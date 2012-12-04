@@ -31,21 +31,20 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-//import org.apache.commons.lang.NullArgumentException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -82,32 +81,6 @@ public class Util {
         } finally {
             stream.close();
         }
-    }
-
-    public static boolean imgpathexists(String path) {
-        Case currentCase = Case.getCurrentCase(); // get the most updated case
-        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-        Boolean rt = false;
-        int count = 0;
-        try {
-            List<FsContent> FFSqlitedb;
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where parent_path LIKE '%" + path + "%'");
-            FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            count = FFSqlitedb.size();
-            final Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
-            if (count > 0) {
-                rt = true;
-            } else {
-                rt = false;
-            }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Error checking if image exists, unable to contact sqlite database.", ex);
-        }
-        return rt;
     }
 
     public static String getBaseDomain(String url) {
@@ -213,8 +186,8 @@ public class Util {
         }
         return path;
     }
-
-    public static long findID(String path) {
+    
+    public static long findID(Image image, String path) {
         String parent_path = path.replace('\\', '/'); // fix Chrome paths
         if (parent_path.length() > 2 && parent_path.charAt(1) == ':') {
             parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
@@ -222,24 +195,20 @@ public class Util {
         int index = parent_path.lastIndexOf('/');
         String name = parent_path.substring(++index);
         parent_path = parent_path.substring(0, index);
-        String query = "select * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+        //String query = "select * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
+        
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        List<FsContent> files = null;
         try {
-            ResultSet rs = tempDb.runQuery(query);
-            List<FsContent> results = tempDb.resultSetToFsContents(rs);
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
-            if (results.size() > 0) {
-                return results.get(0).getId();
-            }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Error finding ID, unable to contact sqlite database", ex);
+            files = fileManager.findFiles(image, name, parent_path);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
-        return -1;
+        
+        if (files == null || files.isEmpty()) {
+            return -1;
+        }
+        return files.get(0).getId();
     }
 
     public static boolean checkColumn(String column, String tablename, String connection) {

@@ -105,62 +105,49 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     public void setArguments(String args) {
         this.args = args;
     }
-
-    private void getregistryfiles(Image image, IngestImageWorkerController controller) {
-        Case currentCase = Case.getCurrentCase(); // get the most updated case
-        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-        Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
-        List<String> fsIds = new LinkedList<String>();
-        for (FileSystem img : imageFS) {
-            Long tempID = img.getId();
-            fsIds.add(tempID.toString());
-        }
-
-        String allFS = new String();
-        for (int i = 0; i < fsIds.size(); i++) {
-            if (i == 0) {
-                allFS += " AND (0";
-            }
-            allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
-            if (i == fsIds.size() - 1) {
-                allFS += ")";
-            }
-        }
-        List<FsContent> Regfiles = new ArrayList<FsContent>();
+    
+    private void getRegistryFiles(Image image, IngestImageWorkerController controller) {
+        
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> allRegistryFiles = new ArrayList<FsContent>();
         try {
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
-            Regfiles = tempDb.resultSetToFsContents(rs);
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error querying the database for registry files: {0}", ex);
+            allRegistryFiles.addAll(fileManager.findFiles(image, "ntuser.dat"));
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file.");
         }
-
-        int j = 0;
-
-        while (j < Regfiles.size()) {
-            boolean Success;
-            Content orgFS = Regfiles.get(j);
-            long orgId = orgFS.getId();
-            String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
+        
+        // try to find each of the listed registry files whose parent directory
+        // is like '%/system32/config%'
+        String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
+        for (String regFileName : regFileNames) {
             try {
-                ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
+                allRegistryFiles.addAll(fileManager.findFiles(image, regFileName, "%/system32/config%"));
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
+            }
+        }
+        
+        int j = 0;
+        for (FsContent regFile : allRegistryFiles) {
+            String regFileName = regFile.getName();
+            String temps = currentCase.getTempDirectory() + "\\" + regFileName;
+            try {
+                ContentUtils.writeToFile(regFile, new File(currentCase.getTempDirectory() + "\\" + regFileName));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
             }
-            File regFile = new File(temps);
+            File aRegFile = new File(temps);
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
-            String txtPath = executeRegRip(temps, j);
+            String txtPath = executeRegRip(temps, j++);
             if (txtPath.length() > 0) {
-                Success = parseReg(txtPath, orgId);
-            } else {
-                Success = false;
+                if (parseReg(txtPath, regFile.getId()) == false) {
+                    continue;
+                }
             }
+            
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
-            if (Success) {
-                //Delete dat file since it was succcessful
-                regFile.delete();
-            }
-            j++;
+            aRegFile.delete();
         }
     }
 
@@ -396,7 +383,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-        this.getregistryfiles(image, controller);
+        this.getRegistryFiles(image, controller);
     }
 
     @Override

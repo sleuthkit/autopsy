@@ -37,6 +37,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
@@ -96,20 +98,25 @@ public class Chrome extends Extract implements IngestModuleImage {
     }
 
     private void getHistory(Image image, IngestImageWorkerController controller) {
-        //Make these seperate, this is for history
 
-        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'");
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> historyFiles = null;
+        try {
+            historyFiles = fileManager.findFiles(image, "History", "Chrome");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
+        }
 
         int j = 0;
-        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+        if (historyFiles != null && !historyFiles.isEmpty()) {
+            while (j < historyFiles.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(historyFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFiles.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -130,7 +137,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFiles.get(j), bbattributes);
 
                 }
                 if (errors > 0) {
@@ -145,20 +152,25 @@ public class Chrome extends Extract implements IngestModuleImage {
     }
 
     private void getBookmark(Image image, IngestImageWorkerController controller) {
-
-        //this is for bookmarks
-        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> bookmarkFiles = null;
+        try {
+            bookmarkFiles = fileManager.findFiles(image, "Bookmarks", "Chrome");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
+        }
 
         int j = 0;
-        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+        if (bookmarkFiles != null && !bookmarkFiles.isEmpty()) {
+            while (j < bookmarkFiles.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + bookmarkFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(bookmarkFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + bookmarkFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + bookmarkFiles.get(j).getName());
                 }
                 logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
                 File dbFile = new File(temps);
@@ -180,7 +192,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                             String name = address.get("name").getAsString();
                             Long date = address.get("date_added").getAsLong();
                             String domain = Util.extractDomain(url);
-                            BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+                            BlackboardArtifact bbart = bookmarkFiles.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                             //TODO Revisit usage of deprecated constructor as per TSK-583
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000000)));
@@ -213,19 +225,25 @@ public class Chrome extends Extract implements IngestModuleImage {
     //COOKIES section
     // This gets the cookie info
     private void getCookie(Image image, IngestImageWorkerController controller) {
-
-        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> cookiesFiles = null;
+        try {
+            cookiesFiles = fileManager.findFiles(image, "Cookies", "Chrome");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
+        }
 
         int j = 0;
-        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+        if (cookiesFiles != null && !cookiesFiles.isEmpty()) {
+            while (j < cookiesFiles.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + cookiesFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(cookiesFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + cookiesFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + cookiesFiles.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -249,7 +267,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                     String domain = result.get("host_key").toString();
                     domain = domain.replaceFirst("^\\.+(?!$)", "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFiles.get(j), bbattributes);
 
                 }
                 if (errors > 0) {
@@ -266,19 +284,25 @@ public class Chrome extends Extract implements IngestModuleImage {
     //Downloads section
     // This gets the downloads info
     private void getDownload(Image image, IngestImageWorkerController controller) {
-
-        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> historyFiles = null;
+        try {
+            historyFiles = fileManager.findFiles(image, "History", "Chrome");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
+        }
 
         int j = 0;
-        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+        if (historyFiles != null && !historyFiles.isEmpty()) {
+            while (j < historyFiles.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(historyFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFiles.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -291,7 +315,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 for (HashMap<String, Object> result : tempList) {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", (result.get("full_path").toString())));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID((result.get("full_path").toString()))));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID(image, (result.get("full_path").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                     Long time = (Long.valueOf(result.get("start_time").toString()));
@@ -303,7 +327,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                     String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFiles.get(j), bbattributes);
 
                 }
                 if (errors > 0) {
@@ -320,19 +344,25 @@ public class Chrome extends Extract implements IngestModuleImage {
     //Login/Password section
     // This gets the user info
     private void getLogin(Image image, IngestImageWorkerController controller) {
-
-        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> signonFiles = null;
+        try {
+            signonFiles = fileManager.findFiles(image, "signons.sqlite", "Chrome");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
+        }
 
         int j = 0;
-        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+        if (signonFiles != null && !signonFiles.isEmpty()) {
+            while (j < signonFiles.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + signonFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(signonFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + signonFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + signonFiles.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -354,7 +384,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : ""))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "Recent Activity", ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", result.get("signon_realm").toString()));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFiles.get(j), bbattributes);
 
                 }
                 if (errors > 0) {

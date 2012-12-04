@@ -394,6 +394,11 @@ class IngestScheduler {
          * @param task
          */
         synchronized void add(ScheduledTask task) {
+            //skip if task contains no modules
+            if (task.modules.isEmpty()) {
+                return;
+            }
+            
             if (getImages().contains(task.image)) {
                 //reset counters if the same image enqueued twice
                 //Note, not very accurate, because we may have processed some files from 
@@ -927,6 +932,11 @@ class IngestScheduler {
         }
 
         synchronized void add(Task task) {
+            //skip if task contains no modules
+            if (task.modules.isEmpty()) {
+                return;
+            }
+            
             Task existTask = null;
             for (Task curTask : tasks) {
                 if (curTask.image.equals(task.image)) {
