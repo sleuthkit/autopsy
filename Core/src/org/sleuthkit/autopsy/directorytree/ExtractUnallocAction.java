@@ -178,7 +178,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                             offset += f.read(buf, offset, MAX_BYTES);    //Offset + Bytes read
                             fos.write(buf);
                         }
-                        progress.progress(count++);
+                        progress.progress("processing block " + ++count + "of " + us.size(), count);
                     }
                 progress.finish();
                 fos.flush();
