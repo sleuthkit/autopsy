@@ -110,8 +110,7 @@ public abstract class AbstractDataResultViewer extends JPanel implements
             this.em.getRootContext().destroy();
             em = null;
         } catch (IOException ex) {
-            // TODO: What's the proper thing to do here? Should it log? Not throw runtime exception?
-            throw new RuntimeException("Error: can't clear the component of the Thumbnail Result Viewer.", ex);
+            logger.log(Level.WARNING, "Can't clear the component of the Thumbnail Result Viewer.", ex);
         }
     }
 
