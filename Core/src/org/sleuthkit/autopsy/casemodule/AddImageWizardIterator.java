@@ -128,7 +128,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     @Override
     // disable the previous button on all panels
     public boolean hasPrevious() {
-        return index == 1;
+        return false;
     }
 
     /**

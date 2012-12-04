@@ -25,6 +25,7 @@ import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JButton;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -156,6 +157,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        JButton cancel = new JButton("Cancel");
+        cancel.setEnabled(false);
+        settings.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupImage = null;
         readyToIngest = false;
         imgAdded = false;
