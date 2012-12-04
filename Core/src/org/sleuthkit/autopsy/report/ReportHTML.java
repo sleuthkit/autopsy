@@ -30,22 +30,26 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 
 /**
  * Generates an HTML report for all the Blackboard Artifacts found in the current case.
@@ -57,7 +61,7 @@ public class ReportHTML implements ReportModule {
                                    + "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\">\n";
     private final String CSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n";
     private final String TABLE_FOOT = "</tbody></table>";
-    private final String HTML_FOOT = "</body>\n</html>";
+    private final String HTML_FOOT = "</div>\n</body>\n</html>";
     
     private ReportConfiguration config;
     private int reportSize;
@@ -65,23 +69,20 @@ public class ReportHTML implements ReportModule {
     private Case currentCase = Case.getCurrentCase();
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
     
-    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> general = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> bookmarks = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> cookies = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> history = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> downloads = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> recent = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> trackpoint = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> installed = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> keywords = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> hash = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> devices = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> email = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> search = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> exif = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> fileBookmarks = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> bookmarks;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> cookies;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> history;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> downloads;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> recent;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> trackpoint;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> installed;
+    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> keywords;
+    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> hash;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> devices;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> search;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> exif;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> fileBookmarks;
     
-    //private int countGeneral;
     private int countBookmarks;
     private int countCookies;
     private int countHistory;
@@ -92,7 +93,6 @@ public class ReportHTML implements ReportModule {
     private int countKeywords;
     //private int countHash;
     private int countDevices;
-    //private int countEmails;
     private int countSearch;
     private int countExif;
     private int countFileBookmarks;
@@ -105,6 +105,57 @@ public class ReportHTML implements ReportModule {
             instance = new ReportHTML();
         }
         return instance;
+    }
+    
+    /**
+     * Iterates through two artifacts' attributes, and compares them in order until
+     * it finds one which is different from the other. If no differing attribute is
+     * found, the comparator compares file unique paths, and then lastly the
+     * artifact ID.
+     */
+    private class ArtifactComparator implements Comparator<Map.Entry<BlackboardArtifact, List<BlackboardAttribute>>> {
+
+        @Override
+        public int compare(Map.Entry<BlackboardArtifact, List<BlackboardAttribute>> art1, Map.Entry<BlackboardArtifact, List<BlackboardAttribute>> art2) {
+            // Get all the attributes for each artifact
+            int size = BlackboardAttribute.ATTRIBUTE_TYPE.values().length;
+            TreeMap<Integer, String> att1 = getAttributes(art1.getValue());
+            TreeMap<Integer, String> att2 = getAttributes(art2.getValue());
+            
+            // Compare the attributes one-by-one looking for differences
+            for(int i=0; i < size; i++) {
+                String a1 = att1.get(i);
+                String a2 = att2.get(i);
+                if((!a1.equals("") && !a2.equals("")) && a1.compareTo(a2) != 0) {
+                    return a1.compareTo(a2);
+                }
+            }
+            
+            // If there are no differenct artifacts, compare the file path
+            Long objId = art1.getKey().getObjectID();
+            AbstractFile file1 = getFile(objId);
+            objId = art2.getKey().getObjectID();
+            AbstractFile file2 = getFile(objId);
+            
+            if(file1 != null && file2 !=null) {
+                try {
+                    int result = file1.getUniquePath().compareTo(file2.getUniquePath());
+                    if(result != 0) {
+                        return result;
+                    }
+                } catch (TskCoreException ex) { // Not a big deal, we'll compare artifact IDs
+                }
+            }
+            
+            // If that's the same, use the artifact ID
+            if(art1.getKey().getArtifactID() < art2.getKey().getArtifactID()) {
+                return -1;
+            } else if(art1.getKey().getArtifactID() > art2.getKey().getArtifactID()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
     }
 
     /**
@@ -136,28 +187,25 @@ public class ReportHTML implements ReportModule {
         }
         
         // For every type of artifact, group that type into it's own set
-        //general = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        bookmarks = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        cookies = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        history = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        downloads = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        recent = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        trackpoint = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        installed = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        keywords = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        //hash = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        devices = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        //email = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        search = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        exif = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
-        fileBookmarks = new LinkedHashSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
+        ArtifactComparator c = new ArtifactComparator();
+        bookmarks = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        cookies = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        history = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        downloads = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        recent = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        trackpoint = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        installed = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        //keywords = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        //hash = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        devices = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        search = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        exif = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        fileBookmarks = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (ReportFilter.cancel == true) {
                 break;
             }
-            //if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
-            //    general.add(entry);
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
                 bookmarks.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
@@ -173,13 +221,11 @@ public class ReportHTML implements ReportModule {
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                 installed.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                keywords.add(entry);
+                countKeywords++;
             //} else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
             //    hash.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 devices.add(entry);
-            //} else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-            //    email.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                 search.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
@@ -189,8 +235,9 @@ public class ReportHTML implements ReportModule {
             }
         }
         
+        
+        
         // Get the sizes for each type
-        //countGeneral = general.size();
         countBookmarks = bookmarks.size();
         countCookies = cookies.size();
         countHistory = history.size();
@@ -198,10 +245,9 @@ public class ReportHTML implements ReportModule {
         countRecent = recent.size();
         countTrackpoint = trackpoint.size();
         countInstalled = installed.size();
-        countKeywords = keywords.size();
+        //countKeywords = keywords.size();
         //countHash = hash.size();
         countDevices = devices.size();
-        //countEmails = email.size();
         countSearch = search.size();
         countExif = exif.size();
         countFileBookmarks = fileBookmarks.size();
@@ -218,21 +264,23 @@ public class ReportHTML implements ReportModule {
         Writer out = null;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "index.css"), "UTF-8"));
-            String css = "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} \n"
-                       + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} \n"
-                       + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} \n"
-                       + "h3 {font-size: 16px; color: #0077aa; margin: 40px 0 10px 0;} \n"
-                       + "ul.nav {list-style-type: none; line-height: 35px; padding: 0px;} \n"
-                       + "ul.nav li a {font-size: 14px; color: #444; text-shadow: #e9f9fd 0 1px 0; text-decoration: none; padding-left: 25px;} \n"
-                       + "ul.nav li a:hover {text-decoration: underline;} \n"
-                       + "p {margin: 0 0 20px 0;} \n"
-                       + "table {max-width: 100%; min-width: 700px; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} \n"
-                       + "table thead th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} \n"
-                       + "/*table tr th:nth-child(1) {text-align: center; width: 60px;}*/ \n"
-                       + "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; max-width: 500px; min-width: 125px; word-break: break-all; overflow: auto;} \n"
-                       + "table tr:nth-child(even) td {background: #f3f3f3;} \n"
-                       + "/*table tr td:nth-child(1) {text-align: left; width: 60px; background: #f3f3f3;}*/ \n"
-                       + "/*table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}*/ \n";
+            String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n" +
+                         "#content {padding: 30px;}\n" +
+                         "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" +
+                         "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; border-bottom: 1px solid #D6D6D6;}\n" +
+                         "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" +
+                         "h3 {font-size: 16px; color: #07A;}\n" +
+                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px;}\n" +
+                         "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" +
+                         "ul li a:hover {text-decoration: underline;}\n" +
+                         "p {margin: 0 0 20px 0;}\n" +
+                         ".keyword_list td.keyword {background: #07A; color: #FFF; font-size: 16px; padding: 3px; padding-left: 15px;}\n" +
+                         ".keyword_list td.blank {background: #FFF; padding: 20px; border-top: 1px solid #07A;}\n" +
+                         "table {max-width: 100%; min-width: 700px; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;}\n" +
+                         ".keyword_list table {margin-left: 25px;}\n" +
+                         "table th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;}\n" +
+                         "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; max-width: 500px; min-width: 125px; word-break: break-all; overflow: auto;}\n" +
+                         "table tr:nth-child(even) td {background: #f3f3f3;}";
             out.write(css);
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find index.css file to write to.");
@@ -273,13 +321,13 @@ public class ReportHTML implements ReportModule {
         Writer out = null;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "index.html"), "UTF-8"));
-            out.write("<head>\n" + CSS + "<title>Report for " + currentCase.getName() + "</title>\n" +  "</head>\n");
+            out.write("<head>\n" + CSS + "<title>Autopsy Report for case " + currentCase.getName() + "</title>\n" +  "</head>\n");
             StringBuilder index = new StringBuilder();
             
             index.append("<frameset cols=\"300px,*\">\n");
             index.append("<frame src=\"nav.html\" name=\"nav\">\n");
             index.append("<frame src=\"summary.html\" name=\"content\">\n");
-            index.append("<noframes>Your browser is not compatible with out frame setup.<br />\n");
+            index.append("<noframes>Your browser is not compatible with our frame setup.<br />\n");
             index.append("Please see <a href=\"nav.html\">the navigation page</a> for artifact links,<br />\n");
             index.append("and <a href=\"summary.html\">the summary page</a> for a case summary.</noframes>\n");
             index.append("</frameset>\n");
@@ -314,12 +362,9 @@ public class ReportHTML implements ReportModule {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "nav.html"), "UTF-8"));
             out.write(generateHead("Report Navigation"));
             StringBuilder nav = new StringBuilder();
-            nav.append("<h2>Report Navigation</h2>\n");
+            nav.append("<div id=\"content\">\n<h1>Report Navigation</h1>\n");
             nav.append("<ul class=\"nav\">\n");
             nav.append("<li><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
-            //if(countGeneral > 0) {
-            //    nav.append("<a href=\"general.html\" target=\"content\">General Information (").append(countGeneral).append(")</a><br />\n");
-            //}
             if(countBookmarks > 0) {
                 nav.append("<li><a href=\"bookmarks.html\" target=\"content\">Web Bookmarks (").append(countBookmarks).append(")</a></li>\n");
             }
@@ -331,6 +376,9 @@ public class ReportHTML implements ReportModule {
             }
             if(countDownloads > 0) {
                 nav.append("<li><a href=\"downloads.html\" target=\"content\">Web Downloads (").append(countDownloads).append(")</a></li>\n");
+            }
+            if(countSearch > 0) {
+                nav.append("<li><a href=\"search.html\" target=\"content\">Web Search Queries (").append(countSearch).append(")</a></li>\n");
             }
             if(countRecent > 0) {
                 nav.append("<li><a href=\"recent.html\" target=\"content\">Recent Documents (").append(countRecent).append(")</a></li>\n");
@@ -349,12 +397,6 @@ public class ReportHTML implements ReportModule {
             //}
             if(countDevices > 0) {
                 nav.append("<li><a href=\"devices.html\" target=\"content\">Devices Attached (").append(countDevices).append(")</a></li>\n");
-            }
-            //if(countEmails > 0) {
-            //    nav.append("<li><a href=\"emails.html\" target=\"content\">Emails (").append(countEmails).append(")</a></li>\n");
-            //}
-            if(countSearch > 0) {
-                nav.append("<li><a href=\"search.html\" target=\"content\">Web Search Queries (").append(countSearch).append(")</a></li>\n");
             }
             if(countExif > 0) {
                 nav.append("<li><a href=\"exif.html\" target=\"content\">Exif Metadata (").append(countExif).append(")</a></li>\n");
@@ -400,31 +442,33 @@ public class ReportHTML implements ReportModule {
             String examiner = currentCase.getExaminer();
             String number = currentCase.getNumber();
             Integer imagecount = currentCase.getImageIDs().length;
-            Integer filesystemcount = currentCase.getRootObjectsCount();
-            Integer totalfiles = 0;
-            Integer totaldirs = 0;
-            try {
-                totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
-                totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Could not get FsContentType counts from TSK ", ex);
-            }
+            
             
             StringBuilder summary = new StringBuilder();
             if (IngestManager.getDefault().isIngestRunning() || IngestManager.getDefault().areModulesRunning()) {
                 summary.append(INGEST_WARNING);
             }
-            summary.append("<h3>Report for Case: ").append(caseName).append("</h3>\n");
-            summary.append("<p>HTML Report Generated by <strong>Autopsy 3</strong> on ").append(datetime).append("\n");
-            summary.append("<ul>\n");
-            summary.append("<li>Examiner: ").append(examiner).append("</li>\n");
-            summary.append("<li>Number: ").append(number).append("</li>\n");
-            summary.append("<li># of Images: ").append(imagecount).append("</li>\n");
-            summary.append("<li>FileSystems: ").append(filesystemcount).append("</li>\n");
-            summary.append("<li># of Files: ").append(totalfiles.toString()).append("</li>\n");
-            summary.append("<li># of Dirs: ").append(totaldirs.toString()).append("</li>\n");
-            summary.append("<li># of Artifacts: ").append(reportSize).append("</li>\n");
-            summary.append("</ul>\n");
+            summary.append("<div id=\"content\"><h3>Report for Case: ").append(caseName).append("</h3>\n");
+            summary.append("<p>HTML Report Generated by Autopsy 3 on ").append(datetime).append("</p>\n");
+            summary.append("<p>Examiner: ").append(examiner.isEmpty()? "<i>No examiner</i>" : examiner).append("</p>\n");
+            summary.append("<p>Case Number: ").append(number.isEmpty() ? "<i>No case number</i>" : number).append("</p>\n");
+            summary.append("<p># of Images: ").append(imagecount).append("</p>\n");
+            try {
+                Image[] images = new Image[imagecount];
+                for(int i=0; i<imagecount; i++) {
+                    images[i] = skCase.getImageById(currentCase.getImageIDs()[i]);
+                }
+                for(Image img : images) {
+                    summary.append("<ul><li>").append(img.getName()).append(":\n");
+                    summary.append("<ul>\n<li>Timezone: ").append(img.getTimeZone()).append("</li>\n");
+                    for(String path : img.getPaths()) {
+                        summary.append("<li>Image Path: ").append(path).append("</li>\n");
+                    }
+                    summary.append("</ul>\n</ul>\n</li>\n");
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get image information for the HTML report.");
+            }
             out.write(summary.toString());
             out.write(HTML_FOOT);
         } catch (FileNotFoundException ex) {
@@ -504,8 +548,8 @@ public class ReportHTML implements ReportModule {
             // Write the HTML title
             out.write(generateHead("Web Bookmark Artifacts (" + countBookmarks + ")"));
             // Write the title for the artifact and the top of the table
-            String title = "<h3>Web Bookmarks (" + countBookmarks + ")</h3>\n";
-            String tableHeader = getTableHead("URL", "Title", "Program", "Path");
+            String title = "<div id=\"header\">Web Bookmarks (" + countBookmarks + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("URL", "Title", "Date Accessed", "Program", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -523,6 +567,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<tr>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
@@ -560,8 +605,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "cookies.html"), "UTF-8"));
             out.write(generateHead("Web Cookie Artifacts (" + countCookies + ")"));
-            String title = "<h3>Web Cookies (" + countCookies + ")</h3>\n";
-            String tableHeader = getTableHead("URL", "Date", "Name", "Value", "Program", "Path");
+            String title = "<div id=\"header\">Web Cookies (" + countCookies + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("URL", "Date/Time", "Name", "Value", "Program", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -613,8 +658,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "history.html"), "UTF-8"));
             out.write(generateHead("Web History Artifacts (" + countHistory + ")"));
-            String title = "<h3>Web History (" + countHistory + ")</h3>\n";
-            String tableHeader = getTableHead("URL", "Date", "Referrer", "Name", "Program", "Path");
+            String title = "<div id=\"header\">Web History (" + countHistory + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("URL", "Date Accessed", "Referrer", "Name", "Program", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -665,8 +710,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "downloads.html"), "UTF-8"));
             out.write(generateHead("Web Download Artifacts (" + countDownloads + ")"));
-            String title = "<h3>Web Downloads (" + countDownloads + ")</h3>\n";
-            String tableHeader = getTableHead("URL", "Source", "Time", "Program", "Path");
+            String title = "<div id=\"header\">Web Downloads (" + countDownloads + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("URL", "Source URL", "Date Accessed", "Program", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -716,8 +761,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "recent.html"), "UTF-8"));
             out.write(generateHead("Recent Document Artifacts (" + countRecent + ")"));
-            String title = "<h3>Recent Documents (" + countRecent + ")</h3>\n";
-            String tableHeader = getTableHead("Name", "Related Shortcut", "Path");
+            String title = "<div id=\"header\">Recent Documents (" + countRecent + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Path", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -729,8 +774,7 @@ public class ReportHTML implements ReportModule {
                 TreeMap<Integer, String> attributes = getAttributes(entry.getValue());
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
-                row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>\n");
-                row.append("<td>").append(file !=null ? file.getName() : "").append("</td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
@@ -765,8 +809,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "trackpoint.html"), "UTF-8"));
             out.write(generateHead("Track Point Artifacts (" + countTrackpoint + ")"));
-            String title = "<h3>Track Points (" + countTrackpoint + ")</h3>\n";
-            String tableHeader = getTableHead("Object ID", "Name", "Size", "Path");
+            String title = "<div id=\"header\">Track Points (" + countTrackpoint + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Object ID", "Name", "Size", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -779,7 +823,7 @@ public class ReportHTML implements ReportModule {
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
                 row.append("<td>").append(objId.toString()).append("</td>\n");
-                row.append("<td><strong>").append(file != null ? file.getName().toString() : "").append("</strong></td>\n");
+                row.append("<td>").append(file != null ? file.getName().toString() : "").append("</td>\n");
                 row.append("<td>").append(fileSize.toString()).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
@@ -815,8 +859,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "installed.html"), "UTF-8"));
             out.write(generateHead("Installed Program Artifacts (" + countInstalled + ")"));
-            String title = "<h3>Installed Programs (" + countInstalled + ")</h3>\n";
-            String tableHeader = getTableHead("Program Name", "Install Date/Time", "Path");
+            String title = "<div id=\"header\">Installed Programs (" + countInstalled + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Program Name", "Install Date/Time", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -828,7 +872,7 @@ public class ReportHTML implements ReportModule {
                 TreeMap<Integer, String> attributes = getAttributes(entry.getValue());
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
-                row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</strong></td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
@@ -864,14 +908,87 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "keywords.html"), "UTF-8"));
             out.write(generateHead("Keyword Hit Artifacts (" + countKeywords + ")"));
-            String title = "<h3>Keyword Hits (" + countKeywords + ")</h3>\n";
+            String title = "<div id=\"header\">Keyword Hits (" + countKeywords + ")</div>\n<div id=\"content\">\n";
             out.write(title);
             
-            Report key = new Report();
-            key.getGroupedKeywordHit(out);
+            ResultSet lists = skCase.runQuery("SELECT att.value_text AS list " +
+                                              "FROM blackboard_attributes AS att, blackboard_artifacts AS art " +
+                                              "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " +
+                                                    "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " +
+                                                    "AND att.artifact_id = art.artifact_id " + 
+                                              "GROUP BY list");
+            StringBuilder keywordLists = new StringBuilder();
+            keywordLists.append("<h3>Keyword Lists:</h3>\n<ul>");
+            while(lists.next()) {
+                if (ReportFilter.cancel == true) { break; }
+                String list = lists.getString("list");
+                if(list.isEmpty()) {
+                    keywordLists.append("<li><a href=\"#User Searches\">User Searches</a></li>\n");
+                } else {
+                    keywordLists.append("<li><a href=\"#").append(list).append("\">").append(list).append("</a></li>\n");
+                }
+            }
+            keywordLists.append("</ul>");
+            out.write(keywordLists.toString());
+            
+            ResultSet rs = skCase.runQuery("SELECT art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list " +
+                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3 " +
+                                           "WHERE (att1.artifact_id = art.artifact_id) " +
+                                                 "AND (att2.artifact_id = art.artifact_id) " + 
+                                                 "AND (att3.artifact_id = art.artifact_id) " + 
+                                                 "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " +
+                                                 "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " +
+                                                 "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " +
+                                                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " +
+                                           "ORDER BY list, keyword");
+            String currentKeyword = "";
+            String currentList = "";
+            while (rs.next()) {
+                if (ReportFilter.cancel == true) { break; }
+                Long objId = rs.getLong("obj_id");
+                String keyword = rs.getString("keyword");
+                String preview = rs.getString("preview");
+                String list = rs.getString("list");
+                
+                AbstractFile file = null;
+                try {
+                    file = skCase.getAbstractFileById(objId);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not get AbstractFile from TSK ", ex);
+                }
+                StringBuilder table = new StringBuilder();
+                
+                if((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals("User Searches"))) {
+                    if(!currentList.isEmpty()) {
+                        table.append("</table></div>");
+                    }
+                    currentList = list.isEmpty() ? "User Searches" : list;
+                    currentKeyword = ""; // reset the current keyword because it's a new list
+                    table.append("<br /><br />\n");
+                    table.append("<h1><a name=\"").append(currentList).append("\">").append(currentList).append("</a></h1>\n");
+                    table.append("<div class=\"keyword_list\"><table style=\"border-bottom: 1px solid #07A;\">");
+                }
+                if (!keyword.equals(currentKeyword)) {
+                    if(!currentKeyword.equals("")) {
+                        table.append("<tr><td colspan=\"3\" class=\"blank\"></td></tr>\n");
+                    }
+                    currentKeyword = keyword;
+                    table.append("<tr><td colspan=\"3\" class=\"keyword\">").append(currentKeyword).append("</td></tr>\n");
+                    table.append("<tr><th>File Name</th><th>Preview</th><th>Path</th></tr>\n");
+                }
+                table.append("<tr><td>").append(file.getName()).append("</td>\n");
+                String previewreplace = EscapeUtil.escapeHtml(preview);
+                table.append("<td>").append(previewreplace.replaceAll("<!", "")).append("</td>").append("<td>").append(file != null ? file.getUniquePath() : "").append("</td>").append("</tr>\n");
+                out.write(table.toString());
+            }
+            out.write("</table><br /><br />");
             
             out.write(TABLE_FOOT);
             out.write(HTML_FOOT);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to get tsk file information for keywords.html.");
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Unable to query database for keyword hits.");
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find keywords.html file to write to.");
         } catch (UnsupportedEncodingException ex) {
@@ -898,8 +1015,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "devices.html"), "UTF-8"));
             out.write(generateHead("Attached Device Artifacts (" + countDevices + ")"));
-            String title = "<h3>Attached Devices (" + countDevices + ")</h3>\n";
-            String tableHeader = getTableHead("Name", "Serial #", "Time", "Path");
+            String title = "<div id=\"header\">Attached Devices (" + countDevices + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Name", "Device ID", "Date/Time", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -911,7 +1028,7 @@ public class ReportHTML implements ReportModule {
                 TreeMap<Integer, String> attributes = getAttributes(entry.getValue());
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
-                row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
@@ -948,8 +1065,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "search.html"), "UTF-8"));
             out.write(generateHead("Web Search Query Artifacts (" + countSearch + ")"));
-            String title = "<h3>Web Search Queries (" + countSearch + ")</h3>\n";
-            String tableHeader = getTableHead("Program Name", "Domain", "Text", "Last Modified", "Path");
+            String title = "<div id=\"header\">Web Search Queries (" + countSearch + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Text", "Domain", "Date Accessed", "Program Name", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -961,10 +1078,10 @@ public class ReportHTML implements ReportModule {
                 TreeMap<Integer, String> attributes = getAttributes(entry.getValue());
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
-                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID())).append("</td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
@@ -999,8 +1116,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "exif.html"), "UTF-8"));
             out.write(generateHead("Exif Metadata Artifacts (" + countExif + ")"));
-            String title = "<h3>Exif Metadata (" + countExif + ")</h3>\n";
-            String tableHeader = getTableHead("File Name", "Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Altitude", "Path");
+            String title = "<div id=\"header\">Exif Metadata (" + countExif + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("File Name", "Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -1018,7 +1135,6 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID())).append("</td>\n");
-                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
@@ -1053,8 +1169,8 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "filebookmarks.html"), "UTF-8"));
             out.write(generateHead("File Bookmarks (" + countFileBookmarks + ")"));
-            String title = "<h3>File Bookmarks (" + countFileBookmarks + ")</h3>\n";
-            String tableHeader = getTableHead("Comment", "File Name", "Path");
+            String title = "<div id=\"header\">File Bookmarks (" + countFileBookmarks + ")</div>\n<div id=\"content\">\n";
+            String tableHeader = getTableHead("Comment", "File Name", "Source File");
             out.write(title);
             out.write(tableHeader);
             
@@ -1113,12 +1229,12 @@ public class ReportHTML implements ReportModule {
         writeCookie(path);
         writeHistory(path);
         writeDownload(path);
+        writeSearch(path);
         writeRecent(path);
         writeTrackpoint(path);
         writeInstalled(path);
         writeKeyword(path);
         writeDevice(path);
-        writeSearch(path);
         writeExif(path);
         writeFileBookmarks(path);
     }
