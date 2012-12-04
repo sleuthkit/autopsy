@@ -45,9 +45,9 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
 
 
-class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
+class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
     
-    private static ShowDetailActionVisitor instance = new ShowDetailActionVisitor();
+    private static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
    
     public static List<Action> getActions(Content c) {
         List<Action> actions = new ArrayList<Action>();
@@ -64,7 +64,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
                    return actions;
                 }
             } catch (TskException ex) {
-                Log.get(ShowDetailActionVisitor.class).log(Level.WARNING, "Error getting show detail actions.", ex);
+                Log.get(ExplorerNodeActionVisitor.class).log(Level.WARNING, "Error getting show detail actions.", ex);
                 return actions;
             }
             actions.addAll(c.accept(instance));
@@ -72,17 +72,19 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
         return actions;
     }
 
-    ShowDetailActionVisitor() {}
+    ExplorerNodeActionVisitor() {}
 
     @Override
     public List<? extends Action> visit(final Image img) {
         final String title = "Image Details";
-
-        return Collections.singletonList(new AbstractAction(title) {
+        
+        List<Action> lst = new ArrayList<Action>();
+        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single Files", img));
+        lst.add(new AbstractAction(title) {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Logger.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ExplorerNodeActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -132,6 +134,8 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
                 popUpWindow.setVisible(true);
             }
         });
+        
+        return lst;
     }
 
     @Override
@@ -144,7 +148,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
             public void actionPerformed(ActionEvent e) {
                 Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
                 
-                Logger.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ExplorerNodeActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -214,7 +218,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
                     popUpWindow.add(fsdPanel);
                 } catch (Exception ex) {
-                    Logger.getLogger(ShowDetailActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex);
+                    Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex);
                 }
 
                 popUpWindow.pack();
@@ -228,33 +232,11 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
     @Override
     public List<? extends Action> visit(final Volume vol) {
         List<AbstractAction> lst = new ArrayList<AbstractAction>();
-        lst.add(new VolumeDetailsAction("Volume Details", vol));
-        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single File", vol));
-        return lst;
-    }
-       
-
-    @Override
-    protected List<? extends Action> defaultVisit(Content di) {
-        return new ArrayList<Action>();
-    }
-}
-
-
- class VolumeDetailsAction extends AbstractAction{
-     
-     String title;
-     Volume vol;
-     
-     VolumeDetailsAction(String title, Volume vol){
-         super(title);
-         this.title = title;
-         this.vol = vol;
-     }
-     
-                 @Override
+        final String title = "Volume Details";
+        lst.add(new AbstractAction(title) {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                Logger.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ExplorerNodeActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -293,17 +275,24 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
                 // add the command to close the window to the button on the Volume Detail Panel
                 volumeDetailPanel.setOKButtonActionListener(new ActionListener() {
-
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         popUpWindow.dispose();
                     }
                 });
-
-
                 popUpWindow.pack();
                 popUpWindow.setResizable(false);
                 popUpWindow.setVisible(true);
 
             }
- }
+        });
+        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single File", vol));
+        return lst;
+    }
+       
+
+    @Override
+    protected List<? extends Action> defaultVisit(Content di) {
+        return new ArrayList<Action>();
+    }
+}
