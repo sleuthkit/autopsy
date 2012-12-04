@@ -151,7 +151,7 @@ public class DataResultFilterNode extends FilterNode {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", img));
             actions.add(new FileSearchAction("Open File Search by Attributes"));
-            actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
+            actions.addAll(ExplorerNodeActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
 
@@ -159,7 +159,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", vol));
-            actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
+            actions.addAll(ExplorerNodeActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
             return actions;
         }
 

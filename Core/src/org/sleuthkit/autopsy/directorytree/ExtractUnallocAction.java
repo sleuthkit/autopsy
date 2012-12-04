@@ -36,43 +36,49 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Extracts all the unallocated space as a single file
  */
-public final class ExtractUnallocAction extends AbstractAction{
+public final class ExtractUnallocAction extends AbstractAction {
 
-    private List<LayoutFile> llf;
-    long VolumeId;
-    String ImageName;
-    long ImageId;
-    volatile static boolean running = false;
+    private List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
+    private static volatile List<String> lockedVols = new ArrayList<String>();
+    private int numDone = 0;
+    private volatile static boolean runningOnImage = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
+    private boolean isImage = false;
     
     public ExtractUnallocAction(String title, Volume volu){
         super(title);
-        VolumeId = volu.getId();
-        try{
-            ImageName = volu.getImage().getName();
-            ImageId = volu.getImage().getId();
-        } catch(TskCoreException tce){
-            logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce);
-            ImageName = "";
-            ImageId = 0;
+        UnallocStruct us = new UnallocStruct(volu);
+        LstUnallocs.add(us);
+    }    
+    public ExtractUnallocAction(String title, Image img) {
+        super(title);
+        isImage = true;
+        if (hasVolumeSystem(img)) {
+            for (Volume v : getVolumes(img)) {
+                UnallocStruct us = new UnallocStruct(v);
+                LstUnallocs.add(us);
+            }
+        } else {
+            UnallocStruct us = new UnallocStruct(img);
+            LstUnallocs.add(us);
         }
-        llf = getUnallocFiles(volu);
-        Collections.sort(llf, new SortObjId());
     }
+    
 
     /**
      * Writes the unallocated files to $CaseDir/Export/ImgName-Unalloc-ImgObjectID-VolumeID.dat
@@ -80,32 +86,41 @@ public final class ExtractUnallocAction extends AbstractAction{
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (llf != null && llf.size() > 0) {
-                String UnallocName = ImageName + "-Unalloc-" + ImageId + "-" + VolumeId + ".dat";
-                //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
-                File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
-                if(running){
-                    JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already running on this volume. Please select a different volume.");
-                    return;
-                }
-                if (unalloc.exists()) {
-                    int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + UnallocName + " already exists, do you want to replace it?");
-                    if (res == JOptionPane.YES_OPTION) {
-                        unalloc.delete();
-                    } else {
-                        return;
+        if (LstUnallocs != null && LstUnallocs.size() > 0) {
+            if (runningOnImage) {
+                JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already running on this Image. Please select a different Image.");
+                return;
+            }
+            for (UnallocStruct u : LstUnallocs) {
+                String UnallocName = u.ImageName + "-Unalloc-" + u.ImageId + "-" + u.VolumeId + ".dat";
+                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(UnallocName)) {                    
+                    //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
+                    File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
+                    if (unalloc.exists()) {
+                        int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + UnallocName + " already exists, do you want to replace it?");
+                        if (res == JOptionPane.YES_OPTION) {
+                            unalloc.delete();
+                        } else {
+                            return;
+                        }
                     }
-                }                
-                ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc);
-                uw.execute();
-        } else {
-            logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + VolumeId + ", but its list of unallocated files was empty or null");
+                    ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc, u);
+                    uw.execute();
+                } else {
+                    logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + u.VolumeId + ", but its list of unallocated files was empty or null");
+                }
+            }
         }
+
     }
 
+    /**
+     * Gets all the unallocated files in a given Content. 
+     * @param c Content o get Unallocated Files from 
+     * @return A list<LayoutFile> if it didn't crash List may be empty. Returns null on failure.
+     */
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
-        logger.log(Level.INFO, "Sending out Unallocated File Visitor");
         try {
             return c.getChildren().get(0).accept(uv); //Launching it on the root directory
         } catch (TskCoreException tce) {
@@ -120,13 +135,19 @@ public final class ExtractUnallocAction extends AbstractAction{
      */
     private class ExtractUnallocWorker extends SwingWorker<Integer, Integer> {
         
-        File path;
+        private File path;
         private ProgressHandle progress;
         private boolean canceled = false;
+        private UnallocStruct us;
+    
 
-        ExtractUnallocWorker(File path) {
+        ExtractUnallocWorker(File path, UnallocStruct us) {
             this.path = path;
-            running = true;
+            if(isImage){
+                runningOnImage = true;
+            }
+            lockedVols.add(path.getName());
+            this.us = us;
         }
 
         @Override
@@ -148,16 +169,16 @@ public final class ExtractUnallocAction extends AbstractAction{
                 byte[] buf = new byte[MAX_BYTES];    //read 8k at a time
                 logger.log(Level.INFO, "Writing Unalloc file to " + path.getPath());
                 
-                progress.start(llf.size());
-                int count = 0;      
-                for (LayoutFile f : llf) {
-                    long offset = 0L;
-                    while (offset != f.getSize() && !canceled) {
-                        offset += f.read(buf, offset, MAX_BYTES);    //Offset + Bytes read
-                        fos.write(buf);
+                progress.start(us.size());
+                int count = 0;
+                    for (LayoutFile f : us.getLayouts()) {
+                        long offset = 0L;
+                        while (offset != f.getSize() && !canceled) {
+                            offset += f.read(buf, offset, MAX_BYTES);    //Offset + Bytes read
+                            fos.write(buf);
+                        }
+                        progress.progress("processing block " + ++count + "of " + us.size(), count);
                     }
-                    progress.progress(count++);
-                }
                 progress.finish();
                 fos.flush();
                 fos.close();
@@ -167,7 +188,7 @@ public final class ExtractUnallocAction extends AbstractAction{
                    logger.log(Level.INFO, "Canceled extraction of " + path.getName() + " and deleted file");
                 }
                 else{
-                    logger.log(Level.INFO, "Finished writing unalloc file");
+                    logger.log(Level.INFO, "Finished writing unalloc file " + path.getPath());
                 }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error writing file", ioe);
@@ -175,13 +196,59 @@ public final class ExtractUnallocAction extends AbstractAction{
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce);
                 return -1;
-            }finally{
-                running = false;
             }
             return 1;
         }
+        
+        @Override
+        protected void done(){
+            lockedVols.remove(path.getName());
+            if(++numDone == LstUnallocs.size()){
+                runningOnImage = false;
+                numDone = 0;
+            }
+        }
     }
+    
+    /**
+     * Determines if an image has a volume system or not.
+     * @param img The Image to analyze
+     * @return True if there are Volume Systems present
+     */
+    private boolean hasVolumeSystem(Image img){
+        try{
+         return (img.getChildren().get(0) instanceof VolumeSystem);
+        } catch(TskCoreException tce){
+            logger.log(Level.WARNING, "Unable to determine if image has a volume system, extraction may be incomplete", tce);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the volumes on an given image.
+     * @param img The image to analyze
+     * @return A list of volumes from the image. Returns an empty list if no matches.
+     */
+    private List<Volume> getVolumes(Image img) {
+        List<Volume> lstVol = new ArrayList<Volume>();
+        try {
+            for (Content v : img.getChildren().get(0).getChildren()) {
+                if(v instanceof Volume){
+                    lstVol.add((Volume)v);
+                }
+            }
+        } catch (TskCoreException tce) {
+            logger.log(Level.WARNING, "Could not get volume information from image. Extraction may be incomplete", tce);
+        }
+        return lstVol;
+    }
+        
+        
 
+
+    /**
+     * Private visitor class for going through a Content file and grabbing unallocated files.
+     */
     private static class UnallocVisitor extends ContentVisitor.Default<List<LayoutFile>> {
 
         /**
@@ -260,7 +327,13 @@ public final class ExtractUnallocAction extends AbstractAction{
             return null;
         }
     }
+   
     
+    /**
+     * Comparator for sorting lists of LayoutFiles based on their Object ID
+     * Ensures that the single Unalloc File is in proper order, and that the bytes
+     * are continuous.
+     */
     private class SortObjId implements Comparator<LayoutFile>{
         
         @Override
@@ -276,4 +349,64 @@ public final class ExtractUnallocAction extends AbstractAction{
             }
         }
     }
+    
+    /**
+     * Private class for assisting in the running the action over an image with multiple volumes.
+     */
+    private class UnallocStruct{
+        private List<LayoutFile> llf;
+        private long VolumeId;
+        private long ImageId;
+        private String ImageName;
+        
+        /**
+         * Contingency constructor in event no VolumeSystem exists on an Image.
+         * @param img Image file to be analyzed
+         */
+        UnallocStruct(Image img){
+            this.llf = getUnallocFiles(img);
+            this.VolumeId = 0;
+            this.ImageId = img.getId();
+            this.ImageName = img.getName();
+        }
+
+        /**
+         * Default constructor for extracting info from Volumes.
+         * @param volu Volume file to be analyzed
+         */
+        UnallocStruct(Volume volu) {
+            try {
+                this.ImageName = volu.getImage().getName();
+                this.ImageId = volu.getImage().getId();
+                this.VolumeId = volu.getId();
+            } catch (TskCoreException tce) {
+                logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce);
+                this.ImageName = "";
+                this.ImageId = 0;
+            }
+            this.llf = getUnallocFiles(volu);
+            Collections.sort(llf, new SortObjId());
+        }
+
+        //Getters
+        int size() {
+            return llf.size();
+        }
+        long getVolumeId(){
+            return this.VolumeId;
+        }
+        long getImageId(){
+            return this.ImageId;
+        }
+        String getImageName(){
+            return this.ImageName;
+        }
+        List<LayoutFile> getLayouts(){
+            return this.llf;
+        }
+        
+        
+        
+    }
+
 }
