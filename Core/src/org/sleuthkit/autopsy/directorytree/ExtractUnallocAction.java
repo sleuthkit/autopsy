@@ -54,11 +54,11 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public final class ExtractUnallocAction extends AbstractAction {
 
     private List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
+    private static volatile List<Long> lockedVols = new ArrayList<Long>();
     private int numDone = 0;
     private volatile static boolean runningOnImage = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     private boolean isImage = false;
-    enum EVENT {WORKER_FINISHED};
     
     public ExtractUnallocAction(String title, Volume volu){
         super(title);
@@ -92,7 +92,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                 return;
             }
             for (UnallocStruct u : LstUnallocs) {
-                if (u.llf != null && u.llf.size() > 0 && !u.isLocked()) {
+                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.VolumeId)) {
                     String UnallocName = u.ImageName + "-Unalloc-" + u.ImageId + "-" + u.VolumeId + ".dat";
                     //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
                     File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
@@ -146,11 +146,8 @@ public final class ExtractUnallocAction extends AbstractAction {
             if(isImage){
                 runningOnImage = true;
             }
-            System.out.println("Default Us is locked? Should be false. Is: " + us.isLocked());
-            us.setLocked(true);
-            System.out.println("Default Us is locked? Should be true. Is: " + us.isLocked());
+            lockedVols.add(us.VolumeId);
             this.us = us;
-            System.out.println("This Us is locked? Should be true. Is: " + this.us.isLocked());
             
         }
 
@@ -206,12 +203,11 @@ public final class ExtractUnallocAction extends AbstractAction {
         
         @Override
         protected void done(){
-            System.out.println("numDone = " + numDone);
+            lockedVols.remove(us.VolumeId);
             if(++numDone == LstUnallocs.size()){
                 runningOnImage = false;
                 numDone = 0;
             }
-            System.out.println("numDone after ++ = " + numDone); 
         }
     }
     
@@ -222,9 +218,6 @@ public final class ExtractUnallocAction extends AbstractAction {
      */
     private boolean hasVolumeSystem(Image img){
         try{
-            for(Content c : img.getChildren()){
-                System.out.println(c.getClass());
-            }
          return (img.getChildren().get(0) instanceof VolumeSystem);
         } catch(TskCoreException tce){
             logger.log(Level.WARNING, "Unable to determine if image has a volume system, extraction may be incomplete", tce);
@@ -248,7 +241,6 @@ public final class ExtractUnallocAction extends AbstractAction {
         } catch (TskCoreException tce) {
             logger.log(Level.WARNING, "Could not get volume information from image. Extraction may be incomplete", tce);
         }
-        System.out.println("lstVol size " + lstVol.size());
         return lstVol;
     }
         
@@ -367,7 +359,6 @@ public final class ExtractUnallocAction extends AbstractAction {
         private long VolumeId;
         private long ImageId;
         private String ImageName;
-        private boolean locked = false;
         
         /**
          * Contingency constructor in event no VolumeSystem exists on an Image.
@@ -382,7 +373,6 @@ public final class ExtractUnallocAction extends AbstractAction {
 
         /**
          * Default constructor for extracting info from Volumes.
-         *
          * @param volu Volume file to be analyzed
          */
         UnallocStruct(Volume volu) {
@@ -409,9 +399,6 @@ public final class ExtractUnallocAction extends AbstractAction {
         long getImageId(){
             return this.ImageId;
         }
-        boolean isLocked(){
-            return this.locked;
-        }
         String getImageName(){
             return this.ImageName;
         }
@@ -419,10 +406,6 @@ public final class ExtractUnallocAction extends AbstractAction {
             return this.llf;
         }
         
-        //Setter
-        void setLocked(boolean lock){
-            this.locked = lock;
-        }
         
         
     }
