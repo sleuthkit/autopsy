@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public final class ExtractUnallocAction extends AbstractAction {
 
     private List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
-    private static volatile List<Long> lockedVols = new ArrayList<Long>();
+    private static volatile List<String> lockedVols = new ArrayList<String>();
     private int numDone = 0;
     private volatile static boolean runningOnImage = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
@@ -92,8 +92,8 @@ public final class ExtractUnallocAction extends AbstractAction {
                 return;
             }
             for (UnallocStruct u : LstUnallocs) {
-                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.VolumeId)) {
-                    String UnallocName = u.ImageName + "-Unalloc-" + u.ImageId + "-" + u.VolumeId + ".dat";
+                String UnallocName = u.ImageName + "-Unalloc-" + u.ImageId + "-" + u.VolumeId + ".dat";
+                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(UnallocName)) {                    
                     //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
                     File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
                     if (unalloc.exists()) {
@@ -146,9 +146,8 @@ public final class ExtractUnallocAction extends AbstractAction {
             if(isImage){
                 runningOnImage = true;
             }
-            lockedVols.add(us.VolumeId);
+            lockedVols.add(path.getName());
             this.us = us;
-            
         }
 
         @Override
@@ -203,7 +202,7 @@ public final class ExtractUnallocAction extends AbstractAction {
         
         @Override
         protected void done(){
-            lockedVols.remove(us.VolumeId);
+            lockedVols.remove(path.getName());
             if(++numDone == LstUnallocs.size()){
                 runningOnImage = false;
                 numDone = 0;
