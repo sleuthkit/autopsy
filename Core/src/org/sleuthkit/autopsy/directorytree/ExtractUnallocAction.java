@@ -53,10 +53,10 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 public final class ExtractUnallocAction extends AbstractAction {
 
-    private List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
-    private static volatile List<String> lockedVols = new ArrayList<String>();
+    private final List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
+    private static final List<String> lockedVols = new ArrayList<String>();
     private int numDone = 0;
-    private volatile static boolean runningOnImage = false;
+    private static boolean runningOnImage = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     private boolean isImage = false;
     
@@ -116,7 +116,7 @@ public final class ExtractUnallocAction extends AbstractAction {
 
     /**
      * Gets all the unallocated files in a given Content. 
-     * @param c Content o get Unallocated Files from 
+     * @param c Content to get Unallocated Files from 
      * @return A list<LayoutFile> if it didn't crash List may be empty. Returns null on failure.
      */
     private List<LayoutFile> getUnallocFiles(Content c) {
@@ -166,7 +166,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                 });
                 FileOutputStream fos = new FileOutputStream(path);
                 int MAX_BYTES = 8192;
-                byte[] buf = new byte[MAX_BYTES];    //read 8k at a time
+                byte[] buf = new byte[MAX_BYTES];    //read 8kb at a time
                 logger.log(Level.INFO, "Writing Unalloc file to " + path.getPath());
                 
                 progress.start(us.size());
