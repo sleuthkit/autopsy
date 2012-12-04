@@ -1,6 +1,7 @@
 ---------------- VERSION Current (development) --------------
 
 New features:
+- Added Hashkeeper hash database support
 
 Improvements:
 - File Ingest: minimized file queuing time and memory usage
