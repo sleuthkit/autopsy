@@ -149,10 +149,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
         final Extract firefox = new Firefox();
         final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
 
-        modules.add(registry);
-        modules.add(iexplore);
         modules.add(chrome);
         modules.add(firefox);
+        modules.add(registry);
+        modules.add(iexplore);
         modules.add(SEUQA);
 
         for (Extract module : modules) {
