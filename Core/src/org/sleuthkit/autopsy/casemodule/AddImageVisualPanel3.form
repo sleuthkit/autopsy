@@ -29,7 +29,7 @@
                       <Component id="subtitleLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="132" max="32767" attributes="0"/>
+              <EmptySpace pref="247" max="32767" attributes="0"/>
           </Group>
           <Component id="configPanel" alignment="0" max="32767" attributes="0"/>
       </Group>
