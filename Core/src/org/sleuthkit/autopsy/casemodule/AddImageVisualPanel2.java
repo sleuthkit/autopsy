@@ -18,13 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -35,33 +30,44 @@ import javax.swing.JProgressBar;
  */
 final class AddImageVisualPanel2 extends JPanel {
 
-    private String nonCriticalErrors = null;
-    private JLabel progressLabel = null;
-    private JButton errorButton = null;
+    private AddImageLoadingPanel loadingPanel;
+    private AddImageDonePanel donePanel;
 
     /**
      * Creates new form AddImageVisualPanel2
      */
     AddImageVisualPanel2() {
+        loadingPanel = new AddImageLoadingPanel();
+        donePanel = new AddImageDonePanel();
         initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
-        progressLabel = new JLabel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.PAGE_AXIS));
-        infoPanel.add(progressLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(10, 10))); //spacer
-        this.jScrollPane1.setBorder(null);
-        this.TextArea_CurrentDirectory.setBackground(this.getBackground());
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.removeAll();
+        mainPanel.add(loadingPanel, BorderLayout.CENTER);
+        mainPanel.validate();
+        mainPanel.repaint();
+    }
+    
+    AddImageLoadingPanel getLoadingPanel() {
+        return loadingPanel;
+    }
+    
+    AddImageDonePanel getDonePanel() {
+        return donePanel;
+    }
+    
+    void done() {
+        mainPanel.removeAll();
+        mainPanel.add(donePanel, BorderLayout.CENTER);
+        mainPanel.validate();
+        mainPanel.repaint();
     }
 
     void resetInfoPanel() {
-        if (errorButton != null) {
-            infoPanel.remove(errorButton);
-            errorButton = null;
-        }
-        progressLabel.setText("");
+        loadingPanel.resetInfoPanel();
     }
 
     /**
@@ -72,15 +78,15 @@ final class AddImageVisualPanel2 extends JPanel {
      */
     @Override
     public String getName() {
-        return "Add Image and Start Ingest";
+        return "Add Image";
     }
 
     public JProgressBar getCrDbProgressBar() {
-        return this.crDbProgressBar;
+        return loadingPanel.getCrDbProgressBar();
     }
 
     public JLabel getProgressLabel() {
-        return this.progressLabel;
+        return loadingPanel.getProgressLabel();
     }
 
     /**
@@ -91,9 +97,7 @@ final class AddImageVisualPanel2 extends JPanel {
      * @param color the color of the progress bar text
      */
     public void changeProgressBarTextAndColor(String text, int value, Color color) {
-        progressLabel.setText(text);
-        progressLabel.setForeground(color);
-        crDbProgressBar.setValue(value);
+        loadingPanel.changeProgressBarTextAndColor(text, value, color);
     }
     
     /**
@@ -101,7 +105,7 @@ final class AddImageVisualPanel2 extends JPanel {
      * @param text 
      */
     public void appendProgressText(String text) {
-        progressLabel.setText(progressLabel.getText() + " " + text);
+        loadingPanel.appendProgressText(text);
     }
     
     /**
@@ -109,39 +113,18 @@ final class AddImageVisualPanel2 extends JPanel {
      * @param dir the text to update with
      */
     public void changeCurrentDir(String dir){
-        this.TextArea_CurrentDirectory.setText(dir);
+        loadingPanel.changeCurrentDir(dir);
     }
     
     /**
      * Sets the CurrentlyProcessing tag and text area to be invisible
      */
     public void setProcessInvis(){
-        this.Label_CurrentDirectory_Static.setVisible(false);
-        this.TextArea_CurrentDirectory.setVisible(false);
+        loadingPanel.setProcessInvis();
     }
 
-    
-
     void setErrors(final String errors, boolean critical) {
-        crDbProgressBar.setValue(100); //always invoked when process completed
-        if (critical) {
-            progressLabel.setText("*Failed to add image (critical errors encountered). Click below to view the Add Image Log.");
-        }
-        else {
-            progressLabel.setText("*Image added (non-critical image errors encountered). Click below to view the Add Image Log.");
-        }
-        errorButton = new JButton();
-        errorButton.setText("View Log");
-        infoPanel.add(errorButton);
-        errorButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //JOptionPane.showMessageDialog(null, errors, "Add image non-critical errors", JOptionPane.WARNING_MESSAGE);
-                AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
-                dialog.setErrors(errors);
-                dialog.setVisible(true);
-            }
-        });
+        loadingPanel.setErrors(errors, critical);
 
     }
 
@@ -153,95 +136,31 @@ final class AddImageVisualPanel2 extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        crDbProgressBar = new javax.swing.JProgressBar();
-        jLabel5 = new javax.swing.JLabel();
-        crDbLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        infoPanel = new javax.swing.JPanel();
-        Label_CurrentDirectory_Static = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        TextArea_CurrentDirectory = new javax.swing.JTextArea();
+        mainPanel = new javax.swing.JPanel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel5.text")); // NOI18N
-
-        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(crDbLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.crDbLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel1.text")); // NOI18N
-
-        javax.swing.GroupLayout infoPanelLayout = new javax.swing.GroupLayout(infoPanel);
-        infoPanel.setLayout(infoPanelLayout);
-        infoPanelLayout.setHorizontalGroup(
-            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 707, Short.MAX_VALUE)
+        javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
+        mainPanel.setLayout(mainPanelLayout);
+        mainPanelLayout.setHorizontalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 334, Short.MAX_VALUE)
         );
-        infoPanelLayout.setVerticalGroup(
-            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 15, Short.MAX_VALUE)
+        mainPanelLayout.setVerticalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 277, Short.MAX_VALUE)
         );
-
-        org.openide.awt.Mnemonics.setLocalizedText(Label_CurrentDirectory_Static, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.Label_CurrentDirectory_Static.text")); // NOI18N
-
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-        TextArea_CurrentDirectory.setEditable(false);
-        TextArea_CurrentDirectory.setBackground(new java.awt.Color(240, 240, 240));
-        TextArea_CurrentDirectory.setColumns(20);
-        TextArea_CurrentDirectory.setLineWrap(true);
-        TextArea_CurrentDirectory.setRows(5);
-        TextArea_CurrentDirectory.setWrapStyleWord(true);
-        TextArea_CurrentDirectory.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        TextArea_CurrentDirectory.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        jScrollPane1.setViewportView(TextArea_CurrentDirectory);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(crDbLabel)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5)
-                            .addComponent(Label_CurrentDirectory_Static))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(crDbLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(crDbProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Label_CurrentDirectory_Static)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(54, Short.MAX_VALUE))
+            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel Label_CurrentDirectory_Static;
-    private javax.swing.JTextArea TextArea_CurrentDirectory;
-    private javax.swing.JLabel crDbLabel;
-    private javax.swing.JProgressBar crDbProgressBar;
-    private javax.swing.JPanel infoPanel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel mainPanel;
     // End of variables declaration//GEN-END:variables
 }
