@@ -120,7 +120,7 @@ public class ReportBodyFile implements ReportModule {
                         out.write(file.getUniquePath());
                     }
                     out.write("|");
-                    out.write(Long.toString(file.getMeta_addr()));
+                    out.write(Long.toString(file.getMetaAddr()));
                     out.write("|");
                     if(file.getModeAsString()!=null) {
                         out.write(file.getModeAsString());

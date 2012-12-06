@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Volume;
@@ -332,12 +332,12 @@ public final class ExtractUnallocAction extends AbstractAction {
         }
         
         /**
-         * LayoutDirectory has all the Layout(Unallocated) files
+         * VirtualDirectory has all the Layout(Unallocated) files
          * @param ld LayoutDirectory the visitor encountered
          * @return A list<LayoutFile> containing all the LayoutFile in ld, returns null if it fails
          */
         @Override
-        public List<LayoutFile> visit(LayoutDirectory ld){
+        public List<LayoutFile> visit(VirtualDirectory ld){
             try{
                 List<LayoutFile> lflst = new ArrayList<LayoutFile>();
                 for(Content layout : ld.getChildren()){
@@ -359,7 +359,7 @@ public final class ExtractUnallocAction extends AbstractAction {
         public List<LayoutFile> visit(Directory dir) {
             try {
                 for (Content c : dir.getChildren()) {
-                    if(c instanceof LayoutDirectory){
+                    if(c instanceof VirtualDirectory){
                         return c.accept(this);
                     }
                 }
