@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.TskException;
@@ -92,7 +92,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
-        public AbstractContentNode visit(LayoutDirectory ld) {
+        public AbstractContentNode visit(VirtualDirectory ld) {
             return new LayoutDirectoryNode(ld);
         }
 

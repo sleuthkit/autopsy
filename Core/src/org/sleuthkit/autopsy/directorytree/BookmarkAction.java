@@ -88,7 +88,7 @@ public class BookmarkAction extends AbstractAction {
         }
 
         @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.LayoutDirectory ld) {
+        public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory ld) {
             return ld;
         }
 

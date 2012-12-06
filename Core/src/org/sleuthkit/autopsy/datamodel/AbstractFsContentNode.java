@@ -241,8 +241,8 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.MODE.toString(), content.getModeAsString());
         map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
         map.put(FsContentPropertyType.GROUP_ID.toString(), content.getGid());
-        map.put(FsContentPropertyType.META_ADDR.toString(), content.getMeta_addr());
-        map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttr_type()) + "-" + Long.toString(content.getAttr_id()));
+        map.put(FsContentPropertyType.META_ADDR.toString(), content.getMetaAddr());
+        map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType()) + "-" + Long.toString(content.getAttrId()));
         map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
