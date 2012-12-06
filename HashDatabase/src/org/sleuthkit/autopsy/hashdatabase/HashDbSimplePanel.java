@@ -32,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
@@ -42,17 +43,12 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
     private HashTableModel knownBadTableModel;
     private HashDb nsrl;
-    private static boolean ingestRunning = false;
 
     /** Creates new form HashDbSimplePanel */
     public HashDbSimplePanel() {
         knownBadTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
-    }
-    
-    static void setIngestRunning(boolean running) {
-        ingestRunning = running;
     }
     
     private void reloadCalc() {
@@ -256,7 +252,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return !ingestRunning && columnIndex == 0;
+            return !IngestManager.getDefault().isIngestRunning() && columnIndex == 0;
         }
 
         @Override

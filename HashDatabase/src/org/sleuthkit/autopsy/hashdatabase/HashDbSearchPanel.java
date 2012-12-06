@@ -30,6 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
@@ -37,7 +38,6 @@ import javax.swing.text.PlainDocument;
 public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
     private static final Logger logger = Logger.getLogger(HashDbSearchPanel.class.getName());
     private static HashDbSearchPanel instance;
-    private static boolean ingestRunning = false;
     
     /**
      * @return  the default instance of this panel 
@@ -48,11 +48,32 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         }
         return instance;
     }
+    
+    /**
+     * Check if ingest is currently running and refresh the panel accordingly.
+     */
+    public void refresh() {
+        boolean running = IngestManager.getDefault().isIngestRunning();
+        if(running) {
+            titleLabel.setForeground(Color.red);
+            titleLabel.setText("Ingest is ongoing; this service will be unavailable until it finishes.");
+        } else {
+            titleLabel.setForeground(Color.black);
+            titleLabel.setText("Search for files with the following MD5 hash(es):");
+        }
+        hashField.setEditable(!running);
+        searchButton.setEnabled(!running);
+        addButton.setEnabled(!running);
+        removeButton.setEnabled(!running);
+        hashTable.setEnabled(!running);
+        hashLabel.setEnabled(!running);
+        saveBox.setEnabled(!running);
+    }
 
     /**
      * Creates new form HashDbSearchPanel
      */
-    public HashDbSearchPanel() {
+    private HashDbSearchPanel() {
         setName(HashDbPanelSearchAction.ACTION_NAME);
         initComponents();
         customInit();
@@ -101,27 +122,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
     
     void addCancelActionListener(ActionListener l) {
         cancelButton.addActionListener(l);
-    }
-    
-    /**
-     * Don't allow any changes if ingest is running
-     */
-    void setIngestRunning(boolean running) {
-        ingestRunning = running;
-        if(running) {
-            titleLabel.setForeground(Color.red);
-            titleLabel.setText("Ingest is ongoing; this service will be unavailable until it finishes.");
-        } else {
-            titleLabel.setForeground(Color.black);
-            titleLabel.setText("Search for files with the following MD5 hash(es):");
-        }
-        hashField.setEditable(!ingestRunning);
-        searchButton.setEnabled(!ingestRunning);
-        addButton.setEnabled(!ingestRunning);
-        removeButton.setEnabled(!ingestRunning);
-        hashTable.setEnabled(!ingestRunning);
-        hashLabel.setEnabled(!ingestRunning);
-        saveBox.setEnabled(!ingestRunning);
     }
 
     /**
@@ -182,7 +182,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
         org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.removeButton.text")); // NOI18N
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.titleLabel.text")); // NOI18N
 
         errorField.setForeground(new java.awt.Color(255, 0, 0));
@@ -222,9 +221,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                                 .addComponent(saveBox)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(errorField)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(cancelButton)))

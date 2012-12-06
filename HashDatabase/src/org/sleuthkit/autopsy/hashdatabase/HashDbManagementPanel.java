@@ -42,12 +42,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
-    private static boolean ingestRunning = false;
+    private boolean ingestRunning = false;
     
     
     //keep track of dbs being indexed, since HashDb objects are reloaded, 
@@ -134,9 +135,10 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
      * Don't allow any changes if ingest is running.
      * @param running Whether ingest is running or not.
      */
-    void setIngestRunning(boolean running) {
+    private void setIngestStatus(boolean running) {
         ingestRunning = running;
         ingestWarningLabel.setVisible(running);
+        importButton.setEnabled(!running);
         
         int selection = getSelection();
         if(selection != -1) {
@@ -493,6 +495,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         HashDbXML.getCurrent().reload();    // Reload XML
         initUI(null);                       // Update the UI
         hashSetTableModel.resync();         // resync the table
+        setIngestStatus(IngestManager.getDefault().isIngestRunning()); // check if ingest is running
     }
 
       @Override
@@ -758,7 +761,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                 theLabel.setForeground(Color.black);
                 theButton.setEnabled(false);
         }
-        if (ingestRunning) {
+        if (IngestManager.getDefault().isIngestRunning()) {
             theButton.setEnabled(false);
         }
     }
