@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -29,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -95,6 +97,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             List<UnallocStruct> copyList = new ArrayList<UnallocStruct>(){{
                 addAll(LstUnallocs);
             }};
+            
             for (UnallocStruct u : LstUnallocs) {
                 if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.getFileName())) {                    
                     //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat                    
@@ -156,8 +159,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             if (!lockedVols.contains(us.getFileName())) {
                 totalSizeinMegs = toMb(us.sizeInBytes());
                 lockedVols.add(us.getFileName());
-            }            
-            
+            } 
         }
 
         ExtractUnallocWorker(List<UnallocStruct> lst) {
@@ -251,7 +253,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             if(isImage){
                 lockedImages.remove(currentImage);
             }
-            JOptionPane.showMessageDialog(new Frame(), "Extraction of unallocated space has completed.");
+            JOptionPane.showMessageDialog(new Frame(), "Completed extraction of unallocated space. Files were extracted to " + lus.get(0).getFile().getParent());
         }
     }
     
