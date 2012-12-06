@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
- * ImageTypePanel for adding a local disk or partition such as \\.\PhysicalDrive0 or  \\.\C:.
+ * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
 public class LocalDiskPanel extends ImageTypePanel {
     private static LocalDiskPanel instance;

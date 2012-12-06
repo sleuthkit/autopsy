@@ -111,7 +111,7 @@ public class StringExtract {
     /**
      * Sets the enabled script to one provided, resets previous setting
      *
-     * @param scripts script to consider for when extracting strings
+     * @param script script to consider for when extracting strings
      */
     public final void setEnabledScript(SCRIPT script) {
 
