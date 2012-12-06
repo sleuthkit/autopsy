@@ -36,10 +36,13 @@ See \ref mod_ingest_page for more details on making an ingest module.
 The UI has three main areas.  The tree on the left-hand side, the result viewers in the upper right, and the content viewers in the lower right.  Data passes between these areas by encapsulating them in Netbeans Node objects (see org.openide.nodes.Node).  These allow Autopsy to generically handle all types of data.  The org.sleuthkit.autopsy.datamodel package details with wrapping the org.sleuthkit.datamodel objects as Netbeans Nodes. 
  
 
-
 Nodes are modeled in a parent-child hierarchy with other nodes.  All data within a Case is represented in a hierarchy with the disk images being one level below the case and volumes and such below the image. 
 
-The tree on the left hand-side shows the analysis results.  Its contents are populated from the central database.   This is where you can browse the file system contents and see the results from the blackboard (see \ref blackboard_page).  The tree is implemented in the org.sleuthkit.autopsy.directorytree package. 
+The tree on the left hand-side shows the analysis results.  
+Its contents are populated from the central database.   
+This is where you can browse the file system contents and see the results from the blackboard. 
+<!-- @@@(see \ref blackboard_page).  -->
+The tree is implemented in the org.sleuthkit.autopsy.directorytree package. 
 
 The area in the upper right is the result viewer area.  When a node is selected from the tree, the node and its children are sent to this area.  This area is used to view a set of nodes.  The viewer is itself a framework with modules that display the data in different layouts.  For example, the standard version comes with a table viewer and a thumbnail viewer.  Refer to \ref mod_result_page for details on building a module. 
 
@@ -50,12 +53,13 @@ See  \ref mod_content_page for details on building new content viewers.
 
 \section design_report Report generation
 
-When ingest is complete, the user can generate reports.  There is a reporting framework to enable many different formats.  Autopsy currently comes with generic html, xml and Excel reports.  See the org.sleuthkit.autopsy.report package for details on the framework and
-\ref report_making for details on building a new report module. 
+When ingest is complete, the user can generate reports.  
+There is a reporting framework to enable many different formats.  Autopsy currently comes with generic html, xml and Excel reports.  See the org.sleuthkit.autopsy.report package for details on the framework and
+\ref mod_report_page for details on building a new report module. 
 
 
 
-<!-- @@@ MOVE THIS SOMEWHERE ELSE -- the directory tree package maybe??
+<!-- @@@ MOVE THIS SOMEWHERE ELSE -- the directory tree package maybe?? -->
 
 The component is by default registered with the ingest manager as an ingest event listener.
 The viewer first loads all the viewer-supported data currently in the blackboard when Autopsy starts.  
@@ -66,9 +70,10 @@ and performs a final refresh of all viewer-supported data in the blackboard.
 
 
 Node content support capabilities are registered in the node's Lookup.
--->
 
-<!-- @@@ This is too detailed for here, but maybe should be broken up and put into the sections on making a result viewer and such…
+
+<!-- @@@ This is too detailed for here, but maybe should be broken up and put into the sections on making a result viewer and such… 
+-->
 
 \section design_data_flow Data Flow
 
@@ -88,6 +93,6 @@ DataResult can send data back to its DataExplorer by making a custom action that
 
 A default DataContent viewer is created when a case is opened. To display the contents of a node, it must be passed to a DataContent instance.  The default single-click behavior of the DataResultViewers is to lookup the default DataContent TopComponent and pass the selected node to it.   See org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer.propertyChange(PropertyChangeEvent) for details. 
 
--->
+
 
 */
