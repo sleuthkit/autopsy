@@ -1,18 +1,20 @@
 ---------------- VERSION Current (development) --------------
 
 New features:
-- Added Hashkeeper hash database support
+- Hashkeeper hash database support
+- Extraction of all unallocated blocks (from volume, image) as a single file
+- Result bookmarks
 
 Improvements:
 - File Ingest: minimized file queuing time and memory usage
 - Add Image Wizard - better work-flow, better device size reporting, info on currently processed directory
-- Added extraction of all unallocated blocks (from volume, image) as a single file
-- Reporting improvements: reorganized columns, sorted by 1st column, added logo to html report
+- Reporting improvements: reorganized columns, sorted by 1st column, added logo to html report, better styling
 
 Bugfixes:
 - fixed periodic keyword search during ingest, when it'd run max. 2 times only
 - fixed Downloads "target" in Recent Activity
 - fixed missing hash and keyword search hits in reports
+- fixed deselecting NSRL database for hash ingest
 
 
 ---------------- VERSION 3.0.1 --------------
