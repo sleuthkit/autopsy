@@ -119,7 +119,7 @@ TODO: Add additional info about service classes (log, Case, database, etc.)  Sim
 
 TODO: Move the log content from the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Logging_and_Error_Checking) to here.
 
-Note: \ref IngestModuleServices provides services specifically for the ingest modules.
+Note: org.sleuthkit.autopsy.ingest.IngestServices provides services specifically for the ingest modules.
 
 
 \section mod_dev_configuration Making a Configuration Panel
@@ -155,7 +155,7 @@ First, use NetBeans' GUI builder to design the panel. Be sure to include all opt
 
 Second, in the source code of the panel, there are two important methods: \c load() and \c store(). When the options panel is opened via Tools > Options in Autopsy, the \c load() method will be called. Conversely, when the user presses OK after editing the options, the \c store() method will be called.
 
-If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the \ref OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
+If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
 
 Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. Continue to \ref mod_dev_properties for more details.
 

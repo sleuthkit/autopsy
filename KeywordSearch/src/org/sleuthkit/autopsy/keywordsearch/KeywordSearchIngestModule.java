@@ -320,7 +320,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      * Initializes the module for new ingest run Sets up threads, timers,
      * retrieves settings, keyword lists to run on
      *
-     * @param services
      */
     @Override
     public void init(IngestModuleInit initContext) {

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +52,7 @@ public class Bookmarks implements AutopsyVisitableItem {
     private static final String FILE_BOOKMARKS_LABEL_NAME = "File Bookmarks";
     private static final String RESULT_BOOKMARKS_LABEL_NAME = "Result Bookmarks";
     //bookmarks are specializations of tags
-    public static final String FILE_BOOKMARK_TAG_NAME = "File Bookmark";
-    public static final String RESULT_BOOKMARK_TAG_NAME = "Result Bookmark";
+    public static final String BOOKMARK_TAG_NAME = "Bookmark";
     private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private static final Logger logger = Logger.getLogger(Bookmarks.class.getName());
     private SleuthkitCase skCase;
@@ -90,13 +90,15 @@ public class Bookmarks implements AutopsyVisitableItem {
 
                 //filter out tags that are not bookmarks
                 //we get bookmarks that have tag names that start with predefined names, preserving the bookmark hierarchy
-                data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE,
-                        skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, FILE_BOOKMARK_TAG_NAME, true));
-
-                data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT,
-                        skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, RESULT_BOOKMARK_TAG_NAME, true));
-
-
+                List<BlackboardArtifact> tagFiles = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE,
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME,
+                        BOOKMARK_TAG_NAME);
+                List<BlackboardArtifact> tagArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT,
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME,
+                        BOOKMARK_TAG_NAME);
+                
+                data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, tagFiles);
+                data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, tagArtifacts);
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Count not initialize bookmark nodes, ", ex);
             }

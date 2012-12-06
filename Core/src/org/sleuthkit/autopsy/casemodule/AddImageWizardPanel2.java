@@ -33,7 +33,7 @@ import org.openide.util.Lookup;
  * thread, and any errors that may occur during the add process.
  */
 class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
-    private boolean imgAdded;
+    private boolean imgAdded = false;
     
     /**
      * The visual component that displays this panel. If you need to access the
@@ -149,6 +149,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        settings.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
+        if(imgAdded) {
+            getComponent().done();
+        }
     }
 
     /**

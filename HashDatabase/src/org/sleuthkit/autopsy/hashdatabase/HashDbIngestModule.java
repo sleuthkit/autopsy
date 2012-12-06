@@ -101,7 +101,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
             calcHashesIsSet = hdbxml.getCalculate();
 
             HashDb nsrl = hdbxml.getNSRLSet();
-            if (nsrl != null && IndexStatus.isIngestible(nsrl.status())) {
+            if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.status())) {
                 nsrlIsSet = true;
                 this.nsrlSet = nsrl;
                 nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));

@@ -42,6 +42,7 @@ public class FileManager implements Closeable {
 	}
 	
 	/**
+         * @param image image where to find files
 	 * @param fileName the name of the file or directory to match
 	 * @return a list of FsContent for files/directories whose name matches the
 	 * given fileName
@@ -54,6 +55,7 @@ public class FileManager implements Closeable {
 	}
 	
 	/**
+         * @param image image where to find files
 	 * @param fileName the name of the file or directory to match
 	 * @param dirName the name of a parent directory of fileName
 	 * @return a list of FsContent for files/directories whose name matches
@@ -67,6 +69,7 @@ public class FileManager implements Closeable {
 	}
 	
 	/**
+         * @param image image where to find files
 	 * @param fileName the name of the file or directory to match
 	 * @param parentFsContent 
 	 * @return a list of FsContent for files/directories whose name matches
@@ -80,6 +83,7 @@ public class FileManager implements Closeable {
 	}
 	
 	/**
+         * @param image image where to find files
 	 * @param filePath The full path to the file(s) of interest. This can
 	 * optionally include the image and volume names.
 	 * @return a list of FsContent that have the given file path.
