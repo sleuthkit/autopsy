@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.LayoutDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
@@ -151,7 +151,7 @@ public class DataResultFilterNode extends FilterNode {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", img));
             actions.add(new FileSearchAction("Open File Search by Attributes"));
-            actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
+            actions.addAll(ExplorerNodeActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
 
@@ -159,7 +159,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", vol));
-            actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
+            actions.addAll(ExplorerNodeActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
             return actions;
         }
 
@@ -174,7 +174,7 @@ public class DataResultFilterNode extends FilterNode {
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract Directory", dir));
             actions.add(null); // creates a menu separator
-            actions.add(new FileBookmarkAction("Bookmark Directory", dir));
+            actions.add(new BookmarkAction("Bookmark Directory", dir));
             return actions;
         }
         
@@ -187,15 +187,15 @@ public class DataResultFilterNode extends FilterNode {
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", lf));
             actions.add(null); // creates a menu separator
-            actions.add(new FileBookmarkAction("Bookmark File", lf));
+            actions.add(new BookmarkAction("Bookmark File", lf));
             return actions;
         }
         
         @Override
-        public List<Action> visit(LayoutDirectoryNode ld) {
+        public List<Action> visit(VirtualDirectoryNode ld) {
             List<Action> actions = new ArrayList<Action>();
            
-            actions.add(new FileBookmarkAction("Bookmark Directory", ld));
+            actions.add(new BookmarkAction("Bookmark Directory", ld));
             return actions;
         }
 
@@ -212,7 +212,7 @@ public class DataResultFilterNode extends FilterNode {
             actions.add(new ExtractAction("Extract File", f));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", f));
             actions.add(null); // creates a menu separator
-            actions.add(new FileBookmarkAction("Bookmark File", f));
+            actions.add(new BookmarkAction("Bookmark File", f));
             return actions;
         }
 
@@ -246,7 +246,8 @@ public class DataResultFilterNode extends FilterNode {
                 //add file bookmark if itself is not a file bookmark
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new FileBookmarkAction("Bookmark File", f));
+                    actions.add(new BookmarkAction("Bookmark File", f));
+                    actions.add(new BookmarkAction("Bookmark Result", ba));
                 }
             }
              if (( d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -259,7 +260,8 @@ public class DataResultFilterNode extends FilterNode {
                 //add file bookmark if itself is not a file bookmark
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new FileBookmarkAction("Bookmark Directory", d));
+                    actions.add(new BookmarkAction("Bookmark Directory", d));
+                    actions.add(new BookmarkAction("Bookmark Result Directory", ba));
                 }
             }
             else if ( ( lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
@@ -272,7 +274,8 @@ public class DataResultFilterNode extends FilterNode {
                 //add file bookmark if itself is not a file bookmark
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new FileBookmarkAction("Bookmark File", lf));
+                     actions.add(new BookmarkAction("Bookmark File", lf));
+                    actions.add(new BookmarkAction("Bookmark Result", ba));
                 }
             }
             //if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -413,7 +416,7 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(LayoutDirectoryNode ldn) {
+        public AbstractAction visit(VirtualDirectoryNode ldn) {
             return openChild(ldn);
         }
 

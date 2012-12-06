@@ -404,7 +404,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param table the object table
      * @return max the maximum width of the column
      */
-    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, String header, Object[][] table) {
+    private synchronized int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, String header, Object[][] table) {
         // set the tree (the node / names column) width
         String headerName = header;
         int headerWidth = metrics.stringWidth(headerName); // length of the header
@@ -412,7 +412,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // Get maximum width of column data
         for (int i = 0; i < table.length; i++) {
-            if (index >= table[i].length) {
+            if (table[i] == null || index >= table[i].length) {
                 continue;
             }
             String test = table[i][index].toString();

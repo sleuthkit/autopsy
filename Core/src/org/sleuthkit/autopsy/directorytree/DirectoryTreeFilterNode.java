@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -109,7 +110,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     private static List<Action> getDetailActions(Content c) {
         List<Action> actions = new ArrayList<Action>();
 
-        actions.addAll(ShowDetailActionVisitor.getActions(c));
+        actions.addAll(ExplorerNodeActionVisitor.getActions(c));
 
         return actions;
     }

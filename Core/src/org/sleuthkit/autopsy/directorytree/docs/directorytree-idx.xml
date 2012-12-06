@@ -9,4 +9,5 @@ and open the template in the editor.
     <indexitem text="Image Details Window" target="org.sleuthkit.autopsy.directorytree.image-details"/>
     <indexitem text="Volume Details Window" target="org.sleuthkit.autopsy.directorytree.volume-details"/>
     <indexitem text="File System Details Window" target="org.sleuthkit.autopsy.directorytree.filesystem-details"/>
+    <indexitem text="Unallocated Space" target="org.sleuthkit.autopsy.directorytree.unallocated-space"/>
 </index>

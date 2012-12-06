@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.exifparser;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.jpeg.JpegProcessingException;
+import com.drew.lang.GeoLocation;
+import com.drew.lang.Rational;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
@@ -120,23 +122,18 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             
             // GPS Stuff
             GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
-//            String latitude, latRef, longitude, longRef, altitude;
-//            latitude = latRef = longitude = longRef = altitude = "";
             
             if(gpsDir != null) {
-                String latitude = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE);
-                String latRef = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE_REF);
-                String longitude = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE);
-                String longRef = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE_REF);
-                String altitude = gpsDir.getString(GpsDirectory.TAG_GPS_ALTITUDE);
-            
- 
-                if(latitude!= null && latRef!=null && !latitude.isEmpty() && !latRef.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude + " " +  latRef));
-                } if(longitude!=null && longRef!=null && !longitude.isEmpty() && !longRef.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude + " " + longRef));
-                } if(altitude!=null && !altitude.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude));
+                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
+                GeoLocation loc = gpsDir.getGeoLocation();
+                if(loc!=null) {
+                    double latitude = loc.getLatitude();
+                    double longitude = loc.getLongitude();
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude));
+                }
+                if(altitude!=null) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude.doubleValue()));
                 }
             }
            
@@ -164,7 +161,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             return IngestModuleAbstractFile.ProcessResult.OK;
             
         } catch (TskCoreException ex) {
-            Logger.getLogger(ExifParserFileIngestModule.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata.");
         } catch (ImageProcessingException ex) {
             logger.log(Level.WARNING, "Failed to process the image file: " + f.getName());
         } catch (IOException ex) {

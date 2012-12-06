@@ -34,7 +34,7 @@ public interface ContentNodeVisitor<T> {
     
     T visit(LayoutFileNode lcn);
     
-    T visit(LayoutDirectoryNode lcn);
+    T visit(VirtualDirectoryNode lcn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -76,7 +76,7 @@ public interface ContentNodeVisitor<T> {
         }
         
         @Override
-        public T visit(LayoutDirectoryNode ldn) {
+        public T visit(VirtualDirectoryNode ldn) {
             return defaultVisit(ldn);
         }
     }

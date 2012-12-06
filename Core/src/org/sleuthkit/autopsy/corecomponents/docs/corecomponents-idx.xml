@@ -14,6 +14,7 @@ and open the template in the editor.
     <indexitem text="Image Details Window" target="org.sleuthkit.autopsy.directorytree.image-details"/>
     <indexitem text="Volume Details Window" target="org.sleuthkit.autopsy.directorytree.volume-details"/>
     <indexitem text="File System Details Window" target="org.sleuthkit.autopsy.directorytree.filesystem-details"/>
+    <indexitem text="Extracting Unallocated Space" target="org.sleuthkit.autopsy.directorytree.unallocated-space"/>
 
     <indexitem text="About File Search" target="org.sleuthkit.autopsy.filesearch.about"/>
     <indexitem text="How to Open File Search" target="org.sleuthkit.autopsy.filesearch.open-filesearch"/>

@@ -22,19 +22,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Node for layout dir
  */
-public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirectory> {
+public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
 
-    public static String nameForLayoutFile(LayoutDirectory ld) {
+    public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
     }
 
-    public LayoutDirectoryNode(LayoutDirectory ld) {
+    public VirtualDirectoryNode(VirtualDirectory ld) {
         super(ld);
 
         this.setDisplayName(nameForLayoutFile(ld));
@@ -88,7 +88,7 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
 
     //TODO consider extend AbstractFsContent node and use that
     //first need methods such as getDirType() to be pushed to AbstractFile class
-    private static void fillPropertyMap(Map<String, Object> map, LayoutDirectory content) {
+    private static void fillPropertyMap(Map<String, Object> map, VirtualDirectory content) {
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
         

@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -313,7 +313,7 @@ class IngestScheduler {
              * @return
              */
             private static List<ProcessTask> createFromScheduledTask(ScheduledTask scheduledTask) {
-                Collection<AbstractFile> rootObjects = new GetRootDirVisitor().visit(scheduledTask.image);
+                Collection<AbstractFile> rootObjects = scheduledTask.image.accept(new GetRootDirVisitor());
                 List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
                 for (AbstractFile root : rootObjects) {
                     //TODO use more specific get AbstractFile children method
@@ -394,6 +394,11 @@ class IngestScheduler {
          * @param task
          */
         synchronized void add(ScheduledTask task) {
+            //skip if task contains no modules
+            if (task.modules.isEmpty()) {
+                return;
+            }
+            
             if (getImages().contains(task.image)) {
                 //reset counters if the same image enqueued twice
                 //Note, not very accurate, because we may have processed some files from 
@@ -604,7 +609,7 @@ class IngestScheduler {
 
                 //skip files in root dir, starting with $, containing : (not default attributes)
                 //with meta address < 32, i.e. some special large NTFS and FAT files
-                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFs_type();
+                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFsType();
 
                 if ((fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
                     //not fat or ntfs, accept all files
@@ -618,7 +623,7 @@ class IngestScheduler {
                     logger.log(Level.WARNING, "Could not check if should enqueue the file: " + f.getName(), ex);
                 }
 
-                if (isInRootDir && f.getMeta_addr() < 32) {
+                if (isInRootDir && f.getMetaAddr() < 32) {
                     String name = f.getName();
 
                     if (name.length() > 0
@@ -810,7 +815,7 @@ class IngestScheduler {
         static class GetRootDirVisitor extends GetFilesContentVisitor {
 
             @Override
-            public Collection<AbstractFile> visit(LayoutDirectory ld) {
+            public Collection<AbstractFile> visit(VirtualDirectory ld) {
                 //case when we hit a layout directory, not under a real FS
                 Collection<AbstractFile> ret = new ArrayList<AbstractFile>();
                 ret.add(ld);
@@ -927,6 +932,11 @@ class IngestScheduler {
         }
 
         synchronized void add(Task task) {
+            //skip if task contains no modules
+            if (task.modules.isEmpty()) {
+                return;
+            }
+            
             Task existTask = null;
             for (Task curTask : tasks) {
                 if (curTask.image.equals(task.image)) {
