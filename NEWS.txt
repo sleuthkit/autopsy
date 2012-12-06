@@ -1,14 +1,14 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.2 --------------
 
 New features:
+- Extraction of all unallocated blocks as a single file
+- Results bookmarks
 - Hashkeeper hash database support
-- Extraction of all unallocated blocks (from volume, image) as a single file
-- Result bookmarks
 
 Improvements:
 - File Ingest: minimized file queuing time and memory usage
 - Add Image Wizard - better work-flow, better device size reporting, info on currently processed directory
-- Reporting improvements: reorganized columns, sorted by 1st column, added logo to html report, better styling
+- Reporting: reorganized columns, sorted by 1st column, added logo, better styling
 
 Bugfixes:
 - fixed periodic keyword search during ingest, when it'd run max. 2 times only
