@@ -13,10 +13,12 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
+import org.sleuthkit.autopsy.directorytree.BookmarkAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -72,6 +74,8 @@ public class KeyValueFileNode extends KeyValueNode {
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", new FileNode(f)));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
+            actions.add(null); // creates a menu separator
+            actions.add(new BookmarkAction("Bookmark File", new FileNode(f)));
             return actions;
         }
         
