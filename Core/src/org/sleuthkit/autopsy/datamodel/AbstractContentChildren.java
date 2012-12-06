@@ -93,7 +93,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         
         @Override
         public AbstractContentNode visit(VirtualDirectory ld) {
-            return new LayoutDirectoryNode(ld);
+            return new VirtualDirectoryNode(ld);
         }
 
         @Override

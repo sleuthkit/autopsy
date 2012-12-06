@@ -28,13 +28,13 @@ import org.sleuthkit.datamodel.LayoutFile;
 /**
  * Node for layout dir
  */
-public class LayoutDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
+public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
 
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
     }
 
-    public LayoutDirectoryNode(VirtualDirectory ld) {
+    public VirtualDirectoryNode(VirtualDirectory ld) {
         super(ld);
 
         this.setDisplayName(nameForLayoutFile(ld));
