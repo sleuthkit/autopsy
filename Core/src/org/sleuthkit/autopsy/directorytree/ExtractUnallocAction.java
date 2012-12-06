@@ -55,8 +55,8 @@ public final class ExtractUnallocAction extends AbstractAction {
 
     private final List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
     private static final List<String> lockedVols = new ArrayList<String>();
-    private int numDone = 0;
-    private static boolean runningOnImage = false;
+    private static final List<Long> lockedImages = new ArrayList<Long>();
+    private long currentImage = 0L;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     private boolean isImage = false;
     
@@ -68,6 +68,7 @@ public final class ExtractUnallocAction extends AbstractAction {
     public ExtractUnallocAction(String title, Image img) {
         super(title);
         isImage = true;
+        currentImage = img.getId();
         if (hasVolumeSystem(img)) {
             for (Volume v : getVolumes(img)) {
                 UnallocStruct us = new UnallocStruct(v);
@@ -87,28 +88,35 @@ public final class ExtractUnallocAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (LstUnallocs != null && LstUnallocs.size() > 0) {
-            if (runningOnImage) {
+            if (lockedImages.contains(currentImage)) {
                 JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already running on this Image. Please select a different Image.");
                 return;
             }
+            List<UnallocStruct> copyList = new ArrayList<UnallocStruct>(){{
+                addAll(LstUnallocs);
+            }};
             for (UnallocStruct u : LstUnallocs) {
-                String UnallocName = u.ImageName + "-Unalloc-" + u.ImageId + "-" + u.VolumeId + ".dat";
-                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(UnallocName)) {                    
-                    //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
-                    File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
-                    if (unalloc.exists()) {
-                        int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + UnallocName + " already exists, do you want to replace it?");
+                if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.getFileName())) {                    
+                    //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat                    
+                    if (u.FileInstance.exists()) {
+                        int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + u.getFileName() + " already exists, do you want to replace it?");
                         if (res == JOptionPane.YES_OPTION) {
-                            unalloc.delete();
+                            u.FileInstance.delete();
                         } else {
-                            return;
+                            copyList.remove(u);
                         }
                     }
-                    ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc, u);
-                    uw.execute();
+                    if (!isImage) {                        
+                        ExtractUnallocWorker uw = new ExtractUnallocWorker(u);
+                        uw.execute();
+                    }
                 } else {
                     logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + u.VolumeId + ", but its list of unallocated files was empty or null");
                 }
+            }
+            if (isImage) {
+                ExtractUnallocWorker uw = new ExtractUnallocWorker(copyList);
+                uw.execute();
             }
         }
 
@@ -135,61 +143,99 @@ public final class ExtractUnallocAction extends AbstractAction {
      */
     private class ExtractUnallocWorker extends SwingWorker<Integer, Integer> {
         
-        private File path;
+
         private ProgressHandle progress;
         private boolean canceled = false;
-        private UnallocStruct us;
-    
+        private List<UnallocStruct> lus = new ArrayList<UnallocStruct>();
+        private File currentlyProcessing;
+        private int totalSizeinMegs;
 
-        ExtractUnallocWorker(File path, UnallocStruct us) {
-            this.path = path;
-            if(isImage){
-                runningOnImage = true;
+        ExtractUnallocWorker(UnallocStruct us) {
+            this.lus.add(us);
+            //Getting the total megs this worker is going to be doing
+            if (!lockedVols.contains(us.getFileName())) {
+                totalSizeinMegs = toMb(us.sizeInBytes());
+                lockedVols.add(us.getFileName());
+            }            
+            
+        }
+
+        ExtractUnallocWorker(List<UnallocStruct> lst) {
+            //Getting the total megs this worker is going to be doing
+            long totalBytes = 0;
+            for (UnallocStruct lu : lst) {
+                if (!lockedVols.contains(lu.getFileName())) {
+                    totalBytes += lu.sizeInBytes();
+                    lockedVols.add(lu.getFileName());
+                    this.lus.add(lu);
+                }
             }
-            lockedVols.add(path.getName());
-            this.us = us;
+            totalSizeinMegs = toMb(totalBytes);
+            lockedImages.add(currentImage);
+        }
+
+        
+        private int toMb(long bytes) {
+            if (bytes > 1024 && (bytes / 1024.0) <= Double.MAX_VALUE) {
+                double Mb = ((bytes / 1024.0)/1024.0);//Bytes -> Megabytes
+                if (((bytes / 1024.0)/1024.0) <= Integer.MAX_VALUE) { 
+                    return (int) Math.floor(Mb);
+                }
+            }
+            return 0;
         }
 
         @Override
         protected Integer doInBackground() {
             try {
-                progress = ProgressHandleFactory.createHandle("Extracting " + path.getName(), new Cancellable() {
+                progress = ProgressHandleFactory.createHandle("Extracting Unallocated Space", new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        logger.log(Level.INFO, "Canceling extraction of Unalloc file " + path.getName());
+                        logger.log(Level.INFO, "Canceling extraction of unallocated space");
                         canceled = true;
                         if (progress != null) {
-                            progress.setDisplayName(path.getName() + " (Cancelling...)");
+                            progress.setDisplayName("Extracting Unallocated Space" + " (Cancelling...)");
                         }
                         return true;
                     }
-                });
-                FileOutputStream fos = new FileOutputStream(path);
+                });                
                 int MAX_BYTES = 8192;
-                byte[] buf = new byte[MAX_BYTES];    //read 8kb at a time
-                logger.log(Level.INFO, "Writing Unalloc file to " + path.getPath());
+                byte[] buf = new byte[MAX_BYTES];    //read 8kb at a time                         
+    
                 
-                progress.start(us.size());
-                int count = 0;
-                    for (LayoutFile f : us.getLayouts()) {
+                //Begin the actual File IO
+                progress.start(totalSizeinMegs);
+                int kbs = 0; //Each completion of the while loop adds one to kbs. 8kb * 128 = 1mb. 
+                int mbs = 0; //Increments every 128 kbs
+                for (UnallocStruct u : this.lus) {
+                    currentlyProcessing = u.getFile();
+                    logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath());
+                    FileOutputStream fos = new FileOutputStream(currentlyProcessing);
+                    int count = 1;
+                    for (LayoutFile f : u.getLayouts()) {
                         long offset = 0L;
                         while (offset != f.getSize() && !canceled) {
                             offset += f.read(buf, offset, MAX_BYTES);    //Offset + Bytes read
                             fos.write(buf);
+                            if (++kbs % 128 == 0) {
+                                mbs++;
+                                progress.progress("processing " + mbs + " of " + totalSizeinMegs + " MBs", mbs);
+                            }
                         }
-                        progress.progress("processing block " + ++count + "of " + us.size(), count);
+                        count++;
                     }
+                    fos.flush();
+                    fos.close();
+
+                    if (canceled) {
+                        u.getFile().delete();
+                        logger.log(Level.INFO, "Canceled extraction of " + u.getFile().getName() + " and deleted file");
+                    } else {
+                        logger.log(Level.INFO, "Finished writing unalloc file " + u.getFile().getPath());
+                    }
+                    lockedVols.remove(u.FileName);
+                }
                 progress.finish();
-                fos.flush();
-                fos.close();
-                
-                if(canceled){
-                   path.delete();
-                   logger.log(Level.INFO, "Canceled extraction of " + path.getName() + " and deleted file");
-                }
-                else{
-                    logger.log(Level.INFO, "Finished writing unalloc file " + path.getPath());
-                }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error writing file", ioe);
                 return -1;
@@ -202,10 +248,8 @@ public final class ExtractUnallocAction extends AbstractAction {
         
         @Override
         protected void done(){
-            lockedVols.remove(path.getName());
-            if(++numDone == LstUnallocs.size()){
-                runningOnImage = false;
-                numDone = 0;
+            if(isImage){
+                lockedImages.remove(currentImage);
             }
         }
     }
@@ -358,7 +402,10 @@ public final class ExtractUnallocAction extends AbstractAction {
         private long VolumeId;
         private long ImageId;
         private String ImageName;
+        private String FileName;
+        private File FileInstance;
         
+       
         /**
          * Contingency constructor in event no VolumeSystem exists on an Image.
          * @param img Image file to be analyzed
@@ -368,6 +415,8 @@ public final class ExtractUnallocAction extends AbstractAction {
             this.VolumeId = 0;
             this.ImageId = img.getId();
             this.ImageName = img.getName();
+            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + 0 + ".dat";
+            this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
         }
 
         /**
@@ -384,6 +433,8 @@ public final class ExtractUnallocAction extends AbstractAction {
                 this.ImageName = "";
                 this.ImageId = 0;
             }
+            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + VolumeId + ".dat";
+            this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
             this.llf = getUnallocFiles(volu);
             Collections.sort(llf, new SortObjId());
         }
@@ -391,6 +442,14 @@ public final class ExtractUnallocAction extends AbstractAction {
         //Getters
         int size() {
             return llf.size();
+        }
+        
+        long sizeInBytes(){
+            long size = 0L;
+            for(LayoutFile f : llf){
+                size+= f.getSize();
+            }
+            return size;
         }
         long getVolumeId(){
             return this.VolumeId;
@@ -403,6 +462,14 @@ public final class ExtractUnallocAction extends AbstractAction {
         }
         List<LayoutFile> getLayouts(){
             return this.llf;
+        }
+        
+        String getFileName(){
+            return this.FileName;
+        }
+        
+        File getFile(){
+            return this.FileInstance;
         }
         
         
