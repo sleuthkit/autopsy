@@ -45,18 +45,20 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 
 /**
  * Generates an HTML report for all the Blackboard Artifacts found in the current case.
  */
 public class ReportHTML implements ReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
-    private final String INGEST_WARNING = "<h2 style=\"color: red;\">Warning, this report was run before ingest services completed!</h2>";
+    private final String INGEST_WARNING = "<span>Warning, this report was run before ingest services completed!</span>";
     private final String HTML_META = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
                                    + "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\">\n";
     private final String CSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n";
@@ -74,28 +76,27 @@ public class ReportHTML implements ReportModule {
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> history;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> downloads;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> recent;
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> trackpoint;
+    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> trackpoint;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> installed;
-    //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> keywords;
     //private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> hash;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> devices;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> search;
     private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> exif;
-    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> fileBookmarks;
+    private Set<Entry<BlackboardArtifact, List<BlackboardAttribute>>> userBookmarks;
     
     private int countBookmarks;
     private int countCookies;
     private int countHistory;
     private int countDownloads;
     private int countRecent;
-    private int countTrackpoint;
+    //private int countTrackpoint;
     private int countInstalled;
     private int countKeywords;
-    //private int countHash;
+    private int countHash;
     private int countDevices;
     private int countSearch;
     private int countExif;
-    private int countFileBookmarks;
+    private int countUserBookmarks;
 
     ReportHTML() {
     }
@@ -173,7 +174,6 @@ public class ReportHTML implements ReportModule {
         reportSize = report.size();
         
         // The report output
-        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
@@ -193,14 +193,13 @@ public class ReportHTML implements ReportModule {
         history = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         downloads = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         recent = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
-        trackpoint = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        //trackpoint = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         installed = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
-        //keywords = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         //hash = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         devices = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         search = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         exif = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
-        fileBookmarks = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
+        userBookmarks = new TreeSet<Entry<BlackboardArtifact, List<BlackboardAttribute>>>(c);
         
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (ReportFilter.cancel == true) {
@@ -216,22 +215,23 @@ public class ReportHTML implements ReportModule {
                 downloads.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
                 recent.add(entry);
-            } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
-                trackpoint.add(entry);
+            //} else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
+            //    trackpoint.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                 installed.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 countKeywords++;
-            //} else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-            //    hash.add(entry);
+            } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                countHash++;
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 devices.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                 search.add(entry);
             } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
                 exif.add(entry);
-            } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()){
-                fileBookmarks.add(entry);
+            } else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() ||
+                    entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()){
+                userBookmarks.add(entry);
             }
         }
         
@@ -243,14 +243,13 @@ public class ReportHTML implements ReportModule {
         countHistory = history.size();
         countDownloads = downloads.size();
         countRecent = recent.size();
-        countTrackpoint = trackpoint.size();
+        //countTrackpoint = trackpoint.size();
         countInstalled = installed.size();
-        //countKeywords = keywords.size();
         //countHash = hash.size();
         countDevices = devices.size();
         countSearch = search.size();
         countExif = exif.size();
-        countFileBookmarks = fileBookmarks.size();
+        countUserBookmarks = userBookmarks.size();
 
         save(htmlFolder);
         return htmlFolder + "index.html";
@@ -270,7 +269,7 @@ public class ReportHTML implements ReportModule {
                          "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; border-bottom: 1px solid #D6D6D6;}\n" +
                          "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" +
                          "h3 {font-size: 16px; color: #07A;}\n" +
-                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px;}\n" +
+                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" +
                          "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" +
                          "ul li a:hover {text-decoration: underline;}\n" +
                          "p {margin: 0 0 20px 0;}\n" +
@@ -321,7 +320,11 @@ public class ReportHTML implements ReportModule {
         Writer out = null;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "index.html"), "UTF-8"));
-            out.write("<head>\n" + CSS + "<title>Autopsy Report for case " + currentCase.getName() + "</title>\n" +  "</head>\n");
+            StringBuilder head = new StringBuilder();
+            head.append("<head>\n" + CSS + "<title>Autopsy Report for case ").append(currentCase.getName()).append("</title>\n");
+            head.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n");
+            head.append("</head>\n");
+            out.write(head.toString());
             StringBuilder index = new StringBuilder();
             
             index.append("<frameset cols=\"300px,*\">\n");
@@ -364,45 +367,45 @@ public class ReportHTML implements ReportModule {
             StringBuilder nav = new StringBuilder();
             nav.append("<div id=\"content\">\n<h1>Report Navigation</h1>\n");
             nav.append("<ul class=\"nav\">\n");
-            nav.append("<li><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
+            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
             if(countBookmarks > 0) {
-                nav.append("<li><a href=\"bookmarks.html\" target=\"content\">Web Bookmarks (").append(countBookmarks).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(bookmarks.png) left center no-repeat;\"><a href=\"bookmarks.html\" target=\"content\">Web Bookmarks (").append(countBookmarks).append(")</a></li>\n");
             }
             if(countCookies > 0) {
-                nav.append("<li><a href=\"cookies.html\" target=\"content\">Web Cookies (").append(countCookies).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(cookies.png) left center no-repeat;\"><a href=\"cookies.html\" target=\"content\">Web Cookies (").append(countCookies).append(")</a></li>\n");
             }
             if(countHistory > 0) {
-                nav.append("<li><a href=\"history.html\" target=\"content\">Web History (").append(countHistory).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(history.png) left center no-repeat;\"><a href=\"history.html\" target=\"content\">Web History (").append(countHistory).append(")</a></li>\n");
             }
             if(countDownloads > 0) {
-                nav.append("<li><a href=\"downloads.html\" target=\"content\">Web Downloads (").append(countDownloads).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(downloads.png) left center no-repeat;\"><a href=\"downloads.html\" target=\"content\">Web Downloads (").append(countDownloads).append(")</a></li>\n");
             }
             if(countSearch > 0) {
-                nav.append("<li><a href=\"search.html\" target=\"content\">Web Search Queries (").append(countSearch).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(search.png) left center no-repeat;\"><a href=\"search.html\" target=\"content\">Web Search Queries (").append(countSearch).append(")</a></li>\n");
             }
             if(countRecent > 0) {
-                nav.append("<li><a href=\"recent.html\" target=\"content\">Recent Documents (").append(countRecent).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(recent.png) left center no-repeat;\"><a href=\"recent.html\" target=\"content\">Recent Documents (").append(countRecent).append(")</a></li>\n");
             }
-            if(countTrackpoint > 0) {
-                nav.append("<li><a href=\"trackpoint.html\" target=\"content\">Trackpoint (").append(countTrackpoint).append(")</a></li>\n");
-            }
+            //if(countTrackpoint > 0) {
+            //    nav.append("<li style=\"background: url(trackpoint.png) left center no-repeat;\"><a href=\"trackpoint.html\" target=\"content\">Trackpoint (").append(countTrackpoint).append(")</a></li>\n");
+            //}
             if(countInstalled > 0) {
-                nav.append("<li><a href=\"installed.html\" target=\"content\">Installed Programs (").append(countInstalled).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(installed.png) left center no-repeat;\"><a href=\"installed.html\" target=\"content\">Installed Programs (").append(countInstalled).append(")</a></li>\n");
             }
             if(countKeywords > 0) {
-                nav.append("<li><a href=\"keywords.html\" target=\"content\">Keyword Hits (").append(countKeywords).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(keywords.png) left center no-repeat;\"><a href=\"keywords.html\" target=\"content\">Keyword Hits (").append(countKeywords).append(")</a></li>\n");
             }
-            //if(countHash > 0) {
-            //    nav.append("<li><a href=\"hash.html\" target=\"content\">Hashset Hits (").append(countHash).append(")</a></li>\n");
-            //}
+            if(countHash > 0) {
+                nav.append("<li style=\"background: url(hash.png) left center no-repeat;\"><a href=\"hash.html\" target=\"content\">Hashset Hits (").append(countHash).append(")</a></li>\n");
+            }
             if(countDevices > 0) {
-                nav.append("<li><a href=\"devices.html\" target=\"content\">Devices Attached (").append(countDevices).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(devices.png) left center no-repeat;\"><a href=\"devices.html\" target=\"content\">Devices Attached (").append(countDevices).append(")</a></li>\n");
             }
             if(countExif > 0) {
-                nav.append("<li><a href=\"exif.html\" target=\"content\">Exif Metadata (").append(countExif).append(")</a></li>\n");
+                nav.append("<li style=\"background: url(exif.png) left center no-repeat;\"><a href=\"exif.html\" target=\"content\">Exif Metadata (").append(countExif).append(")</a></li>\n");
             }
-            if(countFileBookmarks > 0) {
-                nav.append("<li><a href=\"filebookmarks.html\" target=\"content\">File Bookmarks (").append(countFileBookmarks).append(")</a></li>\n");
+            if(countUserBookmarks > 0) {
+                nav.append("<li style=\"background: url(userbookmarks.png) left center no-repeat;\"><a href=\"userbookmarks.html\" target=\"content\">User Bookmarks (").append(countUserBookmarks).append(")</a></li>\n");
             }
             nav.append("</ul>\n");
             out.write(nav.toString());
@@ -432,45 +435,83 @@ public class ReportHTML implements ReportModule {
         Writer out = null;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "summary.html"), "UTF-8"));
-            out.write(generateHead("Case Summary"));
+            StringBuilder head = new StringBuilder(HTML_META);
+            head.append("<head>\n<title>Case Summary</title>\n");
+            head.append("<style type=\"text/css\">\n");
+            head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n");
+            head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n");
+            head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n");
+            head.append("h1 span { color: #F00; display: block; font-size: 16px; font-weight: bold; line-height: 22px; }\n");
+            head.append("h2 { padding: 0 0 3px 0; margin: 0px; color: #07A; font-weight: normal; border-bottom: 1px dotted #81B9DB; }\n");
+            head.append("table td { padding-right: 25px; }\n");
+            head.append("p.subheadding { padding: 0px; margin: 0px; font-size: 11px; color: #B5B5B5; }\n");
+            head.append(".title { width: 660px; margin-bottom: 50px; }\n");
+            head.append(".left { float: left; width: 250px; margin-top: 20px; text-align: center; }\n");
+            head.append(".left img { max-width: 250px; max-height: 250px; min-width: 200px; min-height: 200px; }\n");
+            head.append(".right { float: right; width: 385px; margin-top: 25px; font-size: 14px; }\n");
+            head.append(".clear { clear: both; }\n");
+            head.append(".info p { padding: 3px 10px; background: #e5e5e5; color: #777; font-size: 12px; font-weight: bold; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede; }\n");
+            head.append(".info table { margin: 0 25px 20px 25px; }\n");
+            head.append("</style>\n");
+            head.append("</head>\n<body>\n");
+            out.write(head.toString());
             
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
             Date date = new Date();
             String datetime = datetimeFormat.format(date);
             
             String caseName = currentCase.getName();
+            String caseNumber = currentCase.getNumber();
             String examiner = currentCase.getExaminer();
-            String number = currentCase.getNumber();
-            Integer imagecount = currentCase.getImageIDs().length;
+            int imagecount = currentCase.getImageIDs().length;
             
             
             StringBuilder summary = new StringBuilder();
+            boolean running = false;
             if (IngestManager.getDefault().isIngestRunning() || IngestManager.getDefault().areModulesRunning()) {
-                summary.append(INGEST_WARNING);
+                running = true;
             }
-            summary.append("<div id=\"content\"><h3>Report for Case: ").append(caseName).append("</h3>\n");
-            summary.append("<p>HTML Report Generated by Autopsy 3 on ").append(datetime).append("</p>\n");
-            summary.append("<p>Examiner: ").append(examiner.isEmpty()? "<i>No examiner</i>" : examiner).append("</p>\n");
-            summary.append("<p>Case Number: ").append(number.isEmpty() ? "<i>No case number</i>" : number).append("</p>\n");
-            summary.append("<p># of Images: ").append(imagecount).append("</p>\n");
+            
+            summary.append("<div id=\"wrapper\">\n");
+            summary.append("<h1>Autopsy Forensic Report").append(running ? INGEST_WARNING : "").append("</h1>\n");
+            summary.append("<p class=\"subheadding\">HTML Report Generated on ").append(datetime).append("</p>\n");
+            summary.append("<div class=\"title\">\n");
+            summary.append("<div class=\"left\">\n");
+            summary.append("<img src=\"logo.png\" />\n");
+            summary.append("</div>\n");
+            summary.append("<div class=\"right\">\n");
+            summary.append("<table>\n");
+            summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
+            summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
+            summary.append("<tr><td>Examiner:</td><td>").append(!examiner.isEmpty() ? examiner : "<i>No examiner</i>").append("</td></tr>\n");
+            summary.append("<tr><td># of Images:</td><td>").append(imagecount).append("</td></tr>\n");
+            summary.append("</table>\n");
+            summary.append("</div>\n");
+            summary.append("<div class=\"clear\"></div>\n");
+            summary.append("</div>\n");
+            summary.append("<h2>Image Information:</h2>\n");
+            summary.append("<div class=\"info\">\n");
             try {
                 Image[] images = new Image[imagecount];
                 for(int i=0; i<imagecount; i++) {
                     images[i] = skCase.getImageById(currentCase.getImageIDs()[i]);
                 }
                 for(Image img : images) {
-                    summary.append("<ul><li>").append(img.getName()).append(":\n");
-                    summary.append("<ul>\n<li>Timezone: ").append(img.getTimeZone()).append("</li>\n");
+                    summary.append("<p>").append(img.getName()).append("</p>\n");
+                    summary.append("<table>\n");
+                    summary.append("<tr><td>Timezone:</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
                     for(String path : img.getPaths()) {
-                        summary.append("<li>Image Path: ").append(path).append("</li>\n");
+                        summary.append("<tr><td>Path:</td><td>").append(path).append("</td></tr>\n");
                     }
-                    summary.append("</ul>\n</ul>\n</li>\n");
+                    summary.append("</table>\n");
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get image information for the HTML report.");
             }
+            summary.append("</div>\n");
+            summary.append("</div>\n");
+            summary.append("</body></html>");
             out.write(summary.toString());
-            out.write(HTML_FOOT);
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find summary.html file to write to.");
         } catch (UnsupportedEncodingException ex) {
@@ -508,7 +549,10 @@ public class ReportHTML implements ReportModule {
 
                 SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
-
+            } else if(type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) ||
+                    type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) ||
+                    type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())) {
+                value = Double.toString(tempatt.getValueDouble());
             } else {
                 value = tempatt.getValueString();
             }
@@ -803,7 +847,7 @@ public class ReportHTML implements ReportModule {
     /**
      * Write the trackpoint.html file.
      * @param folder path to output folder
-     */
+     
     private void writeTrackpoint(String folder) {
         Writer out = null;
         try {
@@ -848,7 +892,7 @@ public class ReportHTML implements ReportModule {
             } catch (IOException ex) {
             }
         }
-    }
+    }*/
     
     /**
      * Write the installed.html file.
@@ -1161,20 +1205,20 @@ public class ReportHTML implements ReportModule {
     }
     
     /**
-     * Write the filebookmarks.html file.
+     * Write the userbookmarks.html file.
      * @param folder path to output folder
      */
-    private void writeFileBookmarks(String folder) {
+    private void writeUserBookmarks(String folder) {
         Writer out = null;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "filebookmarks.html"), "UTF-8"));
-            out.write(generateHead("File Bookmarks (" + countFileBookmarks + ")"));
-            String title = "<div id=\"header\">File Bookmarks (" + countFileBookmarks + ")</div>\n<div id=\"content\">\n";
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "userbookmarks.html"), "UTF-8"));
+            out.write(generateHead("User Bookmarks (" + countUserBookmarks + ")"));
+            String title = "<div id=\"header\">User Bookmarks (" + countUserBookmarks + ")</div>\n<div id=\"content\">\n";
             String tableHeader = getTableHead("Comment", "File Name", "Source File");
             out.write(title);
             out.write(tableHeader);
             
-            for(Entry<BlackboardArtifact, List<BlackboardAttribute>> entry: fileBookmarks) {
+            for(Entry<BlackboardArtifact, List<BlackboardAttribute>> entry: userBookmarks) {
                 if (ReportFilter.cancel == true) { break; }
                 Long objId = entry.getKey().getObjectID();
                 AbstractFile file = getFile(objId);
@@ -1191,16 +1235,51 @@ public class ReportHTML implements ReportModule {
             out.write(TABLE_FOOT);
             out.write(HTML_FOOT);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Unable to get file's path for filebookmarks.html.");
+            logger.log(Level.SEVERE, "Unable to get file's path for userbookmarks.html.");
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find filebookmarks.html file to write to.");
+            logger.log(Level.SEVERE, "Could not find userbookmarks.html file to write to.");
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Did not recognize encoding when writing filebookmarks.hmtl.");
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing userbookmarks.hmtl.");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for filebookmarks.html.");
+            logger.log(Level.SEVERE, "Error creating Writer for userbookmarks.html.");
         } finally {
             try {
                 if(out != null) {
+                    out.flush();
+                    out.close();
+                }
+            } catch (IOException ex) {
+            }
+        }
+    }
+    
+    /**
+     * Write the hashhits.html file
+     * @param folder path to output folder
+     */
+    private void writeHashHits(String folder) {
+        Writer out = null;
+        try {
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "hash.html"), "UTF-8"));
+            out.write(generateHead("Hash Hit Artifacts (" + countHash + ")"));
+            String title = "<div id=\"header\">Hash Hits (" + countHash + ")</div>\n<div id=\"content\">\n";
+            out.write(title);
+
+            Report key = new Report();
+            String HashsetTable = key.getGroupedHashsetHit();
+            out.write(HashsetTable);
+
+            out.write(TABLE_FOOT);
+            out.write(HTML_FOOT);
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Could not find keywords.html file to write to.");
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing keywords.hmtl.");
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error creating Writer for keywords.html.");
+        } finally {
+            try {
+                if (out != null) {
                     out.flush();
                     out.close();
                 }
@@ -1231,12 +1310,49 @@ public class ReportHTML implements ReportModule {
         writeDownload(path);
         writeSearch(path);
         writeRecent(path);
-        writeTrackpoint(path);
+        //writeTrackpoint(path);
         writeInstalled(path);
         writeKeyword(path);
         writeDevice(path);
         writeExif(path);
-        writeFileBookmarks(path);
+        writeUserBookmarks(path);
+        writeHashHits(path);
+        try {
+            String dir = PlatformUtil.getUserConfigDirectory() + File.separator;
+            
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "favicon.ico");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "logo.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "summary.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "bookmarks.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "cookies.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "history.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "downloads.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "search.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "recent.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "installed.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "keywords.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "devices.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "exif.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "userbookmarks.png");
+            PlatformUtil.extractResourceToUserConfigDir(ReportHTML.class, "hash.png");
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "favicon.ico", path, "favicon", ".ico", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "logo.png", path, "logo", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "summary.png", path, "summary", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "bookmarks.png", path, "bookmarks", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "cookies.png", path, "cookies", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "history.png", path, "history", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "downloads.png", path, "downloads", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "search.png", path, "search", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "recent.png", path, "recent", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "installed.png", path, "installed", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "keywords.png", path, "keywords", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "devices.png", path, "devices", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "exif.png", path, "exif", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "userbookmarks.png", path, "userbookmarks", ".png", true);
+            org.sleuthkit.autopsy.coreutils.FileUtil.copyFile(dir + "hash.png", path, "hash", ".png", true);
+        } catch (IOException ex) {
+            System.out.println("Failed to extract images for HTML report.");
+        }
     }
 
     @Override

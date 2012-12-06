@@ -19,49 +19,57 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.Bookmarks;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Action on a file that bookmarks a file and reloads the bookmark view.
+ * Action on a file or artifact that bookmarks a file and/or artifact
+ * and reloads the bookmark view.
  * Supports bookmarking of a fs file, directory and layout file and layout
  * directory (virtual files/dirs for unalloc content) 
  * 
  * TODO add use enters description and hierarchy (TSK_TAG_NAME with slashes)
  */
-public class FileBookmarkAction extends AbstractAction {
+public class BookmarkAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(FileBookmarkAction.class.getName());
-    //content to bookmark (AbstractFile)
+    private static final Logger logger = Logger.getLogger(BookmarkAction.class.getName());
+    //content to bookmark
     private AbstractFile bookmarkFile;
+    private BlackboardArtifact bookmarkArtifact;
     private final InitializeBookmarkFileV initializer = new InitializeBookmarkFileV();
 
-    FileBookmarkAction(String title, Node contentNode) {
+    public BookmarkAction(String title, Node contentNode) {
         super(title);
         Content content = contentNode.getLookup().lookup(Content.class);
 
+        bookmarkArtifact = null;
         bookmarkFile = content.accept(initializer);
         this.setEnabled(bookmarkFile != null);
     }
     
-    FileBookmarkAction(String title, Content content) {
+    public BookmarkAction(String title, Content content) {
         super(title);
 
+        bookmarkArtifact = null;
         bookmarkFile = content.accept(initializer);
         this.setEnabled(bookmarkFile != null);
+    }
+
+    public BookmarkAction(String title, BlackboardArtifact art) {
+        super(title);
+        
+        bookmarkArtifact = art;
+        bookmarkFile = null;
+        this.setEnabled(bookmarkArtifact != null);
     }
 
     /**
@@ -96,41 +104,19 @@ public class FileBookmarkAction extends AbstractAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        if (doBookmarkFile(bookmarkFile)) {
-            refreshView();
+    public void actionPerformed(ActionEvent e) {         
+        String comment = JOptionPane.showInputDialog(null, "Please enter a comment for the bookmark:", "Bookmark Comment", JOptionPane.PLAIN_MESSAGE);
+        if(comment == null || comment.isEmpty()) {
+            comment = "No Comment";
         }
-    }
-
-    private void refreshView() {
-        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
+        if(bookmarkArtifact != null) {
+            Tags.createBookmark(bookmarkArtifact, comment);
+        } else if(bookmarkFile != null) {
+            Tags.createBookmark(bookmarkFile, comment);
+        }
+        
+        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();  
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-        //viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-    }
-
-    private boolean doBookmarkFile(AbstractFile file) {
-        try {
-            //TODO popup a dialog and allow user to enter description
-            //and optional bookmark name (TSK_TAG_NAME) with slashes representating hierarchy
-            //should always start with FILE_BOOKMARK_TAG_NAME           
-            final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-            List<BlackboardAttribute> attrs = new ArrayList<BlackboardAttribute>();
-
-
-            BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
-                    "", Bookmarks.FILE_BOOKMARK_TAG_NAME);
-            BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
-                    "", "No Comment");
-            attrs.add(attr1);
-            attrs.add(attr2);
-            bookArt.addAttributes(attrs);
-            return true;
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not create a bookmark for a file: " + file, ex);
-        }
-
-        return false;
-
-
+        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
     }
 }
