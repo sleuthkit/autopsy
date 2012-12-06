@@ -6,12 +6,13 @@ New features:
 - Hashkeeper hash database support
 
 Improvements:
-- File Ingest: minimized file queuing time and memory usage
+- File Ingest: minimized file queuing time and memory usage, also improving ingest stability
+- Jump to arbitrary page in Thumbnail View
 - Add Image Wizard - better work-flow, better device size reporting, info on currently processed directory
 - Reporting: reorganized columns, sorted by 1st column, added logo, better styling
 
 Bugfixes:
-- fixed periodic keyword search during ingest, when it'd run max. 2 times only
+- fixed periodic keyword search during ingest, when it would only search max. 2 times
 - fixed Downloads "target" in Recent Activity
 - fixed missing hash and keyword search hits in reports
 - fixed deselecting NSRL database for hash ingest
