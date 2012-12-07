@@ -124,7 +124,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 final int attributeTypeID= attribute.getAttributeTypeID();
-                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                //skip some internal attributes that user shouldn't see
+                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID())
+                         {
                     continue;
                 } else {
                     switch (attribute.getValueType()) {
