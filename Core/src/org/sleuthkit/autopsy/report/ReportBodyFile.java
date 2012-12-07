@@ -168,7 +168,7 @@ public class ReportBodyFile implements ReportModule {
 
     @Override
     public String getName() {
-        String name = "Body File";
+        String name = "Body File (Timeline Report)";
         return name;
     }
 
