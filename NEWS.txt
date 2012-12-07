@@ -2,7 +2,7 @@
 
 New features:
 - Extraction of all unallocated blocks as a single file
-- Results bookmarks
+- Results bookmarks with comments and basic bookmark reporting
 - Hashkeeper hash database support
 
 Improvements:
