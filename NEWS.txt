@@ -1,3 +1,12 @@
+---------------- VERSION Current (dev) --------------
+New features:
+
+
+Improvements:
+
+
+Bugfixes:
+
 ---------------- VERSION 3.0.2 --------------
 
 New features:
