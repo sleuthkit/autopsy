@@ -89,8 +89,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, artifact);
 
-        ss.put(new NodeProperty("Source",
-                "Source",
+        ss.put(new NodeProperty("Source File",
+                "Source File",
                 NO_DESCR,
                 associated.getName()));
 
