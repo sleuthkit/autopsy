@@ -124,7 +124,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                                 copyList.remove(u);
                             }
                         }
-                        if (!isImage) {
+                        if (!isImage & !copyList.isEmpty()) {
                             ExtractUnallocWorker uw = new ExtractUnallocWorker(u);
                             uw.execute();
                         }
