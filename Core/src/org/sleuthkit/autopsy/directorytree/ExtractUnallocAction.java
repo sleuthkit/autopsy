@@ -129,7 +129,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                             uw.execute();
                         }
                     } else {
-                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + u.VolumeId + ", but its list of unallocated files was empty or null");
+                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked" );
                     }
                 }
                 if (isImage && !copyList.isEmpty()) {
@@ -250,7 +250,6 @@ public final class ExtractUnallocAction extends AbstractAction {
                     } else {
                         logger.log(Level.INFO, "Finished writing unalloc file " + u.getFile().getPath());
                     }
-                    lockedVols.remove(u.FileName);
                 }
                 progress.finish();
 
@@ -270,10 +269,13 @@ public final class ExtractUnallocAction extends AbstractAction {
             if (isImage) {
                 lockedImages.remove(currentImage);
             }
-            if (!canceled) {
+            for (UnallocStruct u : lus) {
+                lockedVols.remove(u.getFileName());
+            }
+            if (!canceled && !lus.isEmpty()) {
                 JOptionPane.showMessageDialog(new Frame(), "Completed extraction of unallocated space. Files were extracted to " + lus.get(0).getFile().getParent());
             }
-        }
+        }        
     }
 
     /**
