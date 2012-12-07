@@ -270,7 +270,9 @@ public final class ExtractUnallocAction extends AbstractAction {
             if (isImage) {
                 lockedImages.remove(currentImage);
             }
-            JOptionPane.showMessageDialog(new Frame(), "Completed extraction of unallocated space. Files were extracted to " + lus.get(0).getFile().getParent());
+            if (!canceled) {
+                JOptionPane.showMessageDialog(new Frame(), "Completed extraction of unallocated space. Files were extracted to " + lus.get(0).getFile().getParent());
+            }
         }
     }
 
