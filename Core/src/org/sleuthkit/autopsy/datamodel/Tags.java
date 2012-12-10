@@ -122,7 +122,7 @@ public class Tags {
      * Get a list of all the tag names.
      * @return a list of all tag names.
      */
-    static String[] getTagNames() {
+    public static String[] getTagNames() {
         Set<String> names = new HashSet<String>();
         //List<String> names = new ArrayList<String>();
         try {
@@ -153,7 +153,7 @@ public class Tags {
      * @param name of the requested tags
      * @return a list of all tag artifacts with the given name
      */
-    static List<BlackboardArtifact> getTagsByName(String name) {
+    public static List<BlackboardArtifact> getTagsByName(String name) {
         try {
             Case currentCase = Case.getCurrentCase();
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
