@@ -23,6 +23,7 @@ import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -229,6 +230,9 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
+        
+        String dirFlagStr = content.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC) ?
+                TSK_FS_NAME_FLAG_ENUM.ALLOC.toString() : TSK_FS_NAME_FLAG_ENUM.UNALLOC.toString();
         map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
         map.put(FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(content.getMtime(), content));
@@ -236,7 +240,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
         map.put(FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
-        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlag().toString());
+        map.put(FsContentPropertyType.FLAGS_DIR.toString(), dirFlagStr);
         map.put(FsContentPropertyType.FLAGS_META.toString(), Integer.toString(content.getMetaFlagsInt()));
         map.put(FsContentPropertyType.MODE.toString(), TSK_FS_META_MODE_ENUM.toString(content.getModes(), content.getMetaType()));
         map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
