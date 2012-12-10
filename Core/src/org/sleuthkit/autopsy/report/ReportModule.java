@@ -75,7 +75,7 @@ public interface ReportModule {
      * module generates
      * @return user-friendly report description
      */
-    public String getReportTypeDescription();
+    public String getDescription();
 
     /**
      * Calls to the report module to execute a method to display the report that

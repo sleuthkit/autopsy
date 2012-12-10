@@ -242,7 +242,7 @@ public class ReportBodyFile implements ReportModule {
     }
 
     @Override
-    public String getReportTypeDescription() {
+    public String getDescription() {
         String desc = "Body file format report with MAC times for every file, that can be used for a timeline view.";
         return desc;
     }
