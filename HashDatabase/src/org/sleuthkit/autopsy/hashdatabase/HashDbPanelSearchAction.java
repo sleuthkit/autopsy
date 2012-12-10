@@ -91,6 +91,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
                 dialog.close();
             }
         });
+        panel.refresh();
         dialog.display(panel);
     }
 

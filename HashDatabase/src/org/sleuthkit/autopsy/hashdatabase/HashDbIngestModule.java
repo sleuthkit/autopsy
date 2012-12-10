@@ -86,9 +86,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
-        getPanel().setIngestRunning(true);
-        HashDbSimplePanel.setIngestRunning(true);
-        HashDbSearchPanel.getDefault().setIngestRunning(true);
         this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
@@ -154,10 +151,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
         detailsSb.append("</table>");
         services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
-
-        getPanel().setIngestRunning(false);
-        HashDbSimplePanel.setIngestRunning(false);
-        HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
 
     /**
@@ -167,9 +160,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
-        getPanel().setIngestRunning(false);
-        HashDbSimplePanel.setIngestRunning(false);
-        HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
 
     /**
