@@ -39,7 +39,7 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         super(dir, directoryBrowseMode);
 
         // set name, display name, and icon
-        if (dir.getDirFlag() == TSK_FS_NAME_FLAG_ENUM.UNALLOC) {
+        if (dir.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
         } else {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
