@@ -575,7 +575,7 @@ public class ReportXLS implements ReportModule {
     }
 
     @Override
-    public String getReportTypeDescription() {
+    public String getDescription() {
         String desc = "This is an xls formatted report that is meant to be viewed in Excel.";
         return desc;
     }

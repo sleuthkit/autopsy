@@ -305,7 +305,7 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public String getReportTypeDescription() {
+    public String getDescription() {
         String desc = "This is an xml formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
