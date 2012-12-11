@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  *
@@ -332,7 +332,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        if (File.dirFlagToValue(file.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
+        if (file.getDirFlag() == TSK_FS_NAME_FLAG_ENUM.UNALLOC) {
             return false;
         }
 

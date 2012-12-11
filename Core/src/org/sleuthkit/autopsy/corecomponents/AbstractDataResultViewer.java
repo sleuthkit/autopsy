@@ -48,11 +48,10 @@ public abstract class AbstractDataResultViewer extends JPanel implements
 
         //property listener to send nodes to content viewer    
         nodeSelListener = new PropertyChangeListener() {
+                        
             /**
              * Propagates changes in the current select node from the
              * DataResultViewer to the DataContentTopComponent
-             *
-             * @param evt
              */
             @Override
             public void propertyChange(PropertyChangeEvent evt) {

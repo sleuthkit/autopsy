@@ -29,6 +29,7 @@
     	    <li>EnCase: An EnCase hashset file.</li>
     	    <li>MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files.</li>
     	    <li>NSRL: The format of the NSRL database.</li>
+            <li>HashKeeper: Hashset file conforming to the HashKeeper standard.</li> 
     	</ul>
 
     	<h2>NIST NSRL</h2>
@@ -49,7 +50,8 @@
             Autopsy needs an index of the hashset to actualy use a hash database.
             It can create the index if you import only the hashset. 
             When you select the database from within this window, it will tell you if the index needs to be created.
-            Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or use can use Autopsy.
+            Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or you can use Autopsy.
+            If you attempt proceed without indexing a database, Autopsy will offer to automatically produce an index for you.
         </p>
     	<p>
             You can also specify only the index file and not use the full hashset - the index file is sufficient to identify known files.
