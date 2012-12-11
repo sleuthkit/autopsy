@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * This class is used to represent the "Node" for the file. It has no children.
@@ -39,7 +39,7 @@ public class FileNode extends AbstractFsContentNode<File> {
         super(file, directoryBrowseMode);
 
         // set name, display name, and icon
-        if (file.getDir_flags() == (TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.getDirFlag())) {
+        if (file.getDirFlag() == TSK_FS_NAME_FLAG_ENUM.UNALLOC) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         } else {
             this.setIconBaseWithExtension(getIconForFileType(file));

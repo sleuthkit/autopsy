@@ -101,11 +101,19 @@ TODO we should outline the process of adding a JAR file dependency for an extern
 E.g. adding jar directly to the module project, or (preferred) wrapping set of jars in another module
 e.g. NewModuleName-Libs and adding a dependency on the libs module. Add info how to bundle OS-specific dlls in the jar (work in progress).
 
+\section mod_dev_services Services
 
-\section mod_dev_services Getting Access to Services
+A Services class is provided to give developers access to the services provided by the Autopsy framework.  Currently, the following
+services are provided:
 
-Autopsy-Core module contains the core Autopsy application, and also the framework the application is built upon that other modules can use.
-Among the Core APIs there are general services available to the Autopsy modules.  The relevant packages include:
+- FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API for easy access to files and directories for a given image.
+You can access the org.sleuthkit.autopsy.casemodule.services.FileManager service by calling the getFileManager() method of the 
+org.sleuthkit.autopsy.casemodule.services.Services class.
+
+\section mod_dev_utilities Utilities
+
+Autopsy-Core module contains the core Autopsy application and also the framework the application is built upon that other modules can use.
+Among the Core APIs there are general utilities available to the Autopsy modules.  The relevant packages include:
 
 - org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data (TSK database) and subscribe to Case change events
 - org.sleuthkit.autopsy.coreutils package has classes providing utilities for getting access to Autopsy loggers, configuration persistance API,
@@ -115,11 +123,11 @@ Relevant service classes are org.sleuthkit.autopsy.coreutils.Version,
 org.sleuthkit.autopsy.coreutils.PlatformUtil, org.sleuthkit.autopsy.coreutils.ModuleSettings, 
 org.sleuthkit.autopsy.coreutils.Logger and org.sleuthkit.autopsy.coreutils.FileUtil.
 
-TODO: Add additional info about service classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
+TODO: Add additional info about utility classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
 
 TODO: Move the log content from the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Logging_and_Error_Checking) to here.
 
-Note: \ref IngestModuleServices provides services specifically for the ingest modules.
+Note: org.sleuthkit.autopsy.ingest.IngestServices provides services specifically for the ingest modules.
 
 
 \section mod_dev_configuration Making a Configuration Panel
@@ -155,7 +163,7 @@ First, use NetBeans' GUI builder to design the panel. Be sure to include all opt
 
 Second, in the source code of the panel, there are two important methods: \c load() and \c store(). When the options panel is opened via Tools > Options in Autopsy, the \c load() method will be called. Conversely, when the user presses OK after editing the options, the \c store() method will be called.
 
-If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the \ref OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
+If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
 
 Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. Continue to \ref mod_dev_properties for more details.
 

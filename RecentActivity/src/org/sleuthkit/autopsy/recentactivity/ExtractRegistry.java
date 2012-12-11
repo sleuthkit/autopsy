@@ -36,6 +36,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
@@ -88,7 +89,12 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         final String rrHome = rrRoot.getAbsolutePath();
         logger.log(Level.INFO, "RegRipper home: " + rrHome);
 
-        RR_PATH = rrHome + File.separator + "rip.exe";
+        if (PlatformUtil.isWindowsOS()) {
+            RR_PATH = rrHome + File.separator + "rip.exe";
+        }
+        else {
+            RR_PATH = "perl " + rrHome + File.separator + "rip.pl";
+        }
     }
 
     @Override

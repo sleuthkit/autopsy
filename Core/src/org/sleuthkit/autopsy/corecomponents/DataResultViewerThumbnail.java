@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
@@ -94,6 +95,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         imagesRangeLabel = new javax.swing.JLabel();
         pageNumLabel = new javax.swing.JLabel();
         filePathLabel = new javax.swing.JLabel();
+        goToPageLabel = new javax.swing.JLabel();
+        goToPageField = new javax.swing.JTextField();
 
         thumbnailScrollPanel.setPreferredSize(new java.awt.Dimension(582, 348));
 
@@ -134,6 +137,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         filePathLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.filePathLabel.text")); // NOI18N
 
+        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageLabel.text")); // NOI18N
+
+        goToPageField.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageField.text")); // NOI18N
+        goToPageField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goToPageFieldActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -142,6 +154,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(filePathLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(pageLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -152,11 +165,14 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(33, 33, 33)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(goToPageLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(12, 12, 12)
                         .addComponent(imagesLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(filePathLabel))
+                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -171,8 +187,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(imagesLabel)
-                        .addComponent(imagesRangeLabel)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(imagesRangeLabel)
+                        .addComponent(goToPageLabel)
+                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(0, 0, 0)
                 .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(filePathLabel))
@@ -186,8 +204,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
         nextPage();
     }//GEN-LAST:event_pageNextButtonActionPerformed
+
+    private void goToPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageFieldActionPerformed
+        goToPage(goToPageField.getText());
+    }//GEN-LAST:event_goToPageFieldActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
+    private javax.swing.JTextField goToPageField;
+    private javax.swing.JLabel goToPageLabel;
     private javax.swing.JLabel imagesLabel;
     private javax.swing.JLabel imagesRangeLabel;
     private javax.swing.JLabel pageLabel;
@@ -309,6 +334,26 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             switchPage();
         }
     }
+    
+    private void goToPage(String pageNumText) {
+        int newPage;
+        try {
+            newPage = Integer.parseInt(pageNumText);
+        }
+        catch (NumberFormatException e) {
+            //ignore input
+            return;
+        }
+        
+        if (newPage > totalPages || newPage < 1) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
+                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        curPage = newPage;
+        switchPage();
+    }
 
     private void switchPage() {
 
@@ -327,6 +372,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             protected Object doInBackground() throws Exception {
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
+                goToPageField.setEnabled(false);
                 progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
                 progress.start();
                 progress.switchToIndeterminate();
@@ -352,6 +398,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (totalPages == 0) {
             pagePrevButton.setEnabled(false);
             pageNextButton.setEnabled(false);
+            goToPageField.setEnabled(false);
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
         } else {
@@ -362,6 +409,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
             pageNextButton.setEnabled(!(curPage == totalPages));
             pagePrevButton.setEnabled(!(curPage == 1));
+            goToPageField.setEnabled(totalPages>1);
 
         }
 

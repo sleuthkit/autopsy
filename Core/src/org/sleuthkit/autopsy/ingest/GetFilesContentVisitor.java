@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -53,7 +53,7 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
     public abstract Collection<AbstractFile> visit(LayoutFile lc);
 
     @Override
-    public Collection<AbstractFile> visit(LayoutDirectory ld) {
+    public Collection<AbstractFile> visit(VirtualDirectory ld) {
         return getAllFromChildren(ld);
     }
     

@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutDirectory;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
@@ -155,7 +155,7 @@ public final class ContentUtils {
         }
 
         @Override
-        public List<String> visit(LayoutDirectory ld) {
+        public List<String> visit(VirtualDirectory ld) {
             List<String> path = ld.getParent().accept(this);
             path.add(toString.visit(ld));
             return path;
