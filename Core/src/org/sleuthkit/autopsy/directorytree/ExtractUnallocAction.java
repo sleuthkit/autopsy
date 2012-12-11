@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,9 +45,9 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -223,30 +224,32 @@ public final class ExtractUnallocAction extends AbstractAction {
 
                 //Begin the actual File IO
                 progress.start(totalSizeinMegs);
-                int kbs = 0; //Each completion of the while loop adds one to kbs. 8kb * 128 = 1mb. 
+                int kbs = 0; //Each completion of the while loop adds one to kbs. 16kb * 64 = 1mb. 
                 int mbs = 0; //Increments every 128th tick of  kbs
                 for (UnallocStruct u : this.lus) {
                     currentlyProcessing = u.getFile();
                     logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath());
-                    FileOutputStream fos = new FileOutputStream(currentlyProcessing);
+                    OutputStream dos = new FileOutputStream(currentlyProcessing);
                     long bytes = 0;
                     int i = 0;
-                    while(i < u.getLayouts().size() && bytes != u.getSizeInBytes()){
+                    while(i < u.getLayouts().size() && bytes != u.getSizeInBytes()){                        
                         LayoutFile f = u.getLayouts().get(i);
-                        long offset = 0L;
-                        while(offset != f.getSize() && !canceled){
+                        long offsetPerFile = 0L;
+                        int bytesRead;
+                        while(offsetPerFile != f.getSize() && !canceled){
                             if (++kbs % 128 == 0) {
                                 mbs++;                                
                                 progress.progress("processing " + mbs + " of " + totalSizeinMegs + " MBs", mbs-1);
                             }
-                            offset+= f.read(buf, offset, MAX_BYTES);
-                            fos.write(buf);                            
+                            bytesRead = f.read(buf, offsetPerFile, MAX_BYTES);  
+                            offsetPerFile+= bytesRead;
+                            dos.write(buf, 0, bytesRead);       
                         }
                         bytes+=f.getSize();
                         i++;
                     }
-                    fos.flush();
-                    fos.close();
+                    dos.flush();
+                    dos.close();
 
                     if (canceled) {
                         u.getFile().delete();
