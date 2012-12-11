@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -236,15 +236,15 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
         map.put(FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
-        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
-        map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(FsContentPropertyType.MODE.toString(), content.getModeAsString());
+        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlag().toString());
+        map.put(FsContentPropertyType.FLAGS_META.toString(), Integer.toString(content.getMetaFlagsInt()));
+        map.put(FsContentPropertyType.MODE.toString(), TSK_FS_META_MODE_ENUM.toString(content.getModes(), content.getMetaType()));
         map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
         map.put(FsContentPropertyType.GROUP_ID.toString(), content.getGid());
-        map.put(FsContentPropertyType.META_ADDR.toString(), content.getMeta_addr());
-        map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttr_type()) + "-" + Long.toString(content.getAttr_id()));
-        map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
-        map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
+        map.put(FsContentPropertyType.META_ADDR.toString(), content.getMetaAddr());
+        map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + Long.toString(content.getAttrId()));
+        map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
+        map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }

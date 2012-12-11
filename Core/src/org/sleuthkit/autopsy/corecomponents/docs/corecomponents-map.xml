@@ -9,6 +9,7 @@ and open the template in the editor.
     <mapID target="org.sleuthkit.autopsy.directorytree.image-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/image-details.html"/>
     <mapID target="org.sleuthkit.autopsy.directorytree.volume-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/volume-details.html"/>
     <mapID target="org.sleuthkit.autopsy.directorytree.filesystem-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/filesystem-details.html"/>
+    <mapID target="org.sleuthkit.autopsy.directorytree.unallocated-space" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/unallocated-space.html"/>
 
     <mapID target="org.sleuthkit.autopsy.filesearch.about" url="nbdocs:/org/sleuthkit/autopsy/filesearch/docs/filesearch-about.html"/>
     <mapID target="org.sleuthkit.autopsy.filesearch.open-filesearch" url="nbdocs:/org/sleuthkit/autopsy/filesearch/docs/open-filesearch.html"/>

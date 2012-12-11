@@ -281,7 +281,7 @@ public class HashDb implements Comparable<HashDb> {
 
         /** We need proper cancel support in TSK to make the task cancellable
          new Cancellable() {
-                @Override
+                Override
                 public boolean cancel() {
                     return CreateIndex.this.cancel(true);
                 }

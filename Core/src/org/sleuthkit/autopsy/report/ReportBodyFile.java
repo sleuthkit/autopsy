@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
 
 /**
  * ReportBodyFile generates a report in the body file format specified on
@@ -120,10 +121,11 @@ public class ReportBodyFile implements ReportModule {
                         out.write(file.getUniquePath());
                     }
                     out.write("|");
-                    out.write(Long.toString(file.getMeta_addr()));
+                    out.write(Long.toString(file.getMetaAddr()));
                     out.write("|");
-                    if(file.getModeAsString()!=null) {
-                        out.write(file.getModeAsString());
+                    String modeString = TSK_FS_META_MODE_ENUM.toString(file.getModes(), file.getMetaType());
+                    if(modeString != null) {
+                        out.write(modeString);
                     }
                     out.write("|");
                     out.write(Long.toString(file.getUid()));
@@ -168,7 +170,7 @@ public class ReportBodyFile implements ReportModule {
 
     @Override
     public String getName() {
-        String name = "Body File";
+        String name = "Body File (Timeline Report)";
         return name;
     }
 

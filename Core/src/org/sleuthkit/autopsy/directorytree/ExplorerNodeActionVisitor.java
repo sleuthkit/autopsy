@@ -284,14 +284,14 @@ class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Ac
 
             Arrays.fill(rowValues, 0, 1, new Object[]{
                         fs.getId(),
-                        fs.getImg_offset(),
+                        fs.getImageOffset(),
                         fs.getParent().getId(),
-                        fs.getFs_type(),
+                        fs.getFsType(),
                         fs.getBlock_size(),
                         fs.getBlock_count(),
                         fs.getRoot_inum(),
                         fs.getFirst_inum(),
-                        fs.getLast_inum()
+                        fs.getLastInum()
                     });
 
 

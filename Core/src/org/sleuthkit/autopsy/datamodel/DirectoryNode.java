@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * This class is used to represent the "Node" for the directory.
@@ -39,7 +39,7 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         super(dir, directoryBrowseMode);
 
         // set name, display name, and icon
-        if (Directory.dirFlagToValue(dir.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
+        if (dir.getDirFlag() == TSK_FS_NAME_FLAG_ENUM.UNALLOC) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
         } else {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
