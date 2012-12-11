@@ -174,10 +174,8 @@ public final class ExtractUnallocAction extends AbstractAction {
             //Getting the total megs this worker is going to be doing
             if (!lockedVols.contains(us.getFileName())) {
                 this.lus.add(us);
-                System.out.println("Size in Bytes: " + us.getSizeInBytes());
                 totalBytes = us.getSizeInBytes();
                 totalSizeinMegs = toMb(totalBytes);
-                System.out.println("Size in Megs: " + totalSizeinMegs);
                 lockedVols.add(us.getFileName());
             }
         }
