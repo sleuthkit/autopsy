@@ -62,7 +62,8 @@ public class XMLUtil {
      *  The schema files are extracted automatically when this function is called, the XML being validated is not.
      *  Be sure the XML file is already extracted otherwise it will return false.
      * @param xmlfile The XML file to validate, in DOMSource format
-     * @param type The file name of the schema to validate against, must exist as a resource in the same package as where this function is being called.
+     * @param clazz class frm package to extract schema file from
+     * @param schemaFile The file name of the schema to validate against, must exist as a resource in the same package as where this function is being called.
      * 
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.
      * 
@@ -95,7 +96,8 @@ public class XMLUtil {
      * 
      *  The schema files are extracted automatically when this function is called, the XML being validated is not.
      *  Be sure the XML file is already extracted otherwise it will return false.
-     * @param xmlfile The XML file to validate
+     * @param doc The XML DOM to validate
+     * @param clazz class from package to extract schema from
      * @param type The file name of the schema to validate against, must exist as a resource in the same package as where this function is being called
      * 
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.

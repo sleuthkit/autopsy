@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.LayoutDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
@@ -192,7 +192,7 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public List<Action> visit(LayoutDirectoryNode ld) {
+        public List<Action> visit(VirtualDirectoryNode ld) {
             List<Action> actions = new ArrayList<Action>();
            
             actions.add(new BookmarkAction("Bookmark Directory", ld));
@@ -416,7 +416,7 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(LayoutDirectoryNode ldn) {
+        public AbstractAction visit(VirtualDirectoryNode ldn) {
             return openChild(ldn);
         }
 

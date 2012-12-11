@@ -22,19 +22,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
-import org.sleuthkit.datamodel.LayoutDirectory;
-import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node for layout dir
  */
-public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirectory> {
+public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
 
-    public static String nameForLayoutFile(LayoutDirectory ld) {
+    public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
     }
 
-    public LayoutDirectoryNode(LayoutDirectory ld) {
+    public VirtualDirectoryNode(VirtualDirectory ld) {
         super(ld);
 
         this.setDisplayName(nameForLayoutFile(ld));
@@ -83,12 +83,10 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
     public boolean isLeafTypeNode() {
         return true;
     }
-    
-    
 
     //TODO consider extend AbstractFsContent node and use that
     //first need methods such as getDirType() to be pushed to AbstractFile class
-    private static void fillPropertyMap(Map<String, Object> map, LayoutDirectory content) {
+    private static void fillPropertyMap(Map<String, Object> map, VirtualDirectory content) {
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
         
@@ -97,9 +95,38 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
         map.put(AbstractFsContentNode.FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlags().toString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), metaFlagToString(content.getMetaFlags()));
+        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_DIR.toString(), content.getDirType().toString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_META.toString(), content.getMetaType().toString());
+    }
+    
+    /**
+     * Convert meta flag long to user-readable string / label
+     *
+     * @param metaFlag to convert
+     * @return string formatted meta flag representation
+     */
+    public static String metaFlagToString(short metaFlag) {
+
+        String result = "";
+
+        short allocFlag = TskData.TSK_FS_META_FLAG_ENUM.ALLOC.getValue();
+        short unallocFlag = TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue();
+
+        // some variables that might be needed in the future
+        //long usedFlag = TskData.TSK_FS_META_FLAG_ENUM.USED.getMetaFlag();
+        //long unusedFlag = TskData.TSK_FS_META_FLAG_ENUM.UNUSED.getMetaFlag();
+        //long compFlag = TskData.TSK_FS_META_FLAG_ENUM.COMP.getMetaFlag();
+        //long orphanFlag = TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag();
+
+        if ((metaFlag & allocFlag) == allocFlag) {
+            result = TskData.TSK_FS_META_FLAG_ENUM.ALLOC.toString();
+        }
+        if ((metaFlag & unallocFlag) == unallocFlag) {
+            result = TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString();
+        }
+
+        return result;
     }
 }
