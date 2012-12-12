@@ -207,13 +207,6 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
-
-        // created the dirFlag string
-        String dirFlagStr = content.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC)
-                ? TSK_FS_NAME_FLAG_ENUM.ALLOC.toString() : TSK_FS_NAME_FLAG_ENUM.UNALLOC.toString();
-        
-        // create the meta flag integer
-        int metaFlagsInt = TSK_FS_META_FLAG_ENUM.toInt(content.getMetaFlags());
         
         map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
@@ -222,9 +215,9 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
         map.put(FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
-        map.put(FsContentPropertyType.FLAGS_DIR.toString(), dirFlagStr);
-        map.put(FsContentPropertyType.FLAGS_META.toString(), Integer.toString(metaFlagsInt));
-        map.put(FsContentPropertyType.MODE.toString(), TSK_FS_META_MODE_ENUM.toString(content.getModes(), content.getMetaType()));
+        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(FsContentPropertyType.MODE.toString(), content.getModesAsString());
         map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
         map.put(FsContentPropertyType.GROUP_ID.toString(), content.getGid());
         map.put(FsContentPropertyType.META_ADDR.toString(), content.getMetaAddr());
