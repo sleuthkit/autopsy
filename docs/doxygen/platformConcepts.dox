@@ -3,7 +3,8 @@
 \section platform_basics Basic Concepts
 
 - <b>Central Database</b>: All data except for the disk image is stored in a SQLite database.  This includes information about what files exist in the disk image and the output from modules. Access to this database can be found from the SleuthKitCase class. <!-- @@@ IS THAT CORRECT -->
-- <b>Services</b>: There are core services that the platform provides to modules. See the \ref mod_dev_services section for more details. 
+- <b>Utilities</b>: There are core utilities that the platform provides to modules. See the \ref mod_dev_utilities section for more details. 
+- <b>Services</b>: There are services provided by the platform. See the \ref mod_dev_services section for more details.
 - <b>Pipelines and Plug-in Modules:</b> The platform has several places where plug-in modules can be incorporated. This modular approach allows other developers to extend the functionality of the system.   See the \ref platform_frameworks section for more details. 
 - <b>Blackboard:</b> The platform uses the blackboard to enable modules to communicate with each other and to display data in the GUI. See the \ref platform_blackboard section for more details. 
 - <b>Single tree:</b> Results from the various modules can generally be found in a single tree. This makes it easy for users to find their results. 

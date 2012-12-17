@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -571,6 +572,10 @@ public class Case {
     public Long[] getImageIDs() {
         Set<Long> ids = getImagePaths(db).keySet();
         return ids.toArray(new Long[ids.size()]);
+    }
+    
+    public List<Image> getImages() throws TskCoreException {
+        return db.getImages();
     }
 
     /**
