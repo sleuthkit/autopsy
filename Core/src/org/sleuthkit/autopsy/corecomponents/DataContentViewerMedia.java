@@ -332,7 +332,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        if (file.getDirFlag() == TSK_FS_NAME_FLAG_ENUM.UNALLOC) {
+        if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             return false;
         }
 

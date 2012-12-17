@@ -123,7 +123,7 @@ public class ReportBodyFile implements ReportModule {
                     out.write("|");
                     out.write(Long.toString(file.getMetaAddr()));
                     out.write("|");
-                    String modeString = TSK_FS_META_MODE_ENUM.toString(file.getModes(), file.getMetaType());
+                    String modeString = file.getModesAsString();
                     if(modeString != null) {
                         out.write(modeString);
                     }
