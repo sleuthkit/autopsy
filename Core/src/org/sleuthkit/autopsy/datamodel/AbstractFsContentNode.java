@@ -18,71 +18,62 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
- */ 
+ */
 public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
-    
-    // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
 
+    // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum FsContentPropertyType {
 
         NAME {
-
             @Override
             public String toString() {
                 return "Name";
             }
         },
         LOCATION {
-
-
             @Override
             public String toString() {
                 return "Location";
             }
         },
         MOD_TIME {
-
-
             @Override
             public String toString() {
                 return "Mod. Time";
             }
         },
         CHANGED_TIME {
-
-
             @Override
             public String toString() {
                 return "Change Time";
             }
         },
         ACCESS_TIME {
-
-
             @Override
             public String toString() {
                 return "Access Time";
             }
         },
         CREATED_TIME {
-
-
             @Override
             public String toString() {
                 return "Created Time";
             }
         },
         SIZE {
-
             @Override
             public String toString() {
                 return "Size";
@@ -95,80 +86,66 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
             }
         },
         FLAGS_META {
-
             @Override
             public String toString() {
                 return "Flags(Meta)";
             }
         },
         MODE {
-
             @Override
             public String toString() {
                 return "Mode";
             }
         },
         USER_ID {
-
             @Override
             public String toString() {
                 return "UserID";
             }
         },
         GROUP_ID {
-         @Override
+            @Override
             public String toString() {
                 return "GroupID";
             }
         },
         META_ADDR {
-
             @Override
             public String toString() {
                 return "Meta Addr.";
             }
         },
         ATTR_ADDR {
-
-
             @Override
             public String toString() {
                 return "Attr. Addr.";
             }
         },
         TYPE_DIR {
-
-
-
             @Override
             public String toString() {
                 return "Type(Dir)";
             }
         },
         TYPE_META {
-
             @Override
             public String toString() {
                 return "Type(Meta)";
             }
         },
         KNOWN {
-
-
             @Override
             public String toString() {
                 return "Known";
             }
         },
         MD5HASH {
-
-
             @Override
             public String toString() {
                 return "MD5 Hash";
             }
-        },
-            }
+        }
+    }
     
     private boolean directoryBrowseMode;
     public static final String HIDE_PARENT = "hide_parent";
@@ -176,21 +153,21 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
     AbstractFsContentNode(T fsContent) {
         this(fsContent, true);
     }
-    
-    
+
     /**
      * Constructor
+     *
      * @param fsContent the fsContent
-     * @param directoryBrowseMode how the user caused this node
-     * to be created: if by browsing the image contents, it is true. If by 
-     * selecting a file filter (e.g. 'type' or 'recent'), it is false
+     * @param directoryBrowseMode how the user caused this node to be created:
+     * if by browsing the image contents, it is true. If by selecting a file
+     * filter (e.g. 'type' or 'recent'), it is false
      */
     AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
         this.setDisplayName(AbstractFsContentNode.getFsContentName(fsContent));
         this.directoryBrowseMode = directoryBrowseMode;
     }
-    
+
     public boolean getDirectoryBrowseMode() {
         return directoryBrowseMode;
     }
@@ -215,7 +192,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
             final String propString = propType.toString();
             ss.put(new NodeProperty(propString, propString, NO_DESCR, map.get(propString)));
         }
-        if(directoryBrowseMode) {
+        if (directoryBrowseMode) {
             ss.put(new NodeProperty(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 
@@ -224,21 +201,23 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
 
     /**
      * Fill map with FsContent properties
-     * 
-     * @param map map with preserved ordering, where property names/values are put
+     *
+     * @param map map with preserved ordering, where property names/values are
+     * put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
+        
         map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
-        map.put(FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(content.getMtime(), content));
+        map.put(FsContentPropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
         map.put(FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
-        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlag().toString());
-        map.put(FsContentPropertyType.FLAGS_META.toString(), Integer.toString(content.getMetaFlagsInt()));
-        map.put(FsContentPropertyType.MODE.toString(), TSK_FS_META_MODE_ENUM.toString(content.getModes(), content.getMetaType()));
+        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(FsContentPropertyType.MODE.toString(), content.getModesAsString());
         map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
         map.put(FsContentPropertyType.GROUP_ID.toString(), content.getGid());
         map.put(FsContentPropertyType.META_ADDR.toString(), content.getMetaAddr());
@@ -248,12 +227,12 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
-    
+
     static String getFsContentName(FsContent fsContent) {
         String name = fsContent.getName();
-        if(name.equals("..")) {
+        if (name.equals("..")) {
             name = DirectoryNode.DOTDOTDIR;
-        } else if(name.equals(".")) {
+        } else if (name.equals(".")) {
             name = DirectoryNode.DOTDIR;
         }
         return name;
