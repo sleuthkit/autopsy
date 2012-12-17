@@ -89,8 +89,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, artifact);
 
-        ss.put(new NodeProperty("File Name",
-                "File Name",
+        ss.put(new NodeProperty("Source File",
+                "Source File",
                 NO_DESCR,
                 associated.getName()));
 
@@ -124,7 +124,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 final int attributeTypeID= attribute.getAttributeTypeID();
-                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                //skip some internal attributes that user shouldn't see
+                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID())
+                         {
                     continue;
                 } else {
                     switch (attribute.getValueType()) {
