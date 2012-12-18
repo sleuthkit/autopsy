@@ -47,7 +47,7 @@ JRE (Java Runtime Environment) 1.6, 32 bit
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 7.0.1 RCP platform and .jar files bundled with the platform
+Netbeans 7.2.1 RCP platform and .jar files bundled with the platform
 - Web page: http://netbeans.org/features/platform/
 - License: 
 http://services.netbeans.org/downloads/licence/nb-7.0-final-2011-04-20-license.txt
