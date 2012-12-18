@@ -482,7 +482,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public int isPreferred(Node node, boolean isSupported) {
         if(node != null && isSupported){
-            return 2;
+            return 1;
         } else {
             return 0;
         }
