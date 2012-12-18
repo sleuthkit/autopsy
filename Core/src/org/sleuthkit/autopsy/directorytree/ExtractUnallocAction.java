@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,9 +45,9 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -168,22 +169,23 @@ public final class ExtractUnallocAction extends AbstractAction {
         private List<UnallocStruct> lus = new ArrayList<UnallocStruct>();
         private File currentlyProcessing;
         private int totalSizeinMegs;
+        long totalBytes = 0;
 
-        ExtractUnallocWorker(UnallocStruct us) {
-            this.lus.add(us);
+        ExtractUnallocWorker(UnallocStruct us) {            
             //Getting the total megs this worker is going to be doing
             if (!lockedVols.contains(us.getFileName())) {
-                totalSizeinMegs = toMb(us.sizeInBytes());
+                this.lus.add(us);
+                totalBytes = us.getSizeInBytes();
+                totalSizeinMegs = toMb(totalBytes);
                 lockedVols.add(us.getFileName());
             }
         }
 
         ExtractUnallocWorker(List<UnallocStruct> lst) {
-            //Getting the total megs this worker is going to be doing
-            long totalBytes = 0;
+            //Getting the total megs this worker is going to be doing            
             for (UnallocStruct lu : lst) {
                 if (!lockedVols.contains(lu.getFileName())) {
-                    totalBytes += lu.sizeInBytes();
+                    totalBytes += lu.getSizeInBytes();
                     lockedVols.add(lu.getFileName());
                     this.lus.add(lu);
                 }
@@ -196,7 +198,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             if (bytes > 1024 && (bytes / 1024.0) <= Double.MAX_VALUE) {
                 double Mb = ((bytes / 1024.0) / 1024.0);//Bytes -> Megabytes
                 if (Mb <= Integer.MAX_VALUE) {
-                    return (int) Math.floor(Mb);
+                    return (int) Math.ceil(Mb);
                 }
             }
             return 0;
@@ -222,27 +224,32 @@ public final class ExtractUnallocAction extends AbstractAction {
 
                 //Begin the actual File IO
                 progress.start(totalSizeinMegs);
-                int kbs = 0; //Each completion of the while loop adds one to kbs. 8kb * 128 = 1mb. 
+                int kbs = 0; //Each completion of the while loop adds one to kbs. 16kb * 64 = 1mb. 
                 int mbs = 0; //Increments every 128th tick of  kbs
                 for (UnallocStruct u : this.lus) {
                     currentlyProcessing = u.getFile();
                     logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath());
-                    FileOutputStream fos = new FileOutputStream(currentlyProcessing);
-                    int count = 1;
-                    for (LayoutFile f : u.getLayouts()) {
-                        long offset = 0L;
-                        while (offset != f.getSize() && !canceled) {
-                            offset += f.read(buf, offset, MAX_BYTES);    //Offset + Bytes read
-                            fos.write(buf);
+                    OutputStream dos = new FileOutputStream(currentlyProcessing);
+                    long bytes = 0;
+                    int i = 0;
+                    while(i < u.getLayouts().size() && bytes != u.getSizeInBytes()){                        
+                        LayoutFile f = u.getLayouts().get(i);
+                        long offsetPerFile = 0L;
+                        int bytesRead;
+                        while(offsetPerFile != f.getSize() && !canceled){
                             if (++kbs % 128 == 0) {
-                                mbs++;
-                                progress.progress("processing " + mbs + " of " + totalSizeinMegs + " MBs", mbs);
+                                mbs++;                                
+                                progress.progress("processing " + mbs + " of " + totalSizeinMegs + " MBs", mbs-1);
                             }
+                            bytesRead = f.read(buf, offsetPerFile, MAX_BYTES);  
+                            offsetPerFile+= bytesRead;
+                            dos.write(buf, 0, bytesRead);       
                         }
-                        count++;
+                        bytes+=f.getSize();
+                        i++;
                     }
-                    fos.flush();
-                    fos.close();
+                    dos.flush();
+                    dos.close();
 
                     if (canceled) {
                         u.getFile().delete();
@@ -420,9 +427,9 @@ public final class ExtractUnallocAction extends AbstractAction {
                 return 0;
             }
             if (o1.getId() > o2.getId()) {
-                return -1;
-            } else {
                 return 1;
+            } else {
+                return -1;
             }
         }
     }
@@ -434,6 +441,7 @@ public final class ExtractUnallocAction extends AbstractAction {
     private class UnallocStruct {
 
         private List<LayoutFile> llf;
+        private long SizeInBytes;
         private long VolumeId;
         private long ImageId;
         private String ImageName;
@@ -453,6 +461,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             this.ImageName = img.getName();
             this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + 0 + ".dat";
             this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
+            this.SizeInBytes = calcSizeInBytes();
         }
 
         /**
@@ -474,6 +483,7 @@ public final class ExtractUnallocAction extends AbstractAction {
             this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
             this.llf = getUnallocFiles(volu);
             Collections.sort(llf, new SortObjId());
+            this.SizeInBytes = calcSizeInBytes();
         }
 
         //Getters
@@ -481,13 +491,17 @@ public final class ExtractUnallocAction extends AbstractAction {
             return llf.size();
         }
 
-        long sizeInBytes() {
+       private long calcSizeInBytes() {
             long size = 0L;
             for (LayoutFile f : llf) {
                 size += f.getSize();
             }
             return size;
         }
+       
+       long getSizeInBytes(){
+           return this.SizeInBytes;
+       }
 
         long getVolumeId() {
             return this.VolumeId;
