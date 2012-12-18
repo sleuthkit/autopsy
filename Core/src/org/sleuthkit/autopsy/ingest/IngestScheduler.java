@@ -695,10 +695,10 @@ class IngestScheduler {
                 }
 
                 static AbstractFilePriotity.Priority getPriority(final AbstractFile abstractFile) {
-                    if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                    //if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                         //non-fs files, such as representing unalloc space
-                        return AbstractFilePriotity.Priority.MEDIUM;
-                    }
+                        //return AbstractFilePriotity.Priority.MEDIUM;
+                    //}
                     final String path = abstractFile.getName();
 
                     if (path == null) {
