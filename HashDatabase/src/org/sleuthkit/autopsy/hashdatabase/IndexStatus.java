@@ -28,7 +28,7 @@ enum IndexStatus {
     /**
      * The index and database both exist, and the index is older.
      */
-    INDEX_OUTDATED("Index is older than database"),
+    INDEX_OUTDATED("WARNING: Index is older than database"),
     /**
      * The index and database both exist, and the index is not older.
      */
@@ -40,11 +40,11 @@ enum IndexStatus {
     /**
      * The database exists but the index does not.
      */
-    NO_INDEX("Index does not exist"),
+    NO_INDEX("ERROR: Index does not exist"),
     /**
      * Neither the index nor the database exists.
      */
-    NONE("No index or database"),
+    NONE("ERROR: No index or database"),
     /**
      * The index is currently being generated
      */
