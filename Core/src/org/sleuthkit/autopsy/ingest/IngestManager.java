@@ -814,8 +814,7 @@ public class IngestManager {
 
                 final AbstractFile fileToProcess = fileTask.file;
                 
-                //logger.log(Level.INFO, "NEXT FILE: " + fileToProcess.getName());
-
+                logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
 
                 for (IngestModuleAbstractFile module : fileTask.scheduledTask.modules) {
@@ -857,7 +856,7 @@ public class IngestManager {
                 //--totalEnqueuedFiles;
                 
             } //end of this AbstractFile
-            logger.log(Level.INFO, "Done background processing");
+            logger.log(Level.INFO, "IngestManager: Finished processing files");
             return null;
         }
 

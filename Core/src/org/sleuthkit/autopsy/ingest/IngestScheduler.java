@@ -663,21 +663,31 @@ class IngestScheduler {
 
                 enum Priority {
 
-                    LOW, MEDIUM, HIGH
+                    LAST, LOW, MEDIUM, HIGH
                 };
+                static final List<Pattern> LAST_PRI_PATHS = new ArrayList<Pattern>();
                 static final List<Pattern> LOW_PRI_PATHS = new ArrayList<Pattern>();
                 static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<Pattern>();
                 static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<Pattern>();
 
+                /* prioritize root directory folders based on the assumption that we are
+                 * looking for user content. Other types of investigations may want different
+                 * priorities. */
                 static {
+                    // these files have no structure, so they go last
+                    LAST_PRI_PATHS.add(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
+                    LAST_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
+                    LAST_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
+                    
+                    // orphan files are often corrupt and windows does not typically have
+                    // user content, so put them towards the bottom
+                    LOW_PRI_PATHS.add(Pattern.compile("^\\$OrphanFiles", Pattern.CASE_INSENSITIVE));
                     LOW_PRI_PATHS.add(Pattern.compile("^Windows", Pattern.CASE_INSENSITIVE));
 
+                    // all other files go into the medium category too
                     MEDIUM_PRI_PATHS.add(Pattern.compile("^Program Files", Pattern.CASE_INSENSITIVE));
-                    MEDIUM_PRI_PATHS.add(Pattern.compile("^\\$OrphanFiles", Pattern.CASE_INSENSITIVE));
-                    MEDIUM_PRI_PATHS.add(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
-                    MEDIUM_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
-                    MEDIUM_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
 
+                    // user content is top priority
                     HIGH_PRI_PATHS.add(Pattern.compile("^Users", Pattern.CASE_INSENSITIVE));
                     HIGH_PRI_PATHS.add(Pattern.compile("^Documents and Settings", Pattern.CASE_INSENSITIVE));
                     HIGH_PRI_PATHS.add(Pattern.compile("^home", Pattern.CASE_INSENSITIVE));
@@ -713,6 +723,13 @@ class IngestScheduler {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
                             return AbstractFilePriotity.Priority.LOW;
+                        }
+                    }
+                    
+                    for (Pattern p : LAST_PRI_PATHS) {
+                        Matcher m = p.matcher(path);
+                        if (m.find()) {
+                            return AbstractFilePriotity.Priority.LAST;
                         }
                     }
 
