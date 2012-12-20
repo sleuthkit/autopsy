@@ -755,7 +755,7 @@ public class ReportHTML implements ReportModule {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "downloads.html"), "UTF-8"));
             out.write(generateHead("Web Download Artifacts (" + countDownloads + ")"));
             String title = "<div id=\"header\">Web Downloads (" + countDownloads + ")</div>\n<div id=\"content\">\n";
-            String tableHeader = getTableHead("URL", "Source URL", "Date Accessed", "Program", "Source File");
+            String tableHeader = getTableHead("Destination", "Source URL", "Date Accessed", "Program", "Source File");
             out.write(title);
             out.write(tableHeader);
             
