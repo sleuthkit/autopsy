@@ -179,7 +179,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                     break;
                 }
                 try {
-                    final JsonParser parser = new JsonParser();
+                   final JsonParser parser = new JsonParser();
                     JsonElement jsonElement = parser.parse(new FileReader(temps));
                     JsonObject jElement = jsonElement.getAsJsonObject();
                     JsonObject jRoot = jElement.get("roots").getAsJsonObject();
@@ -188,9 +188,33 @@ public class Chrome extends Extract implements IngestModuleImage {
                     for (JsonElement result : jBookmarkArray) {
                         try {
                             JsonObject address = result.getAsJsonObject();
-                            String url = address.get("url").getAsString();
-                            String name = address.get("name").getAsString();
-                            Long date = address.get("date_added").getAsLong();
+                            if (address == null) {
+                                continue;
+                            }
+                            JsonElement urlEl = address.get("url");
+                            String url = null;
+                            if (urlEl != null) {
+                                url = urlEl.getAsString();
+                            }
+                            else {
+                                url = "";
+                            }
+                            String name = null;
+                            JsonElement nameEl = address.get("name");
+                            if (nameEl != null) {
+                                name = nameEl.getAsString();
+                            }
+                            else {
+                                name = "";
+                            }
+                            Long date = null;
+                            JsonElement dateEl = address.get("date_added");
+                            if (dateEl != null) {
+                                date = dateEl.getAsLong();
+                            }
+                            else {
+                                date = Long.valueOf(0);
+                            }
                             String domain = Util.extractDomain(url);
                             BlackboardArtifact bbart = bookmarkFiles.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
