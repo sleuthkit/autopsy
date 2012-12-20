@@ -25,6 +25,7 @@ import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -59,6 +60,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private long durationMillis = 0;
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of playbin2 player
+    private VideoProgressWorker videoProgressWorker;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -186,6 +188,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (selectedNode == null) {
             return;
         }
+        
+        // get rid of any existing videoProgressWorker thread
+        if (videoProgressWorker != null) {
+            videoProgressWorker.cancel(true);
+            videoProgressWorker = null;
+        }
 
         File file = selectedNode.getLookup().lookup(File.class);
         if (file == null) {
@@ -303,15 +311,19 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void reset() {
+        // reset the progress label text on the event dispatch thread
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressLabel.setText("                   ");
+            }
+        });
         synchronized (playbinLock) {
             if (playbin2 != null) {
                 if (playbin2.isPlaying()) {
                     playbin2.stop();
                 }
                 playbin2.setState(State.NULL);
-//                try {
-//                    Thread.sleep(20); // gstreamer needs to catch up
-//                } catch (InterruptedException ex) { }
                 if (playbin2.getState().equals(State.NULL)) {
                     playbin2.dispose();
                 }
@@ -397,8 +409,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             this.jFile = jFile;
         }
 
-        ;
-
         @Override
         protected Object doInBackground() throws Exception {
             success = false;
@@ -444,7 +454,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 progressLabel.setText("Error buffering file");
                 return;
             }
-                                ClockTime dur = null;
+            ClockTime dur = null;
             synchronized (playbinLock) {
                 playbin2.play(); // must play, then pause and get state to get duration.
                 playbin2.pause();
@@ -454,73 +464,97 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             duration = dur.toString();
             durationMillis = dur.toMillis();
             
-            progressSlider.setMaximum((int) durationMillis);
-            progressSlider.setMinimum(0);
-            final String finalDuration;
-            if (duration.length() == 8 && duration.substring(0, 3).equals("00:")) {
-                finalDuration = duration.substring(3);
-                progressLabel.setText("00:00/" + duration);
-            } else {
-                finalDuration = duration;
-                progressLabel.setText("00:00:00/" + duration);
-            }
-            synchronized (playbinLock) {
-                playbin2.play();
-            }
-            pauseButton.setText("||");
-            new Thread(new Runnable() {
-                private boolean isPlayBinReady() {
-                    synchronized (playbinLock) {
-                        return playbin2 != null && !playbin2.getState().equals(State.NULL);
-                    }
-                }
-
+            SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    long positionMillis = 0;
-                    while (positionMillis < durationMillis
-                            && isPlayBinReady() ) {
-                        ClockTime pos = null;
-                        synchronized (playbinLock) {
-                            pos = playbin2.queryPosition();
-                        } 
-                        position = pos.toString();
-                        positionMillis = pos.toMillis();
-                        
-                        if (position.length() == 8) {
-                            position = position.substring(3);
-                        }
-                        progressLabel.setText(position + "/" + finalDuration);
-                        autoTracking = true;
-                        progressSlider.setValue((int) positionMillis);
-                        autoTracking = false;
-                        try {
-                            Thread.sleep(20);
-                        } catch (InterruptedException ex) {
-                        }
-                    }
-                    if (finalDuration.length() == 5) {
-                        progressLabel.setText("00:00/" + finalDuration);
+                    progressSlider.setMaximum((int) durationMillis);
+                    progressSlider.setMinimum(0);
+                    final String finalDuration;
+                    if (duration.length() == 8 && duration.substring(0, 3).equals("00:")) {
+                        finalDuration = duration.substring(3);
+                        progressLabel.setText("00:00/" + duration);
                     } else {
-                        progressLabel.setText("00:00:00/" + finalDuration);
+                        finalDuration = duration;
+                        progressLabel.setText("00:00:00/" + duration);
                     }
-                    // If it reached the end
-                    if (progressSlider.getValue() == progressSlider.getMaximum()) {
-                        restartVideo();
-                    }
-                }
-
-                public void restartVideo() {
                     synchronized (playbinLock) {
-                        if (playbin2 != null) {
-                            playbin2.stop();
-                            playbin2.setState(State.READY); // ready to be played again
-                        }
+                        playbin2.play();
                     }
-                    pauseButton.setText("►");
-                    progressSlider.setValue(0);
+                    pauseButton.setText("||");
+                    videoProgressWorker = new VideoProgressWorker();
+                    videoProgressWorker.execute();
                 }
-            }).start();
+            });
+        }
+    }
+    
+    private class VideoProgressWorker extends SwingWorker<Object, Object> {
+        
+        private boolean isPlayBinReady() {
+            synchronized (playbinLock) {
+                return playbin2 != null && !playbin2.getState().equals(State.NULL);
+            }
+        }
+        
+        public void restartVideo() {
+            synchronized (playbinLock) {
+                if (playbin2 != null) {
+                    playbin2.stop();
+                    playbin2.setState(State.READY); // ready to be played again
+                }
+            }
+            pauseButton.setText("►");
+            progressSlider.setValue(0);
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            long positionMillis = 0;
+            String finalDuration = "";
+            while (positionMillis < durationMillis
+                    && isPlayBinReady() && !isCancelled()) {
+                ClockTime pos = null;
+                synchronized (playbinLock) {
+                    pos = playbin2.queryPosition();
+                }
+                String position = pos.toString();
+                positionMillis = pos.toMillis();
+
+                if (position.length() == 8) {
+                    position = position.substring(3);
+                }
+                
+                String duration = playbin2.queryDuration().toString();
+                if (duration.length() == 8 && duration.substring(0, 3).equals("00:")) {
+                    finalDuration = duration.substring(3);
+                    progressLabel.setText("00:00/" + duration);
+                } else {
+                    finalDuration = duration;
+                    progressLabel.setText("00:00:00/" + duration);
+                }
+            
+                progressLabel.setText(position + "/" + finalDuration);
+                autoTracking = true;
+                progressSlider.setValue((int) positionMillis);
+                autoTracking = false;
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException ex) {
+                    throw ex;
+                }
+            }
+            
+            if (finalDuration.length() == 5) {
+                progressLabel.setText("00:00/" + finalDuration);
+            } else {
+                progressLabel.setText("00:00:00/" + finalDuration);
+            }
+            // If it reached the end
+            if (progressSlider.getValue() == progressSlider.getMaximum()) {
+                restartVideo();
+            }
+
+            return null;
         }
     }
 }
