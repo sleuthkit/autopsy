@@ -18,16 +18,17 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -120,32 +121,35 @@ public class Tags {
     
     /**
      * Get a list of all the tag names.
+     * Uses a custom query for speed when dealing with thousands of Tags.
      * @return a list of all tag names.
      */
-    public static String[] getTagNames() {
-        Set<String> names = new HashSet<String>();
-        //List<String> names = new ArrayList<String>();
+    public static List<String> getTagNames() {
+        Case currentCase = Case.getCurrentCase();
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        List<String> names = new ArrayList<String>();
+        ResultSet rs = null;
         try {
-            Case currentCase = Case.getCurrentCase();
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            List<BlackboardArtifact> fileTags = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-            List<BlackboardArtifact> artifactTags = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-            fileTags.addAll(artifactTags);
-            
-            for(BlackboardArtifact artifact : fileTags) {
-                List<BlackboardAttribute> attributes = artifact.getAttributes();
-                for(BlackboardAttribute att : attributes) {
-                    if(att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()) {
-                        names.add(att.getValueString());
-                        break;
-                    }
+            rs = skCase.runQuery("SELECT value_text"
+                    + " FROM blackboard_attributes"
+                    + " WHERE attribute_type_id = " + ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()
+                    + " GROUP BY value_text"
+                    + " ORDER BY value_text");
+            while(rs.next()) {
+                names.add(rs.getString("value_text"));
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to query the blackboard for tag names.");
+        } finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
                 }
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
         }
         
-        return names.toArray(new String[0]);
+        return names;
     }
     
     /**
