@@ -210,6 +210,7 @@
       <analyzer>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
       </analyzer>
+	  <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="10000"/>
     </fieldType>
 	
     <!-- A general text field that has reasonable, generic
@@ -232,6 +233,7 @@
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
+	  <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="10000"/>
     </fieldType>
 
     <!-- A text field with defaults appropriate for English: it
@@ -255,7 +257,7 @@
                 enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
-	<filter class="solr.EnglishPossessiveFilterFactory"/>
+		<filter class="solr.EnglishPossessiveFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
 	<!-- Optionally you may want to use this less aggressive stemmer instead of PorterStemFilterFactory:
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
@@ -271,7 +273,7 @@
                 enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
-	<filter class="solr.EnglishPossessiveFilterFactory"/>
+		<filter class="solr.EnglishPossessiveFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
 	<!-- Optionally you may want to use this less aggressive stemmer instead of PorterStemFilterFactory:
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
