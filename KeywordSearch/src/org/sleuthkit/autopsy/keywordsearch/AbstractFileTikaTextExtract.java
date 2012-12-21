@@ -166,7 +166,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                     //this is the last chunk
                     eof = true;
                 } else {
-                    //try to read until whitespace to not break words
+                    //try to read char-by-char until whitespace to not break words
                     while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
                             && !Character.isWhitespace(TEXT_CHUNK_BUF[(int) totalRead - 1])
                             && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1)) != -1) {
@@ -229,12 +229,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
-            final String msg = "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            final String msg = "Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
-            final String msg = "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            final String msg = "Unexpected error, can't read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
@@ -242,7 +242,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 stream.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to close content stream from " + sourceFile.getId(), ex);
+                logger.log(Level.WARNING, "Unable to close Tika content stream from " + sourceFile.getId(), ex);
             }
             try {
                 if (reader != null) {
