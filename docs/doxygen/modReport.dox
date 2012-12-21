@@ -1,12 +1,82 @@
 /*! \page mod_report_page Developing Report Modules
 
+\section report_summary Summary
+There are two types of reporting modules: table report modules and general report modules.
 
-<!-- @@@ Cleanup -->
-Each reporting submodule implements org.sleuthkit.autopsy.report.ReportModule interface and registers itself in layer.xml
+Each reporting submodule implements either the org.sleuthkit.autopsy.report.TableReportModule interface or the org.sleuthkit.autopsy.report.GeneralReportModule interface, and registers itself in layer.xml
 
-Reporting submodule typically interacts with 3 components:
-- org.sleuthkit.autopsy.report.ReportConfiguration - to read current reporting configuration set by the user,
-- Blackboard API in org.sleuthkit.datamodel.SleuthkitCase class - to traverse and read blackboard artifacts and attributes,
-- an API (possibly external/thirdparty API) to convert blackboard artifacts data structures to the desired reporting format.
+Implementing either of those interfaces will require the reporting module to implement a number of abstract methods. And depending on the type of report module, different methods will be invoked by the application.
+
+Table report modules require their sub-classes to override methods to start and end tables, and add rows to those tables. These methods are provided data, generated from a default configuration panel, for the module to report on. Because of this, when creating a table report module one only needs to focus on how to display the data, not how to find it.
+
+On the other hand, general report modules have a single method to generate the report. This method gives the module freedom to find and process any data it so chooses. General modules also have the ability to provide a configuration panel, allowing the user to choose from various displayed settings. The report module may then use the user's selection to generate a more specific report.
+
+General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It contains basic API to start, stop, and add to the progress bar, as well as update the processing label. The module is also expeted to check the progress bar's status occasionally to see if the user has manually canceled the report.
+
+\section report_create_module Creating a Report Module
+To create a table report module, start off by creating a class and implementing either the TableReportModule interface or the GeneralReportModule interface.
+
+\subsection report_create_module_table Table Report Modules
+If you implement TableReportModule, you should override the methods:
+- org.sleuthkit.autopsy.report.TableReportModule::startReport(String path)
+- org.sleuthkit.autopsy.report.TableReportModule::endReport()
+- org.sleuthkit.autopsy.report.TableReportModule::startDataType(String title)
+- org.sleuthkit.autopsy.report.TableReportModule::endDataType()
+- org.sleuthkit.autopsy.report.TableReportModule::startSet(String setName)
+- org.sleuthkit.autopsy.report.TableReportModule::endSet()
+- org.sleuthkit.autopsy.report.TableReportModule::addSetIndex(List<String> sets)
+- org.sleuthkit.autopsy.report.TableReportModule::addSetElement(String elementName)
+- org.sleuthkit.autopsy.report.TableReportModule::startTable(List<String> titles)
+- org.sleuthkit.autopsy.report.TableReportModule::endTable()
+- org.sleuthkit.autopsy.report.TableReportModule::addRow(List<String> row)
+- org.sleuthkit.autopsy.report.TableReportModule::dateToString(long date)
+
+When generating table module reports, Autopsy will iterate through a list of user selected data, and call methods such as addRow(List<String> row) for every "row" of data it finds, or startTable(List<String> titles) for every new category it finds. Developers are guarenteed that every start of a data type, set, or table will be followed by an approptiate end. The focus for a table report module should be to take the given information and display it in a user friendly format. See org.sleuthkit.autopsy.report.ReportExcel for an example.
+
+\subsection report_create_module_general General Report Modules
+If you implement GeneralReportModule, the overriden methods will be:
+- org.sleuthkit.autopsy.report.GeneralReportModule::generateReport(String reportPath, ReportProgressPanel progressPanel)
+- org.sleuthkit.autopsy.report.GeneralReportModule::getConfigurationPanel()
+
+For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to aquire and report data in its desired format. The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
+
+When updating the progress panel, it is recommened to update it as infrequently as possible, while still keeping the user informed. If your report processes 100,000 files and you chose to update the UI each time a file is reviewed, the UI would freeze when trying to process all your requests. This would cause problems to not only your reporting module, but to other modules running in parellel. A safer approach would be to update the UI every 1,000 files, or when a certain "category" of the files being processed has changed. For example, the HTML report module increments the progress bar and changes the processing label every time a new Blackboard Artifact Type is being processed.
+
+Autopsy will also display the panel returned by getConfigurationPanel() in the generate report wizard, when that particular report module is selected. If null is returned, a blank panel will be displayed instead. This panel can be used to allow the user custom controls over the report.
+
+Typically a general report module should interact with both the Blackboard API in the org.sleuthkit.datamodel.SleuthkitCase class, in addition to an API (possibly external/thirdparty) to convert Blackboard Artifacts to the desired reporting format.
+
+\subsection report_create_module_layer Registering the Report in layer.xml
+Lastly, it is important to register each report module, regardless of the type, to a layer.xml file. This file serves as a globally excessible instance of the report module, and allows all report modules to be recognized abstractly without knowing each class. Without this file, Autopsy will be unable to see your report module.
+
+An example entry into layer.xml is shown below:
+\code
+<folder name="Services">
+    <file name="org-sleuthkit-autopsy-report-ReportHTML.instance">
+        <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.TableReportModule"/>
+        <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
+        <attr name="position" intvalue="910"/>
+    </file>
+</folder>
+\endcode
+
+In the above example, "org-sleuthkit-autopsy-report-ReportHTML" should be replaced with the package based path to your report module.
+
+It is also important to remember to include a getDefault() method in your report module. As shown in the code above, the instance to each report module is accessed via it's getDefault() method.
+
+\code
+// Static instance of this report
+private static MyReport instance;
+
+// Get the default instance of this report
+public static synchronized MyReport getDefault() {
+    if (instance == null) {
+        instance = new MyReport();
+    }
+    return instance;
+}
+\endcode
+
+Above is an example implementation of the getDefault() method.
 
 */
