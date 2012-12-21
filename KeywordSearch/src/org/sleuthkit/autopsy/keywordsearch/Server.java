@@ -116,7 +116,7 @@ public class Server {
             }
         },
     };
-    public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
+    public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but option may not be supported.
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
