@@ -112,7 +112,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
      */
     protected SolrQuery createQuery() {
         final SolrQuery q = new SolrQuery();
-        q.setQueryType(TERMS_HANDLER);
+        q.setRequestHandler(TERMS_HANDLER);
         q.setTerms(true);
         q.setTermsLimit(TERMS_UNLIMITED);
         q.setTermsRegexFlag("case_insensitive");
