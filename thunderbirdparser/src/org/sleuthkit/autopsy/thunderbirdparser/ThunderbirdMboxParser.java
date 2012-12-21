@@ -1,7 +1,26 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 Basis Technology Corp.
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.*;
@@ -18,10 +37,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-/**
- *
- * @author arivera
- */
 public class ThunderbirdMboxParser  {
 
     /** Serial version UID */
@@ -202,12 +217,12 @@ public class ThunderbirdMboxParser  {
         String headerContent = headerMatcher.group(2);
 
         if (headerTag.equalsIgnoreCase("From")) {
-            metadata.add(ThunderbirdMetadata.AUTHOR, headerContent);
+            metadata.add(ThunderbirdMetadata.AUTHOR.toString(), headerContent);
              Matcher address = EMAIL_ADDRESS_PATTERN.matcher(headerContent);
             if(address.find()) {
-        	metadata.add(ThunderbirdMetadata.CREATOR, address.group(1));
+        	metadata.add(ThunderbirdMetadata.CREATOR.toString(), address.group(1));
             } else if(headerContent.indexOf('@') > -1) {
-        	metadata.add(ThunderbirdMetadata.CREATOR, headerContent);
+        	metadata.add(ThunderbirdMetadata.CREATOR.toString(), headerContent);
             }
         } else if (headerTag.equalsIgnoreCase("To") ||
         	headerTag.equalsIgnoreCase("Cc") ||
@@ -227,26 +242,26 @@ public class ThunderbirdMboxParser  {
             }
             metadata.add(property, headerContent);
         } else if (headerTag.equalsIgnoreCase("Subject")) {
-            metadata.add(ThunderbirdMetadata.SUBJECT, headerContent);
-            metadata.add(ThunderbirdMetadata.TITLE, headerContent);
+            metadata.add(ThunderbirdMetadata.SUBJECT.toString(), headerContent);
+            metadata.add(ThunderbirdMetadata.TITLE.toString(), headerContent);
         } else if (headerTag.equalsIgnoreCase("Date")) {
             try {
                 Date date = parseDate(headerContent);
                 metadata.set(ThunderbirdMetadata.DATE, date);
-                metadata.set(ThunderbirdMetadata.CREATION_DATE, date);
+                metadata.set(ThunderbirdMetadata.CREATED, date);
             } catch (ParseException e) {
                 // ignoring date because format was not understood
             }
         } else if (headerTag.equalsIgnoreCase("Message-Id")) {
-            metadata.add(ThunderbirdMetadata.IDENTIFIER, headerContent);
+            metadata.add(ThunderbirdMetadata.IDENTIFIER.toString(), headerContent);
         } else if (headerTag.equalsIgnoreCase("In-Reply-To")) {
-            metadata.add(ThunderbirdMetadata.RELATION, headerContent);
+            metadata.add(ThunderbirdMetadata.RELATION.toString(), headerContent);
         } else if (headerTag.equalsIgnoreCase("Content-Type")) {
             // TODO - key off content-type in headers to
             // set mapping to use for content and convert if necessary.
 
-            metadata.add(ThunderbirdMetadata.CONTENT_TYPE, headerContent);
-            metadata.add(ThunderbirdMetadata.FORMAT, headerContent);
+            metadata.add(ThunderbirdMetadata.CONTENT_TYPE.toString(), headerContent);
+            metadata.add(ThunderbirdMetadata.FORMAT.toString(), headerContent);
         } else {
             metadata.add(EMAIL_HEADER_METADATA_PREFIX + headerTag, headerContent);
         }

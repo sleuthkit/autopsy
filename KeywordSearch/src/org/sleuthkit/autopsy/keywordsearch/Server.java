@@ -36,17 +36,14 @@ import java.nio.charset.Charset;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
-import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -443,7 +440,7 @@ public class Server {
             // TODO: check if SocketExceptions should actually happen (is
             // probably caused by starting a connection as the server finishes
             // shutting down)
-            if (cause instanceof ConnectException || cause instanceof SocketException || cause instanceof NoHttpResponseException) {
+            if (cause instanceof ConnectException || cause instanceof SocketException  ) { //|| cause instanceof NoHttpResponseException) {
                 logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
                 return false;
             } else {
