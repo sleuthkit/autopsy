@@ -61,6 +61,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of playbin2 player
     private VideoProgressWorker videoProgressWorker;
+    private int totalHours, totalMinutes, totalSeconds;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -121,7 +122,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoPanel.setLayout(videoPanelLayout);
         videoPanelLayout.setHorizontalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 283, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -130,6 +131,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         progressSlider.setValue(0);
 
+        progressLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         progressLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.progressLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -140,10 +142,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pauseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 158, Short.MAX_VALUE)
+                .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressLabel)
-                .addContainerGap())
+                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -152,7 +153,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(pauseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -315,7 +316,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                progressLabel.setText("                   ");
+                progressLabel.setText("");
             }
         });
         synchronized (playbinLock) {
@@ -418,7 +419,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     return ExtractMedia.this.cancel(true);
                 }
             });
-            progressLabel.setText("Buffering...");
+            progressLabel.setText("Buffering...  ");
             progress.start();
             progress.switchToDeterminate(100);
             try {
@@ -464,6 +465,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             duration = dur.toString();
             durationMillis = dur.toMillis();
             
+            // pick out the total hours, minutes, seconds
+            long durationSeconds = (int)durationMillis / 1000;
+            totalHours = (int) durationSeconds / 3600;
+            durationSeconds -= totalHours * 3600;
+            totalMinutes = (int) durationSeconds / 60;
+            durationSeconds -= totalMinutes * 60;
+            totalSeconds = (int) durationSeconds;
+            
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -490,13 +499,15 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
         
+        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
+        
         private boolean isPlayBinReady() {
             synchronized (playbinLock) {
                 return playbin2 != null && !playbin2.getState().equals(State.NULL);
             }
         }
         
-        public void restartVideo() {
+        public void resetVideo() {
             synchronized (playbinLock) {
                 if (playbin2 != null) {
                     playbin2.stop();
@@ -505,54 +516,50 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             }
             pauseButton.setText("►");
             progressSlider.setValue(0);
+            
+            String durationStr = String.format(durationFormat, 0, 0, 0,
+                        totalHours, totalMinutes, totalSeconds);
+            progressLabel.setText(durationStr);
         }
 
         @Override
         protected Object doInBackground() throws Exception {
-            long positionMillis = 0;
+            long millisElapsed = 0;
+            int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
             String finalDuration = "";
-            while (positionMillis < durationMillis
+            while (millisElapsed < durationMillis
                     && isPlayBinReady() && !isCancelled()) {
                 ClockTime pos = null;
                 synchronized (playbinLock) {
                     pos = playbin2.queryPosition();
                 }
-                String position = pos.toString();
-                positionMillis = pos.toMillis();
-
-                if (position.length() == 8) {
-                    position = position.substring(3);
-                }
+                //String position = pos.toString();
+                millisElapsed = pos.toMillis();
                 
-                String duration = playbin2.queryDuration().toString();
-                if (duration.length() == 8 && duration.substring(0, 3).equals("00:")) {
-                    finalDuration = duration.substring(3);
-                    progressLabel.setText("00:00/" + duration);
-                } else {
-                    finalDuration = duration;
-                    progressLabel.setText("00:00:00/" + duration);
-                }
-            
-                progressLabel.setText(position + "/" + finalDuration);
+                // pick out the elapsed hours, minutes, seconds
+                long secondsElapsed = millisElapsed / 1000;
+                elapsedHours = (int) secondsElapsed / 3600;
+                secondsElapsed -= elapsedHours * 3600;
+                elapsedMinutes = (int) secondsElapsed / 60;
+                secondsElapsed -= elapsedMinutes * 60;
+                elapsedSeconds = (int) secondsElapsed;
+
+                String durationStr = String.format(durationFormat,
+                        elapsedHours, elapsedMinutes, elapsedSeconds,
+                        totalHours, totalMinutes, totalSeconds);
+
+                progressLabel.setText(durationStr);
                 autoTracking = true;
-                progressSlider.setValue((int) positionMillis);
+                progressSlider.setValue((int) millisElapsed);
                 autoTracking = false;
                 try {
                     Thread.sleep(20);
                 } catch (InterruptedException ex) {
-                    throw ex;
+                    break;
                 }
             }
             
-            if (finalDuration.length() == 5) {
-                progressLabel.setText("00:00/" + finalDuration);
-            } else {
-                progressLabel.setText("00:00:00/" + finalDuration);
-            }
-            // If it reached the end
-            if (progressSlider.getValue() == progressSlider.getMaximum()) {
-                restartVideo();
-            }
+            resetVideo();
 
             return null;
         }
