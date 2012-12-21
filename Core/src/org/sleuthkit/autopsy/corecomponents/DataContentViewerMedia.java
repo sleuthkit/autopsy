@@ -73,6 +73,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     private void customizeComponents() {
         Gst.init();
+        progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.addChangeListener(new ChangeListener() {
             /**
              * Should always try to synchronize any call to
@@ -478,14 +479,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 public void run() {
                     progressSlider.setMaximum((int) durationMillis);
                     progressSlider.setMinimum(0);
-                    final String finalDuration;
-                    if (duration.length() == 8 && duration.substring(0, 3).equals("00:")) {
-                        finalDuration = duration.substring(3);
-                        progressLabel.setText("00:00/" + duration);
-                    } else {
-                        finalDuration = duration;
-                        progressLabel.setText("00:00:00/" + duration);
-                    }
+
                     synchronized (playbinLock) {
                         playbin2.play();
                     }
@@ -524,18 +518,20 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         @Override
         protected Object doInBackground() throws Exception {
+            
+            // enable the slider
+            progressSlider.setEnabled(true);
+
             long millisElapsed = 0;
             int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
-            String finalDuration = "";
             while (millisElapsed < durationMillis
                     && isPlayBinReady() && !isCancelled()) {
                 ClockTime pos = null;
                 synchronized (playbinLock) {
                     pos = playbin2.queryPosition();
                 }
-                //String position = pos.toString();
                 millisElapsed = pos.toMillis();
-                
+
                 // pick out the elapsed hours, minutes, seconds
                 long secondsElapsed = millisElapsed / 1000;
                 elapsedHours = (int) secondsElapsed / 3600;
@@ -559,6 +555,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 }
             }
             
+            // disable the slider
+            progressSlider.setEnabled(false);
+
             resetVideo();
 
             return null;
