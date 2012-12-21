@@ -18,12 +18,12 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
