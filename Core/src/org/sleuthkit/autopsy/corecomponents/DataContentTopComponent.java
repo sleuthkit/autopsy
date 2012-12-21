@@ -52,6 +52,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     private boolean isDefault;
     // Different DataContentViewers
     private List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
+
     // contains a list of the undocked TCs
     private static ArrayList<DataContentTopComponent> newWindowList = new ArrayList<DataContentTopComponent>();
     private static final String PREFERRED_ID = "DataContentTopComponent";
@@ -291,34 +292,22 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      */
     public void setupTabs(Node selectedNode) {
 
+        int currTabIndex = dataContentTabbedPane.getSelectedIndex();
         int totalTabs = dataContentTabbedPane.getTabCount();
-        
-        int maxPreferred = 0;
-        int indexOfPreferred = 0;
+        for (int i = 0; i < totalTabs; ++i) {
+            UpdateWrapper dcv = viewers.get(i);
+            dcv.resetComponent();
 
-        if (totalTabs > 0) { // make sure there are tabs to reset
-            for (int i = 0; i < totalTabs; i++) {
-                UpdateWrapper dcv = viewers.get(i);
-                dcv.resetComponent();             
-
-                // disable an unsupported tab (ex: picture viewer)
-                boolean dcvSupported = dcv.isSupported(selectedNode);
-                if (! dcvSupported) {
-                    dataContentTabbedPane.setEnabledAt(i, false);
-                } else {
-                    dataContentTabbedPane.setEnabledAt(i, true);
-                    int currentPreferred = dcv.isPreferred(selectedNode, dcvSupported);
-                    if (currentPreferred > maxPreferred) {
-                        indexOfPreferred = i;
-                        maxPreferred = currentPreferred;
-                    }
-                    
-                }
+            // disable an unsupported tab (ex: picture viewer)
+            boolean dcvSupported = dcv.isSupported(selectedNode);
+            if (!dcvSupported) {
+                dataContentTabbedPane.setEnabledAt(i, false);
+            } else {
+                dataContentTabbedPane.setEnabledAt(i, true);
             }
-            // set the display of the tab
-            dataContentTabbedPane.setSelectedIndex(indexOfPreferred);
-            viewers.get(indexOfPreferred).setNode(selectedNode);
         }
+
+        viewers.get(currTabIndex).setNode(selectedNode);
     }
 
     /**
