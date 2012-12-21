@@ -675,7 +675,9 @@ class IngestScheduler {
                  * priorities. */
                 static {
                     // these files have no structure, so they go last
-                    LAST_PRI_PATHS.add(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
+                    //unalloc files are handled as virtual files in getPriority()
+                    //LAST_PRI_PATHS.add(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
+                    //LAST_PRI_PATHS.add(Pattern.compile("^\\Unalloc", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
                     
@@ -695,10 +697,13 @@ class IngestScheduler {
                 }
 
                 static AbstractFilePriotity.Priority getPriority(final AbstractFile abstractFile) {
-                    //if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
-                        //non-fs files, such as representing unalloc space
-                        //return AbstractFilePriotity.Priority.MEDIUM;
-                    //}
+                    if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                        //quickly filter out unstructured content
+                        //non-fs virtual files and dirs, such as representing unalloc space
+                        return AbstractFilePriotity.Priority.LAST;
+                    }
+                    
+                    //determine the fs files priority by name
                     final String path = abstractFile.getName();
 
                     if (path == null) {
