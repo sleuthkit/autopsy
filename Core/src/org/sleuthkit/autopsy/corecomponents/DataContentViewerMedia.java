@@ -494,7 +494,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
         
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
-        
+        private long millisElapsed = 0;
+        private final long INTER_FRAME_PERIOD_MS = 20;
+        private final long END_TIME_MARGIN_MS = 50;
+
         private boolean isPlayBinReady() {
             synchronized (playbinLock) {
                 return playbin2 != null && !playbin2.getState().equals(State.NULL);
@@ -515,6 +518,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                         totalHours, totalMinutes, totalSeconds);
             progressLabel.setText(durationStr);
         }
+        
+        /**
+         * @return true while millisElapsed is greater than END_TIME_MARGIN_MS
+         * from durationMillis. This is used to indicate when the video has ended
+         * because for some videos the time elapsed never becomes equal to the
+         * reported duration of the video.
+         */
+        private boolean hasNotEnded() {
+            return (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
+        }
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -522,11 +535,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             // enable the slider
             progressSlider.setEnabled(true);
 
-            long millisElapsed = 0;
             int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
-            while (millisElapsed < durationMillis
-                    && isPlayBinReady() && !isCancelled()) {
-                ClockTime pos = null;
+            ClockTime pos = null;
+            while (hasNotEnded() && isPlayBinReady() && !isCancelled()) {
+                
                 synchronized (playbinLock) {
                     pos = playbin2.queryPosition();
                 }
@@ -548,13 +560,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 autoTracking = true;
                 progressSlider.setValue((int) millisElapsed);
                 autoTracking = false;
+
                 try {
-                    Thread.sleep(20);
+                    Thread.sleep(INTER_FRAME_PERIOD_MS);
                 } catch (InterruptedException ex) {
                     break;
                 }
             }
-            
+
             // disable the slider
             progressSlider.setEnabled(false);
 
