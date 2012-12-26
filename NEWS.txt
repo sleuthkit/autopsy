@@ -1,8 +1,11 @@
 ---------------- VERSION Current (dev) --------------
 New features:
+- Documented report module API
 
 
 Improvements:
+- Remake of reporting UI and functionality
+- Significant increase in reporting speed
 
 
 Bugfixes:
