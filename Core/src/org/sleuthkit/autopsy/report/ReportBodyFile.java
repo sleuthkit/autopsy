@@ -23,43 +23,37 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
-import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
 
 /**
  * ReportBodyFile generates a report in the body file format specified on
  * The Sleuth Kit wiki as MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
-public class ReportBodyFile implements ReportModule {
-    //Declare our publically accessible formatted Report, this will change everytime they run a Report
-    private static String bodyFilePath = "";
-    private ReportConfiguration config;
-    private static ReportBodyFile instance = null;
-    private Case currentCase = Case.getCurrentCase(); // get the current case
-    private SleuthkitCase skCase = currentCase.getSleuthkitCase();
+public class ReportBodyFile implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
+    private static ReportBodyFile instance = null;
+    
+    private Case currentCase;
+    private SleuthkitCase skCase;
+    
+    private String reportPath;
 
-    ReportBodyFile() {
+    // Hidden constructor for the report
+    private ReportBodyFile() {
     }
 
+    // Get the default implementation of this report
     public static synchronized ReportBodyFile getDefault() {
         if (instance == null) {
             instance = new ReportBodyFile();
@@ -68,24 +62,19 @@ public class ReportBodyFile implements ReportModule {
     }
 
     /**
-     * Generates a Body File report in the Reports folder of the current case.
-     * 
-     * @param reportconfig  unused in the body file
-     * @return  the path to the generated report
-     * @throws ReportModuleException 
+     * Generates a body file format report for use with the MAC time tool.
+     * @param path path to save the report
+     * @param progressPanel panel to update the report's progress
      */
     @Override
-    public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
-        config = reportconfig;
-        
-        // Setup timestamp
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
-        Date date = new Date();
-        String datenotime = dateFormat.format(date);
-        
-        // Get report path
-        bodyFilePath = currentCase.getCaseDirectory() + File.separator + "Reports" +
-                File.separator + currentCase.getName() + "-" + datenotime + ".txt";
+    public void generateReport(String path, ReportProgressPanel progressPanel) {
+        // Start the progress bar and setup the report
+        progressPanel.setIndeterminate(false);
+        progressPanel.start();
+        progressPanel.updateStatusLabel("Querying files...");  
+        reportPath = path + "BodyFile.txt";
+        currentCase = Case.getCurrentCase();
+        skCase = currentCase.getSleuthkitCase();
         
         // Run query to get all files
         ResultSet rs = null;
@@ -95,24 +84,36 @@ public class ReportBodyFile implements ReportModule {
                                + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
                                + "AND name != '.' "
                                + "AND name != '..'");
+            
+            progressPanel.updateStatusLabel("Loading files...");  
             List<FsContent> fs = skCase.resultSetToFsContents(rs);
-            // Check if ingest finished
+            
+            // Check if ingest has finished
             String ingestwarning = "";
             if (IngestManager.getDefault().isIngestRunning()) {
                 ingestwarning = "Warning, this report was run before ingest services completed!\n";
             }
-            // Loop files and write info to report
-            for (FsContent file : fs) {
-                if (ReportFilter.cancel == true) {
-                    break;
-                }
+            
+            int size = fs.size();
+            progressPanel.setMaximumProgress(size/100);
                 
-                BufferedWriter out = null;
-                try {
-                    // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
-                    out = new BufferedWriter(new FileWriter(bodyFilePath, true));
-                    out.write(ingestwarning);
-                    
+            BufferedWriter out = null;
+            try {
+                // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
+                out = new BufferedWriter(new FileWriter(reportPath, true));
+                out.write(ingestwarning);
+                // Loop files and write info to report
+                int count = 0;
+                for (FsContent file : fs) {
+                    if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                        break;
+                    }
+                    if(count++ == 100) {
+                        progressPanel.increment();
+                        progressPanel.updateStatusLabel("Now processing " + file.getName() + "...");
+                        count = 0;
+                    }
+
                     if(file.getMd5Hash()!=null) {
                         out.write(file.getMd5Hash());
                     }
@@ -142,94 +143,42 @@ public class ReportBodyFile implements ReportModule {
                     out.write("|");
                     out.write(Long.toString(file.getCrtime()));
                     out.write("\n");
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
+            } finally {
+                try {
+                    out.flush();
+                    out.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
-                } finally {
-                    try {
-                        out.flush();
-                        out.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
-                    }
+                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
                 }
             }
+            progressPanel.complete();
         } catch(SQLException ex) {
             logger.log(Level.WARNING, "Failed to get all file information.", ex);
         } catch(TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex);
         } finally {
             try {// Close the query
-                if(rs!=null) { skCase.closeRunQuery(rs); }
+                if(rs!=null) {
+                    skCase.closeRunQuery(rs);
+                }
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "Failed to close the query.", ex);
             }
         }
-        
-        return bodyFilePath;
     }
 
     @Override
     public String getName() {
-        String name = "Body File (Timeline Report)";
+        String name = "Body File";
         return name;
     }
 
-    /**
-     * Save the previously generated report to the given path.
-     * If the report was not generated in generateReport, save will attempt
-     * to regenerate it, then copy the file. If the regeneration fails, the 
-     * incident is logged.
-     */
     @Override
-    public void save(String path) {
-        File caseFile = new File(bodyFilePath);
-        if(!caseFile.exists()) {
-            logger.log(Level.WARNING, "Body File report does not exist.");
-            try {
-                // Try to generate it again
-                generateReport(config);
-                logger.log(Level.INFO, "Body File report has been regenerated.");
-            } catch (ReportModuleException ex) {
-                logger.log(Level.WARNING, "Failed attempt to regenerate the report.", ex);
-            }
-        }
-        // Check again
-        if(caseFile.exists()) {
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = new FileInputStream(caseFile);
-                out = new FileOutputStream(path);
-                byte[] b  = new byte[Integer.parseInt(Long.toString(caseFile.length()))];
-                int len = b.length;
-                int total = 0;
-                int result = 0;
-
-                while ((result = in.read(b, total, len-total)) > 0) {
-                  out.write(b, total, len);
-                  total += result;
-                }
-            } catch(FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Could find the file specified.", ex);
-            } catch(IOException ex) {
-                logger.log(Level.WARNING, "Could not read from the FileInputStream.", ex);
-            } finally {
-                try {
-                    in.close();
-                    out.flush();
-                    out.close();
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close and flush the streams.", ex);
-                }
-            }
-        }
-        // Otherwise give up
-    }
-
-    @Override
-    public String getReportType() {
-        String type = "BodyFile";
-        return type;
+    public String getFilePath() {
+        return "BodyFile.txt";
     }
 
     @Override
@@ -239,18 +188,13 @@ public class ReportBodyFile implements ReportModule {
     }
 
     @Override
-    public ReportConfiguration GetReportConfiguration() {
-        return config;
-    }
-
-    @Override
-    public String getReportTypeDescription() {
-        String desc = "Body file format report with MAC times for every file, that can be used for a timeline view.";
+    public String getDescription() {
+        String desc = "Body file format report with MAC times for every file. This format can be used for a timeline view.";
         return desc;
     }
 
     @Override
-    public void getPreview(String path) {
-        BrowserControl.openUrl(path);
+    public JPanel getConfigurationPanel() {
+        return null; // No configuration panel
     }
 }
