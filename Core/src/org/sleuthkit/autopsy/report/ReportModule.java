@@ -23,38 +23,10 @@
 package org.sleuthkit.autopsy.report;
 
 /**
- * interface every reporting module should implement
+ * Interface extended by TableReportModule and GeneralReportModule.
+ * Contains vital report information to be used by every report.
  */
 public interface ReportModule {
-
-    /**
-     * Generates a report on the current case Reporting module should traverse
-     * the blackboard, extract needed information as specified in the config and
-     * generate a report file
-     *
-     * @param config specifying parts that should be generated
-     * @return absolute file path to the report generated
-     * @throws ReportModuleException thrown when report generation failed
-     */
-    public String generateReport(ReportConfiguration config) throws ReportModuleException;
-
-    /**
-     * This saves a copy of the report (current one) to another place specified
-     * by the user. Takes the input of where the path needs to be saved, include
-     * filename and extention.
-     * 
-     * @param path file path where to save a copy of the report
-     * @throws ReportModuleException thrown if report saving failed
-     */
-    public void save(String path) throws ReportModuleException;
-
-    /**
-     * Returns a short description of report type/file format this module
-     * generates for instance, "XML", "Excel"
-     *
-     * @return the report type short description
-     */
-    public String getReportType();
 
     /**
      * Returns a basic string name for the report. What is 'officially' titled.
@@ -64,27 +36,11 @@ public interface ReportModule {
     public String getName();
 
     /**
-     * Returns the report configuration object that was created
-     *
-     * @return the report configuration for this report
-     */
-    public ReportConfiguration GetReportConfiguration();
-
-    /**
      * Returns a one line user friendly description of the type of report this
      * module generates
      * @return user-friendly report description
      */
-    public String getReportTypeDescription();
-
-    /**
-     * Calls to the report module to execute a method to display the report that
-     * was generated.
-     *
-     * @param path the path to the file
-     *
-     */
-    public void getPreview(String path);
+    public String getDescription();
 
     /**
      * Calls to the report module to execute a method to get the extension that
@@ -94,4 +50,11 @@ public interface ReportModule {
      *
      */
     public String getExtension();
+    
+    /**
+     * Returns the path to the main (or only) file for the report.
+     * 
+     * @return String path to the report file
+     */
+    public String getFilePath();
 }

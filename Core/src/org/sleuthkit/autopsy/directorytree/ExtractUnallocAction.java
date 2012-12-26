@@ -104,15 +104,25 @@ public final class ExtractUnallocAction extends AbstractAction {
             };
 
 
-            JFileChooser fc = new JFileChooser();
-            fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
+            JFileChooser fc = new JFileChooser() {
+                @Override
+                public void approveSelection() {
+                    File f = getSelectedFile();
+                    if (!f.exists() && getDialogType() == SAVE_DIALOG || !f.canWrite()) {
+                        JOptionPane.showMessageDialog(this, "Folder does not exist. Please choose a valid folder before continuing");
+                        return;
+                    }
+                     super.approveSelection();
+                }
+            };
+            
+            fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export"));
             fc.setDialogTitle("Select directory to save to");
             fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fc.setAcceptAllFileFilterUsed(false);
             int returnValue = fc.showSaveDialog((Component) e.getSource());
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 String destination = fc.getSelectedFile().getPath();
-
                 for (UnallocStruct u : LstUnallocs) {
                     u.setPath(destination);
                     if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.getFileName())) {

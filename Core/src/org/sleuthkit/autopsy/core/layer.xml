@@ -198,11 +198,11 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
                 <attr name="position" intvalue="200"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
+            <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-ReportAction-separatorAfter.instance">
+            <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="101"/>
             </file>
@@ -290,24 +290,19 @@
             <attr name="position" intvalue="50"/> 
         </file>
         <file name="org-sleuthkit-autopsy-report-ReportHTML.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.TableReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
             <attr name="position" intvalue="900"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-ReportXML.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportXML.getDefault"/>
+        <file name="org-sleuthkit-autopsy-report-ReportExcel.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.TableReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportExcel.getDefault"/>
             <attr name="position" intvalue="901"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-ReportXLS.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportXLS.getDefault"/>
-            <attr name="position" intvalue="902"/>
-        </file>
         <file name="org-sleuthkit-autopsy-report-ReportBodyFile.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportBodyFile.getDefault"/>
-            <attr name="position" intvalue="903"/>
+            <attr name="position" intvalue="902"/>
         </file>
         <!--<folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">
@@ -355,9 +350,9 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-SpacerAction.instance"/>
                 <attr name="position" intvalue="10000"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportAction.shadow"/>
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
+            <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportWizardAction.shadow"/>
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="102"/>
             </file>
         </folder>
