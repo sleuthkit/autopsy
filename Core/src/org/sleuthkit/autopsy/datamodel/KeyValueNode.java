@@ -19,11 +19,13 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.datatransfer.Transferable;
 import java.util.Map;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.datatransfer.PasteType;
 import org.openide.util.lookup.Lookups;
 
 /**
@@ -34,19 +36,28 @@ import org.openide.util.lookup.Lookups;
  */
 public class KeyValueNode extends AbstractNode {
     
-    KeyValue thing;
+    private KeyValue data;
     
     public KeyValueNode(KeyValue thing, Children children) {
         super(children, Lookups.singleton(thing));
         this.setName(thing.getName());
-        this.thing = thing;
+        this.data = thing;
     }
     
     public KeyValueNode(KeyValue thing, Children children, Lookup lookup) {
          super(children, lookup);
          this.setName(thing.getName());
-         this.thing = thing;
+         this.data = thing;
      }
+
+    @Override
+    public PasteType getDropType(Transferable t, int action, int index) {
+        return null;
+    }
+    
+    
+    
+    
     
     @Override
     protected Sheet createSheet() {
@@ -59,9 +70,9 @@ public class KeyValueNode extends AbstractNode {
         
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty("Name", "Name", "n/a", thing.getName()));
+        ss.put(new NodeProperty("Name", "Name", "n/a", data.getName()));
         
-        for (Map.Entry<String, Object> entry : thing.getMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             ss.put(new NodeProperty(key, key, "n/a", value));
