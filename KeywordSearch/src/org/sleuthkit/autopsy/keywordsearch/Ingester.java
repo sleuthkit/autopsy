@@ -22,6 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,7 +33,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -39,7 +40,9 @@ import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
+import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -63,6 +66,13 @@ public class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     private static Ingester instance;
+   
+    //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
+    //TODO use a streaming way to add content to /update handler
+    private final static int MAX_DOC_CHUNK_SIZE = 1024*1024;
+    private final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
+    private static final String docContentEncoding = "UTF-8";
+
 
     private Ingester() {
     }
@@ -196,10 +206,11 @@ public class Ingester {
         }
 
         private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(fsContent.getCtime(), fsContent));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(fsContent.getAtime(), fsContent));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(fsContent.getMtime(), fsContent));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(fsContent.getCrtime(), fsContent));
+            //aaa
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getCtime(), fsContent));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getAtime(), fsContent));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getMtime(), fsContent));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getCrtime(), fsContent));
             return params;
         }
 
@@ -209,6 +220,78 @@ public class Ingester {
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
+    }
+
+    
+    /**
+     * Indexing method that bypasses Tika, assumes pure text
+     * It reads and converts the entire content stream to string, assuming UTF8
+     * since we can't use streaming approach for Solr /update handler.
+     * This should be safe, since all content is now in max 1MB chunks.
+     * 
+     * TODO see if can use a byte or string streaming way to add content to /update handler
+     * e.g. with XMLUpdateRequestHandler (deprecated in SOlr 4.0.0), see if possible 
+     * to stream with UpdateRequestHandler
+     * 
+     * @param cs
+     * @param fields
+     * @param size
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
+     */
+    private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+        SolrInputDocument updateDoc = new SolrInputDocument();
+
+        for (String key : fields.keySet()) {
+            updateDoc.addField(key, fields.get(key));
+        }
+
+        //using size here, but we are no longer ingesting entire files
+        //size is normally a chunk size, up to 1MB
+    
+        if (size > 0) {
+ 
+            InputStream is = null;
+            int read = 0;
+            try {
+                is = cs.getStream();
+                read = is.read(docChunkContentBuf);
+            } catch (IOException ex) {
+                throw new IngesterException("Could not read content stream: " + cs.getName());
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex);
+                }
+            }
+
+            if (read != 0) {
+                String s = "";
+                try {
+                    s = new String(docChunkContentBuf, 0, read, docContentEncoding);
+                } catch (UnsupportedEncodingException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                updateDoc.addField(Server.Schema.CONTENT.toString(), s);
+            } else {
+                updateDoc.addField(Server.Schema.CONTENT.toString(), "");
+            }
+        }
+        else {
+            //no content, such as case when 0th chunk indexed
+            updateDoc.addField(Server.Schema.CONTENT.toString(), "");
+        }
+        
+
+        try {
+            //TODO consider timeout thread, or vary socket timeout based on size of indexed content
+            solrServer.addDocument(updateDoc);
+            uncommitedIngests = true;
+        } catch (KeywordSearchModuleException ex) {
+            throw new IngesterException("Error ingestint document: " + cs.getName(), ex);
+        }
+
+
     }
 
     /**
@@ -223,7 +306,7 @@ public class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
-    private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+    private void ingestExtract(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
         up.addContentStream(cs);
         setFields(up, fields);
@@ -270,10 +353,10 @@ public class Ingester {
             solrServer.start();
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Cannot start while restating", ex);
-        } catch(SolrServerNoPortException ex){
+        } catch (SolrServerNoPortException ex) {
             logger.log(Level.WARNING, "Cannot start server with this port", ex);
         }
-        
+
         try {
             solrServer.openCore();
         } catch (KeywordSearchModuleException ex) {

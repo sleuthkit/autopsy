@@ -53,6 +53,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.Content;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.client.solrj.impl.XMLResponseParser;
 
 /**
  * Handles for keeping track of a Solr server and its cores
@@ -300,8 +302,8 @@ public class Server {
 
 
 
-                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR 
-                        + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort 
+                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR
+                        + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort
                         + " -DSTOP.KEY=" + KEY + " "
                         + loggingProperties + " -jar start.jar";
                 logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
@@ -429,7 +431,7 @@ public class Server {
             // that doesn't work when there are no cores
 
             //TODO check if port avail and return false if it is
-            
+
             //TODO handle timeout in cases when some other type of server on that port
             CoreAdminRequest.getStatus(null, solrServer);
             logger.log(Level.INFO, "Solr server is running");
@@ -440,7 +442,7 @@ public class Server {
             // TODO: check if SocketExceptions should actually happen (is
             // probably caused by starting a connection as the server finishes
             // shutting down)
-            if (cause instanceof ConnectException || cause instanceof SocketException  ) { //|| cause instanceof NoHttpResponseException) {
+            if (cause instanceof ConnectException || cause instanceof SocketException) { //|| cause instanceof NoHttpResponseException) {
                 logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
                 return false;
             } else {
@@ -473,6 +475,10 @@ public class Server {
         currentCore.close();
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
+    }
+
+    void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+        currentCore.addDocument(doc);
     }
 
     /**
@@ -760,12 +766,32 @@ public class Server {
         private String name;
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private SolrServer solrCore;
+        private HttpSolrServer solrCore;
 
         private Core(String name) {
             this.name = name;
 
             this.solrCore = new HttpSolrServer(solrUrl + "/" + name);
+            try {
+                solrCore.optimize(true, true);
+            } catch (SolrServerException ex) {
+                logger.log(Level.SEVERE, "Error setting optimize on solr core", ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error setting optimize on solr core", ex);
+            }
+
+            //TODO test these settings
+            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
+            //solrCore.setConnectionTimeout(1000);
+            solrCore.setDefaultMaxConnectionsPerHost(2);
+            solrCore.setMaxTotalConnections(5);
+            solrCore.setFollowRedirects(false);  // defaults to false
+            // allowCompression defaults to false.
+            // Server side must support gzip or deflate for this to have any effect.
+            solrCore.setAllowCompression(true);
+            solrCore.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
+            solrCore.setParser(new XMLResponseParser()); // binary parser is used by default
+            
 
         }
 
@@ -799,6 +825,18 @@ public class Server {
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e);
                 throw new SolrServerException("Could not commit index", e);
+            }
+        }
+
+        void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+            try {
+                solrCore.add(doc);
+            } catch (SolrServerException ex) {
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
+                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
+                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
             }
         }
 
@@ -919,14 +957,14 @@ public class Server {
          * the port number that is not available
          */
         private int port;
-        
+
         SolrServerNoPortException(int port) {
-            super("Indexing server could not bind to port " + port 
-                    + ", port is not available, consider change the default " 
+            super("Indexing server could not bind to port " + port
+                    + ", port is not available, consider change the default "
                     + Server.PROPERTIES_CURRENT_SERVER_PORT + " port.");
             this.port = port;
         }
-        
+
         int getPortNumber() {
             return port;
         }
