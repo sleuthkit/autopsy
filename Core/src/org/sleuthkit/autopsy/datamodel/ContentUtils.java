@@ -49,7 +49,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public final class ContentUtils {
 
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    
 
     // don't instantiate
     private ContentUtils() {
@@ -82,6 +84,16 @@ public final class ContentUtils {
         }
         return time;
     }
+    
+      public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
+        String time = "0000-00-00T00:00:00Z";
+        if (epochSeconds != 0) {
+            dateFormatterISO8601.setTimeZone(tzone);
+            time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
+        }
+        
+        return time;
+    }
 
     /**
      * Convert epoch seconds to a string value (convenience method)
@@ -93,6 +105,20 @@ public final class ContentUtils {
     public static String getStringTime(long epochSeconds, Content c) {
         return getStringTime(epochSeconds, getTimeZone(c));
     }
+    
+    /**
+     * Convert epoch seconds to a string value (convenience method) in ISO8601 format
+     * such as 2008-07-04T13:45:04Z
+     *
+     * @param epochSeconds
+     * @param c
+     * @return
+     */
+    public static String getStringTimeISO8601(long epochSeconds, Content c) {
+        return getStringTimeISO8601(epochSeconds, getTimeZone(c));
+    }
+    
+    
 
     public static TimeZone getTimeZone(Content c) {
         try {
