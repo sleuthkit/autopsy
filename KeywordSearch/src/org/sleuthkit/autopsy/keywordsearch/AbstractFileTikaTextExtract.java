@@ -64,7 +64,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static Ingester ingester;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
-    private static final String UTF16BOM = "\uFEFF";
+    //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     // TODO: use a more robust method than checking file extension
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
@@ -187,7 +187,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //set initial size to chars read + bom + metadata (roughly) - try to prevent from resizing
                 StringBuilder sb = new StringBuilder((int) totalRead + 1000);
                 //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
-                sb.append(UTF16BOM);
+                //sb.append(UTF16BOM); disabled prepending of BOM
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
                     sb.append(TEXT_CHUNK_BUF, 0, (int) totalRead);
                 } else {

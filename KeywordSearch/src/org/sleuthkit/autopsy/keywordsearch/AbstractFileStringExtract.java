@@ -49,19 +49,21 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     //single static buffer for all extractions.  Safe, indexing can only happen in one thread
     private static final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
-    private static final int BOM_LEN = 3;
+    //private static final int BOM_LEN = 3; 
+    private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
     private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
     private Map<String,String> extractOptions = new HashMap<String,String>();
 
-    static {
+    //disabled prepending of BOM
+    //static {
         //prepend UTF-8 BOM to start of the buffer
-        STRING_CHUNK_BUF[0] = (byte) 0xEF;
-        STRING_CHUNK_BUF[1] = (byte) 0xBB;
-        STRING_CHUNK_BUF[2] = (byte) 0xBF;
-    }
+        //STRING_CHUNK_BUF[0] = (byte) 0xEF;
+        //STRING_CHUNK_BUF[1] = (byte) 0xBB;
+        //STRING_CHUNK_BUF[2] = (byte) 0xBF;
+    //}
 
     public AbstractFileStringExtract() {
         this.module = KeywordSearchIngestModule.getDefault();
