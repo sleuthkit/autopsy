@@ -65,6 +65,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // don't show the root node
         ov.getOutline().setRootVisible(false);
+        ov.getOutline().setDragEnabled(false);
     }
 
     /**
