@@ -18,23 +18,18 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
-import java.beans.PropertyVetoException;
-import java.io.IOException;
+import java.awt.dnd.DnDConstants;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
-import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -62,6 +57,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
 
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        ov.setAllowedDropActions(DnDConstants.ACTION_NONE );
 
         // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
