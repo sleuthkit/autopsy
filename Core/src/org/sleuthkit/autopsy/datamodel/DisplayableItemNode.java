@@ -66,10 +66,6 @@ public abstract class DisplayableItemNode extends AbstractNode {
      */
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
 
-    @Override
-    public PasteType getDropType(Transferable t, int action, int index) {
-        return null;
-    }
     
     
 }

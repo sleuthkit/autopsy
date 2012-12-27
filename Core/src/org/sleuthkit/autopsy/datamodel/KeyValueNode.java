@@ -49,14 +49,6 @@ public class KeyValueNode extends AbstractNode {
          this.setName(thing.getName());
          this.data = thing;
      }
-
-    @Override
-    public PasteType getDropType(Transferable t, int action, int index) {
-        return null;
-    }
-    
-    
-    
     
     
     @Override
