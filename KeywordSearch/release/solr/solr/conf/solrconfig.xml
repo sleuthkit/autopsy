@@ -118,8 +118,13 @@
        solr.RAMDirectoryFactory is memory based, not
        persistent, and doesn't work with replication.
     -->
+	<!-- 4.0.0 default 
   <directoryFactory name="DirectoryFactory" 
                     class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}"/> 
+					-->
+	<!-- 3.6.0 default -->
+  <directoryFactory name="DirectoryFactory" 
+                    class="${solr.directoryFactory:solr.StandardDirectoryFactory}"/>	
 
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        Index Config - These settings control low-level behavior of indexing
@@ -150,7 +155,11 @@
          If both ramBufferSizeMB and maxBufferedDocs is set, then
          Lucene will flush based on whichever limit is hit first.  -->
      <ramBufferSizeMB>32</ramBufferSizeMB> 
-     <maxBufferedDocs>1000</maxBufferedDocs> 
+     <maxBufferedDocs>200</maxBufferedDocs> 
+	 
+	<!-- <maxFieldLength>10000</maxFieldLength> 
+	deprecated, replaced with solr.LimitTokenCountFilterFactory filter in schema.xml
+	-->
 
     <!-- Expert: Merge Policy 
          The Merge Policy in Lucene controls how merging of segments is done.
@@ -361,7 +370,7 @@
     <!-- Enables a transaction log, currently used for real-time get.
          "dir" - the target directory for transaction logs, defaults to the
             solr data directory.  --> 
-   <!-- <updateLog>
+    <!-- <updateLog>
       <str name="dir">${solr.data.dir:}</str>
     </updateLog>
    -->
