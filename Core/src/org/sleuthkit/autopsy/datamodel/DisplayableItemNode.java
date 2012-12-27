@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.datatransfer.Transferable;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
+import org.openide.util.datatransfer.PasteType;
 
 
 /**
@@ -63,4 +65,11 @@ public abstract class DisplayableItemNode extends AbstractNode {
      * @return visitor's visit return value
      */
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
+
+    @Override
+    public PasteType getDropType(Transferable t, int action, int index) {
+        return null;
+    }
+    
+    
 }
