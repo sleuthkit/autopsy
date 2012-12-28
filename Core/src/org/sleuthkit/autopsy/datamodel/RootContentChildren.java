@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -73,11 +72,15 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                     case TSK_TAG_FILE:
                         if (o instanceof Bookmarks)
                             this.refreshKey(o);
+                        if (o instanceof Tags)
+                            this.refreshKey(o);
                         break;
                         
                         //TODO check
                      case TSK_TAG_ARTIFACT:
                         if (o instanceof Bookmarks)
+                            this.refreshKey(o);
+                        if (o instanceof Tags)
                             this.refreshKey(o);
                         break;
                     default:
@@ -94,6 +97,8 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                 else if (o instanceof EmailExtracted)
                     this.refreshKey(o);
                 else if (o instanceof Bookmarks)
+                    this.refreshKey(o);
+                else if (o instanceof Tags)
                     this.refreshKey(o);
                 else if (o instanceof ExtractedContent)
                     this.refreshKey(o);

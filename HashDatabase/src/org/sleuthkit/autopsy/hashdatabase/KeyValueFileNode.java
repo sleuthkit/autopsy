@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
@@ -13,7 +27,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.directorytree.BookmarkAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -75,7 +89,7 @@ public class KeyValueFileNode extends KeyValueNode {
             actions.add(new ExtractAction("Extract File", new FileNode(f)));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new BookmarkAction("Bookmark File", new FileNode(f)));
+            actions.add(new TagFileAction(new FileNode(f)));
             return actions;
         }
         
