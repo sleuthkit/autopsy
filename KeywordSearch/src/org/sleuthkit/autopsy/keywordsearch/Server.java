@@ -772,13 +772,6 @@ public class Server {
             this.name = name;
 
             this.solrCore = new HttpSolrServer(solrUrl + "/" + name);
-            try {
-                solrCore.optimize(true, true);
-            } catch (SolrServerException ex) {
-                logger.log(Level.SEVERE, "Error setting optimize on solr core", ex);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error setting optimize on solr core", ex);
-            }
 
             //TODO test these settings
             //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
