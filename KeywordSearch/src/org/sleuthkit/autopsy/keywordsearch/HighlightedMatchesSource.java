@@ -357,7 +357,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 highlightedContent = insertAnchors(highlightedContent);
 
 
-                return "<pre>" + highlightedContent + "</pre>";
+                return "<html><pre>" + highlightedContent + "</pre></html>";
             }
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex);
