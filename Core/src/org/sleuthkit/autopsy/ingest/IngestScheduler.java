@@ -751,6 +751,7 @@ class IngestScheduler {
          * Includes counts of all unalloc files (for the fs, image, volume) even
          * if ingest didn't ask for them
          */
+        @SuppressWarnings("deprecation")
         static class GetImageFilesCountVisitor extends ContentVisitor.Default<Integer> {
 
             @Override
