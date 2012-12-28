@@ -97,6 +97,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
      * and start all necessary reports.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent e) {
         // Create the wizard
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
@@ -106,15 +107,26 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
         // When the user presses the finish button
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             // Get the wizard information
-            Map<TableReportModule, Boolean> tableModuleStates = (Map<TableReportModule, Boolean>) wiz.getProperty("tableModuleStates");
-            Map<GeneralReportModule, Boolean> generalModuleStates = (Map<GeneralReportModule, Boolean>) wiz.getProperty("generalModuleStates");
+            Object wizProp1 = wiz.getProperty("tableModuleStates");
+            Object wizProp2 = wiz.getProperty("generalModuleStates");
+            Object wizProp3 = wiz.getProperty("isTagsSelected");
+            Object wizProp4 = wiz.getProperty("tagStates");
+            Object wizProp5 = wiz.getProperty("artifactStates");
+            
+            // Initialize varibales
+            Map<TableReportModule, Boolean> tableModuleStates = (Map<TableReportModule, Boolean>) wizProp1;
+            Map<GeneralReportModule, Boolean> generalModuleStates = (Map<GeneralReportModule, Boolean>) wizProp2;
+            Boolean isTagsSelected = (Boolean) wizProp3;
+            Map<String, Boolean> tagStates = (Map<String, Boolean>) wizProp4;
+            Map<ARTIFACT_TYPE, Boolean> artifactStates = (Map<ARTIFACT_TYPE, Boolean>) wizProp5;
+
             // Create the generator and generate reports
             ReportGenerator generator = new ReportGenerator(tableModuleStates, generalModuleStates);
-            if (wiz.getProperty("isTagsSelected") != null) {
-                if ((Boolean) wiz.getProperty("isTagsSelected")) {
-                    generator.generateTableTagReport((Map<String, Boolean>) wiz.getProperty("tagStates"));
+            if (isTagsSelected != null) {
+                if (isTagsSelected) {
+                    generator.generateTableTagReport(tagStates);
                 } else {
-                    generator.generateTableArtifactReport((Map<ARTIFACT_TYPE, Boolean>) wiz.getProperty("artifactStates"));
+                    generator.generateTableArtifactReport(artifactStates);
                 }
             }
             generator.generateGeneralReports();
