@@ -20,6 +20,6 @@
         <dependency conf="start-solr->default" org="org.mortbay.jetty" name="start" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jetty" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jsp-2.1" rev="6.1.14"/>
-        <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.2"/>
+        <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
     </dependencies>
 </ivy-module>
