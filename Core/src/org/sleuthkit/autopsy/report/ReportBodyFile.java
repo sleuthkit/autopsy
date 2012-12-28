@@ -67,6 +67,7 @@ public class ReportBodyFile implements GeneralReportModule {
      * @param progressPanel panel to update the report's progress
      */
     @Override
+    @SuppressWarnings("deprecation")
     public void generateReport(String path, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);

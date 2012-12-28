@@ -410,6 +410,7 @@ public class ReportGenerator {
      * Write the keyword hits to the provided TableReportModules.
      * @param tableModules modules to report on
      */
+    @SuppressWarnings("deprecation")
     private void writeKeywordHits(List<TableReportModule> tableModules) {
         ResultSet listsRs = null;
         try {
@@ -546,6 +547,7 @@ public class ReportGenerator {
      * Write the hashset hits to the provided TableReportModules.
      * @param tableModules modules to report on
      */
+    @SuppressWarnings("deprecation")
     private void writeHashsetHits(List<TableReportModule> tableModules) {
         ResultSet listsRs = null;
         try {
