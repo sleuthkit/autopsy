@@ -52,6 +52,12 @@ public class StringExtract {
     private List<SCRIPT> enabledScripts;
     private boolean enableUTF8;
     private boolean enableUTF16;
+    
+    //stored and reused results
+    private final StringExtractResult resUTF16En1 = new StringExtractResult();
+    private final StringExtractResult resUTF16En2 = new StringExtractResult();
+    private final StringExtractResult resUTF8 = new StringExtractResult();
+    
     /**
      * supported scripts, can be overridden with enableScriptX methods
      */
@@ -202,22 +208,21 @@ public class StringExtract {
 
             //extract using all methods and see which one wins
             StringExtractResult resUTF16 = null;
+            boolean runUTF16 = false;
             if (enableUTF16 && curOffset % 2 == 0) {
-                StringExtractResult resUTF16En1 = extractUTF16(buff, len, curOffset, true);
-                StringExtractResult resUTF16En2 = extractUTF16(buff, len, curOffset, false);
+                runUTF16 = true;
+                extractUTF16(buff, len, curOffset, true, resUTF16En1);
+                extractUTF16(buff, len, curOffset, false, resUTF16En2);
                 resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars ? resUTF16En1 : resUTF16En2;
             } 
             
-            //results.add(extractUTF8(buff, len, curOffset));
-            StringExtractResult resUTF8 = null;
-
             if (enableUTF8) {
-                resUTF8 = extractUTF8(buff, len, curOffset);
+                extractUTF8(buff, len, curOffset, resUTF8);
             }
 
             StringExtractResult resWin = null;
             if (enableUTF8 && enableUTF16) {
-                resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
+                resWin = runUTF16 && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
             } else if (enableUTF16){
                 resWin = resUTF16;
             }
@@ -250,7 +255,7 @@ public class StringExtract {
             }
         }
 
-        //build up the result
+        //build up the final result
         StringExtractResult res = new StringExtractResult();
         res.numBytes = processedBytes;
         res.numChars = curStringLen;
@@ -261,9 +266,9 @@ public class StringExtract {
         return res;
     }
 
-    private StringExtractResult extractUTF16(byte[] buff, int len, int offset, boolean endianSwap) {
-        StringExtractResult res = new StringExtractResult();
-
+    private StringExtractResult extractUTF16(byte[] buff, int len, int offset, boolean endianSwap, final StringExtractResult res) {
+        res.reset();
+        
         int curOffset = offset;
 
         final StringBuilder tempString = new StringBuilder();
@@ -352,8 +357,8 @@ public class StringExtract {
         return res;
     }
 
-    private StringExtractResult extractUTF8(byte[] buff, int len, int offset) {
-        StringExtractResult res = new StringExtractResult();
+    private StringExtractResult extractUTF8(byte[] buff, int len, int offset, final StringExtractResult res) {
+        res.reset();
 
         int curOffset = offset;
         int ch = 0; //character being extracted
@@ -608,6 +613,15 @@ public class StringExtract {
         int firstUnprocessedOff; ///< first byte past the last byte used in extraction, offset+numBytes for a single result, but we keep track of it for multiple extractions
         String textString; ///< the actual text string extracted, of numChars long
 
+        
+        void reset() {
+            offset = 0;
+            numBytes = 0;
+            numChars = 0;
+            firstUnprocessedOff = 0;
+            textString = null;
+        }
+        
         public int getFirstUnprocessedOff() {
             return firstUnprocessedOff;
         }
