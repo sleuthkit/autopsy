@@ -116,6 +116,10 @@
                 <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jcl-over-slf4j-1.6.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcl-over-slf4j-1.6.4.jar</binary-origin>
             </class-path-extension>
@@ -216,12 +220,12 @@
                 <binary-origin>release/modules/ext/boilerpipe-1.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/org.osgi.compendium-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.osgi.compendium-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.7.0.jar</runtime-relative-path>
@@ -280,12 +284,12 @@
                 <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/log4j-1.2.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/bcprov-jdk15-1.45.jar</runtime-relative-path>
@@ -298,10 +302,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.7.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-dom-0.7.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/geronimo-stax-api_1.0_spec-1.0.1.jar</runtime-relative-path>
