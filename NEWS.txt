@@ -1,14 +1,17 @@
 ---------------- VERSION Current (dev) --------------
 New features:
-- Documented report module API
 
 
 Improvements:
+- Keyword search indexing and search speed improvements
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
+- Documented report module API
+- Upgrade to Solr4.0 / Tika 1.2
 
 
 Bugfixes:
+- Keyword search will index and search entire extracted content from files
 
 ---------------- VERSION 3.0.2 --------------
 
