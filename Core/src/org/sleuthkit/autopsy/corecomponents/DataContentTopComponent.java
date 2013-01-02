@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
@@ -31,6 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.openide.util.Lookup;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -291,9 +293,15 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      * @param selectedNode  the selected content Node
      */
     public void setupTabs(Node selectedNode) {
+        
+        // get the preference for the preferred viewer
+        Preferences pref = NbPreferences.forModule(GeneralPanel.class);
+        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
 
         int currTabIndex = dataContentTabbedPane.getSelectedIndex();
         int totalTabs = dataContentTabbedPane.getTabCount();
+        int maxPreferred = 0;
+        int preferredViewerIndex = 0;
         for (int i = 0; i < totalTabs; ++i) {
             UpdateWrapper dcv = viewers.get(i);
             dcv.resetComponent();
@@ -304,10 +312,22 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                 dataContentTabbedPane.setEnabledAt(i, false);
             } else {
                 dataContentTabbedPane.setEnabledAt(i, true);
+                
+                // remember the viewer with the highest preference value
+                int currentPreferred = dcv.isPreferred(selectedNode, dcvSupported);
+                if (currentPreferred > maxPreferred) {
+                    preferredViewerIndex = i;
+                    maxPreferred = currentPreferred;
+                }
             }
         }
+        
+        // let the user decide if we should stay with the current viewer
+        int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
 
-        viewers.get(currTabIndex).setNode(selectedNode);
+        // set the tab to the one the user wants, then set that viewer's node.
+        dataContentTabbedPane.setSelectedIndex(tabIndex);
+        viewers.get(tabIndex).setNode(selectedNode);
     }
 
     /**
