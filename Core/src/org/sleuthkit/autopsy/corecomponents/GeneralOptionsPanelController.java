@@ -13,7 +13,8 @@ import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_General",
-iconBase = "org/sleuthkit/autopsy/corecomponents/runSingle24.png",
+iconBase = "org/sleuthkit/autopsy/corecomponents/general-options.png",
+position = 1,
 keywords = "#OptionsCategory_Keywords_General",
 keywordsCategory = "General")
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_General=General", "OptionsCategory_Keywords_General=general"})
