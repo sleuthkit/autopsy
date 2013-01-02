@@ -31,6 +31,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.Content;
@@ -62,6 +63,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private Map<String, List<ContentHit>> hits = null; //original hits that may get passed in
     private String originalQuery = null; //or original query if hits are not available
     private boolean inited = false;
+    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     HighlightedMatchesSource(Content content, String keywordHitQuery, boolean isRegex) {
         this.content = content;
@@ -119,21 +121,17 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         if (hasChunks) {
             //extract pages of interest, sorted
             final long contentId = content.getId();
-            
+
             if (hits == null) {
                 //special case, aka in case of dir tree, we don't know which chunks
                 //reperform search query for the content to get matching chunks info
                 KeywordSearchQuery chunksQuery = null;
-                
+
                 /**
-                Keyword keywordQuery = new Keyword(this.originalQuery, !isRegex);
-                if (this.isRegex)
-                {
-                    chunksQuery = new TermComponentQuery(keywordQuery);
-                } else {
-                    chunksQuery = new LuceneQuery(keywordQuery);
-                    chunksQuery.escape();
-                }
+                 * Keyword keywordQuery = new Keyword(this.originalQuery,
+                 * !isRegex); if (this.isRegex) { chunksQuery = new
+                 * TermComponentQuery(keywordQuery); } else { chunksQuery = new
+                 * LuceneQuery(keywordQuery); chunksQuery.escape(); }
                  */
                 String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
                 if (isRegex) {
@@ -164,9 +162,11 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             }
 
             //set page to first page having highlights
-            if (pagesSorted.isEmpty())
+            if (pagesSorted.isEmpty()) {
                 this.currentPage = 0;
-            else this.currentPage = pagesSorted.first();
+            } else {
+                this.currentPage = pagesSorted.first();
+            }
 
             for (Integer page : pagesSorted) {
                 hitsPages.put(page, 0); //unknown number of matches in the page
@@ -240,15 +240,17 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public boolean hasNextItem() {
-        if (!this.pagesToHits.containsKey(currentPage))
+        if (!this.pagesToHits.containsKey(currentPage)) {
             return false;
+        }
         return this.pagesToHits.get(currentPage) < this.hitsPages.get(currentPage);
     }
 
     @Override
     public boolean hasPreviousItem() {
-        if (!this.pagesToHits.containsKey(currentPage))
+        if (!this.pagesToHits.containsKey(currentPage)) {
             return false;
+        }
         return this.pagesToHits.get(currentPage) > 1;
     }
 
@@ -274,8 +276,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int currentItem() {
-        if (!this.pagesToHits.containsKey(currentPage))
+        if (!this.pagesToHits.containsKey(currentPage)) {
             return 0;
+        }
         return pagesToHits.get(currentPage);
     }
 
@@ -307,6 +310,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         }
 
         SolrQuery q = new SolrQuery();
+        q.setShowDebugInfo(DEBUG); //debug
+
+        String queryStr = null;
 
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
@@ -318,12 +324,14 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             if (group) {
                 sb.append("\"");
             }
-            q.setQuery(sb.toString());
+            queryStr = sb.toString();
         } else {
             //use default field, simplifies query
             //always force grouping/quotes
-            q.setQuery(KeywordSearchUtil.quoteQuery(highlightQuery));
+            queryStr = KeywordSearchUtil.quoteQuery(highlightQuery);
         }
+
+        q.setQuery(queryStr);
 
         final long contentId = content.getId();
 
@@ -332,13 +340,26 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             contentIdStr += "_" + Integer.toString(this.currentPage);
         }
 
+
         final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
-        q.setHighlightSimplePre(HIGHLIGHT_PRE);
-        q.setHighlightSimplePost(HIGHLIGHT_POST);
-        q.setHighlightFragsize(0); // don't fragment the highlight
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content
+
+        //need to use original highlighter (as opposed to snippets), because FVH does not seem to support fragsize=0 to get entire content
+        //https://issues.apache.org/jira/browse/SOLR-1268?attachmentSortBy=dateTime
+
+        q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
+        q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
+        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter only
+
+        //tune the highlighter
+        //q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
+        //q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only
+        //q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only
+        //q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+
+        //docs says makes sense for the original Highlighter only, but not really
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -385,8 +406,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int getNumberHits() {
-        if (!this.hitsPages.containsKey(this.currentPage))
+        if (!this.hitsPages.containsKey(this.currentPage)) {
             return 0;
+        }
         return this.hitsPages.get(this.currentPage);
     }
 
