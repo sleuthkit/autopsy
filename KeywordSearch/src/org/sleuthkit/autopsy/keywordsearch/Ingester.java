@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Handles indexing files on a Solr core.
@@ -217,6 +218,12 @@ public class Ingester {
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
+            try {
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getImage().getId()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get image id to properly index the file " + af.getId());
+            }
+
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
@@ -239,6 +246,14 @@ public class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
      */
     private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+        
+        if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
+            //skip the file, image id unknown
+            String msg = "Skipping indexing the file, unknown image id, for file: " + cs.getName();
+            logger.log(Level.SEVERE, msg);
+            throw new IngesterException(msg);
+        }
+        
         SolrInputDocument updateDoc = new SolrInputDocument();
 
         for (String key : fields.keySet()) {
