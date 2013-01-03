@@ -101,8 +101,6 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
-                listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
-                listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
