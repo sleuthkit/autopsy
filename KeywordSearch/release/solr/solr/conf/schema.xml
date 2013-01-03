@@ -505,6 +505,8 @@
    -->
 
    <field name="id" type="string" indexed="true" stored="true" required="true" /> 
+   <!-- use image_id to easily search a specific image only -->
+   <field name="image_id" type="string" indexed="true" stored="true" required="true" /> 
     <!-- The content field holds the text extracted by SolrCell -->
    <field name="content" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" />
    <!-- The strings field holds strings extracted from files that SolrCell doesn't support -->

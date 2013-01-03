@@ -69,6 +69,12 @@ public class Server {
                 return "id";
             }
         },
+        IMAGE_ID {
+            @Override
+            public String toString() {
+                return "image_id";
+            }
+        },
         CONTENT {
             @Override
             public String toString() {
