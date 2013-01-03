@@ -345,18 +345,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
 
-        //need to use original highlighter (as opposed to snippets), because FVH does not seem to support fragsize=0 to get entire content
-        //https://issues.apache.org/jira/browse/SOLR-1268?attachmentSortBy=dateTime
-
-        q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
-        q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
-        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter only
+        //q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
+        //q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
+        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
         //tune the highlighter
-        //q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
-        //q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only
-        //q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only
-        //q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
+        q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only
 
         //docs says makes sense for the original Highlighter only, but not really
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);

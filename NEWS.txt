@@ -4,6 +4,7 @@ New features:
 
 Improvements:
 - Keyword search indexing and search speed improvements
+- Improved keyword search highlighting in Text View: highlighted tokens are no longer white-space separated
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
 - Documented report module API
