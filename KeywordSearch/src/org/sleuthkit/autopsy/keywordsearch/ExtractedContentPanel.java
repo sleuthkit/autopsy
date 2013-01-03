@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.ComponentOrientation;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -611,6 +612,26 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Scroll to current (first) hit after SetMarkup worker completed
+     *
+     * @param source
+     */
+    private void scrollToCurrentHit(final MarkupSource source) {
+        if (source == null || !source.isSearchable()) {
+            return;
+        }
+
+        //scrolling required invokeLater to enqueue in EDT
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
+            }
+        });
+
+    }
+
+    /**
      * Gets and sets new markup. Updates GUI in GUI thread and gets markup in
      * background thread. To be invoked from GUI thread only.
      */
@@ -655,6 +676,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 setPanelText("", false);
             }
             updateControls(source);
+
+            scrollToCurrentHit(source);
+
 
         }
     }
