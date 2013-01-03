@@ -104,7 +104,9 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
             byte[] t = new byte[64];
             if(fsContent.getSize() > 64) {
                 int byteRead = fsContent.read(t, 0, 64);
-                isMbox = mbox.isValidMimeTypeMbox(t);
+                if (byteRead > 0) {
+                    isMbox = mbox.isValidMimeTypeMbox(t);
+                }
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, null, ex);
@@ -120,6 +122,8 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
             Long msfId = 0L;
             currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+            
+            
             try {
                 ResultSet resultset = tskCase.runQuery("SELECT obj_id FROM tsk_files WHERE parent_path = '" + mboxPath + "' and name = '" + msfName + "'");
                 if (! resultset.next()) {
