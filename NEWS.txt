@@ -4,7 +4,7 @@ New features:
 
 Improvements:
 - Keyword search indexing and search speed improvements
-- Improved keyword search highlighting in Text View: highlighted tokens are no longer white-space separated
+- Improved keyword search highlighting in Text View: highlighted tokens are no longer delimiter separated
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
 - Documented report module API
@@ -12,7 +12,8 @@ Improvements:
 
 
 Bugfixes:
-- Keyword search will index and search entire extracted content from files
+- Keyword search now indexes and searches entire extracted content from files
+- Fix scrolling to first keyword hit when Text View is first loaded
 
 ---------------- VERSION 3.0.2 --------------
 
