@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.corecomponents;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -12,15 +12,15 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
-iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
-position = 2,
-keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
-keywordsCategory = "KeywordSearchOptions")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
-public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
+    categoryName = "#OptionsCategory_Name_General",
+iconBase = "org/sleuthkit/autopsy/corecomponents/general-options.png",
+position = 1,
+keywords = "#OptionsCategory_Keywords_General",
+keywordsCategory = "General")
+@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_General=General", "OptionsCategory_Keywords_General=general"})
+public final class GeneralOptionsPanelController extends OptionsPanelController {
 
-    private KeywordSearchConfigurationPanel panel;
+    private GeneralPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
@@ -35,8 +35,7 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     }
 
     public void cancel() {
-        // Reload XML on cancel
-        KeywordSearchListsXML.getCurrent().reload();
+        // need not do anything special, if no changes have been persisted yet
     }
 
     public boolean isValid() {
@@ -63,9 +62,9 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
         pcs.removePropertyChangeListener(l);
     }
 
-    private KeywordSearchConfigurationPanel getPanel() {
+    private GeneralPanel getPanel() {
         if (panel == null) {
-            panel = new KeywordSearchConfigurationPanel();//this);
+            panel = new GeneralPanel(this);
         }
         return panel;
     }
