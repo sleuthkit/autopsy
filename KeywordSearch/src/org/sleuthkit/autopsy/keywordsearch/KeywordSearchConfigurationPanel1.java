@@ -134,7 +134,7 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
     
     @Override
     public void store() {
-        KeywordSearchListsXML.getCurrent().save();
+        KeywordSearchListsXML.getCurrent().save(false);
         //refresh the list viewer/searcher panel
         KeywordSearchListsViewerPanel.getDefault().resync();
     }
