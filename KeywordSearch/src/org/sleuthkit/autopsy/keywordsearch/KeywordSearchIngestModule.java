@@ -888,13 +888,16 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         return null;
                     }
 
+                    final String queryStr = keywordQuery.getQuery();
+                    final KeywordSearchList list = keywordToList.get(queryStr);
+                    final String listName = list.getName();
+
+                    //new subProgress will be active after the initial query
+                    //when we know number of hits to start() with
                     if (keywordsSearched > 0) {
                         subProgresses[keywordsSearched - 1].finish();
                     }
 
-                    final String queryStr = keywordQuery.getQuery();
-                    final KeywordSearchList list = keywordToList.get(queryStr);
-                    final String listName = list.getName();
 
                     KeywordSearchQuery del = null;
 
@@ -1080,11 +1083,14 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         if (!newArtifacts.isEmpty()) {
                             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
-                    }
-
+                    } //if has results
+                                        
+                    //reset the status text before it goes away
+                    subProgresses[keywordsSearched].progress("");
+                    
                     ++keywordsSearched;
 
-                }
+                } //for each keyword
 
             } //end try block
             catch (Exception ex) {

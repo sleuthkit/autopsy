@@ -56,7 +56,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
     private String field = null;
-    private static int MAX_TERMS_RESULTS = 20000;
+    private static int MAX_TERMS_RESULTS = 200000;
     
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
