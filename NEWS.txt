@@ -1,19 +1,20 @@
----------------- VERSION Current (dev) --------------
-New features:
-
+---------------- VERSION 3.0.3 --------------
 
 Improvements:
-- Keyword search indexing and search speed improvements
-- Improved keyword search highlighting in Text View: highlighted tokens are no longer delimiter separated
+- Keyword Search indexing and search speed improvements
+- Improved Keyword Search highlighting in Text View: highlighted tokens are no longer delimiter separated
+- Better progress updates from Keyword Search ingest
+- Upgrade to Solr4.0 / Tika 1.2
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
-- Documented report module API
-- Upgrade to Solr4.0 / Tika 1.2
+- New option to keep the most specific file viewer (default) or the lastly used viewer active.
 
 
 Bugfixes:
 - Keyword search now indexes and searches entire extracted content from files
 - Fix scrolling to first keyword hit when Text View is first loaded
+- Imported keyword lists are now always enabled for ingest by default
+
 
 ---------------- VERSION 3.0.2 --------------
 
