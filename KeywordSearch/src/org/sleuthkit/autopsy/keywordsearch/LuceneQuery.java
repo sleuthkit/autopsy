@@ -51,7 +51,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
     private String field = null;
-    private static final int MAX_RESULTS = 10000;
+    private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
     //can use different highlight schema fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
