@@ -11,7 +11,8 @@ Improvements:
 
 
 Bugfixes:
-- Keyword search now indexes and searches entire extracted content from files
+- Keyword search now indexes and searches entire extracted content from files and does not miss content.
+*Note: cases from earlier versions need to have index rebuilt by rerunning keyword search index.
 - Fix scrolling to first keyword hit when Text View is first loaded
 - Imported keyword lists are now always enabled for ingest by default
 
