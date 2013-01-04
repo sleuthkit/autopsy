@@ -252,9 +252,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex);
         } catch (KeywordSearchModuleException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", se);
-        } finally {
-            cleanup();
         }
+        
+        //cleanup done in final searcher
 
         //postSummary();
     }
@@ -290,13 +290,13 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     }
 
     /**
-     * Common cleanup code when module stops or completes
+     * Common cleanup code when module stops or final searcher completes
      */
     private void cleanup() {
         ingestStatus.clear();
         currentResults.clear();
         currentSearcher = null;
-        finalSearcher = null;
+        //finalSearcher = null; //do not collect, might be finalizing
 
         commitTimer.stop();
         searchTimer.stop();
@@ -1148,8 +1148,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-
+                
                 services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
+                
+                //run module cleanup
+                cleanup();
             } else {
                 //start counting time for a new searcher to start
                 //unless final searcher is pending
