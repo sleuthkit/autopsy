@@ -172,7 +172,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public String toString() {
-                return "Extracted Content";
+                return "Extracted Text";
             }
 
             @Override

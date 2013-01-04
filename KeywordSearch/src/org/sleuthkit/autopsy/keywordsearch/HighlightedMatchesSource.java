@@ -388,7 +388,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public String toString() {
-        return "Search Matches";
+        return "Search Results";
     }
 
     @Override

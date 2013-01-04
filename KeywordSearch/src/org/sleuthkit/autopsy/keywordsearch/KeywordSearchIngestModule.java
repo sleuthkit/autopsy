@@ -33,8 +33,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
+import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
+import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -813,7 +814,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordLists; // lists currently being searched
         private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
-        private ProgressHandle progress;
+        private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
         private boolean finalRun = false;
 
@@ -838,19 +839,29 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             }
 
             final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
-            progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
+            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" (Pending)"), null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
-                    if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    if (progressGroup != null) {
+                        progressGroup.setDisplayName(displayName + " (Cancelling...)");
                     }
                     return Searcher.this.cancel(true);
                 }
-            });
+            }, null);
 
-            progress.start();
-            progress.switchToIndeterminate();
+            updateKeywords();
+
+            ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
+            int i = 0;
+            for (Keyword keywordQuery : keywords) {
+                subProgresses[i] =
+                        AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
+                progressGroup.addContributor(subProgresses[i]);
+                i++;
+            }
+
+            progressGroup.start();
 
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
@@ -859,7 +870,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             stopWatch.start();
             try {
                 logger.log(Level.INFO, "Started a new searcher");
-                progress.setDisplayName(displayName);
+                progressGroup.setDisplayName(displayName);
                 //make sure other searchers are not spawned 
                 searcherDone = false;
                 runSearcher = false;
@@ -867,21 +878,23 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                     searchTimer.stop();
                 }
 
-                int numSearched = 0;
+                int keywordsSearched = 0;
 
-                updateKeywords();
-                progress.switchToDeterminate(keywords.size());
+                //updateKeywords();
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
                         logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
                         return null;
                     }
+
+                    if (keywordsSearched > 0) {
+                        subProgresses[keywordsSearched - 1].finish();
+                    }
+
                     final String queryStr = keywordQuery.getQuery();
                     final KeywordSearchList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
-
-                    progress.progress(listName + " " + queryStr, numSearched);
 
                     KeywordSearchQuery del = null;
 
@@ -921,6 +934,17 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         //new artifacts created, to report to listeners
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
 
+                        //scale progress bar more more granular, per result sub-progress, within per keyword
+                        int totalUnits = newResults.size();
+                        subProgresses[keywordsSearched].start(totalUnits);
+                        int unitProgress = 0;
+                        String queryDisplayStr = keywordQuery.getQuery();
+                        if (queryDisplayStr.length() > 50) {
+                            queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
+                        }
+                        subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
+
+
                         for (final Keyword hitTerm : newResults.keySet()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
@@ -953,6 +977,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 }
 
                                 newArtifacts.add(written.getArtifact());
+
+                                //send notify every 250 results
+                                if (newArtifacts.size() % 250 == 0) {
+                                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                                }
 
                                 //generate a data message for each artifact
                                 StringBuilder subjectSb = new StringBuilder();
@@ -1032,15 +1061,29 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 }
 
 
-                            } //for each term hit
-                        }//for each file hit
+                            } //for each file hit
+
+                            ++unitProgress;
+
+                            String hitDisplayStr = hitTerm.getQuery();
+                            if (hitDisplayStr.length() > 50) {
+                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
+                            }
+                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
+                            //subProgresses[keywordsSearched].progress(unitProgress);
+
+
+                        }//for each hit term
+
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
                             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     }
-                    progress.progress(queryStr, ++numSearched);
+
+                    ++keywordsSearched;
+
                 }
 
             } //end try block
@@ -1090,7 +1133,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    progress.finish();
+                    progressGroup.finish();
                 }
             });
             searcherDone = true;  //next currentSearcher can start
