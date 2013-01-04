@@ -117,6 +117,11 @@ public class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
     public boolean save() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+    
+    @Override
+    public boolean save(boolean isExport) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 
     @Override
     public boolean load() {
