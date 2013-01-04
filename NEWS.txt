@@ -1,5 +1,8 @@
 ---------------- VERSION 3.0.3 --------------
 
+*Note: Due to major changes in Keyword search module indexing this release is not fully backward compatible.
+As a workaround, you will need to rebuild index by re-running Keyword Search ingest on Cases created with previous versions.
+
 Improvements:
 - Keyword Search indexing and search speed improvements
 - Improved Keyword Search highlighting in Text View: highlighted tokens are no longer delimiter separated
@@ -12,7 +15,6 @@ Improvements:
 
 Bugfixes:
 - Keyword search now indexes and searches entire extracted content from files and does not miss content.
-*Note: cases from earlier versions need to have index rebuilt by rerunning keyword search index.
 - Fix scrolling to first keyword hit when Text View is first loaded
 - Imported keyword lists are now always enabled for ingest by default
 
