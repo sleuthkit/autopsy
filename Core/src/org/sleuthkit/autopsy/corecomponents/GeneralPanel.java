@@ -9,6 +9,7 @@ import org.openide.util.NbPreferences;
 final class GeneralPanel extends javax.swing.JPanel {
 
     private final GeneralOptionsPanelController controller;
+    private final static String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
 
     GeneralPanel(GeneralOptionsPanelController controller) {
         this.controller = controller;
@@ -24,9 +25,27 @@ final class GeneralPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        preferredViewerCheckBox = new javax.swing.JCheckBox();
+        buttonGroup1 = new javax.swing.ButtonGroup();
+        useBestViewerRB = new javax.swing.JRadioButton();
+        keepCurrentViewerRB = new javax.swing.JRadioButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(preferredViewerCheckBox, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.preferredViewerCheckBox.text")); // NOI18N
+        buttonGroup1.add(useBestViewerRB);
+        useBestViewerRB.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(useBestViewerRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useBestViewerRB.text")); // NOI18N
+        useBestViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useBestViewerRB.toolTipText")); // NOI18N
+        useBestViewerRB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useBestViewerRBActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(keepCurrentViewerRB);
+        org.openide.awt.Mnemonics.setLocalizedText(keepCurrentViewerRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.keepCurrentViewerRB.text")); // NOI18N
+        keepCurrentViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.keepCurrentViewerRB.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -34,23 +53,43 @@ final class GeneralPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(preferredViewerCheckBox)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(useBestViewerRB)
+                            .addComponent(keepCurrentViewerRB))
+                        .addContainerGap(122, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator1))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(preferredViewerCheckBox)
-                .addGap(0, 45, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel1)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(useBestViewerRB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(keepCurrentViewerRB)
+                .addContainerGap(18, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_useBestViewerRBActionPerformed
+
     void load() {
-        preferredViewerCheckBox.setSelected(NbPreferences.forModule(GeneralPanel.class).getBoolean("keepPreferredViewer", false));
+        boolean keepPreferredViewer = NbPreferences.forModule(GeneralPanel.class).getBoolean(KEEP_PREFERRED_VIEWER, false);
+        keepCurrentViewerRB.setSelected(keepPreferredViewer);
+        useBestViewerRB.setSelected(!keepPreferredViewer);
     }
 
     void store() {
-        NbPreferences.forModule(GeneralPanel.class).putBoolean("keepPreferredViewer", preferredViewerCheckBox.isSelected());
+        NbPreferences.forModule(GeneralPanel.class).putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
     }
 
     boolean valid() {
@@ -58,6 +97,10 @@ final class GeneralPanel extends javax.swing.JPanel {
         return true;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox preferredViewerCheckBox;
+    private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JRadioButton keepCurrentViewerRB;
+    private javax.swing.JRadioButton useBestViewerRB;
     // End of variables declaration//GEN-END:variables
 }
