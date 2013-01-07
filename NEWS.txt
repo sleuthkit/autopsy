@@ -4,17 +4,14 @@
 As a workaround, you will need to rebuild index by re-running Keyword Search ingest on Cases created with previous versions.
 
 Improvements:
-- Keyword Search indexing and search speed improvements
-- Improved Keyword Search highlighting in Text View: highlighted tokens are no longer delimiter separated
-- Better progress updates from Keyword Search ingest
-- Upgrade to Solr4.0 / Tika 1.2
+- Upgrade to Solr4.0 / Tika 1.2: Improved performance and highlighting
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
 - New option to keep the most specific file viewer (default) or the lastly used viewer active.
 
 
 Bugfixes:
-- Keyword search now indexes and searches entire extracted content from files and does not miss content.
+- Fixed bug that caused the ends of large amounts of text to not be indexed (occurs mostly in unallocated space).
 - Fix scrolling to first keyword hit when Text View is first loaded
 - Imported keyword lists are now always enabled for ingest by default
 
