@@ -1,3 +1,15 @@
+---------------- VERSION Current (development) --------------
+
+New features:
+
+
+Improvements:
+
+
+Bugfixes:
+
+
+
 ---------------- VERSION 3.0.3 --------------
 
 *Note: Due to major changes in Keyword search module indexing this release is not fully backward compatible.
