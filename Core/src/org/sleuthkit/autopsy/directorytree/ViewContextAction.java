@@ -81,30 +81,12 @@ class ViewContextAction extends AbstractAction {
 
             @Override
             public void run() {
+                // create a list of Content objects starting with content's
+                // Image and ends with content
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = content.accept(vtor);
-                
-                // create a list of Content objects starting with 'content' and
-                // ending with the image.
-//                List<Content> hierarchy2 = new ArrayList<Content>();
-//                hierarchy2.add(content);
-//                Content parent = null;
-//                try {
-//                    parent = content.getParent();
-//                } catch (TskCoreException ex) {
-//                    logger.log(Level.SEVERE, "Exception while calling 'getParent' on object: " + content, ex);
-//                }
-//                while (parent != null) {
-//                    hierarchy2.add(parent);
-//                    try {
-//                        parent = parent.getParent();
-//                    } catch (TskCoreException ex) {
-//                        logger.log(Level.SEVERE, "Exception while calling 'getParent' on object: " + parent, ex);
-//                        parent = null;
-//                    }
-//                }
-                
                 Collections.reverse(hierarchy);
+                
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
 
@@ -165,6 +147,14 @@ class ViewContextAction extends AbstractAction {
         });
     }
 
+    /**
+     * The ReverseHierarchyVisitor class is designed to return a list of Content
+     * objects starting with the one the user call 'accept' with and ending at
+     * the Image object.  Please NOTE that Content objects in this hierarchy of
+     * type VolumeSystem and FileSystem are skipped. This seems to be necessary
+     * because org.sleuthkit.autopsy.datamodel.AbstractContentChildren.CreateSleuthkitNodeVisitor
+     * does not support these types.
+     */
     private class ReverseHierarchyVisitor implements ContentVisitor<List<Content>> {
 
         List<Content> ret = new ArrayList<Content>();
@@ -201,7 +191,6 @@ class ViewContextAction extends AbstractAction {
 
         @Override
         public List<Content> visit(FileSystem fs) {
-            ret.add(fs);
             Content parent = null;
             try {
                 parent = fs.getParent();
@@ -231,7 +220,6 @@ class ViewContextAction extends AbstractAction {
 
         @Override
         public List<Content> visit(VolumeSystem vs) {
-            ret.add(vs);
             Content parent = null;
             try {
                 parent = vs.getParent();
