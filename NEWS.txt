@@ -1,7 +1,8 @@
 ---------------- VERSION Current (development) --------------
 
 New features:
-
+- Results and files can be tagged with custom tags and assigned different categories, and 
+they can be reported on based on those categories.
 
 Improvements:
 
