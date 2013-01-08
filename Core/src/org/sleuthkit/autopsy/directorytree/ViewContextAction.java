@@ -162,31 +162,25 @@ class ViewContextAction extends AbstractAction {
         @Override
         public List<Content> visit(Directory drctr) {
             ret.add(drctr);
-            if (drctr.isRoot()) {
-                return visit(drctr.getFileSystem());
-            } else {
-                try {
-                    return drctr.getParentDirectory().accept(this);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get directory's parent directory", ex);
-                }
+            Content parent = null;
+            try {
+                parent = drctr.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of Directory: " + drctr, ex);
             }
-            return ret;
+            return parent.accept(this);
         }
 
         @Override
         public List<Content> visit(File file) {
             ret.add(file);
-            if (file.isRoot()) {
-                return visit(file.getFileSystem());
-            } else {
-                try {
-                    return file.getParentDirectory().accept(this);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get file's parent directory", ex);
-                }
+            Content parent = null;
+            try {
+                parent = file.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of File: " + file, ex);
             }
-            return ret;
+            return parent.accept(this);
         }
 
         @Override
