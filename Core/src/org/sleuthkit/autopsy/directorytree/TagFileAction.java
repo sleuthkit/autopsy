@@ -65,7 +65,7 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
     
     private String getComment() {
         String comment = JOptionPane.showInputDialog(null,
-                "Please enter a comment for the tag:",
+                "Please enter a comment for the tag (optional):",
                 "Tag Comment",
                 JOptionPane.PLAIN_MESSAGE);
         if(comment == null || comment.isEmpty()) {
