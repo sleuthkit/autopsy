@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
@@ -33,6 +32,7 @@ import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
@@ -52,7 +52,15 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public static String REMOVE_FILESEARCH = "RemoveFileSearchTopComponent";
     // Different DataResultsViewers
     private List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
+    
+    //custom content viewer to send selections to, or null if the main one
+    private DataContent customContentViewer;
 
+    /**
+     * Create a new data result top component
+     * @param isMain whether it is the main, application default result viewer, there can be only 1 main result viewer
+     * @param title title of the data result window
+     */
     public DataResultTopComponent(boolean isMain, String title) {
         initComponents();
         setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));
@@ -65,6 +73,19 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
         this.dataResultTabbedPanel.addChangeListener(this);
     }
+    
+    /**
+     * Create a new, custom data result top component, in addition to the application main one
+     * @param title title of the data result window
+     * @param customContentViewer custom content viewer to send selection events to
+     */
+    public DataResultTopComponent(String title, DataContentTopComponent customContentViewer) {
+        this(false, title);
+        
+        //custom content viewer tc to setup for every result viewer
+        this.customContentViewer = customContentViewer;
+    }
+    
 
     private static class UpdateWrapper {
 
@@ -101,6 +122,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         
         boolean isSupported(Node selectedNode) {
             return this.wrapped.isSupported(selectedNode);
+        }
+        
+        void setContentViewer(DataContent contentViewer) {
+            this.wrapped.setContentViewer(contentViewer);
         }
     }
 
@@ -191,8 +216,14 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
             // find all dataContentViewer and add them to the tabbed pane
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                 DataResultViewer drv = factory.getInstance();
-                this.viewers.add(new UpdateWrapper(drv));
+                UpdateWrapper resultViewer = new UpdateWrapper(drv);
+                if (customContentViewer != null) {
+                    //set custom content viewer to respond to events from this result viewer
+                    resultViewer.setContentViewer(customContentViewer);
+                }
+                this.viewers.add(resultViewer);
                 this.dataResultTabbedPanel.addTab(drv.getTitle(), drv.getComponent());
+                
             }
         }
 
