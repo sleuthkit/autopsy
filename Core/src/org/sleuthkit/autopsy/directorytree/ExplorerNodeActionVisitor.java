@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.Volume;
 
 class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
@@ -277,15 +278,23 @@ class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Ac
                 "last_inum"
             };
 
-
-
-
             Object[][] rowValues = new Object[1][9];
+            
+            Content parent = null;
+            try {
+                parent = fs.getParent();
+            } catch (Exception ex) {
+                throw new RuntimeException("Problem getting parent from " + FileSystem.class.getName() + ": " + fs, ex);
+            }
+            long id = -1;
+            if (parent != null) {
+                id = parent.getId();
+            }
 
             Arrays.fill(rowValues, 0, 1, new Object[]{
                         fs.getId(),
                         fs.getImageOffset(),
-                        fs.getParent().getId(),
+                        id,
                         fs.getFsType(),
                         fs.getBlock_size(),
                         fs.getBlock_count(),

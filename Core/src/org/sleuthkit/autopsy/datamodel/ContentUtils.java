@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
@@ -29,6 +30,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -39,6 +41,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -175,50 +178,82 @@ public final class ContentUtils {
 
         @Override
         public List<String> visit(LayoutFile lay) {
-            List<String> path = lay.getParent().accept(this);
-            path.add(toString.visit(lay));
+            Content parent = null;
+            try {
+                parent = lay.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + LayoutFile.class.getName(), ex);
+            }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(lay));
+            }
             return path;
         }
 
         @Override
         public List<String> visit(VirtualDirectory ld) {
-            List<String> path = ld.getParent().accept(this);
-            path.add(toString.visit(ld));
+            Content parent = null;
+            try {
+                parent = ld.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + VirtualDirectory.class.getName(), ex);
+            }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(ld));
+            }
             return path;
         }
 
         @Override
         public List<String> visit(Directory dir) {
-            List<String> path;
-
-            if (dir.isRoot()) {
-                path = dir.getFileSystem().accept(this);
-            } else {
-                try {
-                    path = dir.getParentDirectory().accept(this);
-                    path.add(toString.visit(dir));
-                } catch (TskException ex) {
-                    throw new RuntimeException("Couldn't get directory path.", ex);
-                }
+            Content parent = null;
+            try {
+                parent = dir.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + Directory.class.getName(), ex);
             }
-
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(dir));
+            }
             return path;
         }
 
         @Override
         public List<String> visit(File file) {
+            Content parent = null;
             try {
-                List<String> path = file.getParentDirectory().accept(this);
-                path.add(toString.visit(file));
-                return path;
-            } catch (TskException ex) {
-                throw new RuntimeException("Couldn't get file path.", ex);
+                parent = file.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + File.class.getName(), ex);
             }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(file));
+            }
+            return path;
         }
 
         @Override
         public List<String> visit(FileSystem fs) {
-            return fs.getParent().accept(this);
+            Content parent = null;
+            try {
+                parent = fs.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + FileSystem.class.getName(), ex);
+            }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(fs));
+            }
+            return path;
         }
 
         @Override
@@ -230,14 +265,34 @@ public final class ContentUtils {
 
         @Override
         public List<String> visit(Volume volume) {
-            List<String> path = volume.getParent().accept(this);
-            path.add(toString.visit(volume));
+            Content parent = null;
+            try {
+                parent = volume.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + Volume.class.getName(), ex);
+            }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(volume));
+            }
             return path;
         }
 
         @Override
         public List<String> visit(VolumeSystem vs) {
-            return vs.getParent().accept(this);
+            Content parent = null;
+            try {
+                parent = vs.getParent();
+            } catch (TskCoreException ex) {
+                throw new RuntimeException("Problem getting parent from " + VolumeSystem.class.getName(), ex);
+            }
+            List<String> path = Collections.EMPTY_LIST;
+            if (parent != null) {
+                path = parent.accept(this);
+                path.add(toString.visit(vs));
+            }
+            return path;
         }
     }
     private static final int TO_FILE_BUFFER_SIZE = 8192;
