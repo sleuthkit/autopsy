@@ -8,7 +8,7 @@ Improvements:
 
 
 Bugfixes:
-
+- fixed crash and hang in html and excel report generation, due to special characters present
 
 
 ---------------- VERSION 3.0.3 --------------
