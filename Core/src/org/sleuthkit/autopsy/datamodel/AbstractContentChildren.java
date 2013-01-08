@@ -26,12 +26,12 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VirtualDirectory;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
-import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * Abstract subclass for ContentChildren and RootContentChildren implementations
@@ -137,9 +137,14 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             return ee.new EmailExtractedRootNode();
         }
         
-         @Override
+        @Override
         public AbstractNode visit(Bookmarks bks) {
             return bks.new BookmarksRootNode();
+        }
+        
+        @Override
+        public AbstractNode visit(Tags t) {
+            return t.new TagsRootNode();
         }
         
         @Override

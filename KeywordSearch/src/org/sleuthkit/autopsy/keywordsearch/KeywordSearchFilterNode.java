@@ -28,7 +28,7 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.autopsy.directorytree.BookmarkAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -144,7 +144,7 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(new ExtractAction("Extract File", getOriginal()));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(new BookmarkAction("Bookmark File", getOriginal()));
+            actions.add(new TagFileAction(getOriginal()));
             return actions;
         }
 
