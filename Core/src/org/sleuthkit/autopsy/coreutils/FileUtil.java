@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
 import org.openide.filesystems.FileObject;
 
 /**
@@ -148,5 +149,16 @@ public class FileUtil {
         FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, sourceFileObj.getName(), sourceFileObj.getExt());
         
         return created.getPath();
+    }
+    
+    /**
+     * Escape special characters in a file name or a file name component
+     * @param fileName to escape
+     * @return escaped string
+     */
+    public static String escapeFileName(String fileName) {        
+        //for now escaping / (not valid in file name, at least on Windows)
+        //with underscores.  Windows/Java seem to ignore \\/ and \\\\/ escapings 
+        return fileName.replaceAll("/", "_"); 
     }
 }
