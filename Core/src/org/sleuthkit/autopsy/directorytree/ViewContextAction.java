@@ -149,102 +149,46 @@ class ViewContextAction extends AbstractAction {
 
     /**
      * The ReverseHierarchyVisitor class is designed to return a list of Content
-     * objects starting with the one the user call 'accept' with and ending at
+     * objects starting with the one the user calls 'accept' with and ending at
      * the Image object.  Please NOTE that Content objects in this hierarchy of
      * type VolumeSystem and FileSystem are skipped. This seems to be necessary
      * because org.sleuthkit.autopsy.datamodel.AbstractContentChildren.CreateSleuthkitNodeVisitor
      * does not support these types.
      */
-    private class ReverseHierarchyVisitor implements ContentVisitor<List<Content>> {
-
+    private class ReverseHierarchyVisitor extends ContentVisitor.Default<List<Content>> {
+        
         List<Content> ret = new ArrayList<Content>();
-
-        @Override
-        public List<Content> visit(Directory drctr) {
-            ret.add(drctr);
+        
+        private List<Content> visitParentButDontAddMe(Content content) {
             Content parent = null;
             try {
-                parent = drctr.getParent();
+                parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of Directory: " + drctr, ex);
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
             }
-            return parent.accept(this);
+            return parent == null ? ret : parent.accept(this);
         }
 
         @Override
-        public List<Content> visit(File file) {
-            ret.add(file);
+        protected List<Content> defaultVisit(Content content) {
+            ret.add(content);
             Content parent = null;
             try {
-                parent = file.getParent();
+                parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of File: " + file, ex);
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
             }
-            return parent.accept(this);
+            return parent == null ? ret : parent.accept(this);
         }
-
+        
         @Override
         public List<Content> visit(FileSystem fs) {
-            Content parent = null;
-            try {
-                parent = fs.getParent();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of FileSystem: " + fs, ex);
-            }
-            return parent.accept(this);
+            return visitParentButDontAddMe(fs);
         }
-
-        @Override
-        public List<Content> visit(Image image) {
-            ret.add(image);
-            return ret;
-        }
-
-        @Override
-        public List<Content> visit(Volume volume) {
-            ret.add(volume);
-            Content parent = null;
-            try {
-                parent = volume.getParent();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of Volume: " + volume, ex);
-            }
-            return parent.accept(this);
-        }
-
+        
         @Override
         public List<Content> visit(VolumeSystem vs) {
-            Content parent = null;
-            try {
-                parent = vs.getParent();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of VolumeSystem: " + vs, ex);
-            }
-            return parent.accept(this);
-        }
-        
-        @Override
-        public List<Content> visit(LayoutFile lc) {
-            ret.add(lc);
-            Content parent = null;
-            try {
-                parent = lc.getParent();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of LayoutFile: " + lc, ex);
-            }
-            return parent.accept(this);
-        }
-        
-        @Override
-        public List<Content> visit(VirtualDirectory vd) {
-            ret.add(vd);
-            Content parent = null;
-            try {
-                parent = vd.getParent();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get parent of VirtualDirectory: " + vd, ex);
-            }
-            return parent.accept(this);
+            return visitParentButDontAddMe(vs);
         }
     }
 }
