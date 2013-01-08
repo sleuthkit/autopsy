@@ -33,7 +33,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Action that deletes blackboard artifacts requested and reloads the view
+ * @deprecated do not use, it is here in case we ever pick up on this work
  */
+@Deprecated
 public class ResultDeleteAction extends AbstractAction {
 
     private enum ActionType {
@@ -100,6 +102,7 @@ public class ResultDeleteAction extends AbstractAction {
     }
 
     //TODO should be moved to SleuthkitCase and BlackboardArtifact API
+    @SuppressWarnings("deprecation")
     private static void deleteArtifact(BlackboardArtifact art) {
         final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         final long artId = art.getArtifactID();
@@ -117,15 +120,17 @@ public class ResultDeleteAction extends AbstractAction {
     }
 
 
+    @SuppressWarnings("deprecation")
     private static void deleteArtifactsByAttributeValue(BlackboardArtifact.ARTIFACT_TYPE artType,
             BlackboardAttribute.ATTRIBUTE_TYPE attrType, String value) {
 
         final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        ResultSet rs = null;
         try {
             //first to select to get artifact ids to delete
             //then join delete attrs
             //then delete arts by id
-            ResultSet rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN "
+                    rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN "
                     + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts "
                     + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) "
                     + "WHERE blackboard_artifacts.artifact_type_id = "
@@ -134,7 +139,7 @@ public class ResultDeleteAction extends AbstractAction {
                     + " AND blackboard_attributes.value_type = " + BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING.getType()
                     + " AND blackboard_attributes.value_text = '" + value + "'"
                     + ")");
-            skCase.closeRunQuery(rs);
+        
 
             //rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_type_id = "
               //      + Integer.toString(artType.getTypeID()));
@@ -143,10 +148,20 @@ public class ResultDeleteAction extends AbstractAction {
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex);
         }
+        finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Error closing result set after deleting", ex);
+                }
+            }
+        }
 
     }
 
     //TODO should be moved to SleuthkitCase
+    @SuppressWarnings("deprecation")
     private static void deleteArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
         // SELECT * from blackboard_attributes INNER JOIN blackboard_artifacts ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_ID AND blackboard_artifacts.artifact_type_id = 9;
         final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
