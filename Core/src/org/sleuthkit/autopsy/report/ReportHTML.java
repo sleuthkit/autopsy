@@ -98,7 +98,6 @@ public class ReportHTML implements TableReportModule {
      * Start this report by setting the path, refreshing member variables,
      * and writing the skeleton for the HTML report.
      * @param path path to save the report
-     * @param info map of info to display in the summary
      */
     @Override
     public void startReport(String path) {
