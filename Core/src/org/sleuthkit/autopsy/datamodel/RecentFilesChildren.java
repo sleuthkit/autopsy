@@ -34,12 +34,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
-public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter>{
-    
+public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
+
     SleuthkitCase skCase;
     Calendar lastDay;
     private final static Logger logger = Logger.getLogger(RecentFilesChildren.class.getName());
-    
+
     public RecentFilesChildren(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
@@ -48,7 +48,7 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
     protected boolean createKeys(List<RecentFiles.RecentFilesFilter> list) {
         list.addAll(Arrays.asList(RecentFiles.RecentFilesFilter.values()));
         lastDay = Calendar.getInstance();
-        lastDay.setTimeInMillis(getLastTime()*1000);
+        lastDay.setTimeInMillis(getLastTime() * 1000);
         lastDay.set(Calendar.HOUR_OF_DAY, 0);
         lastDay.set(Calendar.MINUTE, 0);
         lastDay.set(Calendar.SECOND, 0);
@@ -57,10 +57,10 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
     }
 
     @Override
-    protected Node createNodeForKey(RecentFiles.RecentFilesFilter key){
+    protected Node createNodeForKey(RecentFiles.RecentFilesFilter key) {
         return new RecentFilesFilterNode(skCase, key, lastDay);
     }
-    
+
     private long getLastTime() {
         String query = createMaxQuery("crtime");
         long maxcr = runTimeQuery(query);
@@ -73,25 +73,29 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
         //return Math.max(maxcr, Math.max(maxc, Math.max(maxm, maxa)));
         return Math.max(maxcr, Math.max(maxc, maxm));
     }
-    
-    private String createMaxQuery(String attr){
-        return "select max(" + attr + ") from tsk_files where " + attr + " < " + System.currentTimeMillis()/1000;
+
+    private String createMaxQuery(String attr) {
+        return "select max(" + attr + ") from tsk_files where " + attr + " < " + System.currentTimeMillis() / 1000;
     }
-    
+
+    @SuppressWarnings("deprecation")
     private long runTimeQuery(String query) {
         long result = 0;
+        ResultSet rs = null;
         try {
-            ResultSet rs = skCase.runQuery(query);
+            rs = skCase.runQuery(query);
             result = rs.getLong(1);
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null)
-                s.close();
         } catch (SQLException ex) {
-            Logger.getLogger(RecentFilesFilterChildren.class.getName())
-                    .log(Level.WARNING, "Couldn't get search results", ex);
+            logger.log(Level.WARNING, "Couldn't get recent files results", ex);
+        } finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Error closing result set after getting recent files results", ex);
+                }
+            }
         }
         return result;
     }
-    
 }

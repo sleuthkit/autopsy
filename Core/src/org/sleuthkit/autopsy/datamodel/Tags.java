@@ -312,6 +312,7 @@ public class Tags implements AutopsyVisitableItem {
      * Uses a custom query for speed when dealing with thousands of Tags.
      * @return a list of all tag names.
      */
+    @SuppressWarnings("deprecation")
     public static List<String> getTagNames() {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -333,6 +334,7 @@ public class Tags implements AutopsyVisitableItem {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to close the query for blackboard for tag names.");
                 }
             }
         }

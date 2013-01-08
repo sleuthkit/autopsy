@@ -106,8 +106,10 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void initArtifacts() {
         artifacts.clear();
+        ResultSet rs = null;
         try {
             int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
@@ -120,7 +122,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     + ") AND (attribute_type_id=" + setId + " OR "
                     + "attribute_type_id=" + wordId + " OR "
                     + "attribute_type_id=" + regexId + ")";
-            ResultSet rs = skCase.runQuery(query);
+            rs = skCase.runQuery(query);
             while (rs.next()) {
                 String value = rs.getString("value_text");
                 long artifactId = rs.getLong("artifact_id");
@@ -133,13 +135,18 @@ public class KeywordHits implements AutopsyVisitableItem {
                 }
 
             }
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
+      
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+        }
+        finally {
+              if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                   logger.log(Level.WARNING, "Error closing result set after getting keyword hits", ex);
+                }
+            }
         }
     }
 
