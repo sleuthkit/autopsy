@@ -227,6 +227,7 @@ public class Tags implements AutopsyVisitableItem {
      * Create a tag for a file with TSK_TAG_NAME as tagName.
      * @param file to create tag for
      * @param tagName TSK_TAG_NAME
+     * @param comment the tag comment
      */
     public static void createTag(AbstractFile file, String tagName, String comment) {
         try {
@@ -250,6 +251,7 @@ public class Tags implements AutopsyVisitableItem {
      * Create a tag for an artifact with TSK_TAG_NAME as tagName.
      * @param artifact to create tag for
      * @param tagName TSK_TAG_NAME
+     * @param comment the tag comment
      */
     public static void createTag(BlackboardArtifact artifact, String tagName, String comment) {
         try {
@@ -279,6 +281,7 @@ public class Tags implements AutopsyVisitableItem {
     /**
      * Create a bookmark tag for a file.
      * @param file to create bookmark tag for
+     * @param comment the bookmark comment
      */
     public static void createBookmark(AbstractFile file, String comment) {
         createTag(file, Bookmarks.BOOKMARK_TAG_NAME, comment);
@@ -287,6 +290,7 @@ public class Tags implements AutopsyVisitableItem {
     /**
      * Create a bookmark tag for an artifact.
      * @param artifact to create bookmark tag for
+     * @param comment the bookmark comment
      */
     public static void createBookmark(BlackboardArtifact artifact, String comment) {
         createTag(artifact, Bookmarks.BOOKMARK_TAG_NAME, comment);
