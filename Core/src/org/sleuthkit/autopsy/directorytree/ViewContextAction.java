@@ -32,6 +32,7 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -81,6 +83,27 @@ class ViewContextAction extends AbstractAction {
             public void run() {
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = content.accept(vtor);
+                
+                // create a list of Content objects starting with 'content' and
+                // ending with the image.
+//                List<Content> hierarchy2 = new ArrayList<Content>();
+//                hierarchy2.add(content);
+//                Content parent = null;
+//                try {
+//                    parent = content.getParent();
+//                } catch (TskCoreException ex) {
+//                    logger.log(Level.SEVERE, "Exception while calling 'getParent' on object: " + content, ex);
+//                }
+//                while (parent != null) {
+//                    hierarchy2.add(parent);
+//                    try {
+//                        parent = parent.getParent();
+//                    } catch (TskCoreException ex) {
+//                        logger.log(Level.SEVERE, "Exception while calling 'getParent' on object: " + parent, ex);
+//                        parent = null;
+//                    }
+//                }
+                
                 Collections.reverse(hierarchy);
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
@@ -178,7 +201,14 @@ class ViewContextAction extends AbstractAction {
 
         @Override
         public List<Content> visit(FileSystem fs) {
-            return fs.getParent().accept(this);
+            ret.add(fs);
+            Content parent = null;
+            try {
+                parent = fs.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of FileSystem: " + fs, ex);
+            }
+            return parent.accept(this);
         }
 
         @Override
@@ -190,30 +220,49 @@ class ViewContextAction extends AbstractAction {
         @Override
         public List<Content> visit(Volume volume) {
             ret.add(volume);
-            return visit(volume.getParent());
+            Content parent = null;
+            try {
+                parent = volume.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of Volume: " + volume, ex);
+            }
+            return parent.accept(this);
         }
 
         @Override
         public List<Content> visit(VolumeSystem vs) {
-            return visit(vs.getParent());
+            ret.add(vs);
+            Content parent = null;
+            try {
+                parent = vs.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of VolumeSystem: " + vs, ex);
+            }
+            return parent.accept(this);
         }
         
         @Override
         public List<Content> visit(LayoutFile lc) {
             ret.add(lc);
-            ret.addAll(lc.getParent().accept(this));
-              
-            
-            return ret;
-
+            Content parent = null;
+            try {
+                parent = lc.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of LayoutFile: " + lc, ex);
+            }
+            return parent.accept(this);
         }
         
         @Override
-        public List<Content> visit(VirtualDirectory ld) {
-             ret.add(ld);
-             ret.addAll(ld.getParent().accept(this));
-          
-            return ret;
+        public List<Content> visit(VirtualDirectory vd) {
+            ret.add(vd);
+            Content parent = null;
+            try {
+                parent = vd.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get parent of VirtualDirectory: " + vd, ex);
+            }
+            return parent.accept(this);
         }
     }
 }
