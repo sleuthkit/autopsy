@@ -141,7 +141,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 Keyword keywordQuery = new Keyword(queryStr, false);
                 chunksQuery = new LuceneQuery(keywordQuery);
                 KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
-                chunksQuery.setFilter(contentIdFilter);
+                chunksQuery.addFilter(contentIdFilter);
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
