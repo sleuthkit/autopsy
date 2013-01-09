@@ -29,6 +29,7 @@ import org.openide.util.Lookup;
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_HashDatabase",
 iconBase = "org/sleuthkit/autopsy/hashdatabase/options_icon.png",
+position = 3,
 keywords = "#OptionsCategory_Keywords_HashDatabase",
 keywordsCategory = "HashDatabase",
 id = "HashDatabase")

@@ -34,6 +34,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,8 +57,10 @@ public class HashsetHits implements AutopsyVisitableItem {
         hashSetHitsMap = new LinkedHashMap<String, Set<Long>>();
     }
 
+    @SuppressWarnings("deprecation")
     private void initArtifacts() {
         hashSetHitsMap.clear();
+        ResultSet rs = null;
         try {
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
@@ -66,7 +69,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                     + "attribute_type_id=" + setNameId
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
                     + " AND blackboard_artifacts.artifact_type_id=" + artId;
-            ResultSet rs = skCase.runQuery(query);
+            rs = skCase.runQuery(query);
             while (rs.next()) {
                 String value = rs.getString("value_text");
                 long artifactId = rs.getLong("artifact_id");
@@ -76,13 +79,18 @@ public class HashsetHits implements AutopsyVisitableItem {
                 hashSetHitsMap.get(value).add(artifactId);
 
             }
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
+           
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                }
+            }
         }
     }
 

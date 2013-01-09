@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.Content;
@@ -69,21 +70,28 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         return query;
     }
     
+    @SuppressWarnings("deprecation")
     private List<FsContent> runQuery(){
+        ResultSet rs = null;
         List<FsContent> list = new ArrayList<FsContent>();
         try {
-            ResultSet rs = skCase.runQuery(createQuery());
+            rs = skCase.runQuery(createQuery());
             for(FsContent c : skCase.resultSetToFsContents(rs)){
                 if(c.isFile()){
                     list.add(c);
                 }
             }
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null)
-                s.close();
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get search results", ex);
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing result set after executing fscontents query for file search results", ex);
+                }
+            }
         }
         return list;
         

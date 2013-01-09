@@ -60,6 +60,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         accounts = new LinkedHashMap<String, Map<String, List<Long>>>();
     }
 
+    @SuppressWarnings("deprecation")
     private void initArtifacts() {
         accounts.clear();
         try {

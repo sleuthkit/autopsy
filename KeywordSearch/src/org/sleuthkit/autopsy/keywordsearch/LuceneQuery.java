@@ -33,6 +33,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -50,11 +51,15 @@ public class LuceneQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
     private String field = null;
-    //use different highlight Solr fields for regex and literal search
+    private static final int MAX_RESULTS = 20000;
+    static final int SNIPPET_LENGTH = 50;
+    //can use different highlight schema fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
     static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
     //TODO use content_ws stored="true" in solr schema for perfect highlight hits
     //static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT_WS.toString()
+    
+    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
@@ -180,11 +185,11 @@ public class LuceneQuery implements KeywordSearchQuery {
         List<ContentHit> matches = new ArrayList<ContentHit>();
 
         boolean allMatchesFetched = false;
-        final int ROWS_PER_FETCH = 10000;
 
         final Server solrServer = KeywordSearch.getServer();
 
         SolrQuery q = new SolrQuery();
+        q.setShowDebugInfo(DEBUG); //debug
 
         //set query, force quotes/grouping around all literal queries
         final String groupedQuery = KeywordSearchUtil.quoteQuery(queryEscaped);
@@ -197,20 +202,20 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
         
         q.setQuery(theQueryStr);
-        q.setRows(ROWS_PER_FETCH);
+        q.setRows(MAX_RESULTS);
         q.setFields(Server.Schema.ID.toString());
         if (filter != null) {
             q.addFilterQuery(filter.toString());
         }
 
-        for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
+        for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
             q.setStart(start);
 
             try {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
-                allMatchesFetched = start + ROWS_PER_FETCH >= results;
+                allMatchesFetched = start + MAX_RESULTS >= results;
                 SleuthkitCase sc = null;
                 try {
                     sc = Case.getCurrentCase().getSleuthkitCase();
@@ -289,8 +294,6 @@ public class LuceneQuery implements KeywordSearchQuery {
      * @return 
      */
     public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
-        final int SNIPPET_LENGTH = 45;
-
         Server solrServer = KeywordSearch.getServer();
 
         String highlightField = null;
@@ -302,6 +305,8 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         SolrQuery q = new SolrQuery();
 
+        String queryStr = null;
+        
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
             sb.append(highlightField).append(":");
@@ -313,12 +318,14 @@ public class LuceneQuery implements KeywordSearchQuery {
                 sb.append("\"");
             }
 
-            q.setQuery(sb.toString());
+            queryStr = sb.toString();
         } else {
             //simplify query/escaping and use default field
             //always force grouping/quotes
-            q.setQuery(KeywordSearchUtil.quoteQuery(query));
+            queryStr = KeywordSearchUtil.quoteQuery(query);
         }
+        
+        q.setQuery(queryStr);
 
         String contentIDStr = null;
 
@@ -329,13 +336,28 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
 
         String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;
+        q.setShowDebugInfo(DEBUG); //debug
         q.addFilterQuery(idQuery);
         q.addHighlightField(highlightField);
-        q.setHighlightSimplePre("&laquo;");
-        q.setHighlightSimplePost("&raquo;");
+        //q.setHighlightSimplePre("&laquo;"); //original highlighter only
+        //q.setHighlightSimplePost("&raquo;");  //original highlighter only
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content SLOW! consider lowering
+        
+        
+        
+        //tune the highlighter
+        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
+        q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+        
+         //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
+        q.setParam("hl.fragCharSize", Integer.toString(queryStr.length())); //makes sense for FastVectorHighlighter only
+        
+        //docs says makes sense for the original Highlighter only, but not really
+        //analyze all content SLOW! consider lowering
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); 
 
         try {
             QueryResponse response = solrServer.query(q);

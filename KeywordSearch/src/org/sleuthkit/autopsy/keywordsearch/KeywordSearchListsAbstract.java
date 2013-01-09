@@ -341,7 +341,7 @@ public abstract class KeywordSearchListsAbstract {
             }
             theLists.put(list.getName(), list);
         }
-        boolean saved = save();
+        boolean saved = save(true);
         if (saved) {
             for (KeywordSearchList list : newLists) {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
@@ -407,6 +407,13 @@ public abstract class KeywordSearchListsAbstract {
      * writes out current list replacing the last lists file
      */
     public abstract boolean save();
+    
+    /**
+     * writes out current list replacing the last lists file
+     * @param isExport true is this save operation is an export and not a 'Save
+     * As'
+     */
+    public abstract boolean save(boolean isExport);
 
     /**
      * load and parse List, then dispose

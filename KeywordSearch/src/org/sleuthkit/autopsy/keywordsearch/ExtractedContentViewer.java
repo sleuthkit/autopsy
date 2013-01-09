@@ -172,7 +172,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public String toString() {
-                return "Extracted Content";
+                return "Extracted Text";
             }
 
             @Override
@@ -234,13 +234,10 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (currentPage == 0 && currentSource.hasNextPage()) {
             currentSource.nextPage();
         }
-
         updatePageControls();
 
         // first source will be the default displayed
         setPanel(sources);
-        // If node has been selected before, return to the previous position
-        scrollToCurrentHit();
     }
 
     private void scrollToCurrentHit() {
@@ -249,13 +246,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             return;
         }
 
-        // using invokeLater to wait for ComboBox selection to complete
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
-            }
-        });
+        panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
+
     }
 
     @Override

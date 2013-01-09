@@ -378,7 +378,7 @@ public final class ExtractUnallocAction extends AbstractAction {
         /**
          * LayoutDirectory has all the Layout(Unallocated) files
          *
-         * @param ld LayoutDirectory the visitor encountered
+         * @param vd VirtualDirectory the visitor encountered
          * @return A list<LayoutFile> containing all the LayoutFile in ld,
          * returns null if it fails
          */

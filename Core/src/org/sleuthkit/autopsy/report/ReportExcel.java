@@ -123,6 +123,7 @@ public class ReportExcel implements TableReportModule {
             }
         }
     }
+    
 
     /**
      * Start a new sheet for the given data type.
@@ -130,6 +131,7 @@ public class ReportExcel implements TableReportModule {
      */
     @Override
     public void startDataType(String title) {
+        title = escapeForExcel(title);
         sheet = wb.createSheet(title);
         sheet.setAutobreaks(true);
         currentDataType = title;
@@ -154,6 +156,7 @@ public class ReportExcel implements TableReportModule {
      */
     @Override
     public void startSet(String setName) {
+        setName = escapeForExcel(setName);
         Row temp = sheet.createRow(rowCount);
         temp.setRowStyle(setStyle);
         temp.createCell(0).setCellValue(setName);
@@ -179,6 +182,7 @@ public class ReportExcel implements TableReportModule {
      */
     @Override
     public void addSetElement(String elementName) {
+        elementName = escapeForExcel(elementName);
         Row temp = sheet.createRow(rowCount);
         temp.setRowStyle(elementStyle);
         temp.createCell(0).setCellValue(elementName);
@@ -248,4 +252,13 @@ public class ReportExcel implements TableReportModule {
         return "Excel.xlsx";
     }
     
+    /**
+     * Escape special chars for Excel that would cause errors/hangs in generating report
+     * The following are not valid for sheet names: ? / \ * :
+     * @param text
+     * @return 
+     */
+    private static String escapeForExcel(String text) {
+         return text.replaceAll("[\\/\\:\\?\\*\\\\]", "_");
+    }
 }
