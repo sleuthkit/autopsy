@@ -137,7 +137,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 dataContent = DataContentTopComponent.createUndocked("Content", Node.EMPTY);
                 dataContent.setSize(1, 1);
                 dataContent.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult = DataResultTopComponent.createInstance("Results", "", Node.EMPTY, 0);
+                dataResult = DataResultTopComponent.createInstance("Results", "", Node.EMPTY, 0, dataContent);
                 dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dataResult.setPreferredSize(new Dimension(700, 300));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -850,7 +850,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
         String macfile = Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "temp" + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
-            String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + ">" + macfile;
+            String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
             try {
                 JavaSystemCaller.Exec.execute("\"" + command + "\"");
                 return macfile;
