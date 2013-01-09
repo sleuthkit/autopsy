@@ -66,7 +66,7 @@ public class IngestMonitor {
     //TODO add support to monitor multiple drives, e.g. user dir drive in addition to Case drive
     private class MonitorAction implements ActionListener {
 
-        private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024; //100MB
+        private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024 * 999999; //100MB
         private File root = new File(File.separator); //default, roto dir where autopsy runs
 
         MonitorAction() {
@@ -118,7 +118,7 @@ public class IngestMonitor {
                 final String diskPath = root.getAbsolutePath();
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerMessage("Stopping ingest due to low disk space on disk " + diskPath, "Stopping ingest due to low disk space on disk " + diskPath + ". Please ensure the drive where Case is located has at least 1GB free space (more for large images) and restart ingest."));
+                manager.postMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space." + diskPath, "Stopping ingest due to low disk space on disk " + diskPath + ". Please ensure the drive where Case is located has at least 1GB free space (more for large images) and restart ingest."));
             }
         }
 
