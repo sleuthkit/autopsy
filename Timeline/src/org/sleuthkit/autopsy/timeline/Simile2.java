@@ -21,16 +21,11 @@ package org.sleuthkit.autopsy.timeline;
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -78,6 +73,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -854,7 +850,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
         String macfile = Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "temp" + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
-        if (macRoot != null) {
             String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + ">" + macfile;
             try {
                 JavaSystemCaller.Exec.execute("\"" + command + "\"");
@@ -864,9 +859,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             } catch (IOException ioe) {
                 logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
             }
-        } else {
-            System.out.println("Macroot was null");
-        }
         return null;
     }
 
@@ -875,15 +867,27 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
 
     @Override
     public void performAction() {
-        if(IngestManager.getDefault().isIngestRunning()){
+        if(!Case.existsCurrentCase()){
+            return; //Todo: fix how action is enabled disabled. Should be done outside this function.
+        } 
+      else {
+            try {
+             if(Case.getCurrentCase().getImages().isEmpty()){
+            logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+        }
+        else if(IngestManager.getDefault().isIngestRunning()){
             int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
             if (i != JOptionPane.YES_OPTION){
                 return;
             }
-        }else{
+        }
+        else{
                 logger.log(Level.INFO, "Beginning generation of timeline");
                 customizeSwing();
                 customize();
+        }} catch (TskCoreException ex) {
+             Exceptions.printStackTrace(ex);
+         }
         }
     }
 
