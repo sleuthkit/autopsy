@@ -153,6 +153,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
      * Action when the "Search" button is pressed.
      *
      */
+    @SuppressWarnings("deprecation")
     private void search() {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -170,16 +171,12 @@ public class FileSearchPanel extends javax.swing.JPanel {
                     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
                     ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     totalMatches = totalMatches + rs.getInt("TotalMatches");
-                    Statement s = rs.getStatement();
-                    rs.close();
-                    if (s != null)
-                        s.close();
+                    tempDb.closeRunQuery(rs);
+                    
                     rs = tempDb.runQuery(this.getQuery(null));
                     currentDbList = tempDb.resultSetToFsContents(rs);
-                    s = rs.getStatement();
-                    rs.close();
-                    if (s != null)
-                        s.close();
+                    tempDb.closeRunQuery(rs);
+                    
                     fsContentList.addAll(currentDbList);
                 } catch (SQLException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());

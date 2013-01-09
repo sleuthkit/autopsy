@@ -118,7 +118,10 @@ public class IngestMonitor {
                 final String diskPath = root.getAbsolutePath();
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerMessage("Stopping ingest due to low disk space on disk " + diskPath, "Stopping ingest due to low disk space on disk " + diskPath + ". Please ensure the drive where Case is located has at least 1GB free space (more for large images) and restart ingest."));
+                manager.postMessage(IngestMessage.createManagerErrorMessage
+                        ("Ingest stopped - low disk space on " + diskPath, 
+                        "Stopping ingest due to low disk space on disk " + diskPath 
+                        + ". \nEnsure the Case drive has at least 1GB free space and restart ingest."));
             }
         }
 

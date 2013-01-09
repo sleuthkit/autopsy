@@ -104,6 +104,22 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("</td>");
                 buffer.append("</tr>");
             }
+            
+            //add file path
+            buffer.append("<tr>");
+            buffer.append("<td>Source File</td>");
+            buffer.append("<td>");
+            final Content content = getAssociatedContent(wrapped);
+            buffer.append(content.getName());
+            buffer.append("</td>");
+            buffer.append("</tr>");
+            buffer.append("<tr>");
+            buffer.append("<td>Source File Path</td>");
+            buffer.append("<td>");
+            buffer.append(DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
+            buffer.append("</td>");
+            buffer.append("</tr>");
+            
             buffer.append("</table>");
             buffer.append("</html>");
             return buffer.toString();

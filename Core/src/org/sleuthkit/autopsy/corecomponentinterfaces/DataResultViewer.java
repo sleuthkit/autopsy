@@ -80,4 +80,11 @@ public interface DataResultViewer {
      * @return True if supported, else false
      */
     public boolean isSupported(Node selectedNode);
+    
+    /**
+     * Set a custom content viewer to respond to selection events from this result viewer.
+     * If not set, the default content viewer is user
+     * @param contentViewer content viewer to respond to selection events from this viewer
+     */
+    public void setContentViewer(DataContent contentViewer);
 }

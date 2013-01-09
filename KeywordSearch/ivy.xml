@@ -17,9 +17,14 @@
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.0.0"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.2"/>
+        <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
+        <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
+        
+        <!-- TODO update jetty to eclipse.jetty 8 -->
         <dependency conf="start-solr->default" org="org.mortbay.jetty" name="start" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jetty" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jsp-2.1" rev="6.1.14"/>
+        
         <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
     </dependencies>
 </ivy-module>
