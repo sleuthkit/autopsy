@@ -241,4 +241,8 @@ public class IngestMessage {
     static IngestMessage createManagerMessage(String subject, String detailsHtml) {
         return new IngestMessage(++managerMessageId, MessageType.INFO, null, subject, detailsHtml, null);
     }
+    
+    static IngestMessage createManagerErrorMessage(String subject, String detailsHtml) {
+        return new IngestMessage(++managerMessageId, MessageType.ERROR, null, subject, detailsHtml, null);
+    }
 }
