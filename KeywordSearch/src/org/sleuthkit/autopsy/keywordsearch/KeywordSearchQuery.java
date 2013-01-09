@@ -44,9 +44,11 @@ public interface KeywordSearchQuery {
     
     /**
      * Set an optional filter to narrow down the search
+     * Adding multiple filters ANDs them together.
+     * For OR, add multiple ids to a single filter
      * @param filter filter to set on the query
      */
-    public void setFilter(KeywordQueryFilter filter);
+    public void addFilter(KeywordQueryFilter filter);
     
     /**
      * Set an optional field to narrow down the search
