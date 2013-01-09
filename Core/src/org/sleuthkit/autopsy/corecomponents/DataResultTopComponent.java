@@ -129,6 +129,17 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         }
     }
 
+    
+    private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
+        newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
+
+        newDataResult.open(); // open it first so the component can be initialized
+
+        // set the tree table view
+        newDataResult.setNode(givenNode);
+        newDataResult.setPath(pathText);
+    }
+    
     /**
      * Creates a new non-default DataResult component
      *
@@ -141,13 +152,25 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public static DataResultTopComponent createInstance(String title, String pathText, Node givenNode, int totalMatches) {
         DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
 
-        newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
+        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
 
-        newDataResult.open(); // open it first so the component can be initialized
+        return newDataResult;
+    }
+    
+        /**
+     * Creates a new non-default DataResult component
+     *
+     * @param title Title of the component window
+     * @param pathText Descriptive text about the source of the nodes displayed
+     * @param givenNode The new root node
+     * @param totalMatches Cardinality of root node's children
+     * @param dataContentWindow a handle to data content top component window to send events to from the new result viewer
+     * @return
+     */
+    public static DataResultTopComponent createInstance(String title, String pathText, Node givenNode, int totalMatches, DataContentTopComponent dataContentWindow) {
+        DataResultTopComponent newDataResult = new DataResultTopComponent(title, dataContentWindow);
 
-        // set the tree table view
-        newDataResult.setNode(givenNode);
-        newDataResult.setPath(pathText);
+        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
 
         return newDataResult;
     }
