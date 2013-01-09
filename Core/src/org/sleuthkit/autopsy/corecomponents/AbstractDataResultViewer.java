@@ -43,9 +43,19 @@ public abstract class AbstractDataResultViewer extends JPanel implements
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em = new ExplorerManager();
     private PropertyChangeListener nodeSelListener;
+    
+    /**
+     * Content viewer to respond to selection events
+     * Either the main one, or custom one if set
+     */
+    protected DataContent contentViewer;
 
     public AbstractDataResultViewer() {
 
+        //DataContent is designed to return only the default viewer from lookup
+        //use the default one unless set otherwise
+       contentViewer = Lookup.getDefault().lookup(DataContent.class);
+        
         //property listener to send nodes to content viewer    
         nodeSelListener = new PropertyChangeListener() {
                         
@@ -70,17 +80,16 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                         
                         nodeSelected(selectedNode);
 
-                        // DataContent is designed to return only the default viewer
-                        DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
+                        
 
                         if (selectedNode != null) {
                             // there's a new/changed node to display
                             Node newSelectedNode = selectedNode; // get the selected Node on the table
                             // push the node to default "DataContent"
-                            dataContent.setNode(newSelectedNode);
+                            contentViewer.setNode(newSelectedNode);
                         } else {
                             // clear the node viewer
-                            dataContent.setNode(null);
+                            contentViewer.setNode(null);
                         }
                     } finally {
                         setCursor(null);
@@ -154,5 +163,10 @@ public abstract class AbstractDataResultViewer extends JPanel implements
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Couldn't set selected nodes.", ex);
         }
+    }
+    
+    @Override
+    public void setContentViewer(DataContent contentViewer) {
+        this.contentViewer = contentViewer;
     }
 }

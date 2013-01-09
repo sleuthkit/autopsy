@@ -95,8 +95,8 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>5</release-version>
-                        <specification-version>3.0</specification-version>
+                        <release-version>6</release-version>
+                        <specification-version>4.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -144,20 +144,28 @@
                 <binary-origin>release/modules/ext/vorbis-java-core-0.1-tests.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/log4j-over-slf4j-1.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/log4j-over-slf4j-1.6.4.jar</binary-origin>
+                <runtime-relative-path>ext/tika-parsers-1.2-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-parsers-1.2-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/isoparser-1.0-RC-1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/isoparser-1.0-RC-1.jar</binary-origin>
+                <runtime-relative-path>ext/log4j-over-slf4j-1.6.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-over-slf4j-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/vorbis-java-tika-0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/isoparser-1.0-RC-1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/isoparser-1.0-RC-1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/httpcore-4.1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/httpcore-4.1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-parsers-1.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-parsers-1.2-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/aspectjrt-1.6.11.jar</runtime-relative-path>
@@ -188,12 +196,20 @@
                 <binary-origin>release/modules/ext/httpclient-4.1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/icu4j-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/icu4j-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/juniversalchardet-1.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-1.7.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-1.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-1.0.jar</runtime-relative-path>
@@ -228,8 +244,16 @@
                 <binary-origin>release/modules/ext/slf4j-api-1.7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.7.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jempbox-1.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.3-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
@@ -238,6 +262,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf-4.2-min.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/netcdf-4.2-min.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-4.0.0-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-4.0.0-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
@@ -288,16 +316,24 @@
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bcprov-jdk15-1.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcprov-jdk15-1.45.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/solr-solrj-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/solr-solrj-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-4.0.0-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-4.0.0-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.7.2.jar</runtime-relative-path>

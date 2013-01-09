@@ -321,7 +321,7 @@
       -->
      <autoCommit> 
        <maxDocs>15000</maxDocs> 
-       <openSearcher>false</openSearcher> 
+       <openSearcher>true</openSearcher> 
      </autoCommit>
 
     <!-- softAutoCommit is like autoCommit except it causes a
@@ -903,14 +903,16 @@
 		
        <!-- Highlighting defaults -->
        <str name="hl">on</str>
-       <str name="hl.fl">content features title name</str>
+       <str name="hl.fl">text content file_name</str>
        <str name="hl.encoder">html</str>
+	   <str name="f.name.hl.fragsize">0</str>
+       <str name="f.name.hl.alternateField">file_name</str>
+	   
        <str name="hl.simple.pre">&lt;b&gt;</str>
        <str name="hl.simple.post">&lt;/b&gt;</str>
        <str name="f.title.hl.fragsize">0</str>
        <str name="f.title.hl.alternateField">title</str>
-       <str name="f.name.hl.fragsize">0</str>
-       <str name="f.name.hl.alternateField">name</str>
+       
        <str name="f.content.hl.snippets">3</str>
        <str name="f.content.hl.fragsize">200</str>
        <str name="f.content.hl.alternateField">content</str>
@@ -1546,10 +1548,12 @@
 
       <!-- Configure the standard encoder -->
       <encoder name="html" 
+			   default="true"
                class="solr.highlight.HtmlEncoder" />
 
       <!-- Configure the standard fragListBuilder -->
       <fragListBuilder name="simple" 
+					   default="true"
                        class="solr.highlight.SimpleFragListBuilder"/>
       
       <!-- Configure the single fragListBuilder -->

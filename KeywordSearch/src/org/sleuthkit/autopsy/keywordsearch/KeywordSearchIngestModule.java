@@ -33,8 +33,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
+import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
+import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -86,10 +87,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             return time;
         }
     };
-    
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
-    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";  
+    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     final public static String MODULE_VERSION = "1.0";
     private String args;
     private static KeywordSearchIngestModule instance = null;
@@ -116,10 +116,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
-    
     private boolean initialized = false;
-    
-    
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
     private KeywordSearchConfigurationPanel panel;
 
@@ -131,7 +128,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     //private constructor to ensure singleton instance 
     private KeywordSearchIngestModule() {
-
     }
 
     /**
@@ -159,6 +155,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         if (initialized == false) //error initializing indexing/Solr
         {
+            logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
             return ProcessResult.OK;
         }
 
@@ -170,12 +167,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
-        }
-        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.accept(getIsFileKnown) == true) {
+        } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.accept(getIsFileKnown) == true) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
-        } 
+        }
 
         if (processedFiles == false) {
             processedFiles = true;
@@ -186,13 +182,14 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
-        
-        
+
+
         return ProcessResult.OK;
     }
-    
+
     /**
-     * Process content hierarchy and return true if content is a file and is set as known
+     * Process content hierarchy and return true if content is a file and is set
+     * as known
      */
     private class GetIsFileKnownV extends ContentVisitor.Default<Boolean> {
 
@@ -200,12 +197,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         protected Boolean defaultVisit(Content cntnt) {
             return false;
         }
-        
+
         @Override
         public Boolean visit(File file) {
             return file.getKnown() == FileKnown.KNOWN;
         }
-        
     }
 
     /**
@@ -246,7 +242,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         }
 
         //log number of files / chunks in index
-         //signal a potential change in number of indexed files
+        //signal a potential change in number of indexed files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
@@ -258,7 +254,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", se);
         }
         
-        
+        //cleanup done in final searcher
+
         //postSummary();
     }
 
@@ -288,6 +285,33 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         commit();
 
         //postSummary();
+
+        cleanup();
+    }
+
+    /**
+     * Common cleanup code when module stops or final searcher completes
+     */
+    private void cleanup() {
+        ingestStatus.clear();
+        currentResults.clear();
+        currentSearcher = null;
+        //finalSearcher = null; //do not collect, might be finalizing
+
+        commitTimer.stop();
+        searchTimer.stop();
+        commitTimer = null;
+        searchTimer = null;
+
+        textExtractors.clear();
+        textExtractors = null;
+        stringExtractor = null;
+
+        keywords.clear();
+        keywordLists.clear();
+        keywordToList.clear();
+
+        initialized = false;
     }
 
     @Override
@@ -299,7 +323,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     public String getDescription() {
         return MODULE_DESCRIPTION;
     }
-    
+
     @Override
     public String getVersion() {
         return MODULE_VERSION;
@@ -314,7 +338,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     public void setArguments(String args) {
         this.args = args;
     }
-	
 
     /**
      * Initializes the module for new ingest run Sets up threads, timers,
@@ -326,20 +349,20 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
-        
+
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         ingester = Server.getIngester();
-        
+
         final Server server = KeywordSearch.getServer();
         try {
-            if (! server.isRunning()) {
+            if (!server.isRunning()) {
                 String msg = "Keyword search server was not properly initialized, cannot run keyword search ingest. ";
                 logger.log(Level.SEVERE, msg);
                 String details = msg + "Please try restarting the OS and the application";
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                 return;
-                
+
             }
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
@@ -352,8 +375,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         stringExtractor = new AbstractFileStringExtract();
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-        
-        
+
+
         //log the scripts used for debugging
         final StringBuilder sbScripts = new StringBuilder();
         for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
@@ -376,7 +399,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         initKeywords();
 
         if (keywords.isEmpty() || keywordLists.isEmpty()) {
-             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (you can still add keyword lists using the Keyword Lists - Add to Ingest)."));
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (you can still add keyword lists using the Keyword Lists - Add to Ingest)."));
         }
 
         processedFiles = false;
@@ -531,23 +554,24 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     }
 
     /**
-     * Initialize the keyword search lists and associated keywords from the XML loader
-     * Use the lists to ingest that are set in the permanent XML configuration
+     * Initialize the keyword search lists and associated keywords from the XML
+     * loader Use the lists to ingest that are set in the permanent XML
+     * configuration
      */
     private void initKeywords() {
         addKeywordLists(null);
     }
-    
+
     /**
-     * If ingest is ongoing, this will add 
-     * additional keyword search lists to the ongoing ingest
-     * The lists to add may be temporary and not necessary set to be 
-     * added to ingest permanently in the XML configuration.
-     * The lists will be reset back to original (permanent configuration state)
-     * on the next ingest.
+     * If ingest is ongoing, this will add additional keyword search lists to
+     * the ongoing ingest The lists to add may be temporary and not necessary
+     * set to be added to ingest permanently in the XML configuration. The lists
+     * will be reset back to original (permanent configuration state) on the
+     * next ingest.
+     *
      * @param listsToAdd lists to add temporarily to the ongoing ingest
      */
-    void addKeywordLists(List<String>listsToAdd) {
+    void addKeywordLists(List<String> listsToAdd) {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         keywords.clear();
@@ -555,11 +579,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         keywordToList.clear();
 
         StringBuilder sb = new StringBuilder();
-        
+
         for (KeywordSearchList list : loader.getListsL()) {
             final String listName = list.getName();
             if (list.getUseForIngest() == true
-                    || (listsToAdd != null && listsToAdd.contains(listName)) ) {        
+                    || (listsToAdd != null && listsToAdd.contains(listName))) {
                 keywordLists.add(listName);
                 sb.append(listName).append(" ");
             }
@@ -571,9 +595,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             }
 
         }
-        
+
         logger.log(Level.INFO, "Set new effective keyword lists: " + sb.toString());
-        
+
     }
 
     List<String> getKeywordLists() {
@@ -696,8 +720,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
                 //skip indexing of virtual dirs (no content, no real name) - will index children files
                 return;
-            }
-            else if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+            } else if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                 fsContent = (FsContent) aFile;
             }
 
@@ -791,8 +814,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordLists; // lists currently being searched
         private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
-    
-        private ProgressHandle progress;
+        private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
         private boolean finalRun = false;
 
@@ -811,26 +833,35 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         @Override
         protected Object doInBackground() throws Exception {
             if (finalRun) {
-               logger.log(Level.INFO, "Pending start of new (final) searcher");
-            }
-            else {
+                logger.log(Level.INFO, "Pending start of new (final) searcher");
+            } else {
                 logger.log(Level.INFO, "Pending start of new searcher");
             }
 
             final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
-            progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
+            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" (Pending)"), null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
-                    if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    if (progressGroup != null) {
+                        progressGroup.setDisplayName(displayName + " (Cancelling...)");
                     }
                     return Searcher.this.cancel(true);
                 }
-            });
+            }, null);
 
-            progress.start();
-            progress.switchToIndeterminate();
+            updateKeywords();
+
+            ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
+            int i = 0;
+            for (Keyword keywordQuery : keywords) {
+                subProgresses[i] =
+                        AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
+                progressGroup.addContributor(subProgresses[i]);
+                i++;
+            }
+
+            progressGroup.start();
 
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
@@ -839,7 +870,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             stopWatch.start();
             try {
                 logger.log(Level.INFO, "Started a new searcher");
-                progress.setDisplayName(displayName);
+                progressGroup.setDisplayName(displayName);
                 //make sure other searchers are not spawned 
                 searcherDone = false;
                 runSearcher = false;
@@ -847,21 +878,26 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                     searchTimer.stop();
                 }
 
-                int numSearched = 0;
+                int keywordsSearched = 0;
 
-                updateKeywords();
-                progress.switchToDeterminate(keywords.size());
+                //updateKeywords();
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
                         logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
                         return null;
                     }
+
                     final String queryStr = keywordQuery.getQuery();
                     final KeywordSearchList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
 
-                    progress.progress(listName + " " + queryStr, numSearched);
+                    //new subProgress will be active after the initial query
+                    //when we know number of hits to start() with
+                    if (keywordsSearched > 0) {
+                        subProgresses[keywordsSearched - 1].finish();
+                    }
+
 
                     KeywordSearchQuery del = null;
 
@@ -901,13 +937,24 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         //new artifacts created, to report to listeners
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
 
+                        //scale progress bar more more granular, per result sub-progress, within per keyword
+                        int totalUnits = newResults.size();
+                        subProgresses[keywordsSearched].start(totalUnits);
+                        int unitProgress = 0;
+                        String queryDisplayStr = keywordQuery.getQuery();
+                        if (queryDisplayStr.length() > 50) {
+                            queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
+                        }
+                        subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
+
+
                         for (final Keyword hitTerm : newResults.keySet()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
                                 logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: " + keywordQuery.getQuery());
                                 return null;
-                            }    
-                            
+                            }
+
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
@@ -933,6 +980,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 }
 
                                 newArtifacts.add(written.getArtifact());
+
+                                //send notify every 250 results
+                                if (newArtifacts.size() % 250 == 0) {
+                                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                                }
 
                                 //generate a data message for each artifact
                                 StringBuilder subjectSb = new StringBuilder();
@@ -1012,16 +1064,33 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 }
 
 
-                            } //for each term hit
-                        }//for each file hit
+                            } //for each file hit
+
+                            ++unitProgress;
+
+                            String hitDisplayStr = hitTerm.getQuery();
+                            if (hitDisplayStr.length() > 50) {
+                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
+                            }
+                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
+                            //subProgresses[keywordsSearched].progress(unitProgress);
+
+
+                        }//for each hit term
+
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
                             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
-                    }
-                    progress.progress(queryStr, ++numSearched);
-                }
+                    } //if has results
+                                        
+                    //reset the status text before it goes away
+                    subProgresses[keywordsSearched].progress("");
+                    
+                    ++keywordsSearched;
+
+                } //for each keyword
 
             } //end try block
             catch (Exception ex) {
@@ -1070,7 +1139,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    progress.finish();
+                    progressGroup.finish();
                 }
             });
             searcherDone = true;  //next currentSearcher can start
@@ -1079,10 +1148,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-                //reset current resuls earlier to potentially garbage collect sooner
-                currentResults = new HashMap<Keyword, List<Long>>();
-
+                
                 services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
+                
+                //run module cleanup
+                cleanup();
             } else {
                 //start counting time for a new searcher to start
                 //unless final searcher is pending

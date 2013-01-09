@@ -33,6 +33,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -55,6 +56,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
     private String field = null;
+    private static int MAX_TERMS_RESULTS = 20000;
+    
+    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public TermComponentQuery(Keyword keywordQuery) {
         this.keywordQuery = keywordQuery;
@@ -217,9 +221,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
 
         final SolrQuery q = createQuery();
+        q.setShowDebugInfo(DEBUG);
+        q.setTermsLimit(MAX_TERMS_RESULTS); 
         terms = executeQuery(q);
 
-
+        int resultSize = 0;
+        
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
@@ -232,7 +239,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
                 Set<ContentHit> filesResults = new HashSet<ContentHit>();
                 for (String key : subResults.keySet()) {
-                    filesResults.addAll(subResults.get(key));
+                    List<ContentHit> keyRes = subResults.get(key);
+                    resultSize += keyRes.size();
+                    filesResults.addAll(keyRes);
                 }
                 results.put(term.getTerm(), new ArrayList<ContentHit>(filesResults));
             } catch (NoOpenCoreException e) {
@@ -243,6 +252,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
             }
 
         }
+        
+        //TODO limit how many results we store, not to hit memory limits
+        logger.log(Level.INFO, "Regex # results: " + resultSize);
 
 
         return results;
