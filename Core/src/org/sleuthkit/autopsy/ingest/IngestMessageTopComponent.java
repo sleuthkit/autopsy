@@ -24,6 +24,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
@@ -50,6 +52,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     private IngestManager manager;
     private static String PREFERRED_ID = "IngestMessageTopComponent";
     private ActionListener showIngestInboxAction;
+    private static final Pattern tagRemove = Pattern.compile("<.+?>");
 
     public IngestMessageTopComponent() {
         initComponents();
@@ -306,11 +309,15 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                     ? MessageNotifyUtil.MessageType.ERROR
                     : MessageNotifyUtil.MessageType.WARNING;
 
+            String subject = ingestMessage.getSubject();
             String details = ingestMessage.getDetails();
             if (details == null) {
                 details = "";
             }
-            MessageNotifyUtil.Notify.show(ingestMessage.getSubject(), details,
+            //strip html tags in case they are present in ingest message
+            details  = stripHtmlTags(details);
+
+            MessageNotifyUtil.Notify.show(subject, details,
                     notifyMessageType, showIngestInboxAction);
         }
     }
@@ -343,5 +350,14 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     public Action[] getActions() {
         //disable TC toolbar actions
         return new Action[0];
+    }
+
+    private static String stripHtmlTags(String string) {
+        if (string == null || string.length() == 0) {
+            return string;
+        }
+
+        Matcher m = tagRemove.matcher(string);
+        return m.replaceAll("");
     }
 }
