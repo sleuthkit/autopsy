@@ -58,6 +58,7 @@ abstract public class Extract implements IngestModuleImage{
      * @param  query is a sql string query that is to be run
      * @return  FFSqlitedb is a List of FsContent objects
      */
+    @SuppressWarnings("deprecation")
     public List<FsContent> extractFiles(Image image, String query) {
 
         Collection<FileSystem> imageFS = tskCase.getFileSystems(image);
@@ -78,19 +79,22 @@ abstract public class Extract implements IngestModuleImage{
             }
         }
         List<FsContent> FFSqlitedb = null;
+        ResultSet rs = null;
         try {
-            ResultSet rs = tskCase.runQuery(query + allFS);
+            rs = tskCase.runQuery(query + allFS);
             FFSqlitedb = tskCase.resultSetToFsContents(rs);
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
-            rs.close();
-            rs.getStatement().close();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to extract files for:" + this.getClass().getName(), ex);
             this.addErrorMessage(this.getName() + ": Error while trying to extract files to analyze.");
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    tskCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error while trying to close result set after extract files for:" + this.getClass().getName(), ex);
+                }
+            }
         }
         return FFSqlitedb;
     }

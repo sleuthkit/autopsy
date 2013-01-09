@@ -1,17 +1,31 @@
----------------- VERSION 3.0.3 --------------
+---------------- VERSION Current (development) --------------
+
+New features:
+- Results and files can be tagged with custom tags and assigned different categories, and 
+they can be reported on based on those categories.
 
 Improvements:
-- Keyword Search indexing and search speed improvements
-- Improved Keyword Search highlighting in Text View: highlighted tokens are no longer delimiter separated
-- Better progress updates from Keyword Search ingest
-- Upgrade to Solr4.0 / Tika 1.2
+- Better error reporting in the UI using the notification area.
+
+
+Bugfixes:
+- fixed crash and hang in html and excel report generation, due to special characters present
+
+
+---------------- VERSION 3.0.3 --------------
+
+*Note: Due to major changes in Keyword search module indexing this release is not fully backward compatible.
+As a workaround, you will need to rebuild index by re-running Keyword Search ingest on Cases created with previous versions.
+
+Improvements:
+- Upgrade to Solr4.0 / Tika 1.2: Improved performance and highlighting
 - Remake of reporting UI and functionality
 - Significant increase in reporting speed
 - New option to keep the most specific file viewer (default) or the lastly used viewer active.
 
 
 Bugfixes:
-- Keyword search now indexes and searches entire extracted content from files
+- Fixed bug that caused the ends of large amounts of text to not be indexed (occurs mostly in unallocated space).
 - Fix scrolling to first keyword hit when Text View is first loaded
 - Imported keyword lists are now always enabled for ingest by default
 

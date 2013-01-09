@@ -41,8 +41,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
-public class RecentFilesFilterChildren extends ChildFactory<Content>{
-    
+public class RecentFilesFilterChildren extends ChildFactory<Content> {
+
     SleuthkitCase skCase;
     RecentFilesFilter filter;
     Calendar prevDay;
@@ -61,13 +61,13 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         list.addAll(runFsQuery());
         return true;
     }
-    
-    private String createQuery(){
+
+    private String createQuery() {
         String query = "select * from tsk_files where known <> 1 and (";
-        long lowerLimit = prevDay.getTimeInMillis()/1000;
+        long lowerLimit = prevDay.getTimeInMillis() / 1000;
         prevDay.add(Calendar.DATE, 1);
         prevDay.add(Calendar.MILLISECOND, -1);
-        long upperLimit = prevDay.getTimeInMillis()/1000;
+        long upperLimit = prevDay.getTimeInMillis() / 1000;
         query += "(crtime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
         //query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
@@ -75,33 +75,39 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         //query += " limit " + MAX_OBJECTS;
         return query;
     }
-    
-    private List<FsContent> runFsQuery(){
+
+    @SuppressWarnings("deprecation")
+    private List<FsContent> runFsQuery() {
         List<FsContent> list = new ArrayList<FsContent>();
+        ResultSet rs = null;
         try {
-            ResultSet rs = skCase.runQuery(createQuery());
-            for(FsContent c : skCase.resultSetToFsContents(rs)){
-                if(c.isFile()){
+            rs = skCase.runQuery(createQuery());
+            for (FsContent c : skCase.resultSetToFsContents(rs)) {
+                if (c.isFile()) {
                     list.add(c);
                 }
             }
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null)
-                s.close();
+
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get search results", ex);
+        } finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Error closing result set after getting recent files results", ex);
+                }
+            }
         }
         return list;
-        
+
     }
-    
+
     @Override
-    protected Node createNodeForKey(Content key){
-        return key.accept(new ContentVisitor.Default<AbstractNode>(){
-            
+    protected Node createNodeForKey(Content key) {
+        return key.accept(new ContentVisitor.Default<AbstractNode>() {
             @Override
-            public FileNode visit(File f){
+            public FileNode visit(File f) {
                 return new FileNode(f, false);
             }
 
@@ -109,7 +115,6 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
             protected AbstractNode defaultVisit(Content di) {
                 throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
             }
-            
         });
     }
 }

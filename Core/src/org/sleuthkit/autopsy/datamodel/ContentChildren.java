@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.Content;
  * Class for Children of all ContentNodes. Handles creating child ContentNodes.
  * TODO consider a ContentChildren child factory
  */
-class ContentChildren extends AbstractContentChildren {
+class ContentChildren extends AbstractContentChildren<Content> {
     
     private static final Logger logger = Logger.getLogger(ContentChildren.class.getName());
     //private static final int MAX_CHILD_COUNT = 1000000;
@@ -72,7 +72,7 @@ class ContentChildren extends AbstractContentChildren {
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        setKeys(Collections.EMPTY_SET);
+        setKeys(new ArrayList<Content>());
     }
     
 }

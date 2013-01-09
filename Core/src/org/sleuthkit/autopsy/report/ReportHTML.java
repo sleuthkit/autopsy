@@ -98,7 +98,6 @@ public class ReportHTML implements TableReportModule {
      * Start this report by setting the path, refreshing member variables,
      * and writing the skeleton for the HTML report.
      * @param path path to save the report
-     * @param info map of info to display in the summary
      */
     @Override
     public void startReport(String path) {
@@ -140,9 +139,12 @@ public class ReportHTML implements TableReportModule {
      */
     @Override
     public void startDataType(String title) {        
+        String fTitle = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(title);
         // Make a new out for this page
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
+            //escape out slashes tha that appear in title
+            
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + fTitle + getExtension()), "UTF-8"));
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "File not found: {0}", ex);
         } catch (UnsupportedEncodingException ex) {
@@ -425,7 +427,12 @@ public class ReportHTML implements TableReportModule {
             nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
             
             for (String dataType : dataTypes.keySet()) {
-                nav.append("<li style=\"background: url('").append(dataType).append(".png') left center no-repeat;\"><a href=\"").append(dataType).append(".html\" target=\"content\">").append(dataType).append(" (").append(dataTypes.get(dataType)).append(")</a></li>\n");
+                String dataTypeEsc = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dataType);
+                nav.append("<li style=\"background: url('").append(dataType)
+                        .append(".png') left center no-repeat;\"><a href=\"")
+                        .append(dataTypeEsc).append(".html\" target=\"content\">")
+                        .append(dataType).append(" (").append(dataTypes.get(dataType))
+                        .append(")</a></li>\n");
             }
             nav.append("</ul>\n");
             nav.append("</div>\n</body>\n</html>");
