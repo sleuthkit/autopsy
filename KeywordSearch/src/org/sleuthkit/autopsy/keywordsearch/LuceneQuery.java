@@ -49,7 +49,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     private String queryEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
-    private KeywordQueryFilter filter = null;
+    private final List <KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
     private String field = null;
     private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
@@ -73,8 +73,8 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public void setFilter(KeywordQueryFilter filter) {
-        this.filter = filter;
+    public void addFilter(KeywordQueryFilter filter) {
+        this.filters.add(filter);
     }
     
     @Override
@@ -204,7 +204,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
         q.setFields(Server.Schema.ID.toString());
-        if (filter != null) {
+        for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
 
