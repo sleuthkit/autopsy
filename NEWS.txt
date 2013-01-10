@@ -9,6 +9,7 @@ Improvements:
 
 
 Bugfixes:
+- fixed bug when keyword search ingest would search also images previously ingested, creating duplicate results
 - fixed crash and hang in html and excel report generation, due to special characters present
 
 

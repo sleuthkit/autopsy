@@ -16,43 +16,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 /**
  *
- * Filter to select only specific id or chunks for that id
+ * Filter to restrict query only specific files, chunks, images
+ * Single filter supports multiple ids per file/chunk/image, that act as OR filter
  */
 public class KeywordQueryFilter {
-    public static enum FilterType {FILE, CHUNK};
-    private long idFilter;
+
+    public static enum FilterType {
+
+        FILE, CHUNK, IMAGE
+    };
+    private long[] idFilters;
     private FilterType filterType;
-    
+
     public KeywordQueryFilter(FilterType filterType, long id) {
         this.filterType = filterType;
-        this.idFilter = id;
+        this.idFilters = new long[1];
+        this.idFilters[0] = id;
     }
-    
-    public long getIdFilter() {
-        return idFilter;
+
+    public KeywordQueryFilter(FilterType filterType, long[] ids) {
+        this.filterType = filterType;
+        this.idFilters = ids;
     }
+
+    public long[] getIdFilters() {
+        return idFilters;
+    }
+
     public FilterType getFilterType() {
         return filterType;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(Server.Schema.ID.toString());
-        sb.append(":");
-        sb.append(Long.toString(idFilter));
-        if (filterType == FilterType.CHUNK) { 
-            sb.append("_*");
+        String id = null;
+        for (int i = 0; i < idFilters.length; ++i) {
+            if (i > 0) {
+                sb.append(" "); //OR
+            }
+            long idVal = idFilters[i];
+            if (filterType == FilterType.IMAGE) {
+                id = Server.Schema.IMAGE_ID.toString();
+            } else {
+                id = Server.Schema.ID.toString();
+            }
+            sb.append(id);
+            sb.append(":");
+            sb.append(Long.toString(idVal));
+            if (filterType == FilterType.CHUNK) {
+                sb.append("_*");
+            }
         }
+
         return sb.toString();
     }
-    
-    
-    
-    
 }

@@ -20,11 +20,15 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.Long;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -57,6 +61,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -107,6 +112,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Searcher finalSearcher;
     private volatile boolean searcherDone = true; //mark as done, until it's inited
     private Map<Keyword, List<Long>> currentResults;
+    //only search images from current ingest, not images previously ingested/indexed
+    //accessed read-only by searcher thread
+    private Set<Long> curImageIds;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
@@ -157,6 +165,12 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
             return ProcessResult.OK;
+        }
+        try {
+            //add image id of the file to the set, keeping track of images being ingested
+            curImageIds.add(abstractFile.getImage().getId());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
 
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
@@ -253,7 +267,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         } catch (KeywordSearchModuleException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", se);
         }
-        
+
         //cleanup done in final searcher
 
         //postSummary();
@@ -295,6 +309,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private void cleanup() {
         ingestStatus.clear();
         currentResults.clear();
+        curImageIds.clear();
         currentSearcher = null;
         //finalSearcher = null; //do not collect, might be finalizing
 
@@ -407,6 +422,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<Long>>();
+
+        curImageIds = new HashSet<Long>();
 
         indexer = new Indexer();
 
@@ -909,6 +926,16 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         del = new TermComponentQuery(keywordQuery);
                     }
 
+                    //limit search to currently ingested images
+                    final long imageIds[] = new long[curImageIds.size()];
+                    final Iterator<Long> it = curImageIds.iterator();
+                    for (int imageI = 0; it.hasNext(); ++imageI) {
+                        imageIds[imageI] = it.next();
+                    }
+                    //set up a filter with 1 or more image ids OR'ed
+                    final KeywordQueryFilter imageFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.IMAGE, imageIds);
+                    del.addFilter(imageFilter);
+
                     Map<String, List<ContentHit>> queryResult = null;
 
                     try {
@@ -1084,10 +1111,10 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     } //if has results
-                                        
+
                     //reset the status text before it goes away
                     subProgresses[keywordsSearched].progress("");
-                    
+
                     ++keywordsSearched;
 
                 } //for each keyword
@@ -1096,10 +1123,13 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             catch (Exception ex) {
                 logger.log(Level.WARNING, "searcher exception occurred", ex);
             } finally {
-                finalizeSearcher();
-                stopWatch.stop();
-                logger.log(Level.INFO, "Searcher took to run: " + stopWatch.getElapsedTimeSecs() + " secs.");
-                searcherLock.unlock();
+                try {
+                    finalizeSearcher();
+                    stopWatch.stop();
+                    logger.log(Level.INFO, "Searcher took to run: " + stopWatch.getElapsedTimeSecs() + " secs.");
+                } finally {
+                    searcherLock.unlock();
+                }
             }
 
             return null;
@@ -1148,9 +1178,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-                
+
                 services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
-                
+
                 //run module cleanup
                 cleanup();
             } else {

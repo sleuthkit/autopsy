@@ -286,7 +286,6 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
             this.setLayout(null);
             this.pcs = null;
             this.removeAll();
-            System.gc();
         }
 
     }
