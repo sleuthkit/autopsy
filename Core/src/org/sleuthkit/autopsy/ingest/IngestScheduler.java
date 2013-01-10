@@ -606,7 +606,16 @@ class IngestScheduler {
 
                 //skip files in root dir, starting with $, containing : (not default attributes)
                 //with meta address < 32, i.e. some special large NTFS and FAT files
-                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFsType();
+                FileSystem fs = null;
+                try {
+                    fs = f.getFileSystem();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Could not get FileSystem for " + f, ex);
+                }
+                TskData.TSK_FS_TYPE_ENUM fsType = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_UNSUPP;
+                if (fs != null) {
+                    fsType = fs.getFsType();
+                }
 
                 if ((fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
                     //not fat or ntfs, accept all files
