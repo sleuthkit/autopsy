@@ -32,6 +32,7 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -79,9 +81,12 @@ class ViewContextAction extends AbstractAction {
 
             @Override
             public void run() {
+                // create a list of Content objects starting with content's
+                // Image and ends with content
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = content.accept(vtor);
                 Collections.reverse(hierarchy);
+                
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
 
@@ -142,78 +147,48 @@ class ViewContextAction extends AbstractAction {
         });
     }
 
-    private class ReverseHierarchyVisitor implements ContentVisitor<List<Content>> {
-
+    /**
+     * The ReverseHierarchyVisitor class is designed to return a list of Content
+     * objects starting with the one the user calls 'accept' with and ending at
+     * the Image object.  Please NOTE that Content objects in this hierarchy of
+     * type VolumeSystem and FileSystem are skipped. This seems to be necessary
+     * because org.sleuthkit.autopsy.datamodel.AbstractContentChildren.CreateSleuthkitNodeVisitor
+     * does not support these types.
+     */
+    private class ReverseHierarchyVisitor extends ContentVisitor.Default<List<Content>> {
+        
         List<Content> ret = new ArrayList<Content>();
-
-        @Override
-        public List<Content> visit(Directory drctr) {
-            ret.add(drctr);
-            if (drctr.isRoot()) {
-                return visit(drctr.getFileSystem());
-            } else {
-                try {
-                    return drctr.getParentDirectory().accept(this);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get directory's parent directory", ex);
-                }
+        
+        private List<Content> visitParentButDontAddMe(Content content) {
+            Content parent = null;
+            try {
+                parent = content.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
             }
-            return ret;
+            return parent == null ? ret : parent.accept(this);
         }
 
         @Override
-        public List<Content> visit(File file) {
-            ret.add(file);
-            if (file.isRoot()) {
-                return visit(file.getFileSystem());
-            } else {
-                try {
-                    return file.getParentDirectory().accept(this);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get file's parent directory", ex);
-                }
+        protected List<Content> defaultVisit(Content content) {
+            ret.add(content);
+            Content parent = null;
+            try {
+                parent = content.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
             }
-            return ret;
+            return parent == null ? ret : parent.accept(this);
         }
-
+        
         @Override
         public List<Content> visit(FileSystem fs) {
-            return fs.getParent().accept(this);
+            return visitParentButDontAddMe(fs);
         }
-
-        @Override
-        public List<Content> visit(Image image) {
-            ret.add(image);
-            return ret;
-        }
-
-        @Override
-        public List<Content> visit(Volume volume) {
-            ret.add(volume);
-            return visit(volume.getParent());
-        }
-
+        
         @Override
         public List<Content> visit(VolumeSystem vs) {
-            return visit(vs.getParent());
-        }
-        
-        @Override
-        public List<Content> visit(LayoutFile lc) {
-            ret.add(lc);
-            ret.addAll(lc.getParent().accept(this));
-              
-            
-            return ret;
-
-        }
-        
-        @Override
-        public List<Content> visit(VirtualDirectory ld) {
-             ret.add(ld);
-             ret.addAll(ld.getParent().accept(this));
-          
-            return ret;
+            return visitParentButDontAddMe(vs);
         }
     }
 }
