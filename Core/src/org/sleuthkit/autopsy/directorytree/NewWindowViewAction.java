@@ -20,21 +20,22 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Opens new ContentViewer pane in a detached window
  */
 public class NewWindowViewAction extends AbstractAction{
+    
+    private static Logger logger = Logger.getLogger(NewWindowViewAction.class.getName());
 
     private Node contentNode ;
 
@@ -48,14 +49,19 @@ public class NewWindowViewAction extends AbstractAction{
         Logger.noteAction(this.getClass());
         
         String name = "DataContent";
-        Content c = contentNode.getLookup().lookup(Content.class);
-        if (c != null) {
-            String[] filePaths = ContentUtils.getDisplayPath(c);
-            name = DataConversion.getformattedPath(filePaths, 0);
-        }
         String s = contentNode.getLookup().lookup(String.class);
-        if (s != null)
+        if (s != null) {
             name = s;
+        } else {
+            Content c = contentNode.getLookup().lookup(Content.class);
+            if (c != null) {
+                try {
+                    name = c.getUniquePath();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + c);
+                }
+            }
+        }
 
         DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, this.contentNode);
 
