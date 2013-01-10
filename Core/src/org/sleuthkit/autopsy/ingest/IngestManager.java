@@ -690,7 +690,16 @@ public class IngestManager {
                 sb.append("Errors per module:");
                 for (IngestModuleAbstract module : errors.keySet()) {
                     final int errorsModule = errors.get(module);
-                    sb.append("\t").append(module.getName()).append(": ").append(errorsModule).append(EOL);
+                    String moduleName;
+                    if (module != null) {
+                        moduleName = module.getName();
+                    }
+                    else {
+                        //manager message
+                        moduleName = "System";
+                    }
+                    
+                    sb.append("\t").append(moduleName).append(": ").append(errorsModule).append(EOL);
                 }
             }
             return sb.toString();

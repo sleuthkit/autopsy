@@ -130,7 +130,10 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         });
     }
 
-    private void showIngestMessages() {
+    /**
+     * Pop up and show ingest messages window
+     */
+    void showIngestMessages() {
         IngestMessageTopComponent tc = IngestMessageTopComponent.findInstance();
 
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");

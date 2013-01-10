@@ -5,9 +5,11 @@ New features:
 they can be reported on based on those categories.
 
 Improvements:
+- Better error reporting in the UI using the notification area.
 
 
 Bugfixes:
+- fixed bug when keyword search ingest would search also images previously ingested, creating duplicate results
 - fixed crash and hang in html and excel report generation, due to special characters present
 
 

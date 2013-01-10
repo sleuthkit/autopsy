@@ -54,7 +54,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private boolean isEscaped;
     private List<Term> terms;
     private Keyword keywordQuery = null;
-    private KeywordQueryFilter filter = null;
+    private final List<KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
     private String field = null;
     private static int MAX_TERMS_RESULTS = 20000;
     
@@ -69,8 +69,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public void setFilter(KeywordQueryFilter filter) {
-        this.filter = filter;
+    public void addFilter(KeywordQueryFilter filter) {
+        this.filters.add(filter);
     }
 
     @Override
@@ -232,8 +232,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
             LuceneQuery filesQuery = new LuceneQuery(termStr);
             //filesQuery.setField(TERMS_SEARCH_FIELD);
-            if (filter != null) {
-                filesQuery.setFilter(filter);
+            for (KeywordQueryFilter filter : filters) {
+                //set filter
+                //note: we can't set filter query on terms query
+                //but setting filter query on terms results query will yield the same result
+                filesQuery.addFilter(filter);
             }
             try {
                 Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
