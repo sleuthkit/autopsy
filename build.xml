@@ -92,7 +92,8 @@
         
         <propertyfile
         file="${zip-tmp}/${app.name}/etc/${app.name}.conf">
-            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
+            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
+            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none&quot;" />
             <entry key="jdkhome" value="&quot;jre6&quot;" />
         </propertyfile>
         
