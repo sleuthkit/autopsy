@@ -1,15 +1,15 @@
 ---------------- VERSION Current (development) --------------
 
 New features:
-- Results and files can be tagged with custom tags and assigned different categories, and 
-they can be reported on based on those categories.
+- Results and files can be tagged with custom tags and reported on them.
 
 Improvements:
-- Better memory settings to eliminate out of memory errors.
-- Better error reporting in the UI using the notification area.
-
+- Tweaked memory settings to eliminate out-of-memory errors.
+- Faster application launch time.
+- New notification area for error reporting.
 
 Bugfixes:
+- fixed DLL dependency version issue causing Autopsy not to launch on some systems
 - fixed bug when keyword search ingest would search also images previously ingested, creating duplicate results
 - fixed crash and hang in html and excel report generation, due to special characters present
 - fixed cancellation when creating file or result bookmark
