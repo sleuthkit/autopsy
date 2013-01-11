@@ -105,7 +105,7 @@
             <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\java"/>
         </exec>
         <exec executable="${aiPath}">
-            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\jre6"/>
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\jre"/>
         </exec>
         <exec executable="${aiPath}">
             <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\platform"/>
