@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
@@ -52,8 +51,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.Images;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -68,6 +65,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -628,7 +626,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                             String displayName = "";
                             if (originNode.getLookup().lookup(Content.class) != null) {
-                                displayName = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
+                                Content content = originNode.getLookup().lookup(Content.class);
+                                if (content != null) {
+                                    try {
+                                        displayName = content.getUniquePath();
+                                    } catch (TskCoreException ex) {
+                                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode);
+                                    }
+                                }
                             } else if (originNode.getLookup().lookup(String.class) != null) {
                                 displayName = originNode.getLookup().lookup(String.class);
                             }

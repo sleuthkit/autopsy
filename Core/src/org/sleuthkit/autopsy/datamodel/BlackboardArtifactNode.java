@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -33,6 +32,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -101,13 +101,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     entry.getValue()));
         }
         
+        String path = "";
+        try {
+            path = associated.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + associated);
+        }
         final int artifactTypeID = artifact.getArtifactTypeID();
         if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             ss.put(new NodeProperty("File Path",
                     "File Path",
                     NO_DESCR,
-                    DataConversion.getformattedPath(ContentUtils.getDisplayPath(associated), 0, 1)));
+                    path));
         }
 
         return s;

@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskData;
 
@@ -29,6 +32,8 @@ import org.sleuthkit.datamodel.TskData;
  * Node for layout dir
  */
 public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
+    
+    private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
 
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
@@ -87,10 +92,18 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     //TODO consider extend AbstractFsContent node and use that
     //first need methods such as getDirType() to be pushed to AbstractFile class
     private static void fillPropertyMap(Map<String, Object> map, VirtualDirectory content) {
+        
+        String path = "";
+        try {
+            path = content.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+        }
+        
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
         
-        map.put(AbstractFsContentNode.FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
+        map.put(AbstractFsContentNode.FsContentPropertyType.LOCATION.toString(), path);
         map.put(AbstractFsContentNode.FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
