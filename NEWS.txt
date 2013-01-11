@@ -5,6 +5,7 @@ New features:
 they can be reported on based on those categories.
 
 Improvements:
+- Better memory settings to eliminate out of memory errors.
 - Better error reporting in the UI using the notification area.
 
 
