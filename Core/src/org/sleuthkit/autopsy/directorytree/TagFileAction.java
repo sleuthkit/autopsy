@@ -64,10 +64,11 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
     }
     
     //return comment entered or null if cancelled
-    private String getComment() {
+    private String getComment(String tagName) {
         String comment = JOptionPane.showInputDialog(null,
-                "Please enter a comment for the tag (optional):",
-                "Tag Comment",
+                "<html>Enter an optional tag comment or leave it blank. "
+                + "<br />Press OK to confirm, Cancel to cancel tag creation.</html>",
+                 "Tag File with <" + tagName + ">",
                 JOptionPane.PLAIN_MESSAGE);
         if(comment != null && comment.isEmpty()) {
             comment = "No Comment";
@@ -90,7 +91,7 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                String comment =  getComment();
+                String comment =  getComment("Bookmark");
                 if (comment != null) {
                     Tags.createBookmark(tagFile, comment);
                     refreshDirectoryTree();
@@ -132,7 +133,7 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        Tags.createTag(tagFile, tagName, getComment());
+                        Tags.createTag(tagFile, tagName, getComment(tagName));
                         refreshDirectoryTree();
                     }
 
