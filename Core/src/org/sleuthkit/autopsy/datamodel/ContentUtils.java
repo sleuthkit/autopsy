@@ -184,7 +184,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + LayoutFile.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(lay));
@@ -200,7 +200,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + VirtualDirectory.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(ld));
@@ -216,7 +216,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + Directory.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(dir));
@@ -232,7 +232,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + File.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(file));
@@ -248,7 +248,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + FileSystem.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(fs));
@@ -271,7 +271,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + Volume.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(volume));
@@ -287,7 +287,7 @@ public final class ContentUtils {
             } catch (TskCoreException ex) {
                 throw new RuntimeException("Problem getting parent from " + VolumeSystem.class.getName(), ex);
             }
-            List<String> path = Collections.EMPTY_LIST;
+            List<String> path = Collections.<String>emptyList();
             if (parent != null) {
                 path = parent.accept(this);
                 path.add(toString.visit(vs));
