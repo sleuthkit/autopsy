@@ -108,29 +108,4 @@ public class DataConversion {
             return Arrays.toString(binary);
         }
     }
-
-    
-    /**
-     * Converts the given paths into the formatted path. This mainly used for
-     * the paths for the "new directory table" and "new output view".
-     * Will return path from beginIndex to ((length of paths) - endIndex)
-     *
-     * @param paths  the given paths
-     * @param beginIndex  the starting index of the given paths
-     * @param endIndex the ending index
-     * @return path  the formatted path
-     *
-     * @author jantonius
-     */
-    public static String getformattedPath(String[] paths, int beginIndex, int endIndex) {
-        String result = "";
-        for (int i = beginIndex; i < (paths.length - endIndex); i++) {
-            result = result + "\\" + paths[i];
-        }
-        return result;
-    }
-
-    public static String getformattedPath(String[] paths, int index) {
-        return getformattedPath(paths, index, 0);
-    }
 }

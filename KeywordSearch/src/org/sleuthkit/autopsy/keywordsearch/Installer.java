@@ -50,13 +50,13 @@ public class Installer extends ModuleInstall {
         //TODO revise this logic, handle other server types, move some logic to Server class
         try {
             //check if running from previous application instance and try to shut down
-            logger.log(Level.INFO, "Checking is server is running");
+            logger.log(Level.INFO, "Checking if server is running");
             if (server.isRunning()) {
                 //TODO this could hang if other type of server is running 
                 logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort()
                         + " port, maybe leftover from a previous run. Trying to shut it down.");
                 server.stop();
-                logger.log(Level.INFO, "Re-checking is server is running");
+                logger.log(Level.INFO, "Re-checking if server is running");
                 if (server.isRunning()) {
                     int serverPort = server.getCurrentSolrServerPort();
                     int serverStopPort = server.getCurrentSolrStopPort();
