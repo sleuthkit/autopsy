@@ -18,21 +18,21 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.logging.Level;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
-import org.sleuthkit.datamodel.TskData.TSK_FS_META_MODE_ENUM;
-import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
  */
 public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
+    
+    private static Logger logger = Logger.getLogger(AbstractFsContentNode.class.getName());
 
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum FsContentPropertyType {
@@ -208,8 +208,15 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
         
+        String path = "";
+        try {
+            path = content.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+        }
+        
         map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
-        map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
+        map.put(FsContentPropertyType.LOCATION.toString(), path);
         map.put(FsContentPropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
