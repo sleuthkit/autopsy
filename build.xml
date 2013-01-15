@@ -90,12 +90,15 @@
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         <antcall target="copyExternalLibsToZip"></antcall>
         
-        <propertyfile
-        file="${zip-tmp}/${app.name}/etc/${app.name}.conf">
+        <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none&quot;" />
+        <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
-            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none&quot;" />
+            <entry key="default_options" value="@JVM_OPTIONS" />
             <entry key="jdkhome" value="&quot;jre&quot;" />
         </propertyfile>
+        <!-- workaround for ant escaping : and = when setting properties -->
+        <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
