@@ -87,10 +87,10 @@ public class Installer extends ModuleInstall {
     public Installer() {
         packageInstallers = new ArrayList<ModuleInstall>();
 
-        packageInstallers.add(new org.sleuthkit.autopsy.coreutils.Installer());
-        packageInstallers.add(new org.sleuthkit.autopsy.corecomponents.Installer());
-        packageInstallers.add(new org.sleuthkit.autopsy.datamodel.Installer());
-        packageInstallers.add(new org.sleuthkit.autopsy.ingest.Installer());
+        packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault() );
+        packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault() );
+        packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault() );
 
     }
 
