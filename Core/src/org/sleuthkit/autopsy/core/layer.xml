@@ -210,6 +210,7 @@
             <file name="Separator3.instance_hidden"/>-->
         </folder>
         <folder name="Window">
+            <file name="Web_hidden"/>
             <file name="org-netbeans-modules-favorites-View.shadow_hidden"/>
             <file name="CloneDocumentAction.shadow_hidden"/>
             <file name="CloseAllButThisAction.shadow_hidden"/>
