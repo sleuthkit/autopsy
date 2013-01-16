@@ -34,6 +34,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -194,9 +195,9 @@ public final class ExtractAction extends AbstractAction {
                     logger.log(Level.INFO, "Extracting completed without cancellation.");
                     // Alert the user extraction is over
                     if(fsContent.isDir()) {
-                        JOptionPane.showMessageDialog((Component) e.getSource(), "Directory extracted.");
+                        MessageNotifyUtil.Message.info("Directory extracted.");
                     } else if(fsContent.isFile()){
-                        JOptionPane.showMessageDialog((Component) e.getSource(), "File extracted.");
+                        MessageNotifyUtil.Message.info("File extracted.");
                     }
                 } else {
                     logger.log(Level.INFO, "Attempting to delete file(s).");
