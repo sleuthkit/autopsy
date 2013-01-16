@@ -102,12 +102,12 @@ public class Tags implements AutopsyVisitableItem {
                                 if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
                                     break; // Don't add bookmarks
                                 } else if (artTags.containsKey(tagName)) {
-                                    List<BlackboardArtifact> list = new ArrayList<BlackboardArtifact>(artTags.get(tagName));
-                                    ///TODO List<BlackboardArtifact> list = artTags.get(tagName);
-                                    list.add(artifact);
-                                    artTags.put(tagName, list);
+                                    List<BlackboardArtifact> artifacts = artTags.get(tagName);
+                                    artifacts.add(artifact);
                                 } else {
-                                    artTags.put(tagName, Arrays.asList(artifact));
+                                    List<BlackboardArtifact> artifacts = new ArrayList<BlackboardArtifact>();
+                                    artifacts.add(artifact);
+                                    artTags.put(tagName, artifacts);
                                 }
                                 break;
                             }
@@ -172,7 +172,7 @@ public class Tags implements AutopsyVisitableItem {
     /**
      * Tag node representation (file or result)
      */
-     public class TagsNodeRoot extends DisplayableItemNode {
+    public class TagsNodeRoot extends DisplayableItemNode {
 
         TagsNodeRoot(BlackboardArtifact.ARTIFACT_TYPE tagType, Map<String, List<BlackboardArtifact>> subTags) {
             super(Children.create(new TagRootChildren(subTags), true), Lookups.singleton(tagType.getDisplayName()));
@@ -230,11 +230,12 @@ public class Tags implements AutopsyVisitableItem {
     private class TagRootChildren extends ChildFactory<String> {
 
         private Map<String, List<BlackboardArtifact>> subTags;
+
         TagRootChildren(Map<String, List<BlackboardArtifact>> subTags) {
             super();
             this.subTags = subTags;
         }
-        
+
         @Override
         protected boolean createKeys(List<String> list) {
             list.addAll(subTags.keySet());
@@ -251,9 +252,9 @@ public class Tags implements AutopsyVisitableItem {
     /**
      * Node for each unique tag name. Shown directly under Results > Tags.
      */
-     public class TagNodeRoot extends DisplayableItemNode {
+    public class TagNodeRoot extends DisplayableItemNode {
 
-         TagNodeRoot(String tagName, List<BlackboardArtifact> artifacts) {
+        TagNodeRoot(String tagName, List<BlackboardArtifact> artifacts) {
             super(Children.create(new Tags.TagsChildrenNode(artifacts), true), Lookups.singleton(tagName));
 
             super.setName(tagName);
