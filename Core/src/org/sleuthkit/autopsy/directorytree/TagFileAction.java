@@ -93,10 +93,16 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
         newTagItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Map<String, String> tagMap = new CreateTagDialog(new JFrame(), true).display();
-                if (tagMap != null) {
-                    Tags.createTag(tagFile, tagMap.get("Name"), tagMap.get("Comment"));
-                    refreshDirectoryTree();
+                String newTagName = new CreateTagDialog(new JFrame(), true).display();
+                if (newTagName != null) {
+                    //get comment
+                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag File", null, newTagName, false);
+                    tagDialog.setVisible(true);
+                    TagDialogResult inputResult = tagDialog.getResult();
+                    if (inputResult.isAccept()) {
+                        Tags.createTag(tagFile, newTagName, inputResult.getComment());
+                        refreshDirectoryTree();
+                    }
                 }
             }
         });

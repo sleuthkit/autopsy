@@ -64,13 +64,13 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
         contentItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                  final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Result", null, "Bookmark", false);
-                        tagDialog.setVisible(true);
-                        TagDialog.TagDialogResult inputResult = tagDialog.getResult();
-                        if (inputResult.isAccept()) {
-                            Tags.createBookmark(tagArtifact, inputResult.getComment());
-                            refreshDirectoryTree();
-                        }
+                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Result", null, "Bookmark", false);
+                tagDialog.setVisible(true);
+                TagDialog.TagDialogResult inputResult = tagDialog.getResult();
+                if (inputResult.isAccept()) {
+                    Tags.createBookmark(tagArtifact, inputResult.getComment());
+                    refreshDirectoryTree();
+                }
             }
         });
         result.add(contentItem);
@@ -80,10 +80,17 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
         newTagItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Map<String, String> tagMap = new CreateTagDialog(new JFrame(), true).display();
-                if (tagMap != null) {
-                    Tags.createTag(tagArtifact, tagMap.get("Name"), tagMap.get("Comment"));
-                    refreshDirectoryTree();
+                String newTagName = new CreateTagDialog(new JFrame(), true).display();
+                if (newTagName != null) {
+                    //get comment and create tag
+                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Result", null, newTagName, false);
+                    tagDialog.setVisible(true);
+                    TagDialog.TagDialogResult inputResult = tagDialog.getResult();
+                    if (inputResult.isAccept()) {
+                        Tags.createTag(tagArtifact, newTagName, inputResult.getComment());
+                        refreshDirectoryTree();
+                    }
+
                 }
             }
         });
