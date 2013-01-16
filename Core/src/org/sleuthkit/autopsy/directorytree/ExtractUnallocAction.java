@@ -39,6 +39,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -94,7 +95,8 @@ public final class ExtractUnallocAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         if (LstUnallocs != null && LstUnallocs.size() > 0) {
             if (lockedImages.contains(currentImage)) {
-                JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
+                MessageNotifyUtil.Message.info("Unallocated Space is already being extracted on this Image. Please select a different Image.");
+                //JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
                 return;
             }
             List<UnallocStruct> copyList = new ArrayList<UnallocStruct>() {
@@ -290,7 +292,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                 lockedVols.remove(u.getFileName());
             }
             if (!canceled && !lus.isEmpty()) {
-                JOptionPane.showMessageDialog(new Frame(), "Completed extraction of unallocated space. Files were extracted to " + lus.get(0).getFile().getParent());
+                MessageNotifyUtil.Notify.info("Completed extraction of unallocated space.", "Files were extracted to " + lus.get(0).getFile().getParent());
             }
         }        
     }
