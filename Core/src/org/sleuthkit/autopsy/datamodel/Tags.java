@@ -22,10 +22,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -41,13 +41,24 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ *
+ * Support for tags in the directory tree. Tag nodes representing file and
+ * result tags, encapsulate TSK_TAG_FILE and TSK_TAG_ARTIFACT typed artifacts.
+ *
+ * The class implements querying of datamodel and populating node hierarchy
+ * using child factories.
+ *
+ */
 public class Tags implements AutopsyVisitableItem {
 
     private static final Logger logger = Logger.getLogger(Tags.class.getName());
+    private static final String FILE_TAG_LABEL_NAME = "File Tags";
+    private static final String RESULT_TAG_LABEL_NAME = "Result Tags";
     private SleuthkitCase skCase;
     public static final String NAME = "Tags";
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
-    private Map<String, List<BlackboardArtifact>> tags = new HashMap<String, List<BlackboardArtifact>>();
+    private Map<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>> tags;
 
     Tags(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -75,30 +86,38 @@ public class Tags implements AutopsyVisitableItem {
         private void initData() {
             try {
                 // Get all file and artifact tags
-                tags = new HashMap<String, List<BlackboardArtifact>>();
-                List<BlackboardArtifact> tagArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-                tagArtifacts.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT));
 
-                for (BlackboardArtifact artifact : tagArtifacts) {
-                    for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                        if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()) {
-                            String tagName = attribute.getValueString();
-                            if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
-                                break; // Don't add bookmarks
-                            } else if (tags.containsKey(tagName)) {
-                                List<BlackboardArtifact> list = new ArrayList<BlackboardArtifact>(tags.get(tagName));
-                                list.add(artifact);
-                                tags.put(tagName, list);
-                            } else {
-                                tags.put(tagName, Arrays.asList(artifact));
+                //init data
+                tags = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>>(BlackboardArtifact.ARTIFACT_TYPE.class);
+                tags.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, new HashMap<String, List<BlackboardArtifact>>());
+                tags.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, new HashMap<String, List<BlackboardArtifact>>());
+
+                //populate
+                for (BlackboardArtifact.ARTIFACT_TYPE artType : tags.keySet()) {
+                    final Map<String, List<BlackboardArtifact>> artTags = tags.get(artType);
+                    for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(artType)) {
+                        for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                            if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()) {
+                                String tagName = attribute.getValueString();
+                                if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
+                                    break; // Don't add bookmarks
+                                } else if (artTags.containsKey(tagName)) {
+                                    List<BlackboardArtifact> list = new ArrayList<BlackboardArtifact>(artTags.get(tagName));
+                                    ///TODO List<BlackboardArtifact> list = artTags.get(tagName);
+                                    list.add(artifact);
+                                    artTags.put(tagName, list);
+                                } else {
+                                    artTags.put(tagName, Arrays.asList(artifact));
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
 
+
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Count not initialize bookmark nodes, ", ex);
+                logger.log(Level.WARNING, "Count not initialize tag nodes, ", ex);
             }
         }
 
@@ -131,36 +150,114 @@ public class Tags implements AutopsyVisitableItem {
     }
 
     /**
-     * Child factory to add all the Tag artifacts to a TagsRootNode with the tag
-     * name.
+     * bookmarks root child node creating types of bookmarks nodes
      */
-    private class TagsRootChildren extends ChildFactory<String> {
+    private class TagsRootChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
 
         @Override
-        protected boolean createKeys(List<String> list) {
-            for (String tagName : tags.keySet()) {
-                list.add(tagName);
+        protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
+            for (BlackboardArtifact.ARTIFACT_TYPE artType : tags.keySet()) {
+                list.add(artType);
             }
 
             return true;
         }
 
         @Override
+        protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key) {
+            return new TagsNodeRoot(key, tags.get(key));
+        }
+    }
+
+    /**
+     * Tag node representation (file or result)
+     */
+     public class TagsNodeRoot extends DisplayableItemNode {
+
+        TagsNodeRoot(BlackboardArtifact.ARTIFACT_TYPE tagType, Map<String, List<BlackboardArtifact>> subTags) {
+            super(Children.create(new TagRootChildren(subTags), true), Lookups.singleton(tagType.getDisplayName()));
+
+            String name = null;
+            if (tagType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)) {
+                name = FILE_TAG_LABEL_NAME;
+            } else if (tagType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)) {
+                name = RESULT_TAG_LABEL_NAME;
+            }
+
+            super.setName(name);
+            super.setDisplayName(name + " (" + subTags.values().size() + ")");
+
+            this.setIconBaseWithExtension(TAG_ICON_PATH);
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty("Name",
+                    "Name",
+                    "no description",
+                    getName()));
+
+            return s;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
+
+        @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.META;
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+    }
+
+    /**
+     * Child factory to add all the Tag artifacts to a TagsRootNode with the tag
+     * name.
+     */
+    private class TagRootChildren extends ChildFactory<String> {
+
+        private Map<String, List<BlackboardArtifact>> subTags;
+        TagRootChildren(Map<String, List<BlackboardArtifact>> subTags) {
+            super();
+            this.subTags = subTags;
+        }
+        
+        @Override
+        protected boolean createKeys(List<String> list) {
+            list.addAll(subTags.keySet());
+
+            return true;
+        }
+
+        @Override
         protected Node createNodeForKey(String key) {
-            return new Tags.TagsNodeRoot(key, tags.get(key));
+            return new Tags.TagNodeRoot(key, subTags.get(key));
         }
     }
 
     /**
      * Node for each unique tag name. Shown directly under Results > Tags.
      */
-    public class TagsNodeRoot extends DisplayableItemNode {
+     public class TagNodeRoot extends DisplayableItemNode {
 
-        public TagsNodeRoot(String tagName, List<BlackboardArtifact> artifacts) {
+         TagNodeRoot(String tagName, List<BlackboardArtifact> artifacts) {
             super(Children.create(new Tags.TagsChildrenNode(artifacts), true), Lookups.singleton(tagName));
 
             super.setName(tagName);
-            super.setDisplayName(tagName + " (" + tags.get(tagName).size() + ")");
+            super.setDisplayName(tagName + " (" + artifacts.size() + ")");
 
             this.setIconBaseWithExtension(TAG_ICON_PATH);
         }
