@@ -18,23 +18,28 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import java.io.IOException;
-import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import org.openide.modules.ModuleInstall;
 import java.util.logging.Level;
-import java.util.logging.SimpleFormatter;
-import org.openide.modules.Places;
 
 /**
  * Manages a this module's lifecycle. Sets up logging to file.
  */
 public class Installer extends ModuleInstall {
 
-    static final Logger autopsyLogger = Logger.getLogger(""); //root logger
-    static Handler logs;
+    private static final Logger autopsyLogger = Logger.getLogger(""); //root logger
+    private static Handler logs;
 
-    public Installer() {
+    private static Installer instance;
+    
+    public synchronized static Installer getDefault() {
+        if (instance == null) {
+            instance = new Installer();
+        }
+        return instance;
+    }
+    
+    private Installer() {
         super();
     }
 

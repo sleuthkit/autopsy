@@ -28,11 +28,19 @@ import org.openide.windows.WindowManager;
  */
 public class Installer extends ModuleInstall {
 
-    public Installer() {
+    private static Installer instance;
+
+    public synchronized static Installer getDefault() {
+        if (instance == null) {
+            instance = new Installer();
+        }
+        return instance;
+    }
+
+    private Installer() {
         super();
     }
 
-    
     @Override
     public void restored() {
 
@@ -40,7 +48,6 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "Initializing ingest manager");
         final IngestManager manager = IngestManager.getDefault();
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-
             @Override
             public void run() {
                 //at this point UI top component is present for sure, ensure manager has it
