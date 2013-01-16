@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -196,7 +197,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 //Making a dropdown box to select years.
                 List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
                 for (YearEpoch ye : lsye) {
-                    lsi.add(ye.year + " : " + ye.total);
+                    lsi.add(ye.year + " : " + ye.getNumFiles());
                 }
                 ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
                 dropdown_SelectYears = new ComboBox(listSelect);
@@ -291,7 +292,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
         for (final YearEpoch ye : allYears) {
-            se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.total));
+            se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
         }
         bcData.add(se);
 
@@ -320,7 +321,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                                     });
                                     //If a single click, hover a label over the cursor with information about the selection
                                 } else if (e.getClickCount() == 1) {
-                                    l.setText(findYear(allYears, Integer.valueOf((String) data.getXValue())).total + " events");
+                                    l.setText(findYear(allYears, Integer.valueOf((String) data.getXValue())).getNumFiles() + " events");
                                     l.setTranslateX(e.getX());
                                     l.setTranslateY(e.getY());
                                 }
@@ -350,7 +351,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
 
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
         for (final MonthEpoch me : ye.months) {
-            se.getData().add(new BarChart.Data<String, Number>(me.getMonthName(), me.total)); //Adding new data at {X-pos, Y-Pos}
+            se.getData().add(new BarChart.Data<String, Number>(me.getMonthName(), me.getNumFiles())); //Adding new data at {X-pos, Y-Pos}
         }
         bcData.add(se);
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
@@ -373,7 +374,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                                         PlatformImpl.startup(new Runnable() {
                                             @Override
                                             public void run() {
-                                                chart_Events = createEventsByMonth(findMonth(ye.months, month_StringtoInt((String) data.getXValue())));
+                                                chart_Events = createEventsByMonth(findMonth(ye.months, month_StringtoInt((String) data.getXValue())), ye);
                                                 scroll_Events.setContent(chart_Events);
                                             }
                                         });
@@ -396,14 +397,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * Displays a chart with events from one month only.
      * Up to 31 days per month, as low as 28 as determined by the specific MonthEpoch
      */
-    private BarChart createEventsByMonth(final MonthEpoch me) {
+    private BarChart createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Day of Month");
         yAxis.setLabel("Number of Events");
         ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me);
         BarChart.Series<String, Number> series = new BarChart.Series(bcData);
-        series.setName(me.getMonthName() + " " + me.year);
+        series.setName(me.getMonthName() + " " + ye.getYear());
 
         ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
 
@@ -432,7 +433,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me) {
         ObservableList<BarChart.Data> bcData = FXCollections.observableArrayList();
         for (DayEpoch day : me.getDays()) {
-            BarChart.Data d = new BarChart.Data(me.month + 1 + "-" + String.valueOf(day.dayNum), day.events.size());
+            BarChart.Data d = new BarChart.Data(me.month + 1 + "-" + String.valueOf(day.dayNum), day.files.size());
             d.setExtraValue(me);
             bcData.add(d);
         }
@@ -494,63 +495,95 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * All of those are Epochs.
      */
     abstract class Epoch {
-        Calendar calendar;
-        int year;
-        boolean isDay = false;
-        boolean isMonth = false;
-        boolean isYear = false;
-        int total = 0; //total numder of events for this epoch
-
-        Epoch(int year) {
-            this.year = year;
-            this.calendar = Calendar.getInstance();
-        }
+        abstract public int getNumFiles();
     }
 
     private class YearEpoch extends Epoch {
 
-        List<MonthEpoch> months;
-        int numDays = 0; //Days in this year. Will be between 366 and 365
-
-        YearEpoch(int year, List<MonthEpoch> months) {
-            super(year);
-            this.calendar.set(year, 0, 1); //default to January 1st
-            isYear = true;
-            this.months = months;
+        private int year;
+        private List<MonthEpoch> months = new ArrayList<>();
+        
+        YearEpoch(int year) {
+            this.year = year;
+        }
+        
+        public int getYear() {
+            return year;
+        }
+        
+        @Override
+        public int getNumFiles() {
+            int size = 0;
             for (MonthEpoch me : months) {
-                total += me.total;
-                numDays += me.numDays;
+                size += me.getNumFiles();
             }
+            return size;
+        }
+        
+        public void add(AbstractFile af, int month, int day) {
+            // see if this month is in the list
+            MonthEpoch monthEpoch = null;
+            for (MonthEpoch me : months) {
+                if (me.getMonthInt() == month) {
+                    monthEpoch = me;
+                    break;
+                }
+            }
+            
+            if (monthEpoch == null) {
+                monthEpoch = new MonthEpoch(month);
+                months.add(monthEpoch);
+            }
+            
+            // add the file the the MonthEpoch object
+            monthEpoch.add(af, day);
         }
     }
 
     private class MonthEpoch extends Epoch {
 
-        int month; //Zero-indexed: June = 5, August = 7, etc
-        String month_name; //Full name: January, October, July, etc
-        List<DayEpoch> days; //List of DayEpochs in this month, max 31
-        int numDays = 0; //Number of days in this month, max 31
+        private int month; //Zero-indexed: June = 5, August = 7, etc
+        private List<DayEpoch> days = new ArrayList<>(); //List of DayEpochs in this month, max 31
 
-        MonthEpoch(int month, int year, List<DayEpoch> days) {
-            super(year);
-            isMonth = true;
+        MonthEpoch(int month) {
             this.month = month;
-            calendar.set(year, month, 1);
-            java.util.Date d = new java.util.Date(calendar.getTimeInMillis());
-            this.month_name = new SimpleDateFormat("MMMM").format(d);
-            this.numDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-            this.year = year;
-            this.days = days;
+        }
+        
+        public int getMonthInt() {
+            return month;
+        }
+        
+        @Override
+        public int getNumFiles() {
+            int numFiles = 0;
             for (DayEpoch de : days) {
-                total += de.total;
+                numFiles += de.getNumFiles();
             }
+            return numFiles;
+        }
+        
+        public void add(AbstractFile af, int day) {
+            DayEpoch dayEpoch = null;
+            for (DayEpoch de : days) {
+                if (de.getDayInt() == day) {
+                    dayEpoch = de;
+                    break;
+                }
+            }
+            
+            if (dayEpoch == null) {
+                dayEpoch = new DayEpoch(day);
+                days.add(dayEpoch);
+            }
+            
+            dayEpoch.add(af);
         }
 
         /**
          * Returns the month's name in String format, e.g., September, July,
          */
         String getMonthName() {
-            return this.month_name;
+            return new DateFormatSymbols().getMonths()[month];
         }
 
         /**
@@ -563,27 +596,27 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
 
     private class DayEpoch extends Epoch {
 
-        private List<AbstractFile> events;
+        private List<AbstractFile> files = new ArrayList<>();
         int dayNum = 0; //Day of the month this Epoch represents, 1 indexed: 28=28.
-
-        DayEpoch(int year, int month, int day, List<AbstractFile> events) {
-            super(year);
-            isDay = true;
-            this.dayNum = day;
-            this.events = events;
-            total = events.size();
+        
+        DayEpoch(int dayOfMonth) {
+            this.dayNum = dayOfMonth;
         }
-
-        //Constructor for null-days to fill out a Month.
-        DayEpoch(int year, int month, int day) {
-            super(year);
-            this.dayNum = day;
-            this.events = new ArrayList<AbstractFile>();
-            this.total = 0;
+        
+        public int getDayInt() {
+            return dayNum;
+        }
+        
+        public int getNumFiles() {
+            return files.size();
+        }
+        
+        public void add(AbstractFile af) {
+            files.add(af);
         }
 
         List<AbstractFile> getEvents() {
-            return this.events;
+            return this.files;
         }
     }
 
@@ -626,134 +659,49 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         }
     }
 
-    /**
-     * Fills an array list with empty day objects according to the number of
-     * days in a month
-     *
-     * @param daysToFill
-     * @param daysInMonth Must be Zero Indexed
-     */
-    private ArrayList<DayEpoch> fillOutDays(DayEpoch[] daysToFill, int daysInMonth, int year, int month) {
-        for (int i = 0; i < daysInMonth; i++) {
-            if (daysToFill[i] == null) {
-                daysToFill[i] = new DayEpoch(year, month, i + 1);
-            }
-        }
-        return new ArrayList<DayEpoch>(Arrays.asList(daysToFill));
-    }
-
-    private ArrayList<MonthEpoch> fillOutMonths(MonthEpoch[] monthsToFill, int year) {
-        for (int i = 0; i < 12; i++) {
-            if (monthsToFill[i] == null) {
-                Calendar cal2 = Calendar.getInstance();
-                cal2.set(year, i, 1);
-                int daysinMonth = cal2.getActualMaximum(Calendar.DAY_OF_MONTH) - 1;
-                monthsToFill[i] = new MonthEpoch(i, year, fillOutDays(new DayEpoch[daysinMonth], daysinMonth, year, i));
-            }
-        }
-        return new ArrayList<MonthEpoch>(Arrays.asList(monthsToFill));
-    }
-
     private List<YearEpoch> parseMacTime(java.io.File f) {
+        List<YearEpoch> years = new ArrayList<>();
+        Scanner scan;
         try {
-            boolean firstRun = true; //used to help method not screw up on the first run
-            Scanner scan = new Scanner(new FileInputStream(f));
-            scan.nextLine();
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            Calendar cal = Calendar.getInstance();
-            int daysInThisMonth = 31;   //Number of days in the currentMonth
-            scan.useDelimiter(",");
-            String prevDate = "";
-
-            int prevYear = -1;
-            int prevMonth = -1;
-            int prevDay = -1;
-            long prevObjId = -1;
-            String prevType = "-1";
-
-
-            List<AbstractFile> fs = new ArrayList<AbstractFile>(); //Single day's events
-            DayEpoch[] dayz = new DayEpoch[31]; //Default initialization to 31 slots
-            MonthEpoch[] monthz = new MonthEpoch[12];
-            List<YearEpoch> years = new ArrayList<YearEpoch>();
-
-            while (scan.hasNextLine()) {
-                AbstractFsContentNode n;
-                String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
-                String[] datetime = s[0].split("T"); //{1999-02-08, 11:08:08Z}
-                String[] date = datetime[0].split("-"); // {1999, 02, 08}
-                int year = Integer.valueOf(date[0]);
-                int month = Integer.valueOf(date[1]) - 1; //Months are zero indexed: 1 = February, 6 = July, 11 = December
-                int day = Integer.valueOf(date[2]); //Days are 1 indexed
-                String type = s[2];
-                long ObjId = Long.valueOf(s[4]);
-
-                //First values 
-                if (firstRun) {
-                    prevDate = datetime[0];
-                    prevYear = year;
-                    prevMonth = month;
-                    prevDay = day;
-                    prevObjId = ObjId;
-                    prevType = type;
-                    cal.set(prevYear, prevMonth, 1);
-                    daysInThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-                    dayz = new DayEpoch[daysInThisMonth];
-                    firstRun = false;
-                }
-
-                /**
-                 * End Testing Stuff
-                 */
-                //Intermediate values
-                if ((!prevDate.equals(datetime[0]))) {  //Did the Day change?
-                    cal.set(prevYear, prevMonth, 1);
-                    DayEpoch d = new DayEpoch(prevYear, prevMonth, prevDay, fs);
-                    dayz[prevDay - 1] = d;
-                    fs = new ArrayList<AbstractFile>();
-                    prevDate = datetime[0];
-                    prevDay = day;
-
-                    if (month != prevMonth) { //Did the Month change?
-                        ArrayList<DayEpoch> da = fillOutDays(dayz, daysInThisMonth, prevYear, prevMonth);
-                        MonthEpoch m = new MonthEpoch(prevMonth, prevYear, da);
-                        monthz[prevMonth] = m;
-                        prevMonth = month;
-                        cal.set(prevYear, prevMonth, 1);
-                        daysInThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-                        dayz = new DayEpoch[daysInThisMonth];
-
-                        if (Integer.valueOf(year) != prevYear) {   //Did the Year change?
-                            YearEpoch y = new YearEpoch(prevYear, fillOutMonths(monthz, prevYear));
-                            monthz = new MonthEpoch[12];
-                            years.add(y);
-                            prevYear = Integer.valueOf(year);
-                        }
-                    }
-                    prevObjId = ObjId;
-                    prevType = type;
-                } else {
-                    AbstractFile file = skCase.getAbstractFileById(ObjId);
-                    fs.add(file);
-                }
-            }
-            //Final values
-            cal.set(prevYear, prevMonth, 1);
-            DayEpoch d = new DayEpoch(prevYear, prevMonth, prevDay, fs);
-            dayz[prevDay - 1] = d;
-            ArrayList<DayEpoch> da = fillOutDays(dayz, daysInThisMonth, prevYear, prevMonth);
-            MonthEpoch m = new MonthEpoch(prevMonth, prevYear, da);
-            monthz[prevMonth] = m;
-            YearEpoch y = new YearEpoch(prevYear, fillOutMonths(monthz, prevYear));
-            years.add(y);
+            scan = new Scanner(new FileInputStream(f));
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Error: could not find mactime file.", ex);
             return years;
-        } catch (FileNotFoundException fnfe) {
-            logger.log(Level.SEVERE, "Error 404: can't find Mactime file", fnfe);
-            return null;
-        } catch (TskCoreException tce) {
-            logger.log(Level.SEVERE, "Error 500: can't parse mactime file", tce);
-            return null;
         }
+        scan.useDelimiter(",");
+        scan.nextLine();   // skip the header line
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+
+        int prevYear = -1;
+        YearEpoch ye = null;
+        while (scan.hasNextLine()) {
+            String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
+            String[] datetime = s[0].split("T"); //{1999-02-08, 11:08:08Z}
+            String[] date = datetime[0].split("-"); // {1999, 02, 08}
+            int year = Integer.valueOf(date[0]);
+            int month = Integer.valueOf(date[1]) - 1; //Months are zero indexed: 1 = February, 6 = July, 11 = December
+            int day = Integer.valueOf(date[2]); //Days are 1 indexed
+            long ObjId = Long.valueOf(s[4]);
+
+            // when the year changes, create and add a new YearEpoch object to the list
+            if (year != prevYear) {
+                ye = new YearEpoch(year);
+                years.add(ye);
+                prevYear = year;
+            }
+
+            // create and add the file
+            AbstractFile file;
+            try {
+                file = skCase.getAbstractFileById(ObjId);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not find a file with ID " + ObjId, ex);
+                continue;
+            }
+            ye.add(file, month, day);
+        }
+
+        return years;
     }
 
     private String makeBodyFile() {
