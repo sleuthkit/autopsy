@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -56,7 +55,7 @@ public class Bookmarks implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(Bookmarks.class.getName());
     private SleuthkitCase skCase;
     private final Map<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>> data =
-            new HashMap<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>>();
+            new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>>(BlackboardArtifact.ARTIFACT_TYPE.class);
 
     public Bookmarks(SleuthkitCase skCase) {
         this.skCase = skCase;
