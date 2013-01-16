@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsRootNode;
 
@@ -59,6 +60,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(BookmarksNodeRoot bksrn);
     T visit(TagsRootNode bksrn);
     T visit(TagsNodeRoot bksrn);
+    T visit(TagNodeRoot tnr);
     T visit(ViewsNode vn);
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
@@ -218,5 +220,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(TagsNodeRoot bksnr) {
             return defaultVisit(bksnr);
         }
+
+        @Override
+        public T visit(TagNodeRoot tnr) {
+            return defaultVisit(tnr);
+        }
+        
+        
     }
 }
