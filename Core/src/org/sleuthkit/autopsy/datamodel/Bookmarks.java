@@ -48,7 +48,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class Bookmarks implements AutopsyVisitableItem {
 
     public static final String NAME = "Bookmarks";
-    
     private static final String FILE_BOOKMARKS_LABEL_NAME = "File Bookmarks";
     private static final String RESULT_BOOKMARKS_LABEL_NAME = "Result Bookmarks";
     //bookmarks are specializations of tags
@@ -96,7 +95,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 List<BlackboardArtifact> tagArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME,
                         BOOKMARK_TAG_NAME);
-                
+
                 data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, tagFiles);
                 data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, tagArtifacts);
             } catch (TskCoreException ex) {
@@ -228,7 +227,25 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+            BlackboardArtifactNode bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+            int artifactTypeID = artifact.getArtifactTypeID();
+            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                final String NO_DESCR = "no description";
+                
+                BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
+                String resultType = sourceResult.getDisplayName();
+                
+                NodeProperty resultTypeProp = new NodeProperty("Result Type",
+                        "Result Type",
+                        NO_DESCR,
+                        resultType);
+
+
+                bookmarkNode.addNodeProperty(resultTypeProp);
+                
+                //TODO add action to navigate to source result
+            }
+            return bookmarkNode;
         }
     }
 
