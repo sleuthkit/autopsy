@@ -235,7 +235,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
                 String resultType = sourceResult.getDisplayName();
                 
-                NodeProperty resultTypeProp = new NodeProperty("Result Type",
+                NodeProperty resultTypeProp = new NodeProperty("Source Result Type",
                         "Result Type",
                         NO_DESCR,
                         resultType);
