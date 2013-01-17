@@ -2,11 +2,11 @@
 
 New features:
 - Results and files can be tagged with custom tags and reported on them.
+- New notification area for error reporting (bottom right).
 
 Improvements:
 - Tweaked memory settings to eliminate out-of-memory errors.
 - Faster application launch time.
-- New notification area for error reporting.
 - Netbeans RCP upgrade from 7.2.1 to 7.3
 
 Bugfixes:
