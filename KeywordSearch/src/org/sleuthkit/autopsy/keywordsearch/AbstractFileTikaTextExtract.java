@@ -68,8 +68,24 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     // TODO: use a more robust method than checking file extension
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] SUPPORTED_EXTENSIONS = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
+    static final String[] SUPPORTED_EXTENSIONS = {
+        //Archives (TODO remove once we have extraction module)
+        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", 
+        //MS Office
+        "doc", "dot", "docx", "docm", "dotx", "dotm",
+        "xls", "xlw", "xlt", "xlsx",  "xlsm", "xltx", "xltm",
+        "ppt", "pps", "pot", "pptx", "pptm", "potx", "potm",  
+        //Open Office
+        "odf", "odt", "ott", "ods", "ots", "odp", "otp", 
+        "sxw", "stw", "sxc", "stc", "sxi", "sxi", 
+        "sdw", "sdc", "vor", "sgl", 
+        //rich text, pdf
+        "rtf", "pdf", 
+        //html (other extractors take priority)
+        "html", "htm", "xhtml", 
+        //text
+        "txt", "log", "manifest",
+        //images, media, other
         "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
