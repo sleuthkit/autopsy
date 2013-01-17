@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import com.google.common.collect.Lists;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -221,6 +222,11 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //merge predefined specific node actions if bban sublcasses have their own
+            for (Action a : ban.getActions(true)) {
+                actions.add(a);
+            }
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 

@@ -18,16 +18,21 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -226,23 +231,43 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact artifact) {
-            BlackboardArtifactNode bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+            BlackboardArtifactNode bookmarkNode = null;
+
             int artifactTypeID = artifact.getArtifactTypeID();
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                final BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
+                bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH) {
+                    @Override
+                    public Action[] getActions(boolean bln) {
+                        //Action [] actions = super.getActions(bln); //To change body of generated methods, choose Tools | Templates.
+                        Action[] actions = new Action[1];
+                        actions[0] = new AbstractAction("View Source Result") {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                //open the source artifact in dir tree
+                                if (sourceResult != null) {
+                                    BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
+                                    v.viewArtifact(sourceResult);
+                                }
+                            }
+                        };
+                        return actions;
+                    }
+                };
+
+                //add custom property
                 final String NO_DESCR = "no description";
-                
-                BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
                 String resultType = sourceResult.getDisplayName();
-                
                 NodeProperty resultTypeProp = new NodeProperty("Source Result Type",
                         "Result Type",
                         NO_DESCR,
                         resultType);
-
-
                 bookmarkNode.addNodeProperty(resultTypeProp);
-                
-                //TODO add action to navigate to source result
+
+            } else {
+                //file bookmark, no additional action
+                bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+
             }
             return bookmarkNode;
         }
