@@ -18,21 +18,25 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -175,7 +179,7 @@ public class Tags implements AutopsyVisitableItem {
     public class TagsNodeRoot extends DisplayableItemNode {
 
         TagsNodeRoot(BlackboardArtifact.ARTIFACT_TYPE tagType, Map<String, List<BlackboardArtifact>> subTags) {
-            super(Children.create(new TagRootChildren(subTags), true), Lookups.singleton(tagType.getDisplayName()));
+            super(Children.create(new TagRootChildren(tagType, subTags), true), Lookups.singleton(tagType.getDisplayName()));
 
             String name = null;
             if (tagType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)) {
@@ -230,9 +234,11 @@ public class Tags implements AutopsyVisitableItem {
     private class TagRootChildren extends ChildFactory<String> {
 
         private Map<String, List<BlackboardArtifact>> subTags;
+        private BlackboardArtifact.ARTIFACT_TYPE tagType;
 
-        TagRootChildren(Map<String, List<BlackboardArtifact>> subTags) {
+        TagRootChildren(BlackboardArtifact.ARTIFACT_TYPE tagType, Map<String, List<BlackboardArtifact>> subTags) {
             super();
+            this.tagType = tagType;
             this.subTags = subTags;
         }
 
@@ -245,7 +251,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new Tags.TagNodeRoot(key, subTags.get(key));
+            return new Tags.TagNodeRoot(tagType, key, subTags.get(key));
         }
     }
 
@@ -254,8 +260,8 @@ public class Tags implements AutopsyVisitableItem {
      */
     public class TagNodeRoot extends DisplayableItemNode {
 
-        TagNodeRoot(String tagName, List<BlackboardArtifact> artifacts) {
-            super(Children.create(new Tags.TagsChildrenNode(artifacts), true), Lookups.singleton(tagName));
+        TagNodeRoot(BlackboardArtifact.ARTIFACT_TYPE tagType, String tagName, List<BlackboardArtifact> artifacts) {
+            super(Children.create(new Tags.TagsChildrenNode(tagType, artifacts), true), Lookups.singleton(tagName));
 
             super.setName(tagName);
             super.setDisplayName(tagName + " (" + artifacts.size() + ")");
@@ -303,9 +309,11 @@ public class Tags implements AutopsyVisitableItem {
     private class TagsChildrenNode extends ChildFactory<BlackboardArtifact> {
 
         private List<BlackboardArtifact> artifacts;
+        private BlackboardArtifact.ARTIFACT_TYPE tagType;
 
-        private TagsChildrenNode(List<BlackboardArtifact> artifacts) {
+        private TagsChildrenNode(BlackboardArtifact.ARTIFACT_TYPE tagType, List<BlackboardArtifact> artifacts) {
             super();
+            this.tagType = tagType;
             this.artifacts = artifacts;
         }
 
@@ -316,8 +324,40 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact artifact) {
-            BlackboardArtifactNode tagNode = new BlackboardArtifactNode(artifact, TAG_ICON_PATH);
+        protected Node createNodeForKey(final BlackboardArtifact artifact) {
+            //create node with action
+            BlackboardArtifactNode tagNode = null;
+
+            //create actions here where Tag logic belongs
+            //instead of DataResultFilterNode w/visitors, which is much less pluggable and cluttered
+            if (tagType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)) {
+                //in case of result tag, add a action by sublcassing bb art node
+                //this action will be merged with other actions set  DataResultFIlterNode
+                //otherwise in case of 
+                tagNode = new BlackboardArtifactNode(artifact, TAG_ICON_PATH) {
+                    @Override
+                    public Action[] getActions(boolean bln) {
+                        //Action [] actions = super.getActions(bln); //To change body of generated methods, choose Tools | Templates.
+                        Action[] actions = new Action[1];
+                        actions[0] = new AbstractAction("View Source Result") {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                //open the source artifact in dir tree
+                                BlackboardArtifact sourceArt = Tags.getArtifactFromTag(artifact.getArtifactID());
+                                if (sourceArt != null) {
+                                    BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
+                                    v.viewArtifact(sourceArt);
+                                }
+                            }
+                        };
+                        return actions;
+                    }
+                };
+            } else {
+                //for file tag, don't subclass to add the additional actions
+                tagNode = new BlackboardArtifactNode(artifact, TAG_ICON_PATH);
+            }
+
             int artifactTypeID = artifact.getArtifactTypeID();
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                 final String NO_DESCR = "no description";
@@ -333,7 +373,6 @@ public class Tags implements AutopsyVisitableItem {
 
                 tagNode.addNodeProperty(resultTypeProp);
 
-                //TODO add action to navigate to source result
             }
             return tagNode;
         }
