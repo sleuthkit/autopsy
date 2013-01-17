@@ -24,9 +24,8 @@ import org.openide.nodes.PropertySupport;
 /**
  * This class is used to represent the properties for each node.
  *
- * @author jantonius
  */
-class NodeProperty extends PropertySupport.ReadOnly {
+public class NodeProperty extends PropertySupport.ReadOnly {
 
     private Object value;
     
