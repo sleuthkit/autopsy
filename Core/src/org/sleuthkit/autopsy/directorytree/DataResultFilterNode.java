@@ -245,8 +245,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add file/result tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                     actions.add(new TagFileAction(f));
                     actions.add(new TagResultAction(ba));
@@ -259,8 +261,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract Directory", new DirectoryNode(d)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add file/result tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                     actions.add(new TagFileAction( d));
                     actions.add(new TagResultAction(ba));
@@ -273,8 +277,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new LayoutFileNode(lf)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                      actions.add(new TagFileAction(lf));
                     actions.add(new TagResultAction(ba));
