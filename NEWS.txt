@@ -14,7 +14,7 @@ Bugfixes:
 - fixed bug when keyword search ingest would search also images previously ingested, creating duplicate results
 - fixed crash and hang in html and excel report generation, due to special characters present
 - fixed cancellation when creating file or result bookmark
-- fixed text not being extracted from docx, xlsx and pptx MS Office documents
+- fixed text not being extracted and searched from all MS Office documents  (such as docx, xlsx and pptx extensions)
 
 
 ---------------- VERSION 3.0.3 --------------
