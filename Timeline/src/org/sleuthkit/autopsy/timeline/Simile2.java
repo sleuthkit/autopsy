@@ -415,8 +415,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
                     new EventHandler<MouseEvent>() {
                         MonthEpoch myme = me;
-                        
-                        BarChart.Data mydata = data;
+
                         @Override
                         public void handle(MouseEvent e) {
                             int day = (Integer.valueOf(((String) data.getXValue()).split("-")[1]));
