@@ -64,7 +64,7 @@ public class Tags implements AutopsyVisitableItem {
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private Map<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>> tags;
     
-    private static final String EMPTY_COMMENT = "No Comment";
+    private static final String EMPTY_COMMENT = "";
 
     Tags(SleuthkitCase skCase) {
         this.skCase = skCase;
