@@ -236,11 +236,7 @@ public class TagDialog extends javax.swing.JDialog {
     }
 
     String getComment() {
-        String comment = commentText.getText();
-        if (comment == null || comment.isEmpty()) {
-            return "No Comment";
-        }
-        return comment;
+        return commentText.getText();
     }
 
     TagDialogResult getResult() {
