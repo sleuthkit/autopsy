@@ -63,6 +63,8 @@ public class Tags implements AutopsyVisitableItem {
     public static final String NAME = "Tags";
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private Map<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>> tags;
+    
+    private static final String EMPTY_COMMENT = "No Comment";
 
     Tags(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -383,7 +385,7 @@ public class Tags implements AutopsyVisitableItem {
      *
      * @param file to create tag for
      * @param tagName TSK_TAG_NAME
-     * @param comment the tag comment
+     * @param comment the tag comment, or null if not present
      */
     public static void createTag(AbstractFile file, String tagName, String comment) {
         try {
@@ -393,10 +395,13 @@ public class Tags implements AutopsyVisitableItem {
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
                     "", tagName);
-            BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
-                    "", comment);
             attrs.add(attr1);
-            attrs.add(attr2);
+            
+            if (comment != null && ! comment.isEmpty()) {
+                BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
+                    "", comment);
+                attrs.add(attr2);
+            }
             bookArt.addAttributes(attrs);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create tag for " + file.getName());
@@ -408,7 +413,7 @@ public class Tags implements AutopsyVisitableItem {
      *
      * @param artifact to create tag for
      * @param tagName TSK_TAG_NAME
-     * @param comment the tag comment
+     * @param comment the tag comment or null if not present
      */
     public static void createTag(BlackboardArtifact artifact, String tagName, String comment) {
         try {
@@ -422,12 +427,17 @@ public class Tags implements AutopsyVisitableItem {
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
                     "", tagName);
-            BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
+            
+            if (comment != null && ! comment.isEmpty()) {
+                BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
                     "", comment);
+                attrs.add(attr2);
+            }
+            
             BlackboardAttribute attr3 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
                     "", artifact.getArtifactID());
             attrs.add(attr1);
-            attrs.add(attr2);
+            
             attrs.add(attr3);
             bookArt.addAttributes(attrs);
         } catch (TskCoreException ex) {
@@ -550,7 +560,7 @@ public class Tags implements AutopsyVisitableItem {
             logger.log(Level.SEVERE, "Failed to get artifact " + tagArtifactId + " from case.");
         }
 
-        return null;
+        return EMPTY_COMMENT;
     }
 
     /**

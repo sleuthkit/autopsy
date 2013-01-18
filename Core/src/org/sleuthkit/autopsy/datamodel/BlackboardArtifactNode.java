@@ -168,7 +168,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else {
                     switch (attribute.getValueType()) {
                         case STRING:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
+                            String valString = attribute.getValueString();
+                            map.put(attribute.getAttributeTypeDisplayName(),  valString == null ? "":valString);
                             break;
                         case INTEGER:
                             map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
