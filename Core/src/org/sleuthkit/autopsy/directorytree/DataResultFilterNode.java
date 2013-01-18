@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import com.google.common.collect.Lists;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
+import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
+import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -219,6 +222,11 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //merge predefined specific node actions if bban sublcasses have their own
+            for (Action a : ban.getActions(true)) {
+                actions.add(a);
+            }
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 
@@ -243,8 +251,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add file/result tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                     actions.add(new TagFileAction(f));
                     actions.add(new TagResultAction(ba));
@@ -257,8 +267,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract Directory", new DirectoryNode(d)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add file/result tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                     actions.add(new TagFileAction( d));
                     actions.add(new TagResultAction(ba));
@@ -271,8 +283,10 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new LayoutFileNode(lf)));
                 
-                //add file bookmark if itself is not a file bookmark
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                //add tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                    && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()
+                        ) {
                     actions.add(null); // creates a menu separator
                      actions.add(new TagFileAction(lf));
                     actions.add(new TagResultAction(ba));
@@ -403,6 +417,23 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(ArtifactTypeNode atn) {
             return openChild(atn);
         }
+
+        @Override
+        public AbstractAction visit(TagNodeRoot tnr) {
+            return openChild(tnr);
+        }
+        
+        @Override
+        public AbstractAction visit(TagsNodeRoot tnr) {
+            return openChild(tnr);
+        }
+        
+        
+        
+        
+        
+        
+        
 
         @Override
         public AbstractAction visit(DirectoryNode dn) {

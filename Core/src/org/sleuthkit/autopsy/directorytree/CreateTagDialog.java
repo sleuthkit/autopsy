@@ -29,12 +29,14 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.openide.util.ImageUtilities;
 import org.sleuthkit.autopsy.datamodel.Tags;
 
 public class CreateTagDialog extends javax.swing.JDialog {
-    private Map<String, String> tagMap = null;
-    TagsTableModel tagsTableModel;
-    TagSelectionListener tagSelectionListener;
+    private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private TagsTableModel tagsTableModel;
+    private String newTagName;
+
 
     /**
      * Creates new form CreateTagDialog
@@ -44,15 +46,19 @@ public class CreateTagDialog extends javax.swing.JDialog {
         initComponents();
         
         tagsTableModel = new TagsTableModel();
-        tagSelectionListener = new TagSelectionListener();
         tagsTable.setModel(tagsTableModel);
-        tagsTable.getSelectionModel().addListSelectionListener(tagSelectionListener);
         tagsTable.setTableHeader(null);
-        tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        //tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        //completely disable selections
+        tagsTable.setCellSelectionEnabled(false);
+        tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
+        
+        setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
+        
     }
     
-    public Map<String, String> display() {
+    public String display() {
         this.setTitle("Create a new tag");
         
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -62,9 +68,9 @@ public class CreateTagDialog extends javax.swing.JDialog {
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        this.setVisible(true);
+        this.setVisible(true); //blocks
         
-        return this.tagMap;
+        return newTagName;
     }
     
     private boolean containsIllegalCharacters(String content) {
@@ -91,9 +97,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
         tagsTable = new javax.swing.JTable();
         preexistingLabel = new javax.swing.JLabel();
         newTagPanel = new javax.swing.JPanel();
-        tagCommentField = new javax.swing.JTextField();
         tagNameLabel = new javax.swing.JLabel();
-        tagCommentLabel = new javax.swing.JLabel();
         tagNameField = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -119,6 +123,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
 
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
+        tagsTable.setBackground(new java.awt.Color(240, 240, 240));
         tagsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -136,16 +141,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
 
         newTagPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.newTagPanel.border.title"))); // NOI18N
 
-        tagCommentField.setText(org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagCommentField.text")); // NOI18N
-        tagCommentField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tagCommentFieldKeyReleased(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(tagNameLabel, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(tagCommentLabel, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagCommentLabel.text")); // NOI18N
 
         tagNameField.setText(org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagNameField.text")); // NOI18N
         tagNameField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -160,13 +156,9 @@ public class CreateTagDialog extends javax.swing.JDialog {
             newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(newTagPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tagCommentLabel)
-                    .addComponent(tagNameLabel))
-                .addGap(18, 18, 18)
-                .addGroup(newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tagNameField)
-                    .addComponent(tagCommentField))
+                .addComponent(tagNameLabel)
+                .addGap(36, 36, 36)
+                .addComponent(tagNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
                 .addContainerGap())
         );
         newTagPanelLayout.setVerticalGroup(
@@ -176,11 +168,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
                 .addGroup(newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tagNameLabel)
                     .addComponent(tagNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tagCommentLabel)
-                    .addComponent(tagCommentField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(138, Short.MAX_VALUE))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -223,22 +211,19 @@ public class CreateTagDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        this.tagMap = null;
+
         this.dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         String tagName = tagNameField.getText();
-        String tagComment = tagCommentField.getText();
         if (tagName.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Must supply a tag name to continue.", "Tag Name", JOptionPane.ERROR_MESSAGE);
         } else if (containsIllegalCharacters(tagName)) {
             JOptionPane.showMessageDialog(null, "The tag name contains illegal characters.\nCannot contain any of the following symbols: \\ : * ? \" < > |",
                     "Illegal Characters", JOptionPane.ERROR_MESSAGE);
         } else {
-            this.tagMap = new HashMap<String, String>();
-            tagMap.put("Name", tagName);
-            tagMap.put("Comment", tagComment.isEmpty() ? "No Comment" : tagComment);
+            newTagName = tagName;
             this.dispose();
         }
     }//GEN-LAST:event_okButtonActionPerformed
@@ -255,20 +240,12 @@ public class CreateTagDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_tagNameFieldKeyReleased
 
-    private void tagCommentFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tagCommentFieldKeyReleased
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            okButtonActionPerformed(null);
-        }
-    }//GEN-LAST:event_tagCommentFieldKeyReleased
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel newTagPanel;
     private javax.swing.JButton okButton;
     private javax.swing.JLabel preexistingLabel;
-    private javax.swing.JTextField tagCommentField;
-    private javax.swing.JLabel tagCommentLabel;
     private javax.swing.JTextField tagNameField;
     private javax.swing.JLabel tagNameLabel;
     private javax.swing.JTable tagsTable;
@@ -303,17 +280,6 @@ public class CreateTagDialog extends javax.swing.JDialog {
         
     }
     
-    private class TagSelectionListener implements ListSelectionListener {
-
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-            Object row = tagsTable.getValueAt(tagsTable.getSelectedRow(), 0);
-            if (row != null) {
-                String tagName = row.toString();
-                tagNameField.setText(tagName);
-            }
-        }
-        
-    }
+  
 
 }
