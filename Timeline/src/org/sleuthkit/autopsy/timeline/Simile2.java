@@ -138,7 +138,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 dataContent = DataContentTopComponent.createUndocked("Content", Node.EMPTY);
                 dataContent.setSize(1, 1);
                 dataContent.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult = DataResultTopComponent.createInstance("Results", "", Node.EMPTY, 0, dataContent);
+                dataResult = DataResultTopComponent.createInstance("Timeline Results", "timeline", "", Node.EMPTY, 0, dataContent);
                 dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dataResult.setPreferredSize(new Dimension(700, 300));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -256,6 +256,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
 
                 chartJPanel.add(panel_Charts);
                 viewerJPanel.add(dataResult);
+                
                 viewerJPanel.add(dataContent);
                 chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
