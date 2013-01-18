@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -413,9 +414,20 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             //data.getNode().setScaleX(2);
             data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
                     new EventHandler<MouseEvent>() {
+                        MonthEpoch myme = me;
+                        
+                        BarChart.Data mydata = data;
                         @Override
                         public void handle(MouseEvent e) {
-                            final FsContentRootNode d = new FsContentRootNode("Test Root", (((MonthEpoch) data.getExtraValue()).getDays().get(Integer.valueOf(((String) data.getXValue()).split("-")[1]) - 1)).getEvents());
+                            int day = (Integer.valueOf(((String) data.getXValue()).split("-")[1]));
+                            DayEpoch de = myme.getDay(day);
+                            List<AbstractFile> afs = Collections.EMPTY_LIST;
+                            if (de != null) {
+                                afs = de.getEvents();
+                            } else {
+                                logger.log(Level.SEVERE, "There were no events for the clicked-on day.");
+                            }
+                            final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
                             SwingUtilities.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
@@ -560,6 +572,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 numFiles += de.getNumFiles();
             }
             return numFiles;
+        }
+        
+        public DayEpoch getDay(int dayNum) {
+            DayEpoch de = null;
+            for (DayEpoch d : days) {
+                if (d.dayNum == dayNum) {
+                    de = d;
+                    break;
+                }
+            }
+            return de;
         }
         
         public void add(AbstractFile af, int day) {
