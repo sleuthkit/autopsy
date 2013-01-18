@@ -403,7 +403,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Day of Month");
         yAxis.setLabel("Number of Events");
-        ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me);
+        ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
         BarChart.Series<String, Number> series = new BarChart.Series(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
 
@@ -441,10 +441,13 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         return bc;
     }
 
-    private ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me) {
+    private ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
         ObservableList<BarChart.Data> bcData = FXCollections.observableArrayList();
-        for (DayEpoch day : me.getDays()) {
-            BarChart.Data d = new BarChart.Data(me.month + 1 + "-" + String.valueOf(day.dayNum), day.files.size());
+        int totalDays = me.getTotalNumDays(year);
+        for (int i = 1; i <= totalDays; ++i) {
+            DayEpoch day = me.getDay(i);
+            int numFiles = day == null ? 0 : day.getNumFiles();
+            BarChart.Data d = new BarChart.Data(me.month + 1 + "-" + i, numFiles);
             d.setExtraValue(me);
             bcData.add(d);
         }
@@ -562,6 +565,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         
         public int getMonthInt() {
             return month;
+        }
+        
+        public int getTotalNumDays(int year) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(year, month, 1);
+            return cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         }
         
         @Override
