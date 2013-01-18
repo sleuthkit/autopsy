@@ -1,4 +1,4 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.4 --------------
 
 New features:
 - Results and files can be tagged with custom tags and reported on them.
