@@ -15,6 +15,7 @@ Bugfixes:
 - fixed crash and hang in html and excel report generation, due to special characters present
 - fixed cancellation when creating file or result bookmark
 - fixed text not being extracted and searched from all MS Office documents  (such as docx, xlsx and pptx extensions)
+- fixed Exif meta-data extraction in Exif ingest module
 
 
 ---------------- VERSION 3.0.3 --------------
