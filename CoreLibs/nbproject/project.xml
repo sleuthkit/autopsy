@@ -16,6 +16,10 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
+                <package>com.apple.concurrent</package>
+                <package>com.apple.eawt</package>
+                <package>com.apple.eawt.event</package>
+                <package>com.apple.eio</package>
                 <package>com.google.common.annotations</package>
                 <package>com.google.common.base</package>
                 <package>com.google.common.base.internal</package>
@@ -31,9 +35,26 @@
                 <package>com.google.gson</package>
                 <package>com.google.gson.annotations</package>
                 <package>com.google.gson.reflect</package>
+                <package>com.sun.activation.registries</package>
+                <package>com.sun.activation.viewers</package>
                 <package>com.sun.jna</package>
+                <package>com.sun.jna.platform</package>
+                <package>com.sun.jna.platform.dnd</package>
+                <package>com.sun.jna.platform.mac</package>
+                <package>com.sun.jna.platform.unix</package>
+                <package>com.sun.jna.platform.win32</package>
+                <package>com.sun.jna.platform.wince</package>
                 <package>com.sun.jna.ptr</package>
                 <package>com.sun.jna.win32</package>
+                <package>com.sun.mail.auth</package>
+                <package>com.sun.mail.handlers</package>
+                <package>com.sun.mail.iap</package>
+                <package>com.sun.mail.imap</package>
+                <package>com.sun.mail.imap.protocol</package>
+                <package>com.sun.mail.pop3</package>
+                <package>com.sun.mail.smtp</package>
+                <package>com.sun.mail.util</package>
+                <package>com.sun.mail.util.logging</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -51,17 +72,93 @@
                 <package>javassist.tools.web</package>
                 <package>javassist.util</package>
                 <package>javassist.util.proxy</package>
+                <package>javax.activation</package>
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
+                <package>javax.annotation.security</package>
+                <package>javax.ejb</package>
+                <package>javax.ejb.spi</package>
+                <package>javax.enterprise.deploy.model</package>
+                <package>javax.enterprise.deploy.model.exceptions</package>
+                <package>javax.enterprise.deploy.shared</package>
+                <package>javax.enterprise.deploy.shared.factories</package>
+                <package>javax.enterprise.deploy.spi</package>
+                <package>javax.enterprise.deploy.spi.exceptions</package>
+                <package>javax.enterprise.deploy.spi.factories</package>
+                <package>javax.enterprise.deploy.spi.status</package>
+                <package>javax.interceptor</package>
+                <package>javax.jms</package>
+                <package>javax.jws</package>
+                <package>javax.jws.soap</package>
+                <package>javax.mail</package>
+                <package>javax.mail.event</package>
+                <package>javax.mail.internet</package>
+                <package>javax.mail.search</package>
+                <package>javax.mail.util</package>
+                <package>javax.management.j2ee</package>
+                <package>javax.management.j2ee.statistics</package>
+                <package>javax.persistence</package>
+                <package>javax.persistence.spi</package>
+                <package>javax.resource</package>
+                <package>javax.resource.cci</package>
+                <package>javax.resource.spi</package>
+                <package>javax.resource.spi.endpoint</package>
+                <package>javax.resource.spi.security</package>
+                <package>javax.resource.spi.work</package>
+                <package>javax.security.jacc</package>
                 <package>javax.servlet</package>
                 <package>javax.servlet.http</package>
+                <package>javax.transaction</package>
+                <package>javax.transaction.xa</package>
+                <package>javax.xml</package>
+                <package>javax.xml.bind</package>
+                <package>javax.xml.bind.annotation</package>
+                <package>javax.xml.bind.annotation.adapters</package>
+                <package>javax.xml.bind.attachment</package>
+                <package>javax.xml.bind.helpers</package>
+                <package>javax.xml.bind.util</package>
+                <package>javax.xml.namespace</package>
                 <package>javax.xml.parsers</package>
+                <package>javax.xml.registry</package>
+                <package>javax.xml.registry.infomodel</package>
+                <package>javax.xml.rpc</package>
+                <package>javax.xml.rpc.encoding</package>
+                <package>javax.xml.rpc.handler</package>
+                <package>javax.xml.rpc.handler.soap</package>
+                <package>javax.xml.rpc.holders</package>
+                <package>javax.xml.rpc.server</package>
+                <package>javax.xml.rpc.soap</package>
+                <package>javax.xml.soap</package>
+                <package>javax.xml.stream</package>
+                <package>javax.xml.stream.events</package>
+                <package>javax.xml.stream.util</package>
                 <package>javax.xml.transform</package>
                 <package>javax.xml.transform.dom</package>
                 <package>javax.xml.transform.sax</package>
                 <package>javax.xml.transform.stream</package>
+                <package>javax.xml.ws</package>
+                <package>javax.xml.ws.handler</package>
+                <package>javax.xml.ws.handler.soap</package>
+                <package>javax.xml.ws.http</package>
+                <package>javax.xml.ws.soap</package>
+                <package>javax.xml.ws.spi</package>
                 <package>net.sourceforge.jcalendarbutton</package>
+                <package>org.apache.avalon.framework</package>
+                <package>org.apache.avalon.framework.activity</package>
+                <package>org.apache.avalon.framework.component</package>
+                <package>org.apache.avalon.framework.configuration</package>
+                <package>org.apache.avalon.framework.container</package>
+                <package>org.apache.avalon.framework.context</package>
+                <package>org.apache.avalon.framework.logger</package>
+                <package>org.apache.avalon.framework.parameters</package>
+                <package>org.apache.avalon.framework.service</package>
+                <package>org.apache.avalon.framework.thread</package>
+                <package>org.apache.commons.codec</package>
+                <package>org.apache.commons.codec.binary</package>
+                <package>org.apache.commons.codec.digest</package>
+                <package>org.apache.commons.codec.language</package>
+                <package>org.apache.commons.codec.net</package>
                 <package>org.apache.commons.lang</package>
                 <package>org.apache.commons.lang.builder</package>
                 <package>org.apache.commons.lang.enums</package>
@@ -72,6 +169,39 @@
                 <package>org.apache.commons.lang.time</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.geronimo.mail.handlers</package>
+                <package>org.apache.geronimo.mail.util</package>
+                <package>org.apache.log</package>
+                <package>org.apache.log.filter</package>
+                <package>org.apache.log.format</package>
+                <package>org.apache.log.output</package>
+                <package>org.apache.log.output.db</package>
+                <package>org.apache.log.output.io</package>
+                <package>org.apache.log.output.io.rotate</package>
+                <package>org.apache.log.output.jms</package>
+                <package>org.apache.log.output.net</package>
+                <package>org.apache.log.util</package>
+                <package>org.apache.log4j</package>
+                <package>org.apache.log4j.chainsaw</package>
+                <package>org.apache.log4j.config</package>
+                <package>org.apache.log4j.helpers</package>
+                <package>org.apache.log4j.jdbc</package>
+                <package>org.apache.log4j.jmx</package>
+                <package>org.apache.log4j.lf5</package>
+                <package>org.apache.log4j.lf5.util</package>
+                <package>org.apache.log4j.lf5.viewer</package>
+                <package>org.apache.log4j.lf5.viewer.categoryexplorer</package>
+                <package>org.apache.log4j.lf5.viewer.configure</package>
+                <package>org.apache.log4j.net</package>
+                <package>org.apache.log4j.nt</package>
+                <package>org.apache.log4j.or</package>
+                <package>org.apache.log4j.or.jms</package>
+                <package>org.apache.log4j.or.sax</package>
+                <package>org.apache.log4j.pattern</package>
+                <package>org.apache.log4j.rewrite</package>
+                <package>org.apache.log4j.spi</package>
+                <package>org.apache.log4j.varia</package>
+                <package>org.apache.log4j.xml</package>
                 <package>org.apache.poi</package>
                 <package>org.apache.poi.common.usermodel</package>
                 <package>org.apache.poi.ddf</package>
@@ -202,6 +332,66 @@
                 <package>org.apache.poi.xwpf.extractor</package>
                 <package>org.apache.poi.xwpf.model</package>
                 <package>org.apache.poi.xwpf.usermodel</package>
+                <package>org.apache.tools.ant</package>
+                <package>org.apache.tools.ant.dispatch</package>
+                <package>org.apache.tools.ant.filters</package>
+                <package>org.apache.tools.ant.filters.util</package>
+                <package>org.apache.tools.ant.helper</package>
+                <package>org.apache.tools.ant.input</package>
+                <package>org.apache.tools.ant.launch</package>
+                <package>org.apache.tools.ant.listener</package>
+                <package>org.apache.tools.ant.loader</package>
+                <package>org.apache.tools.ant.property</package>
+                <package>org.apache.tools.ant.taskdefs</package>
+                <package>org.apache.tools.ant.taskdefs.compilers</package>
+                <package>org.apache.tools.ant.taskdefs.condition</package>
+                <package>org.apache.tools.ant.taskdefs.cvslib</package>
+                <package>org.apache.tools.ant.taskdefs.email</package>
+                <package>org.apache.tools.ant.taskdefs.optional</package>
+                <package>org.apache.tools.ant.taskdefs.optional.ccm</package>
+                <package>org.apache.tools.ant.taskdefs.optional.clearcase</package>
+                <package>org.apache.tools.ant.taskdefs.optional.depend</package>
+                <package>org.apache.tools.ant.taskdefs.optional.depend.constantpool</package>
+                <package>org.apache.tools.ant.taskdefs.optional.ejb</package>
+                <package>org.apache.tools.ant.taskdefs.optional.extension</package>
+                <package>org.apache.tools.ant.taskdefs.optional.extension.resolvers</package>
+                <package>org.apache.tools.ant.taskdefs.optional.i18n</package>
+                <package>org.apache.tools.ant.taskdefs.optional.j2ee</package>
+                <package>org.apache.tools.ant.taskdefs.optional.javacc</package>
+                <package>org.apache.tools.ant.taskdefs.optional.javah</package>
+                <package>org.apache.tools.ant.taskdefs.optional.jlink</package>
+                <package>org.apache.tools.ant.taskdefs.optional.jsp</package>
+                <package>org.apache.tools.ant.taskdefs.optional.jsp.compilers</package>
+                <package>org.apache.tools.ant.taskdefs.optional.native2ascii</package>
+                <package>org.apache.tools.ant.taskdefs.optional.net</package>
+                <package>org.apache.tools.ant.taskdefs.optional.pvcs</package>
+                <package>org.apache.tools.ant.taskdefs.optional.script</package>
+                <package>org.apache.tools.ant.taskdefs.optional.sos</package>
+                <package>org.apache.tools.ant.taskdefs.optional.testing</package>
+                <package>org.apache.tools.ant.taskdefs.optional.unix</package>
+                <package>org.apache.tools.ant.taskdefs.optional.vss</package>
+                <package>org.apache.tools.ant.taskdefs.optional.windows</package>
+                <package>org.apache.tools.ant.taskdefs.rmic</package>
+                <package>org.apache.tools.ant.types</package>
+                <package>org.apache.tools.ant.types.mappers</package>
+                <package>org.apache.tools.ant.types.optional</package>
+                <package>org.apache.tools.ant.types.optional.depend</package>
+                <package>org.apache.tools.ant.types.resources</package>
+                <package>org.apache.tools.ant.types.resources.comparators</package>
+                <package>org.apache.tools.ant.types.resources.selectors</package>
+                <package>org.apache.tools.ant.types.selectors</package>
+                <package>org.apache.tools.ant.types.selectors.modifiedselector</package>
+                <package>org.apache.tools.ant.types.spi</package>
+                <package>org.apache.tools.ant.util</package>
+                <package>org.apache.tools.ant.util.depend</package>
+                <package>org.apache.tools.ant.util.facade</package>
+                <package>org.apache.tools.ant.util.java15</package>
+                <package>org.apache.tools.ant.util.optional</package>
+                <package>org.apache.tools.ant.util.regexp</package>
+                <package>org.apache.tools.bzip2</package>
+                <package>org.apache.tools.mail</package>
+                <package>org.apache.tools.tar</package>
+                <package>org.apache.tools.zip</package>
                 <package>org.apache.xmlbeans</package>
                 <package>org.apache.xmlbeans.impl.common</package>
                 <package>org.apache.xmlbeans.impl.config</package>
@@ -281,14 +471,19 @@
                 <package>org.gstreamer.swing</package>
                 <package>org.gstreamer.swt</package>
                 <package>org.gstreamer.swt.overlay</package>
+                <package>org.hyperic.jni</package>
+                <package>org.hyperic.sigar</package>
+                <package>org.hyperic.sigar.cmd</package>
+                <package>org.hyperic.sigar.jmx</package>
+                <package>org.hyperic.sigar.pager</package>
+                <package>org.hyperic.sigar.ptql</package>
+                <package>org.hyperic.sigar.shell</package>
+                <package>org.hyperic.sigar.test</package>
+                <package>org.hyperic.sigar.util</package>
+                <package>org.hyperic.sigar.vmware</package>
+                <package>org.hyperic.sigar.win32</package>
+                <package>org.hyperic.sigar.win32.test</package>
                 <package>org.jbundle.thin.base.screen.jcalendarbutton</package>
-                <package>org.jdom</package>
-                <package>org.jdom.adapters</package>
-                <package>org.jdom.filter</package>
-                <package>org.jdom.input</package>
-                <package>org.jdom.output</package>
-                <package>org.jdom.transform</package>
-                <package>org.jdom.xpath</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.main</package>
@@ -349,20 +544,12 @@
                 <package>schemasMicrosoftComVml.impl</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/xml-apis-1.0.b2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xml-apis-1.0.b2.jar</binary-origin>
+                <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
@@ -373,10 +560,6 @@
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>
@@ -385,36 +568,32 @@
                 <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/activation-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activation-1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
+                <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/platform-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/ant-1.8.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
@@ -425,12 +604,84 @@
                 <binary-origin>release/modules/ext/reflections-0.9.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/avalon-framework-4.1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/avalon-framework-4.1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ant-launcher-1.8.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ant-launcher-1.8.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xml-apis-1.0.b2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xml-apis-1.0.b2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/AppleJavaExtensions-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/logkit-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
