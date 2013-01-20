@@ -8,6 +8,7 @@ Improvements:
 - Tweaked memory settings to eliminate out-of-memory errors.
 - Faster application launch time.
 - Netbeans RCP upgrade from 7.2.1 to 7.3
+- Upgrade from Java 6 to Java 7
 
 Bugfixes:
 - fixed DLL dependency version issue causing Autopsy not to launch on some systems
