@@ -89,7 +89,7 @@ Jericho for extracting content from HTML files
 - Web page: http://jerichohtml.sourceforge.net/
 - License: http://www.gnu.org/copyleft/lesser.html
 
-Advanced installer 9.0 (Freeware)
+Advanced installer 9 (Freeware)
 (not embedded in Autopsy, but used to generate Autopsy installer.)
 - Web page: http://www.advancedinstaller.com/
 
@@ -100,3 +100,7 @@ Metadata Extractor 2.6.2 for extracting Exif metadata
 Reflections 0.9.8 for ingest module loading
 - Web page: http://code.google.com/p/reflections 
 - License: http://en.wikipedia.org/wiki/WTFPL
+
+Sigar for process monitoring
+- Web page: http://support.hyperic.com/display/SIGAR/Home
+- License: http://support.hyperic.com/display/SIGAR/Home#Home-license
