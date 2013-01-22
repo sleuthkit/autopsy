@@ -18,25 +18,14 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Cursor;
-import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
-import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JTabbedPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -48,6 +37,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
+    
 
     /**
      * Create a new data result top component
@@ -76,7 +66,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * @param customContentViewer custom content viewer to send selection events
      * to
      */
-    public DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
+     DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
         super();
         this.customModeName = mode;
 
@@ -204,12 +194,12 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
 
     @Override
     public void componentOpened() {
-        this.dataResultPanel.componentOpened();
+        this.dataResultPanel.open();
     }
 
     @Override
     public void componentClosed() {
-        dataResultPanel.componentClosed();
+        dataResultPanel.close();
     }
 
     @Override

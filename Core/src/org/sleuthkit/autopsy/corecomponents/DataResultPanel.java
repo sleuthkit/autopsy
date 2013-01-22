@@ -65,8 +65,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     /**
      * Creates new form DataResultPanel
      */
-    public DataResultPanel(boolean isMain, String title) {
+    DataResultPanel(boolean isMain, String title) {
         this();
+        
+        setName(title);
 
         this.isMain = isMain;
         this.title = title;
@@ -82,8 +84,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param customContentViewer custom content viewer to send selection events
      * to
      */
-    public DataResultPanel(String name, DataContentTopComponent customContentViewer) {
-        this(false, name);
+    DataResultPanel(String title, DataContentTopComponent customContentViewer) {
+        this(false, title);
+        
+        setName(title);
 
         //custom content viewer tc to setup for every result viewer
         this.customContentViewer = customContentViewer; //TODO change to content panel
@@ -102,7 +106,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         DataResultPanel newDataResult = new DataResultPanel(false, title);
 
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
-
+        newDataResult.open();
         return newDataResult;
     }
 
@@ -121,6 +125,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         DataResultPanel newDataResult = new DataResultPanel(title, dataContentWindow);
 
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
+        newDataResult.open();
         return newDataResult;
     }
 
@@ -132,7 +137,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         newDataResult.setPath(pathText);
     }
 
-    public void componentOpened() {
+    void open() {
         // Add all the DataContentViewer to the tabbed pannel.
         // (Only when the it's opened at the first time: tabCount = 0)
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
@@ -151,7 +156,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
 
-        if (this.preferredID().equals(DEFAULT_PREFERRED_ID)) {
+        if (isMain) {
             // if no node selected on DataExplorer, clear the field
             if (rootNode == null) {
                 setNode(rootNode);
@@ -159,11 +164,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
 
+        this.setVisible(true);
 
 
     }
 
-    public void componentClosed() {
+    void close() {
         pcs.firePropertyChange(REMOVE_FILESEARCH, "", this); // notify to remove this from the menu
 
         // try to remove any references to this class
@@ -191,15 +197,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pcs = null;
             this.removeAll();
         }
+        
+        this.setVisible(true);
+        
 
     }
 
     protected String preferredID() {
-        if (this.isMain) {
-            return DEFAULT_PREFERRED_ID;
-        } else {
-            return this.getName();
-        }
+        return this.getName();
     }
 
     @Override
