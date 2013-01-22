@@ -304,6 +304,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (content != null) {
                     // get the fontmetrics
                     final Graphics graphics = ov.getGraphics();
+                    if (graphics != null) { //TODO check why null and if this works
                     final FontMetrics metrics = graphics.getFontMetrics();
 
                     // for the "Name" column
@@ -314,6 +315,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
                         int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
                         ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
+                    }
                     }
                 }
 

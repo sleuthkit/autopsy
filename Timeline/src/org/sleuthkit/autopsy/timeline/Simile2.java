@@ -33,7 +33,6 @@ import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -82,10 +81,10 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -126,7 +125,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private ComboBox<String> dropdown_SelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
-    private DataResultTopComponent dataResult;
+    private DataResultPanel dataResult;
     private DataContentTopComponent dataContent;
     
     //Swing components and JavafX components don't play super well together
@@ -139,7 +138,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 dataContent = DataContentTopComponent.createUndocked("Content", Node.EMPTY);
                 dataContent.setSize(1, 1);
                 dataContent.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult = DataResultTopComponent.createInstance("Timeline Results", "timeline", "", Node.EMPTY, 0, dataContent);
+                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContent);
                 dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dataResult.setPreferredSize(new Dimension(700, 300));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -669,7 +668,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             if (file.isDir()) {
                 n = new DirectoryNode((Directory) file);
             } else {
-                n = new FileNode((File) file);
+                n = new FileNode((File) file) {
+
+                    @Override
+                    public boolean isLeafTypeNode() {
+                        return false;
+                    }
+                    
+                };
             }
             return n;
         }
