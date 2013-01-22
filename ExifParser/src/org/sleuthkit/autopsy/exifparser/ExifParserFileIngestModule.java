@@ -161,9 +161,9 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             return IngestModuleAbstractFile.ProcessResult.OK;
             
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata.");
+            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata (" + ex.getLocalizedMessage() + ").");
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: " + f.getName());
+            logger.log(Level.WARNING, "Failed to process the image file: " + f.getName() + "(" + ex.getLocalizedMessage() + ")");
         } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file: " +  f.getName(), ex);
         } finally {
