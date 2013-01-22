@@ -26,6 +26,7 @@ import org.openide.util.Lookup;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 
 /**
  * Responsible for opening and closing the core windows when a case is opened and closed.
@@ -57,8 +58,7 @@ public class CoreComponentControl {
         }
 
         // find the data content top component
-        DataContent dc = Lookup.getDefault().lookup(DataContent.class);
-        TopComponent contentWin = dc.getTopComponent();
+        TopComponent contentWin = DataContentTopComponent.findInstance();
         Mode m = WindowManager.getDefault().findMode("output");
         if (m != null) {
             m.dockInto(contentWin); // redock into the output mode
