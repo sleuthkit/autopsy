@@ -58,7 +58,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     /**
      * Creates new form DataResultPanel
      */
-    private DataResultPanel() {
+    public DataResultPanel() {
         initComponents();
     }
 
@@ -357,8 +357,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                         .addComponent(numberMatchLabel)
                         .addComponent(matchLabel))
                     .addComponent(directoryTablePath))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dataResultTabbedPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE))
+                .addGap(0, 0, 0)
+                .addComponent(dataResultTabbedPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
