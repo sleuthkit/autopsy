@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Top component which displays result (top-right editor mode by default).
+ * Encapsulates the internal DataResultPanel and delegates to it.
  */
 public class DataResultTopComponent extends TopComponent implements DataResult {
 
@@ -37,7 +38,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
-    
 
     /**
      * Create a new data result top component
@@ -49,10 +49,9 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     public DataResultTopComponent(boolean isMain, String title) {
         super();
 
-        initComponents();
-
         this.dataResultPanel = new DataResultPanel(isMain, title);
 
+        initComponents();
         customizeComponent(isMain, title);
 
     }
@@ -66,14 +65,15 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * @param customContentViewer custom content viewer to send selection events
      * to
      */
-     DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
+    DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
         super();
         this.customModeName = mode;
 
-        customizeComponent(isMain, name);;
-
         //custom content viewer tc to setup for every result viewer
         dataResultPanel = new DataResultPanel(name, customContentViewer);
+
+        initComponents();
+        customizeComponent(isMain, name);;
 
     }
 
@@ -144,15 +144,17 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        org.sleuthkit.autopsy.corecomponents.DataResultPanel dataResultPanelLocal = dataResultPanel;
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 967, Short.MAX_VALUE)
+            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 967, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 579, Short.MAX_VALUE)
+            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -208,16 +210,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         return this.getName();
 
     }
-
-//    @Override
-//    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-//        dataResultPanel.addPropertyChangeListener(listener);
-//    }
-//
-//    @Override
-//    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-//        dataResultPanel.removePropertyChangeListener(listener);
-//    }
 
     @Override
     public String getPreferredID() {
