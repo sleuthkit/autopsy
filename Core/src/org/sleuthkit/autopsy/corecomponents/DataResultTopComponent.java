@@ -42,23 +42,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Top component which displays result (top-right editor mode by default).
  */
-public class DataResultTopComponent extends TopComponent implements DataResult, ChangeListener {
+public class DataResultTopComponent extends TopComponent implements DataResult {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
-    private Node rootNode;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
-    private static final String DEFAULT_MODE = "editor";
-    private static String DEFAULT_PREFERRED_ID = "DataResultTopComponent";
-    /**
-     * Name of property change fired when a file search result is closed
-     */
-    public static String REMOVE_FILESEARCH = "RemoveFileSearchTopComponent";
-    // Different DataResultsViewers
-    private List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
-    //custom content viewer to send selections to, or null if the main one
-    private DataContent customContentViewer;
 
     /**
      * Create a new data result top component
@@ -71,16 +60,11 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         super();
 
         initComponents();
-        setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));
 
-        setTitle(title); // set the title
-        this.isMain = isMain;
-        this.customModeName = null;
-        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isMain)); // set option to close compoment in GUI
-        putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
-        putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
+        this.dataResultPanel = new DataResultPanel(isMain, title);
 
-        this.dataResultTabbedPanel.addChangeListener(this);
+        customizeComponent(isMain, title);
+
     }
 
     /**
@@ -93,57 +77,32 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * to
      */
     public DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
-        this(false, name);
+        super();
+        this.customModeName = mode;
+
+        customizeComponent(isMain, name);;
 
         //custom content viewer tc to setup for every result viewer
-        this.customContentViewer = customContentViewer;
-        this.customModeName = mode;
+        dataResultPanel = new DataResultPanel(name, customContentViewer);
+
     }
 
-    private static class UpdateWrapper {
+    private void customizeComponent(boolean isMain, String title) {
+        this.isMain = isMain;
+        this.customModeName = null;
 
-        private DataResultViewer wrapped;
-        private boolean outdated;
+        setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));
 
-        UpdateWrapper(DataResultViewer wrapped) {
-            this.wrapped = wrapped;
-            this.outdated = true;
-        }
+        setTitle(title); // set the title
 
-        void setNode(Node selectedNode) {
-            this.wrapped.setNode(selectedNode);
-            this.outdated = false;
-        }
+        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isMain)); // set option to close compoment in GUI
+        putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
+        putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
 
-        void resetComponent() {
-            this.wrapped.resetComponent();
-            this.outdated = true;
-        }
-
-        void clearComponent() {
-            this.wrapped.clearComponent();
-            this.outdated = true;
-        }
-
-        boolean isOutdated() {
-            return this.outdated;
-        }
-
-        void setSelectedNodes(Node[] selected) {
-            this.wrapped.setSelectedNodes(selected);
-        }
-
-        boolean isSupported(Node selectedNode) {
-            return this.wrapped.isSupported(selectedNode);
-        }
-
-        void setContentViewer(DataContent contentViewer) {
-            this.wrapped.setContentViewer(contentViewer);
-        }
     }
 
     private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
-        newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
+        newDataResult.setNumMatches(totalMatches);
 
         newDataResult.open(); // open it first so the component can be initialized
 
@@ -195,46 +154,18 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        directoryTablePath = new javax.swing.JLabel();
-        matchLabel = new javax.swing.JLabel();
-        numberMatchLabel = new javax.swing.JLabel();
-        dataResultTabbedPanel = new javax.swing.JTabbedPane();
-
-        org.openide.awt.Mnemonics.setLocalizedText(directoryTablePath, org.openide.util.NbBundle.getMessage(DataResultTopComponent.class, "DataResultTopComponent.directoryTablePath.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(matchLabel, org.openide.util.NbBundle.getMessage(DataResultTopComponent.class, "DataResultTopComponent.matchLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(numberMatchLabel, org.openide.util.NbBundle.getMessage(DataResultTopComponent.class, "DataResultTopComponent.numberMatchLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(directoryTablePath)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 855, Short.MAX_VALUE)
-                .addComponent(numberMatchLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(matchLabel))
-            .addComponent(dataResultTabbedPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 967, Short.MAX_VALUE)
+            .addGap(0, 967, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(matchLabel)
-                        .addComponent(numberMatchLabel))
-                    .addComponent(directoryTablePath))
-                .addGap(0, 0, 0)
-                .addComponent(dataResultTabbedPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 565, Short.MAX_VALUE))
+            .addGap(0, 579, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTabbedPane dataResultTabbedPanel;
-    private javax.swing.JLabel directoryTablePath;
-    private javax.swing.JLabel matchLabel;
-    private javax.swing.JLabel numberMatchLabel;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -273,86 +204,30 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public void componentOpened() {
-        // Add all the DataContentViewer to the tabbed pannel.
-        // (Only when the it's opened at the first time: tabCount = 0)
-        int totalTabs = this.dataResultTabbedPanel.getTabCount();
-        if (totalTabs == 0) {
-            // find all dataContentViewer and add them to the tabbed pane
-            for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                DataResultViewer drv = factory.getInstance();
-                UpdateWrapper resultViewer = new UpdateWrapper(drv);
-                if (customContentViewer != null) {
-                    //set custom content viewer to respond to events from this result viewer
-                    resultViewer.setContentViewer(customContentViewer);
-                }
-                this.viewers.add(resultViewer);
-                this.dataResultTabbedPanel.addTab(drv.getTitle(), drv.getComponent());
-
-            }
-        }
-
-        if (this.preferredID().equals(DataResultTopComponent.DEFAULT_PREFERRED_ID)) {
-            // if no node selected on DataExplorer, clear the field
-            if (rootNode == null) {
-                setNode(rootNode);
-            }
-        }
-
-
-
-
+        this.dataResultPanel.componentOpened();
     }
 
     @Override
     public void componentClosed() {
-        pcs.firePropertyChange(REMOVE_FILESEARCH, "", this); // notify to remove this from the menu
-
-        // try to remove any references to this class
-        PropertyChangeListener[] pcl = pcs.getPropertyChangeListeners();
-        for (int i = 0; i < pcl.length; i++) {
-            pcs.removePropertyChangeListener(pcl[i]);
-        }
-
-        // clear all set nodes
-        for (UpdateWrapper drv : this.viewers) {
-            drv.setNode(null);
-        }
-
-        if (!this.isMain) {
-            for (UpdateWrapper drv : this.viewers) {
-                drv.clearComponent();
-            }
-            this.directoryTablePath.removeAll();
-            this.directoryTablePath = null;
-            this.matchLabel.removeAll();
-            this.matchLabel = null;
-            this.numberMatchLabel.removeAll();
-            this.numberMatchLabel = null;
-            this.setLayout(null);
-            this.pcs = null;
-            this.removeAll();
-        }
-
+        dataResultPanel.componentClosed();
     }
 
     @Override
     protected String preferredID() {
-        if (this.isMain) {
-            return DEFAULT_PREFERRED_ID;
-        } else {
-            return this.getName();
-        }
+
+        return this.getName();
+
     }
 
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
-    }
-
-    @Override
-    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.removePropertyChangeListener(listener);
-    }
+//    @Override
+//    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+//        dataResultPanel.addPropertyChangeListener(listener);
+//    }
+//
+//    @Override
+//    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+//        dataResultPanel.removePropertyChangeListener(listener);
+//    }
 
     @Override
     public String getPreferredID() {
@@ -361,35 +236,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public void setNode(Node selectedNode) {
-        this.rootNode = selectedNode;
-        if (selectedNode != null) {
-            int childrenCount = selectedNode.getChildren().getNodesCount(true);
-            this.numberMatchLabel.setText(Integer.toString(childrenCount));
-        }
-
-        this.numberMatchLabel.setVisible(true);
-        this.matchLabel.setVisible(true);
-
-        resetTabs(selectedNode);
-
-        //update/disable tabs based on if supported for this node
-        int drvC = 0;
-        for (UpdateWrapper drv : viewers) {
-
-            if (drv.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(drvC, true);
-            } else {
-                dataResultTabbedPanel.setEnabledAt(drvC, false);
-            }
-            ++drvC;
-        }
-
-        // set the display on the current active tab
-        int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if (currentActiveTab != -1) {
-            UpdateWrapper drv = viewers.get(currentActiveTab);
-            drv.setNode(selectedNode);
-        }
+        dataResultPanel.setNode(selectedNode);
     }
 
     @Override
@@ -399,37 +246,17 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public void setPath(String pathText) {
-        this.directoryTablePath.setText(pathText);
+        dataResultPanel.setPath(pathText);
     }
 
     @Override
     public boolean isMain() {
-        return this.isMain;
+        return isMain;
     }
 
     @Override
     public boolean canClose() {
         return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        JTabbedPane pane = (JTabbedPane) e.getSource();
-
-        // Get and set current selected tab
-        int currentTab = pane.getSelectedIndex();
-        if (currentTab != -1) {
-            UpdateWrapper drv = this.viewers.get(currentTab);
-            if (drv.isOutdated()) {
-                // change the cursor to "waiting cursor" for this operation
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    drv.setNode(rootNode);
-                } finally {
-                    this.setCursor(null);
-                }
-            }
-        }
     }
 
     /**
@@ -440,18 +267,18 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      */
     public void resetTabs(Node selectedNode) {
 
-        for (UpdateWrapper drv : this.viewers) {
-            drv.resetComponent();
-        }
+        dataResultPanel.resetTabs(selectedNode);
     }
 
     public void setSelectedNodes(Node[] selected) {
-        for (UpdateWrapper drv : this.viewers) {
-            drv.setSelectedNodes(selected);
-        }
+        dataResultPanel.setSelectedNodes(selected);
     }
 
     public Node getRootNode() {
-        return this.rootNode;
+        return dataResultPanel.getRootNode();
+    }
+
+    void setNumMatches(int matches) {
+        this.dataResultPanel.setNumMatches(matches);
     }
 }
