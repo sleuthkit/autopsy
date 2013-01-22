@@ -22,29 +22,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Static class of utility methods for Content objects
@@ -60,18 +50,7 @@ public final class ContentUtils {
     private ContentUtils() {
         throw new AssertionError();
     }
-    private static final ShortNameVisitor shortName = new ShortNameVisitor();
-    private static final GetPathVisitor getDisplayPath = new GetPathVisitor(shortName);
-
-    /**
-     * Returns full path to this node.
-     *
-     * @return the path of this node
-     */
-    public static String[] getDisplayPath(Content content) {
-        return content.accept(getDisplayPath).toArray(new String[]{});
-    }
-
+ 
     /**
      * Convert epoch seconds to a string value in the given time zone
      *
@@ -131,17 +110,7 @@ public final class ContentUtils {
         }
     }
     private static final SystemNameVisitor systemName = new SystemNameVisitor();
-    private static final GetPathVisitor getSystemPath = new GetPathVisitor(systemName);
-
-    /**
-     * Returns full path to this node.
-     *
-     * @return the path of this node
-     */
-    public static String[] getSystemPath(Content content) {
-        return content.accept(getSystemPath).toArray(new String[]{});
-    }
-
+ 
     static String getSystemName(Content content) {
         return content.accept(systemName);
     }
@@ -153,148 +122,11 @@ public final class ContentUtils {
 
         @Override
         protected String defaultVisit(Content cntnt) {
-            return cntnt.accept(shortName) + ":" + Long.toString(cntnt.getId());
+            return cntnt.getName() + ":" + Long.toString(cntnt.getId());
         }
     }
 
-    private static class ShortNameVisitor extends ContentVisitor.Default<String> {
 
-        ShortNameVisitor() {
-        }
-
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            return cntnt.getName();
-        }
-    }
-
-    private static class GetPathVisitor implements ContentVisitor<List<String>> {
-
-        ContentVisitor<String> toString;
-
-        GetPathVisitor(ContentVisitor<String> toString) {
-            this.toString = toString;
-        }
-
-        @Override
-        public List<String> visit(LayoutFile lay) {
-            Content parent = null;
-            try {
-                parent = lay.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + LayoutFile.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(lay));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(VirtualDirectory ld) {
-            Content parent = null;
-            try {
-                parent = ld.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + VirtualDirectory.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(ld));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(Directory dir) {
-            Content parent = null;
-            try {
-                parent = dir.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + Directory.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(dir));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(File file) {
-            Content parent = null;
-            try {
-                parent = file.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + File.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(file));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(FileSystem fs) {
-            Content parent = null;
-            try {
-                parent = fs.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + FileSystem.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(fs));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(Image image) {
-            List<String> path = new LinkedList<String>();
-            path.add(toString.visit(image));
-            return path;
-        }
-
-        @Override
-        public List<String> visit(Volume volume) {
-            Content parent = null;
-            try {
-                parent = volume.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + Volume.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(volume));
-            }
-            return path;
-        }
-
-        @Override
-        public List<String> visit(VolumeSystem vs) {
-            Content parent = null;
-            try {
-                parent = vs.getParent();
-            } catch (TskCoreException ex) {
-                throw new RuntimeException("Problem getting parent from " + VolumeSystem.class.getName(), ex);
-            }
-            List<String> path = Collections.<String>emptyList();
-            if (parent != null) {
-                path = parent.accept(this);
-                path.add(toString.visit(vs));
-            }
-            return path;
-        }
-    }
     private static final int TO_FILE_BUFFER_SIZE = 8192;
 
     /**

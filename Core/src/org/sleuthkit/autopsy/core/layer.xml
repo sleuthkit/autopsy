@@ -210,6 +210,7 @@
             <file name="Separator3.instance_hidden"/>-->
         </folder>
         <folder name="Window">
+            <file name="Web_hidden"/>
             <file name="org-netbeans-modules-favorites-View.shadow_hidden"/>
             <file name="CloneDocumentAction.shadow_hidden"/>
             <file name="CloseAllButThisAction.shadow_hidden"/>
@@ -247,7 +248,9 @@
         <folder name="View">
             <file name="org-netbeans-core-actions-HTMLViewAction.shadow_hidden"/>
             <file name="org-netbeans-core-actions-LogAction.shadow_hidden"/>
+            <file name="org-netbeans-core-multiview-EditorsAction.instance_hidden"/>
             <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance_hidden"/>
+            <file name="org-netbeans-core-windows-actions-ToolbarsListAction.shadow_hidden"/>
         </folder>
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>

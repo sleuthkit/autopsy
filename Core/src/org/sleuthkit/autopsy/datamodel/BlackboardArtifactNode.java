@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -33,6 +32,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -40,12 +40,15 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
-    BlackboardArtifact artifact;
-    Content associated;
+    private BlackboardArtifact artifact;
+    private Content associated;
+    private List<NodeProperty> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     /**
-     * Construct blackboard artifact node from an artifact and using provided icon
+     * Construct blackboard artifact node from an artifact and using provided
+     * icon
+     *
      * @param artifact artifact to encapsulate
      * @param iconPath icon to use for the artifact
      */
@@ -59,12 +62,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(associated.getName());
         this.setIconBaseWithExtension(iconPath);
     }
-    
-     /**
-     * Construct blackboard artifact node from an artifact and using default icon for artifact type
+
+    /**
+     * Construct blackboard artifact node from an artifact and using default
+     * icon for artifact type
+     *
      * @param artifact artifact to encapsulate
      */
-     public BlackboardArtifactNode(BlackboardArtifact artifact) {
+    public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
 
         this.artifact = artifact;
@@ -100,17 +105,49 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     NO_DESCR,
                     entry.getValue()));
         }
-        
+
+        String path = "";
+        try {
+            path = associated.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + associated);
+        }
         final int artifactTypeID = artifact.getArtifactTypeID();
+
+        //custom additional properties
+        //TODO use addNodeProperty() instead of hardcoding here
         if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             ss.put(new NodeProperty("File Path",
                     "File Path",
                     NO_DESCR,
-                    DataConversion.getformattedPath(ContentUtils.getDisplayPath(associated), 0, 1)));
+                    path));
+        }
+
+        //append custom node properties
+        if (customProperties != null) {
+            for (NodeProperty np : customProperties) {
+                ss.put(np);
+            }
+
         }
 
         return s;
+    }
+
+    /**
+     * Add an additional custom node property to that node before it is
+     * displayed
+     *
+     * @param np NodeProperty to add
+     */
+    public void addNodeProperty(NodeProperty np) {
+        if (customProperties == null) {
+            //lazy create the list
+            customProperties = new ArrayList<NodeProperty>();
+        }
+        customProperties.add(np);
+
     }
 
     /**
@@ -123,16 +160,16 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                final int attributeTypeID= attribute.getAttributeTypeID();
+                final int attributeTypeID = attribute.getAttributeTypeID();
                 //skip some internal attributes that user shouldn't see
                 if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID())
-                         {
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()) {
                     continue;
                 } else {
                     switch (attribute.getValueType()) {
                         case STRING:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
+                            String valString = attribute.getValueString();
+                            map.put(attribute.getAttributeTypeDisplayName(),  valString == null ? "":valString);
                             break;
                         case INTEGER:
                             map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
@@ -259,6 +296,4 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return true;
     }
-    
-    
 }
