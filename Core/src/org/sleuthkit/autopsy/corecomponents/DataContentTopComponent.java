@@ -145,7 +145,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void componentOpened() {
-        dataContentPanel1.setTopComponent(this);
     }
 
     @Override
@@ -192,11 +191,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      */
     public JTabbedPane getTabPanels() {
         return dataContentPanel1.getTabPanels();
-    }
-
-    @Override
-    public TopComponent getTopComponent() {
-        return this;
     }
 
     /**

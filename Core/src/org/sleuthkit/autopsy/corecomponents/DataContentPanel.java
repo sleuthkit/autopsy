@@ -165,15 +165,6 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     }
 
     @Override
-    public TopComponent getTopComponent() {
-        return tc;
-    }
-    
-    public void setTopComponent(TopComponent tc) {
-        this.tc = tc;
-    }
-
-    @Override
     public void propertyChange(PropertyChangeEvent evt) {
     }
 
