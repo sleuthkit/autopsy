@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.prefs.Preferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
@@ -32,19 +29,17 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component that organizes all of the data content viewers.  Doing a lookup on this class will
  * always return the default instance (which is created at startup). 
  */
 // Registered as a service provider in layer.xml
+//@TopComponent.Description(preferredID = "DataContentTopComponent")
+//@TopComponent.Registration(mode = "output", openAtStartup = true)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
 public final class DataContentTopComponent extends TopComponent implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());
@@ -54,8 +49,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     private Node currentNode;
     // set to true if this is the TC that always stays open and is the default place to display content
     private boolean isDefault;
-    // Different DataContentViewers
-    private List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
 
     // contains a list of the undocked TCs
     private static ArrayList<DataContentTopComponent> newWindowList = new ArrayList<DataContentTopComponent>();
@@ -70,42 +63,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         this.isDefault = isDefault;
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isDefault)); // prevent option to close compoment in GUI
-
-        // set the tab to listen to any tab change (see the "stateChange" method)
-        this.dataContentTabbedPane.addChangeListener(this);
-    }
-
-    private static class UpdateWrapper {
-
-        private DataContentViewer wrapped;
-        private boolean outdated;
-
-        UpdateWrapper(DataContentViewer wrapped) {
-            this.wrapped = wrapped;
-            this.outdated = true;
-        }
-
-        void setNode(Node selectedNode) {
-            this.wrapped.setNode(selectedNode);
-            this.outdated = false;
-        }
-
-        void resetComponent() {
-            this.wrapped.resetComponent();
-            this.outdated = true;
-        }
-
-        boolean isOutdated() {
-            return this.outdated;
-        }
-
-        boolean isSupported(Node node) {
-            return this.wrapped.isSupported(node);
-        }
-        
-        int isPreferred(Node node, boolean isSupported) {
-            return this.wrapped.isPreferred(node, isSupported);
-        }
     }
 
     /**
@@ -134,24 +91,21 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        dataContentTabbedPane = new javax.swing.JTabbedPane();
-
-        dataContentTabbedPane.setBackground(new java.awt.Color(255, 255, 255));
-        dataContentTabbedPane.setPreferredSize(new java.awt.Dimension(700, 5));
+        dataContentPanel1 = new org.sleuthkit.autopsy.corecomponents.DataContentPanel();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+            .addComponent(dataContentPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE)
+            .addComponent(dataContentPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTabbedPane dataContentTabbedPane;
+    private org.sleuthkit.autopsy.corecomponents.DataContentPanel dataContentPanel1;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -191,29 +145,12 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void componentOpened() {
-        // Add all the DataContentViewer to the tabbed pannel.
-        // (Only when the it's opened at the first time: tabCount = 0)
-        int totalTabs = dataContentTabbedPane.getTabCount();
-        if (totalTabs == 0) {
-            // find all dataContentViewer and add them to the tabbed pane
-            for (DataContentViewer factory : Lookup.getDefault().lookupAll(DataContentViewer.class)) {
-                DataContentViewer dcv = factory.getInstance();
-                this.viewers.add(new UpdateWrapper(dcv));
-                dataContentTabbedPane.addTab(dcv.getTitle(), null,
-                        dcv.getComponent(), dcv.getToolTip());
-            }
-        }
-
-        setupTabs(currentNode);
     }
 
     @Override
     public void componentClosed() {
-        
-        // clear all set nodes
-        for(UpdateWrapper dcv : viewers) {
-            dcv.setNode(null);
-        }
+
+        dataContentPanel1.setNode(null);
         
         if (!this.isDefault) {
             newWindowList.remove(this);
@@ -231,37 +168,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void setNode(Node selectedNode) {
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            
-            
-            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
-            // set the file path
-            if (selectedNode == null) {
-                setName(defaultName);
-            } else {
-                Content content = selectedNode.getLookup().lookup(Content.class);
-                if (content != null) {
-                    //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
-                    String path = defaultName;
-                    try {
-                        path = content.getUniquePath();
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content);
-                    }
-                    setName(path);
-                } else {
-                    setName(defaultName);
-                }
-            }
-
-            currentNode = selectedNode;
-
-            setupTabs(selectedNode);
-        } finally {
-            this.setCursor(null);
-        }
+        dataContentPanel1.setNode(selectedNode);
     }
 
     @Override
@@ -275,66 +182,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void stateChanged(ChangeEvent evt) {
-        JTabbedPane pane = (JTabbedPane) evt.getSource();
-
-        // Get and set current selected tab
-        int currentTab = pane.getSelectedIndex();
-        if (currentTab != -1) {
-            UpdateWrapper dcv = viewers.get(currentTab);
-            if (dcv.isOutdated()) {
-                // change the cursor to "waiting cursor" for this operation
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    dcv.setNode(currentNode);
-                } finally {
-                    this.setCursor(null);
-                }
-            }
-        }
-    }
-
-    /**
-     * Resets the tabs based on the selected Node. If the selected node is null
-     * or not supported, disable that tab as well.
-     *
-     * @param selectedNode  the selected content Node
-     */
-    public void setupTabs(Node selectedNode) {
-        
-        // get the preference for the preferred viewer
-        Preferences pref = NbPreferences.forModule(GeneralPanel.class);
-        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
-
-        int currTabIndex = dataContentTabbedPane.getSelectedIndex();
-        int totalTabs = dataContentTabbedPane.getTabCount();
-        int maxPreferred = 0;
-        int preferredViewerIndex = 0;
-        for (int i = 0; i < totalTabs; ++i) {
-            UpdateWrapper dcv = viewers.get(i);
-            dcv.resetComponent();
-
-            // disable an unsupported tab (ex: picture viewer)
-            boolean dcvSupported = dcv.isSupported(selectedNode);
-            if (!dcvSupported) {
-                dataContentTabbedPane.setEnabledAt(i, false);
-            } else {
-                dataContentTabbedPane.setEnabledAt(i, true);
-                
-                // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode, dcvSupported);
-                if (currentPreferred > maxPreferred) {
-                    preferredViewerIndex = i;
-                    maxPreferred = currentPreferred;
-                }
-            }
-        }
-        
-        // let the user decide if we should stay with the current viewer
-        int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
-
-        // set the tab to the one the user wants, then set that viewer's node.
-        dataContentTabbedPane.setSelectedIndex(tabIndex);
-        viewers.get(tabIndex).setNode(selectedNode);
+        dataContentPanel1.stateChanged(evt);
     }
 
     /**
@@ -342,12 +190,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      * @return tab pane with individual DataContentViewers
      */
     public JTabbedPane getTabPanels() {
-        return this.dataContentTabbedPane;
-    }
-
-    @Override
-    public TopComponent getTopComponent() {
-        return this;
+        return dataContentPanel1.getTabPanels();
     }
 
     /**

@@ -34,11 +34,5 @@ public interface DataContent extends PropertyChangeListener {
      * Sets the "selected" node in this class
      * @param selectedNode node to use
      */
-    public void setNode(Node selectedNode);
-
-    /**
-     * Get the TopComponent that is used when displaying this DataContent
-     * @return TopComponent for this DataContent
-     */
-    public TopComponent getTopComponent();
+    void setNode(Node selectedNode);
 }
