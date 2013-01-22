@@ -8,6 +8,7 @@ Improvements:
 - Tweaked memory settings to eliminate out-of-memory errors.
 - Faster application launch time.
 - Netbeans RCP upgrade from 7.2.1 to 7.3
+- Upgrade from Java 6 to Java 7
 
 Bugfixes:
 - fixed DLL dependency version issue causing Autopsy not to launch on some systems
@@ -15,6 +16,7 @@ Bugfixes:
 - fixed crash and hang in html and excel report generation, due to special characters present
 - fixed cancellation when creating file or result bookmark
 - fixed text not being extracted and searched from all MS Office documents  (such as docx, xlsx and pptx extensions)
+- fixed Exif meta-data extraction in Exif ingest module
 
 
 ---------------- VERSION 3.0.3 --------------

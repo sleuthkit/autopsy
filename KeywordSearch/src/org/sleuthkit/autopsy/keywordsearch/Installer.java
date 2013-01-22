@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.sun.corba.se.impl.util.Version;
 import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
@@ -185,8 +186,10 @@ public class Installer extends ModuleInstall {
             @Override
             public void run() {
                 final String msg = "Indexing server port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder.";
+                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder."
+                        + " Then try rebooting your system if another process was causing the conflict. ";
                 MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
             }
         });
@@ -208,8 +211,13 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "File indexing and search will not be functional."
-                        + "Please try to restart your computer and the application.";
+                final String msg = "Indexing server port " + KeywordSearch.getServer().getCurrentSolrServerPort() + " is not available. "
+                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder."
+                        + " Then try rebooting your system if another process was causing the conflict. ";
+                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+
                 MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
             }
         });
