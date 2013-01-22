@@ -32,10 +32,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,6 +48,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
@@ -80,7 +79,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
                 Object newValue = evt.getNewValue();
 
                 // if the one of the "FileSearchResult" window is closed
-                if (changed.equals(DataResultTopComponent.REMOVE_FILESEARCH)) {
+                if (changed.equals(DataResultPanel.REMOVE_FILESEARCH)) {
                     searchResults.remove((DataResultTopComponent) newValue);
                 }
             }
