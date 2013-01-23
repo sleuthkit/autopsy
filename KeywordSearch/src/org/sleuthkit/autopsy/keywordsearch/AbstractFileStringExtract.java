@@ -54,8 +54,9 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     //string extractor extracts from all other than archives
     //TODO use content type detection mechanism
     static final String[] UNSUPPORTED_EXTENSIONS = {
-        //Archives (
-        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz",};
+        //Archives 
+        //Note: archive unpacker module will process these instead
+        "tar", "jar", "zip", "7z", "gzip", "bzip", "bzip2", "gz", "tgz", "cab", "rar", "arj", "dmg", "iso"};
 
     //disabled prepending of BOM
     //static {
@@ -185,8 +186,13 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     @Override
     public boolean isSupported(AbstractFile file) {
         String fileNameLower = file.getName().toLowerCase();
+        int dotI = fileNameLower.lastIndexOf(".");
+        if (dotI == -1 || dotI == fileNameLower.length() - 1) {
+            return true; //no extension
+        }
+        final String extension = fileNameLower.substring(dotI + 1);
         for (int i = 0; i < UNSUPPORTED_EXTENSIONS.length; ++i) {
-            if (fileNameLower.endsWith(UNSUPPORTED_EXTENSIONS[i])) {
+            if (extension.equals(UNSUPPORTED_EXTENSIONS[i])) {
                 return false;
             }
         }
