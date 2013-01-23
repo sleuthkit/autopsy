@@ -848,13 +848,18 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         return null;
     }
 
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
+    }
+
     
 
 
     @Override
     public void performAction() {
         if(!Case.existsCurrentCase()){
-            return; //Todo: fix how action is enabled disabled. Should be done outside this function.
+            return; 
         } 
       else {
             try {
