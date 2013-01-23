@@ -66,11 +66,9 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-    // TODO: use a more robust method than checking file extension
+    // TODO: use type detection mechanism instead, and maintain supported MimeTypes, not extensions
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] SUPPORTED_EXTENSIONS = {
-        //Archives (TODO remove once we have extraction module)
-        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", 
         //MS Office
         "doc", "dot", "docx", "docm", "dotx", "dotm",
         "xls", "xlw", "xlt", "xlsx",  "xlsm", "xltx", "xltm",
