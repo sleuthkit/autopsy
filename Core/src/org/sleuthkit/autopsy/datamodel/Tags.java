@@ -33,6 +33,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -62,8 +63,10 @@ public class Tags implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     public static final String NAME = "Tags";
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    //bookmarks are specializations of tags
+    public static final String BOOKMARK_TAG_NAME = "Bookmark";
+    private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private Map<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>> tags;
-    
     private static final String EMPTY_COMMENT = "";
 
     Tags(SleuthkitCase skCase) {
@@ -105,9 +108,7 @@ public class Tags implements AutopsyVisitableItem {
                         for (BlackboardAttribute attribute : artifact.getAttributes()) {
                             if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()) {
                                 String tagName = attribute.getValueString();
-                                if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
-                                    break; // Don't add bookmarks
-                                } else if (artTags.containsKey(tagName)) {
+                                if (artTags.containsKey(tagName)) {
                                     List<BlackboardArtifact> artifacts = artTags.get(tagName);
                                     artifacts.add(artifact);
                                 } else {
@@ -263,12 +264,16 @@ public class Tags implements AutopsyVisitableItem {
     public class TagNodeRoot extends DisplayableItemNode {
 
         TagNodeRoot(BlackboardArtifact.ARTIFACT_TYPE tagType, String tagName, List<BlackboardArtifact> artifacts) {
-            super(Children.create(new Tags.TagsChildrenNode(tagType, artifacts), true), Lookups.singleton(tagName));
+            super(Children.create(new Tags.TagsChildrenNode(tagType, tagName, artifacts), true), Lookups.singleton(tagName));
 
             super.setName(tagName);
             super.setDisplayName(tagName + " (" + artifacts.size() + ")");
 
-            this.setIconBaseWithExtension(TAG_ICON_PATH);
+            if (tagName.equals(BOOKMARK_TAG_NAME)) {
+                this.setIconBaseWithExtension(BOOKMARK_ICON_PATH);
+            } else {
+                this.setIconBaseWithExtension(TAG_ICON_PATH);
+            }
         }
 
         @Override
@@ -312,10 +317,12 @@ public class Tags implements AutopsyVisitableItem {
 
         private List<BlackboardArtifact> artifacts;
         private BlackboardArtifact.ARTIFACT_TYPE tagType;
+        private String tagName;
 
-        private TagsChildrenNode(BlackboardArtifact.ARTIFACT_TYPE tagType, List<BlackboardArtifact> artifacts) {
+        private TagsChildrenNode(BlackboardArtifact.ARTIFACT_TYPE tagType, String tagName, List<BlackboardArtifact> artifacts) {
             super();
             this.tagType = tagType;
+            this.tagName = tagName;
             this.artifacts = artifacts;
         }
 
@@ -330,13 +337,20 @@ public class Tags implements AutopsyVisitableItem {
             //create node with action
             BlackboardArtifactNode tagNode = null;
 
+            String iconPath;
+            if (tagName.equals(BOOKMARK_TAG_NAME)) {
+                iconPath = BOOKMARK_ICON_PATH;
+            } else {
+                iconPath = TAG_ICON_PATH;
+            }
+
             //create actions here where Tag logic belongs
             //instead of DataResultFilterNode w/visitors, which is much less pluggable and cluttered
             if (tagType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)) {
                 //in case of result tag, add a action by sublcassing bb art node
                 //this action will be merged with other actions set  DataResultFIlterNode
                 //otherwise in case of 
-                tagNode = new BlackboardArtifactNode(artifact, TAG_ICON_PATH) {
+                tagNode = new BlackboardArtifactNode(artifact, iconPath) {
                     @Override
                     public Action[] getActions(boolean bln) {
                         //Action [] actions = super.getActions(bln); //To change body of generated methods, choose Tools | Templates.
@@ -357,13 +371,13 @@ public class Tags implements AutopsyVisitableItem {
                 };
             } else {
                 //for file tag, don't subclass to add the additional actions
-                tagNode = new BlackboardArtifactNode(artifact, TAG_ICON_PATH);
+                tagNode = new BlackboardArtifactNode(artifact, iconPath);
             }
 
+            //add some additional node properties
             int artifactTypeID = artifact.getArtifactTypeID();
+             final String NO_DESCR = "no description";
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                final String NO_DESCR = "no description";
-
                 BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
                 String resultType = sourceResult.getDisplayName();
 
@@ -376,6 +390,21 @@ public class Tags implements AutopsyVisitableItem {
                 tagNode.addNodeProperty(resultTypeProp);
 
             }
+            try {
+                //add source path property
+                 final AbstractFile sourceFile = skCase.getAbstractFileById(artifact.getObjectID());
+                 final String sourcePath = sourceFile.getUniquePath();
+                 NodeProperty sourcePathProp = new NodeProperty("Source File Path",
+                        "Source File Path",
+                        NO_DESCR,
+                        sourcePath);
+
+
+                tagNode.addNodeProperty(sourcePathProp);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting a file from artifact to get source file path for a tag, ", ex);
+            }
+            
             return tagNode;
         }
     }
@@ -396,10 +425,10 @@ public class Tags implements AutopsyVisitableItem {
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
                     "", tagName);
             attrs.add(attr1);
-            
-            if (comment != null && ! comment.isEmpty()) {
+
+            if (comment != null && !comment.isEmpty()) {
                 BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
-                    "", comment);
+                        "", comment);
                 attrs.add(attr2);
             }
             bookArt.addAttributes(attrs);
@@ -427,17 +456,17 @@ public class Tags implements AutopsyVisitableItem {
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
                     "", tagName);
-            
-            if (comment != null && ! comment.isEmpty()) {
+
+            if (comment != null && !comment.isEmpty()) {
                 BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
-                    "", comment);
+                        "", comment);
                 attrs.add(attr2);
             }
-            
+
             BlackboardAttribute attr3 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
                     "", artifact.getArtifactID());
             attrs.add(attr1);
-            
+
             attrs.add(attr3);
             bookArt.addAttributes(attrs);
         } catch (TskCoreException ex) {

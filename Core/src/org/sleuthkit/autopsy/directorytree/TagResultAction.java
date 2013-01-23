@@ -58,13 +58,13 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
 
     @Override
     public JMenuItem getPopupPresenter() {
-        JMenu result = new JMenu("Tag Result");
+        JMenu result = new JMenu("Tag Source Result");
 
-        JMenuItem contentItem = new JMenuItem("Bookmark Result");
+        JMenuItem contentItem = new JMenuItem("Bookmark Source Result");
         contentItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Result", null, "Bookmark", false);
+                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Source Result", null, "Bookmark", false);
                 tagDialog.setVisible(true);
                 TagDialog.TagDialogResult inputResult = tagDialog.getResult();
                 if (inputResult.isAccept()) {
@@ -83,7 +83,7 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
                 String newTagName = new CreateTagDialog(new JFrame(), true).display();
                 if (newTagName != null) {
                     //get comment and create tag
-                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Result", null, newTagName, false);
+                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source Result", null, newTagName, false);
                     tagDialog.setVisible(true);
                     TagDialog.TagDialogResult inputResult = tagDialog.getResult();
                     if (inputResult.isAccept()) {
@@ -111,7 +111,7 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
                 tagItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Result", tagNames, tagName, true);
+                        final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source Result", tagNames, tagName, true);
                         tagDialog.setVisible(true);
                         TagDialog.TagDialogResult inputResult = tagDialog.getResult();
                         if (inputResult.isAccept()) {
