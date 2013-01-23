@@ -34,10 +34,14 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
- * Data result panel component with its viewer tabs
+ * Data result panel component with its viewer tabs.
  *
  * The component is a generic JPanel and it can be reused in other swing
- * components or a TopComponent
+ * components or in a TopComponent.
+ * 
+ * Use the static factory methods to instantiate and customize the component.
+ * One option is to link a custom data content viewer to link to this viewer.
+ * 
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
@@ -45,9 +49,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     /**
      * Name of property change fired when a file search result is closed
+     * TODO remove this from here, generic component should not care
      */
     public static String REMOVE_FILESEARCH = "RemoveFileSearchTopComponent";
-    private static String DEFAULT_PREFERRED_ID = "DataResultPanel";
+    
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
     //custom content viewer to send selections to, or null if the main one
@@ -56,14 +61,27 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private String title;
 
     /**
-     * Creates new form DataResultPanel
+     * Creates new DataResultPanel
+     * Default constructor, needed mostly  for the palette/UI builder
+     * Use overrides or factory methods for more customization.
      */
     public DataResultPanel() {
         initComponents();
+        
+        setName(title);
+
+        this.isMain = false;
+        this.title = "";
+
+        this.dataResultTabbedPanel.addChangeListener(this);
     }
 
     /**
-     * Creates new form DataResultPanel
+     * Creates data result panel
+     * 
+     * @param isMain whether it is the main panel associated with the main window, 
+     * clients will almost always use false
+     * @param title title string to be displayed
      */
     DataResultPanel(boolean isMain, String title) {
         this();
@@ -73,34 +91,33 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.isMain = isMain;
         this.title = title;
 
-        this.dataResultTabbedPanel.addChangeListener(this);
     }
 
     /**
      * Create a new, custom data result panel, in addition to the application
-     * main one
+     * main one and links with a custom data content panel.
      *
      * @param name unique name of the data result window, also used as title
      * @param customContentViewer custom content viewer to send selection events
      * to
      */
-    DataResultPanel(String title, DataContentTopComponent customContentViewer) {
+    DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
         
         setName(title);
 
         //custom content viewer tc to setup for every result viewer
-        this.customContentViewer = customContentViewer; //TODO change to content panel
+        this.customContentViewer = customContentViewer; 
     }
 
     /**
-     * Creates a new non-default DataResult component
+     * Factory method to create, customize and open a new custom data result panel.
      *
-     * @param title Title of the component window
+     * @param title Title of the result panel
      * @param pathText Descriptive text about the source of the nodes displayed
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children
-     * @return
+     * @return a new DataResultPanel instance representing a custom data result viewer
      */
     public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches) {
         DataResultPanel newDataResult = new DataResultPanel(false, title);
@@ -111,24 +128,30 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Creates a new non-default DataResult component
+     * Factory method to create, customize and open a new custom data result panel.
      *
      * @param title Title of the component window
-     * @param customModeName custom mode to dock this custom TopComponent to
      * @param pathText Descriptive text about the source of the nodes displayed
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children
-     * @param dataContentWindow a handle to data content top component window to
-     * @return
+     * @param dataContent a handle to data content to send selection events to
+     * @return a new DataResultPanel instance representing a custom data result viewer
      */
-    public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches, DataContentTopComponent dataContentWindow) {
-        DataResultPanel newDataResult = new DataResultPanel(title, dataContentWindow);
+    public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches, DataContent dataContent) {
+        DataResultPanel newDataResult = new DataResultPanel(title, dataContent);
 
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         newDataResult.open();
         return newDataResult;
     }
 
+    /**
+     * Common code for factory helper methods
+     * @param pathText
+     * @param givenNode
+     * @param totalMatches
+     * @param newDataResult 
+     */
     private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultPanel newDataResult) {
         newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
 
@@ -137,7 +160,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         newDataResult.setPath(pathText);
     }
 
-    void open() {
+    /**
+     * Initializes the panel internals and activates it.
+     * Call it within your top component when it is opened.
+     * Do not use if used one of the factory methods to create and open the component.
+     */
+    public void open() {
         // Add all the DataContentViewer to the tabbed pannel.
         // (Only when the it's opened at the first time: tabCount = 0)
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
@@ -169,6 +197,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     }
 
+    /**
+     * Tears down the component.
+     * Use within your outer container (such as a top component) when it goes away to tear
+     * down this component and detach its listeners.
+     */
     void close() {
         pcs.firePropertyChange(REMOVE_FILESEARCH, "", this); // notify to remove this from the menu
 
@@ -203,9 +236,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     }
 
-    protected String preferredID() {
-        return this.getName();
-    }
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -219,7 +249,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public String getPreferredID() {
-        return this.preferredID();
+        return getName();
     }
 
     @Override
@@ -258,6 +288,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public void setTitle(String title) {
         setName(title);
+        
     }
 
     @Override
@@ -411,7 +442,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     *
+     * Set number of matches to be displayed in the top right
      * @param numMatches
      */
     public void setNumMatches(int numMatches) {
