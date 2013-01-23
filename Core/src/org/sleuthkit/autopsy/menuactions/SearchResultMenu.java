@@ -27,7 +27,6 @@ import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.autopsy.filesearch.FileSearchPanel;
 
 /**
  * Menu item lists DataResult tabs.
@@ -35,11 +34,12 @@ import org.sleuthkit.autopsy.filesearch.FileSearchPanel;
 public class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
     SearchResultMenu(){
+
     }
 
     @Override
     public JComponent[] getMenuPresenters() {
-        List<DataResultTopComponent> searchResults = FileSearchPanel.getFileSearchResultList();
+        List<String> dataResultsIds = DataResultTopComponent.getActiveComponentIds();
         DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
         DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
 
@@ -56,11 +56,11 @@ public class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
 
         // add search results if there are any
-        if(searchResults.size() > 0){
-            JMenu submenu = new JMenu("File Search Results");
-            for(DataResultTopComponent resultTab : searchResults){
-                JMenuItem item = new JMenuItem(resultTab.getName());
-                item.addActionListener(new OpenTopComponentAction(resultTab));
+        if(dataResultsIds.size() > 0){
+            JMenu submenu = new JMenu("Data Results");
+            for(String resultTabId : dataResultsIds){
+                JMenuItem item = new JMenuItem(resultTabId);
+                item.addActionListener(new OpenTopComponentAction(resultTabId));
                 submenu.add(item);
             }
 

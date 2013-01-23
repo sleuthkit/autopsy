@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -51,6 +54,9 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
+    
+    //keep track of tcs openeded for menu presenters
+    private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
 
     /**
      * Create a new data result top component
@@ -99,11 +105,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));
 
         setTitle(title); // set the title
+        setName(title);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isMain)); // set option to close compoment in GUI
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
 
+        activeComponentIds.add(title);
     }
 
     private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
@@ -152,6 +160,16 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         return newDataResult;
     }
+
+    /**
+     * Get a list with names of active windows ids, e.g. for the menus
+     * @return 
+     */
+    public static List<String> getActiveComponentIds() {
+        return new ArrayList<String>(activeComponentIds);
+    }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -210,12 +228,20 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
 
     @Override
     public void componentOpened() {
+        super.componentOpened();
+        
         this.dataResultPanel.open();
     }
+    
+    
 
     @Override
     public void componentClosed() {
+        super.componentClosed();
+        
+        activeComponentIds.remove(this.getName());
         dataResultPanel.close();
+        
     }
 
     @Override

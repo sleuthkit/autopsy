@@ -56,40 +56,25 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * FileSearchPanel that present search options
  */
 public class FileSearchPanel extends javax.swing.JPanel {
-    
+
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
-    private PropertyChangeListener listener;
-    private static ArrayList<DataResultTopComponent> searchResults = new ArrayList<DataResultTopComponent>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
 
-    /** Creates new form FileSearchPanel */
+    /**
+     * Creates new form FileSearchPanel
+     */
     public FileSearchPanel() {
         initComponents();
         customizeComponents();
-        setListener();
-        this.listener = new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object newValue = evt.getNewValue();
-
-                // if the one of the "FileSearchResult" window is closed
-                if (changed.equals(DataResultPanel.REMOVE_FILESEARCH)) {
-                    searchResults.remove((DataResultTopComponent) newValue);
-                }
-            }
-        };
+      
     }
-    
+
     /**
-     * This method is called from within the constructor to
-     * initialize the form.
+     * This method is called from within the constructor to initialize the form.
      */
     private void customizeComponents() {
 
@@ -98,7 +83,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
         JPanel filterPanel = new JPanel();
         filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.Y_AXIS));
         filterPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
+
         this.add(filterPanel, BorderLayout.CENTER);
 
         JLabel label = new JLabel("Search for files that match the following criteria:");
@@ -128,7 +113,6 @@ public class FileSearchPanel extends javax.swing.JPanel {
         filterPanel.add(searchButton);
 
         addListenerToAll(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 search();
@@ -172,11 +156,11 @@ public class FileSearchPanel extends javax.swing.JPanel {
                     ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     totalMatches = totalMatches + rs.getInt("TotalMatches");
                     tempDb.closeRunQuery(rs);
-                    
+
                     rs = tempDb.runQuery(this.getQuery(null));
                     currentDbList = tempDb.resultSetToFsContents(rs);
                     tempDb.closeRunQuery(rs);
-                    
+
                     fsContentList.addAll(currentDbList);
                 } catch (SQLException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());
@@ -187,13 +171,10 @@ public class FileSearchPanel extends javax.swing.JPanel {
 
                 searchResultWin.requestActive(); // make it the active top component
 
-                searchResultWin.addPropertyChangeListener(listener);
-                searchResults.add((DataResultTopComponent) searchResultWin);
-
                 /**
                  * If total matches more than 1000, pop up a dialog box that say
-                 * the performance maybe be slow and to increase the performance,
-                 * tell the users to refine their search.
+                 * the performance maybe be slow and to increase the
+                 * performance, tell the users to refine their search.
                  */
                 if (totalMatches > 1000) {
                     // show the confirmation
@@ -210,22 +191,19 @@ public class FileSearchPanel extends javax.swing.JPanel {
             this.setCursor(null);
         }
     }
-    
-    private void setListener() {
-        Case.addPropertyChangeListener(listener); // add this class to listen to any changes in the Case.java class
-    }
 
-    public static ArrayList<DataResultTopComponent> getFileSearchResultList() {
-        return searchResults;
-    }
+
 
     /**
      * Gets the SQL query to get the data from the database based on the
      * criteria that user chooses on the FileSearch.
      *
-     * @param addition  the additional selection for query. If nothing/null, will select all.
-     * @return query  the SQL query
-     * @throws org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException  if an enabled filter is in an invalid state
+     * @param addition the additional selection for query. If nothing/null, will
+     * select all.
+     * @return query the SQL query
+     * @throws
+     * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
+     * if an enabled filter is in an invalid state
      */
     private String getQuery(String addition) throws FilterValidationException {
         String tempQuery = "*";
@@ -263,20 +241,20 @@ public class FileSearchPanel extends javax.swing.JPanel {
 
         return enabledFilters;
     }
-    
+
     void addListenerToAll(ActionListener l) {
         searchButton.addActionListener(l);
         for (FilterArea fa : this.filterAreas) {
-            for(FileSearchFilter fsf : fa.getFilters()) {
+            for (FileSearchFilter fsf : fa.getFilters()) {
                 fsf.addActionListener(l);
             }
         }
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
