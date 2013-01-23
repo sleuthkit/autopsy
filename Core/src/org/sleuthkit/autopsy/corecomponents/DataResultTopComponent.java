@@ -114,6 +114,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         // set the tree table view
         newDataResult.setNode(givenNode);
         newDataResult.setPath(pathText);
+        
+        newDataResult.requestActive();
     }
 
     /**
