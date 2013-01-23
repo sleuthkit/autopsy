@@ -201,9 +201,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
 
             } else {
                 logger.log(Level.WARNING, "Could not find mode: " + customModeName + ", will dock into the default one");
-                //customModeName = DEFAULT_MODE;
-                //mode = WindowManager.getDefault().findMode(customModeName);
-                //mode.dockInto(this);
             }
         }
 
@@ -221,14 +218,12 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
 
     @Override
     protected String preferredID() {
-
-        return this.getName();
-
+        return getName();
     }
 
     @Override
     public String getPreferredID() {
-        return this.preferredID();
+        return getName();
     }
 
     @Override
