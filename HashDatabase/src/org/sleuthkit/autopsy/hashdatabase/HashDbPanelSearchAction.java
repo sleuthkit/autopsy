@@ -40,7 +40,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
     
     HashDbPanelSearchAction() {
         super();
-        setEnabled(false);
+        setEnabled(Case.isCaseOpen()); //no guarantee listener executed, so check here
         
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 

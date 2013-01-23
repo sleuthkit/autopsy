@@ -32,7 +32,7 @@ public final class FileSearchAction extends CallableSystemAction implements File
 
     FileSearchAction() {
         super();
-        setEnabled(false);
+        setEnabled(Case.isCaseOpen()); //no guarantee listener executed, so check here
         
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
