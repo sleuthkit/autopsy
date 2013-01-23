@@ -65,6 +65,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
     private JButton searchButton;
     private PropertyChangeListener listener;
     private static ArrayList<DataResultTopComponent> searchResults = new ArrayList<DataResultTopComponent>();
+    private static int resultWindowCount = 0; //keep track of result windows so they get unique names
 
     /** Creates new form FileSearchPanel */
     public FileSearchPanel() {
@@ -158,7 +159,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (this.anyFiltersEnabled()) {
-                String title = "File Search Results";
+                String title = "File Search Results " + (++resultWindowCount);
                 String pathText = "Filename Search Results:";
 
                 // try to get the number of matches first
@@ -182,7 +183,7 @@ public class FileSearchPanel extends javax.swing.JPanel {
                     logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex);
                 }
 
-                TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText, new TableFilterNode(new SearchNode(fsContentList), true), totalMatches);
+                final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText, new TableFilterNode(new SearchNode(fsContentList), true), totalMatches);
 
                 searchResultWin.requestActive(); // make it the active top component
 
