@@ -47,6 +47,7 @@ public class KeywordSearchQueryManager {
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
     private QueryType queryType;
+    private static int resultWindowCount = 0; //keep track of unique window ids to display
     private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
 
     public KeywordSearchQueryManager(List<Keyword> queries, Presentation presentation) {
@@ -129,7 +130,7 @@ public class KeywordSearchQueryManager {
         }
 
         final String pathText = "Keyword search";
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
+        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search " + (++resultWindowCount), pathText, rootNode, things.size());
         searchResultWin.requestActive();
         // }
     }
