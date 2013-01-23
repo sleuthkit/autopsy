@@ -30,7 +30,6 @@ import javax.swing.JMenuItem;
 import org.openide.nodes.Node;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Bookmarks;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.directorytree.TagDialog.TagDialogResult;
@@ -71,13 +70,13 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
 
     @Override
     public JMenuItem getPopupPresenter() {
-        JMenu result = new JMenu("Tag File");
+        JMenu result = new JMenu("Tag Source File");
 
-        JMenuItem contentItem = new JMenuItem("Bookmark File");
+        JMenuItem contentItem = new JMenuItem("Bookmark Source File");
         contentItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark File", null, "Bookmark", false);
+                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Source File", null, "Bookmark", false);
                 tagDialog.setVisible(true);
                 TagDialogResult inputResult = tagDialog.getResult();
                 if (inputResult.isAccept()) {
@@ -96,7 +95,7 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
                 String newTagName = new CreateTagDialog(new JFrame(), true).display();
                 if (newTagName != null) {
                     //get comment
-                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag File", null, newTagName, false);
+                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source File", null, newTagName, false);
                     tagDialog.setVisible(true);
                     TagDialogResult inputResult = tagDialog.getResult();
                     if (inputResult.isAccept()) {
@@ -116,14 +115,15 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
             result.add(empty);
         } else {
             for (final String tagName : tagNames) {
-                if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
+                if (tagName.equals(Tags.BOOKMARK_TAG_NAME)) {
+                    //skip showing bookmarks in tags menu, as they have a separate menu
                     continue;
                 }
                 JMenuItem tagItem = new JMenuItem(tagName);
                 tagItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag File", tagNames, tagName, true);
+                        final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source File", tagNames, tagName, true);
                         tagDialog.setVisible(true);
                         TagDialogResult inputResult = tagDialog.getResult();
                         if (inputResult.isAccept()) {
