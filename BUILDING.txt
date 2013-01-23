@@ -11,17 +11,19 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install 32-bit version of JDK (32-bit is currently
+1a) Download and install 32-bit version of JDK version 1.7 (32-bit is currently
 needed even if you have a 64-bit system).
 
-1b) Ensure that JDK_HOME is set to the root JDK directory. 
+1b) Ensure that JDK_HOME is set to the root JDK directory.
 
 1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
 Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 
-1d) (opetional) If you are going to package Autopsy, then you'll also
+1d) (optional) If you are going to package Autopsy, then you'll also
 need to set JRE_HOME to the root JRE directory. 
+
+1e) (optional) For some Autopsy features to be functional, you need to add java executable to the system PATH.
 
 
 
