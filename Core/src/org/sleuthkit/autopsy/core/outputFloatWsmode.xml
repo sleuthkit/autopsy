@@ -5,8 +5,8 @@
 
 <mode version="2.4">
     <name unique="outputFloat" />
-    <kind type="view" />   <!-- modal -->
-     <!-- <kind type="editor" /> --><!-- non-modal -->
+    <!-- <kind type="view" />  --> <!-- modal -->
+    <kind type="editor" /> <!-- non-modal -->
 
     <state type="separated" />
     <constraints>
