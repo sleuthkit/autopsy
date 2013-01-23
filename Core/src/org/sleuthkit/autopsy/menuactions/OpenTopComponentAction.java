@@ -22,20 +22,31 @@ package org.sleuthkit.autopsy.menuactions;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 
 /**
  * This action opens the TopComponent passed to the constructor
  */
 public class OpenTopComponentAction extends AbstractAction{
 
-    TopComponent tc;
+    private TopComponent tc;
+    
 
     OpenTopComponentAction(TopComponent top){
         this.tc = top;
     }
+    
+    OpenTopComponentAction(String tcId){
+        this.tc = WindowManager.getDefault().findTopComponent(tcId);
+    }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (tc == null) {
+            return;
+        }
+        
         if(!this.tc.isOpened()){
             this.tc.open();
         }

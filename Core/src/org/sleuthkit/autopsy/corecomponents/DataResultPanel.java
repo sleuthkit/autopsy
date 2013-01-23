@@ -47,11 +47,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private Node rootNode;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    /**
-     * Name of property change fired when a file search result is closed
-     * TODO remove this from here, generic component should not care
-     */
-    public static String REMOVE_FILESEARCH = "RemoveFileSearchTopComponent";
     
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
@@ -203,8 +198,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * down this component and detach its listeners.
      */
     void close() {
-        pcs.firePropertyChange(REMOVE_FILESEARCH, "", this); // notify to remove this from the menu
-
         // try to remove any references to this class
         PropertyChangeListener[] pcl = pcs.getPropertyChangeListeners();
         for (int i = 0; i < pcl.length; i++) {
@@ -224,14 +217,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.directoryTablePath = null;
             this.numberMatchLabel.removeAll();
             this.numberMatchLabel = null;
-            this.numberMatchLabel.removeAll();
-            this.numberMatchLabel = null;
+            this.matchLabel.removeAll();
+            this.matchLabel = null;
             this.setLayout(null);
             this.pcs = null;
             this.removeAll();
+            this.setVisible(false);
         }
         
-        this.setVisible(true);
         
 
     }
