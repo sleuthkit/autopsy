@@ -29,8 +29,21 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Top component which displays result (top-right editor mode by default).
+ * Top component which displays results (top-right editor mode by default).
+ * 
+ * There is a main tc instance that responds to directory tree selections.
+ * Others can also create an additional result viewer tc using one of the factory methods, that can be:
+ * 
+ * - added to top-right corner as an additional, closeable viewer
+ * - added to a different, custom mode,
+ * - linked to a custom content viewer that responds to selections from this top component.
+ * 
+ * For embedding custom data result in other top components window, use DataResultPanel component instead,
+ * since we cannot nest top components.
+ * 
  * Encapsulates the internal DataResultPanel and delegates to it.
+ * 
+ * Implements DataResult interface by delegating to the encapsulated DataResultPanel.
  */
 public class DataResultTopComponent extends TopComponent implements DataResult {
 
@@ -49,6 +62,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     public DataResultTopComponent(boolean isMain, String title) {
         super();
 
+        //dataResultPanel is added to this tc using UI builder
         this.dataResultPanel = new DataResultPanel(isMain, title);
 
         initComponents();
@@ -69,7 +83,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         super();
         this.customModeName = mode;
 
-        //custom content viewer tc to setup for every result viewer
+        //custom content viewer to link to this result viewer
+        //dataResultPanel is added to this tc using UI builder
         dataResultPanel = new DataResultPanel(name, customContentViewer);
 
         initComponents();
