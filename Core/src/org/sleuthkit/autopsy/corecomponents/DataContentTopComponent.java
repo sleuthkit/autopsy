@@ -46,7 +46,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     // reference to the "default" TC that always stays open
     private static DataContentTopComponent defaultInstance;
-    private Node currentNode;
     // set to true if this is the TC that always stays open and is the default place to display content
     private boolean isDefault;
 
