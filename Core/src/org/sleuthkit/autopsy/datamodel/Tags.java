@@ -481,7 +481,7 @@ public class Tags implements AutopsyVisitableItem {
      * @param comment the bookmark comment
      */
     public static void createBookmark(AbstractFile file, String comment) {
-        createTag(file, Bookmarks.BOOKMARK_TAG_NAME, comment);
+        createTag(file, Tags.BOOKMARK_TAG_NAME, comment);
     }
 
     /**
@@ -491,7 +491,7 @@ public class Tags implements AutopsyVisitableItem {
      * @param comment the bookmark comment
      */
     public static void createBookmark(BlackboardArtifact artifact, String comment) {
-        createTag(artifact, Bookmarks.BOOKMARK_TAG_NAME, comment);
+        createTag(artifact, Tags.BOOKMARK_TAG_NAME, comment);
     }
 
     /**
@@ -503,7 +503,7 @@ public class Tags implements AutopsyVisitableItem {
         try {
             Case currentCase = Case.getCurrentCase();
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            return skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, Bookmarks.BOOKMARK_TAG_NAME);
+            return skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, Tags.BOOKMARK_TAG_NAME);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
         }

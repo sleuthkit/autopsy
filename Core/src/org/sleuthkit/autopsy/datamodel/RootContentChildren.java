@@ -70,16 +70,12 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                         
                         //TODO check
                     case TSK_TAG_FILE:
-                        if (o instanceof Bookmarks)
-                            this.refreshKey(o);
                         if (o instanceof Tags)
                             this.refreshKey(o);
                         break;
                         
                         //TODO check
                      case TSK_TAG_ARTIFACT:
-                        if (o instanceof Bookmarks)
-                            this.refreshKey(o);
                         if (o instanceof Tags)
                             this.refreshKey(o);
                         break;
@@ -95,8 +91,6 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                 else if (o instanceof KeywordHits)
                     this.refreshKey(o);
                 else if (o instanceof EmailExtracted)
-                    this.refreshKey(o);
-                else if (o instanceof Bookmarks)
                     this.refreshKey(o);
                 else if (o instanceof Tags)
                     this.refreshKey(o);

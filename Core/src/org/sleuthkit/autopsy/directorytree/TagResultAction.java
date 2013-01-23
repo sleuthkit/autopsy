@@ -29,7 +29,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Bookmarks;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -104,7 +103,8 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
             result.add(empty);
         } else {
             for (final String tagName : tagNames) {
-                if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
+                if (tagName.equals(Tags.BOOKMARK_TAG_NAME)) {
+                    //skip showing bookmarks in tags menu, as they have a separate menu
                     continue;
                 }
                 JMenuItem tagItem = new JMenuItem(tagName);
