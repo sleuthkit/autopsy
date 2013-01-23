@@ -100,8 +100,7 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <friend-packages>
-                <friend>org.sleuthkit.autopsy.thunderbirdparser</friend>
+            <public-packages>
                 <package>org.apache.commons.lang</package>
                 <package>org.apache.commons.lang.builder</package>
                 <package>org.apache.commons.lang.enums</package>
@@ -166,7 +165,7 @@
                 <package>org.apache.tika.sax.xpath</package>
                 <package>org.apache.tika.utils</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
-            </friend-packages>
+            </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.4.0-beta-1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.4.0-beta-1.jar</binary-origin>
