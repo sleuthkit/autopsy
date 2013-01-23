@@ -160,8 +160,9 @@
     </target>
     
     <target name="build-installer-windows">
-        <antcall target="run-advanced-installer" />
+        <antcall target="run-advanced-installer" /> 
         <!--<delete dir="${nbdist.dir}/${app.name}-installer"/>-->
         <delete dir="${nbdist.dir}/installer_${app.name}-cache"/>
+        <move file="${nbdist.dir}/installer_${app.name}-SetupFiles/installer_${app.name}.msi" tofile="${nbdist.dir}/installer_${app.name}-${app.version}.msi" />
     </target>
 </project>
