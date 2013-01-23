@@ -44,11 +44,17 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         
         // add all implementors of DataContentViewer and put them in the tabbed pane
         Collection<? extends DataContentViewer> dcvs = Lookup.getDefault().lookupAll(DataContentViewer.class);
-        for (DataContentViewer factory : Lookup.getDefault().lookupAll(DataContentViewer.class)) {
+        for (DataContentViewer factory : dcvs) {
             DataContentViewer dcv = factory.getInstance();
             viewers.add(new UpdateWrapper(dcv));
             jTabbedPane1.addTab(dcv.getTitle(), null,
                     dcv.getComponent(), dcv.getToolTip());
+        }
+        
+        // disable the tabs
+        int numTabs = jTabbedPane1.getTabCount();
+        for (int tab = 0; tab < numTabs; ++tab) {
+            jTabbedPane1.setEnabledAt(tab, false);
         }
         
         jTabbedPane1.addChangeListener(this);
