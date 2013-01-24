@@ -6,16 +6,9 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.testing.</description>
     <import file="nbproject/build-impl.xml"/>
     
-    <target name="set-args">
-        <property name="img_path" value="C:\Users\dfickling\Desktop\test-data\64mb2.img"/>
-        <property name="known_bad_path" value="C:\Users\dfickling\Desktop\test-data\notable_files.txt"/>
-        <property name="nsrl_path" value="C:\Users\dfickling\Desktop\NSRLComplete.txt-md5.idx"/>
-        <property name="keyword_path" value="C:\Users\dfickling\Desktop\test-data\notable_words.xml"/>
-        <property name="gold_path" value="C:\Users\dfickling\Desktop\test-data\win7-ren.txt"/>
-        <property name="out_path" value="C:\Users\dfickling\Desktop\test-data"/>
-    </target>
+
     
-    <target name="check-args"> <!-- remove dependency on set-args to get from script -->
+    <target name="check-args"> 
         <fail message="Missing required argument: img_path" unless="img_path"/>
         <fail message="Missing required argument: gold_path" unless="gold_path"/>
         <fail message="Missing required argument: out_path" unless="out_path"/>
