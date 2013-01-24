@@ -47,8 +47,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Bookmarks are specialized tags - TSK_TAG_NAME starts with File Bookmark or
  * Result Bookmark
  *
+ * @deprecated cosolidated under Tags
+ * 
  * TODO bookmark hierarchy support (TSK_TAG_NAME with slashes)
  */
+@Deprecated
 public class Bookmarks implements AutopsyVisitableItem {
 
     public static final String NAME = "Bookmarks";
@@ -69,7 +72,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+        return null; //v.visit(this);
     }
 
     /**
@@ -111,7 +114,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+            return null; // v.visit(this);
         }
 
         @Override
@@ -197,7 +200,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+            return null; //v.visit(this);
         }
 
         @Override

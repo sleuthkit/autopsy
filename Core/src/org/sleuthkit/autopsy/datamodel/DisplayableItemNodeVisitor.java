@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.Bookmarks.BookmarksNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Bookmarks.BookmarksRootNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
@@ -56,8 +54,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(EmailExtractedRootNode eern);
     T visit(EmailExtractedAccountNode eean);
     T visit(EmailExtractedFolderNode eefn);
-    T visit(BookmarksRootNode bksrn);
-    T visit(BookmarksNodeRoot bksrn);
     T visit(TagsRootNode bksrn);
     T visit(TagsNodeRoot bksrn);
     T visit(TagNodeRoot tnr);
@@ -201,15 +197,6 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(ldn);
         }
         
-        @Override
-        public T visit(BookmarksRootNode bksrn) {
-            return defaultVisit(bksrn);
-        }
-        
-        @Override
-        public T visit(BookmarksNodeRoot bksnr) {
-            return defaultVisit(bksnr);
-        }
         
         @Override
         public T visit(TagsRootNode bksrn) {
