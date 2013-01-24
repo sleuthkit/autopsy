@@ -85,8 +85,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         "html", "htm", "xhtml",
         //text
         "txt", "log", "manifest",
+        //code
+        "class",
         //images, media, other
-        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "flv", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {
