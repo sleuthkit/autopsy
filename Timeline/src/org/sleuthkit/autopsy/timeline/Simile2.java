@@ -80,9 +80,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -126,7 +125,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResult;
-    private DataContentTopComponent dataContent;
+    private DataContentPanel dataContentPanel;
     
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -135,10 +134,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                dataContent = DataContentTopComponent.createUndocked("Content", Node.EMPTY);
-                dataContent.setSize(1, 1);
-                dataContent.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContent);
+                dataContentPanel = new DataContentPanel();
+                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
                 dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dataResult.setPreferredSize(new Dimension(700, 300));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -257,7 +254,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 chartJPanel.add(panel_Charts);
                 viewerJPanel.add(dataResult);
                 
-                viewerJPanel.add(dataContent);
+                viewerJPanel.add(dataContentPanel);
                 chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 comboJPanel.add(chartJPanel);
@@ -858,27 +855,25 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
 
     @Override
     public void performAction() {
-        if(!Case.existsCurrentCase()){
-            return; 
-        } 
-      else {
-            try {
-             if(Case.getCurrentCase().getImages().isEmpty()){
-            logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+        if (!Case.existsCurrentCase()) {
+            return;
         }
-        else if(IngestManager.getDefault().isIngestRunning()){
-            int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
-            if (i != JOptionPane.YES_OPTION){
-                return;
-            }
-        }
-        else{
+
+        try {
+            if (Case.getCurrentCase().getImages().isEmpty()) {
+                logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+            } else if (IngestManager.getDefault().isIngestRunning()) {
+                int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
+                if (i != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
                 customizeSwing();
                 customize();
-        }} catch (TskCoreException ex) {
-             Exceptions.printStackTrace(ex);
-         }
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
     }
 
