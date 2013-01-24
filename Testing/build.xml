@@ -41,7 +41,8 @@
                 <jvmarg line="${test.bootclasspath.prepend.args}"/>
                 <jvmarg line="${test.run.args}"/>
                 <!--  should be in sync with project.properties and build.xml of autopsy main project -->
-                <jvmarg line="-J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none"/>
+                <!-- disable for now, causes issues with Java 7 -->
+                <!-- <jvmarg line="-J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none"/>  -->
                 <sysproperty key="img_path" value="${img_path}"/>
                 <sysproperty key="gold_path" value="${gold_path}"/>
                 <sysproperty key="out_path" value="${out_path}"/>
