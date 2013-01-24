@@ -696,7 +696,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         private boolean extractIndex(AbstractFile aFile, boolean stringsOnly) throws IngesterException {
             AbstractFileExtract fileExtract = null;
 
-            if (stringsOnly) {
+            if (stringsOnly && stringExtractor.isSupported(aFile)) {
                 fileExtract = stringExtractor;
             } else {
                 //go over available text extractors and pick the first one (most specific one)
@@ -709,7 +709,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             }
 
             if (fileExtract == null) {
-                throw new IngesterException("No supported file extractor found for file: " + aFile.getId() + " " + aFile.getName());
+                logger.log(Level.INFO, "No supported file extractor found for file: " + aFile.getId() + " " + aFile.getName());
+                return false;
             }
 
             //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
