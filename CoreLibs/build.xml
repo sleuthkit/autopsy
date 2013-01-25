@@ -33,15 +33,16 @@
         <taskdef resource="org/apache/ivy/ant/antlib.xml"
              uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
-
     
-     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
-        
-        <!-- clear & fetch all the dependencies from Ivy and stick them in the right places -->
+    <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy">
+        <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve conf="autopsy_core" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+	</target>
+    
+     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
+        <!-- overrode depends attribute -->
         
-        
-    </target>
+     </target>
     
 </project>

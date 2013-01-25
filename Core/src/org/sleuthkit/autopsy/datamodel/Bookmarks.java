@@ -18,17 +18,21 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.awt.event.ActionEvent;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -43,12 +47,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Bookmarks are specialized tags - TSK_TAG_NAME starts with File Bookmark or
  * Result Bookmark
  *
+ * @deprecated cosolidated under Tags
+ * 
  * TODO bookmark hierarchy support (TSK_TAG_NAME with slashes)
  */
+@Deprecated
 public class Bookmarks implements AutopsyVisitableItem {
 
     public static final String NAME = "Bookmarks";
-    
     private static final String FILE_BOOKMARKS_LABEL_NAME = "File Bookmarks";
     private static final String RESULT_BOOKMARKS_LABEL_NAME = "Result Bookmarks";
     //bookmarks are specializations of tags
@@ -57,7 +63,7 @@ public class Bookmarks implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(Bookmarks.class.getName());
     private SleuthkitCase skCase;
     private final Map<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>> data =
-            new HashMap<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>>();
+            new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>>(BlackboardArtifact.ARTIFACT_TYPE.class);
 
     public Bookmarks(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -66,7 +72,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+        return null; //v.visit(this);
     }
 
     /**
@@ -96,7 +102,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 List<BlackboardArtifact> tagArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME,
                         BOOKMARK_TAG_NAME);
-                
+
                 data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, tagFiles);
                 data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, tagArtifacts);
             } catch (TskCoreException ex) {
@@ -108,7 +114,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+            return null; // v.visit(this);
         }
 
         @Override
@@ -194,7 +200,7 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+            return null; //v.visit(this);
         }
 
         @Override
@@ -228,7 +234,45 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+            BlackboardArtifactNode bookmarkNode = null;
+
+            int artifactTypeID = artifact.getArtifactTypeID();
+            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                final BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
+                bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH) {
+                    @Override
+                    public Action[] getActions(boolean bln) {
+                        //Action [] actions = super.getActions(bln); //To change body of generated methods, choose Tools | Templates.
+                        Action[] actions = new Action[1];
+                        actions[0] = new AbstractAction("View Source Result") {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                //open the source artifact in dir tree
+                                if (sourceResult != null) {
+                                    BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
+                                    v.viewArtifact(sourceResult);
+                                }
+                            }
+                        };
+                        return actions;
+                    }
+                };
+
+                //add custom property
+                final String NO_DESCR = "no description";
+                String resultType = sourceResult.getDisplayName();
+                NodeProperty resultTypeProp = new NodeProperty("Source Result Type",
+                        "Result Type",
+                        NO_DESCR,
+                        resultType);
+                bookmarkNode.addNodeProperty(resultTypeProp);
+
+            } else {
+                //file bookmark, no additional action
+                bookmarkNode = new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
+
+            }
+            return bookmarkNode;
         }
     }
 

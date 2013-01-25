@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -105,18 +106,26 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("</tr>");
             }
             
+            final Content content = getAssociatedContent(wrapped);
+            
+            String path = "";
+            try {
+                path = content.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+            }
+            
             //add file path
             buffer.append("<tr>");
             buffer.append("<td>Source File</td>");
             buffer.append("<td>");
-            final Content content = getAssociatedContent(wrapped);
             buffer.append(content.getName());
             buffer.append("</td>");
             buffer.append("</tr>");
             buffer.append("<tr>");
             buffer.append("<td>Source File Path</td>");
             buffer.append("<td>");
-            buffer.append(DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
+            buffer.append(path);
             buffer.append("</td>");
             buffer.append("</tr>");
             

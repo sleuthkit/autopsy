@@ -7,7 +7,7 @@
 	
     <import file="nbproject/build-impl.xml"/>
     
-    <property name="netbeans-plat-version" value="7.2.1" />
+    <property name="netbeans-plat-version" value="7.3" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
 
     <condition property="os.family" value="unix">  
@@ -84,17 +84,21 @@
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
          
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-        <copy todir="${zip-tmp}/${app.name}/jre6">
+        <copy todir="${zip-tmp}/${app.name}/jre">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         <antcall target="copyExternalLibsToZip"></antcall>
         
-        <propertyfile
-        file="${zip-tmp}/${app.name}/etc/${app.name}.conf">
-            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
-            <entry key="jdkhome" value="&quot;jre6&quot;" />
+        <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none&quot;" />
+        <propertyfile file="${app.property.file}">
+            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
+            <entry key="default_options" value="@JVM_OPTIONS" />
+            <entry key="jdkhome" value="&quot;jre&quot;" />
         </propertyfile>
+        <!-- workaround for ant escaping : and = when setting properties -->
+        <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">

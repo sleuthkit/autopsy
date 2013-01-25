@@ -11,20 +11,21 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>6</release-version>
-                        <specification-version>4.0</specification-version>
+                        <release-version>7</release-version>
+                        <specification-version>5.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.keywordsearch</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>5</release-version>
+                        <specification-version>3.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
             <public-packages/>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
-            </class-path-extension>
         </data>
     </configuration>
 </project>

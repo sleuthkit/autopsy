@@ -95,12 +95,75 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>6</release-version>
-                        <specification-version>4.0</specification-version>
+                        <release-version>7</release-version>
+                        <specification-version>5.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>org.apache.commons.lang</package>
+                <package>org.apache.commons.lang.builder</package>
+                <package>org.apache.commons.lang.enums</package>
+                <package>org.apache.commons.lang.exception</package>
+                <package>org.apache.commons.lang.math</package>
+                <package>org.apache.commons.lang.mutable</package>
+                <package>org.apache.commons.lang.text</package>
+                <package>org.apache.commons.lang.time</package>
+                <package>org.apache.commons.logging</package>
+                <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.tika</package>
+                <package>org.apache.tika.config</package>
+                <package>org.apache.tika.detect</package>
+                <package>org.apache.tika.exception</package>
+                <package>org.apache.tika.extractor</package>
+                <package>org.apache.tika.fork</package>
+                <package>org.apache.tika.io</package>
+                <package>org.apache.tika.language</package>
+                <package>org.apache.tika.metadata</package>
+                <package>org.apache.tika.mime</package>
+                <package>org.apache.tika.parser</package>
+                <package>org.apache.tika.parser.asm</package>
+                <package>org.apache.tika.parser.audio</package>
+                <package>org.apache.tika.parser.chm</package>
+                <package>org.apache.tika.parser.chm.accessor</package>
+                <package>org.apache.tika.parser.chm.assertion</package>
+                <package>org.apache.tika.parser.chm.core</package>
+                <package>org.apache.tika.parser.chm.exception</package>
+                <package>org.apache.tika.parser.chm.lzx</package>
+                <package>org.apache.tika.parser.crypto</package>
+                <package>org.apache.tika.parser.dwg</package>
+                <package>org.apache.tika.parser.epub</package>
+                <package>org.apache.tika.parser.executable</package>
+                <package>org.apache.tika.parser.external</package>
+                <package>org.apache.tika.parser.feed</package>
+                <package>org.apache.tika.parser.font</package>
+                <package>org.apache.tika.parser.hdf</package>
+                <package>org.apache.tika.parser.html</package>
+                <package>org.apache.tika.parser.image</package>
+                <package>org.apache.tika.parser.image.xmp</package>
+                <package>org.apache.tika.parser.internal</package>
+                <package>org.apache.tika.parser.iptc</package>
+                <package>org.apache.tika.parser.iwork</package>
+                <package>org.apache.tika.parser.jpeg</package>
+                <package>org.apache.tika.parser.mail</package>
+                <package>org.apache.tika.parser.mbox</package>
+                <package>org.apache.tika.parser.microsoft</package>
+                <package>org.apache.tika.parser.microsoft.ooxml</package>
+                <package>org.apache.tika.parser.mp3</package>
+                <package>org.apache.tika.parser.mp4</package>
+                <package>org.apache.tika.parser.netcdf</package>
+                <package>org.apache.tika.parser.odf</package>
+                <package>org.apache.tika.parser.opendocument</package>
+                <package>org.apache.tika.parser.pdf</package>
+                <package>org.apache.tika.parser.pkg</package>
+                <package>org.apache.tika.parser.prt</package>
+                <package>org.apache.tika.parser.rtf</package>
+                <package>org.apache.tika.parser.txt</package>
+                <package>org.apache.tika.parser.video</package>
+                <package>org.apache.tika.parser.xml</package>
+                <package>org.apache.tika.sax</package>
+                <package>org.apache.tika.sax.xpath</package>
+                <package>org.apache.tika.utils</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
             <class-path-extension>

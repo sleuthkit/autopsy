@@ -29,16 +29,14 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Bookmarks;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Action on a file or artifact that bookmarks a file and/or artifact
- * and reloads the bookmark view.
- * Supports bookmarking of a fs file, directory and layout file and layout
- * directory (virtual files/dirs for unalloc content) 
- * 
+ * Action on a file or artifact that bookmarks a file and/or artifact and
+ * reloads the bookmark view. Supports bookmarking of a fs file, directory and
+ * layout file and layout directory (virtual files/dirs for unalloc content)
+ *
  * TODO add use enters description and hierarchy (TSK_TAG_NAME with slashes)
  */
 public class TagResultAction extends AbstractAction implements Presenter.Popup {
@@ -46,85 +44,87 @@ public class TagResultAction extends AbstractAction implements Presenter.Popup {
     private static final Logger logger = Logger.getLogger(TagFileAction.class.getName());
     //content to bookmark
     private BlackboardArtifact tagArtifact;
-    
+
     public TagResultAction(BlackboardArtifact artifact) {
         tagArtifact = artifact;
     }
-    
-    private String getComment() {
-        String comment = JOptionPane.showInputDialog(null,
-                "Please enter a comment for the tag (optional):",
-                "Tag Comment",
-                JOptionPane.PLAIN_MESSAGE);
-        if(comment == null || comment.isEmpty()) {
-            comment = "No Comment";
-        }
-        return comment;
-    }
-    
+
     private void refreshDirectoryTree() {
-        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();  
+        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
     }
 
     @Override
     public JMenuItem getPopupPresenter() {
-        JMenu result = new JMenu("Tag Result");
-        
-        JMenuItem contentItem = new JMenuItem("Bookmark Result");
-        contentItem.addActionListener(new ActionListener() {
+        JMenu result = new JMenu("Tag Source Result");
 
+        JMenuItem contentItem = new JMenuItem("Bookmark Source Result");
+        contentItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Tags.createBookmark(tagArtifact, getComment());
-                refreshDirectoryTree();
-            }
-            
-        });
-        result.add(contentItem);
-        result.addSeparator();
-        
-        JMenuItem newTagItem = new JMenuItem("Create a new tag");
-        newTagItem.addActionListener(new ActionListener() {
-                
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Map<String, String> tagMap = new CreateTagDialog(new JFrame(), true).display();
-                if (tagMap != null) {
-                    Tags.createTag(tagArtifact, tagMap.get("Name"), tagMap.get("Comment"));
+                final TagDialog tagDialog = new TagDialog(TagDialog.Type.BOOKMARK, "Bookmark Source Result", null, "Bookmark", false);
+                tagDialog.setVisible(true);
+                TagDialog.TagDialogResult inputResult = tagDialog.getResult();
+                if (inputResult.isAccept()) {
+                    Tags.createBookmark(tagArtifact, inputResult.getComment());
                     refreshDirectoryTree();
                 }
             }
+        });
+        result.add(contentItem);
+        result.addSeparator();
 
+        JMenuItem newTagItem = new JMenuItem("Create a new tag");
+        newTagItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String newTagName = new CreateTagDialog(new JFrame(), true).display();
+                if (newTagName != null) {
+                    //get comment and create tag
+                    final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source Result", null, newTagName, false);
+                    tagDialog.setVisible(true);
+                    TagDialog.TagDialogResult inputResult = tagDialog.getResult();
+                    if (inputResult.isAccept()) {
+                        Tags.createTag(tagArtifact, newTagName, inputResult.getComment());
+                        refreshDirectoryTree();
+                    }
+
+                }
+            }
         });
         result.add(newTagItem);
         result.addSeparator();
-        
-        List<String> tagNames = Tags.getTagNames();
+
+        final List<String> tagNames = Tags.getTagNames();
         if (tagNames.isEmpty()) {
             JMenuItem empty = new JMenuItem("No tags");
             empty.setEnabled(false);
             result.add(empty);
         } else {
-            for (final String tagName : Tags.getTagNames()) {
-                if (tagName.equals(Bookmarks.BOOKMARK_TAG_NAME)) {
+            for (final String tagName : tagNames) {
+                if (tagName.equals(Tags.BOOKMARK_TAG_NAME)) {
+                    //skip showing bookmarks in tags menu, as they have a separate menu
                     continue;
                 }
                 JMenuItem tagItem = new JMenuItem(tagName);
                 tagItem.addActionListener(new ActionListener() {
-
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        Tags.createTag(tagArtifact, tagName, getComment());
-                        refreshDirectoryTree();
-                    }
+                        final TagDialog tagDialog = new TagDialog(TagDialog.Type.TAG, "Tag Source Result", tagNames, tagName, true);
+                        tagDialog.setVisible(true);
+                        TagDialog.TagDialogResult inputResult = tagDialog.getResult();
+                        if (inputResult.isAccept()) {
+                            Tags.createTag(tagArtifact, inputResult.getSelectedTag(), inputResult.getComment());
+                            refreshDirectoryTree();
+                        }
 
+                    }
                 });
                 result.add(tagItem);
             }
         }
-        
+
         return result;
     }
 

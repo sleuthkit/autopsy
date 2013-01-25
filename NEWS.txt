@@ -1,16 +1,22 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.4 --------------
 
 New features:
-- Results and files can be tagged with custom tags and assigned different categories, and 
-they can be reported on based on those categories.
+- Results and files can be tagged with custom tags and reported on them.
+- New notification area for error reporting (bottom right).
 
 Improvements:
-- Better error reporting in the UI using the notification area.
-
+- Tweaked memory settings to eliminate out-of-memory errors.
+- Faster application launch time.
+- Netbeans RCP upgrade from 7.2.1 to 7.3
+- Upgrade from Java 6 to Java 7
 
 Bugfixes:
+- fixed DLL dependency version issue causing Autopsy not to launch on some systems
 - fixed bug when keyword search ingest would search also images previously ingested, creating duplicate results
 - fixed crash and hang in html and excel report generation, due to special characters present
+- fixed cancellation when creating file or result bookmark
+- fixed text not being extracted and searched from all MS Office documents  (such as docx, xlsx and pptx extensions)
+- fixed Exif meta-data extraction in Exif ingest module
 
 
 ---------------- VERSION 3.0.3 --------------

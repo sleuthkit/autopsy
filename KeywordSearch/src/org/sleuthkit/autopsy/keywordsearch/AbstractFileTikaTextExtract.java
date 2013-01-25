@@ -66,17 +66,35 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-    // TODO: use a more robust method than checking file extension
+    // TODO: use type detection mechanism instead, and maintain supported MimeTypes, not extensions
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] SUPPORTED_EXTENSIONS = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
-        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+    static final String[] SUPPORTED_EXTENSIONS = {
+        //Archive (to be removed when we have archive module
+        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", "ar", "cpio", 
+        //MS Office
+        "doc", "dot", "docx", "docm", "dotx", "dotm",
+        "xls", "xlw", "xlt", "xlsx", "xlsm", "xltx", "xltm",
+        "ppt", "pps", "pot", "pptx", "pptm", "potx", "potm",
+        //Open Office
+        "odf", "odt", "ott", "ods", "ots", "odp", "otp",
+        "sxw", "stw", "sxc", "stc", "sxi", "sxi",
+        "sdw", "sdc", "vor", "sgl",
+        //rich text, pdf
+        "rtf", "pdf",
+        //html (other extractors take priority)
+        "html", "htm", "xhtml",
+        //text
+        "txt", "log", "manifest",
+        //code
+        "class",
+        //images, media, other
+        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "flv", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
-        
+
     }
 
     @Override
@@ -88,15 +106,14 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public List<StringExtract.StringExtractUnicodeTable.SCRIPT> getScripts() {
         return null;
     }
-    
-        @Override
+
+    @Override
     public Map<String, String> getOptions() {
         return null;
     }
 
     @Override
     public void setOptions(Map<String, String> options) {
-
     }
 
     @Override
@@ -267,8 +284,13 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     @Override
     public boolean isSupported(AbstractFile file) {
         String fileNameLower = file.getName().toLowerCase();
+        int dotI = fileNameLower.lastIndexOf(".");
+        if (dotI == -1 || dotI == fileNameLower.length() - 1) {
+            return false; //no extension
+        }
+        final String extension = fileNameLower.substring(dotI + 1);
         for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
-            if (fileNameLower.endsWith(SUPPORTED_EXTENSIONS[i])) {
+            if (extension.equals(SUPPORTED_EXTENSIONS[i])) {
                 return true;
             }
         }
@@ -304,8 +326,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 KeywordSearch.getTikaLogger().log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
                 tika = null;
                 reader = null;
-            }
-             catch (Exception ex) {
+            } catch (Exception ex) {
                 KeywordSearch.getTikaLogger().log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
                 tika = null;
                 reader = null;

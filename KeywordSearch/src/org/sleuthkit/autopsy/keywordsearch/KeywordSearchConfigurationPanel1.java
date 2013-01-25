@@ -118,10 +118,11 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
 
                 if (shouldAdd) {
                     writer.addList(listName, keywords);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
 
-                currentKeywordList = writer.getList(listName);
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                //currentKeywordList = writer.getList(listName);
+                
                 listsManagementPanel.resync();
             }
         });

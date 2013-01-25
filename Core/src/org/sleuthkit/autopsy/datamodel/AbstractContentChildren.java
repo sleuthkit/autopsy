@@ -137,10 +137,6 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             return ee.new EmailExtractedRootNode();
         }
         
-        @Override
-        public AbstractNode visit(Bookmarks bks) {
-            return bks.new BookmarksRootNode();
-        }
         
         @Override
         public AbstractNode visit(Tags t) {

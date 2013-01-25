@@ -18,12 +18,14 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.sun.corba.se.impl.util.Version;
 import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
@@ -50,13 +52,13 @@ public class Installer extends ModuleInstall {
         //TODO revise this logic, handle other server types, move some logic to Server class
         try {
             //check if running from previous application instance and try to shut down
-            logger.log(Level.INFO, "Checking is server is running");
+            logger.log(Level.INFO, "Checking if server is running");
             if (server.isRunning()) {
                 //TODO this could hang if other type of server is running 
                 logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort()
                         + " port, maybe leftover from a previous run. Trying to shut it down.");
                 server.stop();
-                logger.log(Level.INFO, "Re-checking is server is running");
+                logger.log(Level.INFO, "Re-checking if server is running");
                 if (server.isRunning()) {
                     int serverPort = server.getCurrentSolrServerPort();
                     int serverStopPort = server.getCurrentSolrStopPort();
@@ -183,10 +185,12 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "<html>Indexing server port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder.</html>";
-                KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                final String msg = "Indexing server port " + curFailPort + " is not available. "
+                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder."
+                        + " Then try rebooting your system if another process was causing the conflict. ";
+                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
             }
         });
     }
@@ -195,10 +199,10 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "<html>Indexing server stop port " + curFailPort + " is not available. "
+                final String msg = "Indexing server stop port " + curFailPort + " is not available. "
                         + " Consider changing " + Server.PROPERTIES_CURRENT_STOP_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder.</html>";
-                KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        + Server.PROPERTIES_FILE + " property file in the application user folder.";
+                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
             }
         });
     }
@@ -207,10 +211,14 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "<html>Error initializing Keyword Search module.<br />"
-                        + "File indexing and search will not be functional.<br />"
-                        + "Please try to restart your computer and the application.</html>";
-                KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                final String msg = "Indexing server port " + KeywordSearch.getServer().getCurrentSolrServerPort() + " is not available. "
+                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder."
+                        + " Then try rebooting your system if another process was causing the conflict. ";
+                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+
+                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
             }
         });
     }

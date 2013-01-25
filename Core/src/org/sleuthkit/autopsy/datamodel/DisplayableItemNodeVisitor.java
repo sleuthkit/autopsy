@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.Bookmarks.BookmarksNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Bookmarks.BookmarksRootNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
@@ -28,6 +26,7 @@ import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsRootNode;
 
@@ -55,10 +54,9 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(EmailExtractedRootNode eern);
     T visit(EmailExtractedAccountNode eean);
     T visit(EmailExtractedFolderNode eefn);
-    T visit(BookmarksRootNode bksrn);
-    T visit(BookmarksNodeRoot bksrn);
     T visit(TagsRootNode bksrn);
     T visit(TagsNodeRoot bksrn);
+    T visit(TagNodeRoot tnr);
     T visit(ViewsNode vn);
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
@@ -199,15 +197,6 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(ldn);
         }
         
-        @Override
-        public T visit(BookmarksRootNode bksrn) {
-            return defaultVisit(bksrn);
-        }
-        
-        @Override
-        public T visit(BookmarksNodeRoot bksnr) {
-            return defaultVisit(bksnr);
-        }
         
         @Override
         public T visit(TagsRootNode bksrn) {
@@ -218,5 +207,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(TagsNodeRoot bksnr) {
             return defaultVisit(bksnr);
         }
+
+        @Override
+        public T visit(TagNodeRoot tnr) {
+            return defaultVisit(tnr);
+        }
+        
+        
     }
 }

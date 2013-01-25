@@ -23,10 +23,18 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
+import java.util.logging.SimpleFormatter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Monitor health of the system and stop ingest if necessary
@@ -34,8 +42,30 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public class IngestMonitor {
 
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
-    private static final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
+    private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
+    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
+    private final MemoryMXBean memoryManager = ManagementFactory.getMemoryMXBean();
+
+    IngestMonitor() {
+
+        //setup the custom memory logger
+        try {
+            final int MAX_LOG_FILES = 3;
+            FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log",
+                    0, MAX_LOG_FILES);
+            monitorLogHandler.setFormatter(new SimpleFormatter());
+            monitorLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
+            MONITOR_LOGGER.addHandler(monitorLogHandler);
+            //do not forward to the parent autopsy logger
+            MONITOR_LOGGER.setUseParentHandlers(false);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (SecurityException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+    }
 
     /**
      * Start the monitor
@@ -113,14 +143,16 @@ public class IngestMonitor {
                 return;
             }
 
+            monitorMemory();
+
             if (checkDiskSpace() == false) {
                 //stop ingest if running
                 final String diskPath = root.getAbsolutePath();
+                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerErrorMessage
-                        ("Ingest stopped - low disk space on " + diskPath, 
-                        "Stopping ingest due to low disk space on disk " + diskPath 
+                manager.postMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space on " + diskPath,
+                        "Stopping ingest due to low disk space on disk " + diskPath
                         + ". \nEnsure the Case drive has at least 1GB free space and restart ingest."));
             }
         }
@@ -140,6 +172,26 @@ public class IngestMonitor {
             }
             //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));
             return freeSpace > MIN_FREE_DISK_SPACE;
+        }
+
+        /**
+         * Monitor memory usage and print to memory log
+         */
+        private void monitorMemory() {
+
+            final Runtime runTime = Runtime.getRuntime();
+            final long maxMemory = runTime.maxMemory();
+            final long totalMemory = runTime.totalMemory();
+            final long freeMemory = runTime.freeMemory();
+            MONITOR_LOGGER.log(Level.INFO, "Physical memory (max, total, free): "
+                    + Long.toString(maxMemory) + ", " + Long.toString(totalMemory)
+                    + ", " + Long.toString(freeMemory));
+
+            final MemoryUsage heap = memoryManager.getHeapMemoryUsage();
+            final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
+
+            MONITOR_LOGGER.log(Level.INFO, "Java heap memory: " + heap.toString() + ", Java non-heap memory: " + nonHeap.toString());
+
         }
     }
 }

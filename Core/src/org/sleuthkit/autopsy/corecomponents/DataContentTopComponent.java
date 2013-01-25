@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTabbedPane;
@@ -36,9 +37,8 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component that organizes all of the data content viewers.  Doing a lookup on this class will
@@ -46,6 +46,8 @@ import org.sleuthkit.datamodel.Content;
  */
 // Registered as a service provider in layer.xml
 public final class DataContentTopComponent extends TopComponent implements DataContent, ChangeListener {
+    
+    private static Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());
 
     // reference to the "default" TC that always stays open
     private static DataContentTopComponent defaultInstance;
@@ -170,14 +172,13 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public static synchronized DataContentTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (win == null) {
-            Logger.getLogger(DataContentTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
+            logger.warning("Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
             return getDefault();
         }
         if (win instanceof DataContentTopComponent) {
             return (DataContentTopComponent) win;
         }
-        Logger.getLogger(DataContentTopComponent.class.getName()).warning(
+        logger.warning(
                 "There seem to be multiple components with the '" + PREFERRED_ID
                 + "' ID. That is a potential source of errors and unexpected behavior.");
         return getDefault();
@@ -242,7 +243,13 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             } else {
                 Content content = selectedNode.getLookup().lookup(Content.class);
                 if (content != null) {
-                    String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
+                    //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
+                    String path = defaultName;
+                    try {
+                        path = content.getUniquePath();
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content);
+                    }
                     setName(path);
                 } else {
                     setName(defaultName);

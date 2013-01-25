@@ -29,7 +29,8 @@
         <echo>Found CRT.version linked against: ${CRT.version}</echo>
         -->
         <!-- <property name="CRT.version">10.0.40219.1</property> -->
-        <property name="CRT.version">10.0.40219.325</property>
+        <!-- <property name="CRT.version">10.0.40219.325</property> -->
+        <property name="CRT.version">10.0.30319.1</property>
         
         
         <!-- Get C++ Runtime dlls -->
@@ -45,8 +46,8 @@
         <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo in path: ${CRT.path}"/>
 
         <!-- unzip from thirdparty repo to modules/lib in staged dir -->
-        <!-- <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/> -->
-        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/bin"/>
+        <!-- <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/bin"/> -->
+        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
         
         <!-- delete 64 bit exe for now -->
         <delete file="${zip-tmp}/${app.name}/bin/${app.name}64.exe" />
@@ -104,7 +105,7 @@
             <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\java"/>
         </exec>
         <exec executable="${aiPath}">
-            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\jre6"/>
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\jre"/>
         </exec>
         <exec executable="${aiPath}">
             <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\platform"/>
@@ -159,8 +160,9 @@
     </target>
     
     <target name="build-installer-windows">
-        <antcall target="run-advanced-installer" />
+        <antcall target="run-advanced-installer" /> 
         <!--<delete dir="${nbdist.dir}/${app.name}-installer"/>-->
         <delete dir="${nbdist.dir}/installer_${app.name}-cache"/>
+        <move file="${nbdist.dir}/installer_${app.name}-SetupFiles/installer_${app.name}.msi" tofile="${nbdist.dir}/installer_${app.name}-${app.version}.msi" />
     </target>
 </project>
