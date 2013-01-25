@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
@@ -56,6 +57,8 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  * Currently a singleton object only.
  *
  * Contains internal schedulers for image and file ingests.
+ * 
+ * TODO test derived files scheduling
  *
  */
 class IngestScheduler {
@@ -878,8 +881,18 @@ class IngestScheduler {
 
             @Override
             public Collection<AbstractFile> visit(File file) {
-                throw new IllegalStateException("Should not happen, file cannot be a direct child or Fs, Volume, or Image");
+                //can have derived files
+                return getAllFromChildren(file);
             }
+            
+            @Override
+            public Collection<AbstractFile> visit(DerivedFile derivedFile) {
+                //can have derived files
+                //TODO test this and overall scheduler with derived files
+                return getAllFromChildren(derivedFile);
+            }
+            
+            
         }
     }
 
