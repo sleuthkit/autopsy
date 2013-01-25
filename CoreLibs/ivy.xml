@@ -25,7 +25,7 @@
         <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-excelant" rev="3.8"/>
         <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-scratchpad" rev="3.8"/>
         
-        <!-- process and system monitoring -->
+        <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
         <dependency conf="autopsy_core->*" org="org.fusesource" name="sigar" rev="1.6.4" />
     </dependencies>
 </ivy-module>
