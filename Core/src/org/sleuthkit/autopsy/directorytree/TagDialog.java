@@ -98,13 +98,13 @@ public class TagDialog extends javax.swing.JDialog {
 
         if (tagNames != null) {
             for (String tagName : tagNames) {
-                tagCombo.addItem(tagName);
+                tagCombo.<String>addItem(tagName);
                 if (tagName.equals(defaultTagName)) {
                     tagCombo.setSelectedItem(tagName);
                 }
             }
         } else {
-            tagCombo.addItem(defaultTagName);
+            tagCombo.<String>addItem(defaultTagName);
             tagCombo.setSelectedItem(defaultTagName);
         }
     }
@@ -127,7 +127,7 @@ public class TagDialog extends javax.swing.JDialog {
 
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        tagCombo = new javax.swing.JComboBox();
+        tagCombo = new javax.swing.JComboBox<String>();
         tagLabel = new javax.swing.JLabel();
         commentLabel = new javax.swing.JLabel();
         commentText = new javax.swing.JTextField();

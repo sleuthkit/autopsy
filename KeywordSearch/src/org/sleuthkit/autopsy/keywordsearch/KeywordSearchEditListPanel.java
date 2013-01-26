@@ -199,9 +199,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         //selectors
         selectorsCombo.setEnabled(false);
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
-            selectorsCombo.addItem(type.getDisplayName());
+            selectorsCombo.<String>addItem(type.getDisplayName());
         }
-        selectorsCombo.addItem("<none>");
+        selectorsCombo.<String>addItem("<none>");
         selectorsCombo.setSelectedIndex(selectorsCombo.getItemCount() - 1);
 
     }
@@ -295,7 +295,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         addWordButton = new javax.swing.JButton();
         addWordField = new javax.swing.JTextField();
         chRegex = new javax.swing.JCheckBox();
-        selectorsCombo = new javax.swing.JComboBox();
+        selectorsCombo = new javax.swing.JComboBox<String>();
         deleteWordButton = new javax.swing.JButton();
         ingestMessagesCheckbox = new javax.swing.JCheckBox();
         keywordsLabel = new javax.swing.JLabel();
