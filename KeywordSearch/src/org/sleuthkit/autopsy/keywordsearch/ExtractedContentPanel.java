@@ -349,7 +349,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         setPanelText(null, false);
 
         for (MarkupSource ms : sources) {
-            sourceComboBox.addItem(ms);
+            sourceComboBox.<String>addItem(ms);
         }
 
         if (!sources.isEmpty()) {

@@ -6,7 +6,11 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.corelibs.</description>
     <import file="nbproject/build-impl.xml"/>
     
-    <property name="ivy.install.version" value="2.1.0-rc2" />
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="lib.dir" value="release/modules/lib" />
+    
+    
+    <property name="ivy.install.version" value="2.3.0-rc2" />
     <condition property="ivy.home" value="${env.IVY_HOME}">
         <isset property="env.IVY_HOME" />
     </condition>
@@ -34,7 +38,14 @@
              uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
     
-    <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy">
+    <target name="build-native-libs" description="build native library dependencies"> 
+        <!-- sigar: note, matching jar is pulled with ivy -->
+        <mkdir dir="${lib.dir}"/>
+        <unzip src="${thirdparty.dir}/sigar/1.6.4/sigar-native.zip" dest="${lib.dir}"/>
+    </target>
+    
+    
+    <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
         <ivy:retrieve sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
