@@ -17,6 +17,17 @@
     <property name="ivy.home" value="${user.home}/.ant" />
     <property name="ivy.jar.dir" value="${ivy.home}/lib" />
     <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+    
+    <condition property="os.family" value="unix">  
+        <os family="unix"/>  
+    </condition> 
+    <condition property="os.family" value="mac">  
+        <os family="mac"/>  
+    </condition> 
+    <condition property="os.family" value="windows">  
+        <os family="windows"/>  
+    </condition>  
+    <import file="build-${os.family}.xml"/> 
 
     <target name="download-ivy" unless="offline">
         <available file="${ivy.jar.file}" property="ivy.available"/>
@@ -26,7 +37,7 @@
     <target name="-download-ivy" unless="ivy.available">
         <mkdir dir="${ivy.jar.dir}"/>
         <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
-         dest="${ivy.jar.file}" usetimestamp="true"/>
+             dest="${ivy.jar.file}" usetimestamp="true"/>
     </target>
 
     <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
@@ -35,25 +46,19 @@
             <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
         </path>
         <taskdef resource="org/apache/ivy/ant/antlib.xml"
-             uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
-    
-    <target name="build-native-libs" description="build native library dependencies"> 
-        <!-- sigar: note, matching jar is pulled with ivy -->
-        <mkdir dir="${lib.dir}"/>
-        <unzip src="${thirdparty.dir}/sigar/1.6.4/sigar-native.zip" dest="${lib.dir}"/>
-    </target>
-    
+        
     
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
         <ivy:retrieve sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-	</target>
+    </target>
     
-     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
         <!-- overrode depends attribute -->
         
-     </target>
+    </target>
     
 </project>
