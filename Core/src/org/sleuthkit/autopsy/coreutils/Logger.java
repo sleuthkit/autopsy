@@ -132,7 +132,7 @@ public class Logger extends java.util.logging.Logger {
      * Log an action to autopsy_actions.log
      * @param actionClass class where user triggered action occurs
      */
-    public static void noteAction(Class actionClass) {
+    public static void noteAction(Class<?> actionClass) {
         actionsLogger.log(Level.INFO, "Action performed: {0}", actionClass.getName());
     }
 
