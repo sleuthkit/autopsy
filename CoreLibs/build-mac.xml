@@ -1,0 +1,13 @@
+<project name="NativeCoreLibs">
+    
+    <target name="build-native-libs" description="build native library dependencies"> 
+        <!-- sigar: note, matching jar is pulled with ivy -->
+        <mkdir dir="${lib.dir}"/>
+        <unzip src="${thirdparty.dir}/sigar/1.6.4/sigar-native.zip" dest="${lib.dir}" >
+            <patternset>
+                <include name="**/*.dylib"/>
+            </patternset>
+        </unzip>
+    </target>
+    
+</project>

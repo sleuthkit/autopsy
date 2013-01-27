@@ -69,6 +69,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     // TODO: use type detection mechanism instead, and maintain supported MimeTypes, not extensions
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] SUPPORTED_EXTENSIONS = {
+        //Archive (to be removed when we have archive module
+        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", "ar", "cpio", 
         //MS Office
         "doc", "dot", "docx", "docm", "dotx", "dotm",
         "xls", "xlw", "xlt", "xlsx", "xlsm", "xltx", "xltm",
@@ -83,8 +85,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         "html", "htm", "xhtml",
         //text
         "txt", "log", "manifest",
+        //code
+        "class",
         //images, media, other
-        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "flv", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {

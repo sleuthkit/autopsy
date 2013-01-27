@@ -45,7 +45,6 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        //Logger.init();
         autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
         autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
 
