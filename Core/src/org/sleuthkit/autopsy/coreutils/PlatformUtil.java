@@ -20,26 +20,22 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.filechooser.FileSystemView;
+import org.hyperic.sigar.Sigar;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.LocalDisk;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
-
 
 /**
  *
@@ -51,10 +47,8 @@ public class PlatformUtil {
     public static final String OS_NAME_UNKNOWN = "unknown";
     public static final String OS_VERSION_UNKNOWN = "unknown";
     public static final String OS_ARCH_UNKNOWN = "unknown";
-
-    
-           
-            
+    private static long pid = -1;
+    private static Sigar sigar = null;
 
     /**
      * Get root path where the application is installed
@@ -269,22 +263,22 @@ public class PlatformUtil {
             return origFilePath;
         }
     }
-    
+
     /**
-     * Get a list of all physical drives attached to the client's machine.
-     * Error threshold of 4 non-existent physical drives before giving up.
-     * 
+     * Get a list of all physical drives attached to the client's machine. Error
+     * threshold of 4 non-existent physical drives before giving up.
+     *
      * @return list of physical drives
      */
     public static List<LocalDisk> getPhysicalDrives() {
         List<LocalDisk> drives = new ArrayList<LocalDisk>();
         // Windows drives
-        if(PlatformUtil.isWindowsOS()) {
+        if (PlatformUtil.isWindowsOS()) {
             int n = 0;
             int breakCount = 0;
-            while(true) {
+            while (true) {
                 String path = "\\\\.\\PhysicalDrive" + n;
-                if(canReadDrive(path)) {
+                if (canReadDrive(path)) {
                     try {
                         drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
                     } catch (TskCoreException ex) {
@@ -292,22 +286,22 @@ public class PlatformUtil {
                     }
                     n++;
                 } else {
-                    if(breakCount > 4) { // Give up after 4 non-existent drives
+                    if (breakCount > 4) { // Give up after 4 non-existent drives
                         break;
                     }
                     breakCount++;
                     n++;
                 }
             }
-        // Linux drives
+            // Linux drives
         } else {
             File dev = new File("/dev/");
             File[] files = dev.listFiles();
-            for(File f: files) {
+            for (File f : files) {
                 String name = f.getName();
-                if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
+                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
                     String path = "/dev/" + name;
-                    if(canReadDrive(path)) {
+                    if (canReadDrive(path)) {
                         try {
                             drives.add(new LocalDisk(path, path, SleuthkitJNI.findDeviceSize(path)));
                         } catch (TskCoreException ex) {
@@ -316,28 +310,29 @@ public class PlatformUtil {
                     }
                 }
             }
-            
+
         }
         return drives;
     }
-    
+
     /**
-     * Get a list all all the local drives and partitions on the client's machine.
-     * 
+     * Get a list all all the local drives and partitions on the client's
+     * machine.
+     *
      * @return list of local drives and partitions
      */
     public static List<LocalDisk> getPartitions() {
         List<LocalDisk> drives = new ArrayList<LocalDisk>();
         FileSystemView fsv = FileSystemView.getFileSystemView();
-        if(PlatformUtil.isWindowsOS()) {
+        if (PlatformUtil.isWindowsOS()) {
             File[] f = File.listRoots();
             for (int i = 0; i < f.length; i++) {
                 String name = fsv.getSystemDisplayName(f[i]);
                 // Check if it is a drive, readable, and not mapped to the network
-                if(f[i].canRead() && !name.contains("\\\\") && (fsv.isDrive(f[i]) || fsv.isFloppyDrive(f[i]))) {
+                if (f[i].canRead() && !name.contains("\\\\") && (fsv.isDrive(f[i]) || fsv.isFloppyDrive(f[i]))) {
                     String path = f[i].getPath();
-                    String diskPath = "\\\\.\\" + path.substring(0, path.length()-1);
-                    if(canReadDrive(diskPath)) {
+                    String diskPath = "\\\\.\\" + path.substring(0, path.length() - 1);
+                    if (canReadDrive(diskPath)) {
                         drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
                     }
                 }
@@ -345,11 +340,11 @@ public class PlatformUtil {
         } else {
             File dev = new File("/dev/");
             File[] files = dev.listFiles();
-            for(File f: files) {
+            for (File f : files) {
                 String name = f.getName();
-                if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) {
+                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) {
                     String path = "/dev/" + name;
-                    if(canReadDrive(path)) {
+                    if (canReadDrive(path)) {
                         drives.add(new LocalDisk(path, path, f.getTotalSpace()));
                     }
                 }
@@ -357,16 +352,16 @@ public class PlatformUtil {
         }
         return drives;
     }
-    
+
     /**
      * Are we able to read this drive? Usually related to admin permissions.
-     * 
-     * For all drives and partitions, we are using Java's ability to read
-     * the first byte of a drive to determine if TSK would be able to
-     * read the drive during the add image process. This returns whether
-     * the drive is readable or not far faster than validating if TSK can open
-     * the drive. We are assuming the results are almost exactly the same.
-     * 
+     *
+     * For all drives and partitions, we are using Java's ability to read the
+     * first byte of a drive to determine if TSK would be able to read the drive
+     * during the add image process. This returns whether the drive is readable
+     * or not far faster than validating if TSK can open the drive. We are
+     * assuming the results are almost exactly the same.
+     *
      * @param diskPath path to the disk we want to read
      * @return true if we successfully read the first byte
      * @throws IOException if we fail to read
@@ -378,15 +373,64 @@ public class PlatformUtil {
             br = new BufferedInputStream(new FileInputStream(tmp));
             int b = br.read();
             return b != -1;
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             return false;
         } finally {
             try {
-                if(br != null) {
+                if (br != null) {
                     br.close();
                 }
             } catch (IOException ex) {
             }
         }
+    }
+
+    /**
+     * Query and get PID fo this process
+     *
+     * @return PID of this process or -1 if it couldn't be determined
+     */
+    public static synchronized long getPID() {
+
+        if (pid != -1) {
+            return pid;
+        }
+
+        try {
+            if (sigar == null) {
+                sigar = new Sigar();
+            }
+            pid = sigar.getPid();
+        } catch (UnsatisfiedLinkError e) {
+            System.out.println("Can't load library and get PID, " + e.toString());
+        } catch (Exception e) {
+            System.out.println("Can't get PID, " + e.toString());
+        }
+        return pid;
+
+    }
+
+    /**
+     * Query and return virtual memory used by the process
+     *
+     * @return virt memory used in bytes or -1 if couldn't be queried
+     */
+    public static synchronized long getProcessVirtualMemoryUsed() {
+        long pid = getPID();
+        long virtMem = -1;
+
+        try {
+            if (sigar == null) {
+                sigar = new Sigar();
+            }
+
+            virtMem = sigar.getProcMem(pid).getSize();
+        } catch (UnsatisfiedLinkError e) {
+            System.out.println("Can't load library and get virt mem used, " + e.toString());
+        } catch (Exception e) {
+            System.out.println("Can't get virt mem used, " + e.toString());
+        }
+
+        return virtMem;
     }
 }
