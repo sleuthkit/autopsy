@@ -47,8 +47,8 @@ public class PlatformUtil {
     public static final String OS_NAME_UNKNOWN = "unknown";
     public static final String OS_VERSION_UNKNOWN = "unknown";
     public static final String OS_ARCH_UNKNOWN = "unknown";
-    private static long pid = -1;
-    private static Sigar sigar = null;
+    private static volatile long pid = -1;
+    private static volatile Sigar sigar = null;
 
     /**
      * Get root path where the application is installed
@@ -422,6 +422,10 @@ public class PlatformUtil {
         try {
             if (sigar == null) {
                 sigar = new Sigar();
+            }
+            
+            if (sigar == null || pid == -1) {
+                return -1;
             }
 
             virtMem = sigar.getProcMem(pid).getSize();
