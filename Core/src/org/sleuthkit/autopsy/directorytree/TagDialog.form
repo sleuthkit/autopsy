@@ -3,7 +3,6 @@
 <Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <Events>
     <EventHandler event="windowClosing" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="closeDialog"/>
@@ -105,6 +104,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="TagDialog.tagCombo.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;String&gt;()"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="tagLabel">
       <Properties>

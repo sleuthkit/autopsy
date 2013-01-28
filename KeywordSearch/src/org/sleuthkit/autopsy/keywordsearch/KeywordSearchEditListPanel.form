@@ -285,6 +285,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchEditListPanel.selectorsCombo.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;String&gt;()"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JButton" name="deleteWordButton">
               <Properties>
