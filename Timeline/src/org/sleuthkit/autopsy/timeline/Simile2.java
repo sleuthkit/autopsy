@@ -79,6 +79,9 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.Mode;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -101,13 +104,14 @@ import org.sleuthkit.datamodel.TskData;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Simile2")
 @ActionRegistration(displayName = "#CTL_MakeTimeline")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 90)})
+    @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
 
 public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private static final Logger logger = Logger.getLogger(Simile2.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Simile2.class.getPackage().getName(), false);
-    private JFrame jf;          //frame for holding all the elements
+    //private JFrame jf;          //frame for holding all the elements
+    private TopComponent tc;
     private Group group_Charts; //Orders the charts
     private Scene scene_Charts; //Displays the charts
     private HBox hBox_Charts;      //Holds the navigation buttons in horiztonal fashion. 
@@ -126,6 +130,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResult;
     private DataContentPanel dataContentPanel;
+
+    public Simile2() {
+        customizeSwing();
+        customize();
+    }
     
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -146,8 +155,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private void customize() {
         
         //Making the main frame *
-        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline");
-        jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
+        //jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline");
+        //jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
         //JPanels are used as the cohesive glue that binds everything together.*/
         //The chartJpanel holds the chart, 
@@ -165,6 +174,15 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         final JPanel comboJPanel = new JPanel();
         comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
 
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                tc = new Timeline2TopComponent();
+                tc.setSize(Width_Frame, Height_Frame);
+                tc.setLayout(new BoxLayout(tc, BoxLayout.PAGE_AXIS));
+                tc.add(comboJPanel);
+            }
+        });
 
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
@@ -263,8 +281,22 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 chart_TopLevel = createYearChartWithDrill(lsye);
                 chart_Events = chart_TopLevel;
                 scroll_Events.setContent(chart_Events);
-                jf.add(comboJPanel);
-                jf.setVisible(true);
+                //jf.add(comboJPanel);
+                //jf.setVisible(true);
+                
+                
+//                SwingUtilities.invokeLater(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        //tc.add(comboJPanel);
+//
+//                        Mode mode = WindowManager.getDefault().findMode("timeline");
+//                        if (mode != null) {
+//                            mode.dockInto(tc);
+//                            //tc.open();
+//                        }
+//                    }
+//                });
             }
         });
     }
@@ -869,12 +901,22 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 }
             } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
+                Mode mode = WindowManager.getDefault().findMode("timeline");
+                if (mode != null) {
+                    mode.dockInto(tc);
+                    tc.open();
+                }
+                
+                
+                
                 customizeSwing();
                 customize();
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }
+        
+        
     }
 
     @Override

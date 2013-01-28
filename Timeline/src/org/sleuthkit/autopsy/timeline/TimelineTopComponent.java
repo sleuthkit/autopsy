@@ -9,6 +9,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Top component which displays something.
@@ -32,12 +33,17 @@ preferredID = "TimelineTopComponent")
     "HINT_TimelineTopComponent=This is a Timeline window"
 })
 public final class TimelineTopComponent extends TopComponent {
+    
+    private static final Logger logger = Logger.getLogger(TimelineTopComponent.class.getName());
 
     public TimelineTopComponent() {
         initComponents();
         setName(Bundle.CTL_TimelineTopComponent());
         setToolTipText(Bundle.HINT_TimelineTopComponent());
-
+        
+        // set up connections between panels
+        timelineJPanel.setDataResultPanel(dataResultPanel);
+        dataResultPanel.setContentViewer(dataContentPanel);
     }
 
     /**
@@ -50,7 +56,9 @@ public final class TimelineTopComponent extends TopComponent {
 
         dataContentPanel = new org.sleuthkit.autopsy.corecomponents.DataContentPanel();
         dataResultPanel = new org.sleuthkit.autopsy.corecomponents.DataResultPanel();
-        timelineJPanel = new javax.swing.JPanel();
+        timelineJPanel = new org.sleuthkit.autopsy.timeline.TimelineJPanel();
+
+        timelineJPanel.setBackground(new java.awt.Color(0, 204, 204));
 
         javax.swing.GroupLayout timelineJPanelLayout = new javax.swing.GroupLayout(timelineJPanel);
         timelineJPanel.setLayout(timelineJPanelLayout);
@@ -60,42 +68,39 @@ public final class TimelineTopComponent extends TopComponent {
         );
         timelineJPanelLayout.setVerticalGroup(
             timelineJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 208, Short.MAX_VALUE)
+            .addGap(0, 202, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(dataResultPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(dataContentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(timelineJPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(dataResultPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE))
+            .addComponent(timelineJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(timelineJPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(dataResultPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(dataResultPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(dataContentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.corecomponents.DataContentPanel dataContentPanel;
     private org.sleuthkit.autopsy.corecomponents.DataResultPanel dataResultPanel;
-    private javax.swing.JPanel timelineJPanel;
+    private org.sleuthkit.autopsy.timeline.TimelineJPanel timelineJPanel;
     // End of variables declaration//GEN-END:variables
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+        timelineJPanel.initialize();
     }
 
     @Override
