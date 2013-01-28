@@ -129,8 +129,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResult;
     private DataContentPanel dataContentPanel;
+    
+    private java.io.File moduleDir;
 
     public Simile2() {
+
         customizeSwing();
         customize();
     }
@@ -193,11 +196,24 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
                 scroll_Events.setContent(null); //Needs some content, otherwise it crashes
 
-                //mactime file placeholder, goes to pre-grenerated one on my desktop
-                String bodyFilePath = makeBodyFile();
-                java.io.File mactimePath = new java.io.File(makeMacTime(bodyFilePath));
-                //java.io.File mactime = new java.io.File("C:" + java.io.File.separator + "Users" + java.io.File.separator + "nflower" + java.io.File.separator + "Downloads" + java.io.File.separator + "kanarazu-12-21-2012-11-15-46-mactime.txt");
-                final List<YearEpoch> lsye = parseMacTime(mactimePath); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                // set up moduleDir
+                moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
+                if (!moduleDir.exists()) {
+                    moduleDir.mkdir();
+                }
+                String mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+                java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
+                System.out.println("mactime file: " + mactimeFile);
+                if (!mactimeFile.exists()) {
+                    logger.log(Level.INFO, "Creating mactime file.");
+                    String bodyFilePath = makeBodyFile();
+                    String mactimePath = makeMacTime(bodyFilePath);
+                    mactimeFile = new java.io.File(mactimePath);
+                } else {
+                    logger.log(Level.INFO, "mactime file already exists; parsing that.");
+                }
+                
+                final List<YearEpoch> lsye = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
 
                 //Making a dropdown box to select years.
                 List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
@@ -756,7 +772,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         // Get report path
-        String bodyFilePath = currentCase.getCaseDirectory() + java.io.File.separator + "temp"
+        String bodyFilePath = moduleDir.getAbsolutePath()
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
@@ -840,16 +856,16 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
-        String macfile = Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "temp" + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
-            String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
-            try {
-                JavaSystemCaller.Exec.execute("\"" + command + "\"");
-                return macfile;
-            } catch (InterruptedException ie) {
-                logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
-            } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
-            }
+        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
+        String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
+        try {
+            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            return macfile;
+        } catch (InterruptedException ie) {
+            logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
+        } catch (IOException ioe) {
+            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
+        }
         return null;
     }
 
