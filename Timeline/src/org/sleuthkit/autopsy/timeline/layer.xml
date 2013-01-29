@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
-
 <filesystem>
 
  
     <!-- ======================================================
     Windows2
     ====================================================== -->
+    <folder name="Actions">
+        <folder name="Window">
+            <file name="org-sleuthkit-autopsy-timeline-Timeline2TopComponent.instance_hidden"/>
+            <file name="org-sleuthkit-autopsy-timeline-TimelineTopComponent.instance_hidden"/>
+        </folder>
+    </folder>
     <folder name="Windows2">
         <folder name="Components">
           
@@ -17,4 +22,3 @@
     </folder>
     
 </filesystem>
-
