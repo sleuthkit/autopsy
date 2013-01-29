@@ -176,9 +176,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         final JPanel comboJPanel = new JPanel();
         comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
         
-        // start the progress bar
-        progress = ProgressHandleFactory.createHandle("Calculating timeline . . .");
-        progress.start();
+        
 
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
@@ -186,115 +184,121 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         PlatformImpl.startup(new Runnable() {
             @Override
             public void run() {
-                panel_Charts = new JFXPanel();
-                group_Charts = new Group();
-                scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                vBox_FX = new VBox(5);
-                vBox_FX.setAlignment(Pos.BOTTOM_CENTER);
-                hBox_Charts = new HBox(10);
-                hBox_Charts.setAlignment(Pos.BOTTOM_CENTER);
+                try {
+                    // start the progress bar
+                    progress = ProgressHandleFactory.createHandle("Calculating timeline . . .");
+                    progress.start();
 
-                //Initializing default values for the scroll pane
-                scroll_Events = new ScrollPane();
-                scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                scroll_Events.setContent(null); //Needs some content, otherwise it crashes
+                    panel_Charts = new JFXPanel();
+                    group_Charts = new Group();
+                    scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
+                    vBox_FX = new VBox(5);
+                    vBox_FX.setAlignment(Pos.BOTTOM_CENTER);
+                    hBox_Charts = new HBox(10);
+                    hBox_Charts.setAlignment(Pos.BOTTOM_CENTER);
 
-                // set up moduleDir
-                moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
-                if (!moduleDir.exists()) {
-                    moduleDir.mkdir();
-                }
-                String mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
-                java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
-                System.out.println("mactime file: " + mactimeFile);
-                if (!mactimeFile.exists()) {
-                    logger.log(Level.INFO, "Creating mactime file.");
-                    String bodyFilePath = makeBodyFile();
-                    String mactimePath = makeMacTime(bodyFilePath);
-                    mactimeFile = new java.io.File(mactimePath);
-                } else {
-                    logger.log(Level.INFO, "mactime file already exists; parsing that.");
-                }
-                
-                final List<YearEpoch> lsye = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                    //Initializing default values for the scroll pane
+                    scroll_Events = new ScrollPane();
+                    scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
+                    scroll_Events.setContent(null); //Needs some content, otherwise it crashes
 
-                //Making a dropdown box to select years.
-                List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
-                for (YearEpoch ye : lsye) {
-                    lsi.add(ye.year + " : " + ye.getNumFiles());
-                }
-                ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
-                dropdown_SelectYears = new ComboBox(listSelect);
-
-                //Buttons for navigating up and down the timeline
-                button_DrillDown = new Button("Drill down");
-                button_DrillDown.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        //Placeholder, does nothing. Need to store a chart_LastSelected or something
+                    // set up moduleDir
+                    moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
+                    if (!moduleDir.exists()) {
+                        moduleDir.mkdir();
                     }
-                });
-                button_DrillUp = new Button("Drill up");
-                button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        BarChart bc;
-                        if (stack_PrevCharts.size() == 0) {
-                            bc = chart_TopLevel;
-                        } else {
-                            bc = stack_PrevCharts.pop();
+                    String mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+                    java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
+                    System.out.println("mactime file: " + mactimeFile);
+                    if (!mactimeFile.exists()) {
+                        logger.log(Level.INFO, "Creating mactime file.");
+                        String bodyFilePath = makeBodyFile();
+                        String mactimePath = makeMacTime(bodyFilePath);
+                        mactimeFile = new java.io.File(mactimePath);
+                    } else {
+                        logger.log(Level.INFO, "mactime file already exists; parsing that.");
+                    }
+
+                    final List<YearEpoch> lsye = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+
+                    //Making a dropdown box to select years.
+                    List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
+                    for (YearEpoch ye : lsye) {
+                        lsi.add(ye.year + " : " + ye.getNumFiles());
+                    }
+                    ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
+                    dropdown_SelectYears = new ComboBox(listSelect);
+
+                    //Buttons for navigating up and down the timeline
+                    button_DrillDown = new Button("Drill down");
+                    button_DrillDown.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            //Placeholder, does nothing. Need to store a chart_LastSelected or something
                         }
-                        chart_Events = bc;
-                        scroll_Events.setContent(chart_Events);
-                    }
-                });
-                button_Reset = new Button("Reset");
-                button_Reset.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        stack_PrevCharts.clear();
-                        chart_Events = chart_TopLevel;
-                        scroll_Events.setContent(chart_Events);
-                    }
-                });
-                button_Go = new Button("►");
-                button_Go.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        if (dropdown_SelectYears.getValue() != null) {
-                            chart_Events = createMonthsWithDrill(findYear(lsye, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                    });
+                    button_DrillUp = new Button("Drill up");
+                    button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            BarChart bc;
+                            if (stack_PrevCharts.size() == 0) {
+                                bc = chart_TopLevel;
+                            } else {
+                                bc = stack_PrevCharts.pop();
+                            }
+                            chart_Events = bc;
                             scroll_Events.setContent(chart_Events);
                         }
-                    }
-                });
+                    });
+                    button_Reset = new Button("Reset");
+                    button_Reset.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            stack_PrevCharts.clear();
+                            chart_Events = chart_TopLevel;
+                            scroll_Events.setContent(chart_Events);
+                        }
+                    });
+                    button_Go = new Button("►");
+                    button_Go.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            if (dropdown_SelectYears.getValue() != null) {
+                                chart_Events = createMonthsWithDrill(findYear(lsye, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                                scroll_Events.setContent(chart_Events);
+                            }
+                        }
+                    });
 
-                //Adding things to the V and H boxes. 
-                //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Drill Up|Drill Down|Reset|View Year: [Select Year]|►|
-                hBox_Charts.getChildren().addAll(button_DrillUp, button_DrillDown, button_Reset, new Label("View Year:"), dropdown_SelectYears, button_Go);
-                vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
-                group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
-                panel_Charts.setScene(scene_Charts);
+                    //Adding things to the V and H boxes. 
+                    //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Drill Up|Drill Down|Reset|View Year: [Select Year]|►|
+                    hBox_Charts.getChildren().addAll(button_DrillUp, button_DrillDown, button_Reset, new Label("View Year:"), dropdown_SelectYears, button_Go);
+                    vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
+                    group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
+                    panel_Charts.setScene(scene_Charts);
 
 
-                panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                chartJPanel.add(panel_Charts);
-                viewerJPanel.add(dataResult);
-                
-                viewerJPanel.add(dataContentPanel);
-                chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                comboJPanel.add(chartJPanel);
-                comboJPanel.add(viewerJPanel);
+                    chartJPanel.add(panel_Charts);
+                    viewerJPanel.add(dataResult);
 
-                chart_TopLevel = createYearChartWithDrill(lsye);
-                chart_Events = chart_TopLevel;
-                scroll_Events.setContent(chart_Events);
-                jf.add(comboJPanel);
-                jf.setVisible(true);
-                
-                // stop the progress bar
-                progress.finish();
+                    viewerJPanel.add(dataContentPanel);
+                    chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    comboJPanel.add(chartJPanel);
+                    comboJPanel.add(viewerJPanel);
+
+                    chart_TopLevel = createYearChartWithDrill(lsye);
+                    chart_Events = chart_TopLevel;
+                    scroll_Events.setContent(chart_Events);
+                    jf.add(comboJPanel);
+                    jf.setVisible(true);
+                } finally {
+                    // stop the progress bar
+                    progress.finish();
+                }
             }
         });
     }
