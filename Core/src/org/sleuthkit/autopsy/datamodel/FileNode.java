@@ -19,23 +19,26 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
-import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is used to represent the "Node" for the file. It has no children.
+ * This class is used to represent the "Node" for the file.
+ * It may have derived files children.
  *
+ * TODO should extend AbstractFsContentNode<FsContent> after FsContent fields are moved up
  */
-public class FileNode extends AbstractFsContentNode<File> {
+public class FileNode extends AbstractFsContentNode<FsContent> {
 
     /**
      * @param file underlying Content
      */
-    public FileNode(File file) {
+    public FileNode(FsContent file) {
         this(file, true);
     }
 
-    public FileNode(File file, boolean directoryBrowseMode) {
+    public FileNode(FsContent file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
         // set name, display name, and icon
@@ -69,7 +72,7 @@ public class FileNode extends AbstractFsContentNode<File> {
 
     // Given a file, returns the correct icon for said
     // file based off it's extension
-    static String getIconForFileType(File file) {
+    static String getIconForFileType(AbstractFile file) {
         // Get the name, extension
         String name = file.getName();
         int dotIndex = name.lastIndexOf(".");
@@ -138,7 +141,7 @@ public class FileNode extends AbstractFsContentNode<File> {
 
     @Override
     public boolean isLeafTypeNode() {
-        return true;
+        return false;
     }
     
     

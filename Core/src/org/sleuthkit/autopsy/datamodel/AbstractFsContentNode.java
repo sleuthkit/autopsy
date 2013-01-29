@@ -29,6 +29,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
+ * 
+ * TODO type bounds should be  T extends AbstractFile after fields/methods are factored up to AbstractFile
  */
 public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
     
