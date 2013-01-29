@@ -108,8 +108,8 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         map.put(AbstractFsContentNode.FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
         map.put(AbstractFsContentNode.FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlags().toString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), metaFlagToString(content.getMetaFlags()));
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
         map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_META.toString(), content.getMetaType().toString());
     }
