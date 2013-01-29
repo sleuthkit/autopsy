@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,20 +23,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.netbeans.api.options.OptionsDisplayer;
-import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.File;
@@ -58,7 +56,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     private IngestServices services;
     private SleuthkitCase skCase;
     private static int messageId = 0;
-    private int count;
+    private int knownBadCount;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean nsrlIsSet;
     private boolean knownBadIsSet;
@@ -67,13 +65,13 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     private int nsrlPointer;
     static long calctime = 0;
     static long lookuptime = 0;
-    private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
+    private Map<Integer, HashDb> knownBadSets = new HashMap<>();
     private HashDbManagementPanel panel;
     
     private final Hash hasher = new Hash();
 
     private HashDbIngestModule() {
-        count = 0;
+        knownBadCount = 0;
     }
 
     public static synchronized HashDbIngestModule getDefault() {
@@ -86,7 +84,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
-        this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbXML hdbxml = HashDbXML.getCurrent();
@@ -121,36 +118,39 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
             }
 
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Setting NSRL and Known database failed", ex);
+            logger.log(Level.SEVERE, "Setting NSRL and Known database failed", ex);
+            this.services.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error Configuring Hash Databases", "Setting NSRL and Known database failed."));
         }
     }
 
     @Override
     public void complete() {
-        StringBuilder detailsSb = new StringBuilder();
-        //details
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+        if ((knownBadIsSet) || (nsrlIsSet)) {
+            StringBuilder detailsSb = new StringBuilder();
+            //details
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
 
-        detailsSb.append("<tr>");
-        detailsSb.append("<th>Number of notable files found:</th>");
-        detailsSb.append("<td>").append(count).append("</td>");
-        detailsSb.append("</tr>");
+            detailsSb.append("<tr>");
+            detailsSb.append("<th>Number of notable files found:</th>");
+            detailsSb.append("<td>").append(knownBadCount).append("</td>");
+            detailsSb.append("</tr>");
 
-        detailsSb.append("<tr>");
-        detailsSb.append("<th>Notable databases used:</th>");
-        detailsSb.append("<td>Calc Time: ").append(calctime).append(" Lookup Time: ").append(lookuptime).append("</td>");
-        detailsSb.append("</tr>");
+            detailsSb.append("<tr>");
+            detailsSb.append("<th>Notable databases used:</th>");
+            detailsSb.append("<td>Calc Time: ").append(calctime).append(" Lookup Time: ").append(lookuptime).append("</td>");
+            detailsSb.append("</tr>");
 
-        for (HashDb db : knownBadSets.values()) {
-            detailsSb.append("<tr><th>");
-            detailsSb.append(db.getName());
-            detailsSb.append("</th><td>");
-            detailsSb.append(db.getDatabasePaths().get(0)); // TODO: support multiple database paths
-            detailsSb.append("</td></tr>");
+            for (HashDb db : knownBadSets.values()) {
+                detailsSb.append("<tr><th>");
+                detailsSb.append(db.getName());
+                detailsSb.append("</th><td>");
+                detailsSb.append(db.getDatabasePaths().get(0)); // TODO: support multiple database paths
+                detailsSb.append("</td></tr>");
+            }
+
+            detailsSb.append("</table>");
+            services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Lookup Results", detailsSb.toString()));
         }
-
-        detailsSb.append("</table>");
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
     }
 
     /**
@@ -159,7 +159,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
      */
     @Override
     public void stop() {
-        //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
+
     }
 
     /**
@@ -312,70 +312,89 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         }
 
         private ProcessResult process(FsContent fsContent) {
-
-            ProcessResult ret = ProcessResult.OK;
-            boolean processFile = true;
-            if (fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
-                processFile = false;
+            // bail out if we have no hashes set
+            if ((nsrlIsSet == false) && (knownBadIsSet == false) && (calcHashesIsSet == false)) {
+                return ProcessResult.OK;
             }
-            if (processFile && (nsrlIsSet || knownBadIsSet)) {
-                String name = fsContent.getName();
+            
+            // calc hash value
+            String name = fsContent.getName();
+            String md5Hash = fsContent.getMd5Hash();
+            if (md5Hash == null || md5Hash.isEmpty()) {
                 try {
-                    String md5Hash = fsContent.getMd5Hash();
-                    if (md5Hash == null || md5Hash.isEmpty()) {
-                        long calcstart = System.currentTimeMillis();
-                        md5Hash = hasher.calculateMd5(fsContent);
-                        calctime += (System.currentTimeMillis() - calcstart);
-                    }
-                    TskData.FileKnown status = TskData.FileKnown.UKNOWN;
-                    boolean foundBad = false;
-                    for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
+                    long calcstart = System.currentTimeMillis();
+                    md5Hash = hasher.calculateMd5(fsContent);
+                    calctime += (System.currentTimeMillis() - calcstart);   
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
+                            "Error encountered while calculating the hash value for " + name + "."));
+                    return ProcessResult.ERROR;
+                }
+            }
+            
+            
+            // look up in known bad first
+            TskData.FileKnown status = TskData.FileKnown.UKNOWN;
+            boolean foundBad = false;
+            ProcessResult ret = ProcessResult.OK;
+            
+            if (knownBadIsSet) {
+                for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
+                    
+                    try {
                         long lookupstart = System.currentTimeMillis();
                         status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
                         lookuptime += (System.currentTimeMillis() - lookupstart);
-                        if (status.equals(TskData.FileKnown.BAD)) {
-                            foundBad = true;
-                            count += 1;
-                            skCase.setKnown(fsContent, status);
-                            String hashSetName = entry.getValue().getName();
-                            processBadFile(fsContent, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
-                        }
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
+                        services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                            "Error encountered while looking up known bad hash value for " + name + "."));
+                        ret = ProcessResult.ERROR;
+                    }    
+                    
+                    if (status.equals(TskData.FileKnown.BAD)) {
+                        foundBad = true;
+                        knownBadCount += 1;
+                        try {
+                            skCase.setKnown(fsContent, TskData.FileKnown.BAD);
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
+                            services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                                "Error encountered while setting known bad state for " + name + "."));
+                            ret = ProcessResult.ERROR;
+                        } 
+                        String hashSetName = entry.getValue().getName();
+                        processBadFile(fsContent, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
                     }
-                    if (!foundBad && nsrlIsSet) {
-                        long lookupstart = System.currentTimeMillis();
-                        status = skCase.nsrlLookupMd5(md5Hash);
-                        lookuptime += (System.currentTimeMillis() - lookupstart);
-                        if (status.equals(TskData.FileKnown.KNOWN)) {
-                            skCase.setKnown(fsContent, status);
-                        }
-                    }
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
-                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
-                            "Error encountered while updating the hash values for " + name + "."));
-                    ret = ProcessResult.ERROR;
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
-                            "Error encountered while calculating the hash value for " + name + "."));
-                    ret = ProcessResult.ERROR;
-                }
-            } else if (processFile && calcHashesIsSet) {
-                String name = fsContent.getName();
-                try {
-                    String md5Hash = fsContent.getMd5Hash();
-                    if (md5Hash == null || md5Hash.isEmpty()) {
-                        long calcstart = System.currentTimeMillis();
-                        hasher.calculateMd5(fsContent);
-                        calctime += (System.currentTimeMillis() - calcstart);
-                    }
-                    ret = ProcessResult.OK;
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
-                            "Error encountered while calculating the hash value for " + name + " without databases."));
                 }
             }
+                    
+            // only do NSRL if we didn't find a known bad
+            if (!foundBad && nsrlIsSet) {
+                try {
+                    long lookupstart = System.currentTimeMillis();
+                    status = skCase.nsrlLookupMd5(md5Hash);
+                    lookuptime += (System.currentTimeMillis() - lookupstart);
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Couldn't lookup NSRL hash for file " + name + " - see sleuthkit log for details", ex);
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                        "Error encountered while looking up NSRL hash value for " + name + "."));
+                    ret = ProcessResult.ERROR;
+                }
+                
+                if (status.equals(TskData.FileKnown.KNOWN)) {
+                    try {
+                        skCase.setKnown(fsContent, TskData.FileKnown.KNOWN);
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
+                        services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                            "Error encountered while setting known (NSRL) state for " + name + "."));
+                        ret = ProcessResult.ERROR;
+                    }
+                }
+            }
+                
             return ret;
         }
     }
