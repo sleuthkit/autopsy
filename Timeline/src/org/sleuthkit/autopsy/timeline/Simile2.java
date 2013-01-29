@@ -66,6 +66,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -79,9 +81,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.openide.windows.Mode;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -129,7 +128,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResult;
     private DataContentPanel dataContentPanel;
-    
+    private ProgressHandle progress;
     private java.io.File moduleDir;
 
     public Simile2() {
@@ -176,6 +175,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         //aligned vertically (Y_AXIS)
         final JPanel comboJPanel = new JPanel();
         comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
+        
+        // start the progress bar
+        progress = ProgressHandleFactory.createHandle("Calculating timeline . . .");
+        progress.start();
 
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
@@ -289,6 +292,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 scroll_Events.setContent(chart_Events);
                 jf.add(comboJPanel);
                 jf.setVisible(true);
+                
+                // stop the progress bar
+                progress.finish();
             }
         });
     }
