@@ -183,7 +183,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             public void run() {
                 try {
                     // start the progress bar
-                    progress = ProgressHandleFactory.createHandle("Calculating timeline . . .");
+                    progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
                     progress.start();
 
                     panel_Charts = new JFXPanel();
@@ -206,7 +206,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                     }
                     String mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
-                    System.out.println("mactime file: " + mactimeFile);
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
                         String bodyFilePath = makeBodyFile();
