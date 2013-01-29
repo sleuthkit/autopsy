@@ -132,7 +132,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private java.io.File moduleDir;
 
     public Simile2() {
-
         customizeSwing();
         customize();
     }
@@ -175,8 +174,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         //aligned vertically (Y_AXIS)
         final JPanel comboJPanel = new JPanel();
         comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
-        
-        
 
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
@@ -366,7 +363,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         bc.setPrefWidth(Width_Frame);  //but override the width
         bc.setLegendVisible(false); //The legend adds too much extra chart space, it's not necessary.
         return bc;
-
     }
 
     /*
@@ -406,7 +402,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                                         PlatformImpl.startup(new Runnable() {
                                             @Override
                                             public void run() {
-                                                chart_Events = createEventsByMonth(findMonth(ye.months, month_StringtoInt((String) data.getXValue())), ye);
+                                                chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) data.getXValue())), ye);
                                                 scroll_Events.setContent(chart_Events);
                                             }
                                         });
@@ -472,7 +468,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         return bc;
     }
 
-    private ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
+    private static ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
         ObservableList<BarChart.Data> bcData = FXCollections.observableArrayList();
         int totalDays = me.getTotalNumDays(year);
         for (int i = 1; i <= totalDays; ++i) {
@@ -493,7 +489,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param mon The month to convert. Must be minimum 4 characters long "February" and "Febr" are acceptable.
      * @return The integer value of the month. February = 1, July = 6
      */
-    private int month_StringtoInt(String mon) {
+    private static int monthStringToInt(String mon) {
         try {
             Date date = new SimpleDateFormat("MMMM", Locale.ENGLISH).parse(mon);
             Calendar cal = Calendar.getInstance();
@@ -511,7 +507,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param match The month, in integer format, to retrieve. 
      * @return The month epoch as specified by match.
      */
-    private MonthEpoch findMonth(List<MonthEpoch> lst, int match) {
+    private static MonthEpoch findMonth(List<MonthEpoch> lst, int match) {
         for (MonthEpoch e : lst) {
             if (e.month == match) {
                 return e;
@@ -526,7 +522,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param match The year to retrieve. 
      * @return The year epoch as specified by match.
      */
-    private YearEpoch findYear(List<YearEpoch> lst, int match) {
+    private static YearEpoch findYear(List<YearEpoch> lst, int match) {
         for (YearEpoch e : lst) {
             if (e.year == match) {
                 return e;
@@ -669,6 +665,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             return dayNum;
         }
         
+        @Override
         public int getNumFiles() {
             return files.size();
         }
@@ -870,22 +867,20 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
         try {
             JavaSystemCaller.Exec.execute("\"" + command + "\"");
-            return macfile;
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
+            return null;
         } catch (IOException ioe) {
             logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
+            return null;
         }
-        return null;
+        return macfile;
     }
 
     @Override
     public boolean isEnabled() {
         return Case.isCaseOpen();
     }
-
-    
-
 
     @Override
     public void performAction() {
