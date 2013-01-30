@@ -114,7 +114,8 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
 
         if (isMbox) {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+            logger.log(Level.INFO, "ThunderbirdMboxFileIngestModule: Parsing {0}", fsContent.getName());
+            
             String mboxName = fsContent.getName();
             String msfName = mboxName + ".msf";
             //Long mboxId = fsContent.getId();
@@ -248,7 +249,6 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
 
         //module specific cleanup due completion here
     }

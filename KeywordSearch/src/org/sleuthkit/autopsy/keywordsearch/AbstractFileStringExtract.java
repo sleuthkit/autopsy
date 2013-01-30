@@ -56,7 +56,8 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     static final String[] UNSUPPORTED_EXTENSIONS = {
         //Archives 
         //Note: archive unpacker module will process these instead
-        "tar", "jar", "zip", "7z", "gzip", "bzip", "bzip2", "gz", "tgz", "cab", "rar", "arj", "dmg", "iso"};
+        //"tar", "jar", "zip", "7z", "gzip", "bzip", "bzip2", "gz", "tgz", "cab", "rar", "arj", "dmg", "iso"
+    };
 
     //disabled prepending of BOM
     //static {

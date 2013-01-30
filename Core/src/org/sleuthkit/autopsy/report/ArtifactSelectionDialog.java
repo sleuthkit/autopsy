@@ -259,18 +259,17 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         }
     }
     
-    private class ArtifactRenderer extends JCheckBox implements ListCellRenderer {
+    private class ArtifactRenderer extends JCheckBox implements ListCellRenderer<BlackboardArtifact.ARTIFACT_TYPE> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, BlackboardArtifact.ARTIFACT_TYPE  value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
-                BlackboardArtifact.ARTIFACT_TYPE type = (BlackboardArtifact.ARTIFACT_TYPE) value;
                 setEnabled(list.isEnabled());
-                setSelected(artifactStates.get(type));
+                setSelected(artifactStates.get(value));
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(type.getDisplayName());
+                setText(value.getDisplayName());
                 return this;
             }
             return new JLabel();

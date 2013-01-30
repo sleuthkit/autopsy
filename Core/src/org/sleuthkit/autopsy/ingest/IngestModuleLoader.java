@@ -228,7 +228,7 @@ public final class IngestModuleLoader {
                     if (intfs.length != 0 && pType != null) {
                         //check if one of the module interfaces matches the pipeline type
                         boolean interfaceFound = false;
-                        Class moduleMeta = ((IngestModuleMapping) pType).getIngestModuleInterface();
+                        Class<?> moduleMeta = ((IngestModuleMapping) pType).getIngestModuleInterface();
                         String moduleIntNameCan = moduleMeta.getCanonicalName();
                         String[] moduleIntNameTok = moduleIntNameCan.split(" ");
                         String moduleIntName = moduleIntNameTok[moduleIntNameTok.length - 1];
@@ -1073,7 +1073,7 @@ interface IngestModuleMapping {
      *
      * @return ingest module interface meta type
      */
-    public Class getIngestModuleInterface();
+    public Class<?> getIngestModuleInterface();
 }
 
 /**

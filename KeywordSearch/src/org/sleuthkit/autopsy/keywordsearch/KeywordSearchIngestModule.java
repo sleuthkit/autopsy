@@ -252,7 +252,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             finalSearcher.execute();
         } else {
             finalSearcherDone = true;
-            services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
         //log number of files / chunks in index
@@ -438,8 +437,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         commitTimer.start();
         searchTimer.start();
-
-        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
 
     @Override
@@ -551,7 +548,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         msg.append("<br />Skipped files: ").append(skipped).append("<br />");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
-        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", indexStats));
+        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Results", indexStats));
 
     }
 
@@ -1179,8 +1176,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-
-                services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
 
                 //run module cleanup
                 cleanup();

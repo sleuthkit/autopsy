@@ -198,9 +198,6 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     public void complete() {
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
 
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete");
-        services.postMessage(msg);
-
         //module specific cleanup due to completion here
     }
 
@@ -235,13 +232,11 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
-
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //module specific cleanup due to interruption here
     }

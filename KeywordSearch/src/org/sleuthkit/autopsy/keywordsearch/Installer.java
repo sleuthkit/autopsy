@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.sun.corba.se.impl.util.Version;
 import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
@@ -26,6 +25,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
@@ -186,7 +186,7 @@ public class Installer extends ModuleInstall {
             @Override
             public void run() {
                 final String msg = "Indexing server port " + curFailPort + " is not available. "
-                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " Check if your security software does not block " + Version.getName()
                         + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
                         + Server.PROPERTIES_FILE + " property file in the application user folder."
                         + " Then try rebooting your system if another process was causing the conflict. ";
@@ -212,7 +212,7 @@ public class Installer extends ModuleInstall {
             @Override
             public void run() {
                 final String msg = "Indexing server port " + KeywordSearch.getServer().getCurrentSolrServerPort() + " is not available. "
-                        + " Check if your security software does not block " + Version.PROJECT_NAME
+                        + " Check if your security software does not block " + Version.getName()
                         + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
                         + Server.PROPERTIES_FILE + " property file in the application user folder."
                         + " Then try rebooting your system if another process was causing the conflict. ";

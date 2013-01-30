@@ -108,7 +108,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable = new javax.swing.JTable();
         controlPanel = new javax.swing.JPanel();
         sortByLabel = new javax.swing.JLabel();
-        sortByComboBox = new javax.swing.JComboBox();
+        sortByComboBox = new javax.swing.JComboBox<String>();
         totalMessagesNameLabel = new javax.swing.JLabel();
         totalMessagesNameVal = new javax.swing.JLabel();
         totalUniqueMessagesNameLabel = new javax.swing.JLabel();
@@ -120,7 +120,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 10));
+        messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
