@@ -20,12 +20,15 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.awt.Notification;
 import org.openide.awt.NotificationDisplayer;
 import org.openide.util.ImageUtilities;
 
@@ -140,14 +143,30 @@ public class MessageNotifyUtil {
      */
     public static class Notify {
 
+        //notifications to keep track of and to reset when case is closed
+        private static final List<Notification> notifications = Collections.synchronizedList(new ArrayList<Notification>());
+
         private Notify() {
+        }
+        
+        /**
+         * Clear pending notifications
+         * Should really only be used by Case
+         */
+        public static void clear() {
+            for (Notification n : notifications) {
+                n.clear();
+            }
+            notifications.clear();
         }
 
         /**
          * Show message with the specified type and action listener
          */
         public static void show(String title, String message, MessageType type, ActionListener actionListener) {
-            NotificationDisplayer.getDefault().notify(title, type.getIcon(), message, actionListener);
+            Notification newNotification = 
+                    NotificationDisplayer.getDefault().notify(title, type.getIcon(), message, actionListener);
+            notifications.add(newNotification);
         }
 
         /**
