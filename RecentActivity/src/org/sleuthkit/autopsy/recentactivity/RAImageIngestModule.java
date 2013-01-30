@@ -44,7 +44,6 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private static RAImageIngestModule defaultInstance = null;
     private IngestServices services;
     private static int messageId = 0;
-    private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
     private ArrayList<Extract> modules;
     final public static String MODULE_VERSION = "1.0";
@@ -66,12 +65,15 @@ public final class RAImageIngestModule implements IngestModuleImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
+        
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
+        ArrayList<String> errors = new ArrayList<>();
+        
         for (int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
             if (controller.isCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before " + module.getName());
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", module.getName());
                 break;
             }
             try {
@@ -83,46 +85,44 @@ public final class RAImageIngestModule implements IngestModuleImage {
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
         }
+        
+        // create the final message for inbox
+        StringBuilder errorMessage = new StringBuilder();
+        String errorMsgSubject;
+        if (!errors.isEmpty()) {
+            errorMessage.append("Errors encountered during analysis: <ul>\n");
+            for (String msg : errors) {
+                errorMessage.append("<li>").append(msg).append("</li>\n");
+            }
+            errorMessage.append("</ul>\n");
+
+            if (errors.size() == 1) {
+                errorMsgSubject = "1 error found";
+            } else {
+                errorMsgSubject = errors.size() + " errors found";
+            }
+        } else {
+            errorMessage.append("No errors encountered.");
+            errorMsgSubject = "No errors reported";
+        }
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Finished " + image.getName()+ " - " + errorMsgSubject, errorMessage.toString());
+        services.postMessage(msg);
     }
 
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
-        StringBuilder errorMessage = new StringBuilder();
-        String errorsFound = "";
-
+        
+        // close modules 
         for (int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
             try {
                 module.complete();
-                subCompleted.append(module.getName()).append(" complete <br>");
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed to complete - see log for details <br>");
             }
         }
-
-        errorMessage.append(subCompleted);
-        int i = 0;
-        if (!errors.isEmpty()) {
-            errorMessage.append("<br>There were some errors extracting the data: <br>");
-            for (String msg : errors) {
-                i++;
-                final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
-                services.postMessage(error);
-            }
-
-            if (i == 1) {
-                errorsFound = i + " error found";
-            } else {
-                errorsFound = i + " errors found";
-            }
-        } else {
-            errorMessage.append("<br> No errors encountered.");
-            errorsFound = "No errors reported";
-        }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed - " + errorsFound, errorMessage.toString());
-        services.postMessage(msg);
 
         //module specific cleanup due to completion here
     }
@@ -139,8 +139,8 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public void init(IngestModuleInit initContext) {
-        modules = new ArrayList<Extract>();
-        logger.log(Level.INFO, "init() " + this.toString());
+        modules = new ArrayList<>();
+        logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 
         final Extract registry = new ExtractRegistry();
