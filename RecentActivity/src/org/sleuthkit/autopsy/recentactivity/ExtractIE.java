@@ -500,7 +500,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", user));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(), "RecentActivity", user));
                                         bbart.addAttributes(bbattributes);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
