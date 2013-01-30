@@ -27,7 +27,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +45,7 @@ import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -843,6 +843,8 @@ public class Case {
             CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
             CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
+            //clear pending notifications
+            MessageNotifyUtil.Notify.clear();
             
 
             Frame f = WindowManager.getDefault().getMainWindow();
