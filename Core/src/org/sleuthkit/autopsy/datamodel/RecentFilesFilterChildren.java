@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -32,10 +29,10 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.RecentFiles.RecentFilesFilter;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -63,43 +60,33 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
     }
 
     private String createQuery() {
-        String query = "select * from tsk_files where known <> 1 and (";
+        String query = "known <> 1 AND (";
         long lowerLimit = prevDay.getTimeInMillis() / 1000;
         prevDay.add(Calendar.DATE, 1);
         prevDay.add(Calendar.MILLISECOND, -1);
         long upperLimit = prevDay.getTimeInMillis() / 1000;
-        query += "(crtime between " + lowerLimit + " and " + upperLimit + ") or ";
-        query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
-        //query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
-        query += "(mtime between " + lowerLimit + " and " + upperLimit + "))";
-        //query += " limit " + MAX_OBJECTS;
+        query += "(crtime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
+        query += "(ctime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
+        //query += "(atime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
+        query += "(mtime BETWEEN " + lowerLimit + " AND " + upperLimit + "))";
+        //query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
 
-    @SuppressWarnings("deprecation")
     private List<FsContent> runFsQuery() {
-        List<FsContent> list = new ArrayList<FsContent>();
-        ResultSet rs = null;
+        List<FsContent> ret = new ArrayList<FsContent>();
         try {
-            rs = skCase.runQuery(createQuery());
-            for (FsContent c : skCase.resultSetToFsContents(rs)) {
+            List<FsContent> found = skCase.findFilesWhere(createQuery());
+            for (FsContent c : found) {
                 if (c.isFile()) {
-                    list.add(c);
+                    ret.add(c);
                 }
             }
 
-        } catch (SQLException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get search results", ex);
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting recent files results", ex);
-                }
-            }
-        }
-        return list;
+        } 
+        return ret;
 
     }
 
@@ -110,6 +97,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
             public FileNode visit(File f) {
                 return new FileNode(f, false);
             }
+
 
             @Override
             protected AbstractNode defaultVisit(Content di) {
