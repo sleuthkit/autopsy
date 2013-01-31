@@ -136,6 +136,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private String mactimeFileName;
     private List<YearEpoch> data;
     private boolean listeningToAddImage = false;
+    private long lastObjectId = -1;
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -541,11 +542,24 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             return;
         }
         
+        if (jf != null && !jf.isVisible()) {
+            // change the lastObjectId to trigger a reparse of mactime data
+            ++lastObjectId;
+            return;
+        }
+        
         int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION) {
             return;
         }
 
+        clearMactimeData();
+
+        // call performAction as if the user selected 'Make Timeline' from the menu
+        performAction();
+    }
+    
+    private void clearMactimeData() {
         // get rid of the old data
         data = null;
 
@@ -563,9 +577,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             currcase.removePropertyChangeListener(this);
             listeningToAddImage = false;
         }
-
-        // call performAction as if the user selected 'Make Timeline' from the menu
-        performAction();
     }
 
     /*
@@ -950,6 +961,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 
                 // initialize mactimeFileName
                 mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+                
+                // see if data has been added to the database since the last
+                // time timeline ran
+                long objId = Case.getCurrentCase().getSleuthkitCase().getLastObjectId();
+                if (objId != lastObjectId && lastObjectId != -1) {
+                    clearMactimeData();
+                }
+                lastObjectId = objId;
 
                 customizeSwing();
                 customize();
