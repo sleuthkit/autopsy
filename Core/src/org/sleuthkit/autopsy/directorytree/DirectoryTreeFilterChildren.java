@@ -24,6 +24,7 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -163,6 +164,16 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(DirectoryNode dn) {
             return isLeafDirectory(dn);
         }
+        
+        @Override
+        public Boolean visit(FileNode fn) {
+            return true; //return ! fn.hasContentChildren();
+        }
+        
+        @Override
+        public Boolean visit(DerivedFileNode dfn) {
+            return true; //return ! dfn.hasContentChildren();
+        }
 
         @Override
         public Boolean visit(VolumeNode vn) {
@@ -187,7 +198,12 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         @Override
         public Boolean visit(FileNode fn) {
-            return false;
+            return fn.hasContentChildren();
+        }
+        
+        @Override
+        public Boolean visit(DerivedFileNode dfn) {
+            return dfn.hasContentChildren();
         }
 
         @Override

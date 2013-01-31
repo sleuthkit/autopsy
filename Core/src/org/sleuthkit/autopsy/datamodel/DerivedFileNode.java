@@ -83,6 +83,13 @@ public class DerivedFileNode  extends AbstractAbstractFileNode<DerivedFile> {
         return v.visit(this);
     }
 
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
+    
+    
+
     //TODO add more
     private static void fillPropertyMap(Map<String, Object> map, DerivedFile content) {
         map.put(DerivedFilePropertyType.NAME.toString(), content.getName());

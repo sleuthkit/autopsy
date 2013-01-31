@@ -141,7 +141,7 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
 
     @Override
     public boolean isLeafTypeNode() {
-        return false;
+        return true;
     }
     
     
