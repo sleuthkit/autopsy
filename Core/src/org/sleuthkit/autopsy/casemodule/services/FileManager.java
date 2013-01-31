@@ -25,6 +25,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -103,7 +104,7 @@ public class FileManager implements Closeable {
      * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
      * @param size  size of the derived file in bytes
      * @param isFile whether a file or directory, true if a file
-     * @param parentFile the parent fs file object this the new file was derived from
+     * @param parentFile the parent file object this the new file was derived from, either a fs file or parent derived file/dikr\\r
      * @param rederiveDetails details needed to re-derive file (will be specific
 	 * to the derivation method), currently unused
 	 * @param toolName name of derivation method/tool, currently unused
@@ -114,16 +115,16 @@ public class FileManager implements Closeable {
 	 * due to a critical system error or of the file manager has already been closed
      * 
      */
-    public synchronized DerivedFile addDerivedFile(String fileName, String localPath,
-            long size, boolean isFile, FsContent parentFile,
+    public synchronized DerivedFile addDerivedFile(String fileName, String localPath, long size, 
+            boolean isFile, AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
         
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
         
-        return tskCase.addDerivedFile(parentFile.getId(), parentFile.getFileSystem().getId(), parentFile.getParentPath(),
-                fileName, isFile, size, localPath, rederiveDetails, toolName, toolVersion, otherDetails);
+        return tskCase.addDerivedFile(fileName, localPath, size,
+                isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
 
     @Override
