@@ -1,3 +1,14 @@
+---------------- VERSION Current (development) --------------
+
+New features:
+
+
+Improvements:
+
+
+Bugfixes:
+- show error message in hex and string viewer if specific offset of a file could not be read.
+
 ---------------- VERSION 3.0.4 --------------
 
 New features:
