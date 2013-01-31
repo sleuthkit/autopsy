@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline;
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,6 +43,7 @@ import java.util.Locale;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
@@ -106,7 +109,7 @@ import org.sleuthkit.datamodel.TskData;
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
 
-public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
+public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
     private static final Logger logger = Logger.getLogger(Simile2.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Simile2.class.getPackage().getName(), false);
     private JFrame jf;          //frame for holding all the elements
@@ -130,12 +133,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private DataContentPanel dataContentPanel;
     private ProgressHandle progress;
     private java.io.File moduleDir;
+    private String mactimeFileName;
+    private List<YearEpoch> data;
+    private boolean listeningToAddImage = false;
 
-    public Simile2() {
-        customizeSwing();
-        customize();
-    }
-    
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
     //Next, the javafx components may be initialized.
@@ -204,22 +205,25 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                     if (!moduleDir.exists()) {
                         moduleDir.mkdir();
                     }
-                    String mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+                    
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
                         String bodyFilePath = makeBodyFile();
                         String mactimePath = makeMacTime(bodyFilePath);
                         mactimeFile = new java.io.File(mactimePath);
+                        data = null;
                     } else {
                         logger.log(Level.INFO, "mactime file already exists; parsing that.");
                     }
 
-                    final List<YearEpoch> lsye = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                    if (data == null) {
+                        data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                    }
 
                     //Making a dropdown box to select years.
                     List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
-                    for (YearEpoch ye : lsye) {
+                    for (YearEpoch ye : data) {
                         lsi.add(ye.year + " : " + ye.getNumFiles());
                     }
                     ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
@@ -261,7 +265,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                         @Override
                         public void handle(ActionEvent e) {
                             if (dropdown_SelectYears.getValue() != null) {
-                                chart_Events = createMonthsWithDrill(findYear(lsye, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                                chart_Events = createMonthsWithDrill(findYear(data, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
                                 scroll_Events.setContent(chart_Events);
                             }
                         }
@@ -286,7 +290,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                     comboJPanel.add(chartJPanel);
                     comboJPanel.add(viewerJPanel);
 
-                    chart_TopLevel = createYearChartWithDrill(lsye);
+                    chart_TopLevel = createYearChartWithDrill(data);
                     chart_Events = chart_TopLevel;
                     scroll_Events.setContent(chart_Events);
                     jf.add(comboJPanel);
@@ -528,6 +532,40 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             }
         }
         return null;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        String prop = evt.getPropertyName();
+        if (!prop.equals(Case.CASE_ADD_IMAGE)) {
+            return;
+        }
+        
+        int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // get rid of the old data
+        data = null;
+
+        // get rid of the mactime file
+        java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
+        mactimeFile.delete();
+
+        // close the jframe
+        jf.setVisible(false);
+        jf.dispose();
+
+        // remove ourself as change listener on Case
+        Case currcase = Case.getCurrentCase();
+        if (currcase != null) {
+            currcase.removePropertyChangeListener(this);
+            listeningToAddImage = false;
+        }
+
+        // call performAction as if the user selected 'Make Timeline' from the menu
+        performAction();
     }
 
     /*
@@ -785,11 +823,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         ResultSet rs = null;
         try {
             // exclude non-fs files/dirs and . and .. files
-            rs = skCase.runQuery("SELECT * FROM tsk_files "
-                    + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
+//            rs = skCase.runQuery("SELECT * FROM tsk_files "
+//                    + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
+//                    + "AND name != '.' "
+//                    + "AND name != '..'");
+//            List<FsContent> fs = skCase.resultSetToFsContents(rs);
+            
+            String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
                     + "AND name != '.' "
-                    + "AND name != '..'");
-            List<FsContent> fs = skCase.resultSetToFsContents(rs);
+                    + "AND name != '..'";
+            List<FsContent> fs = skCase.findFilesWhere(filesAndDirs);
+            
             // Loop files and write info to report
             for (FsContent file : fs) {
 
@@ -838,9 +882,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                     }
                 }
             }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Failed to get all file information.", ex);
-        } catch (TskCoreException ex) {
+        }
+//         catch (SQLException ex) {
+//            logger.log(Level.WARNING, "Failed to get all file information.", ex);
+//        } 
+        catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex);
         } finally {
             try {// Close the query
@@ -897,6 +943,21 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 }
             } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
+                
+                System.out.println("performAction() called.");
+                
+                Platform.setImplicitExit(false);
+                
+                // listen for case changes (specifically images being added).
+                Case currcase = Case.getCurrentCase();
+                if (currcase != null && !listeningToAddImage) {
+                    currcase.addPropertyChangeListener(this);
+                    listeningToAddImage = true;
+                }
+                
+                // initialize mactimeFileName
+                mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+
                 customizeSwing();
                 customize();
             }
