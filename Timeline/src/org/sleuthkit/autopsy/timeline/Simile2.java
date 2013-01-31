@@ -803,6 +803,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
             ye.add(file, month, day);
         }
+        
+        scan.close();
 
         return years;
     }
@@ -878,15 +880,16 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 out.write(Long.toString(file.getCrtime()));
                 out.write("\n");
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
-                try {
-                    out.flush();
-                    out.close();
-                } catch (IOException ex1) {
-                    logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
-                }
-                
+                logger.log(Level.WARNING, "Probelm while trying to write data to the body file.", ex);
+                break;
             }
+        }
+        
+        try {
+            out.flush();
+            out.close();
+        } catch (IOException ex1) {
+            logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
         }
 
         return bodyFilePath;
@@ -935,8 +938,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 }
             } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
-                
-                System.out.println("performAction() called.");
                 
                 Platform.setImplicitExit(false);
                 
