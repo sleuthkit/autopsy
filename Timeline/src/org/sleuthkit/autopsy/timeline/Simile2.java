@@ -209,10 +209,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
-                        long startMillis = System.currentTimeMillis();
                         String bodyFilePath = makeBodyFile();
-                        long duration = System.currentTimeMillis() - startMillis;
-                        System.out.println("Body file creatino took " + duration/1000 + " seconds.");
                         String mactimePath = makeMacTime(bodyFilePath);
                         mactimeFile = new java.io.File(mactimePath);
                         data = null;
