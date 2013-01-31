@@ -209,7 +209,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
+                        long startMillis = System.currentTimeMillis();
                         String bodyFilePath = makeBodyFile();
+                        long duration = System.currentTimeMillis() - startMillis;
+                        System.out.println("Body file creatino took " + duration/1000 + " seconds.");
                         String mactimePath = makeMacTime(bodyFilePath);
                         mactimeFile = new java.io.File(mactimePath);
                         data = null;
@@ -820,83 +823,75 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
-        ResultSet rs = null;
+        String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
+                + "AND name != '.' "
+                + "AND name != '..'";
+        List<FsContent> fs = Collections.EMPTY_LIST;
         try {
-            // exclude non-fs files/dirs and . and .. files
-//            rs = skCase.runQuery("SELECT * FROM tsk_files "
-//                    + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-//                    + "AND name != '.' "
-//                    + "AND name != '..'");
-//            List<FsContent> fs = skCase.resultSetToFsContents(rs);
-            
-            String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-                    + "AND name != '.' "
-                    + "AND name != '..'";
-            List<FsContent> fs = skCase.findFilesWhere(filesAndDirs);
-            
-            // Loop files and write info to report
-            for (FsContent file : fs) {
+            fs = skCase.findFilesWhere(filesAndDirs);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
 
-                BufferedWriter out = null;
+        // Loop files and write info to report
+        BufferedWriter out = null;
+        try {
+            out = new BufferedWriter(new FileWriter(bodyFilePath, true));
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Could not create new BufferedWriter for body file.", ex);
+        }
+        for (FsContent file : fs) {
+            try {
+                // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
+                //out = new BufferedWriter(new FileWriter(bodyFilePath, true));
+
+                if (file.getMd5Hash() != null) {
+                    out.write(file.getMd5Hash());
+                }
+                out.write("|");
+                String path = "";
                 try {
-                    // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
-                    out = new BufferedWriter(new FileWriter(bodyFilePath, true));
+                    path = file.getUniquePath();
+                } catch (TskCoreException e) {
+                    logger.log(Level.WARNING, "Failed to get the unique path.", e);
+                }
 
-                    if (file.getMd5Hash() != null) {
-                        out.write(file.getMd5Hash());
-                    }
-                    out.write("|");
-                    if (file.getUniquePath() != null) {
-                        out.write(file.getUniquePath());
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getMetaAddr()));
-                    out.write("|");
-                    String modeString = file.getModesAsString();
-                    if (modeString != null) {
-                        out.write(modeString);
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getId()));
-                    out.write("|");
-                    out.write(Long.toString(file.getGid()));
-                    out.write("|");
-                    out.write(Long.toString(file.getSize()));
-                    out.write("|");
-                    out.write(Long.toString(file.getAtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getMtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCrtime()));
-                    out.write("\n");
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
-                } finally {
-                    try {
-                        out.flush();
-                        out.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
-                    }
+                out.write(path);
+
+                out.write("|");
+                out.write(Long.toString(file.getMetaAddr()));
+                out.write("|");
+                String modeString = file.getModesAsString();
+                if (modeString != null) {
+                    out.write(modeString);
                 }
+                out.write("|");
+                out.write(Long.toString(file.getId()));
+                out.write("|");
+                out.write(Long.toString(file.getGid()));
+                out.write("|");
+                out.write(Long.toString(file.getSize()));
+                out.write("|");
+                out.write(Long.toString(file.getAtime()));
+                out.write("|");
+                out.write(Long.toString(file.getMtime()));
+                out.write("|");
+                out.write(Long.toString(file.getCtime()));
+                out.write("|");
+                out.write(Long.toString(file.getCrtime()));
+                out.write("\n");
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
+                try {
+                    out.flush();
+                    out.close();
+                } catch (IOException ex1) {
+                    logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
+                }
+                
             }
         }
-//         catch (SQLException ex) {
-//            logger.log(Level.WARNING, "Failed to get all file information.", ex);
-//        } 
-        catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
-        } finally {
-            try {// Close the query
-                if (rs != null) {
-                    skCase.closeRunQuery(rs);
-                }
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to close the query.", ex);
-            }
-        }
+
         return bodyFilePath;
     }
 
