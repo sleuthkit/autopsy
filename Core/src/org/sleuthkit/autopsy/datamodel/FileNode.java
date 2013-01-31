@@ -129,6 +129,12 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
                 return "org/sleuthkit/autopsy/images/pdf-file.png";
             }
         }
+        // Archives
+        for (String s : FileTypeExtensions.getArchiveExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/archive-file.png";
+            }
+        }
         // Else return the default
         return "org/sleuthkit/autopsy/images/file-icon.png";
 

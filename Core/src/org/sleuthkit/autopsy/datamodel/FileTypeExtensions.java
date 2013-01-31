@@ -18,6 +18,7 @@ public class FileTypeExtensions {
     private final static List<String> TEXT_EXTENSIONS = Arrays.asList(".txt", ".rtf", ".log", ".text", ".xml");
     private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx");
     private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf");
+    private final static List<String> ARCHIVE_EXTENSIONS = Arrays.asList(".zip", ".rar", ".7zip", ".arj", ".gzip", ".bzip", ".bzip2", ".cab", ".jar", ".cpio", ".ar");
     
     public static List<String> getImageExtensions() {
         return IMAGE_EXTENSIONS;
@@ -42,5 +43,8 @@ public class FileTypeExtensions {
     }
     public static List<String> getPDFExtensions() {
         return PDF_EXTENSIONS;
+    }
+     public static List<String> getArchiveExtensions() {
+        return ARCHIVE_EXTENSIONS;
     }
 }
