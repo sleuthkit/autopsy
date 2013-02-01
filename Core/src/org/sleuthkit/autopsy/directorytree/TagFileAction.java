@@ -155,6 +155,11 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
         public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
             return lf;
         }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile lf) {
+            return lf;
+        }
 
         @Override
         public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory ld) {

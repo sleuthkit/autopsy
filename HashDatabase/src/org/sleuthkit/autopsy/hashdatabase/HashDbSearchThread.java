@@ -40,8 +40,8 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
     private AbstractFile file;
     
     HashDbSearchThread(AbstractFile file) {
+        this.file = file;
         this.hashes.add(this.file.getMd5Hash());
-        this.file = this.file;
     }
     HashDbSearchThread(ArrayList<String> hashes) {
         this.hashes = hashes;
