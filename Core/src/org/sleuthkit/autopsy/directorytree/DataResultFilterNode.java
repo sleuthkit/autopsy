@@ -152,6 +152,12 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : img.getActions(true)) {
+                actions.add(a);
+            }
+            
             actions.add(new NewWindowViewAction("View in New Window", img));
             actions.add(new FileSearchAction("Open File Search by Attributes"));
             actions.addAll(ExplorerNodeActionVisitor.getActions(img.getLookup().lookup(Content.class)));
@@ -161,6 +167,12 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : vol.getActions(true)) {
+                actions.add(a);
+            }
+            
             actions.add(new NewWindowViewAction("View in New Window", vol));
             actions.addAll(ExplorerNodeActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
             return actions;
@@ -169,6 +181,12 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(DirectoryNode dir) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : dir.getActions(true)) {
+                actions.add(a);
+            }
+            
             if (!dir.getDirectoryBrowseMode()) {
                 actions.add(new ViewContextAction("View File in Directory", dir));
                 actions.add(null); // creates a menu separator
@@ -184,6 +202,11 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(LayoutFileNode lf) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : lf.getActions(true)) {
+                actions.add(a);
+            }
 
             actions.add(new NewWindowViewAction("View in New Window", lf));
             actions.add(new ExternalViewerAction("Open in External Viewer", lf));
@@ -197,14 +220,45 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public List<Action> visit(VirtualDirectoryNode ld) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : ld.getActions(true)) {
+                actions.add(a);
+            }
 
             actions.add(new TagFileAction(ld));
+            return actions;
+        }
+        
+         @Override
+        public List<Action> visit(DerivedFileNode dfn) {
+            List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : dfn.getActions(true)) {
+                actions.add(a);
+            }
+
+            actions.add(new NewWindowViewAction("View in New Window", dfn));
+            actions.add(new ExternalViewerAction("Open in External Viewer", dfn));
+            actions.add(null); // creates a menu separator
+            actions.add(new ExtractAction("Extract", dfn)); //might not need this actions - already local file
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", dfn));
+            actions.add(null); // creates a menu separator
+            actions.add(new TagFileAction(dfn));
+            
             return actions;
         }
 
         @Override
         public List<Action> visit(FileNode f) {
             List<Action> actions = new ArrayList<Action>();
+            
+            //retain actions from the node if any
+            for (Action a : f.getActions(true)) {
+                actions.add(a);
+            }
+            
             if (!f.getDirectoryBrowseMode()) {
                 actions.add(new ViewContextAction("View File in Directory", f));
                 actions.add(null); // creates a menu separator
@@ -223,7 +277,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
 
-            //merge predefined specific node actions if bban sublcasses have their own
+            //merge predefined specific node actions if bban subclasses have their own
             for (Action a : ban.getActions(true)) {
                 actions.add(a);
             }
