@@ -4,9 +4,10 @@ Contains only the core ingest modules that ship with Autopsy -->
 <PIPELINE_CONFIG>
     <PIPELINE type="FileAnalysis">
       <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.hashdatabase.HashDbIngestModule" arguments="" />
-      <MODULE order="2" type="plugin" location="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestModule"/>
-      <MODULE order="3" type="plugin" location="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule"/>
-      <MODULE order="4" type="plugin" location="org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule" arguments=""/>
+      <MODULE order="2" type="plugin" location="org.sleuthkit.autopsy.sevenzip.SevenZipIngestModule" arguments="" />
+      <MODULE order="3" type="plugin" location="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestModule"/>
+      <MODULE order="4" type="plugin" location="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule"/>
+      <MODULE order="5" type="plugin" location="org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule" arguments=""/>
     </PIPELINE>
 
     <PIPELINE type="ImageAnalysis">
