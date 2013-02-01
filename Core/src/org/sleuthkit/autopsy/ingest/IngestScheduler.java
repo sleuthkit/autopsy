@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
@@ -604,7 +605,8 @@ class IngestScheduler {
             if (fileName.equals(".") || fileName.equals("..")) {
                 return false;
             }
-            if (aFile.isVirtual() == false && aFile.isFile() == true) {
+            if (aFile.isVirtual() == false && aFile.isFile() == true
+                    && aFile.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
                 final org.sleuthkit.datamodel.File f = (File) aFile;
 
                 //skip files in root dir, starting with $, containing : (not default attributes)
