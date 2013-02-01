@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Exports files and folders
@@ -73,6 +72,11 @@ public final class ExtractAction extends AbstractAction {
         @Override
         public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
             return lf;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
+            return df;
         }
 
         @Override

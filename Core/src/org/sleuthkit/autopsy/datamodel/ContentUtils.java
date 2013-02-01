@@ -30,6 +30,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -44,13 +45,12 @@ public final class ContentUtils {
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    
 
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
     }
- 
+
     /**
      * Convert epoch seconds to a string value in the given time zone
      *
@@ -66,14 +66,14 @@ public final class ContentUtils {
         }
         return time;
     }
-    
-      public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
+
+    public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00T00:00:00Z";
         if (epochSeconds != 0) {
             dateFormatterISO8601.setTimeZone(tzone);
             time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
         }
-        
+
         return time;
     }
 
@@ -87,10 +87,10 @@ public final class ContentUtils {
     public static String getStringTime(long epochSeconds, Content c) {
         return getStringTime(epochSeconds, getTimeZone(c));
     }
-    
+
     /**
-     * Convert epoch seconds to a string value (convenience method) in ISO8601 format
-     * such as 2008-07-04T13:45:04Z
+     * Convert epoch seconds to a string value (convenience method) in ISO8601
+     * format such as 2008-07-04T13:45:04Z
      *
      * @param epochSeconds
      * @param c
@@ -99,8 +99,6 @@ public final class ContentUtils {
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
-    
-    
 
     public static TimeZone getTimeZone(Content c) {
         try {
@@ -110,7 +108,7 @@ public final class ContentUtils {
         }
     }
     private static final SystemNameVisitor systemName = new SystemNameVisitor();
- 
+
     static String getSystemName(Content content) {
         return content.accept(systemName);
     }
@@ -125,8 +123,6 @@ public final class ContentUtils {
             return cntnt.getName() + ":" + Long.toString(cntnt.getId());
         }
     }
-
-
     private static final int TO_FILE_BUFFER_SIZE = 8192;
 
     /**
@@ -246,14 +242,26 @@ public final class ContentUtils {
             }
             return null;
         }
-        
-         @Override
+
+        @Override
         public Void visit(LayoutFile f) {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
                         "Trouble extracting unallocated content file to " + dest.getAbsolutePath(),
+                        ex);
+            }
+            return null;
+        }
+
+        @Override
+        public Void visit(DerivedFile df) {
+            try {
+                ContentUtils.writeToFile(df, dest, progress, worker, source);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Error extracting derived file to " + dest.getAbsolutePath(),
                         ex);
             }
             return null;
@@ -324,7 +332,7 @@ public final class ContentUtils {
             public java.io.File visit(File f) {
                 return getFsContentDest(f);
             }
-            
+
             @Override
             public java.io.File visit(LayoutFile lf) {
                 return getFsContentDest(lf);

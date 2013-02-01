@@ -103,15 +103,15 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
         
-        map.put(AbstractFsContentNode.FsContentPropertyType.LOCATION.toString(), path);
-        map.put(AbstractFsContentNode.FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
-        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_META.toString(), content.getMetaType().toString());
+        map.put(AbstractFilePropertyType.LOCATION.toString(), path);
+        map.put(AbstractFilePropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(0, content));
+        map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFilePropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFilePropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFilePropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(AbstractFilePropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
+        map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
     }
     
     /**

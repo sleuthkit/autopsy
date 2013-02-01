@@ -37,8 +37,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
@@ -310,20 +310,25 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         public ProcessResult visit(File f) {
             return process(f);
         }
+        
+        @Override
+        public ProcessResult visit(DerivedFile f) {
+            return process(f);
+        }
 
-        private ProcessResult process(FsContent fsContent) {
+        private ProcessResult process(AbstractFile file) {
             // bail out if we have no hashes set
             if ((nsrlIsSet == false) && (knownBadIsSet == false) && (calcHashesIsSet == false)) {
                 return ProcessResult.OK;
             }
             
             // calc hash value
-            String name = fsContent.getName();
-            String md5Hash = fsContent.getMd5Hash();
+            String name = file.getName();
+            String md5Hash = file.getMd5Hash();
             if (md5Hash == null || md5Hash.isEmpty()) {
                 try {
                     long calcstart = System.currentTimeMillis();
-                    md5Hash = hasher.calculateMd5(fsContent);
+                    md5Hash = hasher.calculateMd5(file);
                     calctime += (System.currentTimeMillis() - calcstart);   
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
@@ -357,7 +362,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                         foundBad = true;
                         knownBadCount += 1;
                         try {
-                            skCase.setKnown(fsContent, TskData.FileKnown.BAD);
+                            skCase.setKnown(file, TskData.FileKnown.BAD);
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
                             services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
@@ -365,7 +370,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                             ret = ProcessResult.ERROR;
                         } 
                         String hashSetName = entry.getValue().getName();
-                        processBadFile(fsContent, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
+                        processBadFile(file, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
                     }
                 }
             }
@@ -385,7 +390,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                 
                 if (status.equals(TskData.FileKnown.KNOWN)) {
                     try {
-                        skCase.setKnown(fsContent, TskData.FileKnown.KNOWN);
+                        skCase.setKnown(file, TskData.FileKnown.KNOWN);
                     } catch (TskException ex) {
                         logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
                         services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,

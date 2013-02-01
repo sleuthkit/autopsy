@@ -88,11 +88,5 @@ public class DerivedFileNode  extends AbstractAbstractFileNode<DerivedFile> {
         return true;
     }
     
-    
 
-    //TODO add more
-    private static void fillPropertyMap(Map<String, Object> map, DerivedFile content) {
-        map.put(DerivedFilePropertyType.NAME.toString(), content.getName());
-        map.put(DerivedFilePropertyType.SIZE.toString(), content.getSize());
-    }
 }

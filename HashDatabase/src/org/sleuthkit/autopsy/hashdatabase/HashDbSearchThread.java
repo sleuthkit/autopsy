@@ -29,18 +29,19 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 
 class HashDbSearchThread extends SwingWorker<Object,Void> {
     private Logger logger = Logger.getLogger(HashDbSearchThread.class.getName());
     private ProgressHandle progress;
-    Map<String, List<FsContent>> map;
-    ArrayList<String> hashes = new ArrayList<String>();
-    FsContent fsContent;
+    private Map<String, List<AbstractFile>> map;
+    private ArrayList<String> hashes = new ArrayList<String>();
+    private AbstractFile file;
     
-    HashDbSearchThread(FsContent fsContent) {
-        this.hashes.add(fsContent.getMd5Hash());
-        this.fsContent = fsContent;
+    HashDbSearchThread(AbstractFile file) {
+        this.hashes.add(this.file.getMd5Hash());
+        this.file = this.file;
     }
     HashDbSearchThread(ArrayList<String> hashes) {
         this.hashes = hashes;
@@ -87,10 +88,10 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
                 logger.log(Level.INFO, "File search by MD5 hash completed without cancellation.");
                 // If its a right click action, we are given an FsContent which
                 // is the file right clicked, so we can remove that from the search
-                if(fsContent!=null) {
+                if(file!=null) {
                     boolean quit = true;
-                    for(List<FsContent> files: map.values()) {
-                        files.remove(fsContent);
+                    for(List<AbstractFile> files: map.values()) {
+                        files.remove(file);
                         if(!files.isEmpty()) {
                             quit = false;
                         }
