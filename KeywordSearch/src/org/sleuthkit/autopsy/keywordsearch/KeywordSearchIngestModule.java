@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -214,6 +215,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         @Override
         public Boolean visit(File file) {
+            return file.getKnown() == FileKnown.KNOWN;
+        }
+        
+        @Override
+        public Boolean visit(DerivedFile file) {
             return file.getKnown() == FileKnown.KNOWN;
         }
     }
