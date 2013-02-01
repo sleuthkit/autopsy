@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -765,18 +764,17 @@ class IngestScheduler {
          * Includes counts of all unalloc files (for the fs, image, volume) even
          * if ingest didn't ask for them
          */
-        @SuppressWarnings("deprecation")
-        static class GetImageFilesCountVisitor extends ContentVisitor.Default<Integer> {
+        static class GetImageFilesCountVisitor extends ContentVisitor.Default<Long> {
 
             @Override
-            public Integer visit(FileSystem fs) {
+            public Long visit(FileSystem fs) {
                 //recursion stop here
                 //case of a real fs, query all files for it
 
                 SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
                 StringBuilder queryB = new StringBuilder();
-                queryB.append("SELECT COUNT(*) FROM tsk_files WHERE ( (fs_obj_id = ").append(fs.getId());
+                queryB.append("( (fs_obj_id = ").append(fs.getId());
                 //queryB.append(") OR (fs_obj_id = NULL) )");
                 queryB.append(") )");
                 queryB.append(" AND ( (meta_type = ").append(TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue());
@@ -791,51 +789,36 @@ class IngestScheduler {
                 ResultSet rs = null;
                 try {
                     final String query = queryB.toString();
-                    logger.log(Level.INFO, "Executing query: " + query);
-                    rs = sc.runQuery(query);
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    } else {
-                        throw new RuntimeException("Count not get count for file system files");
-                    }
-
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Couldn't get count of all files in FileSystem", ex);
-                    return 0;
-                } finally {
-                    if (rs != null) {
-                        try {
-                            sc.closeRunQuery(rs);
-                        } catch (SQLException ex) {
-                            logger.log(Level.WARNING, "Couldn't close result set after getting count of all files in FileSystem", ex);
-                        }
-                    }
-                }
-
+                    logger.log(Level.INFO, "Executing count files query: " + query);
+                    return sc.countFilesWhere(query);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex);
+                    return 0L;
+                } 
             }
 
             @Override
-            public Integer visit(LayoutFile lf) {
+            public Long visit(LayoutFile lf) {
                 //recursion stop here
                 //case of LayoutFile child of Image or Volume
-                return 1;
+                return 1L;
             }
 
-            private int getCountFromChildren(Content content) {
-                int count = 0;
+            private long getCountFromChildren(Content content) {
+                long count = 0;
                 try {
                     for (Content child : content.getChildren()) {
                         count += child.accept(this);
                     }
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
-                    return 0;
+                    return 0L;
                 }
                 return count;
             }
 
             @Override
-            protected Integer defaultVisit(Content cntnt) {
+            protected Long defaultVisit(Content cntnt) {
                 //recurse assuming this is image/vs/volume 
                 //recursion stops at fs or unalloc file
                 return getCountFromChildren(cntnt);
