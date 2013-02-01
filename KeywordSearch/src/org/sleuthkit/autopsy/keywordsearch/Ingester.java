@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,6 +48,7 @@ import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
@@ -191,6 +191,13 @@ public class Ingester {
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
             getCommonFsContentFields(params, f);
+            return params;
+        }
+        
+        @Override
+        public Map<String, String> visit(DerivedFile df) {
+            Map<String, String> params = getCommonFields(df);
+            //TODO mactimes after data model refactor
             return params;
         }
 
