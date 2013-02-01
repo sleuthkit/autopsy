@@ -337,6 +337,11 @@ public final class ContentUtils {
             public java.io.File visit(LayoutFile lf) {
                 return getFsContentDest(lf);
             }
+            
+             @Override
+            public java.io.File visit(DerivedFile df) {
+                return getFsContentDest(df);
+            }
 
             @Override
             public java.io.File visit(Directory dir) {
