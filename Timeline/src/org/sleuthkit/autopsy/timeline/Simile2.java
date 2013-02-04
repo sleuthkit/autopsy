@@ -911,10 +911,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         final String machome = macRoot.getAbsolutePath();
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
+            macpath = PlatformUtil.getOSFilePath(macpath);
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
+        macfile = PlatformUtil.getOSFilePath(macfile);
         String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
         try {
             JavaSystemCaller.Exec.execute("\"" + command + "\"");
