@@ -56,7 +56,6 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
-
 public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
@@ -66,12 +65,8 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     private Case currentCase;
     private static final String MODULE_NAME = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
-    
     final public static String MODULE_VERSION = "1.0";
-    
     private String args;
-    
-    private final GetIsFileKnownVisitor getIsFileKnown = new GetIsFileKnownVisitor();
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
@@ -85,25 +80,24 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
-        IngestModuleAbstractFile.ProcessResult hashDBResult = 
+        IngestModuleAbstractFile.ProcessResult hashDBResult =
                 services.getAbstractFileModuleResult(hashDBModuleName);
 
-        if (abstractFile.accept(getIsFileKnown) == true) {
+        if (abstractFile.getKnown().equals(
+                TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK; //file is known, stop processing it
         } else if (hashDBResult == IngestModuleAbstractFile.ProcessResult.ERROR) {
             return ProcessResult.ERROR;  //file has read error, stop processing it
         }
-        
-        if (abstractFile.isVirtual() ) {
+
+        if (abstractFile.isVirtual()) {
             return ProcessResult.OK;
         }
-        
-        final FsContent fsContent = (FsContent) abstractFile;
 
         try {
             byte[] t = new byte[64];
-            if(fsContent.getSize() > 64) {
-                int byteRead = fsContent.read(t, 0, 64);
+            if (abstractFile.getSize() > 64) {
+                int byteRead = abstractFile.read(t, 0, 64);
                 if (byteRead > 0) {
                     isMbox = mbox.isValidMimeTypeMbox(t);
                 }
@@ -114,25 +108,24 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
 
         if (isMbox) {
-            logger.log(Level.INFO, "ThunderbirdMboxFileIngestModule: Parsing {0}", fsContent.getName());
-            
-            String mboxName = fsContent.getName();
+            logger.log(Level.INFO, "ThunderbirdMboxFileIngestModule: Parsing {0}", abstractFile.getName());
+
+            String mboxName = abstractFile.getName();
             String msfName = mboxName + ".msf";
             //Long mboxId = fsContent.getId();
-            String mboxPath = fsContent.getParentPath();
+            String mboxPath = abstractFile.getParentPath();
             Long msfId = 0L;
             currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-            
-            
+
+
             try {
                 ResultSet resultset = tskCase.runQuery("SELECT obj_id FROM tsk_files WHERE parent_path = '" + mboxPath + "' and name = '" + msfName + "'");
-                if (! resultset.next()) {
+                if (!resultset.next()) {
                     logger.log(Level.WARNING, "Could not find msf file in mbox dir: " + mboxPath + " file: " + msfName);
                     tskCase.closeRunQuery(resultset);
                     return ProcessResult.OK;
-                }
-                else {
+                } else {
                     msfId = resultset.getLong(1);
                     tskCase.closeRunQuery(resultset);
                 }
@@ -262,7 +255,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     public String getDescription() {
         return "This module detects and parses mbox Thunderbird files and populates email artifacts in the blackboard.";
     }
-    
+
     @Override
     public String getVersion() {
         return MODULE_VERSION;
@@ -277,7 +270,6 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     public void setArguments(String args) {
         this.args = args;
     }
-	
 
     @Override
     public void init(IngestModuleInit initContext) {
@@ -331,22 +323,5 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
     @Override
     public void saveSimpleConfiguration() {
-    }
-
-   /**
-     * Process content hierarchy and return true if content is a file and is set as known
-     */
-    private class GetIsFileKnownVisitor extends ContentVisitor.Default<Boolean> {
-
-        @Override
-        protected Boolean defaultVisit(Content cntnt) {
-            return false;
-        }
-        
-        @Override
-        public Boolean visit(org.sleuthkit.datamodel.File file) {
-            return file.getKnown() == TskData.FileKnown.KNOWN;
-        }
-        
     }
 }

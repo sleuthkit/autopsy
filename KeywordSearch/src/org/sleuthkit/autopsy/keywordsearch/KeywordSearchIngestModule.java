@@ -56,11 +56,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -126,7 +121,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
     private boolean initialized = false;
-    private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
     private KeywordSearchConfigurationPanel panel;
 
     private enum IngestStatus {
@@ -182,7 +176,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
-        } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.accept(getIsFileKnown) == true) {
+        } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
@@ -202,27 +196,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         return ProcessResult.OK;
     }
 
-    /**
-     * Process content hierarchy and return true if content is a file and is set
-     * as known
-     */
-    private class GetIsFileKnownV extends ContentVisitor.Default<Boolean> {
-
-        @Override
-        protected Boolean defaultVisit(Content cntnt) {
-            return false;
-        }
-
-        @Override
-        public Boolean visit(File file) {
-            return file.getKnown() == FileKnown.KNOWN;
-        }
-        
-        @Override
-        public Boolean visit(DerivedFile file) {
-            return file.getKnown() == FileKnown.KNOWN;
-        }
-    }
 
     /**
      * After all files are ingested, execute final index commit and final search
@@ -735,44 +708,42 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
-            FsContent fsContent = null;
             //check if alloc fs file or dir
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
             if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
                 //skip indexing of virtual dirs (no content, no real name) - will index children files
                 return;
-            } else if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
-                fsContent = (FsContent) aFile;
-            }
-
+            } 
+            
+            boolean isUnallocFile = aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
 
             final long size = aFile.getSize();
             //if alloc fs file and not to index content, or a dir, or 0 content, index meta data only
-            if (fsContent != null
-                    && (indexContent == false || fsContent.isDir() || size == 0)) {
+            if (isUnallocFile == false
+                    && (indexContent == false || aFile.isDir() || size == 0)) {
                 try {
-                    ingester.ingest(fsContent, false); //meta-data only
+                    ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
                 } catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
-                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
+                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
 
                 return;
             }
 
             boolean extractTextSupported = isTextExtractSupported(aFile);
-            if (fsContent != null && extractTextSupported) {
-                //we know it's an allocated FS file (since it's FsContent)
+            if (isUnallocFile == false && extractTextSupported) {
+                //we know it's an allocated FS file 
                 //extract text with one of the extractors, divide into chunks and index with Solr
                 try {
-                    //logger.log(Level.INFO, "indexing: " + fsContent.getName());
+                    //logger.log(Level.INFO, "indexing: " + aFile.getName());
                     if (!extractIndex(aFile, false)) {
-                        logger.log(Level.WARNING, "Failed to extract Tika text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                        logger.log(Level.WARNING, "Failed to extract text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
                         ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                         //try to extract strings, if a file
-                        if (fsContent.isFile() == true) {
-                            processNonIngestible(fsContent);
+                        if (aFile.isFile() == true) {
+                            processNonIngestible(aFile);
                         }
 
                     } else {
@@ -780,21 +751,21 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                     }
 
                 } catch (IngesterException e) {
-                    logger.log(Level.INFO, "Could not extract text with Tika, " + fsContent.getId() + ", "
-                            + fsContent.getName(), e);
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", "
+                            + aFile.getName(), e);
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                     //try to extract strings, if a file
-                    if (fsContent.isFile() == true) {
-                        processNonIngestible(fsContent);
+                    if (aFile.isFile() == true) {
+                        processNonIngestible(aFile);
                     }
 
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error extracting text with Tika, " + fsContent.getId() + ", "
-                            + fsContent.getName(), e);
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", "
+                            + aFile.getName(), e);
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                     //try to extract strings if a file
-                    if (fsContent.isFile() == true) {
-                        processNonIngestible(fsContent);
+                    if (aFile.isFile() == true) {
+                        processNonIngestible(aFile);
                     }
                 }
             } else {
@@ -1060,11 +1031,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 //file
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>File</th>");
-                                if (hitFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
-                                    detailsSb.append("<td>").append(((FsContent) hitFile).getParentPath()).append(hitFile.getName()).append("</td>");
-                                } else {
-                                    detailsSb.append("<td>").append(hitFile.getName()).append("</td>");
-                                }
+                                detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
+                                
                                 detailsSb.append("</tr>");
 
 

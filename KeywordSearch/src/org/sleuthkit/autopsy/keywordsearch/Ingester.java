@@ -156,17 +156,17 @@ public class Ingester {
      * file is a directory or ingestContent is set to false, the file name is
      * indexed only.
      *
-     * @param fsContent File to ingest
+     * @param file File to ingest
      * @param ingestContent if true, index the file and the content, otherwise
      * indesx metadata only
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent fsContent, boolean ingestContent) throws IngesterException {
-        if (fsContent.isDir() || ingestContent == false) {
-            ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
+    void ingest(AbstractFile file, boolean ingestContent) throws IngesterException {
+        if (ingestContent == false || file.isDir()) {
+            ingest(new NullContentStream(file), getContentFields(file), 0);
         } else {
-            ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
+            ingest(new FscContentStream(file), getContentFields(file), file.getSize());
         }
     }
 
@@ -479,9 +479,9 @@ public class Ingester {
      */
     private static class FscContentStream implements ContentStream {
 
-        FsContent f;
+        private AbstractFile f;
 
-        FscContentStream(FsContent f) {
+        FscContentStream(AbstractFile f) {
             this.f = f;
         }
 

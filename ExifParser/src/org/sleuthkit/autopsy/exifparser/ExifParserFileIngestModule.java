@@ -88,19 +88,16 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
 
     @Override
     public IngestModuleAbstractFile.ProcessResult process(AbstractFile content) {
-        if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.FS)) {
-            FsContent fsContent = (FsContent) content;
-            if(fsContent.isFile()) {
-                if(parsableFormat(fsContent)) {
-                    return processFile(fsContent);
-                }
-            }
+        
+        //skip unalloc
+        if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
         }
         
-        return IngestModuleAbstractFile.ProcessResult.UNKNOWN;
+        return processFile(content);
     }
     
-    public IngestModuleAbstractFile.ProcessResult processFile(FsContent f) {
+    public IngestModuleAbstractFile.ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
         
