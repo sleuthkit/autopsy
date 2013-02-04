@@ -382,8 +382,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
 
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
-        for (final MonthEpoch me : ye.months) {
-            se.getData().add(new BarChart.Data<String, Number>(me.getMonthName(), me.getNumFiles())); //Adding new data at {X-pos, Y-Pos}
+        for (int monthNum = 0; monthNum < 12; ++monthNum) {
+            String monthName = new DateFormatSymbols().getMonths()[monthNum];
+            MonthEpoch month = ye.getMonth(monthNum);
+            int numEvents = month == null ? 0 : month.getNumFiles();
+            se.getData().add(new BarChart.Data<String, Number>(monthName, numEvents)); //Adding new data at {X-pos, Y-Pos}
         }
         bcData.add(se);
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
@@ -607,6 +610,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 size += me.getNumFiles();
             }
             return size;
+        }
+        
+        public MonthEpoch getMonth(int monthNum) {
+            MonthEpoch month = null;
+            for (MonthEpoch me :months) {
+                if (me.getMonthInt() == monthNum) {
+                    month = me;
+                    break;
+                }
+            }
+            return month;
         }
         
         public void add(AbstractFile af, int month, int day) {
