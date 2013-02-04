@@ -158,7 +158,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private void customize() {
         
         //Making the main frame *
-        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline");
+        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
         jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
         //JPanels are used as the cohesive glue that binds everything together.*/
@@ -998,7 +998,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
     @Override
     public String getName() {
-        return "Make Timeline";
+        return "Make Timeline (Beta)";
     }
 
     @Override
