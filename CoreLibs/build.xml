@@ -50,10 +50,17 @@
     </target>
         
     
+    <target name="retrieve-deps-local" description="build library dependencies that are stored local-only"> 
+        <!-- sigar: javafx, note: this a workaround, needs to match the one from jre/jdk and ideally be automatically included -->
+        <copy file="${thirdparty.dir}/jfxrt/1.7.11/jfxrt.jar" todir="release/modules/ext/" />
+    </target>
+    
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
         <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        
+         <antcall target="retrieve-deps-local" />
 	</target>
     
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
