@@ -89,30 +89,6 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         return true;
     }
 
-    //TODO consider extend AbstractFsContent node and use that
-    //first need methods such as getDirType() to be pushed to AbstractFile class
-    private static void fillPropertyMap(Map<String, Object> map, VirtualDirectory content) {
-        
-        String path = "";
-        try {
-            path = content.getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
-        }
-        
-        map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
-        map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
-        
-        map.put(AbstractFilePropertyType.LOCATION.toString(), path);
-        map.put(AbstractFilePropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(0, content));
-        map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFilePropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFilePropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
-        map.put(AbstractFilePropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
-        map.put(AbstractFilePropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
-        map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
-    }
     
     /**
      * Convert meta flag long to user-readable string / label

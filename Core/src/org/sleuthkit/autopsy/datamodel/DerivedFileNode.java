@@ -17,23 +17,6 @@ import org.sleuthkit.datamodel.LayoutFile;
  */
 public class DerivedFileNode  extends AbstractAbstractFileNode<DerivedFile> {
 
-    public static enum DerivedFilePropertyType {
-
-        NAME {
-            @Override
-            public String toString() {
-                return "Name";
-            }
-        },
-        SIZE {
-            @Override
-            public String toString() {
-                return "Size";
-            }
-        },
-  
-    }
-
     public static String nameForLayoutFile(LayoutFile lf) {
         return lf.getName();
     }

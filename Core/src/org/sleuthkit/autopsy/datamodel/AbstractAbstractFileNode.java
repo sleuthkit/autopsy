@@ -155,43 +155,42 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
     
     
-    /**
-     * Fill map with FsContent properties
-     *
-     * TODO make it common with AbstractFsContentNode after datamodel refactor
-     *
+     /**
+     * Fill map with AbstractFile properties
+     * 
      * @param map map with preserved ordering, where property names/values are
      * put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-
+        
         String path = "";
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
         }
-
-        map.put(AbstractFilePropertyType.NAME.toString(), getContentDisplayName(content));
+        
+        map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
         map.put(AbstractFilePropertyType.LOCATION.toString(), path);
-        //map.put(AbstractFilePropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
-        //map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
-        //map.put(AbstractFilePropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
-        //map.put(AbstractFilePropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(AbstractFilePropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
+        map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
+        map.put(AbstractFilePropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
+        map.put(AbstractFilePropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(AbstractFilePropertyType.SIZE.toString(), content.getSize());
         map.put(AbstractFilePropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(AbstractFilePropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        //map.put(AbstractFilePropertyType.MODE.toString(), content.getModesAsString());
-        //map.put(AbstractFilePropertyType.USER_ID.toString(), content.getUid());
-        //map.put(AbstractFilePropertyType.GROUP_ID.toString(), content.getGid());
-        //map.put(AbstractFilePropertyType.META_ADDR.toString(), content.getMetaAddr());
-        //map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + Long.toString(content.getAttrId()));
+        map.put(AbstractFilePropertyType.MODE.toString(), content.getModesAsString());
+        map.put(AbstractFilePropertyType.USER_ID.toString(), content.getUid());
+        map.put(AbstractFilePropertyType.GROUP_ID.toString(), content.getGid());
+        map.put(AbstractFilePropertyType.META_ADDR.toString(), content.getMetaAddr());
+        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + Long.toString(content.getAttrId()));
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
+
 
     static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
