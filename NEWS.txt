@@ -1,3 +1,15 @@
+---------------- VERSION Current (development) --------------
+
+New features:
+- Timeline (Beta)
+
+Improvements:
+- Sleuthkit-4.0.2 and libewf-20130128
+
+Bugfixes:
+- show error message in hex and string viewer if specific offset of a file could not be read.
+- file search actions not always enabled when new case is open.
+
 ---------------- VERSION 3.0.4 --------------
 
 New features:
