@@ -37,6 +37,7 @@ import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
+import javax.swing.text.html.StyleSheet;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -60,7 +61,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void customizeComponents() {
-        extractedTextPane.setEditorKit(new HTMLEditorKit() {
+        
+        HTMLEditorKit editorKit = new HTMLEditorKit() {
             @Override
             public ViewFactory getViewFactory() {
 
@@ -106,7 +108,14 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     }
                 };
             }
-        });
+        };
+        
+        // set font size manually in an effort to get fonts in this panel to look
+        // similar to what is in the 'String View' content viewer.
+        StyleSheet ss = editorKit.getStyleSheet();
+        ss.addRule("body {font-size: 8.5px;}");
+        
+        extractedTextPane.setEditorKit(editorKit);
 
         sourceComboBox.addItemListener(new ItemListener() {
             @Override

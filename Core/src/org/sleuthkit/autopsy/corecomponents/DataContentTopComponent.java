@@ -40,13 +40,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 //@TopComponent.Description(preferredID = "DataContentTopComponent")
 //@TopComponent.Registration(mode = "output", openAtStartup = true)
 //@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
-public final class DataContentTopComponent extends TopComponent implements DataContent, ChangeListener {
+public final class DataContentTopComponent extends TopComponent implements DataContent {
     
     private static Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());
 
     // reference to the "default" TC that always stays open
     private static DataContentTopComponent defaultInstance;
-    private Node currentNode;
     // set to true if this is the TC that always stays open and is the default place to display content
     private boolean isDefault;
 
@@ -178,11 +177,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent evt) {
-        dataContentPanel1.stateChanged(evt);
     }
 
     /**

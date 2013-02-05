@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline;
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,6 +43,7 @@ import java.util.Locale;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
@@ -66,6 +69,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -80,9 +85,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -102,10 +106,10 @@ import org.sleuthkit.datamodel.TskData;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Simile2")
 @ActionRegistration(displayName = "#CTL_MakeTimeline")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 90)})
+    @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
 
-public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
+public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
     private static final Logger logger = Logger.getLogger(Simile2.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Simile2.class.getPackage().getName(), false);
     private JFrame jf;          //frame for holding all the elements
@@ -126,8 +130,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResult;
-    private DataContentTopComponent dataContent;
-    
+    private DataContentPanel dataContentPanel;
+    private ProgressHandle progress;
+    private java.io.File moduleDir;
+    private String mactimeFileName;
+    private List<YearEpoch> data;
+    private boolean listeningToAddImage = false;
+    private long lastObjectId = -1;
+
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
     //Next, the javafx components may be initialized.
@@ -135,10 +145,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                dataContent = DataContentTopComponent.createUndocked("Content", Node.EMPTY);
-                dataContent.setSize(1, 1);
-                dataContent.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContent);
+                dataContentPanel = new DataContentPanel();
+                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
+                dataResult.setContentViewer(new DataContentPanel());
                 dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dataResult.setPreferredSize(new Dimension(700, 300));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -149,7 +158,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
     private void customize() {
         
         //Making the main frame *
-        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline");
+        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
         jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
         //JPanels are used as the cohesive glue that binds everything together.*/
@@ -168,106 +177,129 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         final JPanel comboJPanel = new JPanel();
         comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
 
-
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
         PlatformImpl.startup(new Runnable() {
             @Override
             public void run() {
-                panel_Charts = new JFXPanel();
-                group_Charts = new Group();
-                scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                vBox_FX = new VBox(5);
-                vBox_FX.setAlignment(Pos.BOTTOM_CENTER);
-                hBox_Charts = new HBox(10);
-                hBox_Charts.setAlignment(Pos.BOTTOM_CENTER);
+                try {
+                    // start the progress bar
+                    progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
+                    progress.start();
 
-                //Initializing default values for the scroll pane
-                scroll_Events = new ScrollPane();
-                scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                scroll_Events.setContent(null); //Needs some content, otherwise it crashes
+                    panel_Charts = new JFXPanel();
+                    group_Charts = new Group();
+                    scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
+                    vBox_FX = new VBox(5);
+                    vBox_FX.setAlignment(Pos.BOTTOM_CENTER);
+                    hBox_Charts = new HBox(10);
+                    hBox_Charts.setAlignment(Pos.BOTTOM_CENTER);
 
-                //mactime file placeholder, goes to pre-grenerated one on my desktop
-                String bodyFilePath = makeBodyFile();
-                java.io.File mactimePath = new java.io.File(makeMacTime(bodyFilePath));
-                //java.io.File mactime = new java.io.File("C:" + java.io.File.separator + "Users" + java.io.File.separator + "nflower" + java.io.File.separator + "Downloads" + java.io.File.separator + "kanarazu-12-21-2012-11-15-46-mactime.txt");
-                final List<YearEpoch> lsye = parseMacTime(mactimePath); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                    //Initializing default values for the scroll pane
+                    scroll_Events = new ScrollPane();
+                    scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
+                    scroll_Events.setContent(null); //Needs some content, otherwise it crashes
 
-                //Making a dropdown box to select years.
-                List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
-                for (YearEpoch ye : lsye) {
-                    lsi.add(ye.year + " : " + ye.getNumFiles());
-                }
-                ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
-                dropdown_SelectYears = new ComboBox(listSelect);
-
-                //Buttons for navigating up and down the timeline
-                button_DrillDown = new Button("Drill down");
-                button_DrillDown.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        //Placeholder, does nothing. Need to store a chart_LastSelected or something
+                    // set up moduleDir
+                    moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
+                    if (!moduleDir.exists()) {
+                        moduleDir.mkdir();
                     }
-                });
-                button_DrillUp = new Button("Drill up");
-                button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        BarChart bc;
-                        if (stack_PrevCharts.size() == 0) {
-                            bc = chart_TopLevel;
-                        } else {
-                            bc = stack_PrevCharts.pop();
+                    
+                    java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
+                    if (!mactimeFile.exists()) {
+                        logger.log(Level.INFO, "Creating mactime file.");
+                        String bodyFilePath = makeBodyFile();
+                        String mactimePath = makeMacTime(bodyFilePath);
+                        mactimeFile = new java.io.File(mactimePath);
+                        data = null;
+                    } else {
+                        logger.log(Level.INFO, "mactime file already exists; parsing that.");
+                    }
+
+                    if (data == null) {
+                        data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
+                    }
+
+                    //Making a dropdown box to select years.
+                    List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
+                    for (YearEpoch ye : data) {
+                        lsi.add(ye.year + " : " + ye.getNumFiles());
+                    }
+                    ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
+                    dropdown_SelectYears = new ComboBox(listSelect);
+
+                    //Buttons for navigating up and down the timeline
+                    button_DrillDown = new Button("Drill down");
+                    button_DrillDown.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            //Placeholder, does nothing. Need to store a chart_LastSelected or something
                         }
-                        chart_Events = bc;
-                        scroll_Events.setContent(chart_Events);
-                    }
-                });
-                button_Reset = new Button("Reset");
-                button_Reset.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        stack_PrevCharts.clear();
-                        chart_Events = chart_TopLevel;
-                        scroll_Events.setContent(chart_Events);
-                    }
-                });
-                button_Go = new Button("►");
-                button_Go.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        if (dropdown_SelectYears.getValue() != null) {
-                            chart_Events = createMonthsWithDrill(findYear(lsye, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                    });
+                    button_DrillUp = new Button("Drill up");
+                    button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            BarChart bc;
+                            if (stack_PrevCharts.size() == 0) {
+                                bc = chart_TopLevel;
+                            } else {
+                                bc = stack_PrevCharts.pop();
+                            }
+                            chart_Events = bc;
                             scroll_Events.setContent(chart_Events);
                         }
-                    }
-                });
+                    });
+                    button_Reset = new Button("Reset");
+                    button_Reset.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            stack_PrevCharts.clear();
+                            chart_Events = chart_TopLevel;
+                            scroll_Events.setContent(chart_Events);
+                        }
+                    });
+                    button_Go = new Button("►");
+                    button_Go.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            if (dropdown_SelectYears.getValue() != null) {
+                                chart_Events = createMonthsWithDrill(findYear(data, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                                scroll_Events.setContent(chart_Events);
+                            }
+                        }
+                    });
 
-                //Adding things to the V and H boxes. 
-                //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Drill Up|Drill Down|Reset|View Year: [Select Year]|►|
-                hBox_Charts.getChildren().addAll(button_DrillUp, button_DrillDown, button_Reset, new Label("View Year:"), dropdown_SelectYears, button_Go);
-                vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
-                group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
-                panel_Charts.setScene(scene_Charts);
+                    //Adding things to the V and H boxes. 
+                    //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Drill Up|Drill Down|Reset|View Year: [Select Year]|►|
+                    hBox_Charts.getChildren().addAll(button_DrillUp, button_DrillDown, button_Reset, new Label("View Year:"), dropdown_SelectYears, button_Go);
+                    vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
+                    group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
+                    panel_Charts.setScene(scene_Charts);
 
 
-                panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                chartJPanel.add(panel_Charts);
-                viewerJPanel.add(dataResult);
-                
-                viewerJPanel.add(dataContent);
-                chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                comboJPanel.add(chartJPanel);
-                comboJPanel.add(viewerJPanel);
+                    chartJPanel.add(panel_Charts);
+                    viewerJPanel.add(dataResult);
 
-                chart_TopLevel = createYearChartWithDrill(lsye);
-                chart_Events = chart_TopLevel;
-                scroll_Events.setContent(chart_Events);
-                jf.add(comboJPanel);
-                jf.setVisible(true);
+                    viewerJPanel.add(dataContentPanel);
+                    chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    comboJPanel.add(chartJPanel);
+                    comboJPanel.add(viewerJPanel);
+
+                    chart_TopLevel = createYearChartWithDrill(data);
+                    chart_Events = chart_TopLevel;
+                    scroll_Events.setContent(chart_Events);
+                    jf.add(comboJPanel);
+                    jf.setVisible(true);
+                } finally {
+                    // stop the progress bar
+                    progress.finish();
+                }
             }
         });
     }
@@ -335,7 +367,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         bc.setPrefWidth(Width_Frame);  //but override the width
         bc.setLegendVisible(false); //The legend adds too much extra chart space, it's not necessary.
         return bc;
-
     }
 
     /*
@@ -351,8 +382,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
 
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
-        for (final MonthEpoch me : ye.months) {
-            se.getData().add(new BarChart.Data<String, Number>(me.getMonthName(), me.getNumFiles())); //Adding new data at {X-pos, Y-Pos}
+        for (int monthNum = 0; monthNum < 12; ++monthNum) {
+            String monthName = new DateFormatSymbols().getMonths()[monthNum];
+            MonthEpoch month = ye.getMonth(monthNum);
+            int numEvents = month == null ? 0 : month.getNumFiles();
+            se.getData().add(new BarChart.Data<String, Number>(monthName, numEvents)); //Adding new data at {X-pos, Y-Pos}
         }
         bcData.add(se);
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
@@ -375,7 +409,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                                         PlatformImpl.startup(new Runnable() {
                                             @Override
                                             public void run() {
-                                                chart_Events = createEventsByMonth(findMonth(ye.months, month_StringtoInt((String) data.getXValue())), ye);
+                                                chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) data.getXValue())), ye);
                                                 scroll_Events.setContent(chart_Events);
                                             }
                                         });
@@ -441,7 +475,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         return bc;
     }
 
-    private ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
+    private static ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
         ObservableList<BarChart.Data> bcData = FXCollections.observableArrayList();
         int totalDays = me.getTotalNumDays(year);
         for (int i = 1; i <= totalDays; ++i) {
@@ -462,7 +496,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param mon The month to convert. Must be minimum 4 characters long "February" and "Febr" are acceptable.
      * @return The integer value of the month. February = 1, July = 6
      */
-    private int month_StringtoInt(String mon) {
+    private static int monthStringToInt(String mon) {
         try {
             Date date = new SimpleDateFormat("MMMM", Locale.ENGLISH).parse(mon);
             Calendar cal = Calendar.getInstance();
@@ -480,7 +514,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param match The month, in integer format, to retrieve. 
      * @return The month epoch as specified by match.
      */
-    private MonthEpoch findMonth(List<MonthEpoch> lst, int match) {
+    private static MonthEpoch findMonth(List<MonthEpoch> lst, int match) {
         for (MonthEpoch e : lst) {
             if (e.month == match) {
                 return e;
@@ -495,13 +529,57 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
      * @param match The year to retrieve. 
      * @return The year epoch as specified by match.
      */
-    private YearEpoch findYear(List<YearEpoch> lst, int match) {
+    private static YearEpoch findYear(List<YearEpoch> lst, int match) {
         for (YearEpoch e : lst) {
             if (e.year == match) {
                 return e;
             }
         }
         return null;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        String prop = evt.getPropertyName();
+        if (!prop.equals(Case.CASE_ADD_IMAGE)) {
+            return;
+        }
+        
+        if (jf != null && !jf.isVisible()) {
+            // change the lastObjectId to trigger a reparse of mactime data
+            ++lastObjectId;
+            return;
+        }
+        
+        int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        clearMactimeData();
+
+        // call performAction as if the user selected 'Make Timeline' from the menu
+        performAction();
+    }
+    
+    private void clearMactimeData() {
+        // get rid of the old data
+        data = null;
+
+        // get rid of the mactime file
+        java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
+        mactimeFile.delete();
+
+        // close the jframe
+        jf.setVisible(false);
+        jf.dispose();
+
+        // remove ourself as change listener on Case
+        Case currcase = Case.getCurrentCase();
+        if (currcase != null) {
+            currcase.removePropertyChangeListener(this);
+            listeningToAddImage = false;
+        }
     }
 
     /*
@@ -532,6 +610,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
                 size += me.getNumFiles();
             }
             return size;
+        }
+        
+        public MonthEpoch getMonth(int monthNum) {
+            MonthEpoch month = null;
+            for (MonthEpoch me :months) {
+                if (me.getMonthInt() == monthNum) {
+                    month = me;
+                    break;
+                }
+            }
+            return month;
         }
         
         public void add(AbstractFile af, int month, int day) {
@@ -638,6 +727,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             return dayNum;
         }
         
+        @Override
         public int getNumFiles() {
             return files.size();
         }
@@ -738,6 +828,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
             }
             ye.add(file, month, day);
         }
+        
+        scan.close();
 
         return years;
     }
@@ -751,79 +843,80 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         // Get report path
-        String bodyFilePath = currentCase.getCaseDirectory() + java.io.File.separator + "temp"
+        String bodyFilePath = moduleDir.getAbsolutePath()
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
-        ResultSet rs = null;
+        String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
+                + "AND name != '.' "
+                + "AND name != '..'";
+        List<FsContent> fs = Collections.EMPTY_LIST;
         try {
-            // exclude non-fs files/dirs and . and .. files
-            rs = skCase.runQuery("SELECT * FROM tsk_files "
-                    + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-                    + "AND name != '.' "
-                    + "AND name != '..'");
-            List<FsContent> fs = skCase.resultSetToFsContents(rs);
-            // Loop files and write info to report
-            for (FsContent file : fs) {
-
-                BufferedWriter out = null;
-                try {
-                    // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
-                    out = new BufferedWriter(new FileWriter(bodyFilePath, true));
-
-                    if (file.getMd5Hash() != null) {
-                        out.write(file.getMd5Hash());
-                    }
-                    out.write("|");
-                    if (file.getUniquePath() != null) {
-                        out.write(file.getUniquePath());
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getMetaAddr()));
-                    out.write("|");
-                    String modeString = file.getModesAsString();
-                    if (modeString != null) {
-                        out.write(modeString);
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getId()));
-                    out.write("|");
-                    out.write(Long.toString(file.getGid()));
-                    out.write("|");
-                    out.write(Long.toString(file.getSize()));
-                    out.write("|");
-                    out.write(Long.toString(file.getAtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getMtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCrtime()));
-                    out.write("\n");
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
-                } finally {
-                    try {
-                        out.flush();
-                        out.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
-                    }
-                }
-            }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Failed to get all file information.", ex);
+            fs = skCase.findFilesWhere(filesAndDirs);
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
-        } finally {
-            try {// Close the query
-                if (rs != null) {
-                    skCase.closeRunQuery(rs);
+            Exceptions.printStackTrace(ex);
+        }
+
+        // Loop files and write info to report
+        BufferedWriter out = null;
+        try {
+            out = new BufferedWriter(new FileWriter(bodyFilePath, true));
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Could not create new BufferedWriter for body file.", ex);
+        }
+        for (FsContent file : fs) {
+            try {
+                // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
+                //out = new BufferedWriter(new FileWriter(bodyFilePath, true));
+
+                if (file.getMd5Hash() != null) {
+                    out.write(file.getMd5Hash());
                 }
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to close the query.", ex);
+                out.write("|");
+                String path = "";
+                try {
+                    path = file.getUniquePath();
+                } catch (TskCoreException e) {
+                    logger.log(Level.WARNING, "Failed to get the unique path.", e);
+                }
+
+                out.write(path);
+
+                out.write("|");
+                out.write(Long.toString(file.getMetaAddr()));
+                out.write("|");
+                String modeString = file.getModesAsString();
+                if (modeString != null) {
+                    out.write(modeString);
+                }
+                out.write("|");
+                out.write(Long.toString(file.getId()));
+                out.write("|");
+                out.write(Long.toString(file.getGid()));
+                out.write("|");
+                out.write(Long.toString(file.getSize()));
+                out.write("|");
+                out.write(Long.toString(file.getAtime()));
+                out.write("|");
+                out.write(Long.toString(file.getMtime()));
+                out.write("|");
+                out.write(Long.toString(file.getCtime()));
+                out.write("|");
+                out.write(Long.toString(file.getCrtime()));
+                out.write("\n");
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Probelm while trying to write data to the body file.", ex);
+                break;
             }
         }
+        
+        try {
+            out.flush();
+            out.close();
+        } catch (IOException ex1) {
+            logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
+        }
+
         return bodyFilePath;
     }
 
@@ -832,20 +925,23 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         final String machome = macRoot.getAbsolutePath();
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
+            macpath = PlatformUtil.getOSFilePath(macpath);
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
-        String macfile = Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "temp" + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
-            String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
-            try {
-                JavaSystemCaller.Exec.execute("\"" + command + "\"");
-                return macfile;
-            } catch (InterruptedException ie) {
-                logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
-            } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
-            }
-        return null;
+        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
+        macfile = PlatformUtil.getOSFilePath(macfile);
+        String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
+        try {
+            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+        } catch (InterruptedException ie) {
+            logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
+            return null;
+        } catch (IOException ioe) {
+            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
+            return null;
+        }
+        return macfile;
     }
 
     @Override
@@ -853,38 +949,56 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar {
         return Case.isCaseOpen();
     }
 
-    
-
-
     @Override
     public void performAction() {
-        if(!Case.existsCurrentCase()){
-            return; 
-        } 
-      else {
-            try {
-             if(Case.getCurrentCase().getImages().isEmpty()){
-            logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+        if (!Case.existsCurrentCase()) {
+            return;
         }
-        else if(IngestManager.getDefault().isIngestRunning()){
-            int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
-            if (i != JOptionPane.YES_OPTION){
-                return;
-            }
-        }
-        else{
+
+        try {
+            if (Case.getCurrentCase().getImages().isEmpty()) {
+                logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+            } else if (IngestManager.getDefault().isIngestRunning()) {
+                int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
+                if (i != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
+                
+                Platform.setImplicitExit(false);
+                
+                // listen for case changes (specifically images being added).
+                Case currcase = Case.getCurrentCase();
+                if (currcase != null && !listeningToAddImage) {
+                    currcase.addPropertyChangeListener(this);
+                    listeningToAddImage = true;
+                }
+                
+                // initialize mactimeFileName
+                mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
+                
+                // see if data has been added to the database since the last
+                // time timeline ran
+                long objId = Case.getCurrentCase().getSleuthkitCase().getLastObjectId();
+                if (objId != lastObjectId && lastObjectId != -1) {
+                    clearMactimeData();
+                }
+                lastObjectId = objId;
+
                 customizeSwing();
                 customize();
-        }} catch (TskCoreException ex) {
-             Exceptions.printStackTrace(ex);
-         }
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
+        
+        
     }
 
     @Override
     public String getName() {
-        return "Make Timeline";
+        return "Make Timeline (Beta)";
     }
 
     @Override

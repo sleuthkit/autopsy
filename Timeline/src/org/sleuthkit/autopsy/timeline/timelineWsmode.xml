@@ -5,8 +5,8 @@
 
 <mode version="2.3">
     <name unique="timeline" />
-    <kind type="view" />  <!-- modal -->
-  <!-- <kind type="editor" /> -->  <!-- non-modal -->
+    <!--<kind type="view" /> --> <!-- modal -->
+    <kind type="editor" />  <!-- non-modal -->
   <state type="separated" />
    <constraints>
     <path orientation="horizontal" number="100" weight="0.5"/>

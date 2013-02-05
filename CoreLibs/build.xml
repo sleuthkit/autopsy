@@ -53,8 +53,8 @@
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-    </target>
+        <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+	</target>
     
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
         <!-- overrode depends attribute -->
