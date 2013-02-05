@@ -157,6 +157,17 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * Sets content viewer to the custom one.
+     * Needs to be done before the first call to open()
+     * @param customContentViewer 
+     */
+    public void setContentViewer(DataContent customContentViewer) {
+        this.customContentViewer = customContentViewer;
+    }
+    
+    
+
+    /**
      * Initializes the panel internals and activates it.
      * Call it within your top component when it is opened.
      * Do not use if used one of the factory methods to create and open the component.
