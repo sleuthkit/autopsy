@@ -105,9 +105,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.customContentViewer = customContentViewer; 
     }
     
-    public void setContentViewer(DataContent contentViewer) {
-        this.customContentViewer = contentViewer;
-    }
 
     /**
      * Factory method to create, customize and open a new custom data result panel.
