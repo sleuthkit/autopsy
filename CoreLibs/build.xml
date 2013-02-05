@@ -51,7 +51,8 @@
         
     
     <target name="retrieve-deps-local" description="build library dependencies that are stored local-only"> 
-        <!-- sigar: javafx, note: this a workaround, needs to match the one from jre/jdk and ideally be automatically included -->
+        <!-- javafx: note: this a workaround, needs to match the one from jre/jdk and ideally be automatically included -->
+        <!-- javafx native libs are always on runtime classpath from jre -->
         <copy file="${thirdparty.dir}/jfxrt/1.7.11/jfxrt.jar" todir="release/modules/ext/" />
     </target>
     
