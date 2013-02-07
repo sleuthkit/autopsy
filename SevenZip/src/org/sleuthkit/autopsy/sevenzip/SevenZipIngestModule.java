@@ -234,7 +234,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 
                 //TODO get file mac times and add to db
 
-                final String localFileRelPath = file.getId() + File.separator + extractedPath; //TODO check if ok using ID of parent file 
+                final String localFileRelPath = file.getName() + "_" + file.getId() + File.separator + extractedPath; 
                 final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
 
