@@ -37,6 +37,85 @@
                 <package>com.google.gson.reflect</package>
                 <package>com.sun.activation.registries</package>
                 <package>com.sun.activation.viewers</package>
+                <package>com.sun.browser.plugin</package>
+                <package>com.sun.deploy.uitoolkit.impl.fx</package>
+                <package>com.sun.deploy.uitoolkit.impl.fx.ui</package>
+                <package>com.sun.deploy.uitoolkit.impl.fx.ui.resources</package>
+                <package>com.sun.glass.events</package>
+                <package>com.sun.glass.ui</package>
+                <package>com.sun.glass.ui.delegate</package>
+                <package>com.sun.glass.ui.gtk</package>
+                <package>com.sun.glass.ui.mac</package>
+                <package>com.sun.glass.ui.win</package>
+                <package>com.sun.glass.ui.x11</package>
+                <package>com.sun.glass.utils</package>
+                <package>com.sun.javafx</package>
+                <package>com.sun.javafx.animation</package>
+                <package>com.sun.javafx.animation.transition</package>
+                <package>com.sun.javafx.applet</package>
+                <package>com.sun.javafx.application</package>
+                <package>com.sun.javafx.beans</package>
+                <package>com.sun.javafx.beans.annotations</package>
+                <package>com.sun.javafx.beans.event</package>
+                <package>com.sun.javafx.binding</package>
+                <package>com.sun.javafx.charts</package>
+                <package>com.sun.javafx.collections</package>
+                <package>com.sun.javafx.collections.annotations</package>
+                <package>com.sun.javafx.collections.transformation</package>
+                <package>com.sun.javafx.css</package>
+                <package>com.sun.javafx.css.converters</package>
+                <package>com.sun.javafx.css.parser</package>
+                <package>com.sun.javafx.cursor</package>
+                <package>com.sun.javafx.effect</package>
+                <package>com.sun.javafx.embed</package>
+                <package>com.sun.javafx.event</package>
+                <package>com.sun.javafx.font</package>
+                <package>com.sun.javafx.fxml</package>
+                <package>com.sun.javafx.fxml.builder</package>
+                <package>com.sun.javafx.fxml.expression</package>
+                <package>com.sun.javafx.geom</package>
+                <package>com.sun.javafx.geom.transform</package>
+                <package>com.sun.javafx.iio</package>
+                <package>com.sun.javafx.iio.bmp</package>
+                <package>com.sun.javafx.iio.common</package>
+                <package>com.sun.javafx.iio.gif</package>
+                <package>com.sun.javafx.iio.jpeg</package>
+                <package>com.sun.javafx.iio.png</package>
+                <package>com.sun.javafx.image</package>
+                <package>com.sun.javafx.image.impl</package>
+                <package>com.sun.javafx.jmx</package>
+                <package>com.sun.javafx.logging</package>
+                <package>com.sun.javafx.menu</package>
+                <package>com.sun.javafx.perf</package>
+                <package>com.sun.javafx.property</package>
+                <package>com.sun.javafx.property.adapter</package>
+                <package>com.sun.javafx.robot</package>
+                <package>com.sun.javafx.robot.impl</package>
+                <package>com.sun.javafx.runtime</package>
+                <package>com.sun.javafx.runtime.async</package>
+                <package>com.sun.javafx.runtime.eula</package>
+                <package>com.sun.javafx.scene</package>
+                <package>com.sun.javafx.scene.control</package>
+                <package>com.sun.javafx.scene.control.behavior</package>
+                <package>com.sun.javafx.scene.control.skin</package>
+                <package>com.sun.javafx.scene.control.skin.resources</package>
+                <package>com.sun.javafx.scene.input</package>
+                <package>com.sun.javafx.scene.layout.region</package>
+                <package>com.sun.javafx.scene.paint</package>
+                <package>com.sun.javafx.scene.shape</package>
+                <package>com.sun.javafx.scene.text</package>
+                <package>com.sun.javafx.scene.transform</package>
+                <package>com.sun.javafx.scene.traversal</package>
+                <package>com.sun.javafx.scene.web</package>
+                <package>com.sun.javafx.scene.web.behavior</package>
+                <package>com.sun.javafx.scene.web.skin</package>
+                <package>com.sun.javafx.sg</package>
+                <package>com.sun.javafx.sg.prism</package>
+                <package>com.sun.javafx.stage</package>
+                <package>com.sun.javafx.tk</package>
+                <package>com.sun.javafx.tk.desktop</package>
+                <package>com.sun.javafx.tk.quantum</package>
+                <package>com.sun.javafx.util</package>
                 <package>com.sun.jna</package>
                 <package>com.sun.jna.platform</package>
                 <package>com.sun.jna.platform.dnd</package>
@@ -55,6 +134,100 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
+                <package>com.sun.media.jfxmedia</package>
+                <package>com.sun.media.jfxmedia.control</package>
+                <package>com.sun.media.jfxmedia.effects</package>
+                <package>com.sun.media.jfxmedia.events</package>
+                <package>com.sun.media.jfxmedia.locator</package>
+                <package>com.sun.media.jfxmedia.logging</package>
+                <package>com.sun.media.jfxmedia.track</package>
+                <package>com.sun.media.jfxmediaimpl</package>
+                <package>com.sun.media.jfxmediaimpl.platform</package>
+                <package>com.sun.media.jfxmediaimpl.platform.gstreamer</package>
+                <package>com.sun.media.jfxmediaimpl.platform.java</package>
+                <package>com.sun.media.jfxmediaimpl.platform.osx</package>
+                <package>com.sun.openpisces</package>
+                <package>com.sun.prism</package>
+                <package>com.sun.prism.camera</package>
+                <package>com.sun.prism.d3d</package>
+                <package>com.sun.prism.image</package>
+                <package>com.sun.prism.impl</package>
+                <package>com.sun.prism.impl.packrect</package>
+                <package>com.sun.prism.impl.paint</package>
+                <package>com.sun.prism.impl.ps</package>
+                <package>com.sun.prism.impl.shape</package>
+                <package>com.sun.prism.j2d</package>
+                <package>com.sun.prism.j2d.paint</package>
+                <package>com.sun.prism.paint</package>
+                <package>com.sun.prism.ps</package>
+                <package>com.sun.prism.render</package>
+                <package>com.sun.prism.shader</package>
+                <package>com.sun.prism.shape</package>
+                <package>com.sun.prism.tkal</package>
+                <package>com.sun.prism.util.tess</package>
+                <package>com.sun.prism.util.tess.impl.tess</package>
+                <package>com.sun.scenario</package>
+                <package>com.sun.scenario.animation</package>
+                <package>com.sun.scenario.animation.shared</package>
+                <package>com.sun.scenario.effect</package>
+                <package>com.sun.scenario.effect.impl</package>
+                <package>com.sun.scenario.effect.impl.hw</package>
+                <package>com.sun.scenario.effect.impl.hw.d3d</package>
+                <package>com.sun.scenario.effect.impl.prism</package>
+                <package>com.sun.scenario.effect.impl.prism.ps</package>
+                <package>com.sun.scenario.effect.impl.prism.sw</package>
+                <package>com.sun.scenario.effect.impl.state</package>
+                <package>com.sun.scenario.effect.impl.sw</package>
+                <package>com.sun.scenario.effect.impl.sw.java</package>
+                <package>com.sun.scenario.effect.impl.sw.sse</package>
+                <package>com.sun.scenario.effect.light</package>
+                <package>com.sun.t2k</package>
+                <package>com.sun.webpane.perf</package>
+                <package>com.sun.webpane.platform</package>
+                <package>com.sun.webpane.platform.event</package>
+                <package>com.sun.webpane.platform.graphics</package>
+                <package>com.sun.webpane.sg</package>
+                <package>com.sun.webpane.sg.prism</package>
+                <package>com.sun.webpane.sg.prism.theme</package>
+                <package>com.sun.webpane.sg.theme</package>
+                <package>com.sun.webpane.webkit</package>
+                <package>com.sun.webpane.webkit.dom</package>
+                <package>com.sun.webpane.webkit.network</package>
+                <package>com.sun.webpane.webkit.network.about</package>
+                <package>com.sun.webpane.webkit.network.data</package>
+                <package>com.sun.webpane.webkit.unicode</package>
+                <package>javafx.animation</package>
+                <package>javafx.application</package>
+                <package>javafx.beans</package>
+                <package>javafx.beans.binding</package>
+                <package>javafx.beans.property</package>
+                <package>javafx.beans.property.adapter</package>
+                <package>javafx.beans.value</package>
+                <package>javafx.collections</package>
+                <package>javafx.concurrent</package>
+                <package>javafx.embed.swing</package>
+                <package>javafx.embed.swt</package>
+                <package>javafx.event</package>
+                <package>javafx.fxml</package>
+                <package>javafx.geometry</package>
+                <package>javafx.scene</package>
+                <package>javafx.scene.canvas</package>
+                <package>javafx.scene.chart</package>
+                <package>javafx.scene.control</package>
+                <package>javafx.scene.control.cell</package>
+                <package>javafx.scene.effect</package>
+                <package>javafx.scene.image</package>
+                <package>javafx.scene.input</package>
+                <package>javafx.scene.layout</package>
+                <package>javafx.scene.media</package>
+                <package>javafx.scene.paint</package>
+                <package>javafx.scene.shape</package>
+                <package>javafx.scene.text</package>
+                <package>javafx.scene.transform</package>
+                <package>javafx.scene.web</package>
+                <package>javafx.stage</package>
+                <package>javafx.util</package>
+                <package>javafx.util.converter</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -638,6 +811,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/AppleJavaExtensions-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxrt.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxrt.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>

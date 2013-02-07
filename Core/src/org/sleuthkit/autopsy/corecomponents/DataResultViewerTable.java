@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        ov.setAllowedDropActions(DnDConstants.ACTION_NONE );
+        ov.setAllowedDropActions(DnDConstants.ACTION_NONE);
 
         // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -85,10 +86,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     @Override
     public void nodeSelected(Node selectedNode) {
-
     }
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -246,7 +244,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 em.setRootContext(root);
 
 
-                OutlineView ov = ((OutlineView) this.tableScrollPanel);
+                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
                 propertiesAcc.clear();
 
@@ -296,9 +294,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 int startColumn = 1;
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-                // get the fontmetrics
-                //FontMetrics metrics = ttv.getGraphics().getFontMetrics();
-                FontMetrics metrics = ov.getGraphics().getFontMetrics();
+
 
                 // get first 100 rows values for the table
                 Object[][] content = null;
@@ -306,6 +302,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
                 if (content != null) {
+                    // get the fontmetrics
+                    final Graphics graphics = ov.getGraphics();
+                    final FontMetrics metrics = graphics.getFontMetrics();
+
                     // for the "Name" column
                     int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
                     ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
@@ -315,6 +315,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
                         ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                     }
+                    
                 }
 
                 // if there's no content just auto resize all columns
@@ -324,10 +325,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
 
             } else {
+                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
-                ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                ((OutlineView) this.tableScrollPanel).setPropertyColumns(); // set the empty property header
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                ov.setPropertyColumns(); // set the empty property header
             }
         } finally {
             this.setCursor(null);
@@ -436,6 +438,4 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
 
     }
-
-  
 }

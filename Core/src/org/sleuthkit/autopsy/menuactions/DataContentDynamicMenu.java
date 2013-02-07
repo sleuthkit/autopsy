@@ -41,12 +41,11 @@ public class DataContentDynamicMenu extends JMenuItem implements DynamicMenuCont
         List<DataContentTopComponent> newWindowLists = DataContentTopComponent.getNewWindowList();
 
         // Get DataContent provider to include in the menu
-        DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
         int totalItems = newWindowLists.size() > 0 ? 2 : 1;
         JComponent[] comps = new JComponent[totalItems];
         int counter = 0;
         
-        TopComponent contentWin = dataContent.getTopComponent();
+        TopComponent contentWin = DataContentTopComponent.findInstance();
         JMenuItem defaultItem = new JMenuItem(contentWin.getName()); // set the main name
 
         defaultItem.addActionListener(new OpenTopComponentAction(contentWin));

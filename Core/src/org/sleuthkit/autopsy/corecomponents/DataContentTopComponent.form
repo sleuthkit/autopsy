@@ -16,27 +16,17 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="dataContentTabbedPane" alignment="0" pref="800" max="32767" attributes="0"/>
+          <Component id="dataContentPanel1" alignment="0" pref="585" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="dataContentTabbedPane" alignment="0" pref="360" max="32767" attributes="0"/>
+          <Component id="dataContentPanel1" alignment="0" pref="435" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JTabbedPane" name="dataContentTabbedPane">
-      <Properties>
-        <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[700, 5]"/>
-        </Property>
-      </Properties>
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
-    </Container>
+    <Component class="org.sleuthkit.autopsy.corecomponents.DataContentPanel" name="dataContentPanel1">
+    </Component>
   </SubComponents>
 </Form>
