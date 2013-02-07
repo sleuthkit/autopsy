@@ -66,8 +66,21 @@ public class SevenZipContentReadStream implements IInStream {
 
     @Override
     public int read(byte[] bytes) throws SevenZipException {
+    //Reads at least 1 and maximum data.length from the in-stream. 
+    //If data.length == 0 0 should be returned. 
+    //If data.length != 0, then return value 0 indicates end-of-stream (EOF). This means no more bytes can be read from the stream.
+    //This function is allowed to read less than number of remaining bytes in stream and less then data.length. 
+        if (bytes.length == 0) {
+            return 0;
+        }
+        
         try {
-            return wrapped.read(bytes);
+            int readBytes =  wrapped.read(bytes);
+            if (readBytes < 1) {
+                return 0;
+            }
+            return readBytes;
+            
         } catch (IOException ex) {
             String msg = "Error reading content stream.";
             logger.log(Level.SEVERE, msg, ex);

@@ -41,9 +41,15 @@ import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,12 +69,12 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private String args;
     private IngestServices services;
     private volatile int messageID = 0;
-    private boolean processedFiles;
+    private int processedFiles = 0;
     private SleuthkitCase caseHandle = null;
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar",};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", }; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -130,8 +136,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
 
-        if (initialized == false) //error initializing indexing/Solr
-        {
+        if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
             return ProcessResult.OK;
         }
@@ -154,11 +159,12 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
 
         logger.log(Level.INFO, "Processing with 7ZIP: " + abstractFile.getName());
+        ++processedFiles;
 
 
         List<DerivedFile> unpacked = unpack(abstractFile);
         //TODO send event to dir tree
-        
+
         //TODO reschedule unpacked file for ingest
 
         //process, return error if occurred
@@ -175,29 +181,30 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private List<DerivedFile> unpack(AbstractFile file) {
         final List<DerivedFile> unpacked = new ArrayList<DerivedFile>();
 
+        boolean hasEncrypted = false;
+
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
+        
+        final ProgressHandle progress = ProgressHandleFactory.createHandle(MODULE_NAME + " Extracting Archive");
+        int processedItems = 0;
+
+        String compressMethod = null;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(file));
             inArchive = SevenZip.openInArchive(null, // autodetect archive type
                     stream);
 
+            int numItems = inArchive.getNumberOfItems();
             logger.log(Level.INFO, "Count of items in archive: " + file.getName() + ": "
-                    + inArchive.getNumberOfItems());
+                    + numItems);
+            progress.start(numItems);
+
 
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
             AbstractFile currentParent = file;
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
-                final boolean isDir = item.isFolder();
-                
                 final String extractedPath = item.getPath();
-                
-                final boolean isEncrypted = item.isEncrypted(); //TODO handle this
-                if (isEncrypted) {
-                    logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
-                    continue;
-                }
-
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
 
                 int lastSep = extractedPath.lastIndexOf("/\\");
@@ -207,6 +214,26 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 } else {
                     fileName = extractedPath;
                 }
+
+                //update progress bar
+                progress.progress(file.getName() + ": " + fileName, processedItems);
+                
+                if (compressMethod == null) {
+                    compressMethod = item.getMethod();
+                }
+                final boolean isDir = item.isFolder();
+
+
+
+                final boolean isEncrypted = item.isEncrypted(); //TODO handle this
+                if (isEncrypted) {
+                    logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
+                    hasEncrypted = true;
+                    continue;
+                }
+                
+                //TODO get file mac times and add to db
+
                 final String localFileRelPath = file.getId() + File.separator + extractedPath; //TODO check if ok using ID of parent file 
                 final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
@@ -234,7 +261,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 try {
                     DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size, !isDir, currentParent, "", "", "", "");
                     unpacked.add(df);
-                    
+
                     if (isDir) {
                         //set the new parent for the next unzipped file
                         //assuming 7zip unzips top down TODO check
@@ -256,8 +283,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //TODO handle directories / hierarchy in unzipped file
 
 
-
-            }
+                //update units for progress bar
+                ++processedItems;
+            } //for every item in archive
 
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + file, ex);
@@ -277,6 +305,26 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + file, ex);
                 }
             }
+
+            //close progress bar
+            progress.finish();
+        }
+
+        //create artifact and send user message
+        if (hasEncrypted) {
+            try {
+                BlackboardArtifact generalInfo = file.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
+                generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
+                        MODULE_NAME, compressMethod));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + file, ex);
+            }
+
+            MessageNotifyUtil.Notify.info("Encrypted files in archive",
+                    "Some files in archive: " + file.getName() + " are encrypted. "
+                    + MODULE_NAME + " extractor was unable to extract all files from this archive.");
+
+            //TODO consider inbox message
         }
 
 
@@ -290,7 +338,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             return;
         }
 
-
+        //cleanup if any
 
     }
 
@@ -298,6 +346,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     public void stop() {
         logger.log(Level.INFO, "stop()");
 
+        //cleanup if any
 
     }
 
