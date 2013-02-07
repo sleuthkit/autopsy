@@ -18,8 +18,18 @@
  */
 package org.sleuthkit.autopsy.sevenzip;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import net.sf.sevenzipjbinding.ISequentialOutStream;
+import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -27,8 +37,15 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
+import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -52,6 +69,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar",};
+    private String unpackDir; //relative to the case, to store in db
+    private String unpackDirPath; //absolute, to extract to
+    private FileManager fileManager;
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -75,6 +95,23 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         services = IngestServices.getDefault();
         initialized = false;
 
+        final Case currentCase = Case.getCurrentCase();
+
+        unpackDir = currentCase.getModulesOutputDirectory() + File.separator + MODULE_NAME;
+        unpackDirPath = currentCase.getModulesOutputDirectoryPath() + File.separator + MODULE_NAME;
+
+        fileManager = currentCase.getServices().getFileManager();
+
+        File unpackDirPathFile = new File(unpackDirPath);
+        if (!unpackDirPathFile.exists()) {
+            try {
+                unpackDirPathFile.mkdirs();
+            } catch (SecurityException e) {
+                logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e);
+                MessageNotifyUtil.Notify.error("Error initializing " + MODULE_NAME, "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage());
+                return;
+            }
+        }
 
         try {
             SevenZip.initSevenZipFromPlatformJAR();
@@ -118,13 +155,132 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
         logger.log(Level.INFO, "Processing with 7ZIP: " + abstractFile.getName());
 
-        //process archive recursively, extract to case output folder 
 
-        //add derived files, send event
+        List<DerivedFile> unpacked = unpack(abstractFile);
+        //TODO send event to dir tree
+        
+        //TODO reschedule unpacked file for ingest
 
         //process, return error if occurred
 
         return ProcessResult.OK;
+    }
+
+    /**
+     * Unpack the file to local folder and return a list of derived files
+     *
+     * @param file file to unpack
+     * @return list of unpacked derived files
+     */
+    private List<DerivedFile> unpack(AbstractFile file) {
+        final List<DerivedFile> unpacked = new ArrayList<DerivedFile>();
+
+        ISevenZipInArchive inArchive = null;
+        SevenZipContentReadStream stream = null;
+        try {
+            stream = new SevenZipContentReadStream(new ReadContentInputStream(file));
+            inArchive = SevenZip.openInArchive(null, // autodetect archive type
+                    stream);
+
+            logger.log(Level.INFO, "Count of items in archive: " + file.getName() + ": "
+                    + inArchive.getNumberOfItems());
+
+            final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
+            AbstractFile currentParent = file;
+            for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
+                final boolean isDir = item.isFolder();
+                
+                final String extractedPath = item.getPath();
+                
+                final boolean isEncrypted = item.isEncrypted(); //TODO handle this
+                if (isEncrypted) {
+                    logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
+                    continue;
+                }
+
+                logger.log(Level.INFO, "Extracted item path: " + extractedPath);
+
+                int lastSep = extractedPath.lastIndexOf("/\\");
+                String fileName;
+                if (lastSep != -1) {
+                    fileName = extractedPath.substring(lastSep);
+                } else {
+                    fileName = extractedPath;
+                }
+                final String localFileRelPath = file.getId() + File.separator + extractedPath; //TODO check if ok using ID of parent file 
+                final String localRelPath = unpackDir + File.separator + localFileRelPath;
+                final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
+
+                File f = new java.io.File(localAbsPath);
+                if (!f.exists()) {
+                    try {
+                        if (isDir) {
+                            f.mkdirs();
+                        } else {
+                            f.getParentFile().mkdirs();
+                            try {
+                                f.createNewFile();
+                            } catch (IOException ex) {
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + f.getAbsolutePath(), ex);
+                            }
+                        }
+                    } catch (SecurityException e) {
+                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: " + extractedPath);
+                        //TODO consider bail out / msg to the user
+                    }
+                }
+
+                long size = item.getSize();
+                try {
+                    DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size, !isDir, currentParent, "", "", "", "");
+                    unpacked.add(df);
+                    
+                    if (isDir) {
+                        //set the new parent for the next unzipped file
+                        //assuming 7zip unzips top down TODO check
+                        currentParent = df;
+                    }
+
+
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error adding a derived file to db", ex);
+                    break;
+                }
+
+                //unpack
+                UnpackStream unpackStream = new UnpackStream(localAbsPath);
+                item.extractSlow(unpackStream);
+                unpackStream.close();
+
+
+                //TODO handle directories / hierarchy in unzipped file
+
+
+
+            }
+
+        } catch (SevenZipException ex) {
+            logger.log(Level.SEVERE, "Error unpacking file: " + file, ex);
+        } finally {
+            if (inArchive != null) {
+                try {
+                    inArchive.close();
+                } catch (SevenZipException e) {
+                    logger.log(Level.SEVERE, "Error closing archive: " + file, e);
+                }
+            }
+
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + file, ex);
+                }
+            }
+        }
+
+
+        return unpacked;
     }
 
     @Override
@@ -133,8 +289,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         if (initialized == false) {
             return;
         }
-        
-       
+
+
 
     }
 
@@ -221,5 +377,44 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
         }
         return false;
+    }
+
+    /**
+     * Stream used to unpack the archive to local file
+     */
+    private static class UnpackStream implements ISequentialOutStream {
+
+        private OutputStream output;
+        private String localAbsPath;
+
+        UnpackStream(String localAbsPath) {
+            try {
+                output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex);
+            }
+
+        }
+
+        @Override
+        public int write(byte[] bytes) throws SevenZipException {
+            try {
+                output.write(bytes);
+            } catch (IOException ex) {
+                throw new SevenZipException("Error writing unpacked file to: " + localAbsPath, ex);
+            }
+            return bytes.length;
+        }
+
+        public void close() {
+            if (output != null) {
+                try {
+                    output.flush();
+                    output.close();
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Error closing unpack stream for file: " + localAbsPath);
+                }
+            }
+        }
     }
 }
