@@ -542,10 +542,14 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
          * Get the root file objects (after createDerivedFiles() ) of this tree,
          * so that they can be rescheduled.
          *
-         * @return root objects of this tree
+         * @return root objects of this unpacked tree
          */
         List<AbstractFile> getRootObjects() {
-            return null;
+            List<AbstractFile> ret = new ArrayList<AbstractFile>();
+            for (Data child : root.children) {
+                ret.add(child.getFile());
+            }
+            return ret;
         }
 
         /**
