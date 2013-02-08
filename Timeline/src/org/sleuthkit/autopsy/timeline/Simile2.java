@@ -68,6 +68,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -175,8 +176,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
         //ComboJPanel holds both of the above JPanels together,
         //aligned vertically (Y_AXIS)
-        final JPanel comboJPanel = new JPanel();
-        comboJPanel.setLayout(new BoxLayout(comboJPanel, BoxLayout.Y_AXIS));
+        
+        // create a horizontal split pane
+        final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
+        splitPane.setDividerLocation(450);
 
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
@@ -289,13 +292,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     viewerJPanel.add(dataContentPanel);
                     chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    comboJPanel.add(chartJPanel);
-                    comboJPanel.add(viewerJPanel);
 
                     chart_TopLevel = createYearChartWithDrill(data);
                     chart_Events = chart_TopLevel;
                     scroll_Events.setContent(chart_Events);
-                    jf.add(comboJPanel);
+
+                    jf.add(splitPane);
                     jf.setVisible(true);
                 } finally {
                     // stop the progress bar
@@ -1010,8 +1012,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }
-        
-        
     }
 
     @Override
