@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.sevenzip;
 
+import com.google.common.collect.Lists;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -74,7 +75,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", }; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar",}; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -175,74 +176,97 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     /**
      * Unpack the file to local folder and return a list of derived files
      *
-     * @param file file to unpack
+     * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    private List<DerivedFile> unpack(AbstractFile file) {
+    private List<DerivedFile> unpack(AbstractFile archiveFile) {
         final List<DerivedFile> unpacked = new ArrayList<DerivedFile>();
 
         boolean hasEncrypted = false;
 
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
-        
+
         final ProgressHandle progress = ProgressHandleFactory.createHandle(MODULE_NAME + " Extracting Archive");
         int processedItems = 0;
 
         String compressMethod = null;
         try {
-            stream = new SevenZipContentReadStream(new ReadContentInputStream(file));
+            stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
             inArchive = SevenZip.openInArchive(null, // autodetect archive type
                     stream);
 
             int numItems = inArchive.getNumberOfItems();
-            logger.log(Level.INFO, "Count of items in archive: " + file.getName() + ": "
+            logger.log(Level.INFO, "Count of items in archive: " + archiveFile.getName() + ": "
                     + numItems);
             progress.start(numItems);
 
 
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
-            AbstractFile currentParent = file;
+            AbstractFile currentParent = archiveFile;
+
+            //setup the archive local root folder
+            String localRootPath = archiveFile.getName() + "_" + archiveFile.getId();
+            String localRootAbsPath = unpackDirPath + File.separator + localRootPath;
+            File localRoot = new File(localRootAbsPath);
+            if (!localRoot.exists()) {
+                try {
+                    localRoot.mkdirs();
+                } catch (SecurityException e) {
+                    logger.log(Level.SEVERE, "Error setting up output path for archive root: " + localRootAbsPath);
+                    //bail
+                    return unpacked;
+                }
+            }
+
+            //initialize tree hierarchy to keep track of unpacked file structure
+            UnpackedTree uTree = new UnpackedTree(archiveFile);
+
+            //unpack and process every item in archive
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
                 final String extractedPath = item.getPath();
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
 
-                int lastSep = extractedPath.lastIndexOf("/\\");
-                String fileName;
-                if (lastSep != -1) {
-                    fileName = extractedPath.substring(lastSep);
-                } else {
-                    fileName = extractedPath;
-                }
+                //int lastSep = extractedPath.lastIndexOf("/\\");
+                //String fileName;
+                //if (lastSep != -1) {
+                //  fileName = extractedPath.substring(lastSep);
+                //} else {
+                //  fileName = extractedPath;
+                //}
+
+                //find this node in the hierarchy, create if needed
+                UnpackedTree.Data uNode = uTree.find(extractedPath);
+                String fileName = uNode.fileName;
 
                 //update progress bar
-                progress.progress(file.getName() + ": " + fileName, processedItems);
-                
+                progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
+
                 if (compressMethod == null) {
                     compressMethod = item.getMethod();
                 }
                 final boolean isDir = item.isFolder();
-
-
-
-                final boolean isEncrypted = item.isEncrypted(); //TODO handle this
+                final boolean isEncrypted = item.isEncrypted();
                 if (isEncrypted) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
                     hasEncrypted = true;
                     continue;
                 }
-                
+
                 //TODO get file mac times and add to db
 
-                final String localFileRelPath = file.getName() + "_" + file.getId() + File.separator + extractedPath; 
+                final String localFileRelPath = localRootPath + File.separator + extractedPath;
                 final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
 
+
                 File f = new java.io.File(localAbsPath);
+                //we can assume 7zip gives us dirs in top-bottom order
                 if (!f.exists()) {
                     try {
                         if (isDir) {
                             f.mkdirs();
+                            //f.mkdir();
                         } else {
                             f.getParentFile().mkdirs();
                             try {
@@ -259,14 +283,15 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
                 long size = item.getSize();
                 try {
-                    DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size, !isDir, currentParent, "", "", "", "");
+                    DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size, !isDir, uNode.getParent().file, "", "", "", "");
                     unpacked.add(df);
+                    uNode.setFile(df);
 
-                    if (isDir) {
-                        //set the new parent for the next unzipped file
-                        //assuming 7zip unzips top down TODO check
-                        currentParent = df;
-                    }
+                    //if (isDir) {
+                    //set the new parent for the next unzipped file
+                    //assuming 7zip unzips top down TODO check
+                    //  currentParent = df;
+                    //}
 
 
                 } catch (TskCoreException ex) {
@@ -275,10 +300,15 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 }
 
                 //unpack
-                UnpackStream unpackStream = new UnpackStream(localAbsPath);
-                item.extractSlow(unpackStream);
-                unpackStream.close();
-
+                UnpackStream unpackStream = null;
+                try {
+                    unpackStream = new UnpackStream(localAbsPath);
+                    item.extractSlow(unpackStream);
+                } finally {
+                    if (unpackStream != null) {
+                        unpackStream.close();
+                    }
+                }
 
                 //TODO handle directories / hierarchy in unzipped file
 
@@ -288,13 +318,13 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             } //for every item in archive
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: " + file, ex);
+            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex);
         } finally {
             if (inArchive != null) {
                 try {
                     inArchive.close();
                 } catch (SevenZipException e) {
-                    logger.log(Level.SEVERE, "Error closing archive: " + file, e);
+                    logger.log(Level.SEVERE, "Error closing archive: " + archiveFile, e);
                 }
             }
 
@@ -302,7 +332,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 try {
                     stream.close();
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + file, ex);
+                    logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + archiveFile, ex);
                 }
             }
 
@@ -313,15 +343,15 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         //create artifact and send user message
         if (hasEncrypted) {
             try {
-                BlackboardArtifact generalInfo = file.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
+                BlackboardArtifact generalInfo = archiveFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
                 generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
                         MODULE_NAME, compressMethod));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + file, ex);
+                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
 
             MessageNotifyUtil.Notify.info("Encrypted files in archive",
-                    "Some files in archive: " + file.getName() + " are encrypted. "
+                    "Some files in archive: " + archiveFile.getName() + " are encrypted. "
                     + MODULE_NAME + " extractor was unable to extract all files from this archive.");
 
             //TODO consider inbox message
@@ -463,6 +493,97 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Error closing unpack stream for file: " + localAbsPath);
                 }
+            }
+        }
+    }
+
+    /**
+     * Representation of local directory tree of unpacked archive. Used to track
+     * of local tree file hierarchy and files created to easily and reliably get
+     * parent AbstractFile for unpacked file. So that we don't have to depend on
+     * type of traversal of unpacked files handed to us by 7zip unpacker.
+     */
+    private static class UnpackedTree {
+
+        final Data root; //dummy root to hold children
+
+        UnpackedTree(AbstractFile archiveRoot) {
+            root = new Data();
+            root.file = archiveRoot;
+            root.fileName = archiveRoot.getName();
+        }
+
+        /**
+         * Tokenizes filePath passed in and traverses the dir structure,
+         * creating data nodes on the path way as needed
+         *
+         * @param filePath file path with 1 or more tokens separated by /
+         * @return child node for the last file token in the filePath
+         */
+        Data find(String filePath) {
+            String[] toks = filePath.split("\\/\\\\");
+            List<String> tokens = new ArrayList<String>();
+            for (int i = 0; i < toks.length; ++i) {
+                tokens.add(toks[i]);
+            }
+            return find(root, tokens);
+        }
+
+        /**
+         * recursive method that traverses the path
+         *
+         * @param tokenPath
+         * @return
+         */
+        private Data find(Data parent, List<String> tokenPath) {
+            //base case
+            if (tokenPath.isEmpty()) {
+                return parent;
+            }
+
+            String childName = tokenPath.remove(0); //step towards base case
+            Data child = parent.getChild(childName);
+            if (child == null) {
+                child = new Data();
+                child.fileName = childName;
+                child.parent = parent;
+                //new child derived file will be set by unpack() method
+                parent.children.add(child);
+            }
+            return find(child, tokenPath);
+
+        }
+
+        private static class Data {
+
+            String fileName;
+            AbstractFile file;
+            List<Data> children = new ArrayList<Data>();
+            Data parent;
+
+            Data getParent() {
+                return parent;
+            }
+
+            void setFile(AbstractFile file) {
+                this.file = file;
+            }
+
+            /**
+             * get child by name or null if it doesn't exist
+             *
+             * @param childFileName
+             * @return
+             */
+            Data getChild(String childFileName) {
+                Data ret = null;
+                for (Data child : children) {
+                    if (child.fileName.equals(childFileName)) {
+                        ret = child;
+                        break;
+                    }
+                }
+                return ret;
             }
         }
     }
