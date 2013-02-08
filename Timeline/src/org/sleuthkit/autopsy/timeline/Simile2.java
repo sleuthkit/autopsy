@@ -137,6 +137,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private List<YearEpoch> data;
     private boolean listeningToAddImage = false;
     private long lastObjectId = -1;
+    private TimelineProgressDialog dialog;
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -299,6 +300,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 } finally {
                     // stop the progress bar
                     progress.finish();
+                    
+                    // close the dialog
+                    dialog.doClose(0);
                 }
             }
         });
@@ -975,6 +979,15 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     listeningToAddImage = true;
                 }
                 
+                // create the modal dialog
+                SwingUtilities.invokeLater(new Runnable () {
+                    @Override
+                    public void run() {
+                        dialog = new TimelineProgressDialog(jf, true);
+                        dialog.setVisible(true);
+                    }
+                });
+
                 // initialize mactimeFileName
                 mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
                 
