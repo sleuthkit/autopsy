@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.sevenzip;
 
-import com.google.common.collect.Lists;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -163,7 +163,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         ++processedFiles;
 
 
-        List<DerivedFile> unpacked = unpack(abstractFile);
+        List<AbstractFile> unpackedFiles = unpack(abstractFile);
         //TODO send event to dir tree
 
         //TODO reschedule unpacked file for ingest
@@ -179,9 +179,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
      * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    private List<DerivedFile> unpack(AbstractFile archiveFile) {
-        final List<DerivedFile> unpacked = new ArrayList<DerivedFile>();
-
+    private List<AbstractFile> unpack(AbstractFile archiveFile) {
+        List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
+        
         boolean hasEncrypted = false;
 
         ISevenZipInArchive inArchive = null;
@@ -213,7 +213,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 } catch (SecurityException e) {
                     logger.log(Level.SEVERE, "Error setting up output path for archive root: " + localRootAbsPath);
                     //bail
-                    return unpacked;
+                    return unpackedFiles;
                 }
             }
 
@@ -294,6 +294,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
             try {
                 uTree.createDerivedFiles();
+                unpackedFiles = uTree.getAllFileObjects();
             } catch (TskCoreException e) {
                 logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure");
                 //TODO decide if should cleanup, for now bailing
@@ -340,7 +341,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         }
 
 
-        return unpacked;
+        return unpackedFiles;
     }
 
     @Override
@@ -508,7 +509,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<String>();
             for (int i = 0; i < toks.length; ++i) {
-                tokens.add(toks[i]);
+                if (! toks[i].isEmpty()) {
+                    tokens.add(toks[i]);
+                }
             }
             return find(root, tokens);
         }
@@ -544,12 +547,34 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
          *
          * @return root objects of this unpacked tree
          */
-        List<AbstractFile> getRootObjects() {
+        List<AbstractFile> getRootFileObjects() {
             List<AbstractFile> ret = new ArrayList<AbstractFile>();
             for (Data child : root.children) {
                 ret.add(child.getFile());
             }
             return ret;
+        }
+        
+        
+        /**
+         * Get the all file objects (after createDerivedFiles() ) of this tree,
+         * so that they can be rescheduled.
+         *
+         * @return all file objects of this unpacked tree
+         */
+        List<AbstractFile> getAllFileObjects() {
+            List<AbstractFile> ret = new ArrayList<AbstractFile>();
+            for (Data child : root.children) {
+                getAllFileObjectsRec(ret, child);
+            }
+            return ret;
+        }
+     
+        private void getAllFileObjectsRec(List<AbstractFile> list, Data parent) {
+            list.add(parent.getFile());
+            for (Data child : parent.children) {
+                getAllFileObjectsRec(list, child);
+            }
         }
 
         /**
