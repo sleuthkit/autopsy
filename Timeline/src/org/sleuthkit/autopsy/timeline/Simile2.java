@@ -970,6 +970,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             } else {
                 logger.log(Level.INFO, "Beginning generation of timeline");
                 
+                // if the timeline window is already open, do nothing
+                if (jf != null && jf.isVisible()) {
+                    return;
+                }
+                
                 Platform.setImplicitExit(false);
                 
                 // listen for case changes (specifically images being added).
