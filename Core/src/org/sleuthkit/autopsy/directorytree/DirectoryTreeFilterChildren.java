@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Children;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -115,7 +117,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         try {
             for (Content c : vol.getChildren()) {
-                if (! (c instanceof LayoutFile) ){
+                if (!(c instanceof LayoutFile)) {
                     ret = false;
                     break;
                 }
@@ -164,15 +166,39 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(DirectoryNode dn) {
             return isLeafDirectory(dn);
         }
-        
+
         @Override
         public Boolean visit(FileNode fn) {
-            return true; //return ! fn.hasContentChildren();
+            //is a leaf if has no children, or children are files not dirs
+            boolean hasChildren = fn.hasContentChildren();
+            if (!hasChildren) {
+                return true;
+            }
+            List<Content> derivedChildren = fn.getContentChildren();
+            //child of a file, must be a (derived) file too
+            for (Content childContent : derivedChildren) {
+                if (((AbstractFile) childContent).isDir()) {
+                    return false;
+                }
+            }
+            return true;
         }
-        
+
         @Override
         public Boolean visit(DerivedFileNode dfn) {
-            return true; //return ! dfn.hasContentChildren();
+            //is a leaf if has no children, or children are files not dirs
+            boolean hasChildren = dfn.hasContentChildren();
+            if (!hasChildren) {
+                return true;
+            }
+            List<Content> derivedChildren = dfn.getContentChildren();
+            //child of a file, must be a (derived) file too
+            for (Content childContent : derivedChildren) {
+                if (((AbstractFile) childContent).isDir()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override
@@ -200,7 +226,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(FileNode fn) {
             return fn.hasContentChildren();
         }
-        
+
         @Override
         public Boolean visit(DerivedFileNode dfn) {
             return dfn.hasContentChildren();
