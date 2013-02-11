@@ -146,11 +146,6 @@ public final class JavaSystemCaller {
             logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
 
             proc = rt.exec(aShell.getShellCommand() + " " + command);
-            try {
-                //give time to fully start the process
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-            }
 
             // any error message?
             final JavaSystemCaller.StreamGobbler errorGobbler = new JavaSystemCaller.StreamGobbler(proc.getErrorStream(), "ERROR");
