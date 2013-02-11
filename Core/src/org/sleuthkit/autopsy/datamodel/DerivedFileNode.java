@@ -7,8 +7,10 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Node for a DerivedFile content object.
@@ -25,7 +27,14 @@ public class DerivedFileNode  extends AbstractAbstractFileNode<DerivedFile> {
         super(df);
 
         this.setDisplayName(df.getName());
-        this.setIconBaseWithExtension(FileNode.getIconForFileType(df));
+        
+         // set name, display name, and icon
+        if (df.isDir()) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+        } else {
+            this.setIconBaseWithExtension(FileNode.getIconForFileType(df));
+        }
+        
     }
 
     @Override
@@ -68,8 +77,10 @@ public class DerivedFileNode  extends AbstractAbstractFileNode<DerivedFile> {
 
     @Override
     public boolean isLeafTypeNode() {
-        return true;
+        return true; //!this.hasContentChildren();
     }
+    
+    
     
 
 }
