@@ -215,8 +215,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
                         String bodyFilePath = makeBodyFile();
-                        String mactimePath = makeMacTime(bodyFilePath);
-                        mactimeFile = new java.io.File(mactimePath);
+                        makeMacTime(bodyFilePath);
                         data = null;
                     } else {
                         logger.log(Level.INFO, "mactime file already exists; parsing that.");
@@ -935,7 +934,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
-        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + Case.getCurrentCase().getName() + "-MACTIME.txt";
+        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
         macfile = PlatformUtil.getOSFilePath(macfile);
         String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
         try {
