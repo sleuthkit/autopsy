@@ -573,6 +573,26 @@ public class Case {
         return "ModuleOutput";
     }
 
+     /**
+     * Get absolute module output directory path where modules should save their permanent data
+     * The directory is a subdirectory of this case dir.
+     * @return absolute path to the module output dir
+     */
+    public String getModulesOutputDirectoryPath() {
+        return this.getCaseDirectory() + File.separator + getModulesOutputDirectory();
+    }
+    
+     
+    /**
+     * Get relative (with respect to case dir)
+     * module output directory path where modules should save their permanent data
+     * The directory is a subdirectory of this case dir.
+     * @return relative path to the module output dir
+     */
+    public String getModulesOutputDirectory() {
+        return "ModuleOutput";
+    }
+    
     /**
      * get the PropertyChangeSupport of this class
      * @return PropertyChangeSupport
