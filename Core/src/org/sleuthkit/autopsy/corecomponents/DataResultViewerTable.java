@@ -304,18 +304,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (content != null) {
                     // get the fontmetrics
                     final Graphics graphics = ov.getGraphics();
-                    final FontMetrics metrics = graphics.getFontMetrics();
+                    if (graphics != null) {
+                        final FontMetrics metrics = graphics.getFontMetrics();
 
-                    // for the "Name" column
-                    int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
-                    ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
+                        // for the "Name" column
+                        int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
+                        ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
 
-                    // get the max for each other column
-                    for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
-                        int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
-                        ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
+                        // get the max for each other column
+                        for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
+                            int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
+                            ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
+                        }
                     }
-                    
                 }
 
                 // if there's no content just auto resize all columns
