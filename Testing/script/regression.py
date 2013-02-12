@@ -633,7 +633,7 @@ def compare_to_gold_html():
         if os.path.isdir(os.path.join(os.getcwd(), case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
             htmlfolder = fs
     autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder) #, "AutopsyTestCase", "Reports", htmlfolder)
-    print autopsy_html_path                                
+    print(autopsy_html_path)
     
     
     try:
@@ -1262,7 +1262,7 @@ def vsBuild():
     vs.append("/p:configuration=release")
     vs.append("/p:platform=win32")
     vs.append("/t:rebuild")
-    print vs
+    print(vs)
     subprocess.call(vs)
     
  

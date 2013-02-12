@@ -24,6 +24,7 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -35,7 +36,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -116,10 +116,13 @@ public class RegressionTest extends TestCase{
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
-        jbo.clickMouse();
+        jbo.push();
     }
     
-    public void testNewCaseWizard() {
+    public void testNewCaseWizard() throws IOException {
+        FileWriter outp = new FileWriter("C:\\log.txt");
+        outp.write("got to 124");
+        outp.flush();
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
         JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 1);
