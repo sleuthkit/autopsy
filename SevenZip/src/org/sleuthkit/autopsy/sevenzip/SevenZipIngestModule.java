@@ -79,7 +79,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
-    
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
     private static final String ENCRYPTION_FULL = "Full Encryption";
@@ -185,7 +184,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
      */
     private List<AbstractFile> unpack(AbstractFile archiveFile) {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        
+
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
 
@@ -233,7 +232,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //find this node in the hierarchy, create if needed
                 UnpackedTree.Data uNode = uTree.find(extractedPath);
                 String fileName = uNode.getFileName();
-              
+
                 //update progress bar
                 progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
 
@@ -246,8 +245,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
                     hasEncrypted = true;
                     continue;
-                }
-                else {
+                } else {
                     fullEncryption = false;
                 }
 
@@ -257,20 +255,20 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
 
-                File f = new java.io.File(localAbsPath);
+                //create local dirs and empty files before extracted
+                File localFile = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
-              
-                if (f.exists()) {
+                if (!localFile.exists()) {
                     //TODO check, might give file locking issues, since 7zip is writing to these dirs
                     try {
                         if (isDir) {
-                            f.mkdirs();
+                            localFile.mkdirs();
                         } else {
-                            f.getParentFile().mkdirs();
+                            localFile.getParentFile().mkdirs();
                             try {
-                                f.createNewFile();
+                                localFile.createNewFile();
                             } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + f.getAbsolutePath(), ex);
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex);
                             }
                         }
                     } catch (SecurityException e) {
@@ -284,14 +282,16 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //record derived data in unode, to be traversed later after unpacking the archive
                 uNode.addDerivedInfo(size, !isDir);
 
-                //unpack
-                UnpackStream unpackStream = null;
-                try {
-                    unpackStream = new UnpackStream(localAbsPath);
-                    item.extractSlow(unpackStream);
-                } finally {
-                    if (unpackStream != null) {
-                        unpackStream.close();
+                //unpack locally if a file
+                if (!isDir) {
+                    UnpackStream unpackStream = null;
+                    try {
+                        unpackStream = new UnpackStream(localAbsPath);
+                        item.extractSlow(unpackStream);
+                    } finally {
+                        if (unpackStream != null) {
+                            unpackStream.close();
+                        }
                     }
                 }
 
@@ -523,7 +523,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<String>();
             for (int i = 0; i < toks.length; ++i) {
-                if (! toks[i].isEmpty()) {
+                if (!toks[i].isEmpty()) {
                     tokens.add(toks[i]);
                 }
             }
@@ -564,8 +564,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
             return ret;
         }
-        
-        
+
         /**
          * Get the all file objects (after createDerivedFiles() ) of this tree,
          * so that they can be rescheduled.
@@ -579,7 +578,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
             return ret;
         }
-     
+
         private void getAllFileObjectsRec(List<AbstractFile> list, Data parent) {
             list.add(parent.getFile());
             for (Data child : parent.children) {
@@ -632,10 +631,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             private long size;
             private boolean isFile;
             private Data parent;
-            
+
             //root constructor
-            Data() {}
-            
+            Data() {
+            }
+
             //child node constructor
             Data(String fileName, Data parent) {
                 this.fileName = fileName;
@@ -643,7 +643,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 this.localRelPath = parent.localRelPath + "/" + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
-                
+
             }
 
             public void setFileName(String fileName) {
