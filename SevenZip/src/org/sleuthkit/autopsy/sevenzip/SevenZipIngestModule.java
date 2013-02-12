@@ -250,10 +250,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 }
                 final boolean isDir = item.isFolder();
                 final boolean isEncrypted = item.isEncrypted();
-                String comment = null;
-                if (item.isCommented()) {
-                    comment = item.getComment();
-                }
 
                 if (isEncrypted) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
@@ -295,11 +291,14 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 final Date createTime = item.getCreationTime();
                 final Date accessTime = item.getLastAccessTime();
                 final Date writeTime = item.getLastWriteTime();
+                final long createtime = createTime==null? 0L : createTime.getTime();
+                final long modtime = writeTime==null? 0L : writeTime.getTime();
+                final long accesstime = accessTime==null? 0L : accessTime.getTime();
                 //TODO convert relative to timezone
                 
                 //record derived data in unode, to be traversed later after unpacking the archive
                 uNode.addDerivedInfo(size, !isDir, 
-                        writeTime.getTime(), createTime.getTime(), accessTime.getTime(), writeTime.getTime());
+                        modtime, createtime, accesstime, modtime);
 
                 //unpack locally if a file
                 if (!isDir) {
