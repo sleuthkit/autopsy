@@ -205,7 +205,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     scroll_Events.setContent(null); //Needs some content, otherwise it crashes
 
                     // set up moduleDir
-                    moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
+                    moduleDir = new java.io.File(Case.getCurrentCase().getModulesOutputDirAbsPath() + java.io.File.separator + "timeline");
                     if (!moduleDir.exists()) {
                         moduleDir.mkdir();
                     }
