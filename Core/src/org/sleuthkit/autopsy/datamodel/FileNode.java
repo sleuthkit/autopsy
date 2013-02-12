@@ -33,11 +33,19 @@ public class FileNode extends AbstractFsContentNode<File> {
      */
     public FileNode(File file) {
         this(file, true);
+
+        setIcon(file);
+
+
     }
 
     public FileNode(File file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
+        setIcon(file);
+    }
+
+    private void setIcon(File file) {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
@@ -58,12 +66,12 @@ public class FileNode extends AbstractFsContentNode<File> {
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
+    public <T> T accept(ContentNodeVisitor< T> v) {
         return v.visit(this);
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+    public <T> T accept(DisplayableItemNodeVisitor< T> v) {
         return v.visit(this);
     }
 
@@ -140,6 +148,4 @@ public class FileNode extends AbstractFsContentNode<File> {
     public boolean isLeafTypeNode() {
         return true;
     }
-    
-    
 }
