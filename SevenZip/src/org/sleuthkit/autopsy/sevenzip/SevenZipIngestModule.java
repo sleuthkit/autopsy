@@ -218,7 +218,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
-            UnpackedTree uTree = new UnpackedTree(archiveFile, fileManager);
+            UnpackedTree uTree = new UnpackedTree(unpackDir + "/" + localRootPath, archiveFile, fileManager);
 
             //unpack and process every item in archive
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
@@ -228,7 +228,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //find this node in the hierarchy, create if needed
                 UnpackedTree.Data uNode = uTree.find(extractedPath);
                 String fileName = uNode.getFileName();
-
+              
                 //update progress bar
                 progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
 
@@ -246,12 +246,13 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 //TODO get file mac times and add to db
 
                 final String localFileRelPath = localRootPath + File.separator + extractedPath;
-                final String localRelPath = unpackDir + File.separator + localFileRelPath;
+                //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
 
                 File f = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
                 if (!f.exists()) {
+                    //TODO check, might give file locking issues, since 7zip is writing to these dirs
                     try {
                         if (isDir) {
                             f.mkdirs();
@@ -272,7 +273,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 long size = item.getSize();
 
                 //record derived data in unode, to be traversed later after unpacking the archive
-                uNode.addDerivedInfo(localRelPath, size, !isDir);
+                uNode.addDerivedInfo(size, !isDir);
 
                 //unpack
                 UnpackStream unpackStream = null;
@@ -488,14 +489,17 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
      */
     private static class UnpackedTree {
 
+        final String localPathRoot;
         final Data root; //dummy root to hold children
         final FileManager fileManager;
 
-        UnpackedTree(AbstractFile archiveRoot, FileManager fileManager) {
-            root = new Data();
-            root.setFile(archiveRoot);
-            root.setFileName(archiveRoot.getName());
+        UnpackedTree(String localPathRoot, AbstractFile archiveRoot, FileManager fileManager) {
+            this.localPathRoot = localPathRoot;
             this.fileManager = fileManager;
+            this.root = new Data();
+            this.root.setFile(archiveRoot);
+            this.root.setFileName(archiveRoot.getName());
+            this.root.localRelPath = localPathRoot;
         }
 
         /**
@@ -531,11 +535,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             String childName = tokenPath.remove(0); //step towards base case
             Data child = parent.getChild(childName);
             if (child == null) {
-                child = new Data();
-                child.fileName = childName;
-                child.parent = parent;
-                //new child derived file will be set by unpack() method
-                parent.children.add(child);
+                child = new Data(childName, parent);
             }
             return find(child, tokenPath);
 
@@ -622,6 +622,19 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             private long size;
             private boolean isFile;
             private Data parent;
+            
+            //root constructor
+            Data() {}
+            
+            //child node constructor
+            Data(String fileName, Data parent) {
+                this.fileName = fileName;
+                this.parent = parent;
+                this.localRelPath = parent.localRelPath + "/" + fileName;
+                //new child derived file will be set by unpack() method
+                parent.children.add(this);
+                
+            }
 
             public void setFileName(String fileName) {
                 this.fileName = fileName;
@@ -631,9 +644,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 return parent;
             }
 
-            void addDerivedInfo(String localRelPath, long size,
+            void addDerivedInfo(long size,
                     boolean isFile) {
-                this.localRelPath = localRelPath;
                 this.size = size;
                 this.isFile = isFile;
             }
