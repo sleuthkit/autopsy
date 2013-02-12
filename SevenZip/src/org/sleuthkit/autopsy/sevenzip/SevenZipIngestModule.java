@@ -47,6 +47,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -312,6 +313,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex);
+            //inbox message
+            String msg = "Error unpacking file: " + archiveFile.getName();
+            String details = msg + ". " + ex.getMessage();
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
         } finally {
             if (inArchive != null) {
                 try {
@@ -344,11 +349,12 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
 
-            MessageNotifyUtil.Notify.info("Encrypted files in archive",
-                    "Some files in archive: " + archiveFile.getName() + " are encrypted. "
-                    + MODULE_NAME + " extractor was unable to extract all files from this archive.");
+            String msg = "Encrypted files in archive detected. ";
+            String details = "Some files in archive: " + archiveFile.getName() + " are encrypted. "
+                    + MODULE_NAME + " extractor was unable to extract all files from this archive.";
+            MessageNotifyUtil.Notify.info(msg, details);
 
-            //TODO consider inbox message
+            services.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, instance, msg, details));
         }
 
 
