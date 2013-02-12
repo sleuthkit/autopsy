@@ -103,6 +103,10 @@ public class FileManager implements Closeable {
      * @param fileName file name the derived file
      * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
      * @param size  size of the derived file in bytes
+     * @param ctime
+     * @param crtime
+     * @param atime
+     * @param mtime
      * @param isFile whether a file or directory, true if a file
      * @param parentFile the parent file object this the new file was derived from, either a fs file or parent derived file/dikr\\r
      * @param rederiveDetails details needed to re-derive file (will be specific
@@ -115,7 +119,8 @@ public class FileManager implements Closeable {
 	 * due to a critical system error or of the file manager has already been closed
      * 
      */
-    public synchronized DerivedFile addDerivedFile(String fileName, String localPath, long size, 
+    public synchronized DerivedFile addDerivedFile(String fileName, String localPath, long size,
+            long ctime, long crtime, long atime, long mtime,
             boolean isFile, AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
         
@@ -124,6 +129,7 @@ public class FileManager implements Closeable {
         }
         
         return tskCase.addDerivedFile(fileName, localPath, size,
+                ctime, crtime, atime, mtime,
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
 

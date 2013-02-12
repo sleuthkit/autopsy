@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -76,7 +77,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj",}; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", }; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -290,10 +291,15 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     }
                 }
 
-                long size = item.getSize();
-
+                final long size = item.getSize();
+                final Date createTime = item.getCreationTime();
+                final Date accessTime = item.getLastAccessTime();
+                final Date writeTime = item.getLastWriteTime();
+                //TODO convert relative to timezone
+                
                 //record derived data in unode, to be traversed later after unpacking the archive
-                uNode.addDerivedInfo(size, !isDir);
+                uNode.addDerivedInfo(size, !isDir, 
+                        writeTime.getTime(), createTime.getTime(), accessTime.getTime(), writeTime.getTime());
 
                 //unpack locally if a file
                 if (!isDir) {
@@ -621,6 +627,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
             try {
                 DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size,
+                        node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                         isFile, parent, "", MODULE_NAME, "", "");
                 node.setFile(df);
 
@@ -644,6 +651,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             private List<Data> children = new ArrayList<Data>();
             private String localRelPath;
             private long size;
+            private long ctime, crtime, atime, mtime;
             private boolean isFile;
             private Data parent;
 
@@ -660,6 +668,25 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 parent.children.add(this);
 
             }
+            
+    
+            public long getCtime() {
+                return ctime;
+            }
+
+            public long getCrtime() {
+                return crtime;
+            }
+
+            public long getAtime() {
+                return atime;
+            }
+
+            public long getMtime() {
+                return mtime;
+            }
+            
+            
 
             public void setFileName(String fileName) {
                 this.fileName = fileName;
@@ -670,9 +697,14 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
 
             void addDerivedInfo(long size,
-                    boolean isFile) {
+                    boolean isFile,
+                    long ctime, long crtime, long atime, long mtime) {
                 this.size = size;
                 this.isFile = isFile;
+                this.ctime = ctime;
+                this.crtime = crtime;
+                this.atime = atime;
+                this.mtime = mtime;
             }
 
             void setFile(AbstractFile file) {
