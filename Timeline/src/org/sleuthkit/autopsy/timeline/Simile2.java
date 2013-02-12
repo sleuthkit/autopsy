@@ -28,8 +28,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -90,6 +88,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.datamodel.FilterNodeLeaf;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -753,16 +752,20 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         protected Node createNodeForKey(AbstractFile file) {
             Node n;
             if (file.isDir()) {
-                n = new DirectoryNode((Directory) file);
+                DirectoryNode dirNode = new DirectoryNode((Directory) file);
+                n = new FilterNodeLeaf(dirNode);
             } else {
-                n = new FileNode((File) file) {
+                FileNode fileNode = new FileNode((File) file) {
 
                     @Override
                     public boolean isLeafTypeNode() {
-                        return false;
+                        return true;
                     }
                     
+                    
+                    
                 };
+                n = new FilterNodeLeaf(fileNode);
             }
             return n;
         }
