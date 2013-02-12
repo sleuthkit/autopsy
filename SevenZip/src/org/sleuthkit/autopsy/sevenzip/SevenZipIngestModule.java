@@ -291,10 +291,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 final Date createTime = item.getCreationTime();
                 final Date accessTime = item.getLastAccessTime();
                 final Date writeTime = item.getLastWriteTime();
-                final long createtime = createTime==null? 0L : createTime.getTime();
-                final long modtime = writeTime==null? 0L : writeTime.getTime();
-                final long accesstime = accessTime==null? 0L : accessTime.getTime();
-                //TODO convert relative to timezone
+                final long createtime = createTime==null? 0L : createTime.getTime() / 1000;
+                final long modtime = writeTime==null? 0L : writeTime.getTime() / 1000;
+                final long accesstime = accessTime==null? 0L : accessTime.getTime() / 1000;
                 
                 //record derived data in unode, to be traversed later after unpacking the archive
                 uNode.addDerivedInfo(size, !isDir, 
