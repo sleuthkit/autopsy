@@ -116,13 +116,10 @@ public class RegressionTest extends TestCase{
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
-        jbo.push();
+        jbo.pushNoBlock();
     }
     
-    public void testNewCaseWizard() throws IOException {
-        FileWriter outp = new FileWriter("C:\\log.txt");
-        outp.write("got to 124");
-        outp.flush();
+    public void testNewCaseWizard(){
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
         JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 1);
@@ -276,25 +273,36 @@ public class RegressionTest extends TestCase{
         //new Timeout("pausing", 1000).sleep();
         MainWindowOperator mwo = MainWindowOperator.getDefault();
         JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
-        jbo.push();
+        jbo.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
     }
     
-    public void testGenerateReportButton() {
+    public void testGenerateReportButton() throws IOException {
+        FileWriter outp = new FileWriter("log.txt");
+        outp.write("got to 282\n");
+        outp.flush();
         logger.info("Generate Report Button");
-        JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
+        JDialog reportDialog = JDialogOperator.waitJDialog("Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
-        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
+        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
-        jbo0.pushNoBlock();       
+        jbo0.pushNoBlock();
+        outp.write("got to 292\n");
+        outp.flush();
+        JDialog reportDialog1 = JDialogOperator.waitJDialog("HTML", false, false);
+        outp.write("got to 295\n");
+        outp.flush();
+        JDialogOperator reportDialogOperator1 = new JDialogOperator(reportDialog1);
+        JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator1, "Finish");
+        jbo1.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
         screenshot("Finished Report");
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
-        JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
-        jbo1.pushNoBlock();
+        JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
+        jbo2.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
