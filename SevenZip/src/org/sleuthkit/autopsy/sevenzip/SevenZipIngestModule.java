@@ -76,7 +76,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar",}; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj",}; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -168,13 +168,20 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
-        //TODO send event to dir tree
-
-        //TODO reschedule unpacked file for ingest
+        if (!unpackedFiles.isEmpty()) {
+            sendNewFilesEvent(unpackedFiles);
+            rescheduleNewFiles(unpackedFiles);
+        }
 
         //process, return error if occurred
 
         return ProcessResult.OK;
+    }
+
+    private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
+    }
+    
+    private void rescheduleNewFiles (List<AbstractFile> unpackedFiles) {
     }
 
     /**
@@ -242,6 +249,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 }
                 final boolean isDir = item.isFolder();
                 final boolean isEncrypted = item.isEncrypted();
+                String comment = null;
+                if (item.isCommented()) {
+                    comment = item.getComment();
+                }
+
                 if (isEncrypted) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
                     hasEncrypted = true;
@@ -295,9 +307,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                         }
                     }
                 }
-
-                //TODO handle directories / hierarchy in unzipped file
-
 
                 //update units for progress bar
                 ++processedItems;
