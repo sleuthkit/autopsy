@@ -102,6 +102,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                     ret = false;
                     break;
                 }
+                else if (c.hasChildren() ) {
+                    //fie has children, such as derived files
+                    ret = false;
+                    break;
+                }
             }
         } catch (TskException ex) {
             Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
