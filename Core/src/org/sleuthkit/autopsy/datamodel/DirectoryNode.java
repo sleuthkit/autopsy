@@ -18,7 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -60,7 +66,17 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        return new Action[]{};
+        List<Action> actions = new ArrayList<Action>();
+        if (!getDirectoryBrowseMode()) {
+            actions.add(new ViewContextAction("View File in Directory", this));
+            actions.add(null); // creates a menu separator
+        }
+        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new ExtractAction("Extract Directory", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new TagFileAction(this));
+        return actions.toArray(new Action[0]);
     }
 
     @Override

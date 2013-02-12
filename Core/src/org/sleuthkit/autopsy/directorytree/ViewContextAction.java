@@ -32,7 +32,6 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -40,21 +39,14 @@ import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VirtualDirectory;
-import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * View the directory content associated with the given Artifact
  */
-class ViewContextAction extends AbstractAction {
+public class ViewContextAction extends AbstractAction {
 
     private Content content;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
@@ -62,14 +54,14 @@ class ViewContextAction extends AbstractAction {
     public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
-      
+
     }
-    
+
     public ViewContextAction(String title, AbstractFsContentNode node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
     }
-    
+
     public ViewContextAction(String title, Content content) {
         super(title);
         this.content = content;
@@ -78,7 +70,6 @@ class ViewContextAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         EventQueue.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 // create a list of Content objects starting with content's
@@ -86,7 +77,7 @@ class ViewContextAction extends AbstractAction {
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = content.accept(vtor);
                 Collections.reverse(hierarchy);
-                
+
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
 
@@ -125,7 +116,6 @@ class ViewContextAction extends AbstractAction {
 
                 // Another thread is needed because we have to wait for dataResult to populate
                 EventQueue.invokeLater(new Runnable() {
-
                     @Override
                     public void run() {
                         DataResultTopComponent dataResult = directoryTree.getDirectoryListing();
@@ -150,15 +140,16 @@ class ViewContextAction extends AbstractAction {
     /**
      * The ReverseHierarchyVisitor class is designed to return a list of Content
      * objects starting with the one the user calls 'accept' with and ending at
-     * the Image object.  Please NOTE that Content objects in this hierarchy of
+     * the Image object. Please NOTE that Content objects in this hierarchy of
      * type VolumeSystem and FileSystem are skipped. This seems to be necessary
-     * because org.sleuthkit.autopsy.datamodel.AbstractContentChildren.CreateSleuthkitNodeVisitor
+     * because
+     * org.sleuthkit.autopsy.datamodel.AbstractContentChildren.CreateSleuthkitNodeVisitor
      * does not support these types.
      */
     private class ReverseHierarchyVisitor extends ContentVisitor.Default<List<Content>> {
-        
+
         List<Content> ret = new ArrayList<Content>();
-        
+
         private List<Content> visitParentButDontAddMe(Content content) {
             Content parent = null;
             try {
@@ -180,12 +171,12 @@ class ViewContextAction extends AbstractAction {
             }
             return parent == null ? ret : parent.accept(this);
         }
-        
+
         @Override
         public List<Content> visit(FileSystem fs) {
             return visitParentButDontAddMe(fs);
         }
-        
+
         @Override
         public List<Content> visit(VolumeSystem vs) {
             return visitParentButDontAddMe(vs);

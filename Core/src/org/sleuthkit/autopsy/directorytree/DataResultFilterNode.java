@@ -168,16 +168,12 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(DirectoryNode dir) {
+             //preserve the default node's actions
             List<Action> actions = new ArrayList<Action>();
-            if (!dir.getDirectoryBrowseMode()) {
-                actions.add(new ViewContextAction("View File in Directory", dir));
-                actions.add(null); // creates a menu separator
+            for (Action action : dir.getActions(true)) {
+                actions.add(action);
             }
-            actions.add(new NewWindowViewAction("View in New Window", dir));
-            actions.add(null); // creates a menu separator
-            actions.add(new ExtractAction("Extract Directory", dir));
-            actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(dir));
+            
             return actions;
         }
         
@@ -204,18 +200,12 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(FileNode f) {
+            //preserve the default node's actions
             List<Action> actions = new ArrayList<Action>();
-            if (!f.getDirectoryBrowseMode()) {
-                actions.add(new ViewContextAction("View File in Directory", f));
-                actions.add(null); // creates a menu separator
+            for (Action action : f.getActions(true)) {
+                actions.add(action);
             }
-            actions.add(new NewWindowViewAction("View in New Window", f));
-            actions.add(new ExternalViewerAction("Open in External Viewer", f));
-            actions.add(null); // creates a menu separator
-            actions.add(new ExtractAction("Extract File", f));
-            actions.add(new HashSearchAction("Search for files with the same MD5 hash", f));
-            actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(f));
+            
             return actions;
         }
 
