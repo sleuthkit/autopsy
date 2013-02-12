@@ -40,8 +40,7 @@ import org.openide.util.ImageUtilities;
  *
  * Based on:
  * http://qbeukes.blogspot.com/2009/11/netbeans-platform-notifications.html
- *
- * @license Apache License 2.0
+ * license Apache License 2.0
  */
 public class MessageNotifyUtil {
 
