@@ -276,7 +276,7 @@ public class RegressionTest extends TestCase{
         //new Timeout("pausing", 1000).sleep();
         MainWindowOperator mwo = MainWindowOperator.getDefault();
         JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
-        jbo.pushNoBlock();
+        jbo.push();
         new Timeout("pausing", 1000).sleep();
     }
     
