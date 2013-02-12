@@ -1,4 +1,4 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.5 --------------
 
 New features:
 - Timeline (Beta)
