@@ -51,9 +51,9 @@ import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
- * Stores all information for a given case.  Only a single case can
- * currently be open at a time.  Use getCurrentCase() to retrieve the
- * object for the current case. 
+ * Stores all information for a given case. Only a single case can currently be
+ * open at a time. Use getCurrentCase() to retrieve the object for the current
+ * case.
  */
 public class Case {
 
@@ -62,22 +62,21 @@ public class Case {
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
-     * opened/closed/changed. The value is a String: the name of the case.
-     * The empty string ("") is used for no open case.
+     * opened/closed/changed. The value is a String: the name of the case. The
+     * empty string ("") is used for no open case.
      */
     public static final String CASE_NAME = "caseName";
     /**
      * Property name that indicates the number of the current case has changed.
-     * Fired with the case number is changed.
-     * The value is an int: the number of the case.
-     * -1 is used for no case number set.
+     * Fired with the case number is changed. The value is an int: the number of
+     * the case. -1 is used for no case number set.
      */
     public static final String CASE_NUMBER = "caseNumber";
     /**
-     * Property name that indicates the examiner of the current case has changed.
-     * Fired with the case examiner is changed.
-     * The value is a String: the name of the examiner.
-     * The empty string ("") is used for no examiner set.
+     * Property name that indicates the examiner of the current case has
+     * changed. Fired with the case examiner is changed. The value is a String:
+     * the name of the examiner. The empty string ("") is used for no examiner
+     * set.
      */
     public static final String CASE_EXAMINER = "caseExaminer";
     /**
@@ -93,11 +92,10 @@ public class Case {
      */
     public static final String CASE_DEL_IMAGE = "removeImages";
     /**
-     * Property name that indicates the currently open case has changed.
-     * The new value is the instance of the opened Case, or null if there is no
-     * open case.
-     * The old value is the instance of the closed Case, or null if there was no
-     * open case.
+     * Property name that indicates the currently open case has changed. The new
+     * value is the instance of the opened Case, or null if there is no open
+     * case. The old value is the instance of the closed Case, or null if there
+     * was no open case.
      */
     public static final String CASE_CURRENT_CASE = "currentCase";
     /**
@@ -116,7 +114,6 @@ public class Case {
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
     private Services services;
-    
     private static final Logger logger = Logger.getLogger(Case.class.getName());
 
     /**
@@ -145,9 +142,10 @@ public class Case {
             throw new IllegalStateException("Can't get the current case; there is no case open!");
         }
     }
-    
+
     /**
      * Check if case is currently open
+     *
      * @return true if case is open
      */
     public static boolean isCaseOpen() {
@@ -155,8 +153,9 @@ public class Case {
     }
 
     /**
-     * Updates the current case to the given case and fires off
-     * the appropriate property-change
+     * Updates the current case to the given case and fires off the appropriate
+     * property-change
+     *
      * @param newCase the new current case
      */
     private static void changeCase(Case newCase) {
@@ -168,12 +167,10 @@ public class Case {
 
         doCaseChange(null); //closes windows, etc
         pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
-        
+
 
         doCaseNameChange("");
         pcs.firePropertyChange(CASE_NAME, oldCaseName, "");
-        
-
 
 
         if (newCase != null) {
@@ -195,9 +192,9 @@ public class Case {
 
     /**
      * Creates a new case (create the XML config file and the directory)
-     * 
-     * @param caseDir  the base directory where the configuration file is saved
-     * @param caseName  the name of case
+     *
+     * @param caseDir the base directory where the configuration file is saved
+     * @param caseName the name of case
      * @param caseNumber the case number
      * @param examiner the examiner for this case
      */
@@ -209,7 +206,7 @@ public class Case {
         XMLCaseManagement xmlcm = new XMLCaseManagement();
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
         xmlcm.writeFile();
-        
+
         String dbPath = caseDir + File.separator + "autopsy.db";
         SleuthkitCase db = null;
         try {
@@ -227,7 +224,7 @@ public class Case {
     /**
      * Opens the existing case (open the XML config file)
      *
-     * @param configFilePath  the path of the configuration file that's opened
+     * @param configFilePath the path of the configuration file that's opened
      * @throws CaseActionException
      */
     static void open(String configFilePath) throws CaseActionException {
@@ -250,7 +247,7 @@ public class Case {
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
-            
+
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
@@ -265,13 +262,13 @@ public class Case {
             throw new CaseActionException("Error opening the case", ex);
         }
     }
-    
+
     static Map<Long, String> getImagePaths(SleuthkitCase db) { //TODO: clean this up
         Map<Long, String> imgPaths = new HashMap<Long, String>();
         try {
             Map<Long, List<String>> imgPathsList = db.getImagePaths();
-            for(Map.Entry<Long, List<String>> entry : imgPathsList.entrySet()) {
-                if(entry.getValue().size() > 0) {
+            for (Map.Entry<Long, List<String>> entry : imgPathsList.entrySet()) {
+                if (entry.getValue().size() > 0) {
                     imgPaths.put(entry.getKey(), entry.getValue().get(0));
                 }
             }
@@ -280,7 +277,7 @@ public class Case {
         }
         return imgPaths;
     }
-    
+
     /**
      * Ensure that all image paths point to valid image files
      */
@@ -289,8 +286,8 @@ public class Case {
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = (pathExists(path) ||
-                    driveExists(path));
+            boolean fileExists = (pathExists(path)
+                    || driveExists(path));
             if (!fileExists) {
                 int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one of the images associated with \n"
                         + "this case are missing. Would you like to search for them now?\n"
@@ -310,9 +307,9 @@ public class Case {
     /**
      * Adds the image to the current case after it has been added to the DB
      *
-     * @param imgPaths  the paths of the image that being added
-     * @param imgId  the ID of the image that being added
-     * @param timeZone  the timeZone of the image where it's added
+     * @param imgPaths the paths of the image that being added
+     * @param imgId the ID of the image that being added
+     * @param timeZone the timeZone of the image where it's added
      */
     Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
@@ -326,7 +323,7 @@ public class Case {
             throw new CaseActionException("Error adding image to the case", ex);
         }
     }
-    
+
     /**
      * @return The Services object for this case.
      */
@@ -337,6 +334,7 @@ public class Case {
     /**
      * Get the underlying SleuthkitCase instance from the Sleuth Kit bindings
      * library.
+     *
      * @return
      */
     public SleuthkitCase getSleuthkitCase() {
@@ -360,6 +358,7 @@ public class Case {
 
     /**
      * Delete this case. This methods delete all folders and files of this case.
+     *
      * @param caseDir case dir to delete
      * @throws CaseActionException exception throw if case could not be deleted
      */
@@ -385,10 +384,10 @@ public class Case {
     /**
      * Updates the case name.
      *
-     * @param oldCaseName  the old case name that wants to be updated
-     * @param oldPath  the old path that wants to be updated
-     * @param newCaseName  the new case name
-     * @param newPath  the new path
+     * @param oldCaseName the old case name that wants to be updated
+     * @param oldPath the old path that wants to be updated
+     * @param newCaseName the new case name
+     * @param newPath the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -406,9 +405,9 @@ public class Case {
 
     /**
      * Updates the case examiner
-     * 
-     * @param oldExaminer   the old examiner
-     * @param newExaminer   the new examiner
+     *
+     * @param oldExaminer the old examiner
+     * @param newExaminer the new examiner
      */
     void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
         try {
@@ -423,7 +422,7 @@ public class Case {
 
     /**
      * Updates the case number
-     * 
+     *
      * @param oldCaseNumber the old case number
      * @param newCaseNumber the new case number
      */
@@ -450,16 +449,16 @@ public class Case {
     /**
      * Uses the given path to store it as the configuration file path
      *
-     * @param givenPath  the given config file path
+     * @param givenPath the given config file path
      */
     private void setConfigFilePath(String givenPath) {
         configFilePath = givenPath;
     }
 
     /**
-     *  Get the config file path in the given path
+     * Get the config file path in the given path
      *
-     * @return configFilePath  the path of the configuration file
+     * @return configFilePath the path of the configuration file
      */
     String getConfigFilePath() {
         return configFilePath;
@@ -467,6 +466,7 @@ public class Case {
 
     /**
      * Returns the current version of Autopsy
+     *
      * @return autopsyVer
      */
     public static String getAutopsyVersion() {
@@ -475,6 +475,7 @@ public class Case {
 
     /**
      * Gets the application name
+     *
      * @return appName
      */
     public static String getAppName() {
@@ -483,6 +484,7 @@ public class Case {
 
     /**
      * Gets the case name
+     *
      * @return name
      */
     public String getName() {
@@ -491,6 +493,7 @@ public class Case {
 
     /**
      * Gets the case number
+     *
      * @return number
      */
     public String getNumber() {
@@ -499,6 +502,7 @@ public class Case {
 
     /**
      * Gets the Examiner name
+     *
      * @return examiner
      */
     public String getExaminer() {
@@ -507,6 +511,7 @@ public class Case {
 
     /**
      * Gets the case directory path
+     *
      * @return caseDirectoryPath
      */
     public String getCaseDirectory() {
@@ -519,6 +524,7 @@ public class Case {
 
     /**
      * Gets the full path to the temp directory of this case
+     *
      * @return tempDirectoryPath
      */
     public String getTempDirectory() {
@@ -528,9 +534,10 @@ public class Case {
             return xmlcm.getTempDir();
         }
     }
-    
+
     /**
      * Gets the full path to the cache directory of this case
+     *
      * @return cacheDirectoryPath
      */
     public String getCacheDirectory() {
@@ -543,6 +550,7 @@ public class Case {
 
     /**
      * get the created date of this case
+     *
      * @return case creation date
      */
     public String getCreatedDate() {
@@ -553,28 +561,30 @@ public class Case {
         }
     }
 
-     /**
-     * Get absolute module output directory path where modules should save their permanent data
-     * The directory is a subdirectory of this case dir.
+    /**
+     * Get absolute module output directory path where modules should save their
+     * permanent data The directory is a subdirectory of this case dir.
+     *
      * @return absolute path to the module output dir
      */
-    public String getModulesOutputDirectoryPath() {
-        return this.getCaseDirectory() + File.separator + getModulesOutputDirectory();
+    public String getModulesOutputDirAbsPath() {
+        return this.getCaseDirectory() + File.separator + getModulesOutputDirRelPath();
     }
-    
-     
+
     /**
-     * Get relative (with respect to case dir)
-     * module output directory path where modules should save their permanent data
-     * The directory is a subdirectory of this case dir.
+     * Get relative (with respect to case dir) module output directory path
+     * where modules should save their permanent data The directory is a
+     * subdirectory of this case dir.
+     *
      * @return relative path to the module output dir
      */
-    public String getModulesOutputDirectory() {
+    public static String getModulesOutputDirRelPath() {
         return "ModuleOutput";
     }
-    
+
     /**
      * get the PropertyChangeSupport of this class
+     *
      * @return PropertyChangeSupport
      */
     public static PropertyChangeSupport getPropertyChangeSupport() {
@@ -587,19 +597,21 @@ public class Case {
 
     /**
      * get all the image id in this case
+     *
      * @return imageIDs
      */
     public Long[] getImageIDs() {
         Set<Long> ids = getImagePaths(db).keySet();
         return ids.toArray(new Long[ids.size()]);
     }
-    
+
     public List<Image> getImages() throws TskCoreException {
         return db.getImages();
     }
 
     /**
      * Count the root objects.
+     *
      * @return The number of total root objects in this case.
      */
     public int getRootObjectsCount() {
@@ -608,6 +620,7 @@ public class Case {
 
     /**
      * Get the data model Content objects in the root of this case's hierarchy.
+     *
      * @return a list of the root objects
      */
     public List<Content> getRootObjects() {
@@ -619,13 +632,13 @@ public class Case {
     }
 
     /**
-     * Gets the time zone(s) of the image(s) in this case. 
+     * Gets the time zone(s) of the image(s) in this case.
      *
-     * @return time zones  the set of time zones
+     * @return time zones the set of time zones
      */
     public Set<TimeZone> getTimeZone() {
         Set<TimeZone> timezones = new HashSet<TimeZone>();
-        for(Content c : getRootObjects()) {
+        for (Content c : getRootObjects()) {
             try {
                 timezones.add(TimeZone.getTimeZone(c.getImage().getTimeZone()));
             } catch (TskException ex) {
@@ -645,34 +658,35 @@ public class Case {
 
     /**
      * Check if image from the given image path exists.
-     * @param imgPath  the image path
-     * @return isExist  whether the path exists
+     *
+     * @param imgPath the image path
+     * @return isExist whether the path exists
      */
     public static boolean pathExists(String imgPath) {
         return new File(imgPath).isFile();
     }
-    
     /**
      * Does the given string refer to a physical drive?
      */
     private static final String pdisk = "\\\\.\\physicaldrive";
     private static final String dev = "/dev/";
+
     static boolean isPhysicalDrive(String path) {
-        return path.toLowerCase().startsWith(pdisk) ||
-                path.toLowerCase().startsWith(dev);
+        return path.toLowerCase().startsWith(pdisk)
+                || path.toLowerCase().startsWith(dev);
     }
-    
+
     /**
      * Does the given string refer to a local drive / partition?
      */
     static boolean isPartition(String path) {
-        return path.toLowerCase().startsWith("\\\\.\\") &&
-                path.toLowerCase().endsWith(":");
+        return path.toLowerCase().startsWith("\\\\.\\")
+                && path.toLowerCase().endsWith(":");
     }
-    
+
     /**
      * Does the given drive path exist?
-     * 
+     *
      * @param path to drive
      * @return true if the drive exists, false otherwise
      */
@@ -683,15 +697,15 @@ public class Case {
             File tmp = new File(path);
             br = new BufferedInputStream(new FileInputStream(tmp));
             int b = br.read();
-            if(b!=-1) {
+            if (b != -1) {
                 return true;
             }
             return false;
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             return false;
         } finally {
             try {
-                if(br != null) {
+                if (br != null) {
                     br.close();
                 }
             } catch (IOException ex) {
@@ -701,8 +715,8 @@ public class Case {
 
     /**
      * Convert the Java timezone ID to the "formatted" string that can be
-     * accepted by the C/C++ code.
-     * Example: "America/New_York" converted to "EST5EDT", etc
+     * accepted by the C/C++ code. Example: "America/New_York" converted to
+     * "EST5EDT", etc
      *
      * @param timezoneID
      * @return
@@ -735,8 +749,9 @@ public class Case {
     /* The methods below are used to manage the case directories (creating, checking, deleting, etc) */
     /**
      * to create the case directory
-     * @param caseDir   the case directory path
-     * @param caseName  the case name
+     *
+     * @param caseDir the case directory path
+     * @param caseName the case name
      * @throws CaseActionException throw if could not create the case dir
      */
     static void createCaseDirectory(String caseDir, String caseName) throws CaseActionException {
@@ -745,17 +760,16 @@ public class Case {
         File caseDirF = new File(caseDir);
         if (caseDirF.exists()) {
             if (caseDirF.isFile()) {
-                throw new CaseActionException ("Cannot create case dir, already exists and is not a directory: " + caseDir);
-            }
-            else if (! caseDirF.canRead() || ! caseDirF.canWrite()) {
-                throw new CaseActionException ("Cannot create case dir, already exists and cannot read/write: " + caseDir);
+                throw new CaseActionException("Cannot create case dir, already exists and is not a directory: " + caseDir);
+            } else if (!caseDirF.canRead() || !caseDirF.canWrite()) {
+                throw new CaseActionException("Cannot create case dir, already exists and cannot read/write: " + caseDir);
             }
         }
-        
+
         try {
             result = (caseDirF).mkdirs(); // create root case Directory
             if (result == false) {
-                throw new CaseActionException ("Cannot create case dir: " + caseDir);
+                throw new CaseActionException("Cannot create case dir: " + caseDir);
             }
 
             // create the folders inside the case directory
@@ -767,6 +781,13 @@ public class Case {
             if (result == false) {
                 throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName);
             }
+
+            final String modulesOutDir = caseDir + File.separator + getModulesOutputDirRelPath();
+            result = new File(modulesOutDir).mkdir();
+            if (result == false) {
+                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir + " for case: " + caseName);
+            }
+
         } catch (Exception e) {
             throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName, e);
         }
@@ -774,8 +795,9 @@ public class Case {
 
     /**
      * delete the given case directory
-     * @param casePath  the case path
-     * @return boolean  whether the case directory is successfully deleted or not
+     *
+     * @param casePath the case path
+     * @return boolean whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
         logger.log(Level.INFO, "Deleting case directory: " + casePath.getAbsolutePath());
@@ -790,12 +812,11 @@ public class Case {
     }
 
     /**
-     * Call if there are no images in the case. Displays
-     * a dialog offering to add one.
+     * Call if there are no images in the case. Displays a dialog offering to
+     * add one.
      */
     private static void runAddImageAction() {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 final AddImageAction action = Lookup.getDefault().lookup(AddImageAction.class);
@@ -806,6 +827,7 @@ public class Case {
 
     /**
      * Checks if a String is a valid case name
+     *
      * @param caseName the candidate String
      * @return true if the candidate String is a valid case name
      */
@@ -831,12 +853,32 @@ public class Case {
         }
     }
 
+    /**
+     * Check for existence of certain case sub dirs and create them if needed.
+     * @param openedCase 
+     */
+    private static void checkSubFolders(Case openedCase) {
+        String modulesOutputDir = openedCase.getModulesOutputDirAbsPath();
+        File modulesOutputDirF = new File(modulesOutputDir);
+        if (!modulesOutputDirF.exists()) {
+            logger.log(Level.INFO, "Creating modules output dir for the case.");
+        }
+        try {
+            if (! modulesOutputDirF.mkdir() ) {
+                 logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir);
+            }
+        } catch (SecurityException e) {
+            logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e);
+        }
+    }
+
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
             Case.clearTempFolder();
+            checkSubFolders(toChangeTo);
 
             // enable these menus
             CallableSystemAction.get(AddImageAction.class).setEnabled(true);
@@ -856,7 +898,7 @@ public class Case {
         } else { // case is closed
             // close all top components first
             CoreComponentControl.closeCoreWindows();
-            
+
             // disable these menus
             CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
             CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
@@ -865,7 +907,7 @@ public class Case {
 
             //clear pending notifications
             MessageNotifyUtil.Notify.clear();
-            
+
 
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
@@ -898,4 +940,3 @@ public class Case {
         }
     }
 }
-
