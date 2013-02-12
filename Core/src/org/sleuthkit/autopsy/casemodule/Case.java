@@ -558,8 +558,8 @@ public class Case {
      * The directory is a subdirectory of this case dir.
      * @return absolute path to the module output dir
      */
-    public String getModulesOutputDirectoryPath() {
-        return this.getCaseDirectory() + File.separator + getModulesOutputDirectory();
+    public String getModulesOutputDirAbsPath() {
+        return this.getCaseDirectory() + File.separator + getModulesOutputDirRelPath();
     }
     
      
@@ -569,7 +569,7 @@ public class Case {
      * The directory is a subdirectory of this case dir.
      * @return relative path to the module output dir
      */
-    public String getModulesOutputDirectory() {
+    public static String getModulesOutputDirRelPath() {
         return "ModuleOutput";
     }
     
@@ -767,6 +767,13 @@ public class Case {
             if (result == false) {
                 throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName);
             }
+            
+            final String modulesOutDir = caseDir + File.separator + getModulesOutputDirRelPath();
+            result = new File(modulesOutDir).mkdir();
+            if (result == false) {
+                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir + " for case: " + caseName);
+            }
+            
         } catch (Exception e) {
             throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName, e);
         }
