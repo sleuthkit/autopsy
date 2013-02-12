@@ -18,7 +18,15 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.HashSearchAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -62,7 +70,19 @@ public class FileNode extends AbstractFsContentNode<File> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        return new Action[]{};
+        List<Action> actionsList = new ArrayList<Action>();
+        if (!this.getDirectoryBrowseMode()) {
+                actionsList.add(new ViewContextAction("View File in Directory", this));
+                actionsList.add(null); // creates a menu separator
+            }
+            actionsList.add(new NewWindowViewAction("View in New Window", this));
+            actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+            actionsList.add(null); // creates a menu separator
+            actionsList.add(new ExtractAction("Extract File", this));
+            actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
+            actionsList.add(null); // creates a menu separator
+            actionsList.add(new TagFileAction(this));
+        return actionsList.toArray(new Action[0]);
     }
 
     @Override
