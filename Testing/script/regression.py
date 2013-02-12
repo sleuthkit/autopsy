@@ -397,7 +397,7 @@ def run_config_test(config_file):
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
-    if not image_type(image_file) != IMGTYPE.UNKNOWN:
+    if image_type(image_file) == IMGTYPE.UNKNOWN:
         printerror("Error: Image type is unrecognized:")
         printerror(image_file + "\n")
         return
@@ -627,18 +627,17 @@ def compare_to_gold_db():
 # Using the global case's variables, compare the html report file made by
 # the regression test against the gold standard html report
 def compare_to_gold_html():
-    gold_html_file = make_local_path(case.gold, case.image_name, "index.html")
+    gold_html_file = make_local_path(case.gold, case.image_name, "Report", "index.html")
     htmlfolder = ""
     for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
         if os.path.isdir(os.path.join(os.getcwd(), case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
             htmlfolder = fs
-    autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder) #, "AutopsyTestCase", "Reports", htmlfolder)
+    autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, "HTML Report") #, "AutopsyTestCase", "Reports", htmlfolder)
     print(autopsy_html_path)
     
     
     try:
         autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
-                
         if not file_exists(gold_html_file):
             printerror("Error: No gold html report exists at:")
             printerror(gold_html_file + "\n")

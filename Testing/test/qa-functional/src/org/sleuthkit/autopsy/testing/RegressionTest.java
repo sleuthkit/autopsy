@@ -278,28 +278,20 @@ public class RegressionTest extends TestCase{
     }
     
     public void testGenerateReportButton() throws IOException {
-        FileWriter outp = new FileWriter("log.txt");
-        outp.write("got to 282\n");
-        outp.flush();
         logger.info("Generate Report Button");
-        JDialog reportDialog = JDialogOperator.waitJDialog("Report", false, false);
+        JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
         jbo0.pushNoBlock();
-        outp.write("got to 292\n");
-        outp.flush();
-        JDialog reportDialog1 = JDialogOperator.waitJDialog("HTML", false, false);
-        outp.write("got to 295\n");
-        outp.flush();
-        JDialogOperator reportDialogOperator1 = new JDialogOperator(reportDialog1);
-        JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator1, "Finish");
+        new Timeout("pausing", 1000).sleep();
+        JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
-        screenshot("Finished Report");
-        JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
+        new Timeout("pausing", 8000).sleep(); // Give it a few seconds to generate
+        screenshot("Progress");
+        JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
