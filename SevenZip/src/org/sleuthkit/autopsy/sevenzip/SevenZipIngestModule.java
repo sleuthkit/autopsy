@@ -79,6 +79,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
+    
+    //encryption type strings
+    private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
+    private static final String ENCRYPTION_FULL = "Full Encryption";
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -183,6 +187,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
         
         boolean hasEncrypted = false;
+        boolean fullEncryption = true;
 
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
@@ -242,6 +247,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     hasEncrypted = true;
                     continue;
                 }
+                else {
+                    fullEncryption = false;
+                }
 
                 //TODO get file mac times and add to db
 
@@ -251,7 +259,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
                 File f = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
-                if (!f.exists()) {
+              
+                if (f.exists()) {
                     //TODO check, might give file locking issues, since 7zip is writing to these dirs
                     try {
                         if (isDir) {
@@ -326,10 +335,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
         //create artifact and send user message
         if (hasEncrypted) {
+            String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact generalInfo = archiveFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
                 generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
-                        MODULE_NAME, compressMethod));
+                        MODULE_NAME, encryptionType));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
