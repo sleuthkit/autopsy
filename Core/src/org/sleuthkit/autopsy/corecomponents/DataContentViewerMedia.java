@@ -342,7 +342,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        File file = node.getLookup().lookup(File.class);
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return false;
         }
