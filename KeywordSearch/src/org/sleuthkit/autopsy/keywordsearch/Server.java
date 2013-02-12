@@ -497,7 +497,7 @@ public class Server {
      * @return
      */
     private synchronized Core openCore(Case c) throws KeywordSearchModuleException {
-        String dataDir = c.getModulesOutputDirectoryPath() 
+        String dataDir = c.getModulesOutputDirAbsPath()
                 + File.separator + "keywordsearch" + File.separator + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
     }
