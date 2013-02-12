@@ -205,7 +205,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     scroll_Events.setContent(null); //Needs some content, otherwise it crashes
 
                     // set up moduleDir
-                    moduleDir = new java.io.File(Case.getCurrentCase().getCaseDirectory() + java.io.File.separator + "timeline");
+                    moduleDir = new java.io.File(Case.getCurrentCase().getModulesOutputDirAbsPath() + java.io.File.separator + "timeline");
                     if (!moduleDir.exists()) {
                         moduleDir.mkdir();
                     }
@@ -955,12 +955,19 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         try {
             if (Case.getCurrentCase().getImages().isEmpty()) {
                 logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
-            } else if (IngestManager.getDefault().isIngestRunning()) {
-                int i = JOptionPane.showConfirmDialog(new JFrame(), "You are trying to generate a timeline before ingest has been completed. The timeline may be incomplete. Do you want to continue?");
-                if (i != JOptionPane.YES_OPTION) {
-                    return;
-                }
             } else {
+    
+                if (IngestManager.getDefault().isIngestRunning()) {
+                    int answer = JOptionPane.showConfirmDialog(new JFrame(),
+                            "You are trying to generate a timeline before "
+                            + "ingest has been completed. The timeline may be "
+                            + "incomplete. Do you want to continue?", "Timeline",
+                            JOptionPane.YES_NO_OPTION);
+                    if (answer != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+    
                 logger.log(Level.INFO, "Beginning generation of timeline");
                 
                 // if the timeline window is already open, do nothing
