@@ -923,6 +923,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private String makeMacTime(String pathToBodyFile) {
         String macpath = "";
         final String machome = macRoot.getAbsolutePath();
+        pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
             macpath = PlatformUtil.getOSFilePath(macpath);
@@ -931,7 +932,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         }
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
         macfile = PlatformUtil.getOSFilePath(macfile);
-        String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
+        String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + "> " + macfile;
+
         try {
             JavaSystemCaller.Exec.execute("\"" + command + "\"");
         } catch (InterruptedException ie) {
