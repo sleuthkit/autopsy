@@ -750,24 +750,13 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         }
         @Override
         protected Node createNodeForKey(AbstractFile file) {
-            Node n;
+            Node wrapped;
             if (file.isDir()) {
-                DirectoryNode dirNode = new DirectoryNode((Directory) file, false);
-                n = new FilterNodeLeaf(dirNode);
+                wrapped = new DirectoryNode((Directory) file, false);
             } else {
-                FileNode fileNode = new FileNode((File) file, false) {
-
-                    @Override
-                    public boolean isLeafTypeNode() {
-                        return true;
-                    }
-                    
-                    
-                    
-                };
-                n = new FilterNodeLeaf(fileNode);
+                wrapped = new FileNode((File) file, false);
             }
-            return n;
+            return new FilterNodeLeaf(wrapped);
         }
     }
 
