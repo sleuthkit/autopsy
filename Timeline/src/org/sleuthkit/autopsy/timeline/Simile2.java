@@ -430,6 +430,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
         BarChart.Series<String, Number> series = new BarChart.Series(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
+        
 
         ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
 
@@ -457,6 +458,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                                     dataResult.setNode(d);
                                 }
                             });
+                            
+                            //set result viewer title path with the current date
+                            String dateString = ye.getYear() + "-" + 1+me.getMonthInt() + "-" +  + de.dayNum;
+                            dataResult.setPath(dateString);
                         }
                     });
         }
