@@ -460,7 +460,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                             });
                             
                             //set result viewer title path with the current date
-                            String dateString = ye.getYear() + "-" + 1+me.getMonthInt() + "-" +  + de.dayNum;
+                            String dateString = ye.getYear() + "-" + (1+me.getMonthInt()) + "-" +  + de.dayNum;
                             dataResult.setPath(dateString);
                         }
                     });
