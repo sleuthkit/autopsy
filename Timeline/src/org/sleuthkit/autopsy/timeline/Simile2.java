@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,6 +83,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -155,9 +156,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     }
     
     private void customize() {
-        
         //Making the main frame *
         jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
+        
+        //use the same icon on jframe as main application
+        jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
         //JPanels are used as the cohesive glue that binds everything together.*/
