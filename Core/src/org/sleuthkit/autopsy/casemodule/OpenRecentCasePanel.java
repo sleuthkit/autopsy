@@ -178,6 +178,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
     // Open the selected case
     private void openCase() {
+        if (casePaths.length < 1) {
+            logger.log(Level.INFO, "No Case paths exist, cannot open the case");
+            return;
+        }
         String casePath = casePaths[imagesTable.getSelectedRow()];
         String caseName = caseNames[imagesTable.getSelectedRow()];
         if (!casePath.equals("")) {
