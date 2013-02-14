@@ -94,6 +94,11 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             return IngestModuleAbstractFile.ProcessResult.OK;
         }
         
+        //skip unsupported
+        if (! parsableFormat(content)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+        
         return processFile(content);
     }
     
@@ -176,7 +181,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
     
-    private boolean parsableFormat(FsContent f) {
+    private boolean parsableFormat(AbstractFile f) {
         // Get the name, extension
         String name = f.getName();
         int dotIndex = name.lastIndexOf(".");
