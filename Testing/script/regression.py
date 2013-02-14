@@ -1553,6 +1553,11 @@ def main():
         while args.contin:
             case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
             os.makedirs(case.output_dir)
+            case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
+            case.csv = make_local_path(case.output_dir, "CSV.txt")
+            case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
+            log_name = case.output_dir + "\\regression.log"
+            logging.basicConfig(filename=log_name, level=logging.DEBUG)
             # If user wants to do a single file and a list (contradictory?)
             if args.single and args.list:
                 printerror("Error: Cannot run both from config file and on a single file.")
