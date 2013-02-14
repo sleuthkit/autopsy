@@ -40,7 +40,7 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ScheduledTask;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ScheduledImageTask;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.ImageScheduler.Task;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
@@ -179,7 +179,7 @@ public class IngestManager {
     /**
      * Add property change listener to listen to ingest events
      *
-     * @param l PropertyChangeListener to add
+     * @param l PropertyChangeListener to schedule
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
@@ -1041,13 +1041,13 @@ public class IngestManager {
                 final Task task = new Task(image, imageMods);
                 logger.log(Level.INFO, "Queing image ingest task: " + task);
                 progress.progress("Image Ingest" + " " + imageName, processed);
-                imageScheduler.add(task);
+                imageScheduler.schedule(task);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
-                final ScheduledTask fTask = new ScheduledTask(image, fileMods, getProcessUnallocSpace());
+                final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods, getProcessUnallocSpace());
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
-                fileScheduler.add(fTask);
+                fileScheduler.schedule(fTask);
                 progress.progress("File Ingest" + " " + imageName, ++processed);
 
             } //for images

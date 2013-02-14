@@ -200,13 +200,13 @@ class IngestScheduler {
         /**
          * Scheduled task added to the scheduler
          */
-        static class ScheduledTask {
+        static class ScheduledImageTask {
 
             Image image;
             List<IngestModuleAbstractFile> modules;
             boolean processUnalloc;
 
-            public ScheduledTask(Image image, List<IngestModuleAbstractFile> modules, boolean processUnalloc) {
+            public ScheduledImageTask(Image image, List<IngestModuleAbstractFile> modules, boolean processUnalloc) {
                 this.image = image;
                 this.modules = modules;
                 this.processUnalloc = processUnalloc;
@@ -214,7 +214,7 @@ class IngestScheduler {
 
             @Override
             public String toString() {
-                return "ScheduledTask{" + "image=" + image + ", modules=" + modules + ", processUnalloc=" + processUnalloc + '}';
+                return "ScheduledImageTask{" + "image=" + image + ", modules=" + modules + ", processUnalloc=" + processUnalloc + '}';
             }
 
             /**
@@ -233,7 +233,7 @@ class IngestScheduler {
                 if (getClass() != obj.getClass()) {
                     return false;
                 }
-                final ScheduledTask other = (ScheduledTask) obj;
+                final ScheduledImageTask other = (ScheduledImageTask) obj;
                 if (this.image != other.image && (this.image == null || !this.image.equals(other.image))) {
                     return false;
                 }
@@ -253,9 +253,9 @@ class IngestScheduler {
         static class ProcessTask {
 
             AbstractFile file;
-            ScheduledTask scheduledTask;
+            ScheduledImageTask scheduledTask;
 
-            public ProcessTask(AbstractFile file, ScheduledTask scheduledTask) {
+            public ProcessTask(AbstractFile file, ScheduledImageTask scheduledTask) {
                 this.file = file;
                 this.scheduledTask = scheduledTask;
             }
@@ -307,12 +307,12 @@ class IngestScheduler {
 
             /**
              * Create 1 or more ProcessTasks for each root dir in the image in
-             * the ScheduledTask supplied
+             * the ScheduledImageTask supplied
              *
              * @param scheduledTask
              * @return
              */
-            private static List<ProcessTask> createFromScheduledTask(ScheduledTask scheduledTask) {
+            private static List<ProcessTask> createFromScheduledTask(ScheduledImageTask scheduledTask) {
                 Collection<AbstractFile> rootObjects = scheduledTask.image.accept(new GetRootDirVisitor());
                 List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
                 for (AbstractFile root : rootObjects) {
@@ -324,7 +324,7 @@ class IngestScheduler {
                             //add the root itself, could be unalloc file, child of volume or image
                             firstLevelFiles.add(root);
                         } else {
-                            //root for fs root dir, add children dirs/files
+                            //root for fs root dir, schedule children dirs/files
                             for (Content child : children) {
                                 if (child instanceof AbstractFile) {
                                     firstLevelFiles.add((AbstractFile) child);
@@ -355,7 +355,7 @@ class IngestScheduler {
          *
          * @param task tasks similar to this one should be removed
          */
-        private void removeDupTasks(ScheduledTask task) {
+        private void removeDupTasks(ScheduledImageTask task) {
             Image image = task.image;
 
             //remove from root queue
@@ -389,11 +389,39 @@ class IngestScheduler {
         }
 
         /**
-         * Enqueue new file ingest ScheduledTask If there are
-         *
-         * @param task
+         * Schedule a file to the file ingest, with associated modules.
+         * This will add the file to beginning of the file queue.
+         * The method is intended for rescheduling a file that is a derivative of
+         * another content object that has already ingested and produced this file.
+         * As a result, the derivative file will be scheduled with the same priority
+         * as the parent origin file.
+         * 
+         * @param file file to be scheduled
+         * @param originalTask original image schedule tasks that was used to schedule 
+         * the parent origin file, with the modules context, etc.
          */
-        synchronized void add(ScheduledTask task) {
+        synchronized void schedule (AbstractFile file, ScheduledImageTask originalTask) {
+             //skip if task contains no modules
+            if (originalTask.modules.isEmpty()) {
+                return;
+            }
+            
+            ProcessTask fileTask = new ProcessTask(file, originalTask);
+            if (shouldEnqueueTask(fileTask)) {
+                this.curFileProcessTasks.add(fileTask);
+                 this.filesEnqueuedEst = queryNumFiles();
+            }
+            
+            
+ 
+        }
+        
+        /**
+         * Schedule new image for a file ingest with associated modules.
+         *
+         * @param task image schedule task with image and associated modules
+         */
+        synchronized void schedule(ScheduledImageTask task) {
             //skip if task contains no modules
             if (task.modules.isEmpty()) {
                 return;
@@ -484,7 +512,7 @@ class IngestScheduler {
                     this.curFileProcessTasks.add(parentTask);
                 }
                 try {
-                    //get children, and if leafs, add to file queue
+                    //get children, and if leafs, schedule to file queue
                     //otherwise push to curDir stack
 
                     //TODO use the new more specific method to get list of AbstractFile
@@ -689,8 +717,8 @@ class IngestScheduler {
                 static {
                     // these files have no structure, so they go last
                     //unalloc files are handled as virtual files in getPriority()
-                    //LAST_PRI_PATHS.add(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
-                    //LAST_PRI_PATHS.add(Pattern.compile("^\\Unalloc", Pattern.CASE_INSENSITIVE));
+                    //LAST_PRI_PATHS.schedule(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
+                    //LAST_PRI_PATHS.schedule(Pattern.compile("^\\Unalloc", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
                     
@@ -958,7 +986,7 @@ class IngestScheduler {
             }
         }
 
-        synchronized void add(Task task) {
+        synchronized void schedule(Task task) {
             //skip if task contains no modules
             if (task.modules.isEmpty()) {
                 return;
