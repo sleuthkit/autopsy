@@ -112,23 +112,23 @@ public class Chrome extends Extract implements IngestModuleImage {
             while (j < historyFiles.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
-                final FsContent historyFile = historyFiles.get(j);
+                final FsContent historyFile = historyFiles.get(j++);
                 if (historyFile.getSize() == 0) {
-                    j++;
                     continue;
                 }
                 try {
-                    ContentUtils.writeToFile(historyFile, new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(historyFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFiles.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
                     break;
                 }
-                List<HashMap<String, Object>> tempList = this.dbConnect(temps, chquery);
+                List<HashMap<String, Object>> tempList = null;
+                tempList = this.dbConnect(temps, chquery);
                 logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
 
@@ -142,13 +142,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFiles.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
 
                 }
                 if (errors > 0) {
                     this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome web history artifacts.");
                 }
-                j++;
+       
                 dbFile.delete();
             }
 
@@ -169,13 +169,14 @@ public class Chrome extends Extract implements IngestModuleImage {
         int j = 0;
         if (bookmarkFiles != null && !bookmarkFiles.isEmpty()) {
             while (j < bookmarkFiles.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + bookmarkFiles.get(j).getName().toString() + j + ".db";
+                FsContent bookmarkFile =  bookmarkFiles.get(j++);
+                String temps = currentCase.getTempDirectory() + File.separator + bookmarkFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(bookmarkFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + bookmarkFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(bookmarkFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + bookmarkFiles.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + bookmarkFile.getName());
                 }
                 logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
                 File dbFile = new File(temps);
@@ -221,7 +222,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                                 date = Long.valueOf(0);
                             }
                             String domain = Util.extractDomain(url);
-                            BlackboardArtifact bbart = bookmarkFiles.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+                            BlackboardArtifact bbart = bookmarkFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                             //TODO Revisit usage of deprecated constructor as per TSK-583
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000000)));
@@ -243,7 +244,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 } catch (FileNotFoundException ex) {
                     logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome." + ex);
                 }
-                j++;
+             
                 dbFile.delete();
             }
 
@@ -266,13 +267,14 @@ public class Chrome extends Extract implements IngestModuleImage {
         int j = 0;
         if (cookiesFiles != null && !cookiesFiles.isEmpty()) {
             while (j < cookiesFiles.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + cookiesFiles.get(j).getName().toString() + j + ".db";
+                FsContent cookiesFile = cookiesFiles.get(j++);
+                String temps = currentCase.getTempDirectory() + File.separator + cookiesFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(cookiesFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + cookiesFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(cookiesFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + cookiesFiles.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + cookiesFile.getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -296,13 +298,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                     String domain = result.get("host_key").toString();
                     domain = domain.replaceFirst("^\\.+(?!$)", "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFiles.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
 
                 }
                 if (errors > 0) {
                     this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome cookie artifacts.");
                 }
-                j++;
+        
                 dbFile.delete();
             }
 
@@ -325,13 +327,17 @@ public class Chrome extends Extract implements IngestModuleImage {
         int j = 0;
         if (historyFiles != null && !historyFiles.isEmpty()) {
             while (j < historyFiles.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
+                FsContent historyFile = historyFiles.get(j++);
+                if (historyFile.getSize() == 0) {
+                    continue;
+                }
+                String temps = currentCase.getTempDirectory() + File.separator + historyFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(historyFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(historyFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFiles.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -356,13 +362,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                     String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFiles.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFile, bbattributes);
 
                 }
                 if (errors > 0) {
                     this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome download artifacts.");
                 }
-                j++;
+       
                 dbFile.delete();
             }
 
@@ -385,13 +391,14 @@ public class Chrome extends Extract implements IngestModuleImage {
         int j = 0;
         if (signonFiles != null && !signonFiles.isEmpty()) {
             while (j < signonFiles.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + signonFiles.get(j).getName().toString() + j + ".db";
+                FsContent signonFile = signonFiles.get(j++);
+                String temps = currentCase.getTempDirectory() + File.separator + signonFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
-                    ContentUtils.writeToFile(signonFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + signonFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(signonFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + signonFiles.get(j).getName());
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + signonFile.getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -413,13 +420,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : ""))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(), "Recent Activity", ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", result.get("signon_realm").toString()));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFiles.get(j), bbattributes);
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);
 
                 }
                 if (errors > 0) {
                     this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome login artifacts.");
                 }
-                j++;
+             
                 dbFile.delete();
             }
 

@@ -132,9 +132,9 @@ abstract public class Extract implements IngestModuleImage{
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
             tempdbconnect.closeConnection();
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
-            return new ArrayList<HashMap<String,Object>>();
+            return Collections.<HashMap<String,Object>>emptyList();
         }
         return list;
     }
