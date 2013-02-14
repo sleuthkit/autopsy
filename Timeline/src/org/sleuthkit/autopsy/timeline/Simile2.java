@@ -557,6 +557,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 jf.dispose();
                 jf = null;
             }
+            
+            data = null;
         }
     }
     
