@@ -536,25 +536,30 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (!prop.equals(Case.CASE_ADD_IMAGE)) {
-            return;
-        }
-        
-        if (jf != null && !jf.isVisible()) {
-            // change the lastObjectId to trigger a reparse of mactime data
-            ++lastObjectId;
-            return;
-        }
-        
-        int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
-        if (answer != JOptionPane.YES_OPTION) {
-            return;
-        }
+        if (prop.equals(Case.CASE_ADD_IMAGE)) {
+            if (jf != null && !jf.isVisible()) {
+                // change the lastObjectId to trigger a reparse of mactime data
+                ++lastObjectId;
+                return;
+            }
 
-        clearMactimeData();
+            int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+            if (answer != JOptionPane.YES_OPTION) {
+                return;
+            }
 
-        // call performAction as if the user selected 'Make Timeline' from the menu
-        performAction();
+            clearMactimeData();
+
+            // call performAction as if the user selected 'Make Timeline' from the menu
+            performAction();
+        } else if (prop.equals(Case.CASE_CURRENT_CASE)) {
+            if (jf != null && jf.isVisible()) {
+                jf.dispose();
+                jf = null;
+            }
+            
+            data = null;
+        }
     }
     
     private void clearMactimeData() {
