@@ -112,8 +112,12 @@ public class Chrome extends Extract implements IngestModuleImage {
             while (j < historyFiles.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
                 int errors = 0;
+                final FsContent historyFile = historyFiles.get(j);
+                if (historyFile.getSize() == 0) {
+                    continue;
+                }
                 try {
-                    ContentUtils.writeToFile(historyFiles.get(j), new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(historyFile, new File(currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db"));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFiles.get(j).getName());
