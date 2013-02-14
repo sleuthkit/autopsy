@@ -332,6 +332,12 @@
                 <package>org.apache.commons.codec.digest</package>
                 <package>org.apache.commons.codec.language</package>
                 <package>org.apache.commons.codec.net</package>
+                <package>org.apache.commons.io</package>
+                <package>org.apache.commons.io.comparator</package>
+                <package>org.apache.commons.io.filefilter</package>
+                <package>org.apache.commons.io.input</package>
+                <package>org.apache.commons.io.monitor</package>
+                <package>org.apache.commons.io.output</package>
                 <package>org.apache.commons.lang</package>
                 <package>org.apache.commons.lang.builder</package>
                 <package>org.apache.commons.lang.enums</package>
@@ -731,6 +737,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
