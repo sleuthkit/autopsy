@@ -70,7 +70,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] SUPPORTED_EXTENSIONS = {
         //Archive (to be removed when we have archive module
-        "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", "ar", "cpio", 
+        /// handled by 7zip module now "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", "ar", "cpio", 
         //MS Office
         "doc", "dot", "docx", "docm", "dotx", "dotm",
         "xls", "xlw", "xlt", "xlsx", "xlsm", "xltx", "xltm",
