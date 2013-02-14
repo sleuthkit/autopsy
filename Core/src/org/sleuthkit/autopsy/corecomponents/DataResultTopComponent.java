@@ -147,7 +147,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * Creates a new non-default DataResult component
      *
      * @param title Title of the component window
-     * @param customModeName custom mode to dock this custom TopComponent to
+     * @param mode custom mode to dock this custom TopComponent to
      * @param pathText Descriptive text about the source of the nodes displayed
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children

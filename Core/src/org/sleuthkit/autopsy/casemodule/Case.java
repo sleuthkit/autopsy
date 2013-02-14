@@ -856,20 +856,22 @@ public class Case {
 
     /**
      * Check for existence of certain case sub dirs and create them if needed.
-     * @param openedCase 
+     *
+     * @param openedCase
      */
     private static void checkSubFolders(Case openedCase) {
         String modulesOutputDir = openedCase.getModulesOutputDirAbsPath();
         File modulesOutputDirF = new File(modulesOutputDir);
         if (!modulesOutputDirF.exists()) {
             logger.log(Level.INFO, "Creating modules output dir for the case.");
-        }
-        try {
-            if (! modulesOutputDirF.mkdir() ) {
-                 logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir);
+
+            try {
+                if (!modulesOutputDirF.mkdir()) {
+                    logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir);
+                }
+            } catch (SecurityException e) {
+                logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e);
             }
-        } catch (SecurityException e) {
-            logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e);
         }
     }
 

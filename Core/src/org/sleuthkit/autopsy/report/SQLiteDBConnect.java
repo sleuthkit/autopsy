@@ -27,6 +27,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Database connection class & utilities *
@@ -38,6 +39,7 @@ public class SQLiteDBConnect {
     public int iTimeout = 30;
     public Connection conn = null;
     public Statement statement = null;
+    private static final Logger logger = Logger.getLogger(SQLiteDBConnect.class.getName());
 
     /* Stub constructor for quick instantiation o/t fly for using some of the ancillary stuff */
     public SQLiteDBConnect() {
@@ -45,11 +47,11 @@ public class SQLiteDBConnect {
 
     /* quick and dirty constructor to test the database passing the DriverManager name and the fully loaded url to handle */
     /* NB this will typically be available if you make this class concrete and not abstract */
-    public SQLiteDBConnect(String sDriverToLoad, String sUrlToLoad) throws Exception {
+    public SQLiteDBConnect(String sDriverToLoad, String sUrlToLoad) throws SQLException {
         init(sDriverToLoad, sUrlToLoad);
     }
 
-    public final void init(String sDriverVar, String sUrlVar) throws Exception {
+    public final void init(String sDriverVar, String sUrlVar) throws SQLException {
         setDriver(sDriverVar);
         setUrl(sUrlVar);
         setConnection();
@@ -64,8 +66,13 @@ public class SQLiteDBConnect {
         sUrl = sUrlVar;
     }
 
-    public void setConnection() throws Exception {
-        Class.forName(sDriver);
+    public void setConnection() throws SQLException {
+        try {
+            Class.forName(sDriver);
+        }
+        catch (ClassNotFoundException e) {
+            
+        }
         conn = DriverManager.getConnection(sUrl);
     }
 
@@ -73,7 +80,7 @@ public class SQLiteDBConnect {
         return conn;
     }
 
-    public void setStatement() throws Exception {
+    public void setStatement() throws SQLException {
         if (conn == null) {
             setConnection();
         }

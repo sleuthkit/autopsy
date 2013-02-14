@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +28,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -85,11 +83,13 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.datamodel.FilterNodeLeaf;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -124,7 +124,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private final int Height_Frame = 850; //Sizing constants
     private final int Width_Frame = 1300;
     private Button button_DrillUp;  //Navigation buttons
-    private Button button_Reset;
     private Button button_Go;
     private ComboBox<String> dropdown_SelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
@@ -157,9 +156,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     }
     
     private void customize() {
-        
         //Making the main frame *
         jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
+        
+        //use the same icon on jframe as main application
+        jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
         //JPanels are used as the cohesive glue that binds everything together.*/
@@ -233,7 +234,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     dropdown_SelectYears = new ComboBox(listSelect);
 
                     //Buttons for navigating up and down the timeline
-                    button_DrillUp = new Button("Drill up");
+                    button_DrillUp = new Button("Zoom Out");
                     button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
@@ -247,15 +248,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                             scroll_Events.setContent(chart_Events);
                         }
                     });
-                    button_Reset = new Button("Reset");
-                    button_Reset.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent e) {
-                            stack_PrevCharts.clear();
-                            chart_Events = chart_TopLevel;
-                            scroll_Events.setContent(chart_Events);
-                        }
-                    });
+     
                     button_Go = new Button("►");
                     button_Go.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
@@ -268,8 +261,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     });
 
                     //Adding things to the V and H boxes. 
-                    //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Drill Up|Drill Down|Reset|View Year: [Select Year]|►|
-                    hBox_Charts.getChildren().addAll(button_DrillUp, button_Reset, new Label("View Year:"), dropdown_SelectYears, button_Go);
+                    //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Zoom Out|View Year: [Select Year]|►|
+                    hBox_Charts.getChildren().addAll(button_DrillUp, new Label("View Year:"), dropdown_SelectYears, button_Go);
                     vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
                     group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
                     panel_Charts.setScene(scene_Charts);
@@ -437,6 +430,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
         BarChart.Series<String, Number> series = new BarChart.Series(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
+        
 
         ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
 
@@ -464,6 +458,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                                     dataResult.setNode(d);
                                 }
                             });
+                            
+                            //set result viewer title path with the current date
+                            String dateString = ye.getYear() + "-" + (1+me.getMonthInt()) + "-" +  + de.dayNum;
+                            dataResult.setPath(dateString);
                         }
                     });
         }
@@ -538,25 +536,30 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (!prop.equals(Case.CASE_ADD_IMAGE)) {
-            return;
-        }
-        
-        if (jf != null && !jf.isVisible()) {
-            // change the lastObjectId to trigger a reparse of mactime data
-            ++lastObjectId;
-            return;
-        }
-        
-        int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
-        if (answer != JOptionPane.YES_OPTION) {
-            return;
-        }
+        if (prop.equals(Case.CASE_ADD_IMAGE)) {
+            if (jf != null && !jf.isVisible()) {
+                // change the lastObjectId to trigger a reparse of mactime data
+                ++lastObjectId;
+                return;
+            }
 
-        clearMactimeData();
+            int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+            if (answer != JOptionPane.YES_OPTION) {
+                return;
+            }
 
-        // call performAction as if the user selected 'Make Timeline' from the menu
-        performAction();
+            clearMactimeData();
+
+            // call performAction as if the user selected 'Make Timeline' from the menu
+            performAction();
+        } else if (prop.equals(Case.CASE_CURRENT_CASE)) {
+            if (jf != null && jf.isVisible()) {
+                jf.dispose();
+                jf = null;
+            }
+            
+            data = null;
+        }
     }
     
     private void clearMactimeData() {
@@ -751,20 +754,13 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         }
         @Override
         protected Node createNodeForKey(AbstractFile file) {
-            Node n;
+            Node wrapped;
             if (file.isDir()) {
-                n = new DirectoryNode((Directory) file);
+                wrapped = new DirectoryNode((Directory) file, false);
             } else {
-                n = new FileNode((File) file) {
-
-                    @Override
-                    public boolean isLeafTypeNode() {
-                        return false;
-                    }
-                    
-                };
+                wrapped = new FileNode((File) file, false);
             }
-            return n;
+            return new FilterNodeLeaf(wrapped);
         }
     }
 
@@ -823,7 +819,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 logger.log(Level.SEVERE, "Could not find a file with ID " + ObjId, ex);
                 continue;
             }
-            ye.add(file, month, day);
+            if (ye != null) {
+                ye.add(file, month, day);
+            }
         }
         
         scan.close();
@@ -920,6 +918,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private String makeMacTime(String pathToBodyFile) {
         String macpath = "";
         final String machome = macRoot.getAbsolutePath();
+        pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
             macpath = PlatformUtil.getOSFilePath(macpath);
@@ -928,7 +927,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         }
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
         macfile = PlatformUtil.getOSFilePath(macfile);
-        String command = macpath + " -b " + "\"" + pathToBodyFile + "\"" + " -d " + " -y " + ">" + "\"" + macfile + "\"";
+        String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + "> " + macfile;
+
         try {
             JavaSystemCaller.Exec.execute("\"" + command + "\"");
         } catch (InterruptedException ie) {

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -56,9 +57,10 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         return true;
     }
 
-    private String createQuery() {
-        String query = "known <> 1 and (0";
-        for (String s : filter.getFilter()) {
+    
+    private String createQuery(){
+        String query = "known <> 1 AND (0";
+        for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
         query += ')';
@@ -66,21 +68,22 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         return query;
     }
 
-    private List<FsContent> runQuery() {
-        ResultSet rs = null;
-        List<FsContent> ret = new ArrayList<FsContent>();
+    
+    private List<FsContent> runQuery(){
+        List<FsContent> list = new ArrayList<FsContent>();
         try {
-            List<FsContent> found = skCase.findFilesWhere(createQuery());
-            for (FsContent c : found) {
-                if (c.isFile()) {
-                    ret.add(c);
+            List<FsContent> res = skCase.findFilesWhere(createQuery());
+            for(FsContent c : res){
+                if(c.isFile()){
+                    list.add(c);
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get search results", ex);
-        } 
-        return ret;
+        }
 
+        return list;
+        
     }
 
     @Override

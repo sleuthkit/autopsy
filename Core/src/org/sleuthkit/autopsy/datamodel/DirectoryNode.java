@@ -18,26 +18,38 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is used to represent the "Node" for the directory.
- * Its children are more directories. 
+ * This class is used to represent the "Node" for the directory. Its children
+ * are more directories.
  */
 public class DirectoryNode extends AbstractFsContentNode<Directory> {
-    
+
     public static final String DOTDOTDIR = "[parent folder]";
     public static final String DOTDIR = "[current folder]";
-    
+
     public DirectoryNode(Directory dir) {
         this(dir, true);
+
+        setIcon(dir);
     }
 
     public DirectoryNode(Directory dir, boolean directoryBrowseMode) {
         super(dir, directoryBrowseMode);
 
+        setIcon(dir);
+    }
+
+    private void setIcon(Directory dir) {
         // set name, display name, and icon
         if (dir.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
@@ -54,7 +66,17 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        return new Action[]{};
+        List<Action> actions = new ArrayList<Action>();
+        if (!getDirectoryBrowseMode()) {
+            actions.add(new ViewContextAction("View File in Directory", this));
+            actions.add(null); // creates a menu separator
+        }
+        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new ExtractAction("Extract Directory", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new TagFileAction(this));
+        return actions.toArray(new Action[0]);
     }
 
     @Override
@@ -66,12 +88,9 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     public TYPE getDisplayableItemNodeType() {
         return TYPE.CONTENT;
     }
-    
-    
-
 }

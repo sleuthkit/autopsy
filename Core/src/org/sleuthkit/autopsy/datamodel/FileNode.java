@@ -18,16 +18,23 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.HashSearchAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * This class is used to represent the "Node" for the file.
  * It may have derived files children.
- *
- * TODO should extend AbstractFsContentNode<FsContent> after FsContent fields are moved up
  */
 public class FileNode extends AbstractFsContentNode<FsContent> {
 
@@ -36,11 +43,19 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
      */
     public FileNode(FsContent file) {
         this(file, true);
+
+        setIcon(file);
+
+
     }
 
     public FileNode(FsContent file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
+        setIcon(file);
+    }
+
+    private void setIcon(FsContent file) {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
@@ -57,16 +72,28 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        return new Action[]{};
+        List<Action> actionsList = new ArrayList<Action>();
+        if (!this.getDirectoryBrowseMode()) {
+                actionsList.add(new ViewContextAction("View File in Directory", this));
+                actionsList.add(null); // creates a menu separator
+            }
+            actionsList.add(new NewWindowViewAction("View in New Window", this));
+            actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+            actionsList.add(null); // creates a menu separator
+            actionsList.add(new ExtractAction("Extract File", this));
+            actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
+            actionsList.add(null); // creates a menu separator
+            actionsList.add(new TagFileAction(this));
+        return actionsList.toArray(new Action[0]);
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
+    public <T> T accept(ContentNodeVisitor< T> v) {
         return v.visit(this);
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+    public <T> T accept(DisplayableItemNodeVisitor< T> v) {
         return v.visit(this);
     }
 
@@ -149,6 +176,4 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
     public boolean isLeafTypeNode() {
         return true; //false;
     }
-    
-    
 }

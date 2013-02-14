@@ -31,4 +31,6 @@ genfiles.properties
 /jdiff-logs/*
 /gen_version.txt
 hs_err_pid*.log
+Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
+Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
 

@@ -24,6 +24,7 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -35,7 +36,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -116,10 +116,10 @@ public class RegressionTest extends TestCase{
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
-        jbo.clickMouse();
+        jbo.pushNoBlock();
     }
     
-    public void testNewCaseWizard() {
+    public void testNewCaseWizard(){
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
         JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 1);
@@ -277,21 +277,24 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 1000).sleep();
     }
     
-    public void testGenerateReportButton() {
+    public void testGenerateReportButton() throws IOException {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
-        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
+        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
-        jbo0.pushNoBlock();       
-        new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
-        screenshot("Finished Report");
-        JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
-        JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
-        JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
+        jbo0.pushNoBlock();
+        new Timeout("pausing", 1000).sleep();
+        JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
+        new Timeout("pausing", 8000).sleep(); // Give it a few seconds to generate
+        screenshot("Progress");
+        JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
+        JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
+        JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
+        jbo2.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
