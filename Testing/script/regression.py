@@ -58,6 +58,7 @@ class Args:
         self.exception = False
         self.exception_string = ""
         self.mugen = False
+        self.contin = False
     
     def parse(self):
         sys.argv.pop(0)
@@ -114,6 +115,9 @@ class Args:
             elif arg == "-h" or arg == "--help":
                 printout(usage())
                 return False
+            elif arg == "-c" or arg == "--continuous":
+                printout("Running until interrupted")
+                self.contin = True
             else:
                 printout(usage())
                 return False
@@ -1545,6 +1549,38 @@ def main():
                     run_test(make_path(case.input_dir, file), 0)
                
         write_html_foot()
+
+        while args.contin:
+            case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
+            os.makedirs(case.output_dir)
+            # If user wants to do a single file and a list (contradictory?)
+            if args.single and args.list:
+                printerror("Error: Cannot run both from config file and on a single file.")
+                return
+            # If working from a configuration file
+            if args.list:
+                if not file_exists(args.config_file):
+                    printerror("Error: Configuration file does not exist at:")
+                    printerror(args.config_file)
+                    return
+                run_config_test(args.config_file)
+            # Else if working on a single file
+            elif args.single:
+                if not file_exists(args.single_file):
+                    printerror("Error: Image file does not exist at:")
+                    printerror(args.single_file)
+                    return
+                run_test(args.single_file, 0)
+            # If user has not selected a single file, and does not want to ignore
+            #  the input directory, continue on to parsing ./input
+            if (not args.single) and (not args.ignore):
+                for file in os.listdir(case.input_dir):
+                    # Make sure it's not a required hash/keyword file or dir
+                    if (not required_input_file(file) and
+                        not os.path.isdir(make_path(case.input_dir, file))):
+                        run_test(make_path(case.input_dir, file), 0)
+                   
+            write_html_foot()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)      
