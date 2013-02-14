@@ -254,7 +254,19 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 break;
             }
             Content fav = recentFile;
-            JLNK lnk = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize()).parse();
+            if (fav.getSize() == 0) {
+                continue;
+            }
+            JLNK lnk = null;
+            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize());
+            try {
+                lnk = lnkParser.parse();
+            }
+            catch (Exception e) {
+                //TODO should throw a specific checked exception
+                logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile);
+                continue;
+            }
             String path = lnk.getBestPath();
             Long datetime = recentFile.getCrtime();
 
