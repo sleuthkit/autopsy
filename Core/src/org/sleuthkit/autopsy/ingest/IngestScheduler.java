@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -57,7 +58,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  * Currently a singleton object only.
  *
  * Contains internal schedulers for image and file ingests.
- * 
+ *
  * TODO test derived files scheduling
  *
  */
@@ -92,6 +93,7 @@ class IngestScheduler {
         return fileScheduler;
     }
 
+    
     /**
      * FileScheduler ingest scheduler
      *
@@ -110,7 +112,7 @@ class IngestScheduler {
         //stack of current dirs to be processed recursively
         private List<ProcessTask> curDirProcessTasks;
         //list of files being processed in the currently processed directory
-        private List<ProcessTask> curFileProcessTasks;
+        private LinkedList<ProcessTask> curFileProcessTasks; //need to add to start and end quickly
         //estimated files to be enqueued for current images
         private int filesEnqueuedEst;
         private int filesDequeued;
@@ -123,7 +125,7 @@ class IngestScheduler {
         private FileScheduler() {
             rootProcessTasks = new TreeSet<ProcessTask>(new RootTaskComparator());
             curDirProcessTasks = new ArrayList<ProcessTask>();
-            curFileProcessTasks = new ArrayList<ProcessTask>();
+            curFileProcessTasks = new LinkedList<ProcessTask>();
             filesEnqueuedEst = 0;
             filesDequeued = 0;
         }
@@ -198,66 +200,16 @@ class IngestScheduler {
         }
 
         /**
-         * Scheduled task added to the scheduler
-         */
-        static class ScheduledImageTask {
-
-            Image image;
-            List<IngestModuleAbstractFile> modules;
-            boolean processUnalloc;
-
-            public ScheduledImageTask(Image image, List<IngestModuleAbstractFile> modules, boolean processUnalloc) {
-                this.image = image;
-                this.modules = modules;
-                this.processUnalloc = processUnalloc;
-            }
-
-            @Override
-            public String toString() {
-                return "ScheduledImageTask{" + "image=" + image + ", modules=" + modules + ", processUnalloc=" + processUnalloc + '}';
-            }
-
-            /**
-             * Two scheduled tasks are equal when the image and modules are the
-             * same. This enables us not to enqueue the equal schedules tasks
-             * twice into the queue/set
-             *
-             * @param obj
-             * @return
-             */
-            @Override
-            public boolean equals(Object obj) {
-                if (obj == null) {
-                    return false;
-                }
-                if (getClass() != obj.getClass()) {
-                    return false;
-                }
-                final ScheduledImageTask other = (ScheduledImageTask) obj;
-                if (this.image != other.image && (this.image == null || !this.image.equals(other.image))) {
-                    return false;
-                }
-                if (this.modules != other.modules && (this.modules == null || !this.modules.equals(other.modules))) {
-                    return false;
-                }
-                if (this.processUnalloc != other.processUnalloc) {
-                    return false;
-                }
-                return true;
-            }
-        }
-
-        /**
          * Task to process returned by FileScheduler.getNext()
          */
         static class ProcessTask {
 
-            AbstractFile file;
-            ScheduledImageTask scheduledTask;
+            final AbstractFile file;
+            final IngestContext<IngestModuleAbstractFile> context;
 
-            public ProcessTask(AbstractFile file, ScheduledImageTask scheduledTask) {
+            public ProcessTask(AbstractFile file, IngestContext<IngestModuleAbstractFile> context) {
                 this.file = file;
-                this.scheduledTask = scheduledTask;
+                this.context = context;
             }
 
             @Override
@@ -269,7 +221,7 @@ class IngestScheduler {
                     logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex);
                 }
                 return "ProcessTask{" + "file=" + file.getId() + ": "
-                        + file.getName() + ", scheduledTask=" + scheduledTask + '}';
+                        + file.getName() + ", context=" + context + '}';
             }
 
             /**
@@ -292,7 +244,11 @@ class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                if (this.scheduledTask != other.scheduledTask && (this.scheduledTask == null || !this.scheduledTask.equals(other.scheduledTask))) {
+                ScheduledImageTask<IngestModuleAbstractFile> thisTask = this.context.getScheduledTask();
+                ScheduledImageTask<IngestModuleAbstractFile> otherTask = other.context.getScheduledTask();
+                
+                if (thisTask != otherTask
+                        && (thisTask == null || !thisTask.equals(otherTask))) {
                     return false;
                 }
                 return true;
@@ -302,18 +258,19 @@ class IngestScheduler {
             //to enqueued processtask in file queue
             ProcessTask(ProcessTask orig, AbstractFile childFile) {
                 this.file = childFile;;
-                this.scheduledTask = orig.scheduledTask;
+                this.context = orig.context;
             }
 
             /**
-             * Create 1 or more ProcessTasks for each root dir in the image in
-             * the ScheduledImageTask supplied
+             * Create 1 or more ProcessTasks for each root dir in the image from
+             * the context supplied
              *
-             * @param scheduledTask
+             * @param context the original ingest context
              * @return
              */
-            private static List<ProcessTask> createFromScheduledTask(ScheduledImageTask scheduledTask) {
-                Collection<AbstractFile> rootObjects = scheduledTask.image.accept(new GetRootDirVisitor());
+            private static List<ProcessTask> createFromScheduledTask(IngestContext<IngestModuleAbstractFile> context) {
+                ScheduledImageTask<IngestModuleAbstractFile> scheduledTask = context.getScheduledTask();
+                Collection<AbstractFile> rootObjects = scheduledTask.getImage().accept(new GetRootDirVisitor());
                 List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
                 for (AbstractFile root : rootObjects) {
                     //TODO use more specific get AbstractFile children method
@@ -340,7 +297,7 @@ class IngestScheduler {
 
                 List<ProcessTask> processTasks = new ArrayList<ProcessTask>();
                 for (AbstractFile firstLevelFile : firstLevelFiles) {
-                    ProcessTask newTask = new ProcessTask(firstLevelFile, scheduledTask);
+                    ProcessTask newTask = new ProcessTask(firstLevelFile, context);
                     if (shouldEnqueueTask(newTask)) {
                         processTasks.add(newTask);
                     }
@@ -356,12 +313,12 @@ class IngestScheduler {
          * @param task tasks similar to this one should be removed
          */
         private void removeDupTasks(ScheduledImageTask task) {
-            Image image = task.image;
+            final Image image = task.getImage();
 
             //remove from root queue
             List<ProcessTask> toRemove = new ArrayList<ProcessTask>();
             for (ProcessTask pt : rootProcessTasks) {
-                if (pt.scheduledTask.image.equals(image)) {
+                if (pt.context.getScheduledTask().getImage().equals(image)) {
                     toRemove.add(pt);
                 }
             }
@@ -370,7 +327,7 @@ class IngestScheduler {
             //remove from dir stack
             toRemove = new ArrayList<ProcessTask>();
             for (ProcessTask pt : curDirProcessTasks) {
-                if (pt.scheduledTask.image.equals(image)) {
+                if (pt.context.getScheduledTask().getImage().equals(image)) {
                     toRemove.add(pt);
                 }
             }
@@ -379,7 +336,7 @@ class IngestScheduler {
             //remove from file queue
             toRemove = new ArrayList<ProcessTask>();
             for (ProcessTask pt : curFileProcessTasks) {
-                if (pt.scheduledTask.image.equals(image)) {
+                if (pt.context.getScheduledTask().getImage().equals(image)) {
                     toRemove.add(pt);
                 }
             }
@@ -389,59 +346,63 @@ class IngestScheduler {
         }
 
         /**
-         * Schedule a file to the file ingest, with associated modules.
-         * This will add the file to beginning of the file queue.
-         * The method is intended for rescheduling a file that is a derivative of
-         * another content object that has already ingested and produced this file.
-         * As a result, the derivative file will be scheduled with the same priority
+         * Schedule a file to the file ingest, with associated modules. This
+         * will add the file to beginning of the file queue. The method is
+         * intended for rescheduling a file that is a derivative of another
+         * content object that has already ingested and produced this file. As a
+         * result, the derivative file will be scheduled with the same priority
          * as the parent origin file.
-         * 
+         *
          * @param file file to be scheduled
-         * @param originalTask original image schedule tasks that was used to schedule 
-         * the parent origin file, with the modules context, etc.
+         * @param originalContext original image schedule context that was used to
+         * schedule the parent origin file, with the modules, settings, etc.
          */
-        synchronized void schedule (AbstractFile file, ScheduledImageTask originalTask) {
-             //skip if task contains no modules
-            if (originalTask.modules.isEmpty()) {
+        synchronized void schedule(AbstractFile file, IngestContext<IngestModuleAbstractFile> originalContext) {
+            ScheduledImageTask originalTask = originalContext.getScheduledTask();
+            
+            //skip if task contains no modules
+            if (originalTask.getModules().isEmpty()) {
                 return;
             }
-            
-            ProcessTask fileTask = new ProcessTask(file, originalTask);
+
+            ProcessTask fileTask = new ProcessTask(file, originalContext);
             if (shouldEnqueueTask(fileTask)) {
-                this.curFileProcessTasks.add(fileTask);
-                 this.filesEnqueuedEst = queryNumFiles();
+                this.curFileProcessTasks.addFirst(fileTask);
+                this.filesEnqueuedEst = queryNumFiles();
             }
-            
-            
- 
+
+
         }
-        
+
         /**
          * Schedule new image for a file ingest with associated modules.
          *
          * @param task image schedule task with image and associated modules
          */
-        synchronized void schedule(ScheduledImageTask task) {
+        synchronized void schedule(IngestContext<IngestModuleAbstractFile> context) {
+            
+            final ScheduledImageTask task = context.getScheduledTask();
+            
             //skip if task contains no modules
-            if (task.modules.isEmpty()) {
+            if (task.getModules().isEmpty()) {
                 return;
             }
-            
-            if (getImages().contains(task.image)) {
+
+            if (getImages().contains(task.getImage())) {
                 //reset counters if the same image enqueued twice
                 //Note, not very accurate, because we may have processed some files from 
                 //another image
                 this.filesDequeued = 0;
             }
-            
+
             //remove duplicate scheduled tasks for this image if enqueued previously
             removeDupTasks(task);
 
-            List<ProcessTask> rootTasks = ProcessTask.createFromScheduledTask(task);
+            List<ProcessTask> rootTasks = ProcessTask.createFromScheduledTask(context);
 
             //adds and resorts the tasks
             this.rootProcessTasks.addAll(rootTasks);
-            
+
             this.filesEnqueuedEst = queryNumFiles();
 
             //update the dir and file level queues if needed
@@ -452,13 +413,13 @@ class IngestScheduler {
         @Override
         public synchronized boolean hasNext() {
             boolean hasNext = !this.curFileProcessTasks.isEmpty();
-            
+
             if (!hasNext) {
                 //reset counters
                 filesDequeued = 0;
                 filesEnqueuedEst = 0;
             }
-            
+
             return hasNext;
         }
 
@@ -469,7 +430,7 @@ class IngestScheduler {
             }
 
             //dequeue the last in the list
-            ProcessTask task = curFileProcessTasks.remove(curFileProcessTasks.size() - 1);
+            final ProcessTask task = curFileProcessTasks.pollLast();
 
             //continue shifting to file queue until not empty
             while (curFileProcessTasks.isEmpty()
@@ -478,7 +439,7 @@ class IngestScheduler {
             }
 
             ++filesDequeued;
-            
+
             return task;
 
         }
@@ -509,7 +470,7 @@ class IngestScheduler {
                 final AbstractFile parentFile = parentTask.file;
                 //add popped to file list
                 if (shouldEnqueueTask(parentTask)) {
-                    this.curFileProcessTasks.add(parentTask);
+                    this.curFileProcessTasks.addLast(parentTask);
                 }
                 try {
                     //get children, and if leafs, schedule to file queue
@@ -526,7 +487,7 @@ class IngestScheduler {
                                 this.curDirProcessTasks.add(childTask);
                             } else {
                                 if (shouldEnqueueTask(childTask)) {
-                                    this.curFileProcessTasks.add(childTask);
+                                    this.curFileProcessTasks.addLast(childTask);
                                 }
                             }
 
@@ -578,7 +539,7 @@ class IngestScheduler {
 
         synchronized boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
             for (ProcessTask task : rootProcessTasks) {
-                for (IngestModuleAbstractFile m : task.scheduledTask.modules) {
+                for (IngestModuleAbstractFile m : task.context.getScheduledTask().getModules()) {
                     if (m.getName().equals(module.getName())) {
                         return true;
                     }
@@ -586,7 +547,7 @@ class IngestScheduler {
             }
 
             for (ProcessTask task : curDirProcessTasks) {
-                for (IngestModuleAbstractFile m : task.scheduledTask.modules) {
+                for (IngestModuleAbstractFile m : task.context.getScheduledTask().getModules()) {
                     if (m.getName().equals(module.getName())) {
                         return true;
                     }
@@ -594,7 +555,7 @@ class IngestScheduler {
             }
 
             for (ProcessTask task : curFileProcessTasks) {
-                for (IngestModuleAbstractFile m : task.scheduledTask.modules) {
+                for (IngestModuleAbstractFile m : task.context.getScheduledTask().getModules()) {
                     if (m.getName().equals(module.getName())) {
                         return true;
                     }
@@ -614,7 +575,7 @@ class IngestScheduler {
          * Check if the file meets criteria to be enqueued, or is a special file
          * that we should skip
          *
-         * @param processTask a task whose file to check if should be qneueued
+         * @param processTask a task whose file to check if should be queued
          * of skipped
          * @return true if should be enqueued, false otherwise
          */
@@ -622,7 +583,7 @@ class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.scheduledTask.processUnalloc == false) {
+            if (processTask.context.isProcessUnalloc() == false) {
                 if (aFile.isVirtual() == true) {
                     return false;
                 }
@@ -721,7 +682,7 @@ class IngestScheduler {
                     //LAST_PRI_PATHS.schedule(Pattern.compile("^\\Unalloc", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
                     LAST_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
-                    
+
                     // orphan files are often corrupt and windows does not typically have
                     // user content, so put them towards the bottom
                     LOW_PRI_PATHS.add(Pattern.compile("^\\$OrphanFiles", Pattern.CASE_INSENSITIVE));
@@ -743,7 +704,7 @@ class IngestScheduler {
                         //non-fs virtual files and dirs, such as representing unalloc space
                         return AbstractFilePriotity.Priority.LAST;
                     }
-                    
+
                     //determine the fs files priority by name
                     final String path = abstractFile.getName();
 
@@ -771,7 +732,7 @@ class IngestScheduler {
                             return AbstractFilePriotity.Priority.LOW;
                         }
                     }
-                    
+
                     for (Pattern p : LAST_PRI_PATHS) {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
@@ -822,7 +783,7 @@ class IngestScheduler {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex);
                     return 0L;
-                } 
+                }
             }
 
             @Override
@@ -897,104 +858,39 @@ class IngestScheduler {
                 //can have derived files
                 return getAllFromChildren(file);
             }
-            
+
             @Override
             public Collection<AbstractFile> visit(DerivedFile derivedFile) {
                 //can have derived files
                 //TODO test this and overall scheduler with derived files
                 return getAllFromChildren(derivedFile);
             }
-            
-            
         }
     }
 
     /**
      * ImageScheduler ingest scheduler
      */
-    static class ImageScheduler implements Iterator<ImageScheduler.Task> {
+    static class ImageScheduler implements Iterator<ScheduledImageTask<IngestModuleImage>> {
 
-        private List<Task> tasks;
+        private LinkedList<ScheduledImageTask<IngestModuleImage>> tasks;
 
         ImageScheduler() {
-            tasks = new ArrayList<Task>();
+            tasks = new LinkedList<ScheduledImageTask<IngestModuleImage>>();
         }
 
-        /**
-         * Scheduled task
-         */
-        static class Task {
-
-            private org.sleuthkit.datamodel.Image image;
-            private List<IngestModuleImage> modules;
-
-            public Task(org.sleuthkit.datamodel.Image image, List<IngestModuleImage> modules) {
-                this.image = image;
-                this.modules = modules;
-            }
-
-            public Task(org.sleuthkit.datamodel.Image image, IngestModuleImage module) {
-                this.image = image;
-                this.modules = new ArrayList<IngestModuleImage>();
-                modules.add(module);
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if (obj == null) {
-                    return false;
-                }
-                if (getClass() != obj.getClass()) {
-                    return false;
-                }
-                final Task other = (Task) obj;
-                if (this.image != other.image && (this.image == null || !this.image.equals(other.image))) {
-                    return false;
-                }
-                return true;
-            }
-
-            @Override
-            public String toString() {
-                StringBuilder sb = new StringBuilder();
-                for (IngestModuleImage module : modules) {
-                    sb.append(module.getName()).append(" ");
-                }
-                return "Task{" + "image=" + image.getName() + ", modules=" + sb.toString() + '}';
-            }
-
-            public org.sleuthkit.datamodel.Image getImage() {
-                return image;
-            }
-
-            public List<IngestModuleImage> getModules() {
-                return modules;
-            }
-
-            private void addModule(IngestModuleImage newModule) {
-                if (!modules.contains(newModule)) {
-                    modules.add(newModule);
-                }
-            }
-
-            private void addModules(List<IngestModuleImage> newModules) {
-                for (IngestModuleImage newModule : newModules) {
-                    if (!modules.contains(newModule)) {
-                        modules.add(newModule);
-                    }
-                }
-            }
-        }
-
-        synchronized void schedule(Task task) {
+        synchronized void schedule(IngestContext<IngestModuleImage> context) {
+            
+            ScheduledImageTask<IngestModuleImage> task = context.getScheduledTask();
+            
             //skip if task contains no modules
-            if (task.modules.isEmpty()) {
+            if (task.getModules().isEmpty()) {
                 return;
             }
-            
-            Task existTask = null;
-            for (Task curTask : tasks) {
-                if (curTask.image.equals(task.image)) {
+
+            ScheduledImageTask<IngestModuleImage> existTask = null;
+            for (ScheduledImageTask<IngestModuleImage> curTask : tasks) {
+                if (curTask.getImage().equals(task.getImage())) {
                     existTask = curTask;
                     break;
                 }
@@ -1005,18 +901,17 @@ class IngestScheduler {
                 existTask.addModules(task.getModules());
             } else {
                 //enqueue a new task
-                tasks.add(task);
+                tasks.addLast(task);
             }
         }
 
         @Override
-        public synchronized Task next() throws IllegalStateException {
+        public synchronized ScheduledImageTask<IngestModuleImage> next() throws IllegalStateException {
             if (!hasNext()) {
                 throw new IllegalStateException("There is image tasks in the queue, check hasNext()");
             }
 
-            final Task ret = tasks.get(0);
-            tasks.remove(0);
+            final ScheduledImageTask<IngestModuleImage> ret = tasks.pollFirst();
             return ret;
         }
 
@@ -1027,7 +922,7 @@ class IngestScheduler {
          */
         synchronized List<org.sleuthkit.datamodel.Image> getImages() {
             List<org.sleuthkit.datamodel.Image> images = new ArrayList<org.sleuthkit.datamodel.Image>();
-            for (Task task : tasks) {
+            for (ScheduledImageTask<IngestModuleImage> task : tasks) {
                 images.add(task.getImage());
             }
             return images;
@@ -1040,7 +935,7 @@ class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Removing of scheduled image ingest tasks is not supported. ");
         }
 
         synchronized void empty() {
@@ -1055,7 +950,7 @@ class IngestScheduler {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("ImageQueue, size: ").append(getCount());
-            for (Task task : tasks) {
+            for (ScheduledImageTask<IngestModuleImage> task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();

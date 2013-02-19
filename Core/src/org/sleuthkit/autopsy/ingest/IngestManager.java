@@ -40,8 +40,6 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ScheduledImageTask;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.ImageScheduler.Task;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 
@@ -250,6 +248,18 @@ public class IngestManager {
         logger.log(Level.INFO, "Will enqueue image: " + image.getName());
         execute(modules, images);
     }
+    
+    /**
+     * Schedule a file for ingest.  
+     * The file is usually a product of a recently ran ingest.  
+     * Now we want to process this file with the same ingest context.
+     * 
+     * @param file file to be scheduled
+     * @param ingestContext ingest context used to ingest parent of the file to be scheduled
+     */
+    void scheduleFile(AbstractFile file, IngestContext ingestContext)  {
+        scheduler.getFileScheduler().schedule(file, ingestContext);
+    }
 
     /**
      * Starts the needed worker threads.
@@ -276,7 +286,7 @@ public class IngestManager {
         while (imageScheduler.hasNext()) {
             //dequeue
             // get next image and set of modules
-            final IngestScheduler.ImageScheduler.Task imageTask = imageScheduler.next();
+            final ScheduledImageTask<IngestModuleImage> imageTask = imageScheduler.next();
 
             // check if each module for this image is already running
             for (IngestModuleImage taskModule : imageTask.getModules()) {
@@ -825,8 +835,7 @@ public class IngestManager {
                 
                 logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
-
-                for (IngestModuleAbstractFile module : fileTask.scheduledTask.modules) {
+                for (IngestModuleAbstractFile module : fileTask.context.getScheduledTask().getModules() ) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
@@ -1038,16 +1047,21 @@ public class IngestManager {
                 }//for modules
 
                 //queue to schedulers
-                final Task task = new Task(image, imageMods);
-                logger.log(Level.INFO, "Queing image ingest task: " + task);
+                final boolean processUnalloc = getProcessUnallocSpace();
+                final ScheduledImageTask<IngestModuleImage> imageTask = new ScheduledImageTask<IngestModuleImage>(image, imageMods);
+                final IngestContext<IngestModuleImage>imageIngestContext 
+                        = new IngestContext<IngestModuleImage>(imageTask, processUnalloc);
+                logger.log(Level.INFO, "Queing image ingest task: " + imageTask);
                 progress.progress("Image Ingest" + " " + imageName, processed);
-                imageScheduler.schedule(task);
+                imageScheduler.schedule(imageIngestContext);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
-                final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods, getProcessUnallocSpace());
+                final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods);
+                final IngestContext<IngestModuleAbstractFile>fileIngestContext
+                        = new IngestContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
-                fileScheduler.schedule(fTask);
+                fileScheduler.schedule(fileIngestContext);
                 progress.progress("File Ingest" + " " + imageName, ++processed);
 
             } //for images
