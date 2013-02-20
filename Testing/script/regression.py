@@ -389,22 +389,19 @@ def run_config_test(config_file):
 				value = element.getAttribute("value").encode().decode("utf-8")
 				counts[value] = 0
 			#Begin infiniloop
-			if(True):
+			if(newDay()):
 				global daycount
 				global nxtproc
-				if (daycount==1):
-					print("starting process")
-					pid = subprocess.Popen(nxtproc,
-					stdout=subprocess.PIPE).pid
-					sys.exit()
-				else:
-					daycount = 1
 				setDay()
 				gitPull("sleuthkit")
 				vsBuild()
 				gitPull("autopsy")
 				antBuild("datamodel", False)
 				antBuild("autopsy", True)
+				print("starting process")
+				pid = subprocess.Popen(nxtproc,
+				stdout=subprocess.PIPE)
+				sys.exit()
 		else:
 			for img in values:  
 				if file_exists(img):
@@ -1664,7 +1661,6 @@ def main():
 	errorem = "The test standard didn't match the gold standard.\n"
 	case = TestAutopsy()
 	database = Database()
-
 	printout("")
 	args = Args()
 	attachl = []
