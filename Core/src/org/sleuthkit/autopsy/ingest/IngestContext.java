@@ -55,14 +55,12 @@ public class IngestContext <T extends IngestModuleAbstract> {
         context.put(key, value);
     }
 
-   
-    
-    public ScheduledImageTask<T> getScheduledTask() {
+    ScheduledImageTask<T> getScheduledTask() {
         return task;
     }
 
 
-    public boolean isProcessUnalloc() {
+    boolean isProcessUnalloc() {
         return processUnalloc;
     }
 
