@@ -940,8 +940,9 @@ public class IngestManager {
     /* Thread that adds image/file and module pairs to queues */
     private class EnqueueWorker extends SwingWorker<Object, Void> {
 
-        List<IngestModuleAbstract> modules;
-        final List<Image> images;
+        private List<IngestModuleAbstract> modules;
+        private final List<Image> images;
+        private final Logger logger = Logger.getLogger(EnqueueWorker.class.getName());
 
         EnqueueWorker(final List<IngestModuleAbstract> modules, final List<Image> images) {
             this.modules = modules;
@@ -1071,7 +1072,7 @@ public class IngestManager {
         }
 
         private void handleInterruption(Exception ex) {
-            Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
+            logger.log(Level.SEVERE, "Error while enqueing files. ", ex);
             //empty queues
             scheduler.getFileScheduler().empty();
             scheduler.getImageScheduler().empty();
