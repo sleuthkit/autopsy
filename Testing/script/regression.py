@@ -1278,6 +1278,7 @@ def gitPull(TskOrAutopsy):
 	global SYS
 	ccwd = ""
 	gppth = make_local_path(case.output_dir, "GitPullOutput" + TskOrAutopsy + ".txt")
+	attachl.append(gppth)
 	gpout = open(gppth, 'a')
 	toPull = "http://www.github.com/sleuthkit/" + TskOrAutopsy
 	call = ["git", "pull", toPull]
