@@ -403,7 +403,7 @@ def run_config_test(config_file):
 				pid = subprocess.Popen(nxtproc,
 				stdout=subprocess.PIPE)
 				sys.exit()
-			for img in images
+			for img in images:
 				run_test(img, 0 )
 		else:
 			for img in values:  
@@ -1612,7 +1612,7 @@ def send_email():
 	global errorem
 	global attachl
 	global html
-	if(not args.config)
+	if(not args.config):
 		sys.exit()
 	element = parsed.getElementsByTagName("email")[0]
 	toval = element.getAttribute("value").encode().decode("utf-8")
