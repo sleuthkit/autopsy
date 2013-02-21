@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -145,16 +146,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         return instance;
     }
 
-    /**
-     * Starts processing of every file provided by IngestManager. Checks if it
-     * is time to commit and run search
-     *
-     * @param abstractFile file/unallocated file/directory to process
-     * @return ProcessResult.OK in most cases and ERROR only if error in the
-     * pipeline, otherwise does not advice to stop the pipeline
-     */
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {

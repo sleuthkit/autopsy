@@ -40,6 +40,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -89,7 +90,7 @@ public class Chrome extends Extract implements IngestModuleImage {
     }
 
     @Override
-    public void process(Image image, IngestImageWorkerController controller) {
+    public void process(IngestContext<IngestModuleImage>ingestContext, Image image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);

@@ -48,6 +48,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -140,7 +141,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     }
 
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
 
         if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());

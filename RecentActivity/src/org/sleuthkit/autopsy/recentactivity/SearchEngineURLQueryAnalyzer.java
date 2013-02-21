@@ -37,6 +37,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
@@ -324,7 +325,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     }
 
     @Override
-    public void process(Image image, IngestImageWorkerController controller) {
+    public void process(IngestContext<IngestModuleImage>ingestContext, Image image, IngestImageWorkerController controller) {
         this.getURLs(image, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }

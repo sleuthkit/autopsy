@@ -48,6 +48,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -76,7 +77,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     }
 
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 

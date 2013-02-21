@@ -43,8 +43,9 @@ public interface IngestModuleImage extends IngestModuleAbstract {
      * The module is responsible for posting progress to controller
      * And to periodically check controller if it should break out of the processing loop because task has been canceled
      * 
+     * @param ingestContext the context in which the ingest runs (with its own settings, modules, etc)
      * @param image to process
      * @param controller to post progress to and to use for checking if cancellation has occurred
      */
-    public void process(Image image, IngestImageWorkerController controller);
+    public void process(IngestContext<IngestModuleImage>ingestContext, Image image, IngestImageWorkerController controller);
 }

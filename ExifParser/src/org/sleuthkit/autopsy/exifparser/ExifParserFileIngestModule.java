@@ -38,11 +38,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -87,7 +89,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     }
 
     @Override
-    public IngestModuleAbstractFile.ProcessResult process(AbstractFile content) {
+    public IngestModuleAbstractFile.ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile content) {
         
         //skip unalloc
         if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {

@@ -312,8 +312,10 @@ public class IngestManager {
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
+                    IngestContext<IngestModuleImage>imageIngestContext = 
+                            new IngestContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
                     final IngestImageThread newImageWorker = new IngestImageThread(this,
-                            imageTask.getImage(), taskModule, moduleInit);
+                            imageIngestContext, imageTask.getImage(), taskModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
@@ -826,26 +828,28 @@ public class IngestManager {
             //process AbstractFiles queue
             while (fileScheduler.hasNext()) {
                 final ProcessTask fileTask = fileScheduler.next();
+                final IngestContext<IngestModuleAbstractFile> fileIngestContext = fileTask.context;
+                final ScheduledImageTask<IngestModuleAbstractFile> fileIngestTask = fileIngestContext.getScheduledTask();
+                final AbstractFile fileToProcess = fileTask.file;
+                
                 //clear return values from modules for last file
                 synchronized (abstractFileModulesRetValues) {
                     abstractFileModulesRetValues.clear();
                 }
 
-                final AbstractFile fileToProcess = fileTask.file;
-                
                 logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
-                for (IngestModuleAbstractFile module : fileTask.context.getScheduledTask().getModules() ) {
+                for (IngestModuleAbstractFile module : fileIngestTask.getModules() ) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
                     }
 
-
                     try {
                         stats.logFileModuleStartProcess(module);
-                        IngestModuleAbstractFile.ProcessResult result = module.process(fileToProcess);
+                        IngestModuleAbstractFile.ProcessResult result = module.process
+                                (fileIngestContext, fileToProcess);
                         stats.logFileModuleEndProcess(module);
 
                         //store the result for subsequent modules for this file
