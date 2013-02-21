@@ -1329,7 +1329,7 @@ def antBuild(which, Build):
 		ant.append("dist")
 	antpth = make_local_path(case.output_dir, "ant" + which + "Output.txt")
 	antout = open(antpth, 'a')
-	subprocess.call(ant, stdout=antout)
+	succd = subprocess.call(ant, stdout=antout)
 	if which == "datamodel":
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
@@ -1338,6 +1338,13 @@ def antBuild(which, Build):
 			global errorem
 			global attachl
 			errorem += "DataModel Java build failed.\n"
+			attachl.append(antpth)
+			send_email()
+			sys.exit()
+	elif (succd != 0):
+			global errorem
+			global attachl
+			errorem += "Autopsy build failed.\n"
 			attachl.append(antpth)
 			send_email()
 			sys.exit()
