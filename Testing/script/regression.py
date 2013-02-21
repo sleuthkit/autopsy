@@ -1598,14 +1598,20 @@ def execute_test():
 			  run_test(make_path(case.input_dir, file), 0)
 	write_html_foot()
 	html.close()
+	print("Here here here here here here here here here")
+	print(case.common_log)
+	print(failedbool)
 	logres = search_common_log("ERROR")
-	if (logres>0):
+	print(logres)
+	if (len(logres)>0):
 		failedbool = True
 		global errorem
+		errorem += "There were Autopsy errors.\n"
 		for lm in logres:
 			errorem += lm
+			print(errorem)
+			attachl.append(case.common_log)
 	if failedbool:
-		htmll = html.name.split('\\')
 		ainsert = html.name
 		attachl.insert(0, ainsert)
 		send_email()
