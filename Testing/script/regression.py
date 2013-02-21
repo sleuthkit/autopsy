@@ -1639,6 +1639,7 @@ def send_email():
 	s = smtplib.SMTP(serverval)
 	s.sendmail(msg['From'], msg['To'], msg.as_string())
 	s.quit()
+	sys.exit()
 	
 def Build_email(msg):
 	global attachl
