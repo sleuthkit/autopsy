@@ -1598,11 +1598,7 @@ def execute_test():
 			  run_test(make_path(case.input_dir, file), 0)
 	write_html_foot()
 	html.close()
-	print("Here here here here here here here here here")
-	print(case.common_log)
-	print(failedbool)
 	logres = search_common_log("TskCoreException")
-	print(logres)
 	if (len(logres)>0):
 		failedbool = True
 		global errorem
