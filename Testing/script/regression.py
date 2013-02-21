@@ -280,7 +280,7 @@ class Database:
 			global failedbool
 			global errorem
 			failedbool = True
-			errorem += "There was a difference in the number of artifacts.\n"
+			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 			return "; ".join(self.artifact_comparison)
 		
 	def get_attribute_comparison(self):
@@ -289,7 +289,7 @@ class Database:
 		global failedbool
 		global errorem
 		failedbool = True
-		errorem += "There was a difference in the number of attributes.\n"
+		errorem += "There was a difference in the number of attributes for " + case.image + ".\n"
 		list = []
 		for error in self.attribute_comparison:
 			list.append(error)
@@ -720,7 +720,7 @@ def compare_bb_artifacts():
 				global failedbool
 				global errorem
 				failedbool = True
-				errorem += "There was a difference in the number of artifacts.\n"
+				errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 				return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
@@ -738,7 +738,7 @@ def compare_bb_attributes():
 			global failedbool
 			global errorem
 			failedbool = True
-			errorem += "There was a difference in the number of attributes.\n"
+			errorem += "There was a difference in the number of attributes for " + case.image + ".\n"
 			return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare blackboard_attributes.\n")
@@ -756,7 +756,7 @@ def compare_tsk_objects():
 			global failedbool
 			global errorem
 			failedbool = True
-			errorem += "There was a difference between the tsk object counts.\n"
+			errorem += "There was a difference between the tsk object counts for " + case.image + " .\n"
 			return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare tsk_objects.\n")
@@ -1598,6 +1598,12 @@ def execute_test():
 			  run_test(make_path(case.input_dir, file), 0)
 	write_html_foot()
 	html.close()
+	logres = search_common_log("ERROR")
+	if (logres>0):
+		failedbool = True
+		global errorem
+		for lm in logres:
+			errorem += lm
 	if failedbool:
 		htmll = html.name.split('\\')
 		ainsert = html.name
