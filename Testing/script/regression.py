@@ -381,13 +381,14 @@ def run_config_test(config_file):
 			if file_exists(value):
 				values.append(value)
 		html_add_images(values)
+		images = []
 		# Run the test for each file in the configuration
 		global args
 		if(args.contin):
 			#set all times an image has been processed to 0
 			for element in parsed.getElementsByTagName("image"):
 				value = element.getAttribute("value").encode().decode("utf-8")
-				counts[value] = 0
+				images.append(value)
 			#Begin infiniloop
 			if(newDay()):
 				global daycount
@@ -402,6 +403,8 @@ def run_config_test(config_file):
 				pid = subprocess.Popen(nxtproc,
 				stdout=subprocess.PIPE)
 				sys.exit()
+			for img in images
+				run_test(img, 0 )
 		else:
 			for img in values:  
 				if file_exists(img):
@@ -1609,6 +1612,8 @@ def send_email():
 	global errorem
 	global attachl
 	global html
+	if(not args.config)
+		sys.exit()
 	element = parsed.getElementsByTagName("email")[0]
 	toval = element.getAttribute("value").encode().decode("utf-8")
 	element = parsed.getElementsByTagName("mail_server")[0]

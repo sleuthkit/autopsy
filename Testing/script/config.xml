@@ -35,4 +35,6 @@ It is up to the user to distinguish between the paths when adding to this file.
     <image value="X:\path\to\a\different\image\file.E01" />
     <image value="This provokes an error." />
     <image value="X:\Invalid\Path\Does\Not\Exist.img" />
+	<email value="address@provider.com"/>
+	<mail_server value="mail.localhost.com" />
 </Properties>
