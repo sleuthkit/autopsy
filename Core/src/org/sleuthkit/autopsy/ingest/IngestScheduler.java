@@ -364,8 +364,7 @@ class IngestScheduler {
                 return;
             }
 
-            IngestContext copyContext = new IngestContext(originalContext);
-            ProcessTask fileTask = new ProcessTask(file, copyContext);
+            ProcessTask fileTask = new ProcessTask(file, originalContext);
             if (shouldEnqueueTask(fileTask)) {
                 this.curFileProcessTasks.addFirst(fileTask);
                 ++filesEnqueuedEst;
