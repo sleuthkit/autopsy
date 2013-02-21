@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 
@@ -47,6 +48,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     private final ShowItemVisitor showItemV = new ShowItemVisitor();
     private final IsLeafItemVisitor isLeafItemV = new IsLeafItemVisitor();
+    
+    private final static Logger logger = Logger.getLogger(DirectoryTreeFilterChildren.class.getName());
 
     /**
      * the constructor
@@ -201,6 +204,16 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             for (Content childContent : derivedChildren) {
                 if (((AbstractFile) childContent).isDir()) {
                     return false;
+                }
+                else {
+                    try {
+                    if (childContent.hasChildren()) {
+                        return false;
+                    }
+                    }
+                    catch (TskCoreException e) {
+                        logger.log(Level.SEVERE, "Error checking if derived file node is leaf.", e);
+                    }
                 }
             }
             return true;
