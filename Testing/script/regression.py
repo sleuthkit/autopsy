@@ -1681,6 +1681,7 @@ def main():
 			errorem = "The test standard didn't match the gold standard.\n"
 			failedbool = False
 			execute_test()
+			case = TestAutopsy()
 
 
 class OS:
