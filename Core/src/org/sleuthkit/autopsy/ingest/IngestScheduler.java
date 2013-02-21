@@ -356,7 +356,7 @@ class IngestScheduler {
          * @param originalContext original image schedule context that was used to
          * schedule the parent origin file, with the modules, settings, etc.
          */
-        synchronized void schedule(AbstractFile file, IngestContext<IngestModuleAbstractFile> originalContext) {
+        synchronized void schedule(AbstractFile file, IngestContext originalContext) {
             ScheduledImageTask originalTask = originalContext.getScheduledTask();
             
             //skip if task contains no modules
@@ -364,7 +364,8 @@ class IngestScheduler {
                 return;
             }
 
-            ProcessTask fileTask = new ProcessTask(file, originalContext);
+            IngestContext copyContext = new IngestContext(originalContext);
+            ProcessTask fileTask = new ProcessTask(file, copyContext);
             if (shouldEnqueueTask(fileTask)) {
                 this.curFileProcessTasks.addFirst(fileTask);
                 ++filesEnqueuedEst;

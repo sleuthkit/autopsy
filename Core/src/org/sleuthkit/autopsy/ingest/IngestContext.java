@@ -38,21 +38,50 @@ import java.util.Objects;
  */
 public class IngestContext <T extends IngestModuleAbstract> {
     
-    private final Map<String, Object> context = new HashMap<String, Object>();
+    private Map<String, Object> contextParams;
     private final ScheduledImageTask<T> task;
     private final boolean processUnalloc;
     
     IngestContext(ScheduledImageTask<T> task, boolean processUnalloc) {
         this.task = task;
         this.processUnalloc = processUnalloc;
+        this.contextParams = new HashMap<String, Object>();
     }
     
-    public Object getContextValue(String key) {
-        return context.get(key);
+    /**
+     * Ingest context copy constructor
+     * Preserves task and read only ingest variables.
+     * Makes a fresh copy of context params so that they can be updated
+     * as context is passed in and params are modified with rescheduled files.
+     * 
+     * @param toCopy 
+     */
+    IngestContext(IngestContext toCopy) {
+        this.task = toCopy.task;
+        this.processUnalloc = toCopy.processUnalloc;
+        this.contextParams = new HashMap<String, Object>(toCopy.contextParams);
     }
     
-    public void addContextValue(String key, Object value) {
-        context.put(key, value);
+    
+    /**
+     * Get context parameter value
+     * @param key key of the parameter value to get
+     * @return parameter value object
+     */
+    public Object getContextParamsValue(String key) {
+        return contextParams.get(key);
+    }
+    
+    /**
+     * Add a new (or overwrite) paramter.
+     * Note: as files are scheduled and ingest is passed in, every file gets 
+     * a copy of the parameters with its context, to they can be modified safely.
+     * 
+     * @param key the parameter key string
+     * @param value the parameter value object
+     */
+    public void addContextParamsValue(String key, Object value) {
+        contextParams.put(key, value);
     }
 
     ScheduledImageTask<T> getScheduledTask() {
@@ -66,13 +95,13 @@ public class IngestContext <T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "IngestContext{" + "context=" + context + ", task=" + task + ", processUnalloc=" + processUnalloc + '}';
+        return "IngestContext{" + "contextParams=" + contextParams + ", task=" + task + ", processUnalloc=" + processUnalloc + '}';
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 53 * hash + Objects.hashCode(this.context);
+        hash = 53 * hash + Objects.hashCode(this.contextParams);
         hash = 53 * hash + Objects.hashCode(this.task);
         hash = 53 * hash + (this.processUnalloc ? 1 : 0);
         return hash;
@@ -87,7 +116,7 @@ public class IngestContext <T extends IngestModuleAbstract> {
             return false;
         }
         final IngestContext<T> other = (IngestContext<T>) obj;
-        if (!Objects.equals(this.context, other.context)) {
+        if (!Objects.equals(this.contextParams, other.contextParams)) {
             return false;
         }
         if (!Objects.equals(this.task, other.task)) {
