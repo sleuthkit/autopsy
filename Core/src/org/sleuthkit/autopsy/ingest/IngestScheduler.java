@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -160,11 +159,11 @@ class IngestScheduler {
         /**
          * query num files enqueued total num of files to be enqueued.
          *
-         * Checks files for all the images currently in the queues.
+         * Counts all files for all the images currently in the queues.
          *
          * @return approx. total num of files enqueued (or to be enqueued)
          */
-        private synchronized int queryNumFiles() {
+        private synchronized int queryNumFilesinEnqueuedImages() {
             int totalFiles = 0;
             List<Image> images = getImages();
 
@@ -368,7 +367,7 @@ class IngestScheduler {
             ProcessTask fileTask = new ProcessTask(file, originalContext);
             if (shouldEnqueueTask(fileTask)) {
                 this.curFileProcessTasks.addFirst(fileTask);
-                this.filesEnqueuedEst = queryNumFiles();
+                ++filesEnqueuedEst;
             }
 
 
@@ -403,7 +402,7 @@ class IngestScheduler {
             //adds and resorts the tasks
             this.rootProcessTasks.addAll(rootTasks);
 
-            this.filesEnqueuedEst = queryNumFiles();
+            this.filesEnqueuedEst = queryNumFilesinEnqueuedImages();
 
             //update the dir and file level queues if needed
             updateQueues();
@@ -774,8 +773,6 @@ class IngestScheduler {
                 //queryB.append( "AND (type = ");
                 //queryB.append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType());
                 //queryB.append(")");
-
-                ResultSet rs = null;
                 try {
                     final String query = queryB.toString();
                     logger.log(Level.INFO, "Executing count files query: " + query);

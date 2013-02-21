@@ -59,7 +59,7 @@ public class IngestManager {
     //queues
     private final IngestScheduler scheduler;
     //workers
-    private IngestAbstractFileThread abstractFileIngester;
+    private IngestAbstractFileProcessor abstractFileIngester;
     private List<IngestImageThread> imageIngesters;
     private SwingWorker<Object, Void> queueWorker;
     //modules
@@ -250,7 +250,9 @@ public class IngestManager {
     }
     
     /**
-     * Schedule a file for ingest.  
+     * Schedule a file for ingest.
+     * Scheduler updates the current progress.
+     * 
      * The file is usually a product of a recently ran ingest.  
      * Now we want to process this file with the same ingest context.
      * 
@@ -346,7 +348,7 @@ public class IngestManager {
 
         if (startAbstractFileIngester) {
             stats = new IngestManagerStats();
-            abstractFileIngester = new IngestAbstractFileThread();
+            abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
@@ -790,11 +792,13 @@ public class IngestManager {
 //ingester worker for AbstractFile queue
 //worker runs until AbstractFile queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestAbstractFileThread extends SwingWorker<Object, Void> {
+    private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
-        private Logger logger = Logger.getLogger(IngestAbstractFileThread.class.getName());
+        private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
+        
+        //progress  bar
         private ProgressHandle progress;
-
+ 
         @Override
         protected Object doInBackground() throws Exception {
 
@@ -814,14 +818,16 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return IngestAbstractFileThread.this.cancel(true);
+                    return IngestAbstractFileProcessor.this.cancel(true);
                 }
             });
 
             final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
 
+            //initialize the progress bar
             progress.start();
             progress.switchToIndeterminate();
+            //set initial totals and processed (to be updated as we process or new files are scheduled)
             int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
             progress.switchToDeterminate(totalEnqueuedFiles);
             int processedFiles = 0;
@@ -858,7 +864,7 @@ public class IngestManager {
                         }
 
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Exception from module: " + module.getName(), e);
+                        logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
                     }
                 }
@@ -867,12 +873,12 @@ public class IngestManager {
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
                     //update if new enqueued
                     totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
-                    processedFiles = 0;
+                    //processedFiles = 0;
+                    //reset
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same image enqueued twice
-                    
                     ++processedFiles;
                 }
                 //--totalEnqueuedFiles;
