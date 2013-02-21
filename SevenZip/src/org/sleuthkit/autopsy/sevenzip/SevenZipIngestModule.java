@@ -156,7 +156,12 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         //check if already has derived files, skip
         try {
             if (abstractFile.hasChildren()) {
-                logger.log(Level.INFO, "File already has been processed as it has children, skipping: " + abstractFile.getName());
+                //check if local unpacked dir exists
+                final String localRootPath = getLocalRootRelPath(abstractFile);
+                final String localRootAbsPath = getLocalRootAbsPath(localRootPath);
+                if (new File(localRootAbsPath).exists()) {
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: " + abstractFile.getName());
+                }
                 return ProcessResult.OK;
             }
         } catch (TskCoreException e) {
@@ -165,7 +170,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         }
 
 
-        logger.log(Level.INFO, "Processing with 7ZIP: " + abstractFile.getName());
+        logger.log(Level.INFO, "Processing with " + MODULE_NAME + ": " + abstractFile.getName());
         ++processedFiles;
 
 
@@ -189,6 +194,27 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         }
     }
 
+    /**
+     * Get local relative path to the unpacked archive root
+     * 
+     * @param archiveFile
+     * @return 
+     */
+    private String getLocalRootRelPath(AbstractFile archiveFile) {
+        return archiveFile.getName() + "_" + archiveFile.getId();
+    }
+    
+    /**
+     * Get local abs path to the unpacked archive root
+     * 
+     * @param localRootRelPath relative path to archive, from getLocalRootRelPath()
+     * @return 
+     */
+    private String getLocalRootAbsPath(String localRootRelPath) {
+        return unpackDirPath + File.separator + localRootRelPath;
+    }
+    
+    
     /**
      * Unpack the file to local folder and return a list of derived files
      *
@@ -221,9 +247,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
-            String localRootPath = archiveFile.getName() + "_" + archiveFile.getId();
-            String localRootAbsPath = unpackDirPath + File.separator + localRootPath;
-            File localRoot = new File(localRootAbsPath);
+            final String localRootPath = getLocalRootRelPath(archiveFile);
+            final String localRootAbsPath = getLocalRootAbsPath(localRootPath);
+            final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
                 try {
                     localRoot.mkdirs();
