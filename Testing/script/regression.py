@@ -1612,7 +1612,7 @@ def send_email():
 	global errorem
 	global attachl
 	global html
-	if(not args.config):
+	if(not args.list):
 		sys.exit()
 	element = parsed.getElementsByTagName("email")[0]
 	toval = element.getAttribute("value").encode().decode("utf-8")
