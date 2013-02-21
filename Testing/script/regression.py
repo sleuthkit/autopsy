@@ -1610,11 +1610,11 @@ def execute_test():
 		failedbool = True
 		global errorem
 		errorem += "There were Autopsy errors.\n"
-		attachl.append(case.common_log)
 		for lm in logres:
 			errorem += lm
 			print(errorem)
 	if failedbool:
+		attachl.append(case.common_log)
 		attachl.insert(0, html.name)
 		send_email()
 	html.close()
