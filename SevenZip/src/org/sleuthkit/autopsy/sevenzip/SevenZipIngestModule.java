@@ -172,7 +172,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(unpackedFiles);
-            rescheduleNewFiles(unpackedFiles);
+            rescheduleNewFiles(ingestContext, unpackedFiles);
         }
 
         //process, return error if occurred
@@ -183,7 +183,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
     }
     
-    private void rescheduleNewFiles (List<AbstractFile> unpackedFiles) {
+    private void rescheduleNewFiles (IngestContext<IngestModuleAbstractFile>ingestContext, List<AbstractFile> unpackedFiles) {
+        for (AbstractFile unpackedFile : unpackedFiles) {
+            services.scheduleFile(unpackedFile, ingestContext);
+        }
     }
 
     /**
