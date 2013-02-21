@@ -1601,19 +1601,18 @@ def execute_test():
 	print("Here here here here here here here here here")
 	print(case.common_log)
 	print(failedbool)
-	logres = search_common_log("ERROR")
+	logres = search_common_log("TskCoreException")
 	print(logres)
 	if (len(logres)>0):
 		failedbool = True
 		global errorem
 		errorem += "There were Autopsy errors.\n"
+		attachl.append(case.common_log)
 		for lm in logres:
 			errorem += lm
 			print(errorem)
-			attachl.append(case.common_log)
 	if failedbool:
-		ainsert = html.name
-		attachl.insert(0, ainsert)
+		attachl.insert(0, html.name)
 		send_email()
 	html.close()
 	#email_send(HTML_email, None)
