@@ -67,8 +67,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
-    public static final String MODULE_NAME = "7Zip";
-    public static final String MODULE_DESCRIPTION = "Extracts archive files, add new files, reschedules them to current ingest and populates directory tree with new files.";
+    public static final String MODULE_NAME = "Archive Extractor";
+    public static final String MODULE_DESCRIPTION = "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
     final public static String MODULE_VERSION = "1.0";
     private String args;
     private IngestServices services;
