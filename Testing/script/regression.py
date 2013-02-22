@@ -1301,6 +1301,7 @@ def vsBuild():
 	vs.append(os.path.join("..", "..", "..","sleuthkit", "win32", "Tsk-win.sln"))
 	vs.append("/p:configuration=release")
 	vs.append("/p:platform=win32")
+	vs.append("/t:clean")
 	vs.append("/t:rebuild")
 	print(vs)
 	VSpth = make_local_path(case.output_dir, "VSOutput.txt")
