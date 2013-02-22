@@ -78,13 +78,17 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", }; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar",}; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
     private static final String ENCRYPTION_FULL = "Full Encryption";
+    //key in the context params to keep track of depth and detect zip bombs
+    private static final String CONTEXT_DEPTH_PARAM = MODULE_NAME + "_DEPTH";
+    private static final int MAX_DEPTH = 2; //TODO 10
+    private static final long MIN_FREE_DISK_SPACE = 1L * 10 ^ 9; //1GB
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -141,7 +145,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     }
 
     @Override
-    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
+    public ProcessResult process(IngestContext<IngestModuleAbstractFile> ingestContext, AbstractFile abstractFile) {
 
         if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
@@ -161,8 +165,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 final String localRootAbsPath = getLocalRootAbsPath(localRootPath);
                 if (new File(localRootAbsPath).exists()) {
                     logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: " + abstractFile.getName());
+                    return ProcessResult.OK;
                 }
-                return ProcessResult.OK;
             }
         } catch (TskCoreException e) {
             logger.log(Level.INFO, "Error checking if file already has been processed, skipping: " + abstractFile.getName());
@@ -174,7 +178,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         ++processedFiles;
 
 
-        List<AbstractFile> unpackedFiles = unpack(abstractFile);
+        List<AbstractFile> unpackedFiles = unpack(ingestContext, abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(unpackedFiles);
             rescheduleNewFiles(ingestContext, unpackedFiles);
@@ -187,8 +191,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
     private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
     }
-    
-    private void rescheduleNewFiles (IngestContext<IngestModuleAbstractFile>ingestContext, List<AbstractFile> unpackedFiles) {
+
+    private void rescheduleNewFiles(IngestContext<IngestModuleAbstractFile> ingestContext, List<AbstractFile> unpackedFiles) {
         for (AbstractFile unpackedFile : unpackedFiles) {
             services.scheduleFile(unpackedFile, ingestContext);
         }
@@ -196,33 +200,116 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
     /**
      * Get local relative path to the unpacked archive root
-     * 
+     *
      * @param archiveFile
-     * @return 
+     * @return
      */
     private String getLocalRootRelPath(AbstractFile archiveFile) {
         return archiveFile.getName() + "_" + archiveFile.getId();
     }
-    
+
     /**
      * Get local abs path to the unpacked archive root
-     * 
-     * @param localRootRelPath relative path to archive, from getLocalRootRelPath()
-     * @return 
+     *
+     * @param localRootRelPath relative path to archive, from
+     * getLocalRootRelPath()
+     * @return
      */
     private String getLocalRootAbsPath(String localRootRelPath) {
         return unpackDirPath + File.separator + localRootRelPath;
     }
+
+    /**
+     * Check if the file is a potential zipbomb Currently checks recursion level
+     * and amount of disk space left
+     *
+     * More heuristics to be added here
+     *
+     * @param archiveFile
+     * @return true if potential zip bomb, false otherwise
+     */
+    private boolean isZipBombArchiveCheck(AbstractFile archiveFile) {
+        return false;
+        
+        //TODO reimplement recursion depth check
+
+//        Integer curDepth = (Integer) ingestContext.getContextParamsValue(CONTEXT_DEPTH_PARAM);
+//        if (curDepth == null) {
+//            curDepth = 1;
+//        } else {
+//            ++curDepth;
+//        }
+//        if (curDepth == MAX_DEPTH) {
+//            MessageNotifyUtil.Notify.error("Possible ZIP bomb detected: " + archiveFile.getName(),
+//                    "The archive is " + curDepth + " levels deep, skipping processing of this archive and its contents ");
+//            return unpackedFiles;
+//        } else {
+//            ingestContext.addContextParamsValue(CONTEXT_DEPTH_PARAM, curDepth);
+//        }
+
+    }
     
-    
+     /**
+     * Check if the item inside archive is a potential zipbomb 
+     * 
+     * Currently checks compression ratio.
+     *
+     * More heuristics to be added here
+     *
+     * @param archiveName the parent archive
+     * @param archiveFileItem the archive item
+     * @return true if potential zip bomb, false otherwise
+     */
+    private boolean isZipBombArchiveItemCheck(String archiveName, ISimpleInArchiveItem archiveFileItem) {
+        try {
+            final long archiveItemSize = archiveFileItem.getSize();
+            final long archiveItemPackedSize = archiveFileItem.getPackedSize();
+            
+            if (archiveItemPackedSize <= 0) {
+                return false;
+            }
+            
+            int cRatio = (int) (archiveItemSize / archiveItemPackedSize);
+            final int MAX_COMPRESSION_RATIO = 1000;
+            
+            if (cRatio >= MAX_COMPRESSION_RATIO) {
+                String itemName = archiveFileItem.getPath();
+                logger.log(Level.INFO, "Potential zip bomb detected, compression ration: " + cRatio 
+                        + " for in archive item: " + itemName);
+                
+                MessageNotifyUtil.Notify.error("Possible ZIP bomb detected in arhive: " + archiveName 
+                        + ", item: " + itemName,
+                    "The archive item compression ratio is " + cRatio 
+                        + ", skipping processing of this archive item. ");
+                return true;
+            }
+            else {
+                return false;
+            }
+            
+        } catch (SevenZipException ex) {
+            logger.log(Level.SEVERE, "Error getting archive item size", ex);
+            return false;
+        }
+        
+        
+        
+        
+    }
+
     /**
      * Unpack the file to local folder and return a list of derived files
      *
+     * @param ingestContext current ingest context
      * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    private List<AbstractFile> unpack(AbstractFile archiveFile) {
+    private List<AbstractFile> unpack(IngestContext<IngestModuleAbstractFile> ingestContext, AbstractFile archiveFile) {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
+
+        if (isZipBombArchiveCheck(archiveFile)) {
+            return unpackedFiles;
+        }
 
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
@@ -263,10 +350,17 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             //initialize tree hierarchy to keep track of unpacked file structure
             UnpackedTree uTree = new UnpackedTree(unpackDir + "/" + localRootPath, archiveFile, fileManager);
 
+            long freeDiskSpace = services.getFreeDiskSpace();
+
             //unpack and process every item in archive
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
                 final String extractedPath = item.getPath();
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
+                
+                //check if possible zip bomb
+                if (isZipBombArchiveItemCheck(archiveFile.getName(), item) ) {
+                    continue; //skip the item
+                }
 
                 //find this node in the hierarchy, create if needed
                 UnpackedTree.Data uNode = uTree.find(extractedPath);
@@ -289,7 +383,22 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     fullEncryption = false;
                 }
 
-                //TODO get file mac times and add to db
+                final long size = item.getSize();
+
+                //check if unpacking this file will result in out of disk space
+                //this is additional to zip bomb prevention mechanism
+                if (freeDiskSpace != -1) { //if known
+                    long newDiskSpace = freeDiskSpace - size;
+                    if (newDiskSpace < MIN_FREE_DISK_SPACE) {
+                        MessageNotifyUtil.Notify.error("Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName,
+                                "The archive item is too large to unpack (may also be a zip bomb), skipping unpacking this item. ");
+                        logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: " + archiveFile.getName() + ", " + fileName);
+                        continue; //skip this file
+                    } else {
+                        //update est. disk space during this archive, so we don't need to poll for every file extracted
+                        freeDiskSpace = newDiskSpace;
+                    }
+                }
 
                 final String localFileRelPath = localRootPath + File.separator + extractedPath;
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
@@ -299,7 +408,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 File localFile = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
                 if (!localFile.exists()) {
-                    //TODO check, might give file locking issues, since 7zip is writing to these dirs
                     try {
                         if (isDir) {
                             localFile.mkdirs();
@@ -317,17 +425,16 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     }
                 }
 
-                final long size = item.getSize();
                 final Date createTime = item.getCreationTime();
                 final Date accessTime = item.getLastAccessTime();
                 final Date writeTime = item.getLastWriteTime();
-                final long createtime = createTime==null? 0L : createTime.getTime() / 1000;
-                final long modtime = writeTime==null? 0L : writeTime.getTime() / 1000;
-                final long accesstime = accessTime==null? 0L : accessTime.getTime() / 1000;
-                
+                final long createtime = createTime == null ? 0L : createTime.getTime() / 1000;
+                final long modtime = writeTime == null ? 0L : writeTime.getTime() / 1000;
+                final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
+
                 //record derived data in unode, to be traversed later after unpacking the archive
-                uNode.addDerivedInfo(size, !isDir, 
-                        modtime, createtime, accesstime, modtime);
+                uNode.addDerivedInfo(size, !isDir,
+                        0L, createtime, accesstime, modtime);
 
                 //unpack locally if a file
                 if (!isDir) {
@@ -696,8 +803,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 parent.children.add(this);
 
             }
-            
-    
+
             public long getCtime() {
                 return ctime;
             }
@@ -713,8 +819,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             public long getMtime() {
                 return mtime;
             }
-            
-            
 
             public void setFileName(String fileName) {
                 this.fileName = fileName;
