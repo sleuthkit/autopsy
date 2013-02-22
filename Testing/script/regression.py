@@ -401,7 +401,9 @@ def run_config_test(config_file):
 				antBuild("autopsy", True)
 				print("starting process")
 				pid = subprocess.Popen(nxtproc,
-				stdout=subprocess.PIPE)
+				stdout = subprocess.PIPE,
+				stdin = subprocess.PIPE,
+				stderr = subprocess.PIPE)
 				sys.exit()
 			for img in images:
 				run_test(img, 0 )
