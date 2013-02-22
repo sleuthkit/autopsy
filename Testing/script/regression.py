@@ -1276,6 +1276,8 @@ def newDay():
 #Pulls from git
 def gitPull(TskOrAutopsy):
 	global SYS
+	global errorem
+	global attachl
 	ccwd = ""
 	gppth = make_local_path(case.output_dir, "GitPullOutput" + TskOrAutopsy + ".txt")
 	attachl.append(gppth)
@@ -1613,7 +1615,6 @@ def execute_test():
 		errorem += "There were Autopsy errors.\n"
 		for lm in logres:
 			errorem += lm
-			print(errorem)
 	if failedbool:
 		attachl.append(case.common_log)
 		attachl.insert(0, html.name)
