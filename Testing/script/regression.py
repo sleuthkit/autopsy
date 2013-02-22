@@ -390,7 +390,7 @@ def run_config_test(config_file):
 				value = element.getAttribute("value").encode().decode("utf-8")
 				images.append(value)
 			#Begin infiniloop
-			if(newDay()):
+			if(True):
 				global daycount
 				global nxtproc
 				setDay()
@@ -1284,7 +1284,7 @@ def gitPull(TskOrAutopsy):
 	gppth = make_local_path(case.output_dir, "GitPullOutput" + TskOrAutopsy + ".txt")
 	attachl.append(gppth)
 	gpout = open(gppth, 'a')
-	toPull = "http://www.github.com/sleuthkit/" + TskOrAutopsy
+	toPull = "http://www.github.com/Smoss/" + TskOrAutopsy
 	call = ["git", "pull", toPull]
 	if TskOrAutopsy == "sleuthkit":
 		ccwd = os.path.join("..", "..", "..", "sleuthkit")
