@@ -390,7 +390,7 @@ def run_config_test(config_file):
 				value = element.getAttribute("value").encode().decode("utf-8")
 				images.append(value)
 			#Begin infiniloop
-			if(True):
+			if(newDay()):
 				global daycount
 				global nxtproc
 				setDay()
@@ -400,7 +400,7 @@ def run_config_test(config_file):
 				antBuild("datamodel", False)
 				antBuild("autopsy", True)
 				print("starting process")
-				pid = subprocess.call(nxtproc,
+				pid = subprocess.Popen(nxtproc,
 				stdout = subprocess.PIPE,
 				stdin = subprocess.PIPE,
 				stderr = subprocess.PIPE)
