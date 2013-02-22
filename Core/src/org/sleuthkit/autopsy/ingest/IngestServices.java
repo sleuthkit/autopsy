@@ -134,6 +134,17 @@ public class IngestServices {
     }
     
     
+     /**
+     * Get free disk space of a drive where ingest data are written to
+     * That drive is being monitored by IngestMonitor thread when ingest is running.
+     * Use this method to get amount of free disk space anytime.
+     * 
+     * @return amount of disk space, -1 if unknown
+     */
+    public long getFreeDiskSpace() {
+        return manager.getFreeDiskSpace();
+    }
+    
     
     
     /**

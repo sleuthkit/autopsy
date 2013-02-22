@@ -601,6 +601,22 @@ public class IngestManager {
             ui.displayMessage(message);
         }
     }
+    
+    /**
+     * Get free disk space of a drive where ingest data are written to
+     * That drive is being monitored by IngestMonitor thread when ingest is running.
+     * Use this method to get amount of free disk space anytime.
+     * 
+     * @return amount of disk space, -1 if unknown
+     */
+    long getFreeDiskSpace() {
+        if (ingestMonitor != null) {
+            return ingestMonitor.getFreeSpace();
+        }
+        else {
+            return -1;
+        }
+    }
 
     /**
      * helper to return all loaded image modules managed sorted in order as
