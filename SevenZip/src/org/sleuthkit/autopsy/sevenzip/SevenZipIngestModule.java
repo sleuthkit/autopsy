@@ -266,6 +266,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             final long archiveItemPackedSize = archiveFileItem.getPackedSize();
             
             if (archiveItemPackedSize <= 0) {
+                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: "
+                        + archiveName + ", item: " + archiveFileItem.getPath());
                 return false;
             }
             
@@ -288,7 +290,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             }
             
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error getting archive item size", ex);
+            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex);
             return false;
         }
         
@@ -317,7 +319,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
 
-        final ProgressHandle progress = ProgressHandleFactory.createHandle(MODULE_NAME + " Extracting Archive");
+        final ProgressHandle progress = ProgressHandleFactory.createHandle(MODULE_NAME);
         int processedItems = 0;
 
         String compressMethod = null;
