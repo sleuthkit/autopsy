@@ -390,7 +390,7 @@ def run_config_test(config_file):
 				value = element.getAttribute("value").encode().decode("utf-8")
 				images.append(value)
 			#Begin infiniloop
-			if(True):
+			if(newDay()):
 				global daycount
 				global nxtproc
 				setDay()
