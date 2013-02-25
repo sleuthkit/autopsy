@@ -47,7 +47,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -85,10 +84,13 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
     private static final String ENCRYPTION_FULL = "Full Encryption";
-    //key in the context params to keep track of depth and detect zip bombs
-    private static final String CONTEXT_DEPTH_PARAM = MODULE_NAME + "_DEPTH";
-    private static final int MAX_DEPTH = 2; //TODO 10
+    //zip bomb detection
+    private static final int MAX_DEPTH = 7;
+    private static final int MAX_COMPRESSION_RATIO = 1000;
+    private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 10 ^ 6;
     private static final long MIN_FREE_DISK_SPACE = 1L * 10 ^ 9; //1GB
+    //counts archive depth
+    private ArchiveDepthCountTree archiveDepthCountTree;
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -125,7 +127,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 unpackDirPathFile.mkdirs();
             } catch (SecurityException e) {
                 logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e);
-                MessageNotifyUtil.Notify.error("Error initializing " + MODULE_NAME, "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage());
+                String msg = "Error initializing " + MODULE_NAME;
+                String details = "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage();
+                //MessageNotifyUtil.Notify.error(msg, details);
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                 return;
             }
         }
@@ -136,10 +141,14 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: " + platform);
         } catch (SevenZipNativeInitializationException e) {
             logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
-            MessageNotifyUtil.Notify.error("Error initializing " + MODULE_NAME, "Could not initialize 7-ZIP library");
+            String msg = "Error initializing " + MODULE_NAME;
+            String details = "Could not initialize 7-ZIP library: " + e.getMessage();
+            //MessageNotifyUtil.Notify.error(msg, details);
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
             return;
         }
 
+        archiveDepthCountTree = new ArchiveDepthCountTree();
 
         initialized = true;
     }
@@ -178,7 +187,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         ++processedFiles;
 
 
-        List<AbstractFile> unpackedFiles = unpack(pipelineContext, abstractFile);
+        List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(unpackedFiles);
             rescheduleNewFiles(pipelineContext, unpackedFiles);
@@ -220,38 +229,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     }
 
     /**
-     * Check if the file is a potential zipbomb Currently checks recursion level
-     * and amount of disk space left
+     * Check if the item inside archive is a potential zipbomb
      *
-     * More heuristics to be added here
-     *
-     * @param archiveFile
-     * @return true if potential zip bomb, false otherwise
-     */
-    private boolean isZipBombArchiveCheck(AbstractFile archiveFile) {
-        return false;
-        
-        //TODO reimplement recursion depth check
-
-//        Integer curDepth = (Integer) pipelineContext.getContextParamsValue(CONTEXT_DEPTH_PARAM);
-//        if (curDepth == null) {
-//            curDepth = 1;
-//        } else {
-//            ++curDepth;
-//        }
-//        if (curDepth == MAX_DEPTH) {
-//            MessageNotifyUtil.Notify.error("Possible ZIP bomb detected: " + archiveFile.getName(),
-//                    "The archive is " + curDepth + " levels deep, skipping processing of this archive and its contents ");
-//            return unpackedFiles;
-//        } else {
-//            pipelineContext.addContextParamsValue(CONTEXT_DEPTH_PARAM, curDepth);
-//        }
-
-    }
-    
-     /**
-     * Check if the item inside archive is a potential zipbomb 
-     * 
      * Currently checks compression ratio.
      *
      * More heuristics to be added here
@@ -263,40 +242,47 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean isZipBombArchiveItemCheck(String archiveName, ISimpleInArchiveItem archiveFileItem) {
         try {
             final long archiveItemSize = archiveFileItem.getSize();
+
+            //skip the check for small files
+            if (archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
+                return false;
+            }
+
             final long archiveItemPackedSize = archiveFileItem.getPackedSize();
-            
+
             if (archiveItemPackedSize <= 0) {
                 logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: "
                         + archiveName + ", item: " + archiveFileItem.getPath());
                 return false;
             }
-            
+
             int cRatio = (int) (archiveItemSize / archiveItemPackedSize);
-            final int MAX_COMPRESSION_RATIO = 1000;
-            
+
             if (cRatio >= MAX_COMPRESSION_RATIO) {
                 String itemName = archiveFileItem.getPath();
-                logger.log(Level.INFO, "Potential zip bomb detected, compression ration: " + cRatio 
+                logger.log(Level.INFO, "Potential zip bomb detected, compression ration: " + cRatio
                         + " for in archive item: " + itemName);
+
+                String msg = "Possible ZIP bomb detected in arhive: " + archiveName
+                        + ", item: " + itemName;
+                String details = "The archive item compression ratio is " + cRatio
+                        + ", skipping processing of this archive item. ";
+                //MessageNotifyUtil.Notify.error(msg, details);
+                services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
                 
-                MessageNotifyUtil.Notify.error("Possible ZIP bomb detected in arhive: " + archiveName 
-                        + ", item: " + itemName,
-                    "The archive item compression ratio is " + cRatio 
-                        + ", skipping processing of this archive item. ");
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
-            
+
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex);
             return false;
         }
-        
-        
-        
-        
+
+
+
+
     }
 
     /**
@@ -306,10 +292,20 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
      * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    private List<AbstractFile> unpack(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile archiveFile) {
+    private List<AbstractFile> unpack(AbstractFile archiveFile) {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
 
-        if (isZipBombArchiveCheck(archiveFile)) {
+        //recursion depth check for zip bomb
+        final long archiveId = archiveFile.getId();
+        ArchiveDepthCountTree.Archive parentAr = archiveDepthCountTree.findArchive(archiveId);
+        if (parentAr == null) {
+            parentAr = archiveDepthCountTree.addArchive(null, archiveId);
+        } else if (parentAr.getDepth() == MAX_DEPTH) {
+            String msg = "Possible ZIP bomb detected: " + archiveFile.getName();
+            String details = "The archive is " + parentAr.getDepth()
+                    + " levels deep, skipping processing of this archive and its contents ";
+            //MessageNotifyUtil.Notify.error(msg, details);
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
             return unpackedFiles;
         }
 
@@ -358,9 +354,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
                 final String extractedPath = item.getPath();
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
-                
+
                 //check if possible zip bomb
-                if (isZipBombArchiveItemCheck(archiveFile.getName(), item) ) {
+                if (isZipBombArchiveItemCheck(archiveFile.getName(), item)) {
                     continue; //skip the item
                 }
 
@@ -392,8 +388,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 if (freeDiskSpace != -1) { //if known
                     long newDiskSpace = freeDiskSpace - size;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
-                        MessageNotifyUtil.Notify.error("Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName,
-                                "The archive item is too large to unpack (may also be a zip bomb), skipping unpacking this item. ");
+                        String msg = "Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName;
+                        String details = "The archive item is too large to unpack (may also be a zip bomb), skipping unpacking this item. ";
+                        //MessageNotifyUtil.Notify.error(msg, details);
+                        services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                         logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: " + archiveFile.getName() + ", " + fileName);
                         continue; //skip this file
                     } else {
@@ -458,9 +456,17 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             try {
                 uTree.createDerivedFiles();
                 unpackedFiles = uTree.getAllFileObjects();
+
+                //check if children are archives, update archive depth tracking
+                for (AbstractFile unpackedFile : unpackedFiles) {
+                    if (isSupported(unpackedFile)) {
+                        archiveDepthCountTree.addArchive(parentAr, unpackedFile.getId());
+                    }
+                }
+
             } catch (TskCoreException e) {
                 logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure");
-                //TODO decide if should cleanup, for now bailing
+                //TODO decide if anything to cleanup, for now bailing
             }
 
         } catch (SevenZipException ex) {
@@ -504,9 +510,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             String msg = "Encrypted files in archive detected. ";
             String details = "Some files in archive: " + archiveFile.getName() + " are encrypted. "
                     + MODULE_NAME + " extractor was unable to extract all files from this archive.";
-            MessageNotifyUtil.Notify.info(msg, details);
+           // MessageNotifyUtil.Notify.info(msg, details);
 
-            services.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, instance, msg, details));
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
         }
 
 
@@ -521,6 +527,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         }
 
         //cleanup if any
+        archiveDepthCountTree = null;
 
     }
 
@@ -529,6 +536,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         logger.log(Level.INFO, "stop()");
 
         //cleanup if any
+        archiveDepthCountTree = null;
 
     }
 
@@ -651,9 +659,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
     /**
      * Representation of local directory tree of unpacked archive. Used to track
-     * of local tree file hierarchy and files created to easily and reliably get
-     * parent AbstractFile for unpacked file. So that we don't have to depend on
-     * type of traversal of unpacked files handed to us by 7zip unpacker.
+     * of local tree file hierarchy, archive depth, and files created to easily
+     * and reliably get parent AbstractFile for unpacked file. So that we don't
+     * have to depend on type of traversal of unpacked files handed to us by
+     * 7zip unpacker.
      */
     private static class UnpackedTree {
 
@@ -768,6 +777,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                         isFile, parent, "", MODULE_NAME, "", "");
                 node.setFile(df);
 
+
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex);
                 throw new TskCoreException("Error adding a derived file to db:" + fileName, ex);
@@ -880,6 +890,74 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
             public boolean isIsFile() {
                 return isFile;
+            }
+        }
+    }
+
+    /**
+     * Tracks archive hierarchy and archive depth
+     */
+    private static class ArchiveDepthCountTree {
+
+        //keeps all nodes refs for easy search
+        private final List<Archive> archives = new ArrayList<Archive>();
+
+        /**
+         * Search for previously added parent archive by id
+         *
+         * @param objectId parent archive object id
+         * @return the archive node or null if not found
+         */
+        Archive findArchive(long objectId) {
+            for (Archive ar : archives) {
+                if (ar.objectId == objectId) {
+                    return ar;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Add a new archive to track of depth
+         *
+         * @param parent parent archive or null
+         * @param objectId object id of the new archive
+         * @return the archive added
+         */
+        Archive addArchive(Archive parent, long objectId) {
+            Archive child = new Archive(parent, objectId);
+            archives.add(child);
+            return child;
+        }
+
+        private static class Archive {
+
+            int depth;
+            long objectId;
+            Archive parent;
+            List<Archive> children;
+
+            Archive(Archive parent, long objectId) {
+                this.parent = parent;
+                this.objectId = objectId;
+                children = new ArrayList<Archive>();
+                if (parent != null) {
+                    parent.children.add(this);
+                    this.depth = parent.depth + 1;
+                }
+                else {
+                    this.depth = 0;
+                }
+            }
+
+            /**
+             * get archive depth of this archive
+             *
+             * @return
+             */
+            int getDepth() {
+                return depth;
             }
         }
     }
