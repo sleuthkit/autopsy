@@ -819,7 +819,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 logger.log(Level.SEVERE, "Could not find a file with ID " + ObjId, ex);
                 continue;
             }
-            ye.add(file, month, day);
+            if (ye != null) {
+                ye.add(file, month, day);
+            }
         }
         
         scan.close();

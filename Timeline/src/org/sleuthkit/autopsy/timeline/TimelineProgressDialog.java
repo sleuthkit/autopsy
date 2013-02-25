@@ -51,7 +51,6 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         initComponents();
         
         setLocationRelativeTo(null);
-        
         //set icon the same as main app
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
 
