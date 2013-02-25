@@ -400,10 +400,10 @@ def run_config_test(config_file):
 				antBuild("datamodel", False)
 				antBuild("autopsy", True)
 				print("starting process")
+				outputer = open("ScriptLog.txt", "a")
 				pid = subprocess.Popen(nxtproc,
-				stdout = subprocess.PIPE,
-				stdin = subprocess.PIPE,
-				stderr = subprocess.PIPE)
+				stdout = outputer,
+				stderr = outputer)
 				sys.exit()
 			for img in images:
 				run_test(img, 0 )
