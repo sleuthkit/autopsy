@@ -495,7 +495,6 @@ def run_ant():
 	if not dir_exists(make_local_path("gold")):
 		os.makedirs(make_local_path("gold"))
 	case.ant = ["ant"]
-	case.ant.append("-q")
 	case.ant.append("-f")
 	case.ant.append(os.path.join("..","build.xml"))
 	case.ant.append("regression-test")
