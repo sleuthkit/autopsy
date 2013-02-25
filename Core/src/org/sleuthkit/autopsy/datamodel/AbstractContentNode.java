@@ -122,6 +122,29 @@ abstract class AbstractContentNode<T extends Content> extends ContentNode {
         return children;
 
     }
+    
+     /**
+     * Get count of the underlying content object children.
+     * 
+     * Useful for lazy
+     * loading.
+     *
+     * @return content children count
+     */
+    public int getContentChildrenCount() {
+        int childrenCount = -1;
+
+        if (content != null) {
+            try {
+                childrenCount = content.getChildrenCount();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking node content children count, for content: " + content, ex);
+            }
+        }
+
+        return childrenCount;
+    }
+
 
     /**
      * Reads the content of this node.
