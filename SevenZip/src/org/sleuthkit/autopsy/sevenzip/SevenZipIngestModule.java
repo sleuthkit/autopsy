@@ -73,7 +73,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private IngestServices services;
     private volatile int messageID = 0;
     private int processedFiles = 0;
-    private SleuthkitCase caseHandle = null;
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
@@ -85,8 +84,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
     private static final String ENCRYPTION_FULL = "Full Encryption";
     //zip bomb detection
-    private static final int MAX_DEPTH = 7;
-    private static final int MAX_COMPRESSION_RATIO = 1000;
+    private static final int MAX_DEPTH = 4;
+    private static final int MAX_COMPRESSION_RATIO = 600;
     private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 10 ^ 6;
     private static final long MIN_FREE_DISK_SPACE = 1L * 10 ^ 9; //1GB
     //counts archive depth
@@ -243,6 +242,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         try {
             final long archiveItemSize = archiveFileItem.getSize();
 
+            //logger.log(Level.INFO, "ARCHIVE ITEM:  " + archiveFileItem.getPath() + ", SIZE: " + archiveItemSize + " AR NAME: " + archiveName);
+            
             //skip the check for small files
             if (archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
                 return false;
@@ -260,10 +261,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
             if (cRatio >= MAX_COMPRESSION_RATIO) {
                 String itemName = archiveFileItem.getPath();
-                logger.log(Level.INFO, "Potential zip bomb detected, compression ration: " + cRatio
+                logger.log(Level.INFO, "Possible zip bomb detected, compression ration: " + cRatio
                         + " for in archive item: " + itemName);
-
-                String msg = "Possible ZIP bomb detected in arhive: " + archiveName
+                String msg = "Possible ZIP bomb detected in archive: " + archiveName
                         + ", item: " + itemName;
                 String details = "The archive item compression ratio is " + cRatio
                         + ", skipping processing of this archive item. ";
