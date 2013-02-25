@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @param <T> type of wrapped Content
  */
-abstract class AbstractContentNode<T extends Content> extends ContentNode {
+public abstract class AbstractContentNode<T extends Content> extends ContentNode {
 
     /**
      * Underlying Sleuth Kit Content object

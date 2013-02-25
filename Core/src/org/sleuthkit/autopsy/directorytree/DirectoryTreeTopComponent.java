@@ -311,14 +311,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         WindowManager winManager = WindowManager.getDefault();
         TopComponent win = winManager.findTopComponent(PREFERRED_ID);
         if (win == null) {
-            Logger.getLogger(DirectoryTreeTopComponent.class.getName()).warning(
+            logger.warning(
                     "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
             return getDefault();
         }
         if (win instanceof DirectoryTreeTopComponent) {
             return (DirectoryTreeTopComponent) win;
         }
-        Logger.getLogger(DirectoryTreeTopComponent.class.getName()).warning(
+        logger.warning(
                 "There seem to be multiple components with the '" + PREFERRED_ID
                 + "' ID. That is a potential source of errors and unexpected behavior.");
         return getDefault();
@@ -431,7 +431,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         try {
                             em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
                         } catch (Exception ex) {
-                            Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
                             logger.log(Level.SEVERE, "Error setting default selected node.", ex);
                         }
                     }
