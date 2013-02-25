@@ -40,7 +40,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
 
     private final Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;
-    private final IngestContext<IngestModuleImage>ingestContext;
+    private final PipelineContext<IngestModuleImage>pipelineContext;
     private final Image image;
     private final IngestModuleImage module;
     private IngestImageWorkerController controller;
@@ -52,20 +52,20 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
     //TODO  use a real queue and manager to allow multiple different modules to run in parallel
     private static final Lock imageIngestModuleLock = new ReentrantReadWriteLock(true).writeLock();
 
-    IngestImageThread(IngestManager manager, IngestContext<IngestModuleImage>ingestContext, Image image, IngestModuleImage module, IngestModuleInit init) {
+    IngestImageThread(IngestManager manager, PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestModuleImage module, IngestModuleInit init) {
         this.manager = manager;
-        this.ingestContext = ingestContext;
+        this.pipelineContext = pipelineContext;
         this.image = image;
         this.module = module;
         this.init = init;
     }
 
-    IngestContext<IngestModuleImage>getContext() {
-        return ingestContext;
+    PipelineContext<IngestModuleImage>getContext() {
+        return pipelineContext;
     }
     
     Image getImage() {
-        return ingestContext.getScheduledTask().getImage();
+        return pipelineContext.getScheduledTask().getImage();
     }
 
     IngestModuleImage getModule() {
@@ -120,7 +120,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
             final StopWatch timer = new StopWatch();
             timer.start();
             try {
-                module.process(ingestContext, image, controller);
+                module.process(pipelineContext, image, controller);
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception in module: " + module.getName() + " image: " + image.getName(), e);
             } finally {

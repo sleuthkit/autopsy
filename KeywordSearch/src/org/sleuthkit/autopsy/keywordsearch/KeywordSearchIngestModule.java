@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.ingest.IngestContext;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -147,7 +147,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     }
 
     @Override
-    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
+    public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {

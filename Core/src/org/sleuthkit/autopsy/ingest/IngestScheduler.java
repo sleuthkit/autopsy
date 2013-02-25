@@ -204,9 +204,9 @@ class IngestScheduler {
         static class ProcessTask {
 
             final AbstractFile file;
-            final IngestContext<IngestModuleAbstractFile> context;
+            final PipelineContext<IngestModuleAbstractFile> context;
 
-            public ProcessTask(AbstractFile file, IngestContext<IngestModuleAbstractFile> context) {
+            public ProcessTask(AbstractFile file, PipelineContext<IngestModuleAbstractFile> context) {
                 this.file = file;
                 this.context = context;
             }
@@ -267,7 +267,7 @@ class IngestScheduler {
              * @param context the original ingest context
              * @return
              */
-            private static List<ProcessTask> createFromScheduledTask(IngestContext<IngestModuleAbstractFile> context) {
+            private static List<ProcessTask> createFromScheduledTask(PipelineContext<IngestModuleAbstractFile> context) {
                 ScheduledImageTask<IngestModuleAbstractFile> scheduledTask = context.getScheduledTask();
                 Collection<AbstractFile> rootObjects = scheduledTask.getImage().accept(new GetRootDirVisitor());
                 List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
@@ -356,7 +356,7 @@ class IngestScheduler {
          * @param originalContext original image schedule context that was used to
          * schedule the parent origin file, with the modules, settings, etc.
          */
-        synchronized void schedule(AbstractFile file, IngestContext originalContext) {
+        synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
             ScheduledImageTask originalTask = originalContext.getScheduledTask();
             
             //skip if task contains no modules
@@ -378,7 +378,7 @@ class IngestScheduler {
          *
          * @param task image schedule task with image and associated modules
          */
-        synchronized void schedule(IngestContext<IngestModuleAbstractFile> context) {
+        synchronized void schedule(PipelineContext<IngestModuleAbstractFile> context) {
             
             final ScheduledImageTask task = context.getScheduledTask();
             
@@ -876,7 +876,7 @@ class IngestScheduler {
             tasks = new LinkedList<ScheduledImageTask<IngestModuleImage>>();
         }
 
-        synchronized void schedule(IngestContext<IngestModuleImage> context) {
+        synchronized void schedule(PipelineContext<IngestModuleImage> context) {
             
             ScheduledImageTask<IngestModuleImage> task = context.getScheduledTask();
             

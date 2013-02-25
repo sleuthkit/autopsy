@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestContext;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -193,7 +193,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
 
     @Override
-    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile file) {
+    public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile file) {
         //skip unalloc
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return IngestModuleAbstractFile.ProcessResult.OK;

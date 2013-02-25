@@ -257,10 +257,10 @@ public class IngestManager {
      * Now we want to process this file with the same ingest context.
      * 
      * @param file file to be scheduled
-     * @param ingestContext ingest context used to ingest parent of the file to be scheduled
+     * @param pipelineContext ingest context used to ingest parent of the file to be scheduled
      */
-    void scheduleFile(AbstractFile file, IngestContext ingestContext)  {
-        scheduler.getFileScheduler().schedule(file, ingestContext);
+    void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
+        scheduler.getFileScheduler().schedule(file, pipelineContext);
     }
 
     /**
@@ -314,10 +314,10 @@ public class IngestManager {
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
-                    IngestContext<IngestModuleImage>imageIngestContext = 
-                            new IngestContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
+                    PipelineContext<IngestModuleImage>imagepipelineContext = 
+                            new PipelineContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
                     final IngestImageThread newImageWorker = new IngestImageThread(this,
-                            imageIngestContext, imageTask.getImage(), taskModule, moduleInit);
+                            imagepipelineContext, imageTask.getImage(), taskModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
@@ -850,8 +850,8 @@ public class IngestManager {
             //process AbstractFiles queue
             while (fileScheduler.hasNext()) {
                 final ProcessTask fileTask = fileScheduler.next();
-                final IngestContext<IngestModuleAbstractFile> fileIngestContext = fileTask.context;
-                final ScheduledImageTask<IngestModuleAbstractFile> fileIngestTask = fileIngestContext.getScheduledTask();
+                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = fileTask.context;
+                final ScheduledImageTask<IngestModuleAbstractFile> fileIngestTask = filepipelineContext.getScheduledTask();
                 final AbstractFile fileToProcess = fileTask.file;
                 
                 //clear return values from modules for last file
@@ -871,7 +871,7 @@ public class IngestManager {
                     try {
                         stats.logFileModuleStartProcess(module);
                         IngestModuleAbstractFile.ProcessResult result = module.process
-                                (fileIngestContext, fileToProcess);
+                                (filepipelineContext, fileToProcess);
                         stats.logFileModuleEndProcess(module);
 
                         //store the result for subsequent modules for this file
@@ -1076,19 +1076,19 @@ public class IngestManager {
                 //queue to schedulers
                 final boolean processUnalloc = getProcessUnallocSpace();
                 final ScheduledImageTask<IngestModuleImage> imageTask = new ScheduledImageTask<IngestModuleImage>(image, imageMods);
-                final IngestContext<IngestModuleImage>imageIngestContext 
-                        = new IngestContext<IngestModuleImage>(imageTask, processUnalloc);
+                final PipelineContext<IngestModuleImage>imagepipelineContext 
+                        = new PipelineContext<IngestModuleImage>(imageTask, processUnalloc);
                 logger.log(Level.INFO, "Queing image ingest task: " + imageTask);
                 progress.progress("Image Ingest" + " " + imageName, processed);
-                imageScheduler.schedule(imageIngestContext);
+                imageScheduler.schedule(imagepipelineContext);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
                 final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods);
-                final IngestContext<IngestModuleAbstractFile>fileIngestContext
-                        = new IngestContext<IngestModuleAbstractFile>(fTask, processUnalloc);
+                final PipelineContext<IngestModuleAbstractFile>filepipelineContext
+                        = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
-                fileScheduler.schedule(fileIngestContext);
+                fileScheduler.schedule(filepipelineContext);
                 progress.progress("File Ingest" + " " + imageName, ++processed);
 
             } //for images

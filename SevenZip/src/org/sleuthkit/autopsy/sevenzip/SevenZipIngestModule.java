@@ -48,7 +48,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.ingest.IngestContext;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -145,7 +145,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     }
 
     @Override
-    public ProcessResult process(IngestContext<IngestModuleAbstractFile> ingestContext, AbstractFile abstractFile) {
+    public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
 
         if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
@@ -178,10 +178,10 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         ++processedFiles;
 
 
-        List<AbstractFile> unpackedFiles = unpack(ingestContext, abstractFile);
+        List<AbstractFile> unpackedFiles = unpack(pipelineContext, abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(unpackedFiles);
-            rescheduleNewFiles(ingestContext, unpackedFiles);
+            rescheduleNewFiles(pipelineContext, unpackedFiles);
         }
 
         //process, return error if occurred
@@ -192,9 +192,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
     }
 
-    private void rescheduleNewFiles(IngestContext<IngestModuleAbstractFile> ingestContext, List<AbstractFile> unpackedFiles) {
+    private void rescheduleNewFiles(PipelineContext<IngestModuleAbstractFile> pipelineContext, List<AbstractFile> unpackedFiles) {
         for (AbstractFile unpackedFile : unpackedFiles) {
-            services.scheduleFile(unpackedFile, ingestContext);
+            services.scheduleFile(unpackedFile, pipelineContext);
         }
     }
 
@@ -233,7 +233,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         
         //TODO reimplement recursion depth check
 
-//        Integer curDepth = (Integer) ingestContext.getContextParamsValue(CONTEXT_DEPTH_PARAM);
+//        Integer curDepth = (Integer) pipelineContext.getContextParamsValue(CONTEXT_DEPTH_PARAM);
 //        if (curDepth == null) {
 //            curDepth = 1;
 //        } else {
@@ -244,7 +244,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 //                    "The archive is " + curDepth + " levels deep, skipping processing of this archive and its contents ");
 //            return unpackedFiles;
 //        } else {
-//            ingestContext.addContextParamsValue(CONTEXT_DEPTH_PARAM, curDepth);
+//            pipelineContext.addContextParamsValue(CONTEXT_DEPTH_PARAM, curDepth);
 //        }
 
     }
@@ -302,11 +302,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     /**
      * Unpack the file to local folder and return a list of derived files
      *
-     * @param ingestContext current ingest context
+     * @param pipelineContext current ingest context
      * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    private List<AbstractFile> unpack(IngestContext<IngestModuleAbstractFile> ingestContext, AbstractFile archiveFile) {
+    private List<AbstractFile> unpack(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile archiveFile) {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
 
         if (isZipBombArchiveCheck(archiveFile)) {

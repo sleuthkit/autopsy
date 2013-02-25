@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 
@@ -34,11 +32,11 @@ import java.util.Objects;
  * @param T type of the ingest associated with the context (file or image)
  * 
  */
-public class IngestContext <T extends IngestModuleAbstract> {
+public class PipelineContext <T extends IngestModuleAbstract> {
     private final ScheduledImageTask<T> task;
     private final boolean processUnalloc;
     
-    IngestContext(ScheduledImageTask<T> task, boolean processUnalloc) {
+    PipelineContext(ScheduledImageTask<T> task, boolean processUnalloc) {
         this.task = task;
         this.processUnalloc = processUnalloc;
     }
@@ -56,7 +54,7 @@ public class IngestContext <T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "IngestContext{" + "task=" + task + ", processUnalloc=" + processUnalloc + '}';
+        return "pipelineContext{" + "task=" + task + ", processUnalloc=" + processUnalloc + '}';
     }
 
     @Override
@@ -75,7 +73,7 @@ public class IngestContext <T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IngestContext<T> other = (IngestContext<T>) obj;
+        final PipelineContext<T> other = (PipelineContext<T>) obj;
 
         if (!Objects.equals(this.task, other.task)) {
             return false;

@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestContext;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -65,7 +65,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
     }
 
     @Override
-    public void process(IngestContext<IngestModuleImage>ingestContext, Image image, IngestImageWorkerController controller) {
+    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         
         controller.switchToDeterminate(modules.size());
@@ -79,7 +79,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 break;
             }
             try {
-                module.process(ingestContext, image, controller);
+                module.process(pipelineContext, image, controller);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");

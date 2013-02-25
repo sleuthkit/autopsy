@@ -40,9 +40,9 @@ public interface IngestModuleAbstractFile extends IngestModuleAbstract {
      * Entry point to process file / directory by the module.  See \ref ingestmodule_making for details
      * on what modules are responsible for doing. 
      * 
-     * @param ingestContext the context in which the ingest runs (with its own settings, modules, etc)
+     * @param pipelineContext the context in which the ingest runs (with its own settings, modules, etc)
      * @param abstractFile file to process
      * @return ProcessResult result of the processing that can be used in the pipeline as a hint whether to further process this file
      */
-    public ProcessResult process(IngestContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile);
+    public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile abstractFile);
 }

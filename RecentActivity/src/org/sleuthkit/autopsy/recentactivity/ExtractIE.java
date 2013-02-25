@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestContext;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
@@ -117,7 +117,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     }
 
     @Override
-    public void process(IngestContext<IngestModuleImage>ingestContext, Image image, IngestImageWorkerController controller) {
+    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);
