@@ -148,6 +148,7 @@ class TestAutopsy:
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
+		self.sorted_log = ""
 		self.common_log_path = ""
 		self.warning_log = ""
 		self.csv = ""
@@ -436,7 +437,7 @@ def run_test(image_file, count):
 	case.image_file = image_file
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
 	case.image = case.get_image_name(image_file)
-	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.common_log)
+	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
 	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyWarnings.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
@@ -792,13 +793,32 @@ def generate_common_log():
 			log.close()
 		common_log.write("\n\n")
 		common_log.close()
-		sort_dir = make_local_path(case.output_dir, case.image_name, "SortedErrors.txt")
-		srtcmdlst = ["sort", case.common_log_path, "-o", sort_dir]
+		case.sorted_log = make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
+		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
 		subprocess.call(srtcmdlst)
+		compare_errors()
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
+		
+def	compare_errors():
+	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	common_log = codecs.open(case.sorted_log, "r", "latin-1")
+	gold_log = codecs.open(gold_dir, "r", "latin-1")
+	gold_dat = gold_log.read()
+	common_dat = common_log.read()
+	if (gold_dat != common_dat):
+		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
+		diff_file = open(diff_dir, "w")
+		dffcmdlst = ["diff", case.sorted_log, gold_dir]
+		subprocces.call(dffcmdlst, stdout = diff_file)
+		global attachl
+		global errorem
+		global failedbool
+		attachl.append(diff_dir)
+		errorem += "There was a difference in the exceptions Log.\n"
+		failedbool = True
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
@@ -1635,11 +1655,10 @@ def execute_test():
 		for lm in logres:
 			errorem += lm
 	if failedbool:
-		attachl.append(case.common_log)
+		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 		send_email()
 	html.close()
-	#email_send(HTML_email, None)
 
 
 def send_email():
