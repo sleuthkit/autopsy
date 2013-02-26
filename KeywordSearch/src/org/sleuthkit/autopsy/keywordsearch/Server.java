@@ -504,7 +504,7 @@ public class Server {
             } catch (IOException | SecurityException ex) {
                 logger.log(Level.WARNING, "Error moving keyword search index folder from: "
                         + legacyIndexPath + " to: " + properIndexPath
-                        + " will recreate a new index.");
+                        + " will recreate a new index.", ex);
             }
         }
     }
