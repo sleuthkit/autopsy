@@ -86,8 +86,8 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     //zip bomb detection
     private static final int MAX_DEPTH = 4;
     private static final int MAX_COMPRESSION_RATIO = 600;
-    private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 10 ^ 6;
-    private static final long MIN_FREE_DISK_SPACE = 1L * 10 ^ 9; //1GB
+    private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 1000000L;
+    private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
 
@@ -385,11 +385,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
-                if (freeDiskSpace != -1) { //if known
+                if (freeDiskSpace != -1 && size > 0) { //if known free space and file not empty
                     long newDiskSpace = freeDiskSpace - size;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = "Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName;
-                        String details = "The archive item is too large to unpack (may also be a zip bomb), skipping unpacking this item. ";
+                        String details = "The archive item is too large to unpack, skipping unpacking this item. ";
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                         logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: " + archiveFile.getName() + ", " + fileName);
