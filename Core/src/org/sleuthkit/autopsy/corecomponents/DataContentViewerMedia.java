@@ -19,9 +19,14 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
@@ -31,12 +36,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.gstreamer.*;
 import org.gstreamer.elements.PlayBin2;
+import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -48,12 +55,17 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * Media content viewer for videos, sounds and images.
  * Using gstreamer.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
-public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
+@ServiceProviders(value={
+    @ServiceProvider(service = DataContentViewer.class, position = 5),
+    @ServiceProvider(service = FrameCapture.class)
+})
+public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer, FrameCapture {
 
     private static final String[] IMAGES = new String[]{".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
     private static final String[] VIDEOS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg"};
     private static final String[] AUDIOS = new String[]{".mp3", ".wav", ".wma"};
+    private static final int NUM_FRAMES = 12;
+    private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private VideoComponent videoComponent;
     private PlayBin2 playbin2;
@@ -63,6 +75,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final Object playbinLock = new Object(); // lock for synchronization of playbin2 player
     private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
+    private BufferedImage currentImage = null;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -395,6 +408,72 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         java.io.File tempFile = new java.io.File(tempPath);
         return tempFile;
+    }
+
+    @Override
+    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
+        
+        List<VideoFrame> frames = new ArrayList<>();
+        
+        RGBDataSink.Listener listener1 = new RGBDataSink.Listener() {
+            @Override
+            public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
+                BufferedImage curImage = new BufferedImage(w, h,
+                        BufferedImage.TYPE_INT_ARGB);
+                curImage.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
+                currentImage = curImage;
+            }
+        };
+
+        // set up a PlayBin2 object
+        RGBDataSink videoSink = new RGBDataSink("rgb", listener1);
+        PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
+        playbin.setInputFile(file);
+        playbin.setVideoSink(videoSink);
+        playbin.play();
+        playbin.pause();
+        playbin.getState();
+        
+        // get the duration of the video
+        TimeUnit unit = TimeUnit.MILLISECONDS;
+        long myDurationMillis = playbin.queryDuration(unit);
+        System.out.println("Duration is: " + myDurationMillis);
+        if (myDurationMillis <= 0) {
+            return frames;
+        }
+        
+        // create a list of timestamps at which to get frames
+        List<Long> timeStamps = new ArrayList<>();
+        int numFramesToGet = numFrames;
+        long frameInterval = myDurationMillis/numFrames;
+        if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
+            numFramesToGet = 1;
+        }
+        for (int i = 0; i < numFramesToGet; ++i) {
+            System.out.println("Adding timestamp " + i*frameInterval + " ms");
+            timeStamps.add(i*frameInterval);
+        }
+        
+        // for each timeStamp, grap a frame
+        for (long timeStamp : timeStamps) {
+            currentImage = null;
+            playbin.pause();
+            playbin.getState();
+            if (!playbin.seek(timeStamp, unit)) {
+                logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
+            }
+            playbin.play();
+            
+            while (currentImage == null) {
+                System.out.flush(); // not sure why this is needed
+            }
+            
+            playbin.stop();
+            
+            frames.add(new VideoFrame(currentImage, timeStamp));
+        }
+        
+        return frames;
     }
 
     /* Thread that extracts and plays a file */

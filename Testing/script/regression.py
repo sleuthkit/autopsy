@@ -495,7 +495,7 @@ def run_ant():
 	if not dir_exists(make_local_path("gold")):
 		os.makedirs(make_local_path("gold"))
 	case.ant = ["ant"]
-	case.ant.append("-q")
+	case.ant.append("-v")
 	case.ant.append("-f")
 	case.ant.append(os.path.join("..","build.xml"))
 	case.ant.append("regression-test")
@@ -521,6 +521,7 @@ def run_ant():
 	elif SYS is OS.WIN:
 		theproc = subprocess.Popen(case.ant, shell = True)
 		theproc.communicate()
+	antout.close()
 	
 # Returns the type of image file, based off extension
 class IMGTYPE:
@@ -1291,6 +1292,7 @@ def gitPull(TskOrAutopsy):
 	else:
 		ccwd = os.path.join("..", "..")
 	subprocess.call(call, stdout=gpout, cwd=ccwd)
+	gpout.close()
 	
 
 #Builds TSK as a win32 applicatiion
@@ -1307,6 +1309,7 @@ def vsBuild():
 	VSpth = make_local_path(case.output_dir, "VSOutput.txt")
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
+	VSout.close()
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
@@ -1336,20 +1339,19 @@ def antBuild(which, Build):
 	antpth = make_local_path(case.output_dir, "ant" + which + "Output.txt")
 	antout = open(antpth, 'a')
 	succd = subprocess.call(ant, stdout=antout)
+	antout.close()
+	global errorem
+	global attachl
 	if which == "datamodel":
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
 			open(chk)
 		except IOError as e:
-			global errorem
-			global attachl
 			errorem += "DataModel Java build failed.\n"
 			attachl.append(antpth)
 			send_email()
 			sys.exit()
 	elif (succd != 0):
-			global errorem
-			global attachl
 			errorem += "Autopsy build failed.\n"
 			attachl.append(antpth)
 			send_email()
@@ -1528,7 +1530,7 @@ Options:
   -v			Verbose mode; prints all errors to the screen.
   -e ex		 Prints out all errors containing ex.
   -l cfg		Runs from configuration file cfg.
-  -m			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
+  -c			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
 	"""
 
 
