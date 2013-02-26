@@ -439,7 +439,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         // get the duration of the video
         TimeUnit unit = TimeUnit.MILLISECONDS;
         long myDurationMillis = playbin.queryDuration(unit);
-        System.out.println("Duration is: " + myDurationMillis);
         if (myDurationMillis <= 0) {
             return frames;
         }
