@@ -148,6 +148,9 @@ class TestAutopsy:
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
+		self.sorted_log = ""
+		self.common_log_path = ""
+		self.warning_log = ""
 		self.csv = ""
 		self.global_csv = ""
 		self.html_log = ""
@@ -329,7 +332,8 @@ class Database:
 		
 	def generate_gold_artifacts(self):
 		if not self.gold_artifacts:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name,
+										  "AutopsyTestCase", "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -340,7 +344,8 @@ class Database:
 				
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name,
+										  "AutopsyTestCase", "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -348,7 +353,8 @@ class Database:
 
 	def generate_gold_objects(self):
 		if self.gold_objects == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name,
+										  "AutopsyTestCase", "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -430,6 +436,9 @@ def run_test(image_file, count):
 	# Set the case to work for this test
 	case.image_file = image_file
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
+	case.image = case.get_image_name(image_file)
+	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
+	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyWarnings.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
 	case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
@@ -495,7 +504,7 @@ def run_ant():
 	if not dir_exists(make_local_path("gold")):
 		os.makedirs(make_local_path("gold"))
 	case.ant = ["ant"]
-	case.ant.append("-q")
+	case.ant.append("-v")
 	case.ant.append("-f")
 	case.ant.append(os.path.join("..","build.xml"))
 	case.ant.append("regression-test")
@@ -521,6 +530,7 @@ def run_ant():
 	elif SYS is OS.WIN:
 		theproc = subprocess.Popen(case.ant, shell = True)
 		theproc.communicate()
+	antout.close()
 	
 # Returns the type of image file, based off extension
 class IMGTYPE:
@@ -553,20 +563,9 @@ def rebuild():
 	errors = []
 	# Delete the current gold standards
 	gold_dir = make_local_path(case.gold, case.image_name)
-	clear_dir(gold_dir)
-	
-	# Rebuild the database
-	gold_from = make_local_path(case.output_dir, case.image_name,
-								"AutopsyTestCase", "autopsy.db")
-	gold_to = make_local_path(case.gold, case.image_name, "standard.db")
-	try:
-		copy_file(gold_from, gold_to)
-	except FileNotFoundException as e:
-		errors.append(e.error)
-		print(str(e))
-	except Exception as e:
-		errors.append("Error: Unknown fatal error when rebuilding the gold database.")
-		errors.append(str(e) + "\n")
+	del_dir(gold_dir)
+
+	copy_dir(make_local_path(case.output_dir, case.image_name), gold_dir)
 	# Rebuild the HTML report
 	htmlfolder = ""
 	for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
@@ -595,7 +594,8 @@ def rebuild():
 # from queries while comparing
 def compare_to_gold_db():
 	# SQLITE needs unix style pathing
-	gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+	gold_db_file = os.path.join("./", case.gold, case.image_name,
+									  "AutopsyTestCase", "autopsy.db")
 	autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
@@ -775,7 +775,9 @@ def compare_tsk_objects():
 def generate_common_log():
 	try:
 		logs_path = make_local_path(case.output_dir, case.image_name, "logs")
-		common_log = codecs.open(case.common_log, "a", "latin-1")
+		common_log = codecs.open(case.common_log_path, "w", "latin-1")
+		print(case.common_log_path)
+		warning_log = codecs.open(case.warning_log, "w", "latin_1")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(case.image_name + "\n")
 		common_log.write("--------------------------------------------------\n")
@@ -785,16 +787,38 @@ def generate_common_log():
 				if "exception" in line.lower():
 					common_log.write("From " + file +":\n" +  line + "\n")
 				if "warning" in line.lower():
-					common_log.write("From " + file +":\n" +  line + "\n")
+					warning_log.write("From " + file +":\n" +  line + "\n")
 				if "error" in line.lower():
 					common_log.write("From " + file +":\n" +  line + "\n")
 			log.close()
 		common_log.write("\n\n")
 		common_log.close()
+		case.sorted_log = make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
+		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
+		subprocess.call(srtcmdlst)
+		compare_errors()
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
+		
+def	compare_errors():
+	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	common_log = codecs.open(case.sorted_log, "r", "latin-1")
+	gold_log = codecs.open(gold_dir, "r", "latin-1")
+	gold_dat = gold_log.read()
+	common_dat = common_log.read()
+	if (gold_dat != common_dat):
+		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
+		diff_file = open(diff_dir, "w")
+		dffcmdlst = ["diff", case.sorted_log, gold_dir]
+		subprocces.call(dffcmdlst, stdout = diff_file)
+		global attachl
+		global errorem
+		global failedbool
+		attachl.append(diff_dir)
+		errorem += "There was a difference in the exceptions Log.\n"
+		failedbool = True
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
@@ -902,7 +926,8 @@ def generate_csv(csv_path):
 		vars.append( str(database.autopsy_objects) )
 		vars.append( str(database.get_artifacts_count()) )
 		vars.append( str(database.autopsy_attributes) )
-		vars.append( make_local_path("gold", case.image_name, "standard.db") )
+		vars.append( make_local_path("gold", case.image_name, 
+										  "AutopsyTestCase", "autopsy.db") )
 		vars.append( database.get_artifact_comparison() )
 		vars.append( database.get_attribute_comparison() )
 		vars.append( make_local_path("gold", case.image_name, "standard.html") )
@@ -979,7 +1004,7 @@ def get_exceptions():
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
 	warnings = []
-	common_log = codecs.open(case.common_log, "r", "latin-1")
+	common_log = codecs.open(case.warning_log, "r", "latin-1")
 	for line in common_log:
 		if "warning" in line.lower():
 			warnings.append(line)
@@ -1025,7 +1050,7 @@ def search_logs(string):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string):
 	results = []
-	log = codecs.open(case.common_log, "r", "latin-1")
+	log = codecs.open(case.common_log_path, "r", "latin-1")
 	for line in log:
 		if string in line:
 			results.append(line)
@@ -1099,6 +1124,7 @@ def generate_html():
 		write_html_head()
 	try:
 		global html
+		print(case.html_log)
 		html = open(case.html_log, "a")
 		# The image title
 		title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
@@ -1291,6 +1317,7 @@ def gitPull(TskOrAutopsy):
 	else:
 		ccwd = os.path.join("..", "..")
 	subprocess.call(call, stdout=gpout, cwd=ccwd)
+	gpout.close()
 	
 
 #Builds TSK as a win32 applicatiion
@@ -1307,6 +1334,7 @@ def vsBuild():
 	VSpth = make_local_path(case.output_dir, "VSOutput.txt")
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
+	VSout.close()
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
@@ -1336,20 +1364,19 @@ def antBuild(which, Build):
 	antpth = make_local_path(case.output_dir, "ant" + which + "Output.txt")
 	antout = open(antpth, 'a')
 	succd = subprocess.call(ant, stdout=antout)
+	antout.close()
+	global errorem
+	global attachl
 	if which == "datamodel":
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
 			open(chk)
 		except IOError as e:
-			global errorem
-			global attachl
 			errorem += "DataModel Java build failed.\n"
 			attachl.append(antpth)
 			send_email()
 			sys.exit()
 	elif (succd != 0):
-			global errorem
-			global attachl
 			errorem += "Autopsy build failed.\n"
 			attachl.append(antpth)
 			send_email()
@@ -1423,6 +1450,15 @@ def clear_dir(dir):
 		printerror(dir + "\n")
 		return False;
 
+def del_dir(dir):
+	try:
+		if dir_exists(dir):
+			shutil.rmtree(dir)
+		return True;
+	except:
+		printerror("Error: Cannot delete the given directory:")
+		printerror(dir + "\n")
+		return False;
 # Copies a given file from "ffrom" to "to"
 def copy_file(ffrom, to):
 	try :
@@ -1434,12 +1470,12 @@ def copy_file(ffrom, to):
 
 # Copies a directory file from "ffrom" to "to"
 def copy_dir(ffrom, to):
-	try :
-		if not os.path.isdir(ffrom):
-			raise FileNotFoundException(ffrom)
-		shutil.copytree(ffrom, to)
-	except:
-		raise FileNotFoundException(to)
+	#try :
+	if not os.path.isdir(ffrom):
+		raise FileNotFoundException(ffrom)
+	shutil.copytree(ffrom, to)
+	#except:
+		#raise FileNotFoundException(to)
 # Returns the first file in the given directory with the given extension
 def get_file_in_dir(dir, ext):
 	try:
@@ -1528,7 +1564,7 @@ Options:
   -v			Verbose mode; prints all errors to the screen.
   -e ex		 Prints out all errors containing ex.
   -l cfg		Runs from configuration file cfg.
-  -m			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
+  -c			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
 	"""
 
 
@@ -1578,7 +1614,7 @@ def execute_test():
 	global attachl
 	case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
 	os.makedirs(case.output_dir)
-	case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
+	case.common_log = "AutopsyErrors.txt"
 	case.csv = make_local_path(case.output_dir, "CSV.txt")
 	case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
 	log_name = case.output_dir + "\\regression.log"
@@ -1619,11 +1655,10 @@ def execute_test():
 		for lm in logres:
 			errorem += lm
 	if failedbool:
-		attachl.append(case.common_log)
+		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 		send_email()
 	html.close()
-	#email_send(HTML_email, None)
 
 
 def send_email():
