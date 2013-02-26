@@ -332,8 +332,7 @@ class Database:
 		
 	def generate_gold_artifacts(self):
 		if not self.gold_artifacts:
-			gold_db_file = os.path.join("./", case.gold, case.image_name,
-										  "AutopsyTestCase", "autopsy.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -344,8 +343,7 @@ class Database:
 				
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name,
-										  "AutopsyTestCase", "autopsy.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -353,8 +351,7 @@ class Database:
 
 	def generate_gold_objects(self):
 		if self.gold_objects == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name,
-										  "AutopsyTestCase", "autopsy.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -563,9 +560,12 @@ def rebuild():
 	errors = []
 	# Delete the current gold standards
 	gold_dir = make_local_path(case.gold, case.image_name)
-	del_dir(gold_dir)
-
-	copy_dir(make_local_path(case.output_dir, case.image_name), gold_dir)
+	clear_dir(gold_dir)
+	dbinpth = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
+	dboutpth = make_local_path(case.gold, case.image_name, "autopsy.db")
+	copy_file(dbinpth, dboutpth)
+	error_pth = make_local_path(case.gold, case.image_name, case.image_name+case.common_log)
+	copy_file(case.common_log_path, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
 	for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
@@ -594,8 +594,7 @@ def rebuild():
 # from queries while comparing
 def compare_to_gold_db():
 	# SQLITE needs unix style pathing
-	gold_db_file = os.path.join("./", case.gold, case.image_name,
-									  "AutopsyTestCase", "autopsy.db")
+	gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 	autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
@@ -926,8 +925,7 @@ def generate_csv(csv_path):
 		vars.append( str(database.autopsy_objects) )
 		vars.append( str(database.get_artifacts_count()) )
 		vars.append( str(database.autopsy_attributes) )
-		vars.append( make_local_path("gold", case.image_name, 
-										  "AutopsyTestCase", "autopsy.db") )
+		vars.append( make_local_path("gold", case.image_name, "autopsy.db") )
 		vars.append( database.get_artifact_comparison() )
 		vars.append( database.get_attribute_comparison() )
 		vars.append( make_local_path("gold", case.image_name, "standard.html") )
