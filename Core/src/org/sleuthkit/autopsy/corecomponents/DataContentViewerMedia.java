@@ -429,6 +429,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
+        
+        // this is necessary to get a valid duration value
         playbin.play();
         playbin.pause();
         playbin.getState();
@@ -440,24 +442,22 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (myDurationMillis <= 0) {
             return frames;
         }
-        
+
         // create a list of timestamps at which to get frames
-        List<Long> timeStamps = new ArrayList<>();
         int numFramesToGet = numFrames;
         long frameInterval = myDurationMillis/numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
             numFramesToGet = 1;
         }
-        for (int i = 0; i < numFramesToGet; ++i) {
-            System.out.println("Adding timestamp " + i*frameInterval + " ms");
-            timeStamps.add(i*frameInterval);
-        }
-        
+
         // for each timeStamp, grap a frame
-        for (long timeStamp : timeStamps) {
-            currentImage = null;
+        for (int i = 0; i < numFramesToGet; ++i) {
+            long timeStamp = i*frameInterval;
+
             playbin.pause();
             playbin.getState();
+
+            currentImage = null;
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
