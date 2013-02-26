@@ -1340,20 +1340,18 @@ def antBuild(which, Build):
 	antout = open(antpth, 'a')
 	succd = subprocess.call(ant, stdout=antout)
 	antout.close()
+	global errorem
+	global attachl
 	if which == "datamodel":
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
 			open(chk)
 		except IOError as e:
-			global errorem
-			global attachl
 			errorem += "DataModel Java build failed.\n"
 			attachl.append(antpth)
 			send_email()
 			sys.exit()
 	elif (succd != 0):
-			global errorem
-			global attachl
 			errorem += "Autopsy build failed.\n"
 			attachl.append(antpth)
 			send_email()
