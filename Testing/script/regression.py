@@ -495,6 +495,7 @@ def run_ant():
 	if not dir_exists(make_local_path("gold")):
 		os.makedirs(make_local_path("gold"))
 	case.ant = ["ant"]
+	case.ant.append("-v")
 	case.ant.append("-f")
 	case.ant.append(os.path.join("..","build.xml"))
 	case.ant.append("regression-test")
@@ -1527,7 +1528,7 @@ Options:
   -v			Verbose mode; prints all errors to the screen.
   -e ex		 Prints out all errors containing ex.
   -l cfg		Runs from configuration file cfg.
-  -m			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
+  -c			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
 	"""
 
 
