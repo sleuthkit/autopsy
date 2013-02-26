@@ -30,18 +30,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
     public static enum LayoutContentPropertyType {
 
-        NAME {
-            @Override
-            public String toString() {
-                return "Name";
-            }
-        },
-        SIZE {
-            @Override
-            public String toString() {
-                return "Size";
-            }
-        },
         PARTS {
             @Override
             public String toString() {
@@ -100,8 +88,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     private static void fillPropertyMap(Map<String, Object> map, LayoutFile content) {
-        map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
+        AbstractAbstractFileNode.fillPropertyMap(map, content);
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
-        map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
     }
 }

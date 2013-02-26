@@ -46,6 +46,7 @@ public class IngestMonitor {
     private Timer timer;
     private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
     private final MemoryMXBean memoryManager = ManagementFactory.getMemoryMXBean();
+    private MonitorAction monitor;
 
     IngestMonitor() {
 
@@ -71,7 +72,8 @@ public class IngestMonitor {
      * Start the monitor
      */
     void start() {
-        timer = new Timer(INITIAL_INTERVAL_MS, new MonitorAction());
+        monitor = new MonitorAction();
+        timer = new Timer(INITIAL_INTERVAL_MS, monitor);
         timer.start();
     }
 
@@ -91,6 +93,21 @@ public class IngestMonitor {
      */
     boolean isRunning() {
         return timer != null && timer.isRunning();
+    }
+
+    /**
+     * Get free space in bytes of the drive where case dir resides
+     *
+     * @return free space in bytes or -1 if could not be determined.
+     */
+    long getFreeSpace() {
+        try {
+            return monitor.getFreeSpace();
+        }
+        catch (SecurityException e) {
+            logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e);
+            return -1;
+        }
     }
 
     //TODO add support to monitor multiple drives, e.g. user dir drive in addition to Case drive
@@ -158,14 +175,23 @@ public class IngestMonitor {
         }
 
         /**
-         * check disk space
+         * Get free space in bytes of the drive where case dir resides
+         *
+         * @return free space in bytes
+         */
+        private long getFreeSpace() throws SecurityException {
+            return root.getFreeSpace();
+        }
+
+        /**
+         * check disk space and see if enough to process/continue ingest
          *
          * @return true if OK, false otherwise
          */
         private boolean checkDiskSpace() {
             long freeSpace;
             try {
-                freeSpace = root.getFreeSpace();
+                freeSpace = getFreeSpace();
             } catch (SecurityException e) {
                 logger.log(Level.WARNING, "Unable to check for free disk space (permission issue)", e);
                 return true; //OK

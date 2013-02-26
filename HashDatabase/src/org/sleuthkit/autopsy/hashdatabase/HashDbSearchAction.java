@@ -24,6 +24,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.HashSearchProvider;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -38,7 +39,7 @@ import org.sleuthkit.datamodel.FsContent;
 public class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
-    private FsContent fsContent;
+    private AbstractFile file;
     private static HashDbSearchAction instance = null;
 
     HashDbSearchAction() {
@@ -55,7 +56,7 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     @Override
     public void search(Node contentNode) {
         Content tempContent = contentNode.getLookup().lookup(Content.class);
-        this.fsContent = tempContent.accept(initializeCV);
+        this.file = tempContent.accept(initializeCV);
         performAction();
     }
 
@@ -63,28 +64,33 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
      * Returns the FsContent if it is supported, otherwise null. It should
      * realistically never return null or a Directory, only a File.
      */
-    private static class InitializeContentVisitor extends ContentVisitor.Default<FsContent> {
+    private static class InitializeContentVisitor extends ContentVisitor.Default<AbstractFile> {
 
         @Override
-        public FsContent visit(org.sleuthkit.datamodel.File f) {
+        public AbstractFile visit(org.sleuthkit.datamodel.File f) {
             return f;
         }
 
         @Override
-        public FsContent visit(Directory dir) {
+        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
+            return df;
+        }
+
+        @Override
+        public AbstractFile visit(Directory dir) {
             return ContentUtils.isDotDirectory(dir) ? null : dir;
         }
 
         @Override
-        protected FsContent defaultVisit(Content cntnt) {
+        protected AbstractFile defaultVisit(Content cntnt) {
             return null;
         }
     }
 
     /**
-     * Find all files with the same MD5 hash as this' fsContent. fsContent
-     * should be previously set by calling the search function, which in turn
-     * calls performAction.
+     * Find all files with the same MD5 hash as this' file. file should be
+     * previously set by calling the search function, which in turn calls
+     * performAction.
      */
     @Override
     public void performAction() {
@@ -98,7 +104,7 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     }
 
     private void doSearch() {
-        HashDbSearchThread hashThread = new HashDbSearchThread(fsContent);
+        HashDbSearchThread hashThread = new HashDbSearchThread(file);
         hashThread.execute();
     }
 

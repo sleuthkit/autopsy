@@ -33,9 +33,9 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 
 /**
@@ -137,6 +137,19 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(File f) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
+            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(null);
+            actions.add(new ExtractAction("Extract File", getOriginal()));
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
+            actions.add(null); // creates a menu separator
+            actions.add(new TagFileAction(getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(DerivedFile f) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));

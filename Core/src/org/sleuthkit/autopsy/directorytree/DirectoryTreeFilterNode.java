@@ -21,21 +21,23 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.ingest.IngestDialog;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -45,6 +47,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
+    private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
      * the constructor
@@ -53,6 +56,30 @@ class DirectoryTreeFilterNode extends FilterNode {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
                 new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
                 arg.getLookup()));
+    }
+
+    @Override
+    public String getDisplayName() {
+        final Node orig = getOriginal();
+
+        String name = orig.getDisplayName();
+
+        //do not show children counts for non content nodes
+        if (orig instanceof AbstractContentNode) {
+            //show only for file content nodes
+            AbstractFile file = getLookup().lookup(AbstractFile.class);
+            if (file != null) {
+                try {
+                    final int numChildren = file.getChildrenCount();
+                    name = name + " (" + numChildren + ")";
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex);
+                }
+
+            }
+        }
+
+        return name;
     }
 
     /**
@@ -94,7 +121,7 @@ class DirectoryTreeFilterNode extends FilterNode {
         if (orig instanceof DisplayableItemNode) {
             actions.addAll(getDeleteActions((DisplayableItemNode) orig));
         }
-        
+
         actions.add(collapseAll);
         return actions.toArray(new Action[actions.size()]);
     }
@@ -104,8 +131,6 @@ class DirectoryTreeFilterNode extends FilterNode {
         //actions.addAll(original.accept(getDeleteActionVisitor));
         return actions;
     }
-
-    
 
     private static List<Action> getDetailActions(Content c) {
         List<Action> actions = new ArrayList<Action>();

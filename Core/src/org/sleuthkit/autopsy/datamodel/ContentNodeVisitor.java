@@ -34,6 +34,8 @@ public interface ContentNodeVisitor<T> {
     
     T visit(LayoutFileNode lcn);
     
+    T visit(DerivedFileNode dfn);
+    
     T visit(VirtualDirectoryNode lcn);
 
     /**
@@ -73,6 +75,11 @@ public interface ContentNodeVisitor<T> {
         @Override
         public T visit(LayoutFileNode lcn) {
             return defaultVisit(lcn);
+        }
+        
+        @Override
+        public T visit(DerivedFileNode dfn) {
+            return defaultVisit(dfn);
         }
         
         @Override

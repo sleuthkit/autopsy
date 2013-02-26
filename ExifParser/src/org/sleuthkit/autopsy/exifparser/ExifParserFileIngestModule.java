@@ -38,11 +38,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -87,20 +89,22 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     }
 
     @Override
-    public IngestModuleAbstractFile.ProcessResult process(AbstractFile content) {
-        if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.FS)) {
-            FsContent fsContent = (FsContent) content;
-            if(fsContent.isFile()) {
-                if(parsableFormat(fsContent)) {
-                    return processFile(fsContent);
-                }
-            }
+    public IngestModuleAbstractFile.ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile content) {
+        
+        //skip unalloc
+        if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
         }
         
-        return IngestModuleAbstractFile.ProcessResult.UNKNOWN;
+        //skip unsupported
+        if (! parsableFormat(content)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+        
+        return processFile(content);
     }
     
-    public IngestModuleAbstractFile.ProcessResult processFile(FsContent f) {
+    public IngestModuleAbstractFile.ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
         
@@ -179,7 +183,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
     
-    private boolean parsableFormat(FsContent f) {
+    private boolean parsableFormat(AbstractFile f) {
         // Get the name, extension
         String name = f.getName();
         int dotIndex = name.lastIndexOf(".");

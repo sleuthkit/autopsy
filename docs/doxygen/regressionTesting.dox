@@ -92,7 +92,8 @@ Prints all Warnings and Exceptions after each ingest.
 When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.
     -l, --list
 Runs from a configuration file, which is given as a path to the file after the argument.
-
+    -c, --continuous
+Runs the arguments from the configuration file in a loop until interrupted, must be used with -l.
 
 
 \section regression_test_config Running regression tests with a config file

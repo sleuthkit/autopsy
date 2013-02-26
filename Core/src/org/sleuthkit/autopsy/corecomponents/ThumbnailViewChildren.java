@@ -18,24 +18,19 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeListener;
-import org.openide.nodes.NodeMemberEvent;
-import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 
 /**
@@ -78,15 +73,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         setupKeys();
     }
-    
+
     int getTotalPages() {
         return totalPages;
     }
-    
+
     int getTotalImages() {
         return totalImages;
     }
-    
 
     private void setupKeys() {
         //divide the supported content into buckets
@@ -160,19 +154,27 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
 
-        private static final List<String> SUPP_EXTENSIONS 
-                = Arrays.asList(".jpeg", ".jpg", ".gif", ".png");
-        
+        private static final List<String> SUPP_EXTENSIONS = Arrays.asList(".jpeg", ".jpg", ".gif", ".png");
+
+        @Override
+        public Boolean visit(DerivedFile f) {
+            return isSupported(f);
+        }
+
         @Override
         public Boolean visit(File f) {
+            return isSupported(f);
+        }
+
+        public Boolean isSupported(AbstractFile f) {
             final String fName = f.getName();
             final int dotIdx = fName.lastIndexOf('.');
             if (dotIdx == -1) {
                 return false;
             }
-            
+
             final String ext = fName.substring(dotIdx).toLowerCase();
-            
+
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
             return f.getSize() > 0
                     && SUPP_EXTENSIONS.contains(ext);

@@ -33,6 +33,8 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
@@ -470,8 +472,41 @@ public class Server {
             throw new KeywordSearchModuleException("Already an open Core! Explicitely close Core first. ");
         }
 
-        currentCore = openCore(Case.getCurrentCase());
+        Case currentCase = Case.getCurrentCase();
+        
+        validateIndexLocation(currentCase);
+        
+        currentCore = openCore(currentCase);
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
+    }
+
+    /**
+     * Checks if index dir exists, and moves it to new location if needed (for
+     * backwards compatibility with older cases)
+     */
+    private void validateIndexLocation(Case theCase) {
+        logger.log(Level.INFO, "Validating keyword search index location");
+        String properIndexPath = getIndexDirPath(theCase);
+
+        String legacyIndexPath = theCase.getCaseDirectory()
+                + File.separator + "keywordsearch" + File.separator + "data";
+
+
+        File properIndexDir = new File(properIndexPath);
+        File legacyIndexDir = new File(legacyIndexPath);
+        if (!properIndexDir.exists()
+                && legacyIndexDir.exists() && legacyIndexDir.isDirectory()) {
+            logger.log(Level.INFO, "Moving keyword search index location from: "
+                    + legacyIndexPath + " to: " + properIndexPath);
+            try {
+                Files.move(Paths.get(legacyIndexDir.getParent())
+                        , Paths.get(properIndexDir.getParent()));
+            } catch (IOException | SecurityException ex) {
+                logger.log(Level.WARNING, "Error moving keyword search index folder from: "
+                        + legacyIndexPath + " to: " + properIndexPath
+                        + " will recreate a new index.", ex);
+            }
+        }
     }
 
     synchronized void closeCore() throws KeywordSearchModuleException {
@@ -488,17 +523,28 @@ public class Server {
     }
 
     /**
+     * Get index dir location for the case
+     *
+     * @param theCase the case to get index dir for
+     * @return absolute path to index dir
+     */
+    String getIndexDirPath(Case theCase) {
+        String indexDir = theCase.getModulesOutputDirAbsPath()
+                + File.separator + "keywordsearch" + File.separator + "data";
+        return indexDir;
+    }
+
+    /**
      * ** end single-case specific methods ***
      */
     /**
      * Open a core for the given case
      *
-     * @param c
+     * @param theCase the case to open core for
      * @return
      */
-    private synchronized Core openCore(Case c) throws KeywordSearchModuleException {
-        String sep = File.separator;
-        String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
+    private synchronized Core openCore(Case theCase) throws KeywordSearchModuleException {
+        String dataDir = getIndexDirPath(theCase);
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
     }
 
@@ -790,7 +836,7 @@ public class Server {
             solrCore.setAllowCompression(true);
             solrCore.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
             solrCore.setParser(new XMLResponseParser()); // binary parser is used by default
-            
+
 
         }
 

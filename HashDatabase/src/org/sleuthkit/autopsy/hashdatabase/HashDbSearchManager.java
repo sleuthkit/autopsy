@@ -30,6 +30,7 @@ import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -37,10 +38,10 @@ import org.sleuthkit.datamodel.FsContent;
  * map of MD5 hashes to files, flattens the map, and sends it to the HashDbSearchResultFactory.
  */
 public class HashDbSearchManager {
-    Map<String, List<FsContent>> map;
+    Map<String, List<AbstractFile>> map;
     List<KeyValueContent> kvContents;
     
-    public HashDbSearchManager(Map<String, List<FsContent>> map) {
+    public HashDbSearchManager(Map<String, List<AbstractFile>> map) {
         this.map = map;
         init();
     }
@@ -55,7 +56,7 @@ public class HashDbSearchManager {
             kvContents = new ArrayList<KeyValueContent>();
             int id = 0;
             for(String s : map.keySet()) {
-                for(FsContent file : map.get(s)) {
+                for(AbstractFile file : map.get(s)) {
                     Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
                     keyMap.put("MD5 Hash", s);
                     AbstractFsContentNode.fillPropertyMap(keyMap, file);

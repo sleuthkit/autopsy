@@ -38,28 +38,34 @@ import org.sleuthkit.datamodel.Image;
  */
 public class IngestImageThread extends SwingWorker<Void, Void> {
 
-    private Logger logger = Logger.getLogger(IngestImageThread.class.getName());
+    private final Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;
-    private Image image;
-    private IngestModuleImage module;
+    private final PipelineContext<IngestModuleImage>pipelineContext;
+    private final Image image;
+    private final IngestModuleImage module;
     private IngestImageWorkerController controller;
-    private IngestManager manager;
-    private IngestModuleInit init;
+    private final IngestManager manager;
+    private final IngestModuleInit init;
     //current method of enqueuing image ingest modules with locks and internal lock queue
     //allows to init, run and complete a single image ingest module at time
     //uses fairness policy to run them in order enqueued
     //TODO  use a real queue and manager to allow multiple different modules to run in parallel
     private static final Lock imageIngestModuleLock = new ReentrantReadWriteLock(true).writeLock();
 
-    IngestImageThread(IngestManager manager, Image image, IngestModuleImage module, IngestModuleInit init) {
+    IngestImageThread(IngestManager manager, PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestModuleImage module, IngestModuleInit init) {
         this.manager = manager;
+        this.pipelineContext = pipelineContext;
         this.image = image;
         this.module = module;
         this.init = init;
     }
 
+    PipelineContext<IngestModuleImage>getContext() {
+        return pipelineContext;
+    }
+    
     Image getImage() {
-        return image;
+        return pipelineContext.getScheduledTask().getImage();
     }
 
     IngestModuleImage getModule() {
@@ -70,7 +76,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
 
         logger.log(Level.INFO, "Pending module: " + module.getName());
-
+        
         final String displayName = module.getName() + " image id:" + image.getId();
         progress = ProgressHandleFactory.createHandle(displayName + " (Pending...)", new Cancellable() {
             @Override
@@ -114,7 +120,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
             final StopWatch timer = new StopWatch();
             timer.start();
             try {
-                module.process(image, controller);
+                module.process(pipelineContext, image, controller);
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception in module: " + module.getName() + " image: " + image.getName(), e);
             } finally {

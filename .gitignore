@@ -49,6 +49,7 @@ genfiles.properties
 /Testing/script/input/
 /Testing/script/output/
 /Testing/script/gold/
+/Testing/script/ScriptLog.txt
 /Testing/build/
 /Testing/dist/
 /Testing/nbproject/*
