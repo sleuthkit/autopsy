@@ -51,6 +51,14 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         this.content = content;
         super.setName(ContentUtils.getSystemName(content));
     }
+    
+    /**
+     * Return the content data associated with this node
+     * @return the content object wrapped by this node
+     */
+    public Content getContent() {
+        return content;
+    }
 
     @Override
     public void setName(String name) {
