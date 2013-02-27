@@ -1380,7 +1380,7 @@ def vsBuild():
 			attachl.append(VSpth)
 			send_email()
 		redo = True
-		if(redo and (not redosccd)):\
+		if(redo and (not redosccd)):
 			time.sleep(3600)
 			compile()
 		
