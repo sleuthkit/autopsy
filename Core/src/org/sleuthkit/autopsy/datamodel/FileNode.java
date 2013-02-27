@@ -27,19 +27,21 @@ import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagFileAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is used to represent the "Node" for the file. It has no children.
- *
+ * This class is used to represent the "Node" for the file.
+ * It may have derived files children.
  */
-public class FileNode extends AbstractFsContentNode<File> {
+public class FileNode extends AbstractFsContentNode<FsContent> {
 
     /**
      * @param file underlying Content
      */
-    public FileNode(File file) {
+    public FileNode(FsContent file) {
         this(file, true);
 
         setIcon(file);
@@ -47,13 +49,13 @@ public class FileNode extends AbstractFsContentNode<File> {
 
     }
 
-    public FileNode(File file, boolean directoryBrowseMode) {
+    public FileNode(FsContent file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
         setIcon(file);
     }
 
-    private void setIcon(File file) {
+    private void setIcon(FsContent file) {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
@@ -97,7 +99,7 @@ public class FileNode extends AbstractFsContentNode<File> {
 
     // Given a file, returns the correct icon for said
     // file based off it's extension
-    static String getIconForFileType(File file) {
+    static String getIconForFileType(AbstractFile file) {
         // Get the name, extension
         String name = file.getName();
         int dotIndex = name.lastIndexOf(".");
@@ -154,6 +156,12 @@ public class FileNode extends AbstractFsContentNode<File> {
                 return "org/sleuthkit/autopsy/images/pdf-file.png";
             }
         }
+        // Archives
+        for (String s : FileTypeExtensions.getArchiveExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/archive-file.png";
+            }
+        }
         // Else return the default
         return "org/sleuthkit/autopsy/images/file-icon.png";
 
@@ -166,6 +174,6 @@ public class FileNode extends AbstractFsContentNode<File> {
 
     @Override
     public boolean isLeafTypeNode() {
-        return true;
+        return true; //false;
     }
 }

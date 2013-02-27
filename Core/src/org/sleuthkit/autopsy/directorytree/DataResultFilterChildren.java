@@ -26,7 +26,6 @@ import org.openide.nodes.Node;
  * This class is used for the creation of all the children for the
  * DataResultFilterNode that created in the DataResultFilterNode.java.
  *
- * @author jantonius
  */
 public class DataResultFilterChildren extends FilterNode.Children {
     

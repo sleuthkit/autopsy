@@ -18,20 +18,24 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 
@@ -44,6 +48,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     private final ShowItemVisitor showItemV = new ShowItemVisitor();
     private final IsLeafItemVisitor isLeafItemV = new IsLeafItemVisitor();
+    
+    private final static Logger logger = Logger.getLogger(DirectoryTreeFilterChildren.class.getName());
 
     /**
      * the constructor
@@ -99,6 +105,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                     ret = false;
                     break;
                 }
+                else if (c.hasChildren() ) {
+                    //fie has children, such as derived files
+                    ret = false;
+                    break;
+                }
             }
         } catch (TskException ex) {
             Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
@@ -114,7 +125,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         try {
             for (Content c : vol.getChildren()) {
-                if (! (c instanceof LayoutFile) ){
+                if (!(c instanceof LayoutFile)) {
                     ret = false;
                     break;
                 }
@@ -165,6 +176,50 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
+        public Boolean visit(FileNode fn) {
+            //is a leaf if has no children, or children are files not dirs
+            boolean hasChildren = fn.hasContentChildren();
+            if (!hasChildren) {
+                return true;
+            }
+            List<Content> derivedChildren = fn.getContentChildren();
+            //child of a file, must be a (derived) file too
+            for (Content childContent : derivedChildren) {
+                if (((AbstractFile) childContent).isDir()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public Boolean visit(DerivedFileNode dfn) {
+            //is a leaf if has no children, or children are files not dirs
+            boolean hasChildren = dfn.hasContentChildren();
+            if (!hasChildren) {
+                return true;
+            }
+            List<Content> derivedChildren = dfn.getContentChildren();
+            //child of a file, must be a (derived) file too
+            for (Content childContent : derivedChildren) {
+                if (((AbstractFile) childContent).isDir()) {
+                    return false;
+                }
+                else {
+                    try {
+                    if (childContent.hasChildren()) {
+                        return false;
+                    }
+                    }
+                    catch (TskCoreException e) {
+                        logger.log(Level.SEVERE, "Error checking if derived file node is leaf.", e);
+                    }
+                }
+            }
+            return true;
+        }
+
+        @Override
         public Boolean visit(VolumeNode vn) {
             return isLeafVolume(vn);
         }
@@ -187,7 +242,12 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         @Override
         public Boolean visit(FileNode fn) {
-            return false;
+            return fn.hasContentChildren();
+        }
+
+        @Override
+        public Boolean visit(DerivedFileNode dfn) {
+            return dfn.hasContentChildren();
         }
 
         @Override

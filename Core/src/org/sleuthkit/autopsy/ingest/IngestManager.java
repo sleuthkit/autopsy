@@ -40,8 +40,6 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ScheduledTask;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.ImageScheduler.Task;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 
@@ -61,7 +59,7 @@ public class IngestManager {
     //queues
     private final IngestScheduler scheduler;
     //workers
-    private IngestAbstractFileThread abstractFileIngester;
+    private IngestAbstractFileProcessor abstractFileIngester;
     private List<IngestImageThread> imageIngesters;
     private SwingWorker<Object, Void> queueWorker;
     //modules
@@ -179,7 +177,7 @@ public class IngestManager {
     /**
      * Add property change listener to listen to ingest events
      *
-     * @param l PropertyChangeListener to add
+     * @param l PropertyChangeListener to schedule
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
@@ -250,6 +248,20 @@ public class IngestManager {
         logger.log(Level.INFO, "Will enqueue image: " + image.getName());
         execute(modules, images);
     }
+    
+    /**
+     * Schedule a file for ingest.
+     * Scheduler updates the current progress.
+     * 
+     * The file is usually a product of a recently ran ingest.  
+     * Now we want to process this file with the same ingest context.
+     * 
+     * @param file file to be scheduled
+     * @param pipelineContext ingest context used to ingest parent of the file to be scheduled
+     */
+    void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
+        scheduler.getFileScheduler().schedule(file, pipelineContext);
+    }
 
     /**
      * Starts the needed worker threads.
@@ -276,7 +288,7 @@ public class IngestManager {
         while (imageScheduler.hasNext()) {
             //dequeue
             // get next image and set of modules
-            final IngestScheduler.ImageScheduler.Task imageTask = imageScheduler.next();
+            final ScheduledImageTask<IngestModuleImage> imageTask = imageScheduler.next();
 
             // check if each module for this image is already running
             for (IngestModuleImage taskModule : imageTask.getModules()) {
@@ -302,8 +314,10 @@ public class IngestManager {
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
+                    PipelineContext<IngestModuleImage>imagepipelineContext = 
+                            new PipelineContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
                     final IngestImageThread newImageWorker = new IngestImageThread(this,
-                            imageTask.getImage(), taskModule, moduleInit);
+                            imagepipelineContext, imageTask.getImage(), taskModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
@@ -334,7 +348,7 @@ public class IngestManager {
 
         if (startAbstractFileIngester) {
             stats = new IngestManagerStats();
-            abstractFileIngester = new IngestAbstractFileThread();
+            abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
@@ -587,6 +601,22 @@ public class IngestManager {
             ui.displayMessage(message);
         }
     }
+    
+    /**
+     * Get free disk space of a drive where ingest data are written to
+     * That drive is being monitored by IngestMonitor thread when ingest is running.
+     * Use this method to get amount of free disk space anytime.
+     * 
+     * @return amount of disk space, -1 if unknown
+     */
+    long getFreeDiskSpace() {
+        if (ingestMonitor != null) {
+            return ingestMonitor.getFreeSpace();
+        }
+        else {
+            return -1;
+        }
+    }
 
     /**
      * helper to return all loaded image modules managed sorted in order as
@@ -778,11 +808,13 @@ public class IngestManager {
 //ingester worker for AbstractFile queue
 //worker runs until AbstractFile queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestAbstractFileThread extends SwingWorker<Object, Void> {
+    private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
-        private Logger logger = Logger.getLogger(IngestAbstractFileThread.class.getName());
+        private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
+        
+        //progress  bar
         private ProgressHandle progress;
-
+ 
         @Override
         protected Object doInBackground() throws Exception {
 
@@ -802,41 +834,44 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return IngestAbstractFileThread.this.cancel(true);
+                    return IngestAbstractFileProcessor.this.cancel(true);
                 }
             });
 
             final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
 
+            //initialize the progress bar
             progress.start();
             progress.switchToIndeterminate();
+            //set initial totals and processed (to be updated as we process or new files are scheduled)
             int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
             progress.switchToDeterminate(totalEnqueuedFiles);
             int processedFiles = 0;
             //process AbstractFiles queue
             while (fileScheduler.hasNext()) {
                 final ProcessTask fileTask = fileScheduler.next();
+                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = fileTask.context;
+                final ScheduledImageTask<IngestModuleAbstractFile> fileIngestTask = filepipelineContext.getScheduledTask();
+                final AbstractFile fileToProcess = fileTask.file;
+                
                 //clear return values from modules for last file
                 synchronized (abstractFileModulesRetValues) {
                     abstractFileModulesRetValues.clear();
                 }
 
-                final AbstractFile fileToProcess = fileTask.file;
-                
                 logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
-
-                for (IngestModuleAbstractFile module : fileTask.scheduledTask.modules) {
+                for (IngestModuleAbstractFile module : fileIngestTask.getModules() ) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
                     }
 
-
                     try {
                         stats.logFileModuleStartProcess(module);
-                        IngestModuleAbstractFile.ProcessResult result = module.process(fileToProcess);
+                        IngestModuleAbstractFile.ProcessResult result = module.process
+                                (filepipelineContext, fileToProcess);
                         stats.logFileModuleEndProcess(module);
 
                         //store the result for subsequent modules for this file
@@ -845,7 +880,7 @@ public class IngestManager {
                         }
 
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Exception from module: " + module.getName(), e);
+                        logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
                     }
                 }
@@ -854,12 +889,12 @@ public class IngestManager {
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
                     //update if new enqueued
                     totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
-                    processedFiles = 0;
+                    //processedFiles = 0;
+                    //reset
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same image enqueued twice
-                    
                     ++processedFiles;
                 }
                 //--totalEnqueuedFiles;
@@ -931,8 +966,9 @@ public class IngestManager {
     /* Thread that adds image/file and module pairs to queues */
     private class EnqueueWorker extends SwingWorker<Object, Void> {
 
-        List<IngestModuleAbstract> modules;
-        final List<Image> images;
+        private List<IngestModuleAbstract> modules;
+        private final List<Image> images;
+        private final Logger logger = Logger.getLogger(EnqueueWorker.class.getName());
 
         EnqueueWorker(final List<IngestModuleAbstract> modules, final List<Image> images) {
             this.modules = modules;
@@ -1038,16 +1074,21 @@ public class IngestManager {
                 }//for modules
 
                 //queue to schedulers
-                final Task task = new Task(image, imageMods);
-                logger.log(Level.INFO, "Queing image ingest task: " + task);
+                final boolean processUnalloc = getProcessUnallocSpace();
+                final ScheduledImageTask<IngestModuleImage> imageTask = new ScheduledImageTask<IngestModuleImage>(image, imageMods);
+                final PipelineContext<IngestModuleImage>imagepipelineContext 
+                        = new PipelineContext<IngestModuleImage>(imageTask, processUnalloc);
+                logger.log(Level.INFO, "Queing image ingest task: " + imageTask);
                 progress.progress("Image Ingest" + " " + imageName, processed);
-                imageScheduler.add(task);
+                imageScheduler.schedule(imagepipelineContext);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
-                final ScheduledTask fTask = new ScheduledTask(image, fileMods, getProcessUnallocSpace());
+                final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods);
+                final PipelineContext<IngestModuleAbstractFile>filepipelineContext
+                        = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
-                fileScheduler.add(fTask);
+                fileScheduler.schedule(filepipelineContext);
                 progress.progress("File Ingest" + " " + imageName, ++processed);
 
             } //for images
@@ -1057,7 +1098,7 @@ public class IngestManager {
         }
 
         private void handleInterruption(Exception ex) {
-            Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
+            logger.log(Level.SEVERE, "Error while enqueing files. ", ex);
             //empty queues
             scheduler.getFileScheduler().empty();
             scheduler.getImageScheduler().empty();

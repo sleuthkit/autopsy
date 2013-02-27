@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,11 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Map;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 
@@ -38,6 +40,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class IngestServices {
     
     private IngestManager manager;
+    
+    private Logger logger = Logger.getLogger(IngestServices.class.getName());
     
     private static IngestServices instance;
     
@@ -115,6 +119,30 @@ public class IngestServices {
      */
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
+    }
+    
+    /**
+     * Schedule a file for ingest.  
+     * The file is usually a product of a recently ran ingest.  
+     * Now we want to process this file with the same ingest context.
+     * 
+     * @param file file to be scheduled
+     */
+    public void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
+        logger.log(Level.INFO, "Scheduling file: " + file.getName());
+        manager.scheduleFile(file, pipelineContext);
+    }
+    
+    
+     /**
+     * Get free disk space of a drive where ingest data are written to
+     * That drive is being monitored by IngestMonitor thread when ingest is running.
+     * Use this method to get amount of free disk space anytime.
+     * 
+     * @return amount of disk space, -1 if unknown
+     */
+    public long getFreeDiskSpace() {
+        return manager.getFreeDiskSpace();
     }
     
     

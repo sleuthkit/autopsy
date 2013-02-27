@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,9 +39,10 @@ import javax.swing.table.DefaultTableModel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.Volume;
 
 class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
@@ -77,6 +79,7 @@ class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Ac
     public List<? extends Action> visit(final Image img) {
         List<Action> lst = new ArrayList<Action>();
         lst.add(new ImageDetails("Image Details", img));
+        //TODO lst.add(new ExtractAction("Extract Image", img));
         lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single Files", img));
         return lst;
     }
@@ -95,8 +98,31 @@ class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Ac
     }
 
     @Override
+    public List<? extends Action> visit(final Directory d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new TagFileAction(d));
+        return actions;
+    }
+    
+    @Override
+    public List<? extends Action> visit(final DerivedFile d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new ExtractAction("Extract File", d));
+        actions.add(new TagFileAction(d));
+        return actions;
+    }
+    
+     @Override
+    public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new ExtractAction("Extract File", d));
+        actions.add(new TagFileAction(d));
+        return actions;
+    }
+
+    @Override
     protected List<? extends Action> defaultVisit(Content di) {
-        return new ArrayList<Action>();
+        return Collections.<Action>emptyList();
     }
 
     //Below here are classes regarding node-specific actions
@@ -279,7 +305,7 @@ class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Ac
             };
 
             Object[][] rowValues = new Object[1][9];
-            
+
             Content parent = null;
             try {
                 parent = fs.getParent();

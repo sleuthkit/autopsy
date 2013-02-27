@@ -47,12 +47,13 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- *
- * @author dfickling
+ * Media content viewer for videos, sounds and images.
+ * Using gstreamer.
  */
 @ServiceProviders(value={
     @ServiceProvider(service = DataContentViewer.class, position = 5),
@@ -68,7 +69,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private VideoComponent videoComponent;
     private PlayBin2 playbin2;
-    private File currentFile;
+    private AbstractFile currentFile;
     private long durationMillis = 0;
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of playbin2 player
@@ -210,7 +211,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             videoProgressWorker = null;
         }
 
-        File file = selectedNode.getLookup().lookup(File.class);
+        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return;
         }
@@ -228,7 +229,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      *
      * @param file
      */
-    private void showImage(File file) {
+    private void showImage(AbstractFile file) {
         java.io.File ioFile = getJFile(file);
         if (!ioFile.exists()) {
             try {
@@ -260,9 +261,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     /**
      * Initialize all the necessary vars to play a video/audio file.
      *
-     * @param file the File to play
+     * @param file the file to play
      */
-    private void setupVideo(File file) {
+    private void setupVideo(AbstractFile file) {
         java.io.File ioFile = getJFile(file);
 
         pauseButton.setText("►");
@@ -354,7 +355,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        File file = node.getLookup().lookup(File.class);
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return false;
         }
@@ -394,7 +395,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         return Arrays.asList(exts).contains(ext);
     }
 
-    private java.io.File getJFile(File file) {
+    private java.io.File getJFile(AbstractFile file) {
         // Get the temp folder path of the case
         String tempPath = Case.getCurrentCase().getTempDirectory();
         String name = file.getName();
@@ -429,6 +430,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
+        
+        // this is necessary to get a valid duration value
         playbin.play();
         playbin.pause();
         playbin.getState();
@@ -436,28 +439,25 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         // get the duration of the video
         TimeUnit unit = TimeUnit.MILLISECONDS;
         long myDurationMillis = playbin.queryDuration(unit);
-        System.out.println("Duration is: " + myDurationMillis);
         if (myDurationMillis <= 0) {
             return frames;
         }
-        
+
         // create a list of timestamps at which to get frames
-        List<Long> timeStamps = new ArrayList<>();
         int numFramesToGet = numFrames;
         long frameInterval = myDurationMillis/numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
             numFramesToGet = 1;
         }
-        for (int i = 0; i < numFramesToGet; ++i) {
-            System.out.println("Adding timestamp " + i*frameInterval + " ms");
-            timeStamps.add(i*frameInterval);
-        }
-        
+
         // for each timeStamp, grap a frame
-        for (long timeStamp : timeStamps) {
-            currentImage = null;
+        for (int i = 0; i < numFramesToGet; ++i) {
+            long timeStamp = i*frameInterval;
+
             playbin.pause();
             playbin.getState();
+
+            currentImage = null;
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
@@ -480,12 +480,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         private ProgressHandle progress;
         boolean success = false;
-        private File sFile;
+        private AbstractFile sFile;
         private java.io.File jFile;
         String duration;
         String position;
 
-        ExtractMedia(org.sleuthkit.datamodel.File sFile, java.io.File jFile) {
+        ExtractMedia(org.sleuthkit.datamodel.AbstractFile sFile, java.io.File jFile) {
             this.sFile = sFile;
             this.jFile = jFile;
         }

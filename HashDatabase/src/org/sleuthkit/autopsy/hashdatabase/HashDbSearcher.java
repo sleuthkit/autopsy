@@ -18,13 +18,14 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -39,7 +40,7 @@ public class HashDbSearcher {
      * @param md5Hash   hash value to match files with
      * @return a List of all FsContent with the given hash
      */
-    static List<FsContent> findFilesByMd5(String md5Hash) {
+    static List<AbstractFile> findFilesByMd5(String md5Hash) {
         final Case currentCase = Case.getCurrentCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.findFilesByMd5(md5Hash);
@@ -51,10 +52,10 @@ public class HashDbSearcher {
      * @param md5Hash   hash values to match files with
      * @return a Map of md5 hashes mapped to the list of files hit
      */
-    static Map<String, List<FsContent>> findFilesBymd5(List<String> md5Hash) {
-        Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
+    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash) {
+        Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
         for(String md5 : md5Hash) {
-            List<FsContent> files = findFilesByMd5(md5);
+            List<AbstractFile> files = findFilesByMd5(md5);
             if(!files.isEmpty()) {
                 map.put(md5, files);
             }
@@ -62,8 +63,8 @@ public class HashDbSearcher {
         return map;
     }
     // Same as above, but with a given ProgressHandle to accumulate and StringWorker to check if cancelled
-    static Map<String, List<FsContent>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker worker) {
-        Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
+    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker<Object,Void> worker) {
+        Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
         if(!worker.isCancelled()) {
             progress.switchToDeterminate(md5Hash.size());
             int size = 0;
@@ -71,7 +72,7 @@ public class HashDbSearcher {
                 if(worker.isCancelled()) {
                     break;
                 }
-                List<FsContent> files = findFilesByMd5(md5);
+                List<AbstractFile> files = findFilesByMd5(md5);
                 if(!files.isEmpty()) {
                     map.put(md5, files);
                 }
@@ -90,12 +91,12 @@ public class HashDbSearcher {
      * @param file  file with which to match hash values with
      * @return a List of all FsContent with the same hash as file
      */
-    static List<FsContent> findFiles(FsContent file) {
+    static List<AbstractFile> findFiles(FsContent file) {
         String md5;
         if((md5 = file.getMd5Hash()) != null) {
             return findFilesByMd5(md5);
         } else {
-            return new ArrayList<FsContent>();
+            return Collections.<AbstractFile>emptyList();
         }
     }
     

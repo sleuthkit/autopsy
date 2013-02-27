@@ -43,11 +43,11 @@ EMBEDDED SOFTWARE
 This section lists the software components and libraries that are used inside of
 Autopsy.   These tools are bundled with the installer, unless specified otherwise.
 
-JRE (Java Runtime Environment) 1.6, 32 bit
+JRE (Java Runtime Environment) 1.7, 32 bit
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 7.2.1 RCP platform and .jar files bundled with the platform
+Netbeans 7.3 RCP platform and .jar files bundled with the platform
 - Web page: http://netbeans.org/features/platform/
 - License: 
 http://services.netbeans.org/downloads/licence/nb-7.0-final-2011-04-20-license.txt
@@ -104,3 +104,7 @@ Reflections 0.9.8 for ingest module loading
 Sigar for process monitoring
 - Web page: http://support.hyperic.com/display/SIGAR/Home
 - License: http://support.hyperic.com/display/SIGAR/Home#Home-license
+
+7Zip and 7Zip java bindings for 7Zip extractor module
+- Web page: http://sevenzipjbind.sourceforge.net/
+- License: http://sourceforge.net/directory/license:lgpl/

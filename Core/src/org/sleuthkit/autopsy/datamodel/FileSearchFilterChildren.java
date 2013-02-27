@@ -29,6 +29,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -39,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * @author dfickling
  */
 class FileSearchFilterChildren extends ChildFactory<Content> {
-    
+
     SleuthkitCase skCase;
     SearchFilters.SearchFilterInterface filter;
     Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
@@ -55,6 +56,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         list.addAll(runQuery());
         return true;
     }
+
     
     private String createQuery(){
         String query = "known <> 1 AND (0";
@@ -65,9 +67,9 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         //query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
+
     
     private List<FsContent> runQuery(){
-        ResultSet rs = null;
         List<FsContent> list = new ArrayList<FsContent>();
         try {
             List<FsContent> res = skCase.findFilesWhere(createQuery());
@@ -83,22 +85,24 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         return list;
         
     }
-    
+
     @Override
-    protected Node createNodeForKey(Content key){
-        return key.accept(new ContentVisitor.Default<AbstractNode>(){
-            
+    protected Node createNodeForKey(Content key) {
+        return key.accept(new ContentVisitor.Default<AbstractNode>() {
             @Override
-            public FileNode visit(File f){
+            public FileNode visit(File f) {
                 return new FileNode(f, false);
+            }
+
+            @Override
+            public DerivedFileNode visit(DerivedFile df) {
+                return new DerivedFileNode(df);
             }
 
             @Override
             protected AbstractNode defaultVisit(Content di) {
                 throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
             }
-            
         });
     }
-    
 }

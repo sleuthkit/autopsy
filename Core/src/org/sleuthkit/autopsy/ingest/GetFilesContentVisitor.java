@@ -44,15 +44,6 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
     private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 
     @Override
-    public abstract Collection<AbstractFile> visit(File file);
-
-    @Override
-    public abstract Collection<AbstractFile> visit(FileSystem fs);
-    
-    @Override
-    public abstract Collection<AbstractFile> visit(LayoutFile lc);
-
-    @Override
     public Collection<AbstractFile> visit(VirtualDirectory ld) {
         return getAllFromChildren(ld);
     }

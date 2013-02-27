@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -561,7 +561,7 @@ public class Tags implements AutopsyVisitableItem {
             logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
         }
 
-        return new ArrayList<BlackboardArtifact>();
+        return Collections.<BlackboardArtifact>emptyList();
     }
 
     /**

@@ -39,8 +39,8 @@ import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -125,7 +125,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             toSet.put(commonTypes[i].toString(), "");
         }
 
-        FsContentPropertyType[] fsTypes = FsContentPropertyType.values();
+        AbstractAbstractFileNode.AbstractFilePropertyType[] fsTypes = AbstractAbstractFileNode.AbstractFilePropertyType.values();
         final int FS_PROPS_LEN = fsTypes.length;
         for (int i = 0; i < FS_PROPS_LEN; ++i) {
             toSet.put(fsTypes[i].toString(), "");

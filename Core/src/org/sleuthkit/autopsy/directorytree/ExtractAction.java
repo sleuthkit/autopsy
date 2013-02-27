@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this content except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Exports files and folders
@@ -49,15 +48,22 @@ import org.sleuthkit.datamodel.FsContent;
 public final class ExtractAction extends AbstractAction {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
-    private AbstractFile file;
+    private AbstractFile content;
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
     public ExtractAction(String title, Node contentNode) {
         super(title);
         Content tempContent = contentNode.getLookup().lookup(Content.class);
 
-        this.file = tempContent.accept(initializeCV);
-        this.setEnabled(file != null);
+        this.content = tempContent.accept(initializeCV);
+        this.setEnabled(content != null);
+    }
+    
+     public ExtractAction(String title, Content content) {
+        super(title);
+
+        this.content = content.accept(initializeCV);
+        this.setEnabled(this.content != null);
     }
 
     /**
@@ -74,6 +80,11 @@ public final class ExtractAction extends AbstractAction {
         public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
             return lf;
         }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
+            return df;
+        }
 
         @Override
         public AbstractFile visit(Directory dir) {
@@ -87,16 +98,16 @@ public final class ExtractAction extends AbstractAction {
     }
 
     /**
-     * Asks user to choose destination, then extracts file/directory to 
+     * Asks user to choose destination, then extracts content/directory to 
      * destination (recursing on directories)
      * @param e  the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Get file and check that it's okay to overwrite existing file
+        // Get content and check that it's okay to overwrite existing content
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
-        fc.setSelectedFile(new File(this.file.getName()));
+        fc.setSelectedFile(new File(this.content.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -123,7 +134,7 @@ public final class ExtractAction extends AbstractAction {
         
             try {
                 ExtractFileThread extract = new ExtractFileThread();    
-                extract.init(this.file, e, destination);
+                extract.init(this.content, e, destination);
                 extract.execute();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background thread.", ex);
@@ -163,7 +174,7 @@ public final class ExtractAction extends AbstractAction {
             progress.start();
             progress.switchToIndeterminate();
             if(fsContent.isFile()) {
-                // Max file size of 200GB
+                // Max content size of 200GB
                 //long filesize = fsContent.getSize();
                 //int unit = (int) (filesize / 100);
                 progress.switchToDeterminate(100);
@@ -173,7 +184,7 @@ public final class ExtractAction extends AbstractAction {
                 progress.switchToDeterminate(toProcess);
             }
 
-            // Start extracting the file/directory
+            // Start extracting the content/directory
             ExtractFscContentVisitor.extract(fsContent, destination, progress, this);
             logger.log(Level.INFO, "Done background processing");
             return null;

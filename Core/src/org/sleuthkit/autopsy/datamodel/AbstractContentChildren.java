@@ -23,6 +23,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
@@ -89,6 +90,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractContentNode visit(LayoutFile lf) {
             return new LayoutFileNode(lf);
+        }
+        
+        @Override
+        public AbstractContentNode visit(DerivedFile df) {
+            return new DerivedFileNode(df);
         }
         
         @Override

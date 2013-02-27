@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,6 +48,7 @@ import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
@@ -156,17 +156,17 @@ public class Ingester {
      * file is a directory or ingestContent is set to false, the file name is
      * indexed only.
      *
-     * @param fsContent File to ingest
+     * @param file File to ingest
      * @param ingestContent if true, index the file and the content, otherwise
      * indesx metadata only
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent fsContent, boolean ingestContent) throws IngesterException {
-        if (fsContent.isDir() || ingestContent == false) {
-            ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
+    void ingest(AbstractFile file, boolean ingestContent) throws IngesterException {
+        if (ingestContent == false || file.isDir()) {
+            ingest(new NullContentStream(file), getContentFields(file), 0);
         } else {
-            ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
+            ingest(new FscContentStream(file), getContentFields(file), file.getSize());
         }
     }
 
@@ -191,6 +191,13 @@ public class Ingester {
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
             getCommonFsContentFields(params, f);
+            return params;
+        }
+        
+        @Override
+        public Map<String, String> visit(DerivedFile df) {
+            Map<String, String> params = getCommonFields(df);
+            //TODO mactimes after data model refactor
             return params;
         }
 
@@ -472,9 +479,9 @@ public class Ingester {
      */
     private static class FscContentStream implements ContentStream {
 
-        FsContent f;
+        private AbstractFile f;
 
-        FscContentStream(FsContent f) {
+        FscContentStream(AbstractFile f) {
             this.f = f;
         }
 
