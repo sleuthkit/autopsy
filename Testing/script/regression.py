@@ -394,13 +394,16 @@ def run_config_test(config_file):
 				images.append(value)
 			#Begin infiniloop
 			if(newDay()):
+				global daycount
 				compile()
-				print("starting process")
-				outputer = open("ScriptLog.txt", "a")
-				pid = subprocess.Popen(nxtproc,
-				stdout = outputer,
-				stderr = outputer)
-				sys.exit()
+				if(daycount > 0):
+					print("starting process")
+					outputer = open("ScriptLog.txt", "a")
+					pid = subprocess.Popen(nxtproc,
+					stdout = outputer,
+					stderr = outputer)
+					sys.exit()
+				daycount += 1
 			for img in images:
 				run_test(img, 0 )
 		else:
@@ -442,6 +445,7 @@ def compile():
 		errorem = "The test standard didn't match the gold standard.\n"
 		failedbool = False
 		redosccd = True
+		time.sleep(3600)
 		compile()
 	if(redosccd and (not passed)):
 		errorem += "Rebuilt properly.\n"
@@ -1371,12 +1375,13 @@ def vsBuild():
 	except IOError as e:
 		global errorem
 		global attachl
-		errorem += "LIBTSK C++ failed to build.\n"
-		attachl.append(VSpth)
 		if(not redo):
+			errorem += "LIBTSK C++ failed to build.\n"
+			attachl.append(VSpth)
 			send_email()
 		redo = True
-		if(redo and (not redosccd)):
+		if(redo and (not redosccd)):\
+			time.sleep(3600)
 			compile()
 		
 	
@@ -1410,18 +1415,20 @@ def antBuild(which, Build):
 			if(redo):
 				redosccd = True
 		except IOError as e:
-			errorem += "DataModel Java build failed.\n"
-			attachl.append(antpth)
 			if(not redo):
+				errorem += "DataModel Java build failed.\n"
+				attachl.append(antpth)
 				send_email()
 			redo = True
 			if(redo and (not redosccd)):
+				time.sleep(3600)
 				compile()
 	elif (succd != 0 and (not redo)):
 		errorem += "Autopsy build failed.\n"
 		attachl.append(antpth)
 		send_email()
 	elif (redo and (not redosccd)):
+		time.sleep(3600)
 		compile()
 		
 	
@@ -1757,7 +1764,6 @@ def main():
 	global daycount
 	global redo
 	global passed
-	setDay()
 	daycount = 0
 	failedbool = False
 	redo = False
