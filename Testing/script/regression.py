@@ -394,14 +394,7 @@ def run_config_test(config_file):
 				images.append(value)
 			#Begin infiniloop
 			if(newDay()):
-				global daycount
-				global nxtproc
-				setDay()
-				gitPull("sleuthkit")
-				vsBuild()
-				gitPull("autopsy")
-				antBuild("datamodel", False)
-				antBuild("autopsy", True)
+				compile()
 				print("starting process")
 				outputer = open("ScriptLog.txt", "a")
 				pid = subprocess.Popen(nxtproc,
@@ -422,6 +415,41 @@ def run_config_test(config_file):
 		printerror("Error: There was an error running with the configuration file.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
+		
+def compile():
+	global redo
+	global redosccd
+	global daycount
+	global nxtproc
+	global failedbool
+	global errorem
+	global attachl
+	global passed
+	redosccd = False
+	setDay()
+	if(not passed):
+		gitPull("sleuthkit")
+	if(not passed):
+		vsBuild()
+	if(not passed):
+		gitPull("autopsy")
+	if(not passed):
+		antBuild("datamodel", False)
+	if(not passed):
+		antBuild("autopsy", True)
+	if(redo and not (redosccd)):
+		attachl = []
+		errorem = "The test standard didn't match the gold standard.\n"
+		failedbool = False
+		redosccd = True
+		compile()
+	if(redosccd and (not passed)):
+		errorem += "Rebuilt properly.\n"
+		send_email()
+		attachl = []
+		errorem = "The test standard didn't match the gold standard.\n"	
+		passed = True
+
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
@@ -1320,6 +1348,8 @@ def gitPull(TskOrAutopsy):
 
 #Builds TSK as a win32 applicatiion
 def vsBuild():
+	global redo
+	global redosccd
 	#Please ensure that the current working directory is $autopsy/testing/script
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
@@ -1336,17 +1366,25 @@ def vsBuild():
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
+		if(redo):
+			redosccd = True
 	except IOError as e:
 		global errorem
 		global attachl
 		errorem += "LIBTSK C++ failed to build.\n"
 		attachl.append(VSpth)
-		send_email()
-		sys.exit()
+		if(not redo):
+			send_email()
+		redo = True
+		if(redo and (not redosccd)):
+			compile()
+		
 	
  
 #Builds Autopsy or the Datamodel
 def antBuild(which, Build):
+	global redo
+	global redosccd
 	directory = os.path.join("..", "..")
 	ant = []
 	if which == "datamodel":
@@ -1369,17 +1407,22 @@ def antBuild(which, Build):
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
 			open(chk)
+			if(redo):
+				redosccd = True
 		except IOError as e:
 			errorem += "DataModel Java build failed.\n"
 			attachl.append(antpth)
-			send_email()
-			sys.exit()
-	elif (succd != 0):
-			errorem += "Autopsy build failed.\n"
-			attachl.append(antpth)
-			send_email()
-			sys.exit()
-		
+			if(not redo):
+				send_email()
+			redo = True
+			if(redo and (not redosccd)):
+				compile()
+	elif (succd != 0 and (not redo)):
+		errorem += "Autopsy build failed.\n"
+		attachl.append(antpth)
+		send_email()
+	elif (redo and (not redosccd)):
+		compile()
 		
 	
 #Watches clock and waits for current ingest to be done
@@ -1684,7 +1727,6 @@ def send_email():
 	s = smtplib.SMTP(serverval)
 	s.sendmail(msg['From'], msg['To'], msg.as_string())
 	s.quit()
-	sys.exit()
 	
 def Build_email(msg):
 	global attachl
@@ -1713,15 +1755,19 @@ def main():
 	global errorem
 	global attachl
 	global daycount
+	global redo
+	global passed
 	setDay()
 	daycount = 0
 	failedbool = False
+	redo = False
 	errorem = "The test standard didn't match the gold standard.\n"
 	case = TestAutopsy()
 	database = Database()
 	printout("")
 	args = Args()
 	attachl = []
+	passed = False
 	# The arguments were given wrong:
 	if not args.parse():
 		case.reset()
@@ -1730,9 +1776,11 @@ def main():
 	else:
 		execute_test()
 		while args.contin:
+			redo = False
 			attachl = []
 			errorem = "The test standard didn't match the gold standard.\n"
 			failedbool = False
+			passed = False
 			execute_test()
 			case = TestAutopsy()
 
