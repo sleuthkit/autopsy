@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Collection;
+import javax.swing.event.ChangeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
@@ -37,17 +38,19 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * 
  * By design, only a single type of artifacts can be contained in a single data event. 
  */
-public class ModuleDataEvent {
+public class ModuleDataEvent extends ChangeEvent {
 
     private String moduleName;
     private ARTIFACT_TYPE artifactType;
     private Collection<BlackboardArtifact> artifactIDs;
-    
+
+ 
     /**
      * @param moduleName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
+        super(artifactType);
         this.moduleName = moduleName;
         this.artifactType = artifactType;
     }

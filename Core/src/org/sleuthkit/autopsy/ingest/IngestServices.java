@@ -121,6 +121,15 @@ public class IngestServices {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
     
+    
+     /**
+     * Fire module content event to notify registered module content event listeners
+     * @param moduleContentEvent module content event, encapsulating content changed
+     */
+    public void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
+        IngestManager.fireModuleContentEvent(moduleContentEvent);
+    }
+    
     /**
      * Schedule a file for ingest.  
      * The file is usually a product of a recently ran ingest.  

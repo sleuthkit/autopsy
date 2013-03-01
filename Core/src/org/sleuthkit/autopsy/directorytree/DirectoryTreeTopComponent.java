@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.Images;
+import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -683,7 +684,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
+                    refreshContentTree();
                     refreshTree();
+                }
+            });
+        }
+        else if (changed.equals(IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    refreshContentTree();
                 }
             });
         }
@@ -721,14 +731,38 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
+     * Refreshes changed content nodes
+     */
+    void refreshContentTree() {
+        //TODO preserve selection across refreshes
+        
+        Children rootChildren =  em.getRootContext().getChildren();
+        Node imagesFilterNode = rootChildren.findChild(ImagesNode.NAME);
+        OriginalNode imagesNodeOrig = imagesFilterNode.getLookup().lookup(OriginalNode.class);
+        
+        if (imagesNodeOrig == null) {
+            logger.log(Level.SEVERE, "Cannot find Images node, won't refresh the content tree");
+            return;
+        }
+        
+        Node imagesNode = imagesNodeOrig.getNode();
+        
+        RootContentChildren contentRootChildren = (RootContentChildren) imagesNode.getChildren();
+        contentRootChildren.refreshContentKeys();
+
+        final TreeView tree = getTree();
+        tree.expandNode(imagesNode);
+
+    }
+    
+    /**
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
     void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
-
         Node selected = getSelectedNode();
         final String[] path = NodeOp.createPath(selected, em.getRootContext());
-
+        
         //TODO: instead, we should choose a specific key to refresh? Maybe?
         //contentChildren.refreshKeys();
 
@@ -773,7 +807,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (path.length > 0 && path[0].equals(ResultsNode.NAME)) {
                     try {
                         Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                        resetHistoryListAndButtons();
+                        //resetHistoryListAndButtons();
                         if (newSelection != null) {
                             tree.expandNode(newSelection);
                             em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});

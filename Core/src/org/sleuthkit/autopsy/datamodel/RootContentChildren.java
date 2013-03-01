@@ -48,6 +48,19 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
         setKeys(Collections.<Object>emptySet());
     }
     
+    /**
+     * Refresh all content keys
+     * This creates new nodes of keys have changed.
+     * 
+     * TODO ideally, nodes would respond to event from wrapped content object
+     * but we are not ready for this.
+     */
+    public void refreshContentKeys() {
+        for (Object key : contentKeys) {
+            refreshKey(key);
+        }
+    }
+    
     //TODO use visitor
     //TODO this will be removed, Children should be listening for interesting 
     //events from datamodel and calling refresh / refreshKey() themselves
