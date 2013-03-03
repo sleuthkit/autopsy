@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.logging.Level;
+import org.apache.tika.Tika;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -73,6 +74,12 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
     private static int messageId = 0;
+    
+    private static Tika tika;
+    
+    static {
+        tika = new Tika();
+    }
 
     //file ingest modules require a private constructor
     //to ensure singleton instances
@@ -184,18 +191,17 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     }
     
     private boolean parsableFormat(AbstractFile f) {
-        // Get the name, extension
-        String name = f.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex == -1) {
+        InputStream in = new BufferedInputStream(new ReadContentInputStream(f));
+        
+        byte[] prefix = new byte[4];
+        
+        try {
+            in.read(prefix);
+        } catch (IOException ex) {
             return false;
         }
-        String ext = name.substring(dotIndex).toLowerCase();
-        if(ext.equals(".jpeg") || ext.equals(".jpg")) {
-            return true;
-        }
         
-        return false;
+        return tika.detect(prefix).toLowerCase().equals("image/jpeg");
     }
 
     @Override
