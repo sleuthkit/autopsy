@@ -109,7 +109,7 @@ public final class ContentUtils {
     }
     private static final SystemNameVisitor systemName = new SystemNameVisitor();
 
-    static String getSystemName(Content content) {
+    public static String getSystemName(Content content) {
         return content.accept(systemName);
     }
 

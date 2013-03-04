@@ -111,7 +111,13 @@ public class IngestManager {
          * created by the module. Listener can also query new data as needed.
          *
          */
-        DATA
+        DATA,
+        
+        /**
+         * Event send when content changed, either its attributes changed, or new content
+         * children have been added
+         */
+        CONTENT_CHANGED
     };
     //ui
     //Initialized by Installer in AWT thread once the Window System is ready
@@ -189,6 +195,10 @@ public class IngestManager {
 
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+    }
+    
+    static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
+        pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
     }
 
     /**

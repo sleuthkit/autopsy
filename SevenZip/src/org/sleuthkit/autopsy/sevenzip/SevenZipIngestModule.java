@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
@@ -49,6 +48,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -188,7 +188,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
-            sendNewFilesEvent(unpackedFiles);
+            sendNewFilesEvent(abstractFile, unpackedFiles);
             rescheduleNewFiles(pipelineContext, unpackedFiles);
         }
 
@@ -197,7 +197,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         return ProcessResult.OK;
     }
 
-    private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
+    private void sendNewFilesEvent(AbstractFile archive, List<AbstractFile> unpackedFiles) {
+        //currently sending a single event for all new files
+        services.fireModuleContentEvent(new ModuleContentEvent(archive));
     }
 
     private void rescheduleNewFiles(PipelineContext<IngestModuleAbstractFile> pipelineContext, List<AbstractFile> unpackedFiles) {

@@ -86,6 +86,10 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                             // there's a new/changed node to display
                             Node newSelectedNode = selectedNode; // get the selected Node on the table
                             // push the node to default "DataContent"
+                            //TODO only the active viewer should be calling setNode
+                            //not all of them, otherwise it results in multiple setNode() invocations
+                            //alternative is to use a single instance of the event listener
+                            //, per top component and not the tab perhaps
                             contentViewer.setNode(newSelectedNode);
                         } else {
                             // clear the node viewer
