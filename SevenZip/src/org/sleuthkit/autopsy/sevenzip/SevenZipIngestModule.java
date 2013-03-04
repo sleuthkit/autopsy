@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -90,6 +91,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
+    //buffer for checking file headers and signatures
+    private static final int readHeaderSize = 4;
+    private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
+    private static final int ZIP_SIGNATURE_BE = 0x504B0304;
+    
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -617,8 +623,36 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 return true;
             }
         }
-        return false;
+        
+        //if no extension match, check for zip signature
+        //(note, in near future, we will use pre-detected content type)
+        return isZipFileHeader(file);
+        
     }
+    
+    /**
+     * Check if is zip file based on header
+     * @param file
+     * @return true if zip file, false otherwise
+     */
+    private boolean isZipFileHeader(AbstractFile file) {
+        int bytesRead = 0;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error reading file header to determine if ZIP file: " + file.getName(), ex);
+        }
+        if (bytesRead != readHeaderSize) {
+            return false;
+        }
+        
+        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
+        int signature = bytes.getInt();
+        
+        return signature == ZIP_SIGNATURE_BE;
+        
+    }
+    
 
     /**
      * Stream used to unpack the archive to local file
