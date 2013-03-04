@@ -739,9 +739,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         RootContentChildren contentRootChildren = (RootContentChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
-        final TreeView tree = getTree();
-        tree.expandNode(imagesNode);
-
+        //final TreeView tree = getTree();
+        //tree.expandNode(imagesNode);
+        
         setSelectedNode(selectedPath, ImagesNode.NAME);
 
     }
@@ -751,6 +751,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * be called in the gui thread
      */
     void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+        //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
 
@@ -791,6 +792,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         tree.expandNode(childNode);
 
+        //restores selection if it was under the Results node
         setSelectedNode(selectedPath, ResultsNode.NAME);
 
     }
@@ -822,7 +824,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                                 backList.pollLast();
                             }
                             //select
-                            tree.expandNode(newSelection);
+                            //tree.expandNode(newSelection);
                             em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         }
                         // We need to set the selection, which will refresh dataresult and get rid of the oob exception
