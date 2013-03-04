@@ -27,6 +27,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -78,9 +80,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
     private DataResultTopComponent dataResult = new DataResultTopComponent(true, "Directory Listing");
-    private boolean backFwdFlag; // flag whether the back or forward button is pressed
-    private ArrayList<Node> backList;
-    private ArrayList<Node> forwardList;
+    
+    private LinkedList<String[]> backList;
+    private LinkedList<String[]> forwardList;
     /**
      * path to the icon used by the component and its open action
      */
@@ -111,11 +113,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
 
         this.pcs = new PropertyChangeSupport(this);
-        this.backFwdFlag = false;
 
         // set the back & forward list and also disable the back & forward button
-        this.backList = new ArrayList<Node>();
-        this.forwardList = new ArrayList<Node>();
+        this.backList = new LinkedList<String[]>();
+        this.forwardList = new LinkedList<String[]>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
     }
@@ -219,13 +220,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//        try {
         // update the back and forward List
-        int currentIndex = backList.size() - 1;
-        Node currentNode = backList.get(currentIndex);
-        Node newCurrentNode = backList.get(currentIndex - 1);
-        backList.remove(currentIndex);
-        forwardList.add(currentNode);
+        String[] currentNodePath = backList.pollLast();
+        String[] newCurrentNodePath = backList.peekLast();
+        forwardList.addLast(currentNodePath);
 
         // enable / disable the back and forward button
         if (backList.size() > 1) {
@@ -235,20 +233,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         this.forwardButton.setEnabled(true);
 
-        this.backFwdFlag = true; // set the flag
-
         // update the selection on directory tree
-        try {
-            em.setExploredContextAndSelection(newCurrentNode.getParentNode(), new Node[]{newCurrentNode});
-        } catch (PropertyVetoException ex) {
-            Logger.getLogger(this.className).log(Level.WARNING, "Error: can't go back to the previous selected node.", ex);
-        }
+        setSelectedNode(newCurrentNodePath, null);
 
-        this.backFwdFlag = false; // reset the flag
-//        }
-//        finally {
+
         this.setCursor(null);
-//        }
+
     }//GEN-LAST:event_backButtonActionPerformed
 
     private void forwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_forwardButtonActionPerformed
@@ -256,33 +246,24 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 //        try {
         // update the back and forward List
-        int newCurrentIndex = forwardList.size() - 1;
-        Node newCurrentNode = forwardList.get(newCurrentIndex);
-        forwardList.remove(newCurrentIndex);
-        backList.add(newCurrentNode);
+        //int newCurrentIndex = forwardList.size() - 1;
+        String[] newCurrentNodePath = forwardList.pollLast();
+        //forwardList.remove(newCurrentIndex);
+        backList.addLast(newCurrentNodePath);
 
         // enable / disable the back and forward button
-        if (forwardList.size() > 0) {
+        if (!forwardList.isEmpty()) {
             forwardButton.setEnabled(true);
         } else {
             forwardButton.setEnabled(false);
         }
         this.backButton.setEnabled(true);
 
-        this.backFwdFlag = true; // set the flag
-
         // update the selection on directory tree
-        try {
-            em.setExploredContextAndSelection(newCurrentNode.getParentNode(), new Node[]{newCurrentNode});
-        } catch (PropertyVetoException ex) {
-            Logger.getLogger(this.className).log(Level.WARNING, "Error: can't go forward to the previous selected node.", ex);
-        }
+        setSelectedNode(newCurrentNodePath, null);
 
-        this.backFwdFlag = false; // reset the flag
-//        }
-//        finally {
         this.setCursor(null);
-//    }
+
     }//GEN-LAST:event_forwardButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
@@ -394,10 +375,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
 
                     // Reset the forward and back lists because we're resetting the root context
-                    backButton.setEnabled(false);
-                    forwardButton.setEnabled(false);
-                    forwardList.clear();
-                    backList.clear();
+                    resetHistoryListAndButtons();
 
                     Children childNodes = em.getRootContext().getChildren();
                     TreeView tree = getTree();
@@ -659,18 +637,29 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
             // update the back and forward list
             Node[] selectedNode = em.getSelectedNodes();
-            if (selectedNode.length > 0 && !backFwdFlag) {
+            if (selectedNode.length > 0 ) {
                 Node selectedContext = selectedNode[0];
 
-                backList.add(selectedContext); // add the node to the "backList"
-                if (backList.size() > 1) {
-                    backButton.setEnabled(true);
-                } else {
-                    backButton.setEnabled(false);
+                final String[] selectedPath = NodeOp.createPath(selectedContext, em.getRootContext());
+                String[] currentLast = backList.peekLast();
+                String lastNodeName = null;
+                if (currentLast != null) {
+                    lastNodeName = currentLast[currentLast.length-1];
                 }
+                String selectedNodeName = selectedContext.getName();
+                if (currentLast == null || !selectedNodeName.equals(lastNodeName)) {
+                    //add to the list if the last if not the same as current
 
-                forwardList.clear(); // clear the "forwardList"
-                forwardButton.setEnabled(false); // disable the forward Button
+                    backList.addLast(selectedPath); // add the node to the "backList"
+                    if (backList.size() > 1) {
+                        backButton.setEnabled(true);
+                    } else {
+                        backButton.setEnabled(false);
+                    }
+
+                    forwardList.clear(); // clear the "forwardList"
+                    forwardButton.setEnabled(false); // disable the forward Button
+                }
             }
         } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
@@ -688,8 +677,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree();
                 }
             });
-        }
-        else if (changed.equals(IngestModuleEvent.CONTENT_CHANGED.toString())) {
+        } else if (changed.equals(IngestModuleEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -736,28 +724,28 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     void refreshContentTree() {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-        
-        Children rootChildren =  em.getRootContext().getChildren();
+
+        Children rootChildren = em.getRootContext().getChildren();
         Node imagesFilterNode = rootChildren.findChild(ImagesNode.NAME);
         OriginalNode imagesNodeOrig = imagesFilterNode.getLookup().lookup(OriginalNode.class);
-        
+
         if (imagesNodeOrig == null) {
             logger.log(Level.SEVERE, "Cannot find Images node, won't refresh the content tree");
             return;
         }
-        
+
         Node imagesNode = imagesNodeOrig.getNode();
-        
+
         RootContentChildren contentRootChildren = (RootContentChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
         final TreeView tree = getTree();
         tree.expandNode(imagesNode);
-        
+
         setSelectedNode(selectedPath, ImagesNode.NAME);
 
     }
-    
+
     /**
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
@@ -765,7 +753,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-        
+
         //TODO: instead, we should choose a specific key to refresh? Maybe?
         //contentChildren.refreshKeys();
 
@@ -802,29 +790,38 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
         tree.expandNode(childNode);
-        
+
         setSelectedNode(selectedPath, ResultsNode.NAME);
 
     }
-    
+
     /**
-     * Set selected node using the previously saved selection path
-     * to the selected node
-     * 
+     * Set selected node using the previously saved selection path to the
+     * selected node
+     *
      * @param path node path with node names
-     * @param rootNodeName name of the root node to match
+     * @param rootNodeName name of the root node to match or null if any
      */
-    private void setSelectedNode(final String [] path, final String rootNodeName) {
-         SwingUtilities.invokeLater(new Runnable() {
+    private void setSelectedNode(final String[] path, final String rootNodeName) {
+        if (path == null) {
+            return;
+        }
+        SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
 
-                if (path.length > 0 && path[0].equals(rootNodeName)) {
+                if (path.length > 0 && (rootNodeName == null || path[0].equals(rootNodeName))) {
                     try {
                         final TreeView tree = getTree();
                         Node newSelection = NodeOp.findPath(em.getRootContext(), path);
                         //resetHistoryListAndButtons();
                         if (newSelection != null) {
+                            if (rootNodeName !=  null) {
+                                //called from tree auto refresh context
+                                //remove last from backlist, because auto select will result in duplication
+                                backList.pollLast();
+                            }
+                            //select
                             tree.expandNode(newSelection);
                             em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         }
