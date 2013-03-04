@@ -421,33 +421,38 @@ def run_config_test(config_file):
 		
 def compile():
 	global redo
-	global redosccd
+	global tryredo
 	global daycount
 	global nxtproc
 	global failedbool
 	global errorem
 	global attachl
 	global passed
-	redosccd = False
+	passed = True
+	tryredo = False
 	setDay()
-	if(not passed):
-		gitPull("sleuthkit")
-	if(not passed):
-		vsBuild()
-	if(not passed):
-		gitPull("autopsy")
-	if(not passed):
-		antBuild("datamodel", False)
-	if(not passed):
-		antBuild("autopsy", True)
-	if(redo and not (redosccd)):
-		attachl = []
-		errorem = "The test standard didn't match the gold standard.\n"
-		failedbool = False
-		redosccd = True
-		time.sleep(3600)
-		compile()
-	if(redosccd and (not passed)):
+	redo = True
+	while(redo):
+		passed = True
+		if(passed):
+			gitPull("sleuthkit")
+		if(passed):
+			vsBuild()
+		if(passed):
+			gitPull("autopsy")
+		if(passed):
+			antBuild("datamodel", False)
+		if(passed):
+			antBuild("autopsy", True)
+		if(passed):
+			redo = False
+		else:
+			print("Compile Failed")
+			time.sleep(3600)
+	attachl = []
+	errorem = "The test standard didn't match the gold standard.\n"
+	failedbool = False
+	if(tryredo):
 		errorem += "Rebuilt properly.\n"
 		send_email()
 		attachl = []
@@ -1353,7 +1358,8 @@ def gitPull(TskOrAutopsy):
 #Builds TSK as a win32 applicatiion
 def vsBuild():
 	global redo
-	global redosccd
+	global tryredo
+	global passed
 	#Please ensure that the current working directory is $autopsy/testing/script
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
@@ -1370,26 +1376,24 @@ def vsBuild():
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
-		if(redo):
-			redosccd = True
 	except IOError as e:
 		global errorem
 		global attachl
-		if(not redo):
+		if(not tryredo):
 			errorem += "LIBTSK C++ failed to build.\n"
 			attachl.append(VSpth)
 			send_email()
+		tryredo = True
+		passed = False
 		redo = True
-		if(redo and (not redosccd)):
-			time.sleep(3600)
-			compile()
 		
 	
  
 #Builds Autopsy or the Datamodel
 def antBuild(which, Build):
 	global redo
-	global redosccd
+	global passed
+	global tryredo
 	directory = os.path.join("..", "..")
 	ant = []
 	if which == "datamodel":
@@ -1412,24 +1416,20 @@ def antBuild(which, Build):
 		chk = os.path.join("..", "..", "..","sleuthkit",  "bindings", "java", "dist", "TSK_DataModel.jar")
 		try:
 			open(chk)
-			if(redo):
-				redosccd = True
 		except IOError as e:
-			if(not redo):
+			if(not tryredo):
 				errorem += "DataModel Java build failed.\n"
 				attachl.append(antpth)
 				send_email()
-			redo = True
-			if(redo and (not redosccd)):
-				time.sleep(3600)
-				compile()
-	elif (succd != 0 and (not redo)):
+			passed = False
+			tryredo = True
+	elif (succd != 0 and (not tryredo)):
 		errorem += "Autopsy build failed.\n"
 		attachl.append(antpth)
 		send_email()
-	elif (redo and (not redosccd)):
-		time.sleep(3600)
-		compile()
+		tryredo = True
+	elif (succd != 0):
+		passed = False
 		
 	
 #Watches clock and waits for current ingest to be done
@@ -1716,8 +1716,13 @@ def send_email():
 	global html
 	if(not args.list):
 		sys.exit()
-	element = parsed.getElementsByTagName("email")[0]
+	element = parsed.getElementsByTagName("email")
+	if(len(element)<=0):
+		return
+	element = element[0]
 	toval = element.getAttribute("value").encode().decode("utf-8")
+	if(toval==None):
+		return
 	element = parsed.getElementsByTagName("mail_server")[0]
 	serverval = element.getAttribute("value").encode().decode("utf-8")
 	# Create the container (outer) email message.
