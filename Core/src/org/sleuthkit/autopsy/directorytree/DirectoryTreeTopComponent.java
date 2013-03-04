@@ -734,7 +734,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes changed content nodes
      */
     void refreshContentTree() {
-        //TODO preserve selection across refreshes
+        Node selectedNode = getSelectedNode();
+        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
         
         Children rootChildren =  em.getRootContext().getChildren();
         Node imagesFilterNode = rootChildren.findChild(ImagesNode.NAME);
@@ -752,6 +753,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         final TreeView tree = getTree();
         tree.expandNode(imagesNode);
+        
+        setSelectedNode(selectedPath, ImagesNode.NAME);
 
     }
     
@@ -760,8 +763,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * be called in the gui thread
      */
     void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
-        Node selected = getSelectedNode();
-        final String[] path = NodeOp.createPath(selected, em.getRootContext());
+        Node selectedNode = getSelectedNode();
+        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
         
         //TODO: instead, we should choose a specific key to refresh? Maybe?
         //contentChildren.refreshKeys();
@@ -799,13 +802,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
         tree.expandNode(childNode);
+        
+        setSelectedNode(selectedPath, ResultsNode.NAME);
 
-        SwingUtilities.invokeLater(new Runnable() {
+    }
+    
+    /**
+     * Set selected node using the previously saved selection path
+     * to the selected node
+     * 
+     * @param path node path with node names
+     * @param rootNodeName name of the root node to match
+     */
+    private void setSelectedNode(final String [] path, final String rootNodeName) {
+         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
 
-                if (path.length > 0 && path[0].equals(ResultsNode.NAME)) {
+                if (path.length > 0 && path[0].equals(rootNodeName)) {
                     try {
+                        final TreeView tree = getTree();
                         Node newSelection = NodeOp.findPath(em.getRootContext(), path);
                         //resetHistoryListAndButtons();
                         if (newSelection != null) {

@@ -49,7 +49,8 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         //TODO consider child factory for the content children
         super(new ContentChildren(content), Lookups.singleton(content));
         this.content = content;
-        super.setName(ContentUtils.getSystemName(content));
+        //super.setName(ContentUtils.getSystemName(content));
+        super.setName("content_" + Long.toString(content.getId()));
     }
     
     /**
