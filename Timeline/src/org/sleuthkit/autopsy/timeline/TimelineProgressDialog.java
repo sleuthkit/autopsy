@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
@@ -48,11 +48,11 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     public TimelineProgressDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         setLocationRelativeTo(null);
         //set icon the same as main app
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
-        
+
         progressBar.setIndeterminate(true);
 
         // Close the dialog when Esc is pressed
@@ -73,23 +73,39 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     public int getReturnStatus() {
         return returnStatus;
     }
-    
-    void updateProgressBar(int progress) {
-        this.progressBar.setValue(progress);
-    }
-    
-    void updateProgressBar(String message) {
-        this.progressBar.setStringPainted(true);
-        this.progressBar.setString(message);
-    }
-    
-    void setProgressTotal(int total) {
-        this.progressBar.setIndeterminate(false);
-        this.progressBar.setMaximum(total);
-        this.progressBar.setValue(0);
-    }
-    
 
+    void updateProgressBar(final int progress) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setValue(progress);
+            }
+        });
+
+    }
+
+    void updateProgressBar(final String message) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setString(message);
+            }
+        });
+
+    }
+
+    void setProgressTotal(final int total) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setIndeterminate(false);
+                progressBar.setMaximum(total);
+                progressBar.setValue(0);
+                progressBar.setStringPainted(true);
+            }
+        });
+
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -136,7 +152,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    
+
     /**
      * Closes the dialog
      */
@@ -144,14 +160,11 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         doClose(RET_CANCEL);
     }//GEN-LAST:event_closeDialog
 
-    
-    
     public void doClose(int retStatus) {
         returnStatus = retStatus;
         setVisible(false);
         dispose();
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JProgressBar progressBar;
