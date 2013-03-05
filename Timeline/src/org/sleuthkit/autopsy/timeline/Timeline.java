@@ -505,8 +505,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 @Override
                 public void handle(MouseEvent e) {
-                    int day = (Integer.valueOf(((String) barData.getXValue()).split("-")[1]));
-                    DayEpoch de = myme.getDay(day);
+                    final int day = (Integer.valueOf(((String) barData.getXValue()).split("-")[1]));
+                    final DayEpoch de = myme.getDay(day);
                     List<AbstractFile> afs = Collections.EMPTY_LIST;
                     if (de != null) {
                         afs = de.getEvents();
@@ -518,12 +518,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         @Override
                         public void run() {
                             dataResult.setNode(d);
+                            //set result viewer title path with the current date
+                            String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
+                            dataResult.setPath(dateString);
                         }
                     });
 
-                    //set result viewer title path with the current date
-                    String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
-                    dataResult.setPath(dateString);
+
                 }
             });
         }
