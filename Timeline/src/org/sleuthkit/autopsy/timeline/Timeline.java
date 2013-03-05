@@ -387,7 +387,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 public void handle(MouseEvent e) {
                     if (e.getButton().equals(MouseButton.PRIMARY)) {
                         if (e.getClickCount() == 1) {
-                            PlatformImpl.startup(new Runnable() {
+                            Platform.runLater(new Runnable() {
                                 @Override
                                 public void run() {
                                     BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) barData.getXValue())));
@@ -451,7 +451,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     public void handle(MouseEvent e) {
                         if (e.getButton().equals(MouseButton.PRIMARY)) {
                             if (e.getClickCount() == 1) {
-                                PlatformImpl.startup(new Runnable() {
+                                Platform.runLater(new Runnable() {
                                     @Override
                                     public void run() {
                                         chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) barData.getXValue())), ye);
