@@ -180,6 +180,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
         splitPane.setDividerLocation(450);
 
+        runJavaFxThread(chartJPanel, viewerJPanel, splitPane);
+    }
+
+    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel, final JSplitPane splitPane) {
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
@@ -1053,5 +1057,4 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     public boolean asynchronous() {
         return false;
     }
-    
 }
