@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -42,6 +43,8 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
@@ -122,8 +125,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private ScrollPane scroll_Events;  //Scroll Panes for dealing with oversized an oversized chart
     private final int Height_Frame = 850; //Sizing constants
     private final int Width_Frame = 1300;
-    private Button button_DrillUp;  //Navigation buttons
-    private Button button_Go;
+    private Button zoomOutButton;  //Navigation buttons
     private ComboBox<String> dropdown_SelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
     private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
@@ -136,11 +138,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private boolean listeningToAddImage = false;
     private long lastObjectId = -1;
     private TimelineProgressDialog dialog;
+    private EventHandler mouseEnteredListener;
+    private EventHandler mouseExitedListener;
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
     //Next, the javafx components may be initialized.
     private void customizeSwing() {
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -155,6 +160,21 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     }
 
     private void customize() {
+
+        //listeners
+        mouseEnteredListener = new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent e) {
+                panel_Charts.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+        };
+        mouseExitedListener = new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent e) {
+                panel_Charts.setCursor(null);
+            }
+        };
+
         //Making the main frame *
         jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
 
@@ -177,16 +197,16 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         //aligned vertically (Y_AXIS)
 
         // create a horizontal and vertical split panes
-       
-        
+
+
         final JSplitPane splitYPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
-        splitYPane.setDividerLocation(Height_Frame/2);
+        splitYPane.setDividerLocation(Height_Frame / 2);
 
         runJavaFxThread(chartJPanel, viewerJPanel, splitYPane);
     }
 
-    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel, 
-           final JSplitPane splitYPane) {
+    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel,
+            final JSplitPane splitYPane) {
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
@@ -240,8 +260,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     dropdown_SelectYears = new ComboBox(listSelect);
 
                     //Buttons for navigating up and down the timeline
-                    button_DrillUp = new Button("Zoom Out");
-                    button_DrillUp.setOnAction(new EventHandler<ActionEvent>() {
+                    zoomOutButton = new Button("Zoom Out");
+                    zoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
                             BarChart bc;
@@ -255,20 +275,24 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                         }
                     });
 
-                    button_Go = new Button("►");
-                    button_Go.setOnAction(new EventHandler<ActionEvent>() {
+                    dropdown_SelectYears.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
                         @Override
-                        public void handle(ActionEvent e) {
+                        public void changed(ObservableValue<? extends String> ov, String t, String t1) {
                             if (dropdown_SelectYears.getValue() != null) {
-                                chart_Events = createMonthsWithDrill(findYear(data, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
-                                scroll_Events.setContent(chart_Events);
+                                chartJPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                                try {
+                                    chart_Events = createMonthsWithDrill(findYear(data, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
+                                    scroll_Events.setContent(chart_Events);
+                                } finally {
+                                    chartJPanel.setCursor(null);
+                                }
                             }
                         }
                     });
 
                     //Adding things to the V and H boxes. 
                     //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Zoom Out|View Year: [Select Year]|►|
-                    hBox_Charts.getChildren().addAll(button_DrillUp, new Label("View Year:"), dropdown_SelectYears, button_Go);
+                    hBox_Charts.getChildren().addAll(zoomOutButton, new Label("View Year:"), dropdown_SelectYears);
                     vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
                     group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
                     panel_Charts.setScene(scene_Charts);
@@ -279,8 +303,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     chartJPanel.add(panel_Charts);
                     //viewerJPanel.add(dataResult);
 
-                     final JSplitPane splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
-                    splitXPane.setDividerLocation(Width_Frame/2);
+                    final JSplitPane splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
+                    splitXPane.setDividerLocation(Width_Frame / 2);
                     viewerJPanel.add(splitXPane);
                     chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -336,12 +360,19 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
         for (final BarChart.Data barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
             barData.getNode().setScaleX(.5);
-            barData.getNode().addEventHandler(MouseEvent.MOUSE_CLICKED,
+
+            final javafx.scene.Node barNode = barData.getNode();
+            //hover listener
+            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+
+            //click listener
+            barNode.addEventHandler(MouseEvent.MOUSE_CLICKED,
                     new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent e) {
                     if (e.getButton().equals(MouseButton.PRIMARY)) {
-                        if (e.getClickCount() == 2) { //Checking for a doubleclick
+                        if (e.getClickCount() == 1) {
                             PlatformImpl.startup(new Runnable() {
                                 @Override
                                 public void run() {
@@ -350,11 +381,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                                     scroll_Events.setContent(chart_Events);
                                 }
                             });
-                            //If a single click, hover a label over the cursor with information about the selection
-                        } else if (e.getClickCount() == 1) {
-                            l.setText(findYear(allYears, Integer.valueOf((String) barData.getXValue())).getNumFiles() + " events");
-                            l.setTranslateX(e.getX());
-                            l.setTranslateY(e.getY());
+
                         }
                     }
                 }
@@ -390,24 +417,30 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
 
         for (int i = 0; i < 12; i++) {
-            for (final BarChart.Data data : bc.getData().get(0).getData()) {
+            for (final BarChart.Data barData : bc.getData().get(0).getData()) {
                 //Note: 
                 // All the charts of this package have a problem where when the chart gets below a certain pixel ratio, the barData stops drawing. The axes and the labels remain, 
                 // But the actual chart barData is invisible, unclickable, and unrendered. To partially compensate for that, barData.getNode() can be manually scaled up to increase visibility.
                 // Sometimes I've had it jacked up to as much as x2400 just to see a sliver of information.
                 // But that doesn't work all the time. Adding it to a scrollpane and letting the user scroll up and down to view the chart is the other workaround. Both of these fixes suck.
+                final javafx.scene.Node barNode = barData.getNode();
+                barNode.setScaleX(.5);
 
-                data.getNode().setScaleX(.5);
-                data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
+                //hover listener
+                barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
+                barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+
+                //clicks
+                barNode.addEventHandler(MouseEvent.MOUSE_PRESSED,
                         new EventHandler<MouseEvent>() {
                     @Override
                     public void handle(MouseEvent e) {
                         if (e.getButton().equals(MouseButton.PRIMARY)) {
-                            if (e.getClickCount() == 2) {
+                            if (e.getClickCount() == 1) {
                                 PlatformImpl.startup(new Runnable() {
                                     @Override
                                     public void run() {
-                                        chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) data.getXValue())), ye);
+                                        chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) barData.getXValue())), ye);
                                         scroll_Events.setContent(chart_Events);
                                     }
                                 });
@@ -443,15 +476,22 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
 
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, ol);
-        for (final BarChart.Data data : bc.getData().get(0).getData()) {
+        for (final BarChart.Data barData : bc.getData().get(0).getData()) {
             //data.getNode().setScaleX(2);
-            data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
+
+            final javafx.scene.Node barNode = barData.getNode();
+
+            //hover listener
+            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+
+            barNode.addEventHandler(MouseEvent.MOUSE_PRESSED,
                     new EventHandler<MouseEvent>() {
                 MonthEpoch myme = me;
 
                 @Override
                 public void handle(MouseEvent e) {
-                    int day = (Integer.valueOf(((String) data.getXValue()).split("-")[1]));
+                    int day = (Integer.valueOf(((String) barData.getXValue()).split("-")[1]));
                     DayEpoch de = myme.getDay(day);
                     List<AbstractFile> afs = Collections.EMPTY_LIST;
                     if (de != null) {
