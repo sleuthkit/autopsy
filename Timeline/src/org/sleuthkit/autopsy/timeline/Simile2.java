@@ -212,12 +212,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
-                        logger.log(Level.INFO, "Creating mactime file.");
+                        logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
                         String bodyFilePath = makeBodyFile();
                         makeMacTime(bodyFilePath);
                         data = null;
                     } else {
-                        logger.log(Level.INFO, "mactime file already exists; parsing that.");
+                        logger.log(Level.INFO, "Mactime file already exists; parsing that: " + mactimeFile.getAbsolutePath());
                     }
 
                     if (data == null) {
@@ -297,7 +297,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
      * Creates a BarChart with datapoints for all the years from the parsed
      * mactime file.
      *
-     * @param allYears The list of years that have data from the mactime file
+     * @param allYears The list of years that have barData from the mactime file
      * @return BarChart scaled to the year level
      */
     private BarChart createYearChartWithDrill(final List<YearEpoch> allYears) {
@@ -308,7 +308,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         l.setTextFill(Color.AZURE);
         xAxis.setLabel("Years");
         yAxis.setLabel("Number of Events");
-        //Charts are made up of individual pieces of Chart.Data. In this case, a piece of data is a single bar on the graph.
+        //Charts are made up of individual pieces of Chart.Data. In this case, a piece of barData is a single bar on the graph.
         //Data is packaged into a series, which can be assigned custom colors or styling
         //After the series are created, 1 or more series are packaged into a single chart.
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
@@ -325,9 +325,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         // But it is for this reason that the chart generating functions have two forloops. I do not believe they can be condensed into a single loop due to the nodes being null until 
         // an undetermined point in time. 
         BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
-        for (final BarChart.Data data : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
-            data.getNode().setScaleX(.5);
-            data.getNode().addEventHandler(MouseEvent.MOUSE_CLICKED,
+        for (final BarChart.Data barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
+            barData.getNode().setScaleX(.5);
+            barData.getNode().addEventHandler(MouseEvent.MOUSE_CLICKED,
                     new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent e) {
@@ -336,14 +336,14 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                             PlatformImpl.startup(new Runnable() {
                                 @Override
                                 public void run() {
-                                    BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) data.getXValue())));
+                                    BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) barData.getXValue())));
                                     chart_Events = b;
                                     scroll_Events.setContent(chart_Events);
                                 }
                             });
                             //If a single click, hover a label over the cursor with information about the selection
                         } else if (e.getClickCount() == 1) {
-                            l.setText(findYear(allYears, Integer.valueOf((String) data.getXValue())).getNumFiles() + " events");
+                            l.setText(findYear(allYears, Integer.valueOf((String) barData.getXValue())).getNumFiles() + " events");
                             l.setTranslateX(e.getX());
                             l.setTranslateY(e.getY());
                         }
@@ -375,7 +375,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             String monthName = new DateFormatSymbols().getMonths()[monthNum];
             MonthEpoch month = ye.getMonth(monthNum);
             int numEvents = month == null ? 0 : month.getNumFiles();
-            se.getData().add(new BarChart.Data<String, Number>(monthName, numEvents)); //Adding new data at {X-pos, Y-Pos}
+            se.getData().add(new BarChart.Data<String, Number>(monthName, numEvents)); //Adding new barData at {X-pos, Y-Pos}
         }
         bcData.add(se);
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
@@ -383,8 +383,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         for (int i = 0; i < 12; i++) {
             for (final BarChart.Data data : bc.getData().get(0).getData()) {
                 //Note: 
-                // All the charts of this package have a problem where when the chart gets below a certain pixel ratio, the data stops drawing. The axes and the labels remain, 
-                // But the actual chart data is invisible, unclickable, and unrendered. To partially compensate for that, data.getNode() can be manually scaled up to increase visibility.
+                // All the charts of this package have a problem where when the chart gets below a certain pixel ratio, the barData stops drawing. The axes and the labels remain, 
+                // But the actual chart barData is invisible, unclickable, and unrendered. To partially compensate for that, barData.getNode() can be manually scaled up to increase visibility.
                 // Sometimes I've had it jacked up to as much as x2400 just to see a sliver of information.
                 // But that doesn't work all the time. Adding it to a scrollpane and letting the user scroll up and down to view the chart is the other workaround. Both of these fixes suck.
 
@@ -542,7 +542,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         String prop = evt.getPropertyName();
         if (prop.equals(Case.CASE_ADD_IMAGE)) {
             if (jf != null && !jf.isVisible()) {
-                // change the lastObjectId to trigger a reparse of mactime data
+                // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;
                 return;
             }
@@ -567,7 +567,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     }
 
     private void clearMactimeData() {
-        // get rid of the old data
+        // get rid of the old barData
         data = null;
 
         // get rid of the mactime file
@@ -1021,7 +1021,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 // initialize mactimeFileName
                 mactimeFileName = currentCase.getName() + "-MACTIME.txt";
 
-                // see if data has been added to the database since the last
+                // see if barData has been added to the database since the last
                 // time timeline ran
                 long objId = currentCase.getSleuthkitCase().getLastObjectId();
                 if (objId != lastObjectId && lastObjectId != -1) {
@@ -1053,154 +1053,5 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     public boolean asynchronous() {
         return false;
     }
-    //<editor-fold defaultstate="collapsed" desc="Old Functions">
-    /**
-     * Old Functions *
-     */
-    //    private BarChart createEventsByYear(final YearEpoch ye) {
-    //        final CategoryAxis xAxis = new CategoryAxis();
-    //        final NumberAxis yAxis = new NumberAxis();
-    //        final int maxEvents = ye.max;
-    //        final int maxNumDays = ye.numDays;
-    //        xAxis.setLabel("Day of Year");
-    //        yAxis.setLabel("Number of Events");
-    //        ObservableList<BarChart.Series<String, Number>> seriesList = FXCollections.observableArrayList();
-    //        for (final MonthEpoch me : ye.months) {
-    //            BarChart.Series<String, Number> series = new BarChart.Series(makeObservableListByMonthAllDays(me));
-    //            series.setName(me.getMonthName() + " " + me.year);
-    //            seriesList.add(series);
-    //        }
-    //        final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, seriesList);
-    //        for (int i = 0; i < bc.getData().size(); i++) {
-    //            for (final BarChart.Data data : bc.getData().get(i).getData()) {
-    //                data.getNode().setScaleX(240);
-    //                data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
-    //                        new EventHandler<MouseEvent>() {
-    //                            @Override
-    //                            public void handle(MouseEvent e) {
-    //                                final FsContentRootNode d = new FsContentRootNode("Test Year Nodes", (((MonthEpoch) data.getExtraValue()).getDays().get(Integer.valueOf(((String) data.getXValue()).split("-")[1]))).getEvents());
-    //                                SwingUtilities.invokeLater(new Runnable() {
-    //                                    @Override
-    //                                    public void run() {
-    //                                        dataResult.setNode(d);
-    //                                    }
-    //                                });
-    //                            }
-    //                        });
-    //            }
-    //        }
-    //        bc.autosize();
-    //        bc.setPrefWidth(63 * maxNumDays);
-    //        //bc.setScaleX(1.25);
-    //        //bc.setMinSize(30 * maxNumDays, 4 * maxEvents); // 40 * numDays in year, 4 * maxEvents
-    //        //bc.setMaxSize(30 * maxNumDays, 4 * maxEvents); //Width, Height
-    //        return bc;
-    //    }
-    /*
-     * the small 12-month chart
-     */
-    //    private BarChart createMonthBarChartFromYear(final YearEpoch ye) {
-    //        final CategoryAxis xAxis = new CategoryAxis();
-    //        final NumberAxis yAxis = new NumberAxis();
-    //        final int numMonths = 12;
-    //        final int maxEvents = ye.max;
-    //        xAxis.setLabel("Month (" + ye.year + ")");
-    //        yAxis.setLabel("Number of Events");
-    //        ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
-    //
-    //        BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
-    //        for (final MonthEpoch me : ye.months) {
-    //            se.getData().add(new BarChart.Data<String, Number>(me.getMonthName(), me.total));
-    //        }
-    //        bcData.add(se);
-    //
-    //
-    //        final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);//bcData);
-    //        for (int i = 0; i < numMonths; i++) {
-    //            for (final BarChart.Data data : bc.getData().get(0).getData()) {
-    //                data.getNode().setScaleX(26);
-    //                data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
-    //                        new EventHandler<MouseEvent>() {
-    //                            @Override
-    //                            public void handle(MouseEvent e) {
-    //
-    //                                PlatformImpl.startup(new Runnable() {
-    //                                    @Override
-    //                                    public void run() {
-    //                                        chart_Events = createEventsByMonth(findMonth(ye.months, month_StringtoInt((String) data.getXValue())));
-    //                                        scroll_Events.setContent(chart_Events);
-    //                                    }
-    //                                });
-    //
-    //                            }
-    //                        });
-    //            }
-    //        }
-    //
-    //        bc.setPrefHeight(Height_PieBoxes);
-    //        bc.setPrefWidth(Width_PieBoxes);
-    //        bc.setLegendVisible(false);
-    //        return bc;
-    //    }
-    //    boolean checkCache(List<YearEpoch> epochs, int match) {
-    //        for (Epoch e : epochs) {
-    //            if (e.year == match) {
-    //                return true;
-    //            }
-    //        }
-    //        return false;
-    //    }
-    //
-    //    YearEpoch getFromCache(List<YearEpoch> epochs, int match) {
-    //        for (YearEpoch e : epochs) {
-    //            if (e.year == match) {
-    //                return e;
-    //            }
-    //        }
-    //        return null;
-    //    }
-    //    private PieChart initYearChart() {
-    //        ObservableList<PieChart.Data> pieChartData =
-    //                FXCollections.observableArrayList();
-    //
-    //        double totalEvents = 0.0;
-    //        String sep = java.io.File.separator;
-    //        java.io.File mactime = new java.io.File("C:" + sep + "Users" + sep + "nflower" + sep + "Downloads" + sep + "kanarazu-12-21-2012-11-15-46-mactime.txt");
-    //        List<YearEpoch> ls = parseMacTime(mactime);
-    //
-    //        for (int i = 0; i < ls.size(); i++) {
-    //            cachedYears.add(ls.get(i));
-    //            totalEvents += ls.get(i).total;
-    //        }
-    //
-    //        for (YearEpoch e : ls) {
-    //            PieChart.Data d = new PieChart.Data(String.valueOf(e.year), (e.total / totalEvents) * 100);
-    //            pieChartData.add(d);
-    //        }
-    //        final PieChart chart = new PieChart(pieChartData);
-    //        chart.setTitle("Years with Activity");
-    //        for (int i = 0; i < chart.getData().size(); i++) {
-    //            final PieChart.Data data = chart.getData().get(i);
-    //            final YearEpoch y = findYear(ls, Integer.valueOf(data.getName()));
-    //            data.getNode().setUserData(y);
-    //            data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
-    //                    new EventHandler<MouseEvent>() {
-    //                        @Override
-    //                        public void handle(MouseEvent e) {
-    //                            chart_Months = createMonthBarChartFromYear(((YearEpoch) data.getNode().getUserData()));
-    //                            scroll_Months.setContent(chart_Months);
-    //
-    //                            chart_Events = createEventsByYear(y);
-    //                            scroll_Events.setContent(chart_Events);
-    //                            chart_Events.getBoundsInParent();
-    //                        }
-    //                    });
-    //
-    //        }
-    //        chart.setLegendVisible(false);
-    //        chart.setPrefHeight(Height_PieBoxes / 1.3);
-    //        chart.setPrefWidth(Width_PieBoxes / 1.1);
-    //        return chart;
-    //    }
-    //</editor-fold>
+    
 }
