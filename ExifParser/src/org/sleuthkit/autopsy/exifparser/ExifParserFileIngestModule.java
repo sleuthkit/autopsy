@@ -216,11 +216,16 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
      * @return true if jpeg file, false otherwise
      */
     private boolean isJpegFileHeader(AbstractFile file) {
+        if (file.getSize() < readHeaderSize) {
+            return false;
+        }
+        
         int bytesRead = 0;
         try {
             bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error reading file header to determine if Jpeg/Exif file: " + file.getName(), ex);
+            //ignore if can't read the first few bytes, not a JPEG
+            return false;
         }
         if (bytesRead != readHeaderSize) {
             return false;

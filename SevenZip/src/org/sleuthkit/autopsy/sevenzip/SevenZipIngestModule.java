@@ -636,11 +636,16 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
      * @return true if zip file, false otherwise
      */
     private boolean isZipFileHeader(AbstractFile file) {
+        if (file.getSize() < readHeaderSize) {
+            return false;
+        }
+        
         int bytesRead = 0;
         try {
             bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error reading file header to determine if ZIP file: " + file.getName(), ex);
+            //ignore if can't read the first few bytes, not a ZIP
+            return false;
         }
         if (bytesRead != readHeaderSize) {
             return false;
