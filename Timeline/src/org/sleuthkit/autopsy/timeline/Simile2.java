@@ -78,7 +78,6 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -109,8 +108,8 @@ import org.sleuthkit.datamodel.TskData;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
-
 public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
+
     private static final Logger logger = Logger.getLogger(Simile2.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Simile2.class.getPackage().getName(), false);
     private JFrame jf;          //frame for holding all the elements
@@ -154,11 +153,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
         });
     }
-    
+
     private void customize() {
         //Making the main frame *
         jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
-        
+
         //use the same icon on jframe as main application
         jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
@@ -176,7 +175,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
         //ComboJPanel holds both of the above JPanels together,
         //aligned vertically (Y_AXIS)
-        
+
         // create a horizontal split pane
         final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
         splitPane.setDividerLocation(450);
@@ -210,7 +209,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     if (!moduleDir.exists()) {
                         moduleDir.mkdir();
                     }
-                    
+
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         logger.log(Level.INFO, "Creating mactime file.");
@@ -248,7 +247,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                             scroll_Events.setContent(chart_Events);
                         }
                     });
-     
+
                     button_Go = new Button("►");
                     button_Go.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
@@ -286,7 +285,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 } finally {
                     // stop the progress bar
                     progress.finish();
-                    
+
                     // close the dialog
                     dialog.doClose(0);
                 }
@@ -330,27 +329,27 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             data.getNode().setScaleX(.5);
             data.getNode().addEventHandler(MouseEvent.MOUSE_CLICKED,
                     new EventHandler<MouseEvent>() {
-                        @Override
-                        public void handle(MouseEvent e) {
-                            if (e.getButton().equals(MouseButton.PRIMARY)) {
-                                if (e.getClickCount() == 2) { //Checking for a doubleclick
-                                    PlatformImpl.startup(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) data.getXValue())));
-                                            chart_Events = b;
-                                            scroll_Events.setContent(chart_Events);
-                                        }
-                                    });
-                                    //If a single click, hover a label over the cursor with information about the selection
-                                } else if (e.getClickCount() == 1) {
-                                    l.setText(findYear(allYears, Integer.valueOf((String) data.getXValue())).getNumFiles() + " events");
-                                    l.setTranslateX(e.getX());
-                                    l.setTranslateY(e.getY());
+                @Override
+                public void handle(MouseEvent e) {
+                    if (e.getButton().equals(MouseButton.PRIMARY)) {
+                        if (e.getClickCount() == 2) { //Checking for a doubleclick
+                            PlatformImpl.startup(new Runnable() {
+                                @Override
+                                public void run() {
+                                    BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) data.getXValue())));
+                                    chart_Events = b;
+                                    scroll_Events.setContent(chart_Events);
                                 }
-                            }
+                            });
+                            //If a single click, hover a label over the cursor with information about the selection
+                        } else if (e.getClickCount() == 1) {
+                            l.setText(findYear(allYears, Integer.valueOf((String) data.getXValue())).getNumFiles() + " events");
+                            l.setTranslateX(e.getX());
+                            l.setTranslateY(e.getY());
                         }
-                    });
+                    }
+                }
+            });
         }
 
         bc.autosize(); //Get an auto height
@@ -389,24 +388,24 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 // Sometimes I've had it jacked up to as much as x2400 just to see a sliver of information.
                 // But that doesn't work all the time. Adding it to a scrollpane and letting the user scroll up and down to view the chart is the other workaround. Both of these fixes suck.
 
-                data.getNode().setScaleX(.5); 
+                data.getNode().setScaleX(.5);
                 data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
                         new EventHandler<MouseEvent>() {
-                            @Override
-                            public void handle(MouseEvent e) {
-                                if (e.getButton().equals(MouseButton.PRIMARY)) {
-                                    if (e.getClickCount() == 2) {
-                                        PlatformImpl.startup(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) data.getXValue())), ye);
-                                                scroll_Events.setContent(chart_Events);
-                                            }
-                                        });
+                    @Override
+                    public void handle(MouseEvent e) {
+                        if (e.getButton().equals(MouseButton.PRIMARY)) {
+                            if (e.getClickCount() == 2) {
+                                PlatformImpl.startup(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) data.getXValue())), ye);
+                                        scroll_Events.setContent(chart_Events);
                                     }
-                                }
+                                });
                             }
-                        });
+                        }
+                    }
+                });
             }
         }
 
@@ -430,7 +429,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
         BarChart.Series<String, Number> series = new BarChart.Series(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
-        
+
 
         ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
 
@@ -439,31 +438,31 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             //data.getNode().setScaleX(2);
             data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
                     new EventHandler<MouseEvent>() {
-                        MonthEpoch myme = me;
+                MonthEpoch myme = me;
 
+                @Override
+                public void handle(MouseEvent e) {
+                    int day = (Integer.valueOf(((String) data.getXValue()).split("-")[1]));
+                    DayEpoch de = myme.getDay(day);
+                    List<AbstractFile> afs = Collections.EMPTY_LIST;
+                    if (de != null) {
+                        afs = de.getEvents();
+                    } else {
+                        logger.log(Level.SEVERE, "There were no events for the clicked-on day.");
+                    }
+                    final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
+                    SwingUtilities.invokeLater(new Runnable() {
                         @Override
-                        public void handle(MouseEvent e) {
-                            int day = (Integer.valueOf(((String) data.getXValue()).split("-")[1]));
-                            DayEpoch de = myme.getDay(day);
-                            List<AbstractFile> afs = Collections.EMPTY_LIST;
-                            if (de != null) {
-                                afs = de.getEvents();
-                            } else {
-                                logger.log(Level.SEVERE, "There were no events for the clicked-on day.");
-                            }
-                            final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
-                            SwingUtilities.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dataResult.setNode(d);
-                                }
-                            });
-                            
-                            //set result viewer title path with the current date
-                            String dateString = ye.getYear() + "-" + (1+me.getMonthInt()) + "-" +  + de.dayNum;
-                            dataResult.setPath(dateString);
+                        public void run() {
+                            dataResult.setNode(d);
                         }
                     });
+
+                    //set result viewer title path with the current date
+                    String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
+                    dataResult.setPath(dateString);
+                }
+            });
         }
         bc.autosize();
         bc.setPrefWidth(Width_Frame);
@@ -487,8 +486,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
      * Section for Utility functions
      */
     /**
-     * 
-     * @param mon The month to convert. Must be minimum 4 characters long "February" and "Febr" are acceptable.
+     *
+     * @param mon The month to convert. Must be minimum 4 characters long
+     * "February" and "Febr" are acceptable.
      * @return The integer value of the month. February = 1, July = 6
      */
     private static int monthStringToInt(String mon) {
@@ -505,8 +505,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
     /**
      * Used for finding the proper month in a list of available months
-     * @param lst The list of months to search through. It is assumed that the desired match is in this list.
-     * @param match The month, in integer format, to retrieve. 
+     *
+     * @param lst The list of months to search through. It is assumed that the
+     * desired match is in this list.
+     * @param match The month, in integer format, to retrieve.
      * @return The month epoch as specified by match.
      */
     private static MonthEpoch findMonth(List<MonthEpoch> lst, int match) {
@@ -518,10 +520,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         return null;
     }
 
-       /**
+    /**
      * Used for finding the proper year in a list of available years
-     * @param lst The list of years to search through. It is assumed that the desired match is in this list.
-     * @param match The year to retrieve. 
+     *
+     * @param lst The list of years to search through. It is assumed that the
+     * desired match is in this list.
+     * @param match The year to retrieve.
      * @return The year epoch as specified by match.
      */
     private static YearEpoch findYear(List<YearEpoch> lst, int match) {
@@ -557,11 +561,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 jf.dispose();
                 jf = null;
             }
-            
+
             data = null;
         }
     }
-    
+
     private void clearMactimeData() {
         // get rid of the old data
         data = null;
@@ -575,11 +579,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         jf.dispose();
 
         // remove ourself as change listener on Case
-        Case currcase = Case.getCurrentCase();
-        if (currcase != null) {
-            currcase.removePropertyChangeListener(this);
-            listeningToAddImage = false;
-        }
+        Case.removePropertyChangeListener(this);
+        listeningToAddImage = false;
+
     }
 
     /*
@@ -587,6 +589,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
      * All of those are Epochs.
      */
     abstract class Epoch {
+
         abstract public int getNumFiles();
     }
 
@@ -594,15 +597,15 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
         private int year;
         private List<MonthEpoch> months = new ArrayList<>();
-        
+
         YearEpoch(int year) {
             this.year = year;
         }
-        
+
         public int getYear() {
             return year;
         }
-        
+
         @Override
         public int getNumFiles() {
             int size = 0;
@@ -611,10 +614,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
             return size;
         }
-        
+
         public MonthEpoch getMonth(int monthNum) {
             MonthEpoch month = null;
-            for (MonthEpoch me :months) {
+            for (MonthEpoch me : months) {
                 if (me.getMonthInt() == monthNum) {
                     month = me;
                     break;
@@ -622,7 +625,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
             return month;
         }
-        
+
         public void add(AbstractFile af, int month, int day) {
             // see if this month is in the list
             MonthEpoch monthEpoch = null;
@@ -632,12 +635,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     break;
                 }
             }
-            
+
             if (monthEpoch == null) {
                 monthEpoch = new MonthEpoch(month);
                 months.add(monthEpoch);
             }
-            
+
             // add the file the the MonthEpoch object
             monthEpoch.add(af, day);
         }
@@ -651,17 +654,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         MonthEpoch(int month) {
             this.month = month;
         }
-        
+
         public int getMonthInt() {
             return month;
         }
-        
+
         public int getTotalNumDays(int year) {
             Calendar cal = Calendar.getInstance();
             cal.set(year, month, 1);
             return cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         }
-        
+
         @Override
         public int getNumFiles() {
             int numFiles = 0;
@@ -670,7 +673,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
             return numFiles;
         }
-        
+
         public DayEpoch getDay(int dayNum) {
             DayEpoch de = null;
             for (DayEpoch d : days) {
@@ -681,7 +684,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             }
             return de;
         }
-        
+
         public void add(AbstractFile af, int day) {
             DayEpoch dayEpoch = null;
             for (DayEpoch de : days) {
@@ -690,12 +693,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     break;
                 }
             }
-            
+
             if (dayEpoch == null) {
                 dayEpoch = new DayEpoch(day);
                 days.add(dayEpoch);
             }
-            
+
             dayEpoch.add(af);
         }
 
@@ -718,20 +721,20 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
         private List<AbstractFile> files = new ArrayList<>();
         int dayNum = 0; //Day of the month this Epoch represents, 1 indexed: 28=28.
-        
+
         DayEpoch(int dayOfMonth) {
             this.dayNum = dayOfMonth;
         }
-        
+
         public int getDayInt() {
             return dayNum;
         }
-        
+
         @Override
         public int getNumFiles() {
             return files.size();
         }
-        
+
         public void add(AbstractFile af) {
             files.add(af);
         }
@@ -743,15 +746,19 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
     // The node factories used to make lists of files to send to the result viewer
     private class FsContentNodeChildFactory extends ChildFactory<AbstractFile> {
+
         List<AbstractFile> l;
+
         FsContentNodeChildFactory(List<AbstractFile> l) {
             this.l = l;
         }
+
         @Override
         protected boolean createKeys(List<AbstractFile> list) {
             list.addAll(l);
             return true;
         }
+
         @Override
         protected Node createNodeForKey(AbstractFile file) {
             Node wrapped;
@@ -765,15 +772,18 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     }
 
     private class FsContentRootNode extends DisplayableItemNode {
+
         FsContentRootNode(String NAME, List<AbstractFile> l) {
             super(Children.create(new FsContentNodeChildFactory(l), true));
             super.setName(NAME);
             super.setDisplayName(NAME);
         }
+
         @Override
         public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
             return DisplayableItemNode.TYPE.CONTENT;
         }
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return null;
@@ -823,20 +833,26 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 ye.add(file, month, day);
             }
         }
-        
+
         scan.close();
 
         return years;
     }
 
+    /**
+     * Crate a body file and return its path or null if error
+     *
+     * @return absolute path string or null if error
+     */
     private String makeBodyFile() {
         // Setup timestamp
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        final Case currentCase = Case.getCurrentCase();
+        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
+
         // Get report path
         String bodyFilePath = moduleDir.getAbsolutePath()
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
@@ -845,34 +861,39 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
                 + "AND name != '.' "
                 + "AND name != '..'";
-        List<FsContent> fs = Collections.EMPTY_LIST;
+        List<FsContent> fs = null;
         try {
             fs = skCase.findFilesWhere(filesAndDirs);
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
+            return null;
         }
 
         // Loop files and write info to report
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(bodyFilePath, true);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error creating output stream to write body file to: " + bodyFilePath, ex);
+            return null;
+        }
+
         BufferedWriter out = null;
         try {
-            out = new BufferedWriter(new FileWriter(bodyFilePath, true));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not create new BufferedWriter for body file.", ex);
-        }
-        for (FsContent file : fs) {
-            try {
+            out = new BufferedWriter(fileWriter);
+            for (FsContent file : fs) {
+                // try {
                 // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
-                //out = new BufferedWriter(new FileWriter(bodyFilePath, true));
-
                 if (file.getMd5Hash() != null) {
                     out.write(file.getMd5Hash());
                 }
                 out.write("|");
-                String path = "";
+                String path = null;
                 try {
                     path = file.getUniquePath();
                 } catch (TskCoreException e) {
-                    logger.log(Level.WARNING, "Failed to get the unique path.", e);
+                    logger.log(Level.SEVERE, "Failed to get the unique path of: " + file + " and writing body file.", e);
+                    return null;
                 }
 
                 out.write(path);
@@ -899,18 +920,21 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 out.write("|");
                 out.write(Long.toString(file.getCrtime()));
                 out.write("\n");
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Probelm while trying to write data to the body file.", ex);
-                break;
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error while trying to write data to the body file.", ex);
+            return null;
+        } finally {
+            if (out != null) {
+                try {
+                    out.flush();
+                    out.close();
+                } catch (IOException ex1) {
+                    logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
+                }
             }
         }
-        
-        try {
-            out.flush();
-            out.close();
-        } catch (IOException ex1) {
-            logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
-        }
+
 
         return bodyFilePath;
     }
@@ -952,11 +976,13 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
             return;
         }
 
+        final Case currentCase = Case.getCurrentCase();
+
         try {
-            if (Case.getCurrentCase().getImages().isEmpty()) {
+            if (currentCase.getImages().isEmpty()) {
                 logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
             } else {
-    
+
                 if (IngestManager.getDefault().isIngestRunning()) {
                     int answer = JOptionPane.showConfirmDialog(new JFrame(),
                             "You are trying to generate a timeline before "
@@ -967,25 +993,24 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                         return;
                     }
                 }
-    
+
                 logger.log(Level.INFO, "Beginning generation of timeline");
-                
+
                 // if the timeline window is already open, do nothing
                 if (jf != null && jf.isVisible()) {
                     return;
                 }
-                
+
                 Platform.setImplicitExit(false);
-                
+
                 // listen for case changes (specifically images being added).
-                Case currcase = Case.getCurrentCase();
-                if (currcase != null && !listeningToAddImage) {
-                    currcase.addPropertyChangeListener(this);
+                if (Case.isCaseOpen() && !listeningToAddImage) {
+                    Case.addPropertyChangeListener(this);
                     listeningToAddImage = true;
                 }
-                
+
                 // create the modal dialog
-                SwingUtilities.invokeLater(new Runnable () {
+                SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         dialog = new TimelineProgressDialog(jf, true);
@@ -994,11 +1019,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 });
 
                 // initialize mactimeFileName
-                mactimeFileName = Case.getCurrentCase().getName() + "-MACTIME.txt";
-                
+                mactimeFileName = currentCase.getName() + "-MACTIME.txt";
+
                 // see if data has been added to the database since the last
                 // time timeline ran
-                long objId = Case.getCurrentCase().getSleuthkitCase().getLastObjectId();
+                long objId = currentCase.getSleuthkitCase().getLastObjectId();
                 if (objId != lastObjectId && lastObjectId != -1) {
                     clearMactimeData();
                 }
@@ -1008,7 +1033,9 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                 customize();
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error when generating timeline, ", ex);
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex);
         }
     }
 
