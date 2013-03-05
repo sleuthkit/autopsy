@@ -140,26 +140,12 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private TimelineProgressDialog progressDialog;
     private EventHandler mouseEnteredListener;
     private EventHandler mouseExitedListener;
+    private JSplitPane splitXPane, splitYPane;
     private SleuthkitCase skCase;
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
     //Next, the javafx components may be initialized.
-    private void customizeSwing() {
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                dataContentPanel = new DataContentPanel();
-                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
-                dataResult.setContentViewer(new DataContentPanel());
-                dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult.setPreferredSize(new Dimension(700, 300));
-                logger.log(Level.INFO, "Successfully created viewers");
-            }
-        });
-    }
-
     private void customize() {
 
         //listeners
@@ -176,38 +162,51 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             }
         };
 
-        //Making the main frame *
-        jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //Making the main frame *
+                jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
 
-        //use the same icon on jframe as main application
-        jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
-        jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
-
-        //JPanels are used as the cohesive glue that binds everything together.*/
-        //The chartJpanel holds the chart, 
-        //aligned vertically (Y_AXIS)
-        final JPanel chartJPanel = new JPanel();
-        chartJPanel.setLayout(new BoxLayout(chartJPanel, BoxLayout.Y_AXIS));
-
-        //ViewerJPanel holds both of the DataResult/DataContent viewers,
-        //aligned horizontally (X_AXIS)
-        final JPanel viewerJPanel = new JPanel();
-        viewerJPanel.setLayout(new BoxLayout(viewerJPanel, BoxLayout.X_AXIS));
-
-        //ComboJPanel holds both of the above JPanels together,
-        //aligned vertically (Y_AXIS)
-
-        // create a horizontal and vertical split panes
+                //use the same icon on jframe as main application
+                jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
+                jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
 
 
-        final JSplitPane splitYPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
-        splitYPane.setDividerLocation(Height_Frame / 2);
+                dataContentPanel = new DataContentPanel();
 
-        runJavaFxThread(chartJPanel, viewerJPanel, splitYPane);
+                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
+                dataResult.setContentViewer(new DataContentPanel());
+                dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
+                dataResult.setPreferredSize(new Dimension(700, 300));
+                logger.log(Level.INFO, "Successfully created viewers");
+
+                //ViewerJPanel holds both of the DataResult/DataContent viewers,
+                //aligned horizontally (X_AXIS)
+                final JPanel viewerJPanel = new JPanel();
+                viewerJPanel.setLayout(new BoxLayout(viewerJPanel, BoxLayout.X_AXIS));
+        
+                splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
+                splitXPane.setDividerLocation(Width_Frame / 2);
+                viewerJPanel.add(splitXPane);
+                viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                //The chartJpanel holds the chart, 
+                //aligned vertically (Y_AXIS)
+                final JPanel chartJPanel = new JPanel();
+                chartJPanel.setLayout(new BoxLayout(chartJPanel, BoxLayout.Y_AXIS));
+
+                splitYPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
+                splitYPane.setDividerLocation(Height_Frame / 2);
+
+                runJavaFxThread(chartJPanel);
+            }
+        });
+
+
     }
 
-    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel,
-            final JSplitPane splitYPane) {
+    private void runJavaFxThread(final JPanel chartJPanel) {
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
@@ -256,8 +255,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         progressDialog.setProgressTotal(1); //total 1 units
                         logger.log(Level.INFO, "Mactime file already exists; parsing that: " + mactimeFile.getAbsolutePath());
                     }
-                    
-                    
+
+
                     progressDialog.updateProgressBar("Parsing Mactime");
                     if (data == null) {
                         logger.log(Level.INFO, "Parsing mactime file: " + mactimeFile.getAbsolutePath());
@@ -315,13 +314,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                     chartJPanel.add(panel_Charts);
-                    //viewerJPanel.add(dataResult);
 
-                    final JSplitPane splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
-                    splitXPane.setDividerLocation(Width_Frame / 2);
-                    viewerJPanel.add(splitXPane);
                     chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
 
                     chart_TopLevel = createYearChartWithDrill(data);
                     chart_Events = chart_TopLevel;
@@ -507,16 +502,18 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 public void handle(MouseEvent e) {
                     final int day = (Integer.valueOf(((String) barData.getXValue()).split("-")[1]));
                     final DayEpoch de = myme.getDay(day);
-                    List<AbstractFile> afs = Collections.EMPTY_LIST;
+                    final List<AbstractFile> afs;
                     if (de != null) {
                         afs = de.getEvents();
                     } else {
-                        logger.log(Level.SEVERE, "There were no events for the clicked-on day.");
+                        logger.log(Level.SEVERE, "There were no events for the clicked-on day: " + day);
+                        return;
                     }
-                    final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
+
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
+                            final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
                             dataResult.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
@@ -1039,7 +1036,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public void performAction() {
         initTimeline();
     }
-    
+
     private void initTimeline() {
         if (!Case.existsCurrentCase()) {
             return;
@@ -1099,7 +1096,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 }
                 lastObjectId = objId;
 
-                customizeSwing();
                 customize();
             }
         } catch (TskCoreException ex) {
