@@ -97,15 +97,15 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     }
 
     void setProgressTotal(final int total) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+        //EventQueue.invokeLater(new Runnable() {
+          //  @Override
+            //public void run() {
                 progressBar.setIndeterminate(false);
                 progressBar.setMaximum(total);
-                progressBar.setValue(0);
+                //progressBar.setValue(0);
                 progressBar.setStringPainted(true);
-            }
-        });
+            //}
+        //});
 
     }
 
