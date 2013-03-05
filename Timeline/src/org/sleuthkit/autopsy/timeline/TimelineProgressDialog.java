@@ -29,8 +29,7 @@ import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
 
 /**
- *
- * @author mciver
+ * Dialog with progress bar that pops up when timeline is being generated
  */
 public class TimelineProgressDialog extends javax.swing.JDialog {
 
@@ -53,6 +52,8 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         setLocationRelativeTo(null);
         //set icon the same as main app
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
+        
+        progressBar.setIndeterminate(true);
 
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
@@ -83,6 +84,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
+        progressBar = new javax.swing.JProgressBar();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -97,16 +99,22 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(51, 51, 51)
-                .addComponent(jLabel1)
-                .addContainerGap(131, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 263, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(37, 37, 37)
+                .addGap(17, 17, 17)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -118,6 +126,8 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         doClose(RET_CANCEL);
     }//GEN-LAST:event_closeDialog
+
+    
     
     public void doClose(int retStatus) {
         returnStatus = retStatus;
@@ -127,6 +137,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
     private int returnStatus = RET_CANCEL;
 }
