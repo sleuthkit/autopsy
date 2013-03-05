@@ -292,7 +292,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
                     //Adding things to the V and H boxes. 
                     //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Zoom Out|View Year: [Select Year]|►|
-                    hBox_Charts.getChildren().addAll(zoomOutButton, new Label("View Year:"), dropdown_SelectYears);
+                    hBox_Charts.getChildren().addAll(zoomOutButton, new Label("Go To:"), dropdown_SelectYears);
                     vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
                     group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
                     panel_Charts.setScene(scene_Charts);
