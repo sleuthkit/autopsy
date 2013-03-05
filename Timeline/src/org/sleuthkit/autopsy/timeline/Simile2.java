@@ -241,10 +241,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         progressDialog.setProgressTotal(3); //total 3 units
-                        logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
+                        logger.log(Level.INFO, "Creating body file");
                         progressDialog.updateProgressBar("Generating Bodyfile");
                         String bodyFilePath = makeBodyFile();
                         progressDialog.updateProgressBar(++currentProgress);
+                        logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
                         progressDialog.updateProgressBar("Generating Mactime");
                         makeMacTime(bodyFilePath);
                         progressDialog.updateProgressBar(++currentProgress);
@@ -257,6 +258,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     
                     progressDialog.updateProgressBar("Parsing Mactime");
                     if (data == null) {
+                        logger.log(Level.INFO, "Parsing mactime file: " + mactimeFile.getAbsolutePath());
                         data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
                     }
                     progressDialog.updateProgressBar(++currentProgress);
