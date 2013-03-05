@@ -242,10 +242,10 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     if (!mactimeFile.exists()) {
                         progressDialog.setProgressTotal(3); //total 3 units
                         logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
-                        progressDialog.updateProgressBar("Generating body file");
+                        progressDialog.updateProgressBar("Generating Bodyfile");
                         String bodyFilePath = makeBodyFile();
                         progressDialog.updateProgressBar(++currentProgress);
-                        progressDialog.updateProgressBar("Generating mactime file");
+                        progressDialog.updateProgressBar("Generating Mactime");
                         makeMacTime(bodyFilePath);
                         progressDialog.updateProgressBar(++currentProgress);
                         data = null;
