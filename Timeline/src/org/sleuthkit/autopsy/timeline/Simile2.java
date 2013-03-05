@@ -176,14 +176,17 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         //ComboJPanel holds both of the above JPanels together,
         //aligned vertically (Y_AXIS)
 
-        // create a horizontal split pane
-        final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
-        splitPane.setDividerLocation(450);
+        // create a horizontal and vertical split panes
+       
+        
+        final JSplitPane splitYPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
+        splitYPane.setDividerLocation(Height_Frame/2);
 
-        runJavaFxThread(chartJPanel, viewerJPanel, splitPane);
+        runJavaFxThread(chartJPanel, viewerJPanel, splitYPane);
     }
 
-    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel, final JSplitPane splitPane) {
+    private void runJavaFxThread(final JPanel chartJPanel, final JPanel viewerJPanel, 
+           final JSplitPane splitYPane) {
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
@@ -274,9 +277,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                     chartJPanel.add(panel_Charts);
-                    viewerJPanel.add(dataResult);
+                    //viewerJPanel.add(dataResult);
 
-                    viewerJPanel.add(dataContentPanel);
+                     final JSplitPane splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
+                    splitXPane.setDividerLocation(Width_Frame/2);
+                    viewerJPanel.add(splitXPane);
                     chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -284,7 +289,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     chart_Events = chart_TopLevel;
                     scroll_Events.setContent(chart_Events);
 
-                    jf.add(splitPane);
+                    jf.add(splitYPane);
                     jf.setVisible(true);
                 } finally {
                     // stop the progress bar
