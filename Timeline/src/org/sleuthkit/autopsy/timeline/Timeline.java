@@ -106,15 +106,15 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Simile2")
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline")
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
-public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
+public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
 
-    private static final Logger logger = Logger.getLogger(Simile2.class.getName());
-    private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Simile2.class.getPackage().getName(), false);
+    private static final Logger logger = Logger.getLogger(Timeline.class.getName());
+    private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false);
     private JFrame jf;          //frame for holding all the elements
     private Group group_Charts; //Orders the charts
     private Scene scene_Charts; //Displays the charts

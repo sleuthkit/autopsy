@@ -7,6 +7,10 @@
     Windows2
     ====================================================== -->
     <folder name="Actions">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-timeline-Simile2.instance_hidden"/>
+            <file name="org-sleuthkit-autopsy-timeline-Timeline.instance"/>
+        </folder>
         <folder name="Window">
             <file name="org-sleuthkit-autopsy-timeline-Timeline2TopComponent.instance_hidden"/>
             <file name="org-sleuthkit-autopsy-timeline-TimelineTopComponent.instance_hidden"/>

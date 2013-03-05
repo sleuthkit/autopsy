@@ -53,7 +53,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         //set icon the same as main app
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
 
-        progressBar.setIndeterminate(true);
+        //progressBar.setIndeterminate(true);
         
         setName("Make Timeline (Beta)");
 
@@ -97,15 +97,16 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     }
 
     void setProgressTotal(final int total) {
-        //EventQueue.invokeLater(new Runnable() {
-          //  @Override
-            //public void run() {
-                progressBar.setIndeterminate(false);
+        EventQueue.invokeLater(new Runnable() {
+           @Override
+            public void run() {
+                //progressBar.setIndeterminate(false);
                 progressBar.setMaximum(total);
                 //progressBar.setValue(0);
                 progressBar.setStringPainted(true);
-            //}
-        //});
+                progressBar.setVisible(true);
+            }
+        });
 
     }
 
