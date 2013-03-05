@@ -54,7 +54,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
 
         //progressBar.setIndeterminate(true);
-        
+
         setName("Make Timeline (Beta)");
 
         // Close the dialog when Esc is pressed
@@ -98,7 +98,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
 
     void setProgressTotal(final int total) {
         EventQueue.invokeLater(new Runnable() {
-           @Override
+            @Override
             public void run() {
                 //progressBar.setIndeterminate(false);
                 progressBar.setMaximum(total);
@@ -163,10 +163,16 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         doClose(RET_CANCEL);
     }//GEN-LAST:event_closeDialog
 
-    public void doClose(int retStatus) {
-        returnStatus = retStatus;
-        setVisible(false);
-        dispose();
+    void doClose(final int retStatus) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                returnStatus = retStatus;
+                setVisible(false);
+                dispose();
+            }
+        });
+
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
