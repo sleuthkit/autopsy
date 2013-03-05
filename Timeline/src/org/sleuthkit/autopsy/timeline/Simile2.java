@@ -137,7 +137,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private List<YearEpoch> data;
     private boolean listeningToAddImage = false;
     private long lastObjectId = -1;
-    private TimelineProgressDialog dialog;
+    private TimelineProgressDialog progressDialog;
     private EventHandler mouseEnteredListener;
     private EventHandler mouseExitedListener;
 
@@ -237,19 +237,29 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                         moduleDir.mkdir();
                     }
 
+                    int currentProgress = 0;
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
+                        progressDialog.setProgressTotal(3); //total 3 units
                         logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
+                        progressDialog.updateProgressBar("Generating body file");
                         String bodyFilePath = makeBodyFile();
+                        progressDialog.updateProgressBar(++currentProgress);
+                        progressDialog.updateProgressBar("Generating mactime file");
                         makeMacTime(bodyFilePath);
+                        progressDialog.updateProgressBar(++currentProgress);
                         data = null;
                     } else {
+                        progressDialog.setProgressTotal(1); //total 1 units
                         logger.log(Level.INFO, "Mactime file already exists; parsing that: " + mactimeFile.getAbsolutePath());
                     }
-
+                    
+                    
+                    progressDialog.updateProgressBar("Parsing Mactime");
                     if (data == null) {
                         data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
                     }
+                    progressDialog.updateProgressBar(++currentProgress);
 
                     //Making a dropdown box to select years.
                     List<String> lsi = new ArrayList<String>();  //List is in the format of {Year : Number of Events}, used for selecting from the dropdown.
@@ -319,8 +329,8 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     // stop the progress bar
                     progress.finish();
 
-                    // close the dialog
-                    dialog.doClose(0);
+                    // close the progressDialog
+                    progressDialog.doClose(0);
                 }
             }
         });
@@ -624,8 +634,11 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         mactimeFile.delete();
 
         // close the jframe
-        jf.setVisible(false);
-        jf.dispose();
+        if (jf != null) {
+            jf.setVisible(false);
+            jf.dispose();
+            jf = null;
+        }
 
         // remove ourself as change listener on Case
         Case.removePropertyChangeListener(this);
@@ -1058,12 +1071,12 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     listeningToAddImage = true;
                 }
 
-                // create the modal dialog
+                // create the modal progressDialog
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        dialog = new TimelineProgressDialog(jf, true);
-                        dialog.setVisible(true);
+                        progressDialog = new TimelineProgressDialog(jf, true);
+                        progressDialog.setVisible(true);
                     }
                 });
 

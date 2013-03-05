@@ -73,6 +73,23 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     public int getReturnStatus() {
         return returnStatus;
     }
+    
+    void updateProgressBar(int progress) {
+        this.progressBar.setValue(progress);
+    }
+    
+    void updateProgressBar(String message) {
+        this.progressBar.setStringPainted(true);
+        this.progressBar.setString(message);
+    }
+    
+    void setProgressTotal(int total) {
+        this.progressBar.setIndeterminate(false);
+        this.progressBar.setMaximum(total);
+        this.progressBar.setValue(0);
+    }
+    
+
 
     /**
      * This method is called from within the constructor to initialize the form.
