@@ -140,6 +140,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
     private TimelineProgressDialog progressDialog;
     private EventHandler mouseEnteredListener;
     private EventHandler mouseExitedListener;
+    private SleuthkitCase skCase;
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -218,6 +219,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
                     progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
                     progress.start();
 
+                    chart_Events = null;
                     panel_Charts = new JFXPanel();
                     group_Charts = new Group();
                     scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
@@ -865,7 +867,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         }
         scan.useDelimiter(",");
         scan.nextLine();   // skip the header line
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
 
         int prevYear = -1;
         YearEpoch ye = null;
@@ -915,7 +916,6 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
         String datenotime = dateFormat.format(date);
 
         final Case currentCase = Case.getCurrentCase();
-        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
         // Get report path
         String bodyFilePath = moduleDir.getAbsolutePath()
@@ -1036,11 +1036,16 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
     @Override
     public void performAction() {
+        initTimeline();
+    }
+    
+    private void initTimeline() {
         if (!Case.existsCurrentCase()) {
             return;
         }
 
         final Case currentCase = Case.getCurrentCase();
+        skCase = currentCase.getSleuthkitCase();
 
         try {
             if (currentCase.getImages().isEmpty()) {
@@ -1087,7 +1092,7 @@ public class Simile2 extends CallableSystemAction implements Presenter.Toolbar, 
 
                 // see if barData has been added to the database since the last
                 // time timeline ran
-                long objId = currentCase.getSleuthkitCase().getLastObjectId();
+                long objId = skCase.getLastObjectId();
                 if (objId != lastObjectId && lastObjectId != -1) {
                     clearMactimeData();
                 }
