@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
 
-class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
+public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
 
     private static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
 
