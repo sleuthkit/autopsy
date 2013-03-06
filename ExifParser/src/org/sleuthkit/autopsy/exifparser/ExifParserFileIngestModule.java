@@ -31,6 +31,7 @@ import com.drew.metadata.exif.GpsDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -69,6 +70,10 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     final public static String MODULE_VERSION = "1.0";
     
     private String args;
+    
+    private static final int readHeaderSize = 2;
+    private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
+    private static final char JPEG_SIGNATURE_BE = 0xFFD8;
     
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
@@ -183,6 +188,12 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
     
+    /**
+     * Checks if should try to attempt to extract exif.
+     * Currently checks if JPEG image, first by extension, then by signature (if extension fails)
+     * @param f file to be checked 
+     * @return true if to be processed 
+     */
     private boolean parsableFormat(AbstractFile f) {
         // Get the name, extension
         String name = f.getName();
@@ -195,8 +206,38 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             return true;
         }
         
-        return false;
+        return isJpegFileHeader(f);
+        
     }
+    
+        /**
+     * Check if is jpeg file based on header
+     * @param file
+     * @return true if jpeg file, false otherwise
+     */
+    private boolean isJpegFileHeader(AbstractFile file) {
+        if (file.getSize() < readHeaderSize) {
+            return false;
+        }
+        
+        int bytesRead = 0;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not a JPEG
+            return false;
+        }
+        if (bytesRead != readHeaderSize) {
+            return false;
+        }
+        
+        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
+        char signature = bytes.getChar();
+        
+        return signature == JPEG_SIGNATURE_BE;
+        
+    }
+    
 
     @Override
     public void complete() {
