@@ -524,6 +524,7 @@ def run_test(image_file, count):
 	if args.rebuild:
 		rebuild()
 	# Reset the case and return the tests sucessfully finished
+	clear_dir(make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "ModuleOutput", "keywordsearch"))
 	case.reset()
 	return True
 
@@ -1602,7 +1603,7 @@ Usage:  ./regression.py [-f FILE] [OPTIONS]
 		Expected files:
 		  An NSRL database at:			./input/nsrl.txt-md5.idx
 		  A notable hash database at:	 ./input/notablehashes.txt-md5.idx
-		  A notible keyword file at:	  ./input/notablekeywords.xml
+		  A notable keyword file at:	  ./input/notablekeywords.xml
 		
 Options:
   -r			Rebuild the gold standards for the image(s) tested.
@@ -1702,11 +1703,11 @@ def execute_test():
 		errorem += "There were Autopsy errors.\n"
 		for lm in logres:
 			errorem += lm
+	html.close()
 	if failedbool:
 		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 		send_email()
-	html.close()
 
 
 def send_email():
