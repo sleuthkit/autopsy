@@ -602,8 +602,8 @@ def rebuild():
 	dbinpth = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
 	dboutpth = make_local_path(case.gold, case.image_name, "autopsy.db")
 	copy_file(dbinpth, dboutpth)
-	error_pth = make_local_path(case.gold, case.image_name, case.image_name+case.common_log)
-	copy_file(case.common_log_path, error_pth)
+	error_pth = make_local_path(case.gold, case.image_name, case.image_name+"SortedErrors.txt")
+	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
 	for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
@@ -849,7 +849,7 @@ def	compare_errors():
 		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
 		diff_file = open(diff_dir, "w")
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
-		subprocces.call(dffcmdlst, stdout = diff_file)
+		subprocess.call(dffcmdlst, stdout = diff_file)
 		global attachl
 		global errorem
 		global failedbool
@@ -1707,7 +1707,10 @@ def execute_test():
 	if failedbool:
 		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
-		send_email()
+	else:
+		errorem = ""
+		errorem += "There were no Errors.\n"
+	send_email()
 
 
 def send_email():
