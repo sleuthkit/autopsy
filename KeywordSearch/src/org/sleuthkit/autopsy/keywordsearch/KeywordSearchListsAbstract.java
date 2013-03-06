@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 public abstract class KeywordSearchListsAbstract {
 
     protected String filePath;
-    Map<String, KeywordSearchList> theLists; //the keyword data
+    public Map<String, KeywordSearchList> theLists; //the keyword data
     static KeywordSearchListsXML currentInstance = null;
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
@@ -60,7 +60,7 @@ public abstract class KeywordSearchListsAbstract {
     /**
      * get instance for managing the current keyword list of the application
      */
-    static KeywordSearchListsXML getCurrent() {
+    public static KeywordSearchListsXML getCurrent() {
         if (currentInstance == null) {
             currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
             currentInstance.reload();
@@ -424,103 +424,103 @@ public abstract class KeywordSearchListsAbstract {
         File f = new File(filePath);
         return f.exists() && f.canRead() && f.canWrite();
     }
-}
+    
+    /**
+     * a representation of a single keyword list created or loaded
+     */
+    public class KeywordSearchList {
 
-/**
- * a representation of a single keyword list created or loaded
- */
-class KeywordSearchList {
+        private String name;
+        private Date created;
+        private Date modified;
+        private Boolean useForIngest;
+        private Boolean ingestMessages;
+        private List<Keyword> keywords;
+        private Boolean locked;
 
-    private String name;
-    private Date created;
-    private Date modified;
-    private Boolean useForIngest;
-    private Boolean ingestMessages;
-    private List<Keyword> keywords;
-    private Boolean locked;
-
-    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords, boolean locked) {
-        this.name = name;
-        this.created = created;
-        this.modified = modified;
-        this.useForIngest = useForIngest;
-        this.ingestMessages = ingestMessages;
-        this.keywords = keywords;
-        this.locked = locked;
-    }
-
-    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
-        this(name, created, modified, useForIngest, ingestMessages, keywords, false);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
+        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords, boolean locked) {
+            this.name = name;
+            this.created = created;
+            this.modified = modified;
+            this.useForIngest = useForIngest;
+            this.ingestMessages = ingestMessages;
+            this.keywords = keywords;
+            this.locked = locked;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
+
+        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
+            this(name, created, modified, useForIngest, ingestMessages, keywords, false);
         }
-        final KeywordSearchList other = (KeywordSearchList) obj;
-        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
-            return false;
-        }
-        return true;
-    }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        return hash;
-    }
-
-    String getName() {
-        return name;
-    }
-
-    Date getDateCreated() {
-        return created;
-    }
-
-    Date getDateModified() {
-        return modified;
-    }
-
-    Boolean getUseForIngest() {
-        return useForIngest;
-    }
-
-    void setUseForIngest(boolean use) {
-        this.useForIngest = use;
-    }
-
-    Boolean getIngestMessages() {
-        return ingestMessages;
-    }
-
-    void setIngestMessages(boolean ingestMessages) {
-        this.ingestMessages = ingestMessages;
-    }
-
-    List<Keyword> getKeywords() {
-        return keywords;
-    }
-
-    boolean hasKeyword(Keyword keyword) {
-        return keywords.contains(keyword);
-    }
-
-    boolean hasKeyword(String keyword) {
-        //note, this ignores isLiteral
-        for (Keyword k : keywords) {
-            if (k.getQuery().equals(keyword)) {
-                return true;
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
             }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final KeywordSearchList other = (KeywordSearchList) obj;
+            if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
+                return false;
+            }
+            return true;
         }
-        return false;
-    }
 
-    Boolean isLocked() {
-        return locked;
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            return hash;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Date getDateCreated() {
+            return created;
+        }
+
+        public Date getDateModified() {
+            return modified;
+        }
+
+        public Boolean getUseForIngest() {
+            return useForIngest;
+        }
+
+        public void setUseForIngest(boolean use) {
+            this.useForIngest = use;
+        }
+
+        public Boolean getIngestMessages() {
+            return ingestMessages;
+        }
+
+        public void setIngestMessages(boolean ingestMessages) {
+            this.ingestMessages = ingestMessages;
+        }
+
+        public List<Keyword> getKeywords() {
+            return keywords;
+        }
+
+        public boolean hasKeyword(Keyword keyword) {
+            return keywords.contains(keyword);
+        }
+
+        public boolean hasKeyword(String keyword) {
+            //note, this ignores isLiteral
+            for (Keyword k : keywords) {
+                if (k.getQuery().equals(keyword)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public Boolean isLocked() {
+            return locked;
+        }
     }
 }

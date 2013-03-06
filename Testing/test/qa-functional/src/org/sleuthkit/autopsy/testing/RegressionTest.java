@@ -52,6 +52,7 @@ import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.keywordsearch.*;
 /**
  * This test expects the following system properties to be set:
  * img_path: The fully qualified path to the image file (if split, the first file)
@@ -207,6 +208,8 @@ public class RegressionTest extends TestCase{
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
+        KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
+        curr.theLists.get("URLs").setUseForIngest(true);
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();

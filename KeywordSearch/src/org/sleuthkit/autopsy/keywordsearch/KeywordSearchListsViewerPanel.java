@@ -105,7 +105,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
-                    KeywordSearchList list = listsTableModel.getListAt(index);
+                    KeywordSearchListsAbstract.KeywordSearchList list = listsTableModel.getListAt(index);
                     keywordsTableModel.resync(list);
                 } else {
                     keywordsTableModel.deleteAll();
@@ -307,13 +307,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     @Override
     public List<Keyword> getQueryList() {
         List<Keyword> ret = new ArrayList<Keyword>();
-        for (KeywordSearchList list : getSelectedLists()) {
+        for (KeywordSearchListsAbstract.KeywordSearchList list : getSelectedLists()) {
             ret.addAll(list.getKeywords());
         }
         return ret;
     }
 
-    private List<KeywordSearchList> getSelectedLists() {
+    private List<KeywordSearchListsAbstract.KeywordSearchList> getSelectedLists() {
         return listsTableModel.getSelectedListsL();
     }
 
@@ -427,7 +427,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             return ret;
         }
 
-        KeywordSearchList getListAt(int rowIndex) {
+        KeywordSearchListsAbstract.KeywordSearchList getListAt(int rowIndex) {
             return listsHandle.getList((String) getValueAt(rowIndex, 1));
         }
 
@@ -441,8 +441,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             return ret;
         }
 
-        List<KeywordSearchList> getSelectedListsL() {
-            List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
+        List<KeywordSearchListsAbstract.KeywordSearchList> getSelectedListsL() {
+            List<KeywordSearchListsAbstract.KeywordSearchList> ret = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
             for (String s : getSelectedLists()) {
                 ret.add(listsHandle.getList(s));
             }
@@ -462,8 +462,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         //add lists to the model
-        private void addLists(List<KeywordSearchList> lists) {
-            for (KeywordSearchList list : lists) {
+        private void addLists(List<KeywordSearchListsAbstract.KeywordSearchList> lists) {
+            for (KeywordSearchListsAbstract.KeywordSearchList list : lists) {
                 if (!listExists(list.getName())) {
                     listData.add(new ListTableEntry(list, ingestRunning));
                 }
@@ -476,7 +476,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             String name;
             Boolean selected;
 
-            ListTableEntry(KeywordSearchList list, boolean ingestRunning) {
+            ListTableEntry(KeywordSearchListsAbstract.KeywordSearchList list, boolean ingestRunning) {
                 this.name = list.getName();
                 if (ingestRunning) {
                     this.selected = list.getUseForIngest();
@@ -558,7 +558,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             return getValueAt(0, c).getClass();
         }
 
-        void resync(KeywordSearchList list) {
+        void resync(KeywordSearchListsAbstract.KeywordSearchList list) {
             listData.clear();
             for (Keyword k : list.getKeywords()) {
                 listData.add(new KeywordTableEntry(k));
