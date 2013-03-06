@@ -18,9 +18,17 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagFileAction;
 import org.sleuthkit.datamodel.LayoutFile;
 
 /**
@@ -85,6 +93,20 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actionsList = new ArrayList<Action>();
+
+        actionsList.add(new NewWindowViewAction("View in New Window", this));
+        actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new ExtractAction("Extract File", content));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new TagFileAction(content));
+
+        return actionsList.toArray(new Action[0]);
     }
 
     private static void fillPropertyMap(Map<String, Object> map, LayoutFile content) {

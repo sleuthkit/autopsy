@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -147,6 +148,9 @@ public class DataResultFilterNode extends FilterNode {
         return propertySets;
     }
 
+    /**
+     * Uses the default nodes actions per node, adds some custom ones and returns them per visited node type 
+     */
     private static class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
 
         @Override
@@ -158,9 +162,6 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(a);
             }
             
-            actions.add(new NewWindowViewAction("View in New Window", img));
-            actions.add(new FileSearchAction("Open File Search by Attributes"));
-            actions.addAll(ExplorerNodeActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
 
@@ -173,8 +174,6 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(a);
             }
             
-            actions.add(new NewWindowViewAction("View in New Window", vol));
-            actions.addAll(ExplorerNodeActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
             return actions;
         }
 
@@ -199,12 +198,6 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(a);
             }
 
-            actions.add(new NewWindowViewAction("View in New Window", lf));
-            actions.add(new ExternalViewerAction("Open in External Viewer", lf));
-            actions.add(null); // creates a menu separator
-            actions.add(new ExtractAction("Extract File", lf));
-            actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(lf));
             return actions;
         }
 
@@ -229,14 +222,6 @@ public class DataResultFilterNode extends FilterNode {
             for (Action a : dfn.getActions(true)) {
                 actions.add(a);
             }
-
-            actions.add(new NewWindowViewAction("View in New Window", dfn));
-            actions.add(new ExternalViewerAction("Open in External Viewer", dfn));
-            actions.add(null); // creates a menu separator
-            actions.add(new ExtractAction("Extract", dfn)); //might not need this actions - already local file
-            actions.add(new HashSearchAction("Search for files with the same MD5 hash", dfn));
-            actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(dfn));
             
             return actions;
         }
@@ -322,39 +307,31 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(new TagResultAction(ba));
                 }
             }
-            //if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            //actions.add(null); // creates a menu separator
-            //actions.add(new ResultDeleteAction("Delete Result", ba));
-            //}
 
             return actions;
         }
 
         @Override
         public List<Action> visit(KeywordHitsRootNode khrn) {
-            //List<Action> actions = new ArrayList<Action>();
-            //actions.add(null); // creates a menu separator
 
-            //actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
-            //return actions;
             return super.visit(khrn);
         }
 
         @Override
         public List<Action> visit(KeywordHitsListNode khsn) {
-            //TODO delete by list
+
             return super.visit(khsn);
         }
 
         @Override
         public List<Action> visit(KeywordHitsKeywordNode khmln) {
-            //TODO delete by keyword hit
+   
             return super.visit(khmln);
         }
 
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
-            return new ArrayList<Action>();
+            return Collections.<Action>emptyList();
         }
 
         private Content findLinked(BlackboardArtifactNode ba) {
