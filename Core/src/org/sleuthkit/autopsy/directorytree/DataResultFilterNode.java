@@ -153,90 +153,6 @@ public class DataResultFilterNode extends FilterNode {
      */
     private static class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
 
-        @Override
-        public List<Action> visit(ImageNode img) {
-            List<Action> actions = new ArrayList<Action>();
-            
-            //retain actions from the node if any
-            for (Action a : img.getActions(true)) {
-                actions.add(a);
-            }
-            
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(VolumeNode vol) {
-            List<Action> actions = new ArrayList<Action>();
-            
-            //retain actions from the node if any
-            for (Action a : vol.getActions(true)) {
-                actions.add(a);
-            }
-            
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(DirectoryNode dir) {
-             //preserve the default node's actions
-            List<Action> actions = new ArrayList<Action>();
-
-            for (Action action : dir.getActions(true)) {
-                actions.add(action);
-            }
-            
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(LayoutFileNode lf) {
-            List<Action> actions = new ArrayList<Action>();
-            
-            //retain actions from the node if any
-            for (Action a : lf.getActions(true)) {
-                actions.add(a);
-            }
-
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(VirtualDirectoryNode ld) {
-            List<Action> actions = new ArrayList<Action>();
-            
-            //retain actions from the node if any
-            for (Action a : ld.getActions(true)) {
-                actions.add(a);
-            }
-
-            actions.add(new TagFileAction(ld));
-            return actions;
-        }
-        
-         @Override
-        public List<Action> visit(DerivedFileNode dfn) {
-            List<Action> actions = new ArrayList<Action>();
-            
-            //retain actions from the node if any
-            for (Action a : dfn.getActions(true)) {
-                actions.add(a);
-            }
-            
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(FileNode f) {
-            //preserve the default node's actions
-            List<Action> actions = new ArrayList<Action>();
-
-            for (Action action : f.getActions(true)) {
-                actions.add(action);
-            }
-            
-            return actions;
-        }
 
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
@@ -311,27 +227,18 @@ public class DataResultFilterNode extends FilterNode {
             return actions;
         }
 
-        @Override
-        public List<Action> visit(KeywordHitsRootNode khrn) {
 
-            return super.visit(khrn);
-        }
-
-        @Override
-        public List<Action> visit(KeywordHitsListNode khsn) {
-
-            return super.visit(khsn);
-        }
-
-        @Override
-        public List<Action> visit(KeywordHitsKeywordNode khmln) {
-   
-            return super.visit(khmln);
-        }
 
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
-            return Collections.<Action>emptyList();
+             //preserve the default node's actions
+            List<Action> actions = new ArrayList<Action>();
+
+            for (Action action : ditem.getActions(true)) {
+                actions.add(action);
+            }
+            
+            return actions;
         }
 
         private Content findLinked(BlackboardArtifactNode ba) {
