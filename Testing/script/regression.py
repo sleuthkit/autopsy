@@ -840,7 +840,7 @@ def generate_common_log():
 		logging.critical(traceback.format_exc())
 		
 def	compare_errors():
-	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "AutopsyErrors.txt")
 	common_log = codecs.open(case.sorted_log, "r", "latin-1")
 	gold_log = codecs.open(gold_dir, "r", "latin-1")
 	gold_dat = gold_log.read()
@@ -849,7 +849,7 @@ def	compare_errors():
 		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
 		diff_file = open(diff_dir, "w")
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
-		subprocces.call(dffcmdlst, stdout = diff_file)
+		subprocess.call(dffcmdlst, stdout = diff_file)
 		global attachl
 		global errorem
 		global failedbool
