@@ -26,11 +26,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +55,7 @@ import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.*;
 /**
@@ -318,5 +323,36 @@ public class RegressionTest extends TestCase{
             
         }
     }
-   
+   private void setUseForIngest()
+   {
+        try {
+            Method getter = org.sleuthkit.autopsy.keywordsearch.KeywordSearchListsAbstract.class.getDeclaredMethod("getCurrent");
+            KeywordSearchListsXML curr = (KeywordSearchListsXML)getter.invoke(null, null);
+            Field lsts = org.sleuthkit.autopsy.keywordsearch.KeywordSearchListsAbstract.class.getDeclaredField("theLists");
+            lsts.setAccessible(true);
+            Map mplst = (Map)lsts.get(curr);
+            Object aplr = mplst.get("URLs");
+            Method[] setters = aplr.getClass().getDeclaredMethods();
+            int i = -1;
+            for(int x = 0; x < setters.length; x++)
+            {
+                if(setters[x].getName().equals("setUseForIngest"))
+                    i = x;
+            }
+            Method setter = setters[i];
+            setter.invoke(aplr.getClass().cast(aplr), true);
+        } catch (NoSuchMethodException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (SecurityException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IllegalAccessException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IllegalArgumentException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (InvocationTargetException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (NoSuchFieldException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+   }
 }
