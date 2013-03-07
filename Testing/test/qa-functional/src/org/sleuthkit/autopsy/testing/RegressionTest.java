@@ -213,8 +213,7 @@ public class RegressionTest extends TestCase{
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
-        KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
-        curr.theLists.get("URLs").setUseForIngest(true);
+        setListForIngest();
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();
@@ -325,34 +324,7 @@ public class RegressionTest extends TestCase{
     }
    private void setListForIngest()
    {
-        try {
-            Method getter = org.sleuthkit.autopsy.keywordsearch.KeywordSearchListsAbstract.class.getDeclaredMethod("getCurrent");
-            KeywordSearchListsXML curr = (KeywordSearchListsXML)getter.invoke(null, null);
-            Field lsts = org.sleuthkit.autopsy.keywordsearch.KeywordSearchListsAbstract.class.getDeclaredField("theLists");
-            lsts.setAccessible(true);
-            Map mplst = (Map)lsts.get(curr);
-            Object aplr = mplst.get("URLs");
-            Method[] setters = aplr.getClass().getDeclaredMethods();
-            int i = -1;
-            for(int x = 0; x < setters.length; x++)
-            {
-                if(setters[x].getName().equals("setUseForIngest"))
-                    i = x;
-            }
-            Method setter = setters[i];
-            setter.invoke(aplr.getClass().cast(aplr), true);
-        } catch (NoSuchMethodException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SecurityException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IllegalAccessException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IllegalArgumentException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (InvocationTargetException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (NoSuchFieldException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+       KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
+       curr.setUseForIngest("URLs", true);
    }
 }

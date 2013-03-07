@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 public abstract class KeywordSearchListsAbstract {
 
     protected String filePath;
-    public Map<String, KeywordSearchList> theLists; //the keyword data
+    Map<String, KeywordSearchList> theLists; //the keyword data
     static KeywordSearchListsXML currentInstance = null;
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
@@ -425,6 +425,10 @@ public abstract class KeywordSearchListsAbstract {
         return f.exists() && f.canRead() && f.canWrite();
     }
     
+    public void setUseForIngest(String key, boolean flag)
+    {
+        theLists.get(key).setUseForIngest(flag);
+    }
     /**
      * a representation of a single keyword list created or loaded
      */
@@ -473,43 +477,43 @@ public abstract class KeywordSearchListsAbstract {
             return hash;
         }
 
-        public String getName() {
+        String getName() {
             return name;
         }
 
-        public Date getDateCreated() {
+        Date getDateCreated() {
             return created;
         }
 
-        public Date getDateModified() {
+        Date getDateModified() {
             return modified;
         }
 
-        public Boolean getUseForIngest() {
+        Boolean getUseForIngest() {
             return useForIngest;
         }
 
-        public void setUseForIngest(boolean use) {
+        void setUseForIngest(boolean use) {
             this.useForIngest = use;
         }
 
-        public Boolean getIngestMessages() {
+        Boolean getIngestMessages() {
             return ingestMessages;
         }
 
-        public void setIngestMessages(boolean ingestMessages) {
+        void setIngestMessages(boolean ingestMessages) {
             this.ingestMessages = ingestMessages;
         }
 
-        public List<Keyword> getKeywords() {
+        List<Keyword> getKeywords() {
             return keywords;
         }
 
-        public boolean hasKeyword(Keyword keyword) {
+        boolean hasKeyword(Keyword keyword) {
             return keywords.contains(keyword);
         }
 
-        public boolean hasKeyword(String keyword) {
+        boolean hasKeyword(String keyword) {
             //note, this ignores isLiteral
             for (Keyword k : keywords) {
                 if (k.getQuery().equals(keyword)) {
@@ -519,7 +523,7 @@ public abstract class KeywordSearchListsAbstract {
             return false;
         }
 
-        public Boolean isLocked() {
+        Boolean isLocked() {
             return locked;
         }
     }
