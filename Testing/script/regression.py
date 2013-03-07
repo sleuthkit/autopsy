@@ -855,6 +855,7 @@ def	compare_errors():
 		global failedbool
 		attachl.append(diff_dir)
 		errorem += "There was a difference in the exceptions Log.\n"
+		print("Exceptions didn't match.\n")
 		failedbool = True
 
 # Fill in the global case's variables that require the log files
