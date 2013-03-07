@@ -1710,6 +1710,7 @@ def execute_test():
 	else:
 		errorem = ""
 		errorem += "There were no Errors.\n"
+		attachl = []
 	send_email()
 
 

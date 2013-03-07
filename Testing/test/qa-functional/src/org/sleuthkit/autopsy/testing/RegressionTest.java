@@ -323,7 +323,7 @@ public class RegressionTest extends TestCase{
             
         }
     }
-   private void setUseForIngest()
+   private void setListForIngest()
    {
         try {
             Method getter = org.sleuthkit.autopsy.keywordsearch.KeywordSearchListsAbstract.class.getDeclaredMethod("getCurrent");
