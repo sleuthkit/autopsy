@@ -472,7 +472,7 @@ def run_test(image_file, count):
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
 	case.image = case.get_image_name(image_file)
 	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
-	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyWarnings.txt")
+	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
 	case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
@@ -821,12 +821,16 @@ def generate_common_log():
 		for file in os.listdir(logs_path):
 			log = codecs.open(make_path(logs_path, file), "r", "latin-1")
 			for line in log:
-				if "exception" in line.lower():
+				if line.startswith("Exception"):
 					common_log.write("From " + file +":\n" +  line + "\n")
-				if "warning" in line.lower():
+				elif line.startswith("WARNING"):
+					common_log.write("From " + file +":\n" +  line + "\n")
+				elif line.startswith("Error"):
+					common_log.write("From " + file +":\n" +  line + "\n")
+				#elif line.startswith("SEVERE"):
+				#	common_log.write("From " + file +":\n" +  line + "\n")
+				else:
 					warning_log.write("From " + file +":\n" +  line + "\n")
-				if "error" in line.lower():
-					common_log.write("From " + file +":\n" +  line + "\n")
 			log.close()
 		common_log.write("\n\n")
 		common_log.close()
