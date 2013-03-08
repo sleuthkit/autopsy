@@ -16,41 +16,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.corelibs;
 
 import java.io.File;
 import org.hyperic.sigar.Sigar;
 
 /**
- * Wrapper over Sigar instrumentation class to facilitate dll loading.
- * Our setup bypasses Sigar library loader which does not work well for netbeans environment
- * We are responsible for loading the library ourselves.
+ * Wrapper over Sigar instrumentation class to facilitate dll loading. Our setup
+ * bypasses Sigar library loader which does not work well for netbeans
+ * environment We are responsible for loading the library ourselves.
  */
 public class SigarLoader {
 
     private static volatile Sigar sigar;
-    
+
     static {
         //bypass the process of validation/loading of the library by sigar jar
-         System.setProperty("org.hyperic.sigar.path", "-");
-         //System.setProperty(org.hyperic.sigar.SigarLoader.PROP_SIGAR_JAR_NAME, "sigar-1.6.4.jar");
+        System.setProperty("org.hyperic.sigar.path", "-");
+        //System.setProperty(org.hyperic.sigar.SigarLoader.PROP_SIGAR_JAR_NAME, "sigar-1.6.4.jar");
     }
 
     public static Sigar getSigar() {
-        if (sigar == null) {
-            synchronized (SigarLoader.class) {
-
+        synchronized (SigarLoader.class) {
+            if (sigar == null) {
                 try {
                     //rely on netbeans / jna to locate the lib variation for architecture/OS
-                    System.loadLibrary("libsigar");      
+                    System.loadLibrary("libsigar");
                     sigar = new Sigar();
                     sigar.enableLogging(false); //forces a test
 
                 } catch (UnsatisfiedLinkError ex) {
                     System.out.println("Error loading sigar library" + ex.toString());
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     System.out.println("Error loading sigar library" + ex.toString());
                 }
             }
