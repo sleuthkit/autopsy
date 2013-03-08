@@ -26,9 +26,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.filechooser.FileSystemView;
 import org.hyperic.sigar.Sigar;
 import org.openide.modules.InstalledFileLocator;
@@ -49,6 +53,7 @@ public class PlatformUtil {
     public static final String OS_ARCH_UNKNOWN = "unknown";
     private static volatile long pid = -1;
     private static volatile Sigar sigar = null;
+    private static volatile MemoryMXBean memoryManager = null;
 
     /**
      * Get root path where the application is installed
@@ -398,11 +403,13 @@ public class PlatformUtil {
 
         try {
             if (sigar == null) {
-                sigar = new Sigar();
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
             }
-            pid = sigar.getPid();
-        } catch (UnsatisfiedLinkError e) {
-            System.out.println("Can't load library and get PID, " + e.toString());
+            if (sigar != null) {
+                pid = sigar.getPid();
+            } else {
+                System.out.println("Can't get PID");
+            }
         } catch (Exception e) {
             System.out.println("Can't get PID, " + e.toString());
         }
@@ -421,20 +428,65 @@ public class PlatformUtil {
 
         try {
             if (sigar == null) {
-                sigar = new Sigar();
-            }
-            
-            if (sigar == null || pid == -1) {
-                return -1;
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
             }
 
+            if (sigar == null || pid == -1) {
+                System.out.println("Can't get virt mem used");
+                return -1;
+            }
             virtMem = sigar.getProcMem(pid).getSize();
-        } catch (UnsatisfiedLinkError e) {
-            System.out.println("Can't load library and get virt mem used, " + e.toString());
         } catch (Exception e) {
             System.out.println("Can't get virt mem used, " + e.toString());
         }
 
         return virtMem;
+    }
+
+    /**
+     * Return formatted string with Jvm heap and non-heap memory usage
+     *
+     * @return formatted string with jvm memory usage
+     */
+    public static String getJvmMemInfo() {
+        synchronized (PlatformUtil.class) {
+            if (memoryManager == null) {
+                memoryManager = ManagementFactory.getMemoryMXBean();
+            }
+        }
+        final MemoryUsage heap = memoryManager.getHeapMemoryUsage();
+        final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
+
+        return "JVM heap usage: " + heap.toString() + ", JVM non-heap usage: " + nonHeap.toString();
+
+
+    }
+
+    /**
+     * Return formatted string with physical memory usage
+     *
+     * @return formatted string with physical memory usage
+     */
+    public static String getPhysicalMemInfo() {
+        final Runtime runTime = Runtime.getRuntime();
+        final long maxMemory = runTime.maxMemory();
+        final long totalMemory = runTime.totalMemory();
+        final long freeMemory = runTime.freeMemory();
+        return "Physical memory usage (max, total, free): "
+                + Long.toString(maxMemory) + ", " + Long.toString(totalMemory)
+                + ", " + Long.toString(freeMemory);
+    }
+    
+      /**
+     * Return formatted string with all memory usage (jvm, physical, native)
+     *
+     * @return formatted string with all memory usage info
+     */
+    public static String getAllMemUsageInfo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(PlatformUtil.getPhysicalMemInfo()).append("\n");
+        sb.append(PlatformUtil.getJvmMemInfo()).append("\n");
+        sb.append("Process Virtual Memory: ").append(PlatformUtil.getProcessVirtualMemoryUsed());
+        return sb.toString();
     }
 }

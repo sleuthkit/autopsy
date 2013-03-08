@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
+import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -65,10 +68,12 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        return new Action[]{ //new ShowDetailAction("Volume Details", this.getName(), this),
-                //new ShowDetailAction("File System Details", this.getName(), this)
-            //new ExtractUnallocAction("Extract Unallocated Files to single Single", this)
-                };
+        List<Action> actionsList = new ArrayList<Action>();
+
+        actionsList.add(new NewWindowViewAction("View in New Window", this));
+        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+
+        return actionsList.toArray(new Action[0]);
     }
 
     @Override

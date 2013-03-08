@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -37,7 +38,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -90,6 +91,11 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
+    //buffer for checking file headers and signatures
+    private static final int readHeaderSize = 4;
+    private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
+    private static final int ZIP_SIGNATURE_BE = 0x504B0304;
+    
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -188,7 +194,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
-            sendNewFilesEvent(unpackedFiles);
+            sendNewFilesEvent(abstractFile, unpackedFiles);
             rescheduleNewFiles(pipelineContext, unpackedFiles);
         }
 
@@ -197,7 +203,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         return ProcessResult.OK;
     }
 
-    private void sendNewFilesEvent(List<AbstractFile> unpackedFiles) {
+    private void sendNewFilesEvent(AbstractFile archive, List<AbstractFile> unpackedFiles) {
+        //currently sending a single event for all new files
+        services.fireModuleContentEvent(new ModuleContentEvent(archive));
     }
 
     private void rescheduleNewFiles(PipelineContext<IngestModuleAbstractFile> pipelineContext, List<AbstractFile> unpackedFiles) {
@@ -615,8 +623,41 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 return true;
             }
         }
-        return false;
+        
+        //if no extension match, check for zip signature
+        //(note, in near future, we will use pre-detected content type)
+        return isZipFileHeader(file);
+        
     }
+    
+    /**
+     * Check if is zip file based on header
+     * @param file
+     * @return true if zip file, false otherwise
+     */
+    private boolean isZipFileHeader(AbstractFile file) {
+        if (file.getSize() < readHeaderSize) {
+            return false;
+        }
+        
+        int bytesRead = 0;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not a ZIP
+            return false;
+        }
+        if (bytesRead != readHeaderSize) {
+            return false;
+        }
+        
+        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
+        int signature = bytes.getInt();
+        
+        return signature == ZIP_SIGNATURE_BE;
+        
+    }
+    
 
     /**
      * Stream used to unpack the archive to local file

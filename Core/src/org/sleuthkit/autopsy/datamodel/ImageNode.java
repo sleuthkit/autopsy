@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
+import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -64,9 +69,13 @@ public class ImageNode extends AbstractContentNode<Image> {
      */
     @Override
     public Action[] getActions(boolean context) {
-        return new Action[]{ //            SystemAction.get( NewAction.class ),
-                //            SystemAction.get( PasteAction.class )
-                };
+        List<Action> actionsList = new ArrayList<Action>();
+
+        actionsList.add(new NewWindowViewAction("View in New Window", this));
+        actionsList.add(new FileSearchAction("Open File Search by Attributes"));
+        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+
+        return actionsList.toArray(new Action[0]);
     }
 
     @Override

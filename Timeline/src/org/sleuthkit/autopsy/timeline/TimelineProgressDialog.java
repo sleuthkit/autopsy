@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
@@ -29,8 +29,7 @@ import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
 
 /**
- *
- * @author mciver
+ * Dialog with progress bar that pops up when timeline is being generated
  */
 public class TimelineProgressDialog extends javax.swing.JDialog {
 
@@ -49,10 +48,14 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     public TimelineProgressDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         setLocationRelativeTo(null);
         //set icon the same as main app
         setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
+
+        //progressBar.setIndeterminate(true);
+
+        setName("Make Timeline (Beta)");
 
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
@@ -73,6 +76,40 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         return returnStatus;
     }
 
+    void updateProgressBar(final int progress) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setValue(progress);
+            }
+        });
+
+    }
+
+    void updateProgressBar(final String message) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setString(message);
+            }
+        });
+
+    }
+
+    void setProgressTotal(final int total) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //progressBar.setIndeterminate(false);
+                progressBar.setMaximum(total);
+                //progressBar.setValue(0);
+                progressBar.setStringPainted(true);
+                progressBar.setVisible(true);
+            }
+        });
+
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -83,6 +120,7 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
+        progressBar = new javax.swing.JProgressBar();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -97,36 +135,48 @@ public class TimelineProgressDialog extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(51, 51, 51)
-                .addComponent(jLabel1)
-                .addContainerGap(131, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 504, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(37, 37, 37)
+                .addContainerGap()
                 .addComponent(jLabel1)
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addGap(7, 7, 7)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    
+
     /**
      * Closes the dialog
      */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         doClose(RET_CANCEL);
     }//GEN-LAST:event_closeDialog
-    
-    public void doClose(int retStatus) {
-        returnStatus = retStatus;
-        setVisible(false);
-        dispose();
-    }
 
+    void doClose(final int retStatus) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                returnStatus = retStatus;
+                setVisible(false);
+                dispose();
+            }
+        });
+
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
     private int returnStatus = RET_CANCEL;
 }

@@ -4,9 +4,9 @@
         <!-- sigar: note, matching jar is pulled with ivy -->
         <mkdir dir="${lib.dir}"/>
         <unzip src="${thirdparty.dir}/sigar/1.6.4/sigar-native.zip" dest="${lib.dir}" >
-            <patternset>
+              <!-- get all, rely on jna to locate <patternset>
                 <include name="**/*.dylib"/>
-            </patternset>
+            </patternset> -->
         </unzip>
     </target>
     

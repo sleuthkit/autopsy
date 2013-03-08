@@ -54,6 +54,14 @@ public class Installer extends ModuleInstall {
 
         autopsyLogger.log(Level.INFO, "Application name: " + Version.getName()
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
+        
+        autopsyLogger.log(Level.INFO, "os.name: " + System.getProperty("os.name"));
+        autopsyLogger.log(Level.INFO, "os.arch: " + System.getProperty("os.arch"));
+        autopsyLogger.log(Level.INFO, "PID: " + PlatformUtil.getPID());
+        autopsyLogger.log(Level.INFO, "Process Virtual Memory Used: " + PlatformUtil.getProcessVirtualMemoryUsed());
+        
+        
+        
     }
 
     @Override
