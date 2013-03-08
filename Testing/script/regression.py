@@ -23,7 +23,7 @@ from email.mime.text import MIMEText
 from email.MIMEBase import MIMEBase
 from email import Encoders
 import urllib2
-
+import re
 
 #
 # Please read me...
@@ -827,8 +827,8 @@ def generate_common_log():
 					common_log.write("From " + file +":\n" +  line + "\n")
 				elif line.startswith("Error"):
 					common_log.write("From " + file +":\n" +  line + "\n")
-				#elif line.startswith("SEVERE"):
-				#	common_log.write("From " + file +":\n" +  line + "\n")
+				elif line.startswith("SEVERE"):
+					common_log.write("From " + file +":\n" +  line + "\n")
 				else:
 					warning_log.write("From " + file +":\n" +  line + "\n")
 			log.close()
@@ -849,7 +849,8 @@ def	compare_errors():
 	gold_log = codecs.open(gold_dir, "r", "latin-1")
 	gold_dat = gold_log.read()
 	common_dat = common_log.read()
-	if (gold_dat != common_dat):
+	patrn = re.compile("\d")
+	if (re.sub(patrn, 'd', gold_dat) != re.sub(patrn, 'd', common_dat)):
 		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
 		diff_file = open(diff_dir, "w")
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
