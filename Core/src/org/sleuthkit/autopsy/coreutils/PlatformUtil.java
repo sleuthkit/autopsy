@@ -486,7 +486,7 @@ public class PlatformUtil {
         StringBuilder sb = new StringBuilder();
         sb.append(PlatformUtil.getPhysicalMemInfo()).append("\n");
         sb.append(PlatformUtil.getJvmMemInfo()).append("\n");
-        sb.append("Process Virtual Memory: ").append(PlatformUtil.getJvmMemInfo());
+        sb.append("Process Virtual Memory: ").append(PlatformUtil.getProcessVirtualMemoryUsed());
         return sb.toString();
     }
 }
