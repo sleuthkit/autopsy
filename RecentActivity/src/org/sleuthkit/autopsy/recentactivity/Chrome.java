@@ -120,9 +120,9 @@ public class Chrome extends Extract implements IngestModuleImage {
         // we should have only one allocated history file. Log a warning if we
         // have more, but process them all
         if (allocatedHistoryFiles.size() > 1) {
-            logger.log(Level.WARNING, "Found more than one allocated Chrome history file. Processing them all.");
+            logger.log(Level.INFO, "Found more than one allocated Chrome history file. Processing them all.");
         } else if (allocatedHistoryFiles.size() == 0) {
-            logger.log(Level.WARNING, "Could not find an allocated Chrome history file.");
+            logger.log(Level.INFO, "Could not find an allocated Chrome history file.");
             return;
         }
 
