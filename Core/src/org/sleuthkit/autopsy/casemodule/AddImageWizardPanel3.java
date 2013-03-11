@@ -34,6 +34,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -381,6 +382,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // task
                 cleanupImage.disable();
                 settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
+                
+                logger.log(Level.INFO, "Image committed, imageId: " + imageId);
+                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             }
         }
 
