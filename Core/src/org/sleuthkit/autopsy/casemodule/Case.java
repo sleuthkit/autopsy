@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -877,6 +878,7 @@ public class Case {
 
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
+        logger.log(Level.INFO, "Chaning case to: " + toChangeTo);
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
@@ -916,6 +918,9 @@ public class Case {
             f.setTitle(Case.getAppName()); // set the window name to just application name
         }
 
+        //log memory usage after case changed
+        logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+        
 
     }
 
