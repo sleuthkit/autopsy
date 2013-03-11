@@ -150,7 +150,7 @@ public abstract class KeywordSearchListsAbstract {
 
     }
 
-    List<KeywordSearchList> getListsL() {
+    public List<KeywordSearchList> getListsL() {
         List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
         for (KeywordSearchList list : theLists.values()) {
             ret.add(list);
@@ -158,7 +158,7 @@ public abstract class KeywordSearchListsAbstract {
         return ret;
     }
 
-    List<KeywordSearchList> getListsL(boolean locked) {
+    public List<KeywordSearchList> getListsL(boolean locked) {
         List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
         for (KeywordSearchList list : theLists.values()) {
             if (list.isLocked().equals(locked)) {
@@ -173,7 +173,7 @@ public abstract class KeywordSearchListsAbstract {
      *
      * @return List of keyword list names
      */
-    List<String> getListNames() {
+    public List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
     }
 
@@ -183,7 +183,7 @@ public abstract class KeywordSearchListsAbstract {
      * @param locked true if look for locked lists, false otherwise
      * @return List of keyword list names
      */
-    List<String> getListNames(boolean locked) {
+    public List<String> getListNames(boolean locked) {
         ArrayList<String> lists = new ArrayList<String>();
         for (String listName : theLists.keySet()) {
             KeywordSearchList list = theLists.get(listName);
@@ -201,7 +201,7 @@ public abstract class KeywordSearchListsAbstract {
      * @param keyword
      * @return found list or null
      */
-    KeywordSearchList getListWithKeyword(Keyword keyword) {
+    public KeywordSearchList getListWithKeyword(Keyword keyword) {
         KeywordSearchList found = null;
         for (KeywordSearchList list : theLists.values()) {
             if (list.hasKeyword(keyword)) {
@@ -218,7 +218,7 @@ public abstract class KeywordSearchListsAbstract {
      * @param keyword
      * @return found list or null
      */
-    KeywordSearchList getListWithKeyword(String keyword) {
+    public KeywordSearchList getListWithKeyword(String keyword) {
         KeywordSearchList found = null;
         for (KeywordSearchList list : theLists.values()) {
             if (list.hasKeyword(keyword)) {
@@ -244,7 +244,7 @@ public abstract class KeywordSearchListsAbstract {
      * @param locked true if look for locked lists, false otherwise
      * @return number of unlocked lists currently stored
      */
-    int getNumberLists(boolean locked) {
+    public int getNumberLists(boolean locked) {
         int numLists = 0;
         for (String listName : theLists.keySet()) {
             KeywordSearchList list = theLists.get(listName);
@@ -261,7 +261,7 @@ public abstract class KeywordSearchListsAbstract {
      * @param name id of the list
      * @return keyword list representation
      */
-    KeywordSearchList getList(String name) {
+    public KeywordSearchList getList(String name) {
         return theLists.get(name);
     }
 
@@ -477,19 +477,19 @@ public abstract class KeywordSearchListsAbstract {
             return hash;
         }
 
-        String getName() {
+        public String getName() {
             return name;
         }
 
-        Date getDateCreated() {
+        public Date getDateCreated() {
             return created;
         }
 
-        Date getDateModified() {
+        public Date getDateModified() {
             return modified;
         }
 
-        Boolean getUseForIngest() {
+        public Boolean getUseForIngest() {
             return useForIngest;
         }
 
@@ -497,7 +497,7 @@ public abstract class KeywordSearchListsAbstract {
             this.useForIngest = use;
         }
 
-        Boolean getIngestMessages() {
+        public Boolean getIngestMessages() {
             return ingestMessages;
         }
 
@@ -505,7 +505,7 @@ public abstract class KeywordSearchListsAbstract {
             this.ingestMessages = ingestMessages;
         }
 
-        List<Keyword> getKeywords() {
+        public List<Keyword> getKeywords() {
             return keywords;
         }
 
@@ -513,7 +513,7 @@ public abstract class KeywordSearchListsAbstract {
             return keywords.contains(keyword);
         }
 
-        boolean hasKeyword(String keyword) {
+        public boolean hasKeyword(String keyword) {
             //note, this ignores isLiteral
             for (Keyword k : keywords) {
                 if (k.getQuery().equals(keyword)) {
@@ -523,7 +523,7 @@ public abstract class KeywordSearchListsAbstract {
             return false;
         }
 
-        Boolean isLocked() {
+        public Boolean isLocked() {
             return locked;
         }
     }

@@ -851,8 +851,10 @@ def	compare_errors():
 	common_dat = common_log.read()
 	patrn = re.compile("\d")
 	if (re.sub(patrn, 'd', gold_dat) != re.sub(patrn, 'd', common_dat)):
+		print(re.sub(patrn, 'd', gold_dat))
+		print(re.sub(patrn, 'd', common_dat))
 		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
-		diff_file = open(diff_dir, "w")
+		diff_file = open(diff_dir, "w") 
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
 		subprocess.call(dffcmdlst, stdout = diff_file)
 		global attachl
