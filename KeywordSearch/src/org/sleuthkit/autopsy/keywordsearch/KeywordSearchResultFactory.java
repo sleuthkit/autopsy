@@ -236,7 +236,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             //get listname
             String listName = "";
-            KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(tcq.getQueryString());
+            KeywordSearchListsAbstract.KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(tcq.getQueryString());
             if (list != null) {
                 listName = list.getName();
             }

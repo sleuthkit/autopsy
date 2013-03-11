@@ -23,7 +23,7 @@ from email.mime.text import MIMEText
 from email.MIMEBase import MIMEBase
 from email import Encoders
 import urllib2
-
+import re
 
 #
 # Please read me...
@@ -148,6 +148,9 @@ class TestAutopsy:
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
+		self.sorted_log = ""
+		self.common_log_path = ""
+		self.warning_log = ""
 		self.csv = ""
 		self.global_csv = ""
 		self.html_log = ""
@@ -329,7 +332,7 @@ class Database:
 		
 	def generate_gold_artifacts(self):
 		if not self.gold_artifacts:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -340,7 +343,7 @@ class Database:
 				
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -348,7 +351,7 @@ class Database:
 
 	def generate_gold_objects(self):
 		if self.gold_objects == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -392,19 +395,15 @@ def run_config_test(config_file):
 			#Begin infiniloop
 			if(newDay()):
 				global daycount
-				global nxtproc
-				setDay()
-				gitPull("sleuthkit")
-				vsBuild()
-				gitPull("autopsy")
-				antBuild("datamodel", False)
-				antBuild("autopsy", True)
-				print("starting process")
-				outputer = open("ScriptLog.txt", "a")
-				pid = subprocess.Popen(nxtproc,
-				stdout = outputer,
-				stderr = outputer)
-				sys.exit()
+				compile()
+				if(daycount > 0):
+					print("starting process")
+					outputer = open("ScriptLog.txt", "a")
+					pid = subprocess.Popen(nxtproc,
+					stdout = outputer,
+					stderr = outputer)
+					sys.exit()
+				daycount += 1
 			for img in images:
 				run_test(img, 0 )
 		else:
@@ -419,6 +418,47 @@ def run_config_test(config_file):
 		printerror("Error: There was an error running with the configuration file.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
+		
+def compile():
+	global redo
+	global tryredo
+	global daycount
+	global nxtproc
+	global failedbool
+	global errorem
+	global attachl
+	global passed
+	passed = True
+	tryredo = False
+	setDay()
+	redo = True
+	while(redo):
+		passed = True
+		if(passed):
+			gitPull("sleuthkit")
+		if(passed):
+			vsBuild()
+		if(passed):
+			gitPull("autopsy")
+		if(passed):
+			antBuild("datamodel", False)
+		if(passed):
+			antBuild("autopsy", True)
+		if(passed):
+			redo = False
+		else:
+			print("Compile Failed")
+			time.sleep(3600)
+	attachl = []
+	errorem = "The test standard didn't match the gold standard.\n"
+	failedbool = False
+	if(tryredo):
+		errorem += "Rebuilt properly.\n"
+		send_email()
+		attachl = []
+		errorem = "The test standard didn't match the gold standard.\n"	
+		passed = True
+
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
@@ -430,6 +470,9 @@ def run_test(image_file, count):
 	# Set the case to work for this test
 	case.image_file = image_file
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
+	case.image = case.get_image_name(image_file)
+	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
+	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
 	case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
@@ -481,6 +524,7 @@ def run_test(image_file, count):
 	if args.rebuild:
 		rebuild()
 	# Reset the case and return the tests sucessfully finished
+	clear_dir(make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "ModuleOutput", "keywordsearch"))
 	case.reset()
 	return True
 
@@ -555,19 +599,11 @@ def rebuild():
 	# Delete the current gold standards
 	gold_dir = make_local_path(case.gold, case.image_name)
 	clear_dir(gold_dir)
-	
-	# Rebuild the database
-	gold_from = make_local_path(case.output_dir, case.image_name,
-								"AutopsyTestCase", "autopsy.db")
-	gold_to = make_local_path(case.gold, case.image_name, "standard.db")
-	try:
-		copy_file(gold_from, gold_to)
-	except FileNotFoundException as e:
-		errors.append(e.error)
-		print(str(e))
-	except Exception as e:
-		errors.append("Error: Unknown fatal error when rebuilding the gold database.")
-		errors.append(str(e) + "\n")
+	dbinpth = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
+	dboutpth = make_local_path(case.gold, case.image_name, "autopsy.db")
+	copy_file(dbinpth, dboutpth)
+	error_pth = make_local_path(case.gold, case.image_name, case.image_name+"SortedErrors.txt")
+	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
 	for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
@@ -596,7 +632,7 @@ def rebuild():
 # from queries while comparing
 def compare_to_gold_db():
 	# SQLITE needs unix style pathing
-	gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+	gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
 	autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
@@ -776,26 +812,56 @@ def compare_tsk_objects():
 def generate_common_log():
 	try:
 		logs_path = make_local_path(case.output_dir, case.image_name, "logs")
-		common_log = codecs.open(case.common_log, "a", "latin-1")
+		common_log = codecs.open(case.common_log_path, "w", "latin-1")
+		print(case.common_log_path)
+		warning_log = codecs.open(case.warning_log, "w", "latin_1")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(case.image_name + "\n")
 		common_log.write("--------------------------------------------------\n")
 		for file in os.listdir(logs_path):
 			log = codecs.open(make_path(logs_path, file), "r", "latin-1")
 			for line in log:
-				if "exception" in line.lower():
+				if line.startswith("Exception"):
 					common_log.write("From " + file +":\n" +  line + "\n")
-				if "warning" in line.lower():
+				elif line.startswith("WARNING"):
 					common_log.write("From " + file +":\n" +  line + "\n")
-				if "error" in line.lower():
+				elif line.startswith("Error"):
 					common_log.write("From " + file +":\n" +  line + "\n")
+				elif line.startswith("SEVERE"):
+					common_log.write("From " + file +":\n" +  line + "\n")
+				else:
+					warning_log.write("From " + file +":\n" +  line + "\n")
 			log.close()
 		common_log.write("\n\n")
 		common_log.close()
+		case.sorted_log = make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
+		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
+		subprocess.call(srtcmdlst)
+		compare_errors()
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
+		
+def	compare_errors():
+	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	common_log = codecs.open(case.sorted_log, "r", "latin-1")
+	gold_log = codecs.open(gold_dir, "r", "latin-1")
+	gold_dat = gold_log.read()
+	common_dat = common_log.read()
+	patrn = re.compile("\d")
+	if (re.sub(patrn, 'd', gold_dat) != re.sub(patrn, 'd', common_dat)):
+		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
+		diff_file = open(diff_dir, "w")
+		dffcmdlst = ["diff", case.sorted_log, gold_dir]
+		subprocess.call(dffcmdlst, stdout = diff_file)
+		global attachl
+		global errorem
+		global failedbool
+		attachl.append(diff_dir)
+		errorem += "There was a difference in the exceptions Log.\n"
+		print("Exceptions didn't match.\n")
+		failedbool = True
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
@@ -903,7 +969,7 @@ def generate_csv(csv_path):
 		vars.append( str(database.autopsy_objects) )
 		vars.append( str(database.get_artifacts_count()) )
 		vars.append( str(database.autopsy_attributes) )
-		vars.append( make_local_path("gold", case.image_name, "standard.db") )
+		vars.append( make_local_path("gold", case.image_name, "autopsy.db") )
 		vars.append( database.get_artifact_comparison() )
 		vars.append( database.get_attribute_comparison() )
 		vars.append( make_local_path("gold", case.image_name, "standard.html") )
@@ -980,7 +1046,7 @@ def get_exceptions():
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
 	warnings = []
-	common_log = codecs.open(case.common_log, "r", "latin-1")
+	common_log = codecs.open(case.warning_log, "r", "latin-1")
 	for line in common_log:
 		if "warning" in line.lower():
 			warnings.append(line)
@@ -1026,7 +1092,7 @@ def search_logs(string):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string):
 	results = []
-	log = codecs.open(case.common_log, "r", "latin-1")
+	log = codecs.open(case.common_log_path, "r", "latin-1")
 	for line in log:
 		if string in line:
 			results.append(line)
@@ -1100,6 +1166,7 @@ def generate_html():
 		write_html_head()
 	try:
 		global html
+		print(case.html_log)
 		html = open(case.html_log, "a")
 		# The image title
 		title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
@@ -1297,6 +1364,9 @@ def gitPull(TskOrAutopsy):
 
 #Builds TSK as a win32 applicatiion
 def vsBuild():
+	global redo
+	global tryredo
+	global passed
 	#Please ensure that the current working directory is $autopsy/testing/script
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
@@ -1316,14 +1386,21 @@ def vsBuild():
 	except IOError as e:
 		global errorem
 		global attachl
-		errorem += "LIBTSK C++ failed to build.\n"
-		attachl.append(VSpth)
-		send_email()
-		sys.exit()
+		if(not tryredo):
+			errorem += "LIBTSK C++ failed to build.\n"
+			attachl.append(VSpth)
+			send_email()
+		tryredo = True
+		passed = False
+		redo = True
+		
 	
  
 #Builds Autopsy or the Datamodel
 def antBuild(which, Build):
+	global redo
+	global passed
+	global tryredo
 	directory = os.path.join("..", "..")
 	ant = []
 	if which == "datamodel":
@@ -1347,16 +1424,19 @@ def antBuild(which, Build):
 		try:
 			open(chk)
 		except IOError as e:
-			errorem += "DataModel Java build failed.\n"
-			attachl.append(antpth)
-			send_email()
-			sys.exit()
+			if(not tryredo):
+				errorem += "DataModel Java build failed.\n"
+				attachl.append(antpth)
+				send_email()
+			passed = False
+			tryredo = True
+	elif (succd != 0 and (not tryredo)):
+		errorem += "Autopsy build failed.\n"
+		attachl.append(antpth)
+		send_email()
+		tryredo = True
 	elif (succd != 0):
-			errorem += "Autopsy build failed.\n"
-			attachl.append(antpth)
-			send_email()
-			sys.exit()
-		
+		passed = False
 		
 	
 #Watches clock and waits for current ingest to be done
@@ -1425,6 +1505,15 @@ def clear_dir(dir):
 		printerror(dir + "\n")
 		return False;
 
+def del_dir(dir):
+	try:
+		if dir_exists(dir):
+			shutil.rmtree(dir)
+		return True;
+	except:
+		printerror("Error: Cannot delete the given directory:")
+		printerror(dir + "\n")
+		return False;
 # Copies a given file from "ffrom" to "to"
 def copy_file(ffrom, to):
 	try :
@@ -1436,12 +1525,12 @@ def copy_file(ffrom, to):
 
 # Copies a directory file from "ffrom" to "to"
 def copy_dir(ffrom, to):
-	try :
-		if not os.path.isdir(ffrom):
-			raise FileNotFoundException(ffrom)
-		shutil.copytree(ffrom, to)
-	except:
-		raise FileNotFoundException(to)
+	#try :
+	if not os.path.isdir(ffrom):
+		raise FileNotFoundException(ffrom)
+	shutil.copytree(ffrom, to)
+	#except:
+		#raise FileNotFoundException(to)
 # Returns the first file in the given directory with the given extension
 def get_file_in_dir(dir, ext):
 	try:
@@ -1520,7 +1609,7 @@ Usage:  ./regression.py [-f FILE] [OPTIONS]
 		Expected files:
 		  An NSRL database at:			./input/nsrl.txt-md5.idx
 		  A notable hash database at:	 ./input/notablehashes.txt-md5.idx
-		  A notible keyword file at:	  ./input/notablekeywords.xml
+		  A notable keyword file at:	  ./input/notablekeywords.xml
 		
 Options:
   -r			Rebuild the gold standards for the image(s) tested.
@@ -1580,7 +1669,7 @@ def execute_test():
 	global attachl
 	case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
 	os.makedirs(case.output_dir)
-	case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
+	case.common_log = "AutopsyErrors.txt"
 	case.csv = make_local_path(case.output_dir, "CSV.txt")
 	case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
 	log_name = case.output_dir + "\\regression.log"
@@ -1620,12 +1709,15 @@ def execute_test():
 		errorem += "There were Autopsy errors.\n"
 		for lm in logres:
 			errorem += lm
-	if failedbool:
-		attachl.append(case.common_log)
-		attachl.insert(0, html.name)
-		send_email()
 	html.close()
-	#email_send(HTML_email, None)
+	if failedbool:
+		attachl.append(case.common_log_path)
+		attachl.insert(0, html.name)
+	else:
+		errorem = ""
+		errorem += "There were no Errors.\n"
+		attachl = []
+	send_email()
 
 
 def send_email():
@@ -1635,8 +1727,13 @@ def send_email():
 	global html
 	if(not args.list):
 		sys.exit()
-	element = parsed.getElementsByTagName("email")[0]
+	element = parsed.getElementsByTagName("email")
+	if(len(element)<=0):
+		return
+	element = element[0]
 	toval = element.getAttribute("value").encode().decode("utf-8")
+	if(toval==None):
+		return
 	element = parsed.getElementsByTagName("mail_server")[0]
 	serverval = element.getAttribute("value").encode().decode("utf-8")
 	# Create the container (outer) email message.
@@ -1653,7 +1750,6 @@ def send_email():
 	s = smtplib.SMTP(serverval)
 	s.sendmail(msg['From'], msg['To'], msg.as_string())
 	s.quit()
-	sys.exit()
 	
 def Build_email(msg):
 	global attachl
@@ -1682,15 +1778,18 @@ def main():
 	global errorem
 	global attachl
 	global daycount
-	setDay()
+	global redo
+	global passed
 	daycount = 0
 	failedbool = False
+	redo = False
 	errorem = "The test standard didn't match the gold standard.\n"
 	case = TestAutopsy()
 	database = Database()
 	printout("")
 	args = Args()
 	attachl = []
+	passed = False
 	# The arguments were given wrong:
 	if not args.parse():
 		case.reset()
@@ -1699,9 +1798,11 @@ def main():
 	else:
 		execute_test()
 		while args.contin:
+			redo = False
 			attachl = []
 			errorem = "The test standard didn't match the gold standard.\n"
 			failedbool = False
+			passed = False
 			execute_test()
 			case = TestAutopsy()
 

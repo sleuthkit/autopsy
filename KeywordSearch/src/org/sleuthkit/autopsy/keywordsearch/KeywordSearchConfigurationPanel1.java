@@ -80,7 +80,7 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = "Save Keyword List";
                 KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
-                KeywordSearchList currentKeywordList = editListPanel.getCurrentKeywordList();
+                KeywordSearchListsAbstract.KeywordSearchList currentKeywordList = editListPanel.getCurrentKeywordList();
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
