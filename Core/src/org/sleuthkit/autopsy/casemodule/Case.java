@@ -878,7 +878,7 @@ public class Case {
 
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
-        logger.log(Level.INFO, "Chaning case to: " + toChangeTo);
+        logger.log(Level.INFO, "Changing Case to: " + toChangeTo);
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
