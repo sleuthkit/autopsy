@@ -2,10 +2,8 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * 
- * Copyright 2012 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,12 +115,9 @@ public class Chrome extends Extract implements IngestModuleImage {
             }
         }
         
-        // we should have only one allocated history file. Log a warning if we
-        // have more, but process them all
-        if (allocatedHistoryFiles.size() > 1) {
-            logger.log(Level.INFO, "Found more than one allocated Chrome history file. Processing them all.");
-        } else if (allocatedHistoryFiles.size() == 0) {
-            logger.log(Level.INFO, "Could not find an allocated Chrome history file.");
+        // log a message if we don't have any allocated history files
+        if (allocatedHistoryFiles.size() == 0) {
+            logger.log(Level.INFO, "Could not find any allocated Chrome history files.");
             return;
         }
 
