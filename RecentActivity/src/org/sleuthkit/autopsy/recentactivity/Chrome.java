@@ -4,8 +4,6 @@
  * 
  * Copyright 2013 Basis Technology Corp.
  * 
- * Copyright 2013 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
