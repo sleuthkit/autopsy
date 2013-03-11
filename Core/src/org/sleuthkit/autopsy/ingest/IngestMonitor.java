@@ -217,6 +217,7 @@ public class IngestMonitor {
             final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
 
             MONITOR_LOGGER.log(Level.INFO, "Java heap memory: " + heap.toString() + ", Java non-heap memory: " + nonHeap.toString());
+            MONITOR_LOGGER.log(Level.INFO, "Process Virtual Memory: " + PlatformUtil.getProcessVirtualMemoryUsed());
 
         }
     }

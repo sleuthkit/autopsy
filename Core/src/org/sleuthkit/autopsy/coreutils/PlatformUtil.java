@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.filechooser.FileSystemView;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarLoader;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.sleuthkit.autopsy.casemodule.LocalDisk;
@@ -398,11 +399,14 @@ public class PlatformUtil {
 
         try {
             if (sigar == null) {
-                sigar = new Sigar();
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
             }
-            pid = sigar.getPid();
-        } catch (UnsatisfiedLinkError e) {
-            System.out.println("Can't load library and get PID, " + e.toString());
+            if (sigar != null) {
+                pid = sigar.getPid();
+            }
+            else {
+                System.out.println("Can't get PID");
+            }
         } catch (Exception e) {
             System.out.println("Can't get PID, " + e.toString());
         }
@@ -421,16 +425,14 @@ public class PlatformUtil {
 
         try {
             if (sigar == null) {
-                sigar = new Sigar();
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
             }
             
             if (sigar == null || pid == -1) {
+                System.out.println("Can't get virt mem used");
                 return -1;
             }
-
             virtMem = sigar.getProcMem(pid).getSize();
-        } catch (UnsatisfiedLinkError e) {
-            System.out.println("Can't load library and get virt mem used, " + e.toString());
         } catch (Exception e) {
             System.out.println("Can't get virt mem used, " + e.toString());
         }
