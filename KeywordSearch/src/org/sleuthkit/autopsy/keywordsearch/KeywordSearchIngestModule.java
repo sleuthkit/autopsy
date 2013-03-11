@@ -101,7 +101,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private volatile boolean runSearcher = false; //whether to run searcher next time
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
-    private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
+    private Map<String, KeywordSearchListsAbstract.KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
     private Indexer indexer;
@@ -380,7 +380,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
-        keywordToList = new HashMap<String, KeywordSearchList>();
+        keywordToList = new HashMap<String, KeywordSearchListsAbstract.KeywordSearchList>();
 
         initKeywords();
 
@@ -566,7 +566,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         StringBuilder sb = new StringBuilder();
 
-        for (KeywordSearchList list : loader.getListsL()) {
+        for (KeywordSearchListsAbstract.KeywordSearchList list : loader.getListsL()) {
             final String listName = list.getName();
             if (list.getUseForIngest() == true
                     || (listsToAdd != null && listsToAdd.contains(listName))) {
@@ -798,7 +798,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
          */
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordLists; // lists currently being searched
-        private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
+        private Map<String, KeywordSearchListsAbstract.KeywordSearchList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
         private boolean finalRun = false;
@@ -806,7 +806,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         Searcher(List<String> keywordLists) {
             this.keywordLists = new ArrayList<String>(keywordLists);
             this.keywords = new ArrayList<Keyword>();
-            this.keywordToList = new HashMap<String, KeywordSearchList>();
+            this.keywordToList = new HashMap<String, KeywordSearchListsAbstract.KeywordSearchList>();
             //keywords are populated as searcher runs
         }
 
@@ -874,7 +874,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                     }
 
                     final String queryStr = keywordQuery.getQuery();
-                    final KeywordSearchList list = keywordToList.get(queryStr);
+                    final KeywordSearchListsAbstract.KeywordSearchList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
 
                     //new subProgress will be active after the initial query
@@ -1110,7 +1110,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             this.keywordToList.clear();
 
             for (String name : this.keywordLists) {
-                KeywordSearchList list = loader.getList(name);
+                KeywordSearchListsAbstract.KeywordSearchList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
                     this.keywords.add(k);
                     this.keywordToList.put(k.getQuery(), list);

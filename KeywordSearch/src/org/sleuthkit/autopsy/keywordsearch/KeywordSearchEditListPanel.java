@@ -57,7 +57,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
-    private KeywordSearchList currentKeywordList;
+    private KeywordSearchListsAbstract.KeywordSearchList currentKeywordList;
 
     
     private boolean ingestRunning;
@@ -608,7 +608,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             KeywordSearchListsXML reader = KeywordSearchListsXML.getCurrent();
 
-            List<KeywordSearchList> toWrite = new ArrayList<KeywordSearchList>();
+            List<KeywordSearchListsAbstract.KeywordSearchList> toWrite = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
             toWrite.add(reader.getList(currentKeywordList.getName()));
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
             boolean written = exporter.saveLists(toWrite);
@@ -693,11 +693,11 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         // Implemented by parent panel
     }
     
-    KeywordSearchList getCurrentKeywordList() {
+    KeywordSearchListsAbstract.KeywordSearchList getCurrentKeywordList() {
         return currentKeywordList;
     }
     
-    void setCurrentKeywordList(KeywordSearchList list) {
+    void setCurrentKeywordList(KeywordSearchListsAbstract.KeywordSearchList list) {
         currentKeywordList = list;
     }
     

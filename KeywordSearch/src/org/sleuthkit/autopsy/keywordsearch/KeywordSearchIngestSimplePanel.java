@@ -38,12 +38,12 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
     public static final String PROP_OPTIONS = "Keyword Search_Options";
     private KeywordTableModel tableModel;
-    private List<KeywordSearchList> lists;
+    private List<KeywordSearchListsAbstract.KeywordSearchList> lists;
 
     /** Creates new form KeywordSearchIngestSimplePanel */
     public KeywordSearchIngestSimplePanel() {
         tableModel = new KeywordTableModel();
-        lists = new ArrayList<KeywordSearchList>();
+        lists = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
         reloadLists();
         initComponents();
         customizeComponents();
@@ -222,7 +222,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordSearchListsAbstract.KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
             if(columnIndex == 0) {
                 return list.getUseForIngest();
             } else {
@@ -238,7 +238,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             
-            KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordSearchListsAbstract.KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
             if(columnIndex == 0){
                 KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
                 loader.addList(list.getName(), list.getKeywords(), (Boolean) aValue, false);
