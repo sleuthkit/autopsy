@@ -243,12 +243,12 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                 return;
             }
 
-            List<KeywordSearchList> toImport = reader.getListsL();
-            List<KeywordSearchList> toImportConfirmed = new ArrayList<KeywordSearchList>();
+            List<KeywordSearchListsAbstract.KeywordSearchList> toImport = reader.getListsL();
+            List<KeywordSearchListsAbstract.KeywordSearchList> toImportConfirmed = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
 
             final KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
-            for (KeywordSearchList list : toImport) {
+            for (KeywordSearchListsAbstract.KeywordSearchList list : toImport) {
                 //check name collisions
                 if (writer.listExists(list.getName())) {
                     Object[] options = {"Yes, overwrite",

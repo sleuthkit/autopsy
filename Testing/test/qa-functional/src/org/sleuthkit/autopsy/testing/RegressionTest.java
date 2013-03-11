@@ -26,11 +26,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,7 +55,9 @@ import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.keywordsearch.*;
 /**
  * This test expects the following system properties to be set:
  * img_path: The fully qualified path to the image file (if split, the first file)
@@ -207,6 +213,7 @@ public class RegressionTest extends TestCase{
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
+        setListForIngest();
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();
@@ -315,5 +322,9 @@ public class RegressionTest extends TestCase{
             
         }
     }
-   
+   private void setListForIngest()
+   {
+       KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
+       curr.setUseForIngest("URLs", true);
+   }
 }
