@@ -2,10 +2,10 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
+ * 
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Chrome recent activity extraction
@@ -107,54 +108,66 @@ public class Chrome extends Extract implements IngestModuleImage {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
+        
+        // get only the allocated ones, for now
+        List<FsContent> allocatedHistoryFiles = new ArrayList<>();
+        for (FsContent historyFile : historyFiles) {
+            if (historyFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                allocatedHistoryFiles.add(historyFile);
+            }
+        }
+        
+        // log a message if we don't have any allocated history files
+        if (allocatedHistoryFiles.size() == 0) {
+            logger.log(Level.INFO, "Could not find any allocated Chrome history files.");
+            return;
+        }
 
         int j = 0;
-        if (historyFiles != null && !historyFiles.isEmpty()) {
-            while (j < historyFiles.size()) {
-                String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
-                int errors = 0;
-                final FsContent historyFile = historyFiles.get(j++);
-                if (historyFile.getSize() == 0) {
-                    continue;
-                }
-                try {
-                    ContentUtils.writeToFile(historyFile, new File(temps));
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
-                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
-                }
-                File dbFile = new File(temps);
-                if (controller.isCancelled()) {
-                    dbFile.delete();
-                    break;
-                }
-                List<HashMap<String, Object>> tempList = null;
-                tempList = this.dbConnect(temps, chquery);
-                logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
-                for (HashMap<String, Object> result : tempList) {
-
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
-                    //TODO Revisit usage of deprecated constructor per TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000000)));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000000)));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "Recent Activity", ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : "")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
-
-                }
-                if (errors > 0) {
-                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome web history artifacts.");
-                }
-       
+        while (j < historyFiles.size()) {
+            String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
+            int errors = 0;
+            final FsContent historyFile = historyFiles.get(j++);
+            if (historyFile.getSize() == 0) {
+                continue;
+            }
+            try {
+                ContentUtils.writeToFile(historyFile, new File(temps));
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
+            }
+            File dbFile = new File(temps);
+            if (controller.isCancelled()) {
                 dbFile.delete();
+                break;
+            }
+            List<HashMap<String, Object>> tempList = null;
+            tempList = this.dbConnect(temps, chquery);
+            logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
+            for (HashMap<String, Object> result : tempList) {
+
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
+                //TODO Revisit usage of deprecated constructor per TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000000)));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000000)));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "Recent Activity", ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+
+            }
+            if (errors > 0) {
+                this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome web history artifacts.");
             }
 
-            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            dbFile.delete();
         }
+
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     private void getBookmark(Image image, IngestImageWorkerController controller) {

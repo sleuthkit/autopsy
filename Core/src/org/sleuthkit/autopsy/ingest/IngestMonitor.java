@@ -24,9 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
@@ -45,7 +42,6 @@ public class IngestMonitor {
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
     private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
-    private final MemoryMXBean memoryManager = ManagementFactory.getMemoryMXBean();
     private MonitorAction monitor;
 
     IngestMonitor() {
@@ -103,8 +99,7 @@ public class IngestMonitor {
     long getFreeSpace() {
         try {
             return monitor.getFreeSpace();
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e);
             return -1;
         }
@@ -204,21 +199,7 @@ public class IngestMonitor {
          * Monitor memory usage and print to memory log
          */
         private void monitorMemory() {
-
-            final Runtime runTime = Runtime.getRuntime();
-            final long maxMemory = runTime.maxMemory();
-            final long totalMemory = runTime.totalMemory();
-            final long freeMemory = runTime.freeMemory();
-            MONITOR_LOGGER.log(Level.INFO, "Physical memory (max, total, free): "
-                    + Long.toString(maxMemory) + ", " + Long.toString(totalMemory)
-                    + ", " + Long.toString(freeMemory));
-
-            final MemoryUsage heap = memoryManager.getHeapMemoryUsage();
-            final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
-
-            MONITOR_LOGGER.log(Level.INFO, "Java heap memory: " + heap.toString() + ", Java non-heap memory: " + nonHeap.toString());
-            MONITOR_LOGGER.log(Level.INFO, "Process Virtual Memory: " + PlatformUtil.getProcessVirtualMemoryUsed());
-
+            MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
     }
 }

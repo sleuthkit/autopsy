@@ -229,7 +229,7 @@ public class Server {
 
         InputStream stream;
         OutputStream out;
-        boolean doRun = true;
+        volatile boolean doRun = true;
 
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
@@ -266,9 +266,11 @@ public class Server {
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
+            OutputStreamWriter osw = null;
+            BufferedWriter bw = null;
             try {
-                OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
-                BufferedWriter bw = new BufferedWriter(osw);
+                osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
+                bw = new BufferedWriter(osw);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
                     bw.write(line);
@@ -280,7 +282,16 @@ public class Server {
                 }
                 bw.flush();
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error redirecting Solr output stream");
+            }
+            finally {
+                if (bw != null) {
+                    try {
+                        bw.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Error closing Solr output stream");
+                    }
+                }
             }
         }
     }
