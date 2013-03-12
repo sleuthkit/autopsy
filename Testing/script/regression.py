@@ -818,9 +818,12 @@ def generate_common_log():
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(case.image_name + "\n")
 		common_log.write("--------------------------------------------------\n")
+		rep_path = make_local_path(case.output_dir)
+		rep_path = rep_path.replace("\\\\", "\\")
 		for file in os.listdir(logs_path):
 			log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 			for line in log:
+				line = line.replace(rep_path, "CASE")
 				if line.startswith("Exception"):
 					common_log.write("From " + file +":\n" +  line + "\n")
 				elif line.startswith("WARNING"):
