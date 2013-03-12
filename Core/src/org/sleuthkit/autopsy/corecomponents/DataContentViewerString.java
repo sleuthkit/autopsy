@@ -122,6 +122,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        setMinimumSize(new java.awt.Dimension(5, 5));
+
+        jPanel1.setPreferredSize(new java.awt.Dimension(502, 424));
+
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
@@ -197,7 +201,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -220,7 +224,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 11, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
@@ -248,7 +252,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 640, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

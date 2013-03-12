@@ -75,6 +75,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
 
+        setMinimumSize(new java.awt.Dimension(5, 5));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(

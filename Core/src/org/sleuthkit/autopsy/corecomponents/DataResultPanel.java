@@ -367,6 +367,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         matchLabel = new javax.swing.JLabel();
         dataResultTabbedPanel = new javax.swing.JTabbedPane();
 
+        setMinimumSize(new java.awt.Dimension(5, 5));
+        setPreferredSize(new java.awt.Dimension(5, 5));
+
         org.openide.awt.Mnemonics.setLocalizedText(directoryTablePath, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.directoryTablePath.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(numberMatchLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.numberMatchLabel.text")); // NOI18N
