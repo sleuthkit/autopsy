@@ -1,5 +1,5 @@
-#!/usr/bin/python 
-#en_US.latin-1
+#!/usr/bin/python
+# -*- coding: utf_8 -*- 
 import codecs
 import datetime
 import logging
@@ -372,15 +372,15 @@ def run_config_test(config_file):
 		parsed = parse(config_file)
 		counts = {}
 		if parsed.getElementsByTagName("indir"):
-			case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf-8")
+			case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
 		if parsed.getElementsByTagName("global_csv"):
-			case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf-8")
+			case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
 		
 		# Generate the top navbar of the HTML for easy access to all images
 		case.global_csv = make_local_path(case.global_csv)
 		values = []
 		for element in parsed.getElementsByTagName("image"):
-			value = element.getAttribute("value").encode().decode("utf-8")
+			value = element.getAttribute("value").encode().decode("utf_8")
 			if file_exists(value):
 				values.append(value)
 		html_add_images(values)
@@ -390,7 +390,7 @@ def run_config_test(config_file):
 		if(args.contin):
 			#set all times an image has been processed to 0
 			for element in parsed.getElementsByTagName("image"):
-				value = element.getAttribute("value").encode().decode("utf-8")
+				value = element.getAttribute("value").encode().decode("utf_8")
 				images.append(value)
 			#Begin infiniloop
 			if(newDay()):
@@ -812,14 +812,14 @@ def compare_tsk_objects():
 def generate_common_log():
 	try:
 		logs_path = make_local_path(case.output_dir, case.image_name, "logs")
-		common_log = codecs.open(case.common_log_path, "w", "latin-1")
+		common_log = codecs.open(case.common_log_path, "w", "utf_8")
 		print(case.common_log_path)
-		warning_log = codecs.open(case.warning_log, "w", "latin_1")
+		warning_log = codecs.open(case.warning_log, "w", "utf_8")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(case.image_name + "\n")
 		common_log.write("--------------------------------------------------\n")
 		for file in os.listdir(logs_path):
-			log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+			log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 			for line in log:
 				if line.startswith("Exception"):
 					common_log.write("From " + file +":\n" +  line + "\n")
@@ -845,14 +845,14 @@ def generate_common_log():
 		
 def	compare_errors():
 	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
-	common_log = codecs.open(case.sorted_log, "r", "latin-1")
-	gold_log = codecs.open(gold_dir, "r", "latin-1")
+	common_log = codecs.open(case.sorted_log, "r", "utf_8")
+	gold_log = codecs.open(gold_dir, "r", "utf_8")
 	gold_dat = gold_log.read()
 	common_dat = common_log.read()
 	patrn = re.compile("\d")
-	if (re.sub(patrn, 'd', gold_dat) != re.sub(patrn, 'd', common_dat)):
+	if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
 		diff_dir = make_local_path(case.output_dir, case.image_name, "ErrorDiff.txt")
-		diff_file = open(diff_dir, "w")
+		diff_file = open(diff_dir, "w") 
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
 		subprocess.call(dffcmdlst, stdout = diff_file)
 		global attachl
@@ -1034,7 +1034,7 @@ def get_exceptions():
 	results = []
 	for file in os.listdir(logs_path):
 		if "autopsy.log" in file:
-			log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+			log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 			ex = re.compile("\SException")
 			er = re.compile("\SError")
 			for line in log:
@@ -1046,7 +1046,7 @@ def get_exceptions():
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
 	warnings = []
-	common_log = codecs.open(case.warning_log, "r", "latin-1")
+	common_log = codecs.open(case.warning_log, "r", "utf_8")
 	for line in common_log:
 		if "warning" in line.lower():
 			warnings.append(line)
@@ -1068,7 +1068,7 @@ def regex_search_logs(regex):
 	logs_path = make_local_path(case.output_dir, case.image_name, "logs")
 	results = []
 	for file in os.listdir(logs_path):
-		log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+		log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 		for line in log:
 			if regex.search(line):
 				results.append(line)
@@ -1082,7 +1082,7 @@ def search_logs(string):
 	logs_path = make_local_path(case.output_dir, case.image_name, "logs")
 	results = []
 	for file in os.listdir(logs_path):
-		log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+		log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 		for line in log:
 			if string in line:
 				results.append(line)
@@ -1092,7 +1092,7 @@ def search_logs(string):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string):
 	results = []
-	log = codecs.open(case.common_log_path, "r", "latin-1")
+	log = codecs.open(case.common_log_path, "r", "utf_8")
 	for line in log:
 		if string in line:
 			results.append(line)
@@ -1105,7 +1105,7 @@ def search_log(log, string):
 	logs_path = make_local_path(case.output_dir, case.image_name, "logs", log)
 	try:
 		results = []
-		log = codecs.open(logs_path, "r", "latin-1")
+		log = codecs.open(logs_path, "r", "utf_8")
 		for line in log:
 			if string in line:
 				results.append(line)
@@ -1122,7 +1122,7 @@ def search_log_set(type, string):
 	results = []
 	for file in os.listdir(logs_path):
 		if type in file:
-			log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+			log = codecs.open(make_path(logs_path, file), "r", "utf_8")
 			for line in log:
 				if string in line:
 					results.append(line)
@@ -1731,11 +1731,11 @@ def send_email():
 	if(len(element)<=0):
 		return
 	element = element[0]
-	toval = element.getAttribute("value").encode().decode("utf-8")
+	toval = element.getAttribute("value").encode().decode("utf_8")
 	if(toval==None):
 		return
 	element = parsed.getElementsByTagName("mail_server")[0]
-	serverval = element.getAttribute("value").encode().decode("utf-8")
+	serverval = element.getAttribute("value").encode().decode("utf_8")
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
 	msg['Subject'] = 'Email Test'

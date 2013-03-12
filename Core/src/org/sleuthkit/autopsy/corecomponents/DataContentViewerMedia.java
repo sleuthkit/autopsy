@@ -360,9 +360,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            return false;
-        }
+        //try displaying deleted files if we can read them
+        //if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+          //  return false;
+        //}
 
         if (file.getSize() == 0) {
             return false;
