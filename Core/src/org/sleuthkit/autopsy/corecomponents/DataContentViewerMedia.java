@@ -187,6 +187,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             } else if (state.equals(State.READY)) {
                 ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
                 em.execute();
+                em.getExtractedBytes();
             }
         }
     }//GEN-LAST:event_pauseButtonActionPerformed
@@ -483,13 +484,20 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         boolean success = false;
         private AbstractFile sFile;
         private java.io.File jFile;
-        String duration;
-        String position;
+        private String duration;
+        private String position;
+        private long extractedBytes;
 
         ExtractMedia(org.sleuthkit.datamodel.AbstractFile sFile, java.io.File jFile) {
             this.sFile = sFile;
             this.jFile = jFile;
         }
+
+        public long getExtractedBytes() {
+            return extractedBytes;
+        }
+        
+        
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -504,7 +512,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             progress.start();
             progress.switchToDeterminate(100);
             try {
-                ContentUtils.writeToFile(sFile, jFile, progress, this, true);
+                extractedBytes = ContentUtils.writeToFile(sFile, jFile, progress, this, true);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error buffering file", ex);
             }
