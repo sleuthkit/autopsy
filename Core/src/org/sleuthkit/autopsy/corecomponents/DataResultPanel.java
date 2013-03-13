@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Data result panel component with its viewer tabs.
@@ -46,7 +48,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private Node rootNode;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs;
     
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
@@ -54,6 +56,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
+    
+    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
 
     /**
      * Creates new DataResultPanel
@@ -61,6 +65,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Use overrides or factory methods for more customization.
      */
     public DataResultPanel() {
+        pcs = new PropertyChangeSupport(this);
         initComponents();
         
         setName(title);
@@ -244,7 +249,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
+        if (pcs == null) {
+            logger.log(Level.SEVERE, "Error adding listener, listener support not ready yet, listener: " + listener.toString());
+        }
+        else {
+            this.pcs.addPropertyChangeListener(listener);
+        }
     }
 
     @Override
