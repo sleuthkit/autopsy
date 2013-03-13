@@ -916,6 +916,10 @@ public class Case {
 
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
+            
+            //try to force gc to happen
+            System.gc();
+            System.gc();
         }
 
         //log memory usage after case changed
