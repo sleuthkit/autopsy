@@ -46,9 +46,11 @@ public class SigarLoader {
                     sigar.enableLogging(false); //forces a test
 
                 } catch (UnsatisfiedLinkError ex) {
-                    System.out.println("Error loading sigar library" + ex.toString());
+                    String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                    System.out.println(msg + ex.toString());
                 } catch (Exception ex) {
-                    System.out.println("Error loading sigar library" + ex.toString());
+                    String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                    System.out.println(msg + ex.toString());
                 }
             }
         }
