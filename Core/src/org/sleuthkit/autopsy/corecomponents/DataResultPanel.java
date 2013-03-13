@@ -250,7 +250,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
         if (pcs == null) {
-            logger.log(Level.SEVERE, "Error adding listener, listener support not ready yet, listener: " + listener.toString());
+            logger.log(Level.WARNING, "Could not add listener to DataResultPanel, "
+                    + "listener support not fully initialized yet, listener: " + listener.toString() );
         }
         else {
             this.pcs.addPropertyChangeListener(listener);
