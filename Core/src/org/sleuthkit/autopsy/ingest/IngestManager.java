@@ -37,6 +37,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
@@ -828,7 +829,9 @@ public class IngestManager {
         @Override
         protected Object doInBackground() throws Exception {
 
-            logger.log(Level.INFO, "Starting background processing");
+            logger.log(Level.INFO, "Starting background ingest file processor");
+            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+            
             stats.start();
 
             //notify main thread modules started
@@ -925,6 +928,8 @@ public class IngestManager {
                         IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
                     }
                 }
+                
+                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
 
             } catch (CancellationException e) {
                 //task was cancelled
