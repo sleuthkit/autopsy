@@ -139,7 +139,7 @@
                 </Property>
               </Properties>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;&#xa;    public boolean getScrollableTracksViewportWidth() {&#xd;&#xa;    return (getSize().width &lt; 700);&#xd;&#xa;}};"/>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;     public boolean getScrollableTracksViewportWidth() {&#xd;     return (getSize().width &lt; 400);&#xd; }};"/>
                 <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white"/>
               </AuxValues>
             </Component>

@@ -118,6 +118,9 @@
             <Property name="editable" type="boolean" value="false"/>
             <Property name="autoscrolls" type="boolean" value="false"/>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;&#xa;    public boolean getScrollableTracksViewportWidth() {&#xd;&#xa;    return (getSize().width &lt; 400);&#xd;&#xa;}};"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>
