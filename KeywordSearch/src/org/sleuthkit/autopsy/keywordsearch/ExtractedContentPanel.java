@@ -186,8 +186,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
             rightClickMenu.add(selectAllMenuItem);
 
+            setPreferredSize(new java.awt.Dimension(700, 400));
+
+            jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
+            jScrollPane1.setPreferredSize(new java.awt.Dimension(700, 400));
+
             extractedTextPane.setEditable(false);
             extractedTextPane.setAutoscrolls(false);
+            extractedTextPane.setMaximumSize(new java.awt.Dimension(2000, 2000));
+            extractedTextPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(extractedTextPane);
 
             sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -296,7 +303,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addComponent(jScrollPane1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             );
             layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
