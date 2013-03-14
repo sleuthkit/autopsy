@@ -1053,8 +1053,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 logger.log(Level.INFO, "Beginning generation of timeline");
 
-                // if the timeline window is already open, do nothing
+                // if the timeline window is already open, bring to front and do nothing
                 if (mainFrame != null && mainFrame.isVisible()) {
+                    mainFrame.toFront();
                     return;
                 }
 
