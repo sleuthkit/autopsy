@@ -123,8 +123,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private JFXPanel fxPanelCharts;  //FX panel to hold the group
     private BarChart fxChartEvents;      //Yearly/Monthly events - Bar chart
     private ScrollPane fxScrollEvents;  //Scroll Panes for dealing with oversized an oversized chart
-    private static final int FRAME_HEIGHT = 600; //Sizing constants
-    private static final int FRAME_WIDTH = 1000;
+    private static final int FRAME_HEIGHT = 700; //Sizing constants
+    private static final int FRAME_WIDTH = 1024;
     private Button fxZoomOutButton;  //Navigation buttons
     private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart> fxStackPrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
@@ -209,7 +209,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     fxChartEvents = null;
                     fxPanelCharts = new JFXPanel();
                     fxGroupCharts = new Group();
-                    fxSceneCharts = new Scene(fxGroupCharts, FRAME_WIDTH, FRAME_HEIGHT * 1); //Width, Height
+                    fxSceneCharts = new Scene(fxGroupCharts, FRAME_WIDTH, FRAME_HEIGHT * 0.6); //Width, Height
                     fxVBox = new VBox(5);
                     fxVBox.setAlignment(Pos.BOTTOM_CENTER);
                     fxHBoxCharts = new HBox(10);
@@ -217,7 +217,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                     //Initializing default values for the scroll pane
                     fxScrollEvents = new ScrollPane();
-                    fxScrollEvents.setPrefSize(FRAME_WIDTH, FRAME_HEIGHT * 1); //Width, Height
+                    fxScrollEvents.setPrefSize(FRAME_WIDTH, FRAME_HEIGHT * 0.6); //Width, Height
                     fxScrollEvents.setContent(null); //Needs some content, otherwise it crashes
 
                     // set up moduleDir
@@ -300,15 +300,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
 
                     fxPanelCharts.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                           // mainFrame.setTopPanel(fxPanelCharts);
-                            //chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        }
-                    });
-
 
                     fxChartTopLevel = createYearChartWithDrill(data);
                     fxChartEvents = fxChartTopLevel;
