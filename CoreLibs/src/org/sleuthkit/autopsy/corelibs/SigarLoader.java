@@ -37,20 +37,22 @@ public class SigarLoader {
     }
 
     public static Sigar getSigar() {
-        synchronized (SigarLoader.class) {
-            if (sigar == null) {
-                try {
-                    //rely on netbeans / jna to locate the lib variation for architecture/OS
-                    System.loadLibrary("libsigar");
-                    sigar = new Sigar();
-                    sigar.enableLogging(false); //forces a test
+        if (sigar == null) {
+            synchronized (SigarLoader.class) {
+                if (sigar == null) {
+                    try {
+                        //rely on netbeans / jna to locate the lib variation for architecture/OS
+                        System.loadLibrary("libsigar");
+                        sigar = new Sigar();
+                        sigar.enableLogging(false); //forces a test
 
-                } catch (UnsatisfiedLinkError ex) {
-                    String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
-                    System.out.println(msg + ex.toString());
-                } catch (Exception ex) {
-                    String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
-                    System.out.println(msg + ex.toString());
+                    } catch (UnsatisfiedLinkError ex) {
+                        String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                        System.out.println(msg + ex.toString());
+                    } catch (Exception ex) {
+                        String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                        System.out.println(msg + ex.toString());
+                    }
                 }
             }
         }
