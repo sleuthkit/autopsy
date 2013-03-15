@@ -77,7 +77,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar",}; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz", }; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -362,16 +362,35 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
                 String extractedPath = item.getPath();
                 if (extractedPath == null || extractedPath.isEmpty() ) {
-                    //some formats (.tar.gz) may not be handled correctly
-                    //skip and report since we don't have a way of knowing what to do with the file,
-                    //and what file path to assume. As an alternative, we can extract the file using the 
-                    //item sequence number
-                    String details = "Unknown path/name of in-archive item.  Skipping in-archive item: " 
-                            + itemNumber + " for archive: " + archiveFile.getName();
-                    String msg = "Skipping extraction of unknown item in archive: " + archiveFile.getName();
+                    //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
+                    //handle this for .tar.gz and tgz but assuming the child is tar,
+                    //otherwise, unpack using itemNumber as name
+                    
+                    //TODO this should really be signature based, not extension based
+                    String archName = archiveFile.getName();
+                    int dotI = archName.lastIndexOf(".");
+                    String useName = null;
+                    if (dotI != -1 ) {
+                        String base = archName.substring(0, dotI);
+                        String ext = archName.substring(dotI);
+                        if (ext.equals(".gz") ) {
+                            useName = base;
+                        }
+                        else if (ext.equals(".tgz")) {
+                            useName = base + ".tar";
+                        }
+                    }
+                    
+                    if (useName == null) {
+                        extractedPath = "/" + archName + "/" + Integer.toString(itemNumber);
+                    }
+                    else {
+                        extractedPath = "/" + useName;
+                    }
+                    
+                    String msg = "Unknown item path in archive: " + archiveFile.getName() + ", will use: " + extractedPath;
                     logger.log(Level.WARNING, msg);
-                    services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
-                    continue;
+                    
                 }
                 ++itemNumber;
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
