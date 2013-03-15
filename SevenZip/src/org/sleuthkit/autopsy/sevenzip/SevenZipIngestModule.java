@@ -95,7 +95,6 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
     private static final int readHeaderSize = 4;
     private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
-    
 
     //private constructor to ensure singleton instance 
     private SevenZipIngestModule() {
@@ -251,7 +250,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             final long archiveItemSize = archiveFileItem.getSize();
 
             //logger.log(Level.INFO, "ARCHIVE ITEM:  " + archiveFileItem.getPath() + ", SIZE: " + archiveItemSize + " AR NAME: " + archiveName);
-            
+
             //skip the check for small files
             if (archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
                 return false;
@@ -277,7 +276,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                         + ", skipping processing of this archive item. ";
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
-                
+
                 return true;
             } else {
                 return false;
@@ -359,8 +358,22 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             long freeDiskSpace = services.getFreeDiskSpace();
 
             //unpack and process every item in archive
+            int itemNumber = 0;
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
-                final String extractedPath = item.getPath();
+                String extractedPath = item.getPath();
+                if (extractedPath == null || extractedPath.isEmpty() ) {
+                    //some formats (.tar.gz) may not be handled correctly
+                    //skip and report since we don't have a way of knowing what to do with the file,
+                    //and what file path to assume. As an alternative, we can extract the file using the 
+                    //item sequence number
+                    String details = "Unknown path/name of in-archive item.  Skipping in-archive item: " 
+                            + itemNumber + " for archive: " + archiveFile.getName();
+                    String msg = "Skipping extraction of unknown item in archive: " + archiveFile.getName();
+                    logger.log(Level.WARNING, msg);
+                    services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
+                    continue;
+                }
+                ++itemNumber;
                 logger.log(Level.INFO, "Extracted item path: " + extractedPath);
 
                 //check if possible zip bomb
@@ -370,6 +383,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
 
                 //find this node in the hierarchy, create if needed
                 UnpackedTree.Data uNode = uTree.find(extractedPath);
+
                 String fileName = uNode.getFileName();
 
                 //update progress bar
@@ -378,8 +392,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 if (compressMethod == null) {
                     compressMethod = item.getMethod();
                 }
-                final boolean isDir = item.isFolder();
+
                 final boolean isEncrypted = item.isEncrypted();
+                final boolean isDir = item.isFolder();
 
                 if (isEncrypted) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: " + extractedPath);
@@ -450,6 +465,9 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                     try {
                         unpackStream = new UnpackStream(localAbsPath);
                         item.extractSlow(unpackStream);
+                    } catch (Exception e) {
+                        //could be something unexpected with this file, move on
+                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e);
                     } finally {
                         if (unpackStream != null) {
                             unpackStream.close();
@@ -518,7 +536,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
             String msg = "Encrypted files in archive detected. ";
             String details = "Some files in archive: " + archiveFile.getName() + " are encrypted. "
                     + MODULE_NAME + " extractor was unable to extract all files from this archive.";
-           // MessageNotifyUtil.Notify.info(msg, details);
+            // MessageNotifyUtil.Notify.info(msg, details);
 
             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
         }
@@ -623,15 +641,16 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 return true;
             }
         }
-        
+
         //if no extension match, check for zip signature
         //(note, in near future, we will use pre-detected content type)
         return isZipFileHeader(file);
-        
+
     }
-    
+
     /**
      * Check if is zip file based on header
+     *
      * @param file
      * @return true if zip file, false otherwise
      */
@@ -639,7 +658,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         if (file.getSize() < readHeaderSize) {
             return false;
         }
-        
+
         int bytesRead = 0;
         try {
             bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
@@ -650,14 +669,13 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         if (bytesRead != readHeaderSize) {
             return false;
         }
-        
+
         ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
         int signature = bytes.getInt();
-        
+
         return signature == ZIP_SIGNATURE_BE;
-        
+
     }
-    
 
     /**
      * Stream used to unpack the archive to local file
@@ -986,8 +1004,7 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
                 if (parent != null) {
                     parent.children.add(this);
                     this.depth = parent.depth + 1;
-                }
-                else {
+                } else {
                     this.depth = 0;
                 }
             }
