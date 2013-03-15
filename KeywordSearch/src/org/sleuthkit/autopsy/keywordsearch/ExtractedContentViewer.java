@@ -257,7 +257,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public String getToolTip() {
-        return "Displays extracted text and keyword-search results.";
+        return "Displays extracted text from files and keyword-search results. Requires Keyword Search ingest to be run on a file to activate this viewer. ";
     }
 
     @Override

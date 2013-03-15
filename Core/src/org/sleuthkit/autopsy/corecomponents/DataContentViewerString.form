@@ -88,7 +88,6 @@
                   <Component id="languageLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="languageCombo" min="-2" pref="155" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
               </Group>
               <Component id="jScrollPane1" alignment="0" pref="0" max="32767" attributes="0"/>
           </Group>
@@ -134,6 +133,9 @@
                   <Dimension value="[700, 400]"/>
                 </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;     public boolean getScrollableTracksViewportWidth() {&#xd;     return (getSize().width &lt; 400);&#xd; }};"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>

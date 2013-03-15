@@ -124,7 +124,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private BarChart fxChartEvents;      //Yearly/Monthly events - Bar chart
     private ScrollPane fxScrollEvents;  //Scroll Panes for dealing with oversized an oversized chart
     private static final int FRAME_HEIGHT = 700; //Sizing constants
-    private static final int FRAME_WIDTH = 1024;
+    private static final int FRAME_WIDTH = 1200;
     private Button fxZoomOutButton;  //Navigation buttons
     private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart> fxStackPrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
@@ -206,7 +206,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
                     progress.start();
 
-                    fxChartEvents = null;
+                    fxChartEvents = null; //important to reset old data
                     fxPanelCharts = new JFXPanel();
                     fxGroupCharts = new Group();
                     fxSceneCharts = new Scene(fxGroupCharts, FRAME_WIDTH, FRAME_HEIGHT * 0.6); //Width, Height
@@ -1053,8 +1053,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 logger.log(Level.INFO, "Beginning generation of timeline");
 
-                // if the timeline window is already open, do nothing
+                // if the timeline window is already open, bring to front and do nothing
                 if (mainFrame != null && mainFrame.isVisible()) {
+                    mainFrame.toFront();
                     return;
                 }
 

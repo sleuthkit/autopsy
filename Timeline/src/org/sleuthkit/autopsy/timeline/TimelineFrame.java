@@ -55,27 +55,27 @@ public class TimelineFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(TimelineFrame.class, "TimelineFrame.title")); // NOI18N
-        setPreferredSize(new java.awt.Dimension(1024, 700));
+        setPreferredSize(new java.awt.Dimension(1200, 700));
 
         splitYPane.setDividerLocation(420);
         splitYPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitYPane.setResizeWeight(0.5);
         splitYPane.setPreferredSize(new java.awt.Dimension(1024, 400));
 
-        topPane.setPreferredSize(new java.awt.Dimension(1024, 400));
+        topPane.setPreferredSize(new java.awt.Dimension(1200, 400));
         topPane.setLayout(new java.awt.BorderLayout());
         splitYPane.setLeftComponent(topPane);
 
-        splitXPane.setDividerLocation(500);
+        splitXPane.setDividerLocation(600);
         splitXPane.setResizeWeight(0.5);
-        splitXPane.setPreferredSize(new java.awt.Dimension(1024, 300));
+        splitXPane.setPreferredSize(new java.awt.Dimension(1200, 300));
         splitXPane.setRequestFocusEnabled(false);
 
-        leftPane.setPreferredSize(new java.awt.Dimension(550, 300));
+        leftPane.setPreferredSize(new java.awt.Dimension(700, 300));
         leftPane.setLayout(new java.awt.BorderLayout());
         splitXPane.setLeftComponent(leftPane);
 
-        rightPane.setPreferredSize(new java.awt.Dimension(450, 300));
+        rightPane.setPreferredSize(new java.awt.Dimension(500, 300));
         rightPane.setLayout(new java.awt.BorderLayout());
         splitXPane.setRightComponent(rightPane);
 
