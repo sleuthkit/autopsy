@@ -816,9 +816,12 @@ public class IngestManager {
         }
     }
 
-//ingester worker for AbstractFile queue
-//worker runs until AbstractFile queue is consumed
-//and if needed, new instance is created and started when data arrives
+    
+    /**
+     * File ingest pipeline processor.
+     * Worker runs until AbstractFile queue is consumed
+     * New instance is created and started when data arrives and previous pipeline completed.
+     */
     private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
         private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
@@ -929,6 +932,10 @@ public class IngestManager {
                     }
                 }
                 
+                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+                logger.log(Level.INFO, "Freeing resources post file pipeline run");
+                System.gc();
+                System.gc();
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
 
             } catch (CancellationException e) {
