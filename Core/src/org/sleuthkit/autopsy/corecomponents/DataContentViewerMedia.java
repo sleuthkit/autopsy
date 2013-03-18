@@ -46,16 +46,15 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * Media content viewer for videos, sounds and images.
- * Using gstreamer.
+ * Media content viewer for videos, sounds and images. Using gstreamer.
  */
-@ServiceProviders(value={
+@ServiceProviders(value = {
     @ServiceProvider(service = DataContentViewer.class, position = 5),
     @ServiceProvider(service = FrameCapture.class)
 })
@@ -76,6 +75,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
     private BufferedImage currentImage = null;
+    private boolean gstInited = false;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -86,7 +86,25 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void customizeComponents() {
-        Gst.init();
+        try {
+            Gst.init();
+            gstInited = true;
+        } catch (GstException e) {
+            gstInited = false;
+            logger.log(Level.SEVERE, "Error initializing gstreamer for Media Viewing and frame extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for Media Viewing and frame extraction capabilities. "
+                         + " Media View will be disabled. ",
+                    e.getMessage());
+            return;
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
+            gstInited = false;
+            logger.log(Level.SEVERE, "Error initializing gstreamer for Media Viewing and extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for Media View and frame extraction capabilities. "
+                    + " Media View will be disabled. ",
+                    e.getMessage());
+            return;
+        }
+
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.addChangeListener(new ChangeListener() {
             /**
@@ -200,12 +218,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
+        if (!gstInited) {
+            return;
+        }
+
         reset();
         setComponentsVisibility(false);
         if (selectedNode == null) {
             return;
         }
-        
+
         // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
@@ -341,6 +363,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 progressLabel.setText("");
             }
         });
+
+
+        if (!gstInited) {
+            return;
+        }
+
         synchronized (playbinLock) {
             if (playbin2 != null) {
                 if (playbin2.isPlaying()) {
@@ -358,6 +386,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public boolean isSupported(Node node) {
+        if (!gstInited) {
+            return false;
+        }
         if (node == null) {
             return false;
         }
@@ -369,7 +400,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         //try displaying deleted files if we can read them
         //if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-          //  return false;
+        //  return false;
         //}
 
         if (file.getSize() == 0) {
@@ -379,10 +410,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         String name = file.getName().toLowerCase();
 
         boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-        
-        if (containsExt(name, IMAGES) 
-                || containsExt(name, AUDIOS) 
-                || (!deleted && containsExt(name, VIDEOS) ) ) {
+
+        if (containsExt(name, IMAGES)
+                || containsExt(name, AUDIOS)
+                || (!deleted && containsExt(name, VIDEOS))) {
             return true;
         }
 
@@ -424,9 +455,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
-        
+
         List<VideoFrame> frames = new ArrayList<>();
-        
+
+        if (!gstInited) {
+            return frames;
+        }
+
         RGBDataSink.Listener listener1 = new RGBDataSink.Listener() {
             @Override
             public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
@@ -442,12 +477,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
-        
+
         // this is necessary to get a valid duration value
         playbin.play();
         playbin.pause();
         playbin.getState();
-        
+
         // get the duration of the video
         TimeUnit unit = TimeUnit.MILLISECONDS;
         long myDurationMillis = playbin.queryDuration(unit);
@@ -457,14 +492,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         // create a list of timestamps at which to get frames
         int numFramesToGet = numFrames;
-        long frameInterval = myDurationMillis/numFrames;
+        long frameInterval = myDurationMillis / numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
             numFramesToGet = 1;
         }
 
         // for each timeStamp, grap a frame
         for (int i = 0; i < numFramesToGet; ++i) {
-            long timeStamp = i*frameInterval;
+            long timeStamp = i * frameInterval;
 
             playbin.pause();
             playbin.getState();
@@ -474,16 +509,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
             playbin.play();
-            
+
             while (currentImage == null) {
                 System.out.flush(); // not sure why this is needed
             }
-            
+
             playbin.stop();
-            
+
             frames.add(new VideoFrame(currentImage, timeStamp));
         }
-        
+
         return frames;
     }
 
@@ -506,8 +541,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         public long getExtractedBytes() {
             return extractedBytes;
         }
-        
-        
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -563,15 +596,15 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             }
             duration = dur.toString();
             durationMillis = dur.toMillis();
-            
+
             // pick out the total hours, minutes, seconds
-            long durationSeconds = (int)durationMillis / 1000;
+            long durationSeconds = (int) durationMillis / 1000;
             totalHours = (int) durationSeconds / 3600;
             durationSeconds -= totalHours * 3600;
             totalMinutes = (int) durationSeconds / 60;
             durationSeconds -= totalMinutes * 60;
             totalSeconds = (int) durationSeconds;
-            
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -588,9 +621,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             });
         }
     }
-    
+
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
-        
+
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
         private long millisElapsed = 0;
         private final long INTER_FRAME_PERIOD_MS = 20;
@@ -601,7 +634,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 return playbin2 != null && !playbin2.getState().equals(State.NULL);
             }
         }
-        
+
         public void resetVideo() {
             synchronized (playbinLock) {
                 if (playbin2 != null) {
@@ -611,17 +644,17 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             }
             pauseButton.setText("►");
             progressSlider.setValue(0);
-            
+
             String durationStr = String.format(durationFormat, 0, 0, 0,
-                        totalHours, totalMinutes, totalSeconds);
+                    totalHours, totalMinutes, totalSeconds);
             progressLabel.setText(durationStr);
         }
-        
+
         /**
          * @return true while millisElapsed is greater than END_TIME_MARGIN_MS
-         * from durationMillis. This is used to indicate when the video has ended
-         * because for some videos the time elapsed never becomes equal to the
-         * reported duration of the video.
+         * from durationMillis. This is used to indicate when the video has
+         * ended because for some videos the time elapsed never becomes equal to
+         * the reported duration of the video.
          */
         private boolean hasNotEnded() {
             return (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
@@ -629,14 +662,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         @Override
         protected Object doInBackground() throws Exception {
-            
+
             // enable the slider
             progressSlider.setEnabled(true);
 
             int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
             ClockTime pos = null;
             while (hasNotEnded() && isPlayBinReady() && !isCancelled()) {
-                
+
                 synchronized (playbinLock) {
                     pos = playbin2.queryPosition();
                 }
