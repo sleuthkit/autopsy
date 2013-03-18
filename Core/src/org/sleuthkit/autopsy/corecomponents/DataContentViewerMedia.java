@@ -242,6 +242,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         videoComponent = new VideoComponent();
         synchronized (playbinLock) {
+            if (playbin2 != null) {
+                playbin2.dispose();
+            }
             playbin2 = new PlayBin2("ImageViewer");
             playbin2.setVideoSink(videoComponent.getElement());
         }
@@ -272,6 +275,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         videoComponent = new VideoComponent();
         synchronized (playbinLock) {
+            if (playbin2 != null) {
+                playbin2.dispose();
+            }
             playbin2 = new PlayBin2("VideoPlayer");
             playbin2.setVideoSink(videoComponent.getElement());
         }
