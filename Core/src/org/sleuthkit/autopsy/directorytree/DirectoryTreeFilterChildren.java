@@ -48,7 +48,6 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     private final ShowItemVisitor showItemV = new ShowItemVisitor();
     private final IsLeafItemVisitor isLeafItemV = new IsLeafItemVisitor();
-    
     private final static Logger logger = Logger.getLogger(DirectoryTreeFilterChildren.class.getName());
 
     /**
@@ -104,8 +103,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                         && !((Directory) c).getName().equals(".."))) {
                     ret = false;
                     break;
-                }
-                else if (c.hasChildren() ) {
+                } else if (c.hasChildren()) {
                     //fie has children, such as derived files
                     ret = false;
                     break;
@@ -188,6 +186,15 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 if (((AbstractFile) childContent).isDir()) {
                     return false;
                 }
+                else {
+                    try {
+                        if (childContent.hasChildren()) {
+                            return false;
+                        }
+                    } catch (TskCoreException e) {
+                        logger.log(Level.SEVERE, "Error checking if file node is leaf.", e);
+                    }
+                }
             }
             return true;
         }
@@ -204,14 +211,12 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             for (Content childContent : derivedChildren) {
                 if (((AbstractFile) childContent).isDir()) {
                     return false;
-                }
-                else {
+                } else {
                     try {
-                    if (childContent.hasChildren()) {
-                        return false;
-                    }
-                    }
-                    catch (TskCoreException e) {
+                        if (childContent.hasChildren()) {
+                            return false;
+                        }
+                    } catch (TskCoreException e) {
                         logger.log(Level.SEVERE, "Error checking if derived file node is leaf.", e);
                     }
                 }
