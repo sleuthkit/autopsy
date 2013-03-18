@@ -60,10 +60,6 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
 
-    private enum COLUMN {
-
-        SUBJECT, COUNT, MODULE
-    };
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
     static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
 
@@ -233,7 +229,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getParent().setBackground(messageTable.getBackground());
 
         renderer = new MessageTableRenderer();
-        for (int i = 0; i < 3; i++) {
+        int numCols = messageTable.getColumnCount();
+        for (int i = 0; i < numCols; ++i) {
             TableColumn column = messageTable.getColumnModel().getColumn(i);
             //column.setCellRenderer(new MessageTableRenderer());
             column.setCellRenderer(renderer);
@@ -253,15 +250,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     void setTableSize(Dimension d) {
-        for (int i = 0; i < 3; ++i) {
-            TableColumn column = messageTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column.setPreferredWidth(((int) (d.width * 0.23)));
-            } else if (i == 1) {
-                column.setPreferredWidth(((int) (d.width * 0.09)));
-            } else {
-                column.setPreferredWidth(((int) (d.width * 0.67)));
-            }
+        double[] columnWidths = new double[]{0.20, 0.1, 0.45, 0.25};
+        int numCols = messageTable.getColumnCount();
+        for (int i = 0; i < numCols; ++i) {
+            messageTable.getColumnModel().getColumn(i).setPreferredWidth((int)(d.width * columnWidths[i]));
         }
     }
 
@@ -319,6 +311,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private class MessageTableModel extends AbstractTableModel {
         //data
 
+        private String[] columnNames = new String[]{"Module", "Num", "Subject", "Timestamp"};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
         private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
@@ -343,7 +336,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public int getColumnCount() {
-            return 3;
+            return columnNames.length;
         }
 
         @Override
@@ -385,23 +378,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public String getColumnName(int column) {
-            String colName = null;
-
-            switch (column) {
-                case 0:
-                    colName = "Module";
-                    break;
-                case 1:
-                    colName = "Num";
-                    break;
-                case 2:
-                    colName = "Subject";
-                    break;
-                default:
-                    ;
-
-            }
-            return colName;
+            return columnNames[column];
         }
 
         @Override
@@ -432,6 +409,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 case 2:
                     ret = (Object) entry.messageGroup.getSubject();
                     break;
+                case 3:
+                    ret = entry.messageGroup.getDatePosted();
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
                     break;
