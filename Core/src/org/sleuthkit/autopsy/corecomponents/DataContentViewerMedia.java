@@ -372,7 +372,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         String name = file.getName().toLowerCase();
 
-        if (containsExt(name, IMAGES) || containsExt(name, AUDIOS) || containsExt(name, VIDEOS)) {
+        boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+        
+        if (containsExt(name, IMAGES) 
+                || containsExt(name, AUDIOS) 
+                || (!deleted && containsExt(name, VIDEOS) ) ) {
             return true;
         }
 
