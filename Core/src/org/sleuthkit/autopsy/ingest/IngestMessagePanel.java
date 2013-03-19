@@ -41,6 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.apache.log4j.lf5.LogLevel;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -69,6 +70,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         tableModel = new MessageTableModel();
         initComponents();
         customizeComponents();
+    }
+    
+    public void markAllSeen() {
+        tableModel.markAllSeen();
     }
 
     int getLastRowSelected() {
@@ -230,7 +235,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         renderer = new MessageTableRenderer();
         int numCols = messageTable.getColumnCount();
-        for (int i = 0; i < numCols; ++i) {
+        
+        // add the cell renderer to all columns except the last one (New?)
+        for (int i = 0; i < numCols - 1; ++i) {
             TableColumn column = messageTable.getColumnModel().getColumn(i);
             //column.setCellRenderer(new MessageTableRenderer());
             column.setCellRenderer(renderer);
@@ -250,7 +257,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     void setTableSize(Dimension d) {
-        double[] columnWidths = new double[]{0.20, 0.1, 0.45, 0.25};
+        double[] columnWidths = new double[]{0.20, 0.08, 0.39, 0.25, 0.08};
         int numCols = messageTable.getColumnCount();
         for (int i = 0; i < numCols; ++i) {
             messageTable.getColumnModel().getColumn(i).setPreferredWidth((int)(d.width * columnWidths[i]));
@@ -309,9 +316,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     private class MessageTableModel extends AbstractTableModel {
-        //data
 
-        private String[] columnNames = new String[]{"Module", "Num", "Subject", "Timestamp"};
+        private String[] columnNames = new String[]{"Module", "Num", "Subject", "Timestamp", "New?"};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
         private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
@@ -338,10 +344,16 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public int getColumnCount() {
             return columnNames.length;
         }
-
+        
         @Override
         synchronized public int getRowCount() {
             return getNumberGroups();
+        }
+        
+        public void markAllSeen() {
+            for (TableEntry entry : messageData) {
+                entry.hasBeenSeen(true);
+            }
         }
 
         synchronized int getNumberGroups() {
@@ -351,7 +363,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
-                total += e.messageGroup.count;
+                total += e.messageGroup.getCount();
             }
             return total;
         }
@@ -359,8 +371,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberUnreadMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
-                    total += e.messageGroup.count;
+                if (!e.hasBeenVisited) {
+                    total += e.messageGroup.getCount();
                 }
             }
             return total;
@@ -369,7 +381,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberUnreadGroups() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
+                if (!e.hasBeenVisited) {
                     ++total;
                 }
             }
@@ -386,7 +398,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             Object ret = null;
 
             int numMessages = messageData.size();
-            if (rowIndex > messageData.size() -1) {
+            if (rowIndex > messageData.size() - 1 ||
+                    columnIndex > columnNames.length - 1) {
                 //temporary check if the rare case still occurrs
                 //#messages is now lower after last regrouping, and gui event thinks it's not
                 logger.log(Level.WARNING, "Requested inbox message at" + rowIndex, ", only have " + numMessages);
@@ -397,20 +410,20 @@ class IngestMessagePanel extends javax.swing.JPanel {
             switch (columnIndex) {
                 case 0:
                     Object module = entry.messageGroup.getSource();
-                    if (module == null) {
-                        ret = "";
-                    } else {
-                        ret = (Object) entry.messageGroup.getSource().getName();
-                    }
+                    ret = module == null ? "" : entry.messageGroup.getSource().getName();
                     break;
                 case 1:
-                    ret = (Object) entry.messageGroup.getCount();
+                    ret = entry.messageGroup.getCount();
                     break;
                 case 2:
-                    ret = (Object) entry.messageGroup.getSubject();
+                    ret = entry.messageGroup.getSubject();
                     break;
                 case 3:
                     ret = entry.messageGroup.getDatePosted();
+                    break;
+                case 4:
+                    ret = !entry.hasBeenSeen();
+                    break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
                     break;
@@ -539,7 +552,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         public synchronized void setVisited(int rowNumber) {
-            messageData.get(rowNumber).visited = true;
+            messageData.get(rowNumber).hasBeenVisited(true);
             //repaint the cell 
             fireTableCellUpdated(rowNumber, 2);
         }
@@ -547,8 +560,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public synchronized void setVisitedAll() {
             int row = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
-                    e.visited = true;
+                if (!e.hasBeenVisited) {
+                    e.hasBeenVisited(true);
                     fireTableCellUpdated(row, 2);
                 }
                 ++row;
@@ -556,7 +569,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         public synchronized boolean isVisited(int rowNumber) {
-            return messageData.get(rowNumber).visited;
+            return messageData.get(rowNumber).hasBeenVisited();
         }
 
         public synchronized MessageType getMessageType(int rowNumber) {
@@ -580,11 +593,27 @@ class IngestMessagePanel extends javax.swing.JPanel {
         class TableEntry implements Comparable<TableEntry> {
 
             IngestMessageGroup messageGroup;
-            boolean visited;
+            boolean hasBeenVisited = false;
+            boolean hasBeenSeen = false;
+
+            public boolean hasBeenVisited() {
+                return hasBeenVisited;
+            }
+            
+            public void hasBeenVisited(boolean visited) {
+                hasBeenVisited = visited;
+            }
+
+            public boolean hasBeenSeen() {
+                return hasBeenSeen;
+            }
+            
+            public void hasBeenSeen(boolean seen) {
+                hasBeenSeen = seen;
+            }
 
             TableEntry(IngestMessageGroup messageGroup) {
                 this.messageGroup = messageGroup;
-                visited = false;
             }
 
             @Override
@@ -592,7 +621,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 if (chronoSort == true) {
                     return this.messageGroup.getDatePosted().compareTo(o.messageGroup.getDatePosted());
                 } else {
-                    return messageGroup.count - o.messageGroup.count;
+                    return messageGroup.getCount() - o.messageGroup.getCount();
                 }
             }
         }
@@ -607,12 +636,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         static final Color MED_PRI_COLOR = new Color(199, 199, 222);
         static final Color LOW_PRI_COLOR = new Color(221, 221, 235);
         private List<IngestMessage> messages;
-        private int count;
 
         IngestMessageGroup(IngestMessage message) {
             messages = new ArrayList<IngestMessage>();
             messages.add(message);
-            count = 1;
         }
 
         List<IngestMessage> getMessages() {
@@ -620,39 +647,18 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         void add(IngestMessage message) {
-
-            IngestMessage first = messages.get(0);
-            //make sure uniqness agrees
-            /*
-            if (!message.getSource().equals(first.getSource())
-            || !message.getUniqueKey().equals(first.getUniqueKey())) {
-            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            } */
-
             messages.add(message);
-            ++count;
         }
 
         //add all messages from another group
         void addAll(IngestMessageGroup group) {
-
-            //IngestMessage first = messages.get(0);
-            //IngestMessage firstG = group.messages.get(0);
-            //make sure uniqness agrees
-            /*
-            if (!firstG.getSource().equals(first.getSource())
-            || !firstG.getUniqueKey().equals(first.getUniqueKey())) {
-            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            } */
-
             for (IngestMessage m : group.getMessages()) {
                 messages.add(m);
-                ++count;
             }
         }
 
         int getCount() {
-            return count;
+            return messages.size();
         }
 
         String getDetails() {
@@ -675,6 +681,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
          * @return 
          */
         Color getColor() {
+            int count = messages.size();
             if (count == 1) {
                 return VERY_HIGH_PRI_COLOR;
             } else if (count < 5) {
@@ -693,7 +700,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
          * @return 
          */
         Date getDatePosted() {
-            return messages.get(count - 1).getDatePosted();
+            return messages.get(messages.size() - 1).getDatePosted();
         }
 
         /**
