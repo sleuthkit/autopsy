@@ -15,6 +15,7 @@ Bugfixes:
 - fixed directory tree history being reset when tree is refreshed.
 - exif module better jpeg detection using signature and not only file extension.
 - The "media view" tab is inactive for deleted files (#165)
+- improved image loading in Media View and Thumbnail View (faster loading, handles large files better)
 
 ---------------- VERSION 3.0.4 --------------
 
