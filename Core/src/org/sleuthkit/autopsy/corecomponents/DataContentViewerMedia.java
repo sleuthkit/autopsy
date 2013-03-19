@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -54,10 +55,12 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -303,31 +306,29 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             public void run() {
                 Dimension dims = DataContentViewerMedia.this.getSize();
                 
-                //reading all bytes first, then passing to byte array input stream
-                //becase otherwise does not work for png for some reason
-                //and we need to load all bytes anyways before scaling
-                long fileSize = file.getSize();
-                byte[] imageBytes = new byte[(int)fileSize];
-                
                 final InputStream inputStream = new ReadContentInputStream(file);
+
+                final Image fxImage;
                 try {
-                    inputStream.read(imageBytes, 0, imageBytes.length);
+                    //original input stream
+                    BufferedImage bi = ImageIO.read(inputStream);
+                    //scale image using Scalr
+                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int)dims.getWidth(), (int)dims.getHeight());
+                    //convert from awt imageto fx image
+                    fxImage = SwingFXUtils.toFXImage(biScaled, null);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex);
-                    //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName() + ", " + ex.getMessage());
                     return;
                 }
-               
-                final InputStream byteInputStream = new ByteArrayInputStream(imageBytes);
-                
-                //scaled down the image while loading to save memory
-                final Image fxImage;
-                if (fileName.toLowerCase().endsWith(".bmp")) {
-                    //bmp does not work with scaling
-                    fxImage = new Image(byteInputStream);
+                catch (OutOfMemoryError ex) {
+                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex);
+                    MessageNotifyUtil.Notify.warn("Could not load image file (too large): " +  file.getName(), ex.getMessage());
+                    return;
                 }
-                else {
-                    fxImage = new Image(byteInputStream, dims.getWidth(), dims.getHeight(), true, true);
+                
+                if (fxImage == null) {
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                    return;
                 }
 
                 // simple displays ImageView the image as is

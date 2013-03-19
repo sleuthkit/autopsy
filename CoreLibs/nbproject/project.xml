@@ -661,6 +661,7 @@
                 <package>org.hyperic.sigar.util</package>
                 <package>org.hyperic.sigar.vmware</package>
                 <package>org.hyperic.sigar.win32</package>
+                <package>org.imgscalr</package>
                 <package>org.jbundle.thin.base.screen.jcalendarbutton</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
@@ -775,6 +776,10 @@
                 <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
             </class-path-extension>
@@ -785,6 +790,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/reflections-0.9.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/reflections-0.9.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/imgscalr-lib-4.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
@@ -859,6 +872,10 @@
                 <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
             </class-path-extension>
@@ -869,6 +886,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
