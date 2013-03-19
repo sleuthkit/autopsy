@@ -122,7 +122,11 @@ class ThumbnailViewNode extends FilterNode {
             BufferedImage bi = ImageIO.read(inputStream);
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, 100, 100);
             return biScaled;
-        } catch (Exception e) {
+        }catch (OutOfMemoryError e) {
+            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e);
+            return null;
+        } 
+        catch (Exception e) {
             logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
             return null;
         } finally {
