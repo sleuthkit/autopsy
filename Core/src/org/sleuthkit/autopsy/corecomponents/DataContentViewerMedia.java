@@ -242,6 +242,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     @Override
     public void setNode(Node selectedNode) {
 
+        if (selectedNode == null) {
+            return;
+        }
+        
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return;
@@ -255,10 +259,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         reset();
         setComponentsVisibility(false);
-        if (selectedNode == null) {
-            return;
-        }
-
+        
         // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
