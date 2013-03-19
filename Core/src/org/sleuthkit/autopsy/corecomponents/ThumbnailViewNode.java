@@ -26,6 +26,7 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
@@ -35,32 +36,39 @@ import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node that wraps around original node and adds the bitmap icon representing the picture
+ * Node that wraps around original node and adds the bitmap icon representing
+ * the picture
  */
 class ThumbnailViewNode extends FilterNode {
 
     private SoftReference<Image> iconCache;
-    
     private static final Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
+    private static final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
+    //private final BufferedImage defaultIconBI;
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     ThumbnailViewNode(Node arg) {
         super(arg, Children.LEAF);
     }
 
     @Override
-    public String getDisplayName(){
-        if(super.getDisplayName().length() > 15)
+    public String getDisplayName() {
+        if (super.getDisplayName().length() > 15) {
             return super.getDisplayName().substring(0, 15).concat("...");
-        else
+        } else {
             return super.getDisplayName();
+        }
     }
-    
+
     @Override
     public Image getIcon(int type) {
         Image icon = null;
@@ -68,12 +76,11 @@ class ThumbnailViewNode extends FilterNode {
         if (iconCache != null) {
             icon = iconCache.get();
         }
-        
-        
-        
+
+
         if (icon == null) {
             Content content = this.getLookup().lookup(Content.class);
-            
+
             if (content != null) {
                 if (getFile(content.getId()).exists()) {
                     try {
@@ -84,85 +91,44 @@ class ThumbnailViewNode extends FilterNode {
                 } else {
                     try {
                         icon = generateIcon(content);
-                        ImageIO.write(toBufferedImage(icon), "jpg", getFile(content.getId()));
-                    } catch (TskException ex) {
-                        icon = ThumbnailViewNode.defaultIcon;
+                        if (icon == null) {
+                            icon = ThumbnailViewNode.defaultIcon;
+                        }
+                        else {
+                            ImageIO.write((BufferedImage) icon, "jpg", getFile(content.getId()));
+                        }
                     } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
                     }
                 }
             } else {
                 icon = ThumbnailViewNode.defaultIcon;
             }
-            
+
             iconCache = new SoftReference<Image>(icon);
         }
 
         return icon;
     }
 
-    static private Image generateIcon(Content content) throws TskException {
-        byte[] data = new byte[(int)content.getSize()];
-        int bytesRead = content.read(data, 0, content.getSize());
-        
-        if (bytesRead < 1)
+    /*
+     * Generate a scaled image
+     */
+    static private BufferedImage generateIcon(Content content) {
+
+        try {
+            final InputStream inputStream = new ReadContentInputStream(content);
+            BufferedImage bi = ImageIO.read(inputStream);
+
+            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, 100, 100);
+            return biScaled;
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
             return null;
-        
-        Image result = Toolkit.getDefaultToolkit().createImage(data);
-
-        // scale the image
-        MediaTracker mTracker = new MediaTracker(new JFrame());
-        mTracker.addImage(result, 1);
-        try {
-            mTracker.waitForID(1);
-        } catch (InterruptedException ex) {
-            // TODO: maybe make bubble instead
-            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.WARNING, "Error while trying to scale the icon.", ex);
         }
-        int width = result.getWidth(null);
-        int height = result.getHeight(null);
-
-        int max = Math.max(width, height);
-        double scale = (75 * 100) / max;
-
-        // getScaledInstance can't take have width or height be 0, so round
-        // up by adding 1 after truncating to int.
-        width = (int) ((width * scale) / 100) + 1;
-        height = (int) ((height * scale) / 100) + 1;
-
-        result = result.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-
-        // load the image completely
-        mTracker.addImage(result, 1);
-        try {
-            mTracker.waitForID(1);
-        } catch (InterruptedException ex) {
-            // TODO: maybe make bubble instead
-            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.WARNING, "Error while trying to load the icon.", ex);
-        }
-
-        // create 75x75 image for the icon with the icon on the center
-        BufferedImage combined = new BufferedImage(75, 75, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = (Graphics2D) combined.getGraphics();
-        g.setColor(Color.WHITE);
-        g.setBackground(Color.WHITE);
-        g.drawImage(result, (75 - width) / 2, (75 - height) / 2, null);
-
-        return Toolkit.getDefaultToolkit().createImage(combined.getSource());
     }
 
-    private static BufferedImage toBufferedImage(Image src) {
-        int w = src.getWidth(null);
-        int h = src.getHeight(null);
-        int type = BufferedImage.TYPE_INT_RGB;  // other options
-        BufferedImage dest = new BufferedImage(w, h, type);
-        Graphics2D g2 = dest.createGraphics();
-        g2.drawImage(src, 0, 0, null);
-        g2.dispose();
-        return dest;
-    }
-    
     private static File getFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
     }
-    
 }

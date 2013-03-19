@@ -30,11 +30,11 @@ import org.imgscalr.Scalr.Method;
 public class ScalrWrapper {
 
     public static synchronized BufferedImage resize(BufferedImage input, int width, int height) {
-        return Scalr.resize(input, width, height);
+        return Scalr.resize(input, width, height, Scalr.OP_ANTIALIAS);
     }
 
     public static synchronized BufferedImage resize(BufferedImage input, int size) {
-        return Scalr.resize(input, size);
+        return Scalr.resize(input, size, Scalr.OP_ANTIALIAS);
     }
 
     public static synchronized BufferedImage resizeHighQuality(BufferedImage input, int width, int height) {
@@ -42,6 +42,10 @@ public class ScalrWrapper {
     }
 
     public static synchronized BufferedImage resizeFast(BufferedImage input, int size) {
-        return Scalr.resize(input, Method.SPEED, size, Scalr.OP_ANTIALIAS);
+        return Scalr.resize(input, Method.SPEED, Scalr.Mode.FIT_TO_WIDTH, size, Scalr.OP_ANTIALIAS);
+    }
+    
+     public static synchronized BufferedImage resizeFast(BufferedImage input, int width, int height) {
+        return Scalr.resize(input, Method.SPEED, Scalr.Mode.AUTOMATIC, width, height, Scalr.OP_ANTIALIAS);
     }
 }
