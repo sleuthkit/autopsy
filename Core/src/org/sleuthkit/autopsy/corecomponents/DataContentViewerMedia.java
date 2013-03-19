@@ -325,6 +325,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     MessageNotifyUtil.Notify.warn("Could not load image file (too large): " +  file.getName(), ex.getMessage());
                     return;
                 }
+                finally {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex);
+                    }
+                }
                 
                 if (fxImage == null) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);

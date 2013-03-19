@@ -35,6 +35,7 @@ import javax.swing.JFrame;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -93,8 +94,7 @@ class ThumbnailViewNode extends FilterNode {
                         icon = generateIcon(content);
                         if (icon == null) {
                             icon = ThumbnailViewNode.defaultIcon;
-                        }
-                        else {
+                        } else {
                             ImageIO.write((BufferedImage) icon, "jpg", getFile(content.getId()));
                         }
                     } catch (IOException ex) {
@@ -116,15 +116,24 @@ class ThumbnailViewNode extends FilterNode {
      */
     static private BufferedImage generateIcon(Content content) {
 
+        InputStream inputStream = null;
         try {
-            final InputStream inputStream = new ReadContentInputStream(content);
+            inputStream = new ReadContentInputStream(content);
             BufferedImage bi = ImageIO.read(inputStream);
-
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, 100, 100);
             return biScaled;
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
             return null;
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex);
+                }
+            }
+
         }
     }
 
