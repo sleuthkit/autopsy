@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.IntBuffer;
@@ -38,6 +39,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.SwingUtilities;
@@ -71,7 +73,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer, FrameCapture {
 
-    private static final String[] IMAGES = new String[]{".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
+    private String[] IMAGES; // use javafx supported 
     private static final String[] VIDEOS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg"};
     private static final String[] AUDIOS = new String[]{".mp3", ".wav", ".wma"};
     private static final int NUM_FRAMES = 12;
@@ -106,7 +108,18 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 logger.log(Level.INFO, "Initializing JavaFX for image viewing");
             }
         });
-
+        logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
+        
+        //initialize supported image types
+        //TODO use mime-types instead once we have support
+        String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
+        IMAGES = new String[fxSupportedImagesSuffixes.length];
+        for (int i=0; i<fxSupportedImagesSuffixes.length; ++i) {
+            String suffix = fxSupportedImagesSuffixes[i];
+            logger.log(Level.INFO, "suffix: " + suffix);
+            IMAGES[i] = "." + suffix;
+        }
+        
         try {
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing");
             Gst.init();
@@ -281,17 +294,41 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      *
      * @param file
      */
-    private void showImageFx(AbstractFile file) {
-
-        final InputStream inputStream = new ReadContentInputStream(file);
-
+    private void showImageFx(final AbstractFile file) {
+        final String fileName = file.getName();
+        
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
-                Image fxImage = new Image(inputStream);
-
                 Dimension dims = DataContentViewerMedia.this.getSize();
+                
+                //reading all bytes first, then passing to byte array input stream
+                //becase otherwise does not work for png for some reason
+                //and we need to load all bytes anyways before scaling
+                long fileSize = file.getSize();
+                byte[] imageBytes = new byte[(int)fileSize];
+                
+                final InputStream inputStream = new ReadContentInputStream(file);
+                try {
+                    inputStream.read(imageBytes, 0, imageBytes.length);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex);
+                    //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName() + ", " + ex.getMessage());
+                    return;
+                }
+               
+                final InputStream byteInputStream = new ByteArrayInputStream(imageBytes);
+                
+                //scaled down the image while loading to save memory
+                final Image fxImage;
+                if (fileName.toLowerCase().endsWith(".bmp")) {
+                    //bmp does not work with scaling
+                    fxImage = new Image(byteInputStream);
+                }
+                else {
+                    fxImage = new Image(byteInputStream, dims.getWidth(), dims.getHeight(), true, true);
+                }
 
                 // simple displays ImageView the image as is
                 ImageView fxImageView = new ImageView();
@@ -307,7 +344,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
                 Group fxRoot = new Group();
 
-                Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
+                //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
+                Scene fxScene = new Scene(fxRoot,javafx.scene.paint.Color.BLACK);
                 fxRoot.getChildren().add(fxImageView);
 
                 final JFXPanel fxPanel = new JFXPanel();
@@ -321,6 +359,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
                         videoPanel.add(fxPanel);
                         videoPanel.setVisible(true);
+                        
+                        if (fxImage.isError() ) {
+                            logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                            //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName());
+                        }
                     }
                 });
             }
