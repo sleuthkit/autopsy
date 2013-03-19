@@ -6,6 +6,8 @@ New features:
 
 Improvements:
 - Sleuthkit-4.0.2 and libewf-20130128
+- improved image loading in Media View and Thumbnail View (faster loading, handles large files better)
+- improve Keyword Search file indexing (decision whether to index using detected mime-type instead of file extension)
 - show children counts in directory tree
 
 Bugfixes:
@@ -15,7 +17,7 @@ Bugfixes:
 - fixed directory tree history being reset when tree is refreshed.
 - exif module better jpeg detection using signature and not only file extension.
 - The "media view" tab is inactive for deleted files (#165)
-- improved image loading in Media View and Thumbnail View (faster loading, handles large files better)
+
 
 ---------------- VERSION 3.0.4 --------------
 

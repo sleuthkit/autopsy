@@ -51,13 +51,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
     private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
     private Map<String, String> extractOptions = new HashMap<String, String>();
-    //string extractor extracts from all other than archives
-    //TODO use content type detection mechanism
-    static final String[] UNSUPPORTED_EXTENSIONS = {
-        //Archives 
-        //Note: archive unpacker module will process these instead
-        "tar", "jar", "zip", "7z", "gzip", "bzip", "bzip2", "gz", "tgz", "cab", "rar", "arj", "dmg", "iso"
-    };
+    
 
     //disabled prepending of BOM
     //static {
@@ -185,18 +179,26 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean isSupported(AbstractFile file) {
-        String fileNameLower = file.getName().toLowerCase();
-        int dotI = fileNameLower.lastIndexOf(".");
-        if (dotI == -1 || dotI == fileNameLower.length() - 1) {
-            return true; //no extension
+    public boolean isSupported(AbstractFile file, String detectedFormat) {
+        if (detectedFormat == null) {
+            return true;
         }
-        final String extension = fileNameLower.substring(dotI + 1);
-        for (int i = 0; i < UNSUPPORTED_EXTENSIONS.length; ++i) {
-            if (extension.equals(UNSUPPORTED_EXTENSIONS[i])) {
-                return false;
-            }
+        else if (detectedFormat.equals("application/octet-stream")) {
+            //any binary unstructured blobs (string extraction will be used)
+            return true;
         }
-        return true;
+        else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+            return false; //let unzipper take care of it
+        }
+        //skip images/video/audio
+        else if (detectedFormat.contains("image/")
+                || detectedFormat.contains("audio/")
+                || detectedFormat.contains("video/")
+                ) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 }
