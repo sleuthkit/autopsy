@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +32,12 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.SwingUtilities;
@@ -49,6 +59,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -76,6 +87,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private int totalHours, totalMinutes, totalSeconds;
     private BufferedImage currentImage = null;
     private boolean gstInited = false;
+    private AbstractFile lastFile;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -86,24 +98,35 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void customizeComponents() {
+
+        Platform.setImplicitExit(false);
+        PlatformImpl.startup(new Runnable() {
+            @Override
+            public void run() {
+                logger.log(Level.INFO, "Initializing JavaFX for image viewing");
+            }
+        });
+
         try {
+            logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing");
             Gst.init();
             gstInited = true;
         } catch (GstException e) {
             gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for Media Viewing and frame extraction capabilities", e);
-            MessageNotifyUtil.Notify.error("Error initializing gstreamer for Media Viewing and frame extraction capabilities. "
-                         + " Media View will be disabled. ",
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing and frame extraction capabilities. "
+                    + " Video and audio viewing will be disabled. ",
                     e.getMessage());
             return;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
             gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for Media Viewing and extraction capabilities", e);
-            MessageNotifyUtil.Notify.error("Error initializing gstreamer for Media View and frame extraction capabilities. "
-                    + " Media View will be disabled. ",
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing frame extraction capabilities. "
+                    + " Video and audio viewing will be disabled. ",
                     e.getMessage());
             return;
         }
+
 
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.addChangeListener(new ChangeListener() {
@@ -218,8 +241,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
-        if (!gstInited) {
+
+        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
             return;
+        }
+
+        if (file.equals(lastFile)) {
+            return; //prevent from loading twice if setNode() called mult. times
+        } else {
+            lastFile = file;
         }
 
         reset();
@@ -234,15 +265,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             videoProgressWorker = null;
         }
 
-        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return;
-        }
 
         currentFile = file;
         if (containsExt(file.getName(), IMAGES)) {
-            showImage(file);
-        } else if (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS)) {
+            showImageFx(file);
+        } else if (gstInited
+                && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
             setupVideo(file);
         }
     }
@@ -252,7 +280,66 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      *
      * @param file
      */
-    private void showImage(AbstractFile file) {
+    private void showImageFx(AbstractFile file) {
+
+        final InputStream inputStream = new ReadContentInputStream(file);
+
+        // load the image
+        PlatformImpl.runLater(new Runnable() {
+            @Override
+            public void run() {
+                Image fxImage = new Image(inputStream);
+
+                Dimension dims = DataContentViewerMedia.this.getSize();
+
+                // simple displays ImageView the image as is
+                ImageView fxImageView = new ImageView();
+                fxImageView.setImage(fxImage);
+                // resizes the image to have width of 100 while preserving the ratio and using
+                // higher quality filtering method; this ImageView is also cached to
+                // improve performance
+                fxImageView.setPreserveRatio(true);
+                fxImageView.setSmooth(true);
+                fxImageView.setCache(true);
+                fxImageView.setFitWidth(dims.getWidth());
+                fxImageView.setFitHeight(dims.getHeight());
+
+                Group fxRoot = new Group();
+
+                Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
+                fxRoot.getChildren().add(fxImageView);
+
+                final JFXPanel fxPanel = new JFXPanel();
+                fxPanel.setScene(fxScene);
+
+                //when done, join with the swing panel
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        videoPanel.removeAll();
+                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                        videoPanel.add(fxPanel);
+                        videoPanel.setVisible(true);
+                    }
+                });
+            }
+        });
+
+
+
+    }
+
+    /**
+     * Initialize vars and display the image on the panel.
+     *
+     * @param file
+     * @deprecated using javafx for image display
+     */
+    @Deprecated
+    private void showImageGst(AbstractFile file) {
+        if (!gstInited) {
+            return;
+        }
         java.io.File ioFile = getJFile(file);
         if (!ioFile.exists()) {
             try {
@@ -386,9 +473,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public boolean isSupported(Node node) {
-        if (!gstInited) {
-            return false;
-        }
         if (node == null) {
             return false;
         }
@@ -411,9 +495,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
 
-        if (containsExt(name, IMAGES)
-                || containsExt(name, AUDIOS)
-                || (!deleted && containsExt(name, VIDEOS))) {
+        if (containsExt(name, IMAGES)) {
+            return true;
+        } //for gstreamer formats, check if initialized first, then
+        //support audio formats, and video formats if undeleted file
+        else if (gstInited
+                && (containsExt(name, AUDIOS)
+                || (!deleted && containsExt(name, VIDEOS)))) {
             return true;
         }
 
