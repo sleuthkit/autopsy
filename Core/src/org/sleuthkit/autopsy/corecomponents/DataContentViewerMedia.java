@@ -18,9 +18,14 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +33,14 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.SwingUtilities;
@@ -42,26 +55,28 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * Media content viewer for videos, sounds and images.
- * Using gstreamer.
+ * Media content viewer for videos, sounds and images. Using gstreamer.
  */
-@ServiceProviders(value={
+@ServiceProviders(value = {
     @ServiceProvider(service = DataContentViewer.class, position = 5),
     @ServiceProvider(service = FrameCapture.class)
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer, FrameCapture {
 
-    private static final String[] IMAGES = new String[]{".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
+    private String[] IMAGES; // use javafx supported 
     private static final String[] VIDEOS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg"};
     private static final String[] AUDIOS = new String[]{".mp3", ".wav", ".wma"};
     private static final int NUM_FRAMES = 12;
@@ -76,6 +91,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
     private BufferedImage currentImage = null;
+    private boolean gstInited = false;
+    private AbstractFile lastFile;
 
     /**
      * Creates new form DataContentViewerVideo
@@ -86,7 +103,47 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void customizeComponents() {
-        Gst.init();
+
+        Platform.setImplicitExit(false);
+        PlatformImpl.startup(new Runnable() {
+            @Override
+            public void run() {
+                logger.log(Level.INFO, "Initializing JavaFX for image viewing");
+            }
+        });
+        logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
+        
+        //initialize supported image types
+        //TODO use mime-types instead once we have support
+        String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
+        IMAGES = new String[fxSupportedImagesSuffixes.length];
+        for (int i=0; i<fxSupportedImagesSuffixes.length; ++i) {
+            String suffix = fxSupportedImagesSuffixes[i];
+            logger.log(Level.INFO, "suffix: " + suffix);
+            IMAGES[i] = "." + suffix;
+        }
+        
+        try {
+            logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing");
+            Gst.init();
+            gstInited = true;
+        } catch (GstException e) {
+            gstInited = false;
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing and frame extraction capabilities. "
+                    + " Video and audio viewing will be disabled. ",
+                    e.getMessage());
+            return;
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
+            gstInited = false;
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e);
+            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing frame extraction capabilities. "
+                    + " Video and audio viewing will be disabled. ",
+                    e.getMessage());
+            return;
+        }
+
+
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.addChangeListener(new ChangeListener() {
             /**
@@ -200,11 +257,24 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
-        reset();
-        setComponentsVisibility(false);
+
         if (selectedNode == null) {
             return;
         }
+        
+        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
+            return;
+        }
+
+        if (file.equals(lastFile)) {
+            return; //prevent from loading twice if setNode() called mult. times
+        } else {
+            lastFile = file;
+        }
+
+        reset();
+        setComponentsVisibility(false);
         
         // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
@@ -212,15 +282,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             videoProgressWorker = null;
         }
 
-        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return;
-        }
 
         currentFile = file;
         if (containsExt(file.getName(), IMAGES)) {
-            showImage(file);
-        } else if (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS)) {
+            showImageFx(file);
+        } else if (gstInited
+                && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
             setupVideo(file);
         }
     }
@@ -230,7 +297,94 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      *
      * @param file
      */
-    private void showImage(AbstractFile file) {
+    private void showImageFx(final AbstractFile file) {
+        final String fileName = file.getName();
+        
+        // load the image
+        PlatformImpl.runLater(new Runnable() {
+            @Override
+            public void run() {
+                Dimension dims = DataContentViewerMedia.this.getSize();
+                
+                final InputStream inputStream = new ReadContentInputStream(file);
+
+                final Image fxImage;
+                try {
+                    //original input stream
+                    BufferedImage bi = ImageIO.read(inputStream);
+                    //scale image using Scalr
+                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int)dims.getWidth(), (int)dims.getHeight());
+                    //convert from awt imageto fx image
+                    fxImage = SwingFXUtils.toFXImage(biScaled, null);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex);
+                    return;
+                }
+                catch (OutOfMemoryError ex) {
+                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex);
+                    MessageNotifyUtil.Notify.warn("Could not load image file (too large): " +  file.getName(), ex.getMessage());
+                    return;
+                }
+                
+                if (fxImage == null) {
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                    return;
+                }
+
+                // simple displays ImageView the image as is
+                ImageView fxImageView = new ImageView();
+                fxImageView.setImage(fxImage);
+                // resizes the image to have width of 100 while preserving the ratio and using
+                // higher quality filtering method; this ImageView is also cached to
+                // improve performance
+                fxImageView.setPreserveRatio(true);
+                fxImageView.setSmooth(true);
+                fxImageView.setCache(true);
+                fxImageView.setFitWidth(dims.getWidth());
+                fxImageView.setFitHeight(dims.getHeight());
+
+                Group fxRoot = new Group();
+
+                //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
+                Scene fxScene = new Scene(fxRoot,javafx.scene.paint.Color.BLACK);
+                fxRoot.getChildren().add(fxImageView);
+
+                final JFXPanel fxPanel = new JFXPanel();
+                fxPanel.setScene(fxScene);
+
+                //when done, join with the swing panel
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        videoPanel.removeAll();
+                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                        videoPanel.add(fxPanel);
+                        videoPanel.setVisible(true);
+                        
+                        if (fxImage.isError() ) {
+                            logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                            //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName());
+                        }
+                    }
+                });
+            }
+        });
+
+
+
+    }
+
+    /**
+     * Initialize vars and display the image on the panel.
+     *
+     * @param file
+     * @deprecated using javafx for image display
+     */
+    @Deprecated
+    private void showImageGst(AbstractFile file) {
+        if (!gstInited) {
+            return;
+        }
         java.io.File ioFile = getJFile(file);
         if (!ioFile.exists()) {
             try {
@@ -242,6 +396,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         videoComponent = new VideoComponent();
         synchronized (playbinLock) {
+            if (playbin2 != null) {
+                playbin2.dispose();
+            }
             playbin2 = new PlayBin2("ImageViewer");
             playbin2.setVideoSink(videoComponent.getElement());
         }
@@ -272,6 +429,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         videoComponent = new VideoComponent();
         synchronized (playbinLock) {
+            if (playbin2 != null) {
+                playbin2.dispose();
+            }
             playbin2 = new PlayBin2("VideoPlayer");
             playbin2.setVideoSink(videoComponent.getElement());
         }
@@ -335,6 +495,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 progressLabel.setText("");
             }
         });
+
+
+        if (!gstInited) {
+            return;
+        }
+
         synchronized (playbinLock) {
             if (playbin2 != null) {
                 if (playbin2.isPlaying()) {
@@ -363,7 +529,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         //try displaying deleted files if we can read them
         //if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-          //  return false;
+        //  return false;
         //}
 
         if (file.getSize() == 0) {
@@ -373,10 +539,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         String name = file.getName().toLowerCase();
 
         boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-        
-        if (containsExt(name, IMAGES) 
-                || containsExt(name, AUDIOS) 
-                || (!deleted && containsExt(name, VIDEOS) ) ) {
+
+        if (containsExt(name, IMAGES)) {
+            return true;
+        } //for gstreamer formats, check if initialized first, then
+        //support audio formats, and video formats if undeleted file
+        else if (gstInited
+                && (containsExt(name, AUDIOS)
+                || (!deleted && containsExt(name, VIDEOS)))) {
             return true;
         }
 
@@ -418,9 +588,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
-        
+
         List<VideoFrame> frames = new ArrayList<>();
-        
+
+        if (!gstInited) {
+            return frames;
+        }
+
         RGBDataSink.Listener listener1 = new RGBDataSink.Listener() {
             @Override
             public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
@@ -436,12 +610,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
-        
+
         // this is necessary to get a valid duration value
         playbin.play();
         playbin.pause();
         playbin.getState();
-        
+
         // get the duration of the video
         TimeUnit unit = TimeUnit.MILLISECONDS;
         long myDurationMillis = playbin.queryDuration(unit);
@@ -451,14 +625,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         // create a list of timestamps at which to get frames
         int numFramesToGet = numFrames;
-        long frameInterval = myDurationMillis/numFrames;
+        long frameInterval = myDurationMillis / numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
             numFramesToGet = 1;
         }
 
         // for each timeStamp, grap a frame
         for (int i = 0; i < numFramesToGet; ++i) {
-            long timeStamp = i*frameInterval;
+            long timeStamp = i * frameInterval;
 
             playbin.pause();
             playbin.getState();
@@ -468,16 +642,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
             playbin.play();
-            
+
             while (currentImage == null) {
                 System.out.flush(); // not sure why this is needed
             }
-            
+
             playbin.stop();
-            
+
             frames.add(new VideoFrame(currentImage, timeStamp));
         }
-        
+
         return frames;
     }
 
@@ -500,8 +674,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         public long getExtractedBytes() {
             return extractedBytes;
         }
-        
-        
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -557,15 +729,15 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             }
             duration = dur.toString();
             durationMillis = dur.toMillis();
-            
+
             // pick out the total hours, minutes, seconds
-            long durationSeconds = (int)durationMillis / 1000;
+            long durationSeconds = (int) durationMillis / 1000;
             totalHours = (int) durationSeconds / 3600;
             durationSeconds -= totalHours * 3600;
             totalMinutes = (int) durationSeconds / 60;
             durationSeconds -= totalMinutes * 60;
             totalSeconds = (int) durationSeconds;
-            
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -582,9 +754,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             });
         }
     }
-    
+
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
-        
+
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
         private long millisElapsed = 0;
         private final long INTER_FRAME_PERIOD_MS = 20;
@@ -595,7 +767,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 return playbin2 != null && !playbin2.getState().equals(State.NULL);
             }
         }
-        
+
         public void resetVideo() {
             synchronized (playbinLock) {
                 if (playbin2 != null) {
@@ -605,17 +777,17 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             }
             pauseButton.setText("►");
             progressSlider.setValue(0);
-            
+
             String durationStr = String.format(durationFormat, 0, 0, 0,
-                        totalHours, totalMinutes, totalSeconds);
+                    totalHours, totalMinutes, totalSeconds);
             progressLabel.setText(durationStr);
         }
-        
+
         /**
          * @return true while millisElapsed is greater than END_TIME_MARGIN_MS
-         * from durationMillis. This is used to indicate when the video has ended
-         * because for some videos the time elapsed never becomes equal to the
-         * reported duration of the video.
+         * from durationMillis. This is used to indicate when the video has
+         * ended because for some videos the time elapsed never becomes equal to
+         * the reported duration of the video.
          */
         private boolean hasNotEnded() {
             return (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
@@ -623,14 +795,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         @Override
         protected Object doInBackground() throws Exception {
-            
+
             // enable the slider
             progressSlider.setEnabled(true);
 
             int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
             ClockTime pos = null;
             while (hasNotEnded() && isPlayBinReady() && !isCancelled()) {
-                
+
                 synchronized (playbinLock) {
                     pos = playbin2.queryPosition();
                 }
