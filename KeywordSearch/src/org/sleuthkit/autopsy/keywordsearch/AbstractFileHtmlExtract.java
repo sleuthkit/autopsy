@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -49,9 +50,15 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
-    private static final String[] SUPPORTED_EXTENSIONS = {
-        "htm", "html", "xhtml", "shtml", "xhtm", "shtm", "css", "js", "php", "jsp"
-    };
+    static final List<String> WEB_MIME_TYPES = Arrays.asList(
+            "application/javascript",
+            "application/xhtml+xml",
+            "application/json",
+            "text/css",
+            "text/html",
+            "text/javascript" //"application/xml",
+            //"application/xml-dtd",
+            );
 
     AbstractFileHtmlExtract() {
         this.module = KeywordSearchIngestModule.getDefault();
@@ -67,7 +74,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     public List<SCRIPT> getScripts() {
         return null;
     }
-    
+
     @Override
     public Map<String, String> getOptions() {
         return null;
@@ -75,7 +82,6 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
 
     @Override
     public void setOptions(Map<String, String> options) {
-
     }
 
     @Override
@@ -207,13 +213,16 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean isSupported(AbstractFile file) {
-        String fileNameLower = file.getName().toLowerCase();
-        for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
-            if (fileNameLower.endsWith(SUPPORTED_EXTENSIONS[i])) {
-                return true;
-            }
+    public boolean isSupported(AbstractFile file, String detectedFormat) {
+        if (detectedFormat == null) {
+            return false;
         }
-        return false;
+        else if (WEB_MIME_TYPES.contains(detectedFormat) ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+        
     }
 }

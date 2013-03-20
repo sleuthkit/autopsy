@@ -12,7 +12,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>7</release-version>
-                        <specification-version>5.0</specification-version>
+                        <specification-version>5.2</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>

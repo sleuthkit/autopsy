@@ -30,6 +30,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerManager.Provider;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -43,10 +44,9 @@ public abstract class AbstractDataResultViewer extends JPanel implements
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em = new ExplorerManager();
     private PropertyChangeListener nodeSelListener;
-    
     /**
-     * Content viewer to respond to selection events
-     * Either the main one, or custom one if set
+     * Content viewer to respond to selection events Either the main one, or
+     * custom one if set
      */
     protected DataContent contentViewer;
 
@@ -54,17 +54,22 @@ public abstract class AbstractDataResultViewer extends JPanel implements
 
         //DataContent is designed to return only the default viewer from lookup
         //use the default one unless set otherwise
-       contentViewer = Lookup.getDefault().lookup(DataContent.class);
-        
+        contentViewer = Lookup.getDefault().lookup(DataContent.class);
+
         //property listener to send nodes to content viewer    
         nodeSelListener = new PropertyChangeListener() {
-                        
             /**
              * Propagates changes in the current select node from the
              * DataResultViewer to the DataContentTopComponent
              */
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
+                if (!Case.isCaseOpen()) {
+                    //handle in-between condition when case is being closed
+                    //and legacy selection events are pumped
+                    return;
+                }
+
                 String changed = evt.getPropertyName();
 
                 // change that should affect view
@@ -77,10 +82,10 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     try {
                         Node selectedNode = getSelectedNode();
-                        
+
                         nodeSelected(selectedNode);
 
-                        
+
 
                         if (selectedNode != null) {
                             // there's a new/changed node to display
@@ -142,10 +147,11 @@ public abstract class AbstractDataResultViewer extends JPanel implements
     @Override
     public void resetComponent() {
     }
-    
+
     /**
-     * Called when a new node has been selected in the result viewer
-     * Can update the viewer, etc.
+     * Called when a new node has been selected in the result viewer Can update
+     * the viewer, etc.
+     *
      * @param selectedNode the new node currently selected
      */
     public abstract void nodeSelected(Node selectedNode);
@@ -168,7 +174,7 @@ public abstract class AbstractDataResultViewer extends JPanel implements
             logger.log(Level.WARNING, "Couldn't set selected nodes.", ex);
         }
     }
-    
+
     @Override
     public void setContentViewer(DataContent contentViewer) {
         this.contentViewer = contentViewer;
