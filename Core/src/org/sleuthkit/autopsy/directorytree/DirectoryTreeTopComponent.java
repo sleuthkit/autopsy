@@ -595,14 +595,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     /**
      * Event handler to run when selection changed
-     * 
+     *
      * TODO this needs to be revised
-     * 
+     *
      * @param oldNodes
-     * @param newNodes 
+     * @param newNodes
      */
     private void respondSelection(final Node[] oldNodes, final Node[] newNodes) {
-        
+        if (!Case.isCaseOpen()) {
+            //handle in-between condition when case is being closed
+            //and legacy selection events are pumped
+            return;
+        }
         //this looks redundant?
 //        if (getSelectedNode() == null && oldNodes != null) {         
 //            try {
