@@ -1,0 +1,11 @@
+This file explains how to setup regression and continuous testing for Autopsy.
+
+1)Create a folder called 'gold', this is where the test standards will go.
+2)Create a folder called 'input', this is where the image, hash, and keyword search files.
+3)Put an idx file called NSRL, that contains known bad hashes, in the input folder.
+4)Put an idx file called notablehashes, that contains notable hashes, in the input folder.
+5)Put an xml file called notablekeywords, that contains keywords, in the input folder.
+6)The xml file should be of the format of the notablekeywords-example.xml file.
+7)Create a folder called 'output', this is where the output from tests go.
+8)The config.xml file is an example of a configuration file and contains all of the available elements.
+9)Use the -g 

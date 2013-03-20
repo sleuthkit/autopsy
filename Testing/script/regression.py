@@ -66,6 +66,7 @@ class Args:
 		self.exception = False
 		self.exception_string = ""
 		self.contin = False
+		self.gold_creation = False
 	
 	def parse(self):
 		global nxtproc 
@@ -128,6 +129,9 @@ class Args:
 			elif arg == "-c" or arg == "--continuous":
 				printout("Running until interrupted")
 				self.contin = True
+			elif arg == "-g" or arg == "--gold":
+				printout("Creating gold standards")
+				self.gold_creation = True
 			else:
 				printout(usage())
 				return False
@@ -523,8 +527,9 @@ def run_test(image_file, count):
 		print_report(exceptions, "EXCEPTION", okay)
 		
 	# Now test in comparison to the gold standards
-	compare_to_gold_db()
-	compare_to_gold_html()
+	if !args.gold_creation:
+		compare_to_gold_db()
+		compare_to_gold_html()
 	
 	# Make the CSV log and the html log viewer
 	generate_csv(case.csv)
