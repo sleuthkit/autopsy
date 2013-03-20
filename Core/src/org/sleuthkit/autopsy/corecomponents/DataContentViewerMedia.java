@@ -303,6 +303,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private void showImageFx(final AbstractFile file) {
         final String fileName = file.getName();
 
+        if (!Case.isCaseOpen()) {
+            //handle in-between condition when case is being closed
+            //and an image was previously selected
+            return;
+        }
+        
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
@@ -362,15 +368,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     fxPanel.setScene(fxScene);
                     videoPanel.setVisible(true);
                 } else {
+                    inImageMode = true;
                     final JFXPanel fxPanel = new JFXPanel();
                     fxPanel.setScene(fxScene);
                     
-
                     //when done, join with the swing panel
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            inImageMode = true;
                             //remove video panels and recreate image view panel
                             //TODO use swing layered pane to switch between different modes
                             videoPanel.removeAll();
