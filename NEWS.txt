@@ -1,4 +1,4 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.5 --------------
 
 New features:
 - Archive extractor ingest module (uses 7zip)
@@ -7,7 +7,7 @@ New features:
 Improvements:
 - Sleuthkit-4.0.2 and libewf-20130128
 - improved image loading in Media View and Thumbnail View (faster loading, handles large files better)
-- improve Keyword Search file indexing (decision whether to index using detected mime-type instead of file extension)
+- improve Keyword Search file indexing (use detected mime-type instead of file extension)
 - show children counts in directory tree
 
 Bugfixes:

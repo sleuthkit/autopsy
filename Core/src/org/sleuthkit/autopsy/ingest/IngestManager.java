@@ -899,7 +899,14 @@ public class IngestManager {
                         logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
                     }
-                }
+                    catch (OutOfMemoryError e) {
+                        logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
+                        stats.addError(module);
+                    }
+                } //end for every module
+                
+                //free the internal file resource after done with every module
+                fileToProcess.close();
 
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
@@ -915,7 +922,8 @@ public class IngestManager {
                 }
                 //--totalEnqueuedFiles;
                 
-            } //end of this AbstractFile
+                
+            } //end of for every AbstractFile
             logger.log(Level.INFO, "IngestManager: Finished processing files");
             return null;
         }
@@ -933,8 +941,7 @@ public class IngestManager {
                 }
                 
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-                logger.log(Level.INFO, "Freeing resources post file pipeline run");
-                System.gc();
+                logger.log(Level.INFO, "Freeing jvm heap resources post file pipeline run");
                 System.gc();
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
 
