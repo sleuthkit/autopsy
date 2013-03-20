@@ -309,6 +309,12 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
+			autopsy_cur.execute("SELECT * FROM blackboard_artifacts")
+			self.autopsy_artifacts_list = []
+			for row in autopsy_cur.fetchall():
+				for item in row:
+					self.autopsy_artifacts_list.append(item)
+
 				
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
@@ -340,6 +346,11 @@ class Database:
 			for type_id in range(1, length):
 				gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.gold_artifacts.append(gold_cur.fetchone()[0])
+			gold_cur.execute("SELECT * FROM blackboard_artifacts")
+			self.gold_artifacts_list = []
+			for row in gold_cur.fetchall():
+				for item in row:
+					self.gold_artifacts_list.append(item)
 				
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:

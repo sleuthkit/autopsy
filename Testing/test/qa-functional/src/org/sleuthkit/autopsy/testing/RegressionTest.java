@@ -296,7 +296,7 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 8000).sleep(); // Give it a few seconds to generate
+        new Timeout("pausing", 20000).sleep(); // Give it a few seconds to generate
         screenshot("Progress");
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
@@ -305,6 +305,7 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
+        System.exit(0);
     }
     
     public void screenshot(String name) {
