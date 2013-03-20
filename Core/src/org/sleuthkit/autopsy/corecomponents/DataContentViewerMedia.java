@@ -101,6 +101,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public DataContentViewerMedia() {
         initComponents();
         customizeComponents();
+        logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
 
     private void customizeComponents() {

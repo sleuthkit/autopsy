@@ -59,6 +59,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private int curContentChunk;
 
     public ExtractedContentViewer() {
+        logger.log(Level.INFO, "Created TextView instance: " + this);
     }
 
     @Override

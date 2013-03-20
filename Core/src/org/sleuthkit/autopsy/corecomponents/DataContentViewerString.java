@@ -50,10 +50,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
     private Content dataSource;
-    // for error handling
-    private String className = this.getClass().toString();
     //string extract utility
     private final StringExtract stringExtract = new StringExtract();
+    private static final Logger logger = Logger.getLogger(DataContentViewerString.class.getName());
 
     /**
      * Creates new form DataContentViewerString
@@ -62,6 +61,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         initComponents();
         customizeComponents();
         this.resetComponent();
+        logger.log(Level.INFO, "Created StringView instance: " + this);
     }
 
     private void customizeComponents() {
@@ -350,7 +350,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                         + " could not be read)";
                 setVisible = true;
-                Logger logger = Logger.getLogger(this.className);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex);
             }
         }
