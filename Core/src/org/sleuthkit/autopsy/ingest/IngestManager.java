@@ -899,6 +899,10 @@ public class IngestManager {
                         logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
                     }
+                    catch (OutOfMemoryError e) {
+                        logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
+                        stats.addError(module);
+                    }
                 } //end for every module
                 
                 //free the internal file resource after done with every module
