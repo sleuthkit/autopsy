@@ -527,7 +527,7 @@ def run_test(image_file, count):
 		print_report(exceptions, "EXCEPTION", okay)
 		
 	# Now test in comparison to the gold standards
-	if !args.gold_creation:
+	if not args.gold_creation:
 		compare_to_gold_db()
 		compare_to_gold_html()
 	
@@ -1736,7 +1736,8 @@ def execute_test():
 		errorem = ""
 		errorem += "There were no Errors.\n"
 		attachl = []
-	send_email()
+	if not args.gold_creation:
+		send_email()
 
 
 def send_email():
