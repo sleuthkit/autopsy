@@ -45,12 +45,12 @@ public interface DataContentViewer {
     public String getToolTip();
 
     /**
-     * Get new DataContentViewer instance. (This method is weird. We use the
+     * Create and get new DataContentViewer instance. (This method is weird. We use the
      * instance returned by the Lookup as a factory for the instances that
      * are actually used.)
      */
     // TODO: extract the factory method out into a seperate interface that is used for the Lookup.
-    public DataContentViewer getInstance();
+    public DataContentViewer createInstance();
     
     /**
      * Get Component to display this DataContentViewer

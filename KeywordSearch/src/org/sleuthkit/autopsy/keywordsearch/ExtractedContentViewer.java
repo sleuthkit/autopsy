@@ -262,7 +262,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new ExtractedContentViewer();
     }
 

@@ -21,10 +21,9 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTabbedPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -62,6 +61,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         this.isDefault = isDefault;
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isDefault)); // prevent option to close compoment in GUI
+        logger.log(Level.INFO, "Created DataContentTopComponent instance: " + this);
     }
 
     /**

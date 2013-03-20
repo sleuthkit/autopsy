@@ -408,7 +408,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerHex();
     }
 

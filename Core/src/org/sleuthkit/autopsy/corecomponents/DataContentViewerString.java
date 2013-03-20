@@ -460,7 +460,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerString();
     }
 
