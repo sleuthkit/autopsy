@@ -184,7 +184,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (totalTabs == 0) {
             // find all dataContentViewer and add them to the tabbed pane
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                DataResultViewer drv = factory.getInstance();
+                DataResultViewer drv = factory; //use the original instance, do not create duplicate viewer //.createInstance();
                 UpdateWrapper resultViewer = new UpdateWrapper(drv);
                 if (customContentViewer != null) {
                     //set custom content viewer to respond to events from this result viewer

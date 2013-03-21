@@ -296,7 +296,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     @Override
-    public DataResultViewer getInstance() {
+    public DataResultViewer createInstance() {
         return new DataResultViewerThumbnail();
     }
 
