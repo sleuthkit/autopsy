@@ -17,7 +17,7 @@
         <os family="windows"/>  
     </condition>  
     <import file="build-${os.family}.xml"/> 
-    
+    <property name="test-input" location="Testing/script/input"/>
     <property name="thirdparty.dir" value="${basedir}/thirdparty" />
 
     <!-- import ant-contrib tools -->
@@ -238,5 +238,10 @@
     
     <target name="build-installer" depends="build-installer-dir" description="Builds Autopsy installer.">
         <antcall target="build-installer-${os.family}" />
+    </target>
+    <target name="test-download-imgs" description="Get test images and store them in the path represented by the test-input variable.">
+	<mkdir dir="${test-input}" />
+	<get src="http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E01" dest="${test-input}"/>
+    	<get src="http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E02" dest="${test-input}"/>
     </target>
 </project>

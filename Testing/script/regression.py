@@ -25,6 +25,7 @@ from email import Encoders
 import urllib2
 import re
 import zipfile
+import zlib
 
 #
 # Please read me...
@@ -533,7 +534,7 @@ def run_test(image_file, count):
 			gold_path = os.path.join(case.gold)
 			img_gold = os.path.join(case.gold, case.image_name)
 			img_archive = os.path.join(case.gold, case.image_name+"-archive.zip")
-			extrctr = zipfile.ZipFile(img_archive, 'r')
+			extrctr = zipfile.ZipFile(img_archive, 'r', zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
 			compare_to_gold_db()
@@ -590,7 +591,7 @@ def run_ant():
 	if SYS is OS.CYGWIN:
 		subprocess.call(case.ant, stdout=antout)
 	elif SYS is OS.WIN:
-		theproc = subprocess.Popen(case.ant, shell = True)
+		theproc = subprocess.Popen(case.ant, shell = True, stdout=subprocess.PIPE)
 		theproc.communicate()
 	antout.close()
 	
@@ -612,7 +613,8 @@ def image_type(image_file):
 	return IMGTYPE.UNKNOWN
 
 
-
+#http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E01
+#http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E02
 #-----------------------------------------------------------#
 #	  Functions relating to rebuilding and comparison	  #
 #				   of gold standards					   #
@@ -654,7 +656,7 @@ def rebuild():
 	os.chdir(case.gold)
 	img_archive = make_local_path(case.image_name+"-archive.zip")
 	img_gold = os.path.join(case.image_name)
-	comprssr = zipfile.ZipFile(img_archive, 'w')
+	comprssr = zipfile.ZipFile(img_archive, 'w',zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
 	del_dir(gold_dir)

@@ -51,6 +51,7 @@ import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
+import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
@@ -297,19 +298,22 @@ public class RegressionTest extends TestCase{
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
         boolean waiting = true;
+        new Timeout("pausing", 500).sleep();
         long size = 0;
         java.io.File rprtfldr = new java.io.File(System.getProperty("out_path")+java.io.File.separator+"AutopsyTestCase"+java.io.File.separator+"Reports"+java.io.File.separator+"AutopsyTestCase "+datenotime+java.io.File.separator+"HTML Report");
         while(waiting)
         {
+            new Timeout("pausing", 500).sleep();
             long currsize = size;
             size = 0;
             for(java.io.File elem: rprtfldr.listFiles())
             {
                 size+=elem.getTotalSpace();
             }
+            System.out.println("\nJAVA:"+size);
+            System.out.println("JAVA:"+currsize);
             waiting = size>currsize;
         }
-        new Timeout("pausing", 20000).sleep(); // Give it a few seconds to generate
         screenshot("Progress");
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
