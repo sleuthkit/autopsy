@@ -106,7 +106,7 @@ class Args:
 			   printout("Ignoring unallocated space.\n")
 			   self.unallocated = True
 			elif(arg == "-i" or arg == "--ignore"):
-				printout("Ignoring the ./input directory.\n")
+				printout("Ignoring the ../input directory.\n")
 				self.ignore = True
 			elif(arg == "-k" or arg == "--keep"):
 				printout("Keeping the Solr index.\n")
@@ -148,9 +148,9 @@ class Args:
 class TestAutopsy:
 	def __init__(self):
 		# Paths:
-		self.input_dir = make_local_path("input")
+		self.input_dir = make_local_path("../","input")
 		self.output_dir = ""
-		self.gold = "gold"
+		self.gold = make_local_path("../", "output", "gold")
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -171,6 +171,7 @@ class TestAutopsy:
 		self.known_bad_path = ""
 		self.keyword_path = ""
 		self.nsrl_path = ""
+		self.build_path = ""
 		# Case info
 		self.start_date = ""
 		self.end_date = ""
@@ -479,6 +480,7 @@ def compile():
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
+	global parsed
 	if image_type(image_file) == IMGTYPE.UNKNOWN:
 		printerror("Error: Image type is unrecognized:")
 		printerror(image_file + "\n")
@@ -491,6 +493,18 @@ def run_test(image_file, count):
 	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
 	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
+	if(args.list):
+		element = parsed.getElementsByTagName("build")
+		if(len(element)<=0):
+			toval = make_path("..", "build.xml")
+		else:
+			element = element[0]
+			toval = element.getAttribute("value").encode().decode("utf_8")
+			if(toval==None):
+				toval = make_path("..", "build.xml")
+	else:
+		toval = make_path("..", "build.xml")
+	case.build_path = toval	
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
 	case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
 	case.nsrl_path = make_path(case.input_dir, "nsrl.txt-md5.idx")
@@ -569,6 +583,7 @@ def run_ant():
 	case.ant = ["ant"]
 	case.ant.append("-v")
 	case.ant.append("-f")
+#	case.ant.append(case.build_path)
 	case.ant.append(os.path.join("..","build.xml"))
 	case.ant.append("regression-test")
 	case.ant.append("-l")
@@ -613,8 +628,7 @@ def image_type(image_file):
 	return IMGTYPE.UNKNOWN
 
 
-#http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E01
-#http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E02
+
 #-----------------------------------------------------------#
 #	  Functions relating to rebuilding and comparison	  #
 #				   of gold standards					   #
@@ -1647,19 +1661,19 @@ def usage():
 Usage:  ./regression.py [-f FILE] [OPTIONS]
 
 		Run RegressionTest.java, and compare the result with a gold standard.
-		By default, the script tests every image in ./input
+		By default, the script tests every image in ../input
 		When the -f flag is set, this script only tests a single given image.
 		When the -l flag is set, the script looks for a configuration file,
 		which may outsource to a new input directory and to individual images.
 		
 		Expected files:
-		  An NSRL database at:			./input/nsrl.txt-md5.idx
-		  A notable hash database at:	 ./input/notablehashes.txt-md5.idx
-		  A notable keyword file at:	  ./input/notablekeywords.xml
+		  An NSRL database at:			../input/nsrl.txt-md5.idx
+		  A notable hash database at:	 ../input/notablehashes.txt-md5.idx
+		  A notable keyword file at:	  ../input/notablekeywords.xml
 		
 Options:
   -r			Rebuild the gold standards for the image(s) tested.
-  -i			Ignores the ./input directory and all files within it.
+  -i			Ignores the ../input directory and all files within it.
   -u			Tells Autopsy not to ingest unallocated space.
   -k			Keeps each image's Solr index instead of deleting it.
   -v			Verbose mode; prints all errors to the screen.
@@ -1713,7 +1727,7 @@ def execute_test():
 	global failedbool
 	global html
 	global attachl
-	case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
+	case.output_dir = make_path("../", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
 	os.makedirs(case.output_dir)
 	case.common_log = "AutopsyErrors.txt"
 	case.csv = make_local_path(case.output_dir, "CSV.txt")
@@ -1739,7 +1753,7 @@ def execute_test():
 		   return
 	   run_test(args.single_file, 0)
 	# If user has not selected a single file, and does not want to ignore
-	#  the input directory, continue on to parsing ./input
+	#  the input directory, continue on to parsing ../input
 	if (not args.single) and (not args.ignore):
 	   for file in os.listdir(case.input_dir):
 		   # Make sure it's not a required hash/keyword file or dir
