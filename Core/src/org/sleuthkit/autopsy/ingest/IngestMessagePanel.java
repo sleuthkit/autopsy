@@ -26,6 +26,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -33,15 +35,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.JLabel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
-import org.apache.log4j.lf5.LogLevel;
+import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -54,8 +57,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;
     private IngestMessageMainPanel mainPanel;
-    private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
-    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
+    private static Font visitedFont = new Font("Arial", Font.PLAIN, 12);
+    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private boolean resized = false;
     private volatile int lastRowSelected = -1;
@@ -121,7 +124,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+        messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -236,11 +239,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
         renderer = new MessageTableRenderer();
         int numCols = messageTable.getColumnCount();
         
-        // add the cell renderer to all columns except the last one (New?)
-        for (int i = 0; i < numCols - 1; ++i) {
-            TableColumn column = messageTable.getColumnModel().getColumn(i);
-            //column.setCellRenderer(new MessageTableRenderer());
-            column.setCellRenderer(renderer);
+        // add the cell renderer to all columns
+        for (int i = 0; i < numCols; ++i) {
+            messageTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
 
         messageTable.setCellSelectionEnabled(false);
@@ -257,7 +258,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     void setTableSize(Dimension d) {
-        double[] columnWidths = new double[]{0.20, 0.08, 0.39, 0.25, 0.08};
+        double[] columnWidths = new double[]{0.20, 0.08, 0.08, 0.49, 0.15};
         int numCols = messageTable.getColumnCount();
         for (int i = 0; i < numCols; ++i) {
             messageTable.getColumnModel().getColumn(i).setPreferredWidth((int)(d.width * columnWidths[i]));
@@ -310,14 +311,14 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private synchronized void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
-        renderer.setSelected(rowNumber);
+        //renderer.setSelected(rowNumber);
         lastRowSelected = rowNumber;
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
     }
 
     private class MessageTableModel extends AbstractTableModel {
 
-        private String[] columnNames = new String[]{"Module", "Num", "Subject", "Timestamp", "New?"};
+        private String[] columnNames = new String[]{"Module", "Num", "New?", "Subject", "Timestamp"};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
         private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
@@ -416,13 +417,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     ret = entry.messageGroup.getCount();
                     break;
                 case 2:
-                    ret = entry.messageGroup.getSubject();
+                    ret = !entry.hasBeenSeen();
                     break;
                 case 3:
-                    ret = entry.messageGroup.getDatePosted();
+                    ret = entry.messageGroup.getSubject();
                     break;
                 case 4:
-                    ret = !entry.hasBeenSeen();
+                    ret = entry.messageGroup.getDatePosted();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -739,43 +740,66 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return messages.get(0).getMessageType();
         }
     }
-
-    /**
-     * bold font if not visited, colors for errors
-     * tooltips that show entire query string, disable selection borders
+    
+    /*
+     * Main TableCellRenderer to be used for ingest message inbox. Delegates to
+     * other TableCellRenderers based different factors such as column data type
+     * or column number.
      */
     private class MessageTableRenderer extends DefaultTableCellRenderer {
+        
+        private TableCellRenderer booleanRenderer = new BooleanRenderer();
+        private TableCellRenderer defaultRenderer = new DefaultRenderer();
+        private TableCellRenderer dateRenderer = new DateRenderer();
+        protected int rowSelected;
 
-        //custom selection tracking
-        private int selected = -1;
-
-        void setSelected(int row) {
-            this.selected = row;
+        public void setRowSelected(int rowSelected) {
+            this.rowSelected = rowSelected;
         }
 
         @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
-
-            final Component cell = super.getTableCellRendererComponent(
-                    table, value, false, false, row, column);
-
-            if (column == 2) {
-                String val = (String) table.getModel().getValueAt(row, column);
-                setToolTipText(val);
-                //setText(val);
-                if (tableModel.isVisited(row)) {
-                    cell.setFont(visitedFont);
-                } else {
-                    cell.setFont(notVisitedFont);
-                }
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof Boolean) {
+                return booleanRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            } else if (value instanceof Date) {
+                return dateRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            } else {
+                return defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             }
+        }
+    }
+    
+    /*
+     * TableCellRenderer used to render boolean values with a bullet point.
+     */
+    private class BooleanRenderer extends DefaultTableCellRenderer {
+        
+        private final String bulletChar = new String(Character.toChars(0x2022));
 
-
-            //if (!isSelected) {
-            if (selected != row) {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            super.setForeground(table.getSelectionForeground());
+            super.setBackground(table.getSelectionBackground());
+            
+            boolean boolVal;
+            if (value instanceof Boolean) {
+                boolVal = ((Boolean)value).booleanValue();
+            } else {
+                throw new RuntimeException("Tried to use BooleanRenderer on non-boolean value.");
+            }
+            
+            String aValue = boolVal ? bulletChar : "";
+            
+            JLabel cell = (JLabel)super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
+            
+            // center the bullet in the JLabel
+            cell.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            // increase the font size
+            cell.setFont(new Font("", Font.PLAIN, 16));
+            
+            if (isSelected) {
                 final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
                 MessageType mt = messageGroup.getMessageType();
                 if (mt == MessageType.ERROR) {
@@ -790,24 +814,95 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 super.setForeground(table.getSelectionForeground());
                 super.setBackground(table.getSelectionBackground());
             }
-            //}
-                /*
-            if (column == 1) {
-            if (isSelected) {
-            super.setForeground(table.getSelectionForeground());
-            super.setBackground(table.getSelectionBackground());
-            } else {
-            cell.setBackground(table.getBackground());
-            }
-            } */
-
-            return this;
+            
+            return cell;
         }
+        
+    }
+
+    /**
+     * bold font if not visited, colors for errors
+     * tooltips that show entire query string, disable selection borders
+     */
+    private class DefaultRenderer extends DefaultTableCellRenderer {
 
         @Override
-        protected void setValue(Object value) {
-            super.setValue(value);
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            
+            Component cell = super.getTableCellRendererComponent(
+                    table, value, false, false, row, column);
+            
+            if (column == 3) {
+                String subject = (String)value;
+                setToolTipText(subject);
+                if (tableModel.isVisited(row)) {
+                    cell.setFont(visitedFont);
+                } else {
+                    cell.setFont(notVisitedFont);
+                }
+            }
+
+            if (isSelected) {
+                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
+                } else {
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
+                }
+            } else {
+                super.setForeground(table.getSelectionForeground());
+                super.setBackground(table.getSelectionBackground());
+            }
+
+            return cell;
         }
+    }
+    
+    private class DateRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            super.setForeground(table.getSelectionForeground());
+            super.setBackground(table.getSelectionBackground());
+            
+            Object aValue = value;
+            if (value instanceof Date) {
+                Date date = (Date)value;
+                DateFormat df = new SimpleDateFormat("HH:mm:ss");
+                aValue = df.format(date);
+            } else {
+                throw new RuntimeException("Tried to use DateRenderer on non-Date value.");
+            }
+            
+            Component cell =  super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
+            
+            if (isSelected) {
+                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
+                } else {
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
+                }
+            } else {
+                super.setForeground(table.getSelectionForeground());
+                super.setBackground(table.getSelectionBackground());
+            }
+            
+            return cell;
+        }
+        
     }
 
     /**
