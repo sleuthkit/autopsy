@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.sun.javafx.application.PlatformImpl;
 import java.awt.Color;
 import java.awt.Insets;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.UIManager;
@@ -37,33 +39,39 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public class Installer extends ModuleInstall {
 
     private static Installer instance;
-    
+    Logger logger = Logger.getLogger(Installer.class.getName());
+
     public synchronized static Installer getDefault() {
         if (instance == null) {
             instance = new Installer();
         }
         return instance;
     }
-    
+
     private Installer() {
         super();
     }
 
-    
-    
     @Override
     public void restored() {
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-
             @Override
             public void run() {
                 Case.invokeStartupDialog(); // bring up the startup dialog
-               
+
+                //initialize java fx
+                Platform.setImplicitExit(true);
+                PlatformImpl.startup(new Runnable() {
+                    @Override
+                    public void run() {
+                        logger.log(Level.INFO, "Initializing JavaFX for image viewing");
+                    }
+                });
+
             }
         });
 
-        Logger logger = Logger.getLogger(Installer.class.getName());
         //setupLAF();
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
@@ -80,7 +88,7 @@ public class Installer extends ModuleInstall {
 
         Logger logger = Logger.getLogger(Installer.class.getName());
         //use Nimbus if available
-        for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels() ) {
+        for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());

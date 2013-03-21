@@ -198,7 +198,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
-        PlatformImpl.startup(new Runnable() {
+        PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -1058,8 +1058,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     mainFrame.toFront();
                     return;
                 }
-
-                Platform.setImplicitExit(false);
 
                 // listen for case changes (specifically images being added).
                 if (Case.isCaseOpen() && !listeningToAddImage) {

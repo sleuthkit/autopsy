@@ -107,15 +107,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private void customizeComponents() {
         inImageMode = false;
 
-        Platform.setImplicitExit(false);
-        PlatformImpl.startup(new Runnable() {
-            @Override
-            public void run() {
-                logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-            }
-        });
         logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
-
         //initialize supported image types
         //TODO use mime-types instead once we have support
         String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
