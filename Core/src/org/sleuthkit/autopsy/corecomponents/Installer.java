@@ -39,7 +39,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public class Installer extends ModuleInstall {
 
     private static Installer instance;
-    Logger logger = Logger.getLogger(Installer.class.getName());
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private volatile boolean javaFxInit = true;
 
     public synchronized static Installer getDefault() {
         if (instance == null) {
@@ -50,6 +51,7 @@ public class Installer extends ModuleInstall {
 
     private Installer() {
         super();
+        javaFxInit = true;
     }
 
     @Override
@@ -60,14 +62,20 @@ public class Installer extends ModuleInstall {
             public void run() {
                 Case.invokeStartupDialog(); // bring up the startup dialog
 
-                //initialize java fx
-                Platform.setImplicitExit(true);
-                PlatformImpl.startup(new Runnable() {
-                    @Override
-                    public void run() {
-                        logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-                    }
-                });
+                //initialize java fx if exists
+                try {
+                    Platform.setImplicitExit(false);
+                    PlatformImpl.startup(new Runnable() {
+                        @Override
+                        public void run() {
+                            logger.log(Level.INFO, "Initializing JavaFX for image viewing");
+                        }
+                    });
+                } catch (Exception e) {
+                    //in case javafx not present
+                    javaFxInit = false;
+                    
+                }
 
             }
         });
@@ -76,6 +84,18 @@ public class Installer extends ModuleInstall {
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+    }
+
+    @Override
+    public void uninstalled() {
+        super.uninstalled();
+
+        //exit JavaFx plat
+        if (javaFxInit) {
+            Platform.exit();
+        }
+        
+
     }
 
     private void setupLAF() {
