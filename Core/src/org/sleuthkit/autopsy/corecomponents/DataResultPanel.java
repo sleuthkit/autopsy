@@ -64,13 +64,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Default constructor, needed mostly  for the palette/UI builder
      * Use overrides or factory methods for more customization.
      */
-    public DataResultPanel() {
+    private DataResultPanel() {
+        this.isMain = true;
         pcs = new PropertyChangeSupport(this);
         initComponents();
         
         setName(title);
 
-        this.isMain = false;
         this.title = "";
 
         this.dataResultTabbedPanel.addChangeListener(this);
@@ -184,8 +184,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (totalTabs == 0) {
             // find all dataContentViewer and add them to the tabbed pane
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                //DataResultViewer drv = factory; //use the original instance, do not create duplicate viewer //.createInstance();
-                DataResultViewer drv = factory.createInstance(); //TODO !!! we should not be creating dup instance, but currently might break external viewers
+                DataResultViewer drv;
+                if (isMain) {
+                    //for main window, use the instance in the lookup
+                    drv = factory; 
+                }
+                else {
+                    //create a new instance of the viewer for non-main window
+                    drv = factory.createInstance();
+                }
                 UpdateWrapper resultViewer = new UpdateWrapper(drv);
                 if (customContentViewer != null) {
                     //set custom content viewer to respond to events from this result viewer

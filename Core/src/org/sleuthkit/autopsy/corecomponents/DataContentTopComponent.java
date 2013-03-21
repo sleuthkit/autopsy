@@ -90,21 +90,21 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        dataContentPanel1 = new org.sleuthkit.autopsy.corecomponents.DataContentPanel();
+        dataContentPanel = new DataContentPanel(true);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE)
+            .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
+            .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.corecomponents.DataContentPanel dataContentPanel1;
+    private org.sleuthkit.autopsy.corecomponents.DataContentPanel dataContentPanel;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -149,7 +149,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     @Override
     public void componentClosed() {
 
-        dataContentPanel1.setNode(null);
+        dataContentPanel.setNode(null);
         
         if (!this.isDefault) {
             newWindowList.remove(this);
@@ -167,7 +167,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void setNode(Node selectedNode) {
-        dataContentPanel1.setNode(selectedNode);
+        dataContentPanel.setNode(selectedNode);
     }
 
     @Override
@@ -184,7 +184,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      * @return tab pane with individual DataContentViewers
      */
     public JTabbedPane getTabPanels() {
-        return dataContentPanel1.getTabPanels();
+        return dataContentPanel.getTabPanels();
     }
 
     /**

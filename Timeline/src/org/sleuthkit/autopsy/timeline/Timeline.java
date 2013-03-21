@@ -174,7 +174,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 mainFrame.setFrameSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT)); //(Width, Height)
 
 
-                dataContentPanel = new DataContentPanel();
+                dataContentPanel = DataContentPanel.createInstance();
                 //dataContentPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
                 //dataContentPanel.setPreferredSize(new Dimension(FRAME_WIDTH, (int) (FRAME_HEIGHT * 0.4)));
 

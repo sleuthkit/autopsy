@@ -16,17 +16,20 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="dataContentPanel1" alignment="0" pref="585" max="32767" attributes="0"/>
+          <Component id="dataContentPanel" alignment="0" pref="585" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="dataContentPanel1" alignment="0" pref="435" max="32767" attributes="0"/>
+          <Component id="dataContentPanel" alignment="0" pref="435" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="org.sleuthkit.autopsy.corecomponents.DataContentPanel" name="dataContentPanel1">
+    <Component class="org.sleuthkit.autopsy.corecomponents.DataContentPanel" name="dataContentPanel">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new DataContentPanel(true);"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

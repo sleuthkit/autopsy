@@ -13,11 +13,11 @@ Improvements:
 
 Bugfixes:
 - fixed memory leaks in "Add Image"
+- fix bug with duplicate instances of content and result viewers hidden and possibly degrading performance
 - show error message in hex and string viewer if specific offset of a file could not be read.
 - file search actions not always enabled when new case is open.
 - fixed directory tree history being reset when tree is refreshed.
 - The "media view" tab is inactive for deleted files (#165)
-
 
 
 ---------------- VERSION 3.0.4 --------------
