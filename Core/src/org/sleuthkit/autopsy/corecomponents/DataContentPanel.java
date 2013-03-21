@@ -45,7 +45,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // add all implementors of DataContentViewer and put them in the tabbed pane
         Collection<? extends DataContentViewer> dcvs = Lookup.getDefault().lookupAll(DataContentViewer.class);
         for (DataContentViewer factory : dcvs) {
-            DataContentViewer dcv = factory; //use the instance from Lookup instead of creating duplicate viewers //.createInstance();
+            //DataContentViewer dcv = factory; //use the instance from Lookup instead of creating duplicate viewers //.createInstance();
+            DataContentViewer dcv = factory.createInstance(); //TODO !!! we should not be creating dup instance, but currently might break external viewers
             viewers.add(new UpdateWrapper(dcv));
             jTabbedPane1.addTab(dcv.getTitle(), null,
                     dcv.getComponent(), dcv.getToolTip());
