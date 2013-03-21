@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import com.sun.javafx.application.PlatformImpl;
-import java.awt.Color;
 import java.awt.Insets;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -32,6 +31,7 @@ import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Manages this module's lifecycle. Opens the startup dialog during startup.
@@ -71,9 +71,16 @@ public class Installer extends ModuleInstall {
                             logger.log(Level.INFO, "Initializing JavaFX for image viewing");
                         }
                     });
-                } catch (Exception e) {
+                } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
                     //in case javafx not present
                     javaFxInit = false;
+                    String msg = "Error initializing JavaFX.  ";
+                    String details = " Some features will not be available. "
+                            + " Check that you have the right JRE installed (Sun JRE > 1.7.10). ";
+                    logger.log(Level.SEVERE, msg
+                            + details
+                            );
+                    MessageNotifyUtil.Notify.error(msg, details);
                     
                 }
 
