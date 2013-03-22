@@ -296,6 +296,19 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
+        boolean waiting = true;
+        long size = 0;
+        java.io.File rprtfldr = new java.io.File(System.getProperty("out_path")+java.io.File.separator+"AutopsyTestCase"+java.io.File.separator+"Reports"+java.io.File.separator+"AutopsyTestCase "+datenotime+java.io.File.separator+"HTML Report");
+        while(waiting)
+        {
+            long currsize = size;
+            size = 0;
+            for(java.io.File elem: rprtfldr.listFiles())
+            {
+                size+=elem.getTotalSpace();
+            }
+            waiting = size>currsize;
+        }
         new Timeout("pausing", 20000).sleep(); // Give it a few seconds to generate
         screenshot("Progress");
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);

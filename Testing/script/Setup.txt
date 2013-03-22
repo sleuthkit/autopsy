@@ -8,4 +8,6 @@ This file explains how to setup regression and continuous testing for Autopsy.
 6)The xml file should be of the format of the notablekeywords-example.xml file.
 7)Create a folder called 'output', this is where the output from tests go.
 8)The config.xml file is an example of a configuration file and contains all of the available elements.
-9)Use the -g 
+9)Use the -g command to create a gold standard without testing.
+10)Use the -r command to rebuild gold standards with testing.
+11)Use the -c command to run testing continuously until interrupted, this will also update all of the sleuthkit and autopsy code from github and will rebuild the code so that it is running the latest version after each test.

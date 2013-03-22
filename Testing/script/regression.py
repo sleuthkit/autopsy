@@ -24,6 +24,7 @@ from email.MIMEBase import MIMEBase
 from email import Encoders
 import urllib2
 import re
+import zipfile
 
 #
 # Please read me...
@@ -527,17 +528,27 @@ def run_test(image_file, count):
 		print_report(exceptions, "EXCEPTION", okay)
 		
 	# Now test in comparison to the gold standards
-	if !args.gold_creation:
-		compare_to_gold_db()
-		compare_to_gold_html()
-	
+	if not args.gold_creation:
+		try:
+			gold_path = os.path.join(case.gold)
+			img_gold = os.path.join(case.gold, case.image_name)
+			img_archive = os.path.join(case.gold, case.image_name+"-archive.zip")
+			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+			extrctr.extractall(gold_path)
+			extrctr.close
+			compare_to_gold_db()
+			compare_to_gold_html()
+			compare_errors()
+			del_dir(img_gold)
+		except:
+			print("Tests failed due to an error, try rebuilding or creating gold standards.\n")
 	# Make the CSV log and the html log viewer
 	generate_csv(case.csv)
 	if case.global_csv:
 		generate_csv(case.global_csv)
 	generate_html()
 	# If running in rebuild mode (-r)
-	if args.rebuild:
+	if args.rebuild or args.gold_creation:
 		rebuild()
 	# Reset the case and return the tests sucessfully finished
 	clear_dir(make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "ModuleOutput", "keywordsearch"))
@@ -639,8 +650,22 @@ def rebuild():
 	except Exception as e:
 		errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 		errors.append(str(e) + "\n")
+	oldcwd = os.getcwd()
+	os.chdir(case.gold)
+	img_archive = make_local_path(case.image_name+"-archive.zip")
+	img_gold = os.path.join(case.image_name)
+	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
+	zipdir(img_gold, comprssr)
+	comprssr.close()
+	del_dir(gold_dir)
+	os.chdir(oldcwd)
 	okay = "Sucessfully rebuilt all gold standards."
 	print_report(errors, "REBUILDING", okay)
+
+def zipdir(path, zip):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            zip.write(os.path.join(root, file))
 
 # Using the global case's variables, compare the database file made by the
 # regression test to the gold standard database file
@@ -856,7 +881,6 @@ def generate_common_log():
 		case.sorted_log = make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
 		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
 		subprocess.call(srtcmdlst)
-		compare_errors()
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
 		printerror(str(e) + "\n")
@@ -906,9 +930,10 @@ def fill_case_data():
 	start = datetime.datetime.strptime(case.start_date, "%b %d, %Y %I:%M:%S %p")
 	end = datetime.datetime.strptime(case.end_date, "%a %b %d %H:%M:%S %Y")
 	case.total_test_time = str(end - start)
-	
+
 	try:
 		# Set Autopsy version, heap space, ingest time, and service times
+		
 		version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
 		case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
 		
@@ -1736,7 +1761,8 @@ def execute_test():
 		errorem = ""
 		errorem += "There were no Errors.\n"
 		attachl = []
-	send_email()
+	if not args.gold_creation:
+		send_email()
 
 
 def send_email():
