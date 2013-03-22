@@ -40,7 +40,6 @@ public class Installer extends ModuleInstall {
 
     private static Installer instance;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
-    private volatile boolean javaFxInit = true;
 
     public synchronized static Installer getDefault() {
         if (instance == null) {
@@ -51,57 +50,31 @@ public class Installer extends ModuleInstall {
 
     private Installer() {
         super();
-        javaFxInit = true;
+
     }
 
     @Override
     public void restored() {
 
-        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-            @Override
-            public void run() {
-                Case.invokeStartupDialog(); // bring up the startup dialog
-
-                //initialize java fx if exists
-                try {
-                    Platform.setImplicitExit(false);
-                    PlatformImpl.startup(new Runnable() {
-                        @Override
-                        public void run() {
-                            logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-                        }
-                    });
-                } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
-                    //in case javafx not present
-                    javaFxInit = false;
-                    String msg = "Error initializing JavaFX.  ";
-                    String details = " Some features will not be available. "
-                            + " Check that you have the right JRE installed (Sun JRE > 1.7.10). ";
-                    logger.log(Level.SEVERE, msg
-                            + details
-                            );
-                    MessageNotifyUtil.Notify.error(msg, details);
-                    
-                }
-
-            }
-        });
 
         //setupLAF();
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+
+        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+            @Override
+            public void run() {
+                Case.invokeStartupDialog(); // bring up the startup dialog
+            }
+        });
+
+
     }
 
     @Override
     public void uninstalled() {
         super.uninstalled();
-
-        //exit JavaFx plat
-        if (javaFxInit) {
-            Platform.exit();
-        }
-        
 
     }
 
