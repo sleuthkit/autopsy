@@ -180,12 +180,17 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
             infoLabel.setText("Playback of deleted videos is not supported, use an external player. ");
+            videoPanel.removeAll();
+            pauseButton.setEnabled(false);
+            progressSlider.setEnabled(false);
             return;
         } else {
             try {
                 String path = file.getUniquePath();
                 infoLabel.setText(path);
                 infoLabel.setToolTipText(path);
+                pauseButton.setEnabled(true);
+                progressSlider.setEnabled(true);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Cannot get unique path of video file");
             }
@@ -193,7 +198,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
         java.io.File ioFile = getJFile(file);
 
-          gstVideoComponent = new VideoComponent();
+        gstVideoComponent = new VideoComponent();
         synchronized (playbinLock) {
             if (gstPlaybin2 != null) {
                 gstPlaybin2.dispose();
@@ -202,11 +207,11 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             gstPlaybin2.setVideoSink(gstVideoComponent.getElement());
 
             videoPanel.removeAll();
-          
+
 
             videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
             videoPanel.add(gstVideoComponent);
-           
+
             videoPanel.setVisible(true);
 
             gstPlaybin2.setInputFile(ioFile);
@@ -222,7 +227,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             @Override
             public void run() {
                 progressLabel.setText("");
-              //  infoLabel.setText("");
+                //  infoLabel.setText("");
 
             }
         });
@@ -243,15 +248,15 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 }
                 gstPlaybin2 = null;
             }
-             gstVideoComponent = null;
+            gstVideoComponent = null;
             //videoComponent.setBackground(Color.BLACK);
             //videoComponent.repaint();
 
 
             //videoPanel.repaint();
         }
-        
-          // get rid of any existing videoProgressWorker thread
+
+        // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
             videoProgressWorker = null;
