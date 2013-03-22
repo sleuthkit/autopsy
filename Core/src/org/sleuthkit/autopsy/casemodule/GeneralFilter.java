@@ -28,10 +28,11 @@ import javax.swing.filechooser.FileFilter;
  */
 public class GeneralFilter extends FileFilter{
 
-    List<String> extensions;
-    String desc;
+    private List<String> extensions;
+    private String desc;
 
     public GeneralFilter(List<String> ext, String desc){
+        super();
         this.extensions = ext;
         this.desc = desc;
     }
