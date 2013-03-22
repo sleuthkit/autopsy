@@ -102,6 +102,9 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
     void showImageFx(final AbstractFile file, final Dimension dims) {
         final String fileName = file.getName();
 
+        //hide the panel during loading/transformations
+        fxPanel.setVisible(false);
+        
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
@@ -142,6 +145,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                     return;
                 }
 
+                //use border pane to center the image in the scene
                 BorderPane borderpane = new BorderPane();
                 borderpane.setCenter(fxImageView);
 
@@ -156,6 +160,9 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 // borderpane.getChildren().add(fxImageView);
 
                 fxPanel.setScene(fxScene);
+                
+                //show the panel after fully loaded
+                fxPanel.setVisible(true);
 
             }
         });
@@ -171,6 +178,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        setBackground(new java.awt.Color(0, 0, 0));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
