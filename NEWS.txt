@@ -1,4 +1,4 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.5 --------------
 
 New features:
 - Archive extractor ingest module (uses 7zip)
@@ -6,13 +6,19 @@ New features:
 
 Improvements:
 - Sleuthkit-4.0.2 and libewf-20130128
+- improved image loading in Media View and Thumbnail View (faster loading, handles large files better)
+- improve Keyword Search file indexing (use detected mime-type instead of file extension)
+- exif module - better jpeg detection using signature and not only file extension.
 - show children counts in directory tree
 
 Bugfixes:
+- fixed memory leaks in "Add Image"
+- fix bug with duplicate instances of content and result viewers hidden and possibly degrading performance
 - show error message in hex and string viewer if specific offset of a file could not be read.
 - file search actions not always enabled when new case is open.
 - fixed directory tree history being reset when tree is refreshed.
-- exif module better jpeg detection using signature and not only file extension.
+- The "media view" tab is inactive for deleted files (#165)
+
 
 ---------------- VERSION 3.0.4 --------------
 

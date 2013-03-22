@@ -37,6 +37,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
@@ -815,9 +816,12 @@ public class IngestManager {
         }
     }
 
-//ingester worker for AbstractFile queue
-//worker runs until AbstractFile queue is consumed
-//and if needed, new instance is created and started when data arrives
+    
+    /**
+     * File ingest pipeline processor.
+     * Worker runs until AbstractFile queue is consumed
+     * New instance is created and started when data arrives and previous pipeline completed.
+     */
     private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
         private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
@@ -828,7 +832,9 @@ public class IngestManager {
         @Override
         protected Object doInBackground() throws Exception {
 
-            logger.log(Level.INFO, "Starting background processing");
+            logger.log(Level.INFO, "Starting background ingest file processor");
+            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+            
             stats.start();
 
             //notify main thread modules started
@@ -893,7 +899,14 @@ public class IngestManager {
                         logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
                     }
-                }
+                    catch (OutOfMemoryError e) {
+                        logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
+                        stats.addError(module);
+                    }
+                } //end for every module
+                
+                //free the internal file resource after done with every module
+                fileToProcess.close();
 
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
@@ -909,7 +922,8 @@ public class IngestManager {
                 }
                 //--totalEnqueuedFiles;
                 
-            } //end of this AbstractFile
+                
+            } //end of for every AbstractFile
             logger.log(Level.INFO, "IngestManager: Finished processing files");
             return null;
         }
@@ -925,6 +939,11 @@ public class IngestManager {
                         IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
                     }
                 }
+                
+                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+                logger.log(Level.INFO, "Freeing jvm heap resources post file pipeline run");
+                System.gc();
+                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
 
             } catch (CancellationException e) {
                 //task was cancelled

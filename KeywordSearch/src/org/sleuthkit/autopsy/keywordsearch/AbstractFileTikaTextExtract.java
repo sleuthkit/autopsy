@@ -66,30 +66,6 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-    // TODO: use type detection mechanism instead, and maintain supported MimeTypes, not extensions
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] SUPPORTED_EXTENSIONS = {
-        //Archive (to be removed when we have archive module
-        /// handled by 7zip module now "tar", "jar", "zip", "gzip", "bzip2", "gz", "tgz", "ar", "cpio", 
-        //MS Office
-        "doc", "dot", "docx", "docm", "dotx", "dotm",
-        "xls", "xlw", "xlt", "xlsx", "xlsm", "xltx", "xltm",
-        "ppt", "pps", "pot", "pptx", "pptm", "potx", "potm",
-        //Open Office
-        "odf", "odt", "ott", "ods", "ots", "odp", "otp",
-        "sxw", "stw", "sxc", "stc", "sxi", "sxi",
-        "sdw", "sdc", "vor", "sgl",
-        //rich text, pdf
-        "rtf", "pdf",
-        //html (other extractors take priority)
-        "html", "htm", "xhtml",
-        //text
-        "txt", "log", "manifest",
-        //code
-        "class",
-        //images, media, other
-        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "flv", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {
         this.module = KeywordSearchIngestModule.getDefault();
@@ -282,19 +258,27 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean isSupported(AbstractFile file) {
-        String fileNameLower = file.getName().toLowerCase();
-        int dotI = fileNameLower.lastIndexOf(".");
-        if (dotI == -1 || dotI == fileNameLower.length() - 1) {
-            return false; //no extension
+    public boolean isSupported(AbstractFile file, String detectedFormat) {
+        if (detectedFormat == null) {
+            return false;
+        } else if (detectedFormat.equals("application/octet-stream")) {
+            //any binary unstructured blobs (string extraction will be used)
+            return false;
+        } else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+            return false;
+        } //skip video other than flv (tika supports flv only)
+        else if (detectedFormat.contains("video/")
+                && !detectedFormat.equals("video/x-flv")) {
+            return false;
         }
-        final String extension = fileNameLower.substring(dotI + 1);
-        for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
-            if (extension.equals(SUPPORTED_EXTENSIONS[i])) {
-                return true;
-            }
-        }
-        return false;
+
+        //TODO might need to add more mime-types to ignore
+
+        //default to true, which includes
+        //text, docs, pdf and others
+
+        return true;
+
     }
 
     /**

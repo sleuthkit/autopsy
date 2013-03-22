@@ -126,7 +126,7 @@ public final class ContentUtils {
     private static final int TO_FILE_BUFFER_SIZE = 8192;
 
     /**
-     * Reads all the data from any content object and writes it to a file.
+     * Reads all the data from any content object and writes (extracts) it to a file.
      *
      * @param content Any content object.
      * @param outputFile Will be created if it doesn't exist, and overwritten if
@@ -136,9 +136,10 @@ public final class ContentUtils {
      * @param worker the swing worker background thread the process runs within,
      * or null, if in the main thread, used to handle task cancellation
      * @param source true if source file
+     * @return number of bytes extracted
      * @throws IOException if file could not be written
      */
-    public static void writeToFile(Content content, java.io.File outputFile,
+    public static long writeToFile(Content content, java.io.File outputFile,
             ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
@@ -174,6 +175,7 @@ public final class ContentUtils {
         } finally {
             out.close();
         }
+        return totalRead;
     }
 
     public static void writeToFile(Content content, java.io.File outputFile) throws IOException {

@@ -27,18 +27,16 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
-import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -52,10 +50,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
     private Content dataSource;
-    // for error handling
-    private String className = this.getClass().toString();
     //string extract utility
     private final StringExtract stringExtract = new StringExtract();
+    private static final Logger logger = Logger.getLogger(DataContentViewerString.class.getName());
 
     /**
      * Creates new form DataContentViewerString
@@ -64,6 +61,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         initComponents();
         customizeComponents();
         this.resetComponent();
+        logger.log(Level.INFO, "Created StringView instance: " + this);
     }
 
     private void customizeComponents() {
@@ -103,7 +101,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         selectAllMenuItem = new javax.swing.JMenuItem();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        outputViewPane = new javax.swing.JTextPane();
+        outputViewPane = new JTextPane(){
+     public boolean getScrollableTracksViewportWidth() {
+     return (getSize().width < 400);
+ }};
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
         currentPageLabel = new javax.swing.JLabel();
@@ -121,6 +122,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
+
+        setMinimumSize(new java.awt.Dimension(5, 5));
+
+        jPanel1.setPreferredSize(new java.awt.Dimension(502, 424));
 
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
@@ -219,8 +224,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addGap(33, 33, 33)
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 11, Short.MAX_VALUE))
+                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
@@ -248,7 +252,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 640, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -346,7 +350,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                         + " could not be read)";
                 setVisible = true;
-                Logger logger = Logger.getLogger(this.className);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex);
             }
         }
@@ -457,7 +460,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerString();
     }
 

@@ -47,8 +47,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
     private Content dataSource;
-    // for error handling
-    private String className = this.getClass().toString();
+
+    private static final Logger logger = Logger.getLogger(DataContentViewerHex.class.getName());
 
     /**
      * Creates new form DataContentViewerHex
@@ -57,6 +57,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         initComponents();
         customizeComponents();
         this.resetComponent();
+        logger.log(Level.INFO, "Created HexView instance: " + this);
     }
 
     private void customizeComponents() {
@@ -91,155 +92,155 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         hexViewerPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         outputViewPane = new JTextPane(){
-            public boolean getScrollableTracksViewportWidth() {
-                return (getSize().width < 700);
-            }};
-            this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white
-            totalPageLabel = new javax.swing.JLabel();
-            ofLabel = new javax.swing.JLabel();
-            currentPageLabel = new javax.swing.JLabel();
-            pageLabel = new javax.swing.JLabel();
-            prevPageButton = new javax.swing.JButton();
-            nextPageButton = new javax.swing.JButton();
-            pageLabel2 = new javax.swing.JLabel();
-            goToPageTextField = new javax.swing.JTextField();
-            goToPageLabel = new javax.swing.JLabel();
+     public boolean getScrollableTracksViewportWidth() {
+     return (getSize().width < 400);
+ }};
+        this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white
+        totalPageLabel = new javax.swing.JLabel();
+        ofLabel = new javax.swing.JLabel();
+        currentPageLabel = new javax.swing.JLabel();
+        pageLabel = new javax.swing.JLabel();
+        prevPageButton = new javax.swing.JButton();
+        nextPageButton = new javax.swing.JButton();
+        pageLabel2 = new javax.swing.JLabel();
+        goToPageTextField = new javax.swing.JTextField();
+        goToPageLabel = new javax.swing.JLabel();
 
-            copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
-            rightClickMenu.add(copyMenuItem);
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
 
-            selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.selectAllMenuItem.text")); // NOI18N
-            rightClickMenu.add(selectAllMenuItem);
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
-            jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
-            outputViewPane.setEditable(false);
-            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-            outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
-            outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
-            jScrollPane1.setViewportView(outputViewPane);
+        outputViewPane.setEditable(false);
+        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
+        outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
+        jScrollPane1.setViewportView(outputViewPane);
 
-            totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.totalPageLabel.text_1")); // NOI18N
 
-            ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.ofLabel.text_1")); // NOI18N
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.ofLabel.text_1")); // NOI18N
 
-            currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.currentPageLabel.text_1")); // NOI18N
-            currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-            currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-            currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
-            pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel.text_1")); // NOI18N
-            pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
-            pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
-            pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
+        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel.text_1")); // NOI18N
+        pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
-            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-            prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.prevPageButton.text")); // NOI18N
-            prevPageButton.setBorderPainted(false);
-            prevPageButton.setContentAreaFilled(false);
-            prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
-            prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-            prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
-            prevPageButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    prevPageButtonActionPerformed(evt);
-                }
-            });
+        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.prevPageButton.text")); // NOI18N
+        prevPageButton.setBorderPainted(false);
+        prevPageButton.setContentAreaFilled(false);
+        prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+        prevPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                prevPageButtonActionPerformed(evt);
+            }
+        });
 
-            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-            nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.nextPageButton.text")); // NOI18N
-            nextPageButton.setBorderPainted(false);
-            nextPageButton.setContentAreaFilled(false);
-            nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-            nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-            nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-            nextPageButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    nextPageButtonActionPerformed(evt);
-                }
-            });
+        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.nextPageButton.text")); // NOI18N
+        nextPageButton.setBorderPainted(false);
+        nextPageButton.setContentAreaFilled(false);
+        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextPageButtonActionPerformed(evt);
+            }
+        });
 
-            pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel2.text")); // NOI18N
-            pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
-            pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
-            pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel2.text")); // NOI18N
+        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
-            goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageTextField.text")); // NOI18N
-            goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    goToPageTextFieldActionPerformed(evt);
-                }
-            });
+        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageTextField.text")); // NOI18N
+        goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goToPageTextFieldActionPerformed(evt);
+            }
+        });
 
-            goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageLabel.text")); // NOI18N
+        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageLabel.text")); // NOI18N
 
-            javax.swing.GroupLayout hexViewerPanelLayout = new javax.swing.GroupLayout(hexViewerPanel);
-            hexViewerPanel.setLayout(hexViewerPanelLayout);
-            hexViewerPanelLayout.setHorizontalGroup(
-                hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(hexViewerPanelLayout.createSequentialGroup()
-                    .addContainerGap()
+        javax.swing.GroupLayout hexViewerPanelLayout = new javax.swing.GroupLayout(hexViewerPanel);
+        hexViewerPanel.setLayout(hexViewerPanelLayout);
+        hexViewerPanelLayout.setHorizontalGroup(
+            hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(hexViewerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(ofLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(totalPageLabel)
+                .addGap(50, 50, 50)
+                .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(goToPageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(205, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
+        );
+        hexViewerPanelLayout.setVerticalGroup(
+            hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(hexViewerPanelLayout.createSequentialGroup()
+                .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(ofLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(totalPageLabel)
-                    .addGap(50, 50, 50)
+                    .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(ofLabel)
+                        .addComponent(totalPageLabel))
                     .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, 0)
                     .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
+                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(goToPageLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(205, Short.MAX_VALUE))
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
-            );
-            hexViewerPanelLayout.setVerticalGroup(
-                hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(hexViewerPanelLayout.createSequentialGroup()
-                    .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ofLabel)
-                            .addComponent(totalPageLabel))
-                        .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(goToPageLabel)
-                        .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(0, 0, 0)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE))
-            );
+                    .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE))
+        );
 
-            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-            this.setLayout(layout);
-            layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGap(0, 622, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(hexViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(0, 0, 0)))
-            );
-            layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGap(0, 411, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(hexViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(0, 0, 0)))
-            );
-        }// </editor-fold>//GEN-END:initComponents
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 622, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, 0)
+                    .addComponent(hexViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(0, 0, 0)))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 411, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, 0)
+                    .addComponent(hexViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(0, 0, 0)))
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
@@ -321,7 +322,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 setVisible = true;
                 errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                     + " could not be read)";
-                Logger.getLogger(this.className).log(Level.WARNING, "Error while trying to show the hex content.", ex);
+                logger.log(Level.WARNING, "Error while trying to show the hex content.", ex);
             }
         }
 
@@ -407,7 +408,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerHex();
     }
 

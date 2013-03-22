@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Data result panel component with its viewer tabs.
@@ -46,7 +48,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private Node rootNode;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs;
     
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
@@ -54,18 +56,21 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
+    
+    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
 
     /**
      * Creates new DataResultPanel
      * Default constructor, needed mostly  for the palette/UI builder
      * Use overrides or factory methods for more customization.
      */
-    public DataResultPanel() {
+    private DataResultPanel() {
+        this.isMain = true;
+        pcs = new PropertyChangeSupport(this);
         initComponents();
         
         setName(title);
 
-        this.isMain = false;
         this.title = "";
 
         this.dataResultTabbedPanel.addChangeListener(this);
@@ -179,7 +184,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (totalTabs == 0) {
             // find all dataContentViewer and add them to the tabbed pane
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                DataResultViewer drv = factory.getInstance();
+                DataResultViewer drv;
+                if (isMain) {
+                    //for main window, use the instance in the lookup
+                    drv = factory; 
+                }
+                else {
+                    //create a new instance of the viewer for non-main window
+                    drv = factory.createInstance();
+                }
                 UpdateWrapper resultViewer = new UpdateWrapper(drv);
                 if (customContentViewer != null) {
                     //set custom content viewer to respond to events from this result viewer
@@ -244,7 +257,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
+        if (pcs == null) {
+            logger.log(Level.WARNING, "Could not add listener to DataResultPanel, "
+                    + "listener support not fully initialized yet, listener: " + listener.toString() );
+        }
+        else {
+            this.pcs.addPropertyChangeListener(listener);
+        }
     }
 
     @Override
@@ -366,6 +385,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         numberMatchLabel = new javax.swing.JLabel();
         matchLabel = new javax.swing.JLabel();
         dataResultTabbedPanel = new javax.swing.JTabbedPane();
+
+        setMinimumSize(new java.awt.Dimension(5, 5));
+        setPreferredSize(new java.awt.Dimension(5, 5));
 
         org.openide.awt.Mnemonics.setLocalizedText(directoryTablePath, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.directoryTablePath.text")); // NOI18N
 

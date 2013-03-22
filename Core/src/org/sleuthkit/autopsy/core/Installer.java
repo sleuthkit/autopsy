@@ -18,11 +18,16 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import com.sun.javafx.application.PlatformImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -33,6 +38,7 @@ public class Installer extends ModuleInstall {
 
     private List<ModuleInstall> packageInstallers;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private volatile boolean javaFxInit = true;
 
     static {
         loadDynLibraries();
@@ -85,12 +91,44 @@ public class Installer extends ModuleInstall {
     }
 
     public Installer() {
+        javaFxInit = true;
         packageInstallers = new ArrayList<ModuleInstall>();
 
-        packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault() );
+        packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
-        packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault() );
-        packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault() );
+        packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
+
+    }
+
+    private void initJavaFx() {
+        //initialize java fx if exists
+        try {
+            Platform.setImplicitExit(false);
+            PlatformImpl.startup(new Runnable() {
+                @Override
+                public void run() {
+                    logger.log(Level.INFO, "Initializing JavaFX for image viewing");
+                }
+            });
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
+            //in case javafx not present
+            javaFxInit = false;
+            final String msg = "Error initializing JavaFX.  ";
+            final String details = " Some features will not be available. "
+                    + " Check that you have the right JRE installed (Sun JRE > 1.7.10). ";
+            logger.log(Level.SEVERE, msg
+                    + details);
+
+            WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+                @Override
+                public void run() {
+                    MessageNotifyUtil.Notify.error(msg, details);
+                }
+            });
+
+
+        }
 
     }
 
@@ -99,6 +137,9 @@ public class Installer extends ModuleInstall {
         super.restored();
 
         logger.log(Level.INFO, "restored()");
+
+        initJavaFx();
+
         for (ModuleInstall mi : packageInstallers) {
             logger.log(Level.INFO, mi.getClass().getName() + " restored()");
             try {
@@ -130,6 +171,7 @@ public class Installer extends ModuleInstall {
         super.uninstalled();
 
         logger.log(Level.INFO, "uninstalled()");
+
         for (ModuleInstall mi : packageInstallers) {
             logger.log(Level.INFO, mi.getClass().getName() + " uninstalled()");
             try {
@@ -138,6 +180,9 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.WARNING, "", e);
             }
         }
+
+
+
     }
 
     @Override
@@ -145,6 +190,12 @@ public class Installer extends ModuleInstall {
         super.close();
 
         logger.log(Level.INFO, "close()");
+
+        //exit JavaFx plat
+        if (javaFxInit) {
+            Platform.exit();
+        }
+
         for (ModuleInstall mi : packageInstallers) {
             logger.log(Level.INFO, mi.getClass().getName() + " close()");
             try {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -115,6 +116,8 @@ public class Case {
     private static Case currentCase = null;
     private Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
+    static final String CASE_EXTENSION = "aut";
+    static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
 
     /**
      * Constructor for the Case class
@@ -201,7 +204,7 @@ public class Case {
     static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
-        String configFilePath = caseDir + File.separator + caseName + ".aut";
+        String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
@@ -259,7 +262,12 @@ public class Case {
             // close the previous case if there's any
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
-            throw new CaseActionException("Error opening the case", ex);
+            if (!configFilePath.endsWith(CASE_DOT_EXTENSION)) {
+                throw new CaseActionException("Check that you selected the correct case file (usually with "
+                        + CASE_DOT_EXTENSION + " extension)", ex);
+            } else {
+                throw new CaseActionException("Error opening the case", ex);
+            }
         }
     }
 
@@ -560,7 +568,6 @@ public class Case {
             return xmlcm.getCreatedDate();
         }
     }
-
 
     /**
      * Get absolute module output directory path where modules should save their
@@ -877,6 +884,7 @@ public class Case {
 
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
+        logger.log(Level.INFO, "Changing Case to: " + toChangeTo);
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
@@ -914,7 +922,14 @@ public class Case {
 
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
+
+            //try to force gc to happen
+            System.gc();
+            System.gc();
         }
+
+        //log memory usage after case changed
+        logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
 
 
     }

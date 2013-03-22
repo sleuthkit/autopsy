@@ -28,6 +28,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Image;
@@ -98,6 +99,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
                 return Void.TYPE.newInstance();
             }
             logger.log(Level.INFO, "Starting module: " + module.getName());
+            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             progress.setDisplayName(displayName);
 
             logger.log(Level.INFO, "Initializing module: " + module.getName());
@@ -162,6 +164,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
                 }
             });
             logger.log(Level.INFO, "Done running module: " + module.getName());
+            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
     }
 }

@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import javax.imageio.ImageIO;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -154,7 +156,17 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
 
-        private static final List<String> SUPP_EXTENSIONS = Arrays.asList(".jpeg", ".jpg", ".gif", ".png");
+        private final List<String> SUPP_EXTENSIONS;
+
+        IsSupportedContentVisitor() {
+            String[] supportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
+
+            SUPP_EXTENSIONS = new ArrayList<String>(supportedImagesSuffixes.length);
+            for (int i = 0; i < supportedImagesSuffixes.length; ++i) {
+                String suffix = supportedImagesSuffixes[i];
+                SUPP_EXTENSIONS.add("." + suffix);
+            }
+        }
 
         @Override
         public Boolean visit(DerivedFile f) {

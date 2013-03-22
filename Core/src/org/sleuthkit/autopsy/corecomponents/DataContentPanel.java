@@ -34,18 +34,31 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     
     private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();;
     private Node currentNode;
+    private final boolean isMain;
 
     /**
-     * Creates new form DataContentPanel
+     * Creates new DataContentPanel panel
+     * The main data content panel can only be created by the data content top component, 
+     * thus this constructor is not public.
+     * 
+     * Use the createInstance factory method to create an external viewer data content panel.
+     * 
      */
-    public DataContentPanel() {
-        
+    DataContentPanel(boolean isMain) {
+        this.isMain = isMain;
         initComponents();
         
         // add all implementors of DataContentViewer and put them in the tabbed pane
         Collection<? extends DataContentViewer> dcvs = Lookup.getDefault().lookupAll(DataContentViewer.class);
         for (DataContentViewer factory : dcvs) {
-            DataContentViewer dcv = factory.getInstance();
+            DataContentViewer dcv;
+            if (isMain) {
+                //use the instance from Lookup for the main viewer
+                dcv = factory; 
+            }
+            else {
+                dcv = factory.createInstance(); 
+            }
             viewers.add(new UpdateWrapper(dcv));
             jTabbedPane1.addTab(dcv.getTitle(), null,
                     dcv.getComponent(), dcv.getToolTip());
@@ -58,6 +71,17 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         }
         
         jTabbedPane1.addChangeListener(this);
+    }
+    
+    
+    /**
+     * Factory method to create an external (not main window) data content panel
+     * to be used in an external window
+     * 
+     * @return a new instance of a data content panel
+     */
+    public static DataContentPanel createInstance() {
+        return new DataContentPanel(false);
     }
     
     public JTabbedPane getTabPanels() {
@@ -74,6 +98,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     private void initComponents() {
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
+
+        setMinimumSize(new java.awt.Dimension(5, 5));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

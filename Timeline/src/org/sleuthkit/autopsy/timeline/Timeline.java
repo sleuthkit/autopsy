@@ -22,6 +22,7 @@ import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
@@ -35,7 +36,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -115,21 +115,21 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false);
-    private JFrame jf;          //frame for holding all the elements
-    private Group group_Charts; //Orders the charts
-    private Scene scene_Charts; //Displays the charts
-    private HBox hBox_Charts;      //Holds the navigation buttons in horiztonal fashion. 
-    private VBox vBox_FX;        //Holds the JavaFX Elements in vertical fashion. 
-    private JFXPanel panel_Charts;  //FX panel to hold the group
-    private BarChart chart_Events;      //Yearly/Monthly events - Bar chart
-    private ScrollPane scroll_Events;  //Scroll Panes for dealing with oversized an oversized chart
-    private final int Height_Frame = 850; //Sizing constants
-    private final int Width_Frame = 1300;
-    private Button zoomOutButton;  //Navigation buttons
-    private ComboBox<String> dropdown_SelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
-    private final Stack<BarChart> stack_PrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
-    private BarChart chart_TopLevel; //the topmost chart, used for resetting to default view.
-    private DataResultPanel dataResult;
+    private TimelineFrame mainFrame;          //frame for holding all the elements
+    private Group fxGroupCharts; //Orders the charts
+    private Scene fxSceneCharts; //Displays the charts
+    private HBox fxHBoxCharts;      //Holds the navigation buttons in horiztonal fashion. 
+    private VBox fxVBox;        //Holds the JavaFX Elements in vertical fashion. 
+    private JFXPanel fxPanelCharts;  //FX panel to hold the group
+    private BarChart fxChartEvents;      //Yearly/Monthly events - Bar chart
+    private ScrollPane fxScrollEvents;  //Scroll Panes for dealing with oversized an oversized chart
+    private static final int FRAME_HEIGHT = 700; //Sizing constants
+    private static final int FRAME_WIDTH = 1200;
+    private Button fxZoomOutButton;  //Navigation buttons
+    private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
+    private final Stack<BarChart> fxStackPrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
+    private BarChart fxChartTopLevel; //the topmost chart, used for resetting to default view.
+    private DataResultPanel dataResultPanel;
     private DataContentPanel dataContentPanel;
     private ProgressHandle progress;
     private java.io.File moduleDir;
@@ -138,9 +138,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private boolean listeningToAddImage = false;
     private long lastObjectId = -1;
     private TimelineProgressDialog progressDialog;
-    private EventHandler mouseEnteredListener;
-    private EventHandler mouseExitedListener;
-    private JSplitPane splitXPane, splitYPane;
+    private EventHandler fxMouseEnteredListener;
+    private EventHandler fxMouseExitedListener;
     private SleuthkitCase skCase;
 
     //Swing components and JavafX components don't play super well together
@@ -149,16 +148,16 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private void customize() {
 
         //listeners
-        mouseEnteredListener = new EventHandler<MouseEvent>() {
+        fxMouseEnteredListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
-                panel_Charts.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                fxPanelCharts.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
         };
-        mouseExitedListener = new EventHandler<MouseEvent>() {
+        fxMouseExitedListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
-                panel_Charts.setCursor(null);
+                fxPanelCharts.setCursor(null);
             }
         };
 
@@ -166,51 +165,40 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             @Override
             public void run() {
                 //Making the main frame *
-                jf = new JFrame(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
+                
+                mainFrame = new TimelineFrame();
+                mainFrame.setFrameName(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
 
                 //use the same icon on jframe as main application
-                jf.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
-                jf.setSize(Width_Frame, Height_Frame); //(Width, Height)
+                mainFrame.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
+                mainFrame.setFrameSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT)); //(Width, Height)
 
 
-                dataContentPanel = new DataContentPanel();
+                dataContentPanel = DataContentPanel.createInstance();
+                //dataContentPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                //dataContentPanel.setPreferredSize(new Dimension(FRAME_WIDTH, (int) (FRAME_HEIGHT * 0.4)));
 
-                dataResult = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
-                dataResult.setContentViewer(new DataContentPanel());
-                dataResult.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dataResult.setPreferredSize(new Dimension(700, 300));
+                dataResultPanel = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
+                dataResultPanel.setContentViewer(dataContentPanel);
+                //dataResultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                //dataResultPanel.setPreferredSize(new Dimension((int)(FRAME_WIDTH * 0.5), (int) (FRAME_HEIGHT * 0.5)));
                 logger.log(Level.INFO, "Successfully created viewers");
 
-                //ViewerJPanel holds both of the DataResult/DataContent viewers,
-                //aligned horizontally (X_AXIS)
-                final JPanel viewerJPanel = new JPanel();
-                viewerJPanel.setLayout(new BoxLayout(viewerJPanel, BoxLayout.X_AXIS));
-        
-                splitXPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dataResult, dataContentPanel);
-                splitXPane.setDividerLocation(Width_Frame / 2);
-                viewerJPanel.add(splitXPane);
-                viewerJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                mainFrame.setBottomLeftPanel(dataResultPanel);
+                mainFrame.setBottomRightPanel(dataContentPanel);
 
-                //The chartJpanel holds the chart, 
-                //aligned vertically (Y_AXIS)
-                final JPanel chartJPanel = new JPanel();
-                chartJPanel.setLayout(new BoxLayout(chartJPanel, BoxLayout.Y_AXIS));
-
-                splitYPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartJPanel, viewerJPanel);
-                splitYPane.setDividerLocation(Height_Frame / 2);
-
-                runJavaFxThread(chartJPanel);
+                runJavaFxThread();
             }
         });
 
 
     }
 
-    private void runJavaFxThread(final JPanel chartJPanel) {
+    private void runJavaFxThread() {
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
-        PlatformImpl.startup(new Runnable() {
+        PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -218,19 +206,19 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
                     progress.start();
 
-                    chart_Events = null;
-                    panel_Charts = new JFXPanel();
-                    group_Charts = new Group();
-                    scene_Charts = new Scene(group_Charts, Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                    vBox_FX = new VBox(5);
-                    vBox_FX.setAlignment(Pos.BOTTOM_CENTER);
-                    hBox_Charts = new HBox(10);
-                    hBox_Charts.setAlignment(Pos.BOTTOM_CENTER);
+                    fxChartEvents = null; //important to reset old data
+                    fxPanelCharts = new JFXPanel();
+                    fxGroupCharts = new Group();
+                    fxSceneCharts = new Scene(fxGroupCharts, FRAME_WIDTH, FRAME_HEIGHT * 0.6); //Width, Height
+                    fxVBox = new VBox(5);
+                    fxVBox.setAlignment(Pos.BOTTOM_CENTER);
+                    fxHBoxCharts = new HBox(10);
+                    fxHBoxCharts.setAlignment(Pos.BOTTOM_CENTER);
 
                     //Initializing default values for the scroll pane
-                    scroll_Events = new ScrollPane();
-                    scroll_Events.setPrefSize(Width_Frame, Math.round(Height_Frame / .75)); //Width, Height
-                    scroll_Events.setContent(null); //Needs some content, otherwise it crashes
+                    fxScrollEvents = new ScrollPane();
+                    fxScrollEvents.setPrefSize(FRAME_WIDTH, FRAME_HEIGHT * 0.6); //Width, Height
+                    fxScrollEvents.setContent(null); //Needs some content, otherwise it crashes
 
                     // set up moduleDir
                     moduleDir = new java.io.File(Case.getCurrentCase().getModulesOutputDirAbsPath() + java.io.File.separator + "timeline");
@@ -270,34 +258,34 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         lsi.add(ye.year + " : " + ye.getNumFiles());
                     }
                     ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
-                    dropdown_SelectYears = new ComboBox(listSelect);
+                    fxDropdownSelectYears = new ComboBox(listSelect);
 
                     //Buttons for navigating up and down the timeline
-                    zoomOutButton = new Button("Zoom Out");
-                    zoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
+                    fxZoomOutButton = new Button("Zoom Out");
+                    fxZoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
                             BarChart bc;
-                            if (stack_PrevCharts.size() == 0) {
-                                bc = chart_TopLevel;
+                            if (fxStackPrevCharts.size() == 0) {
+                                bc = fxChartTopLevel;
                             } else {
-                                bc = stack_PrevCharts.pop();
+                                bc = fxStackPrevCharts.pop();
                             }
-                            chart_Events = bc;
-                            scroll_Events.setContent(chart_Events);
+                            fxChartEvents = bc;
+                            fxScrollEvents.setContent(fxChartEvents);
                         }
                     });
 
-                    dropdown_SelectYears.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+                    fxDropdownSelectYears.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
                         @Override
                         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
-                            if (dropdown_SelectYears.getValue() != null) {
-                                chartJPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                            if (fxDropdownSelectYears.getValue() != null) {
+                                mainFrame.setTopComponentCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 try {
-                                    chart_Events = createMonthsWithDrill(findYear(data, Integer.valueOf(dropdown_SelectYears.getValue().split(" ")[0])));
-                                    scroll_Events.setContent(chart_Events);
+                                    fxChartEvents = createMonthsWithDrill(findYear(data, Integer.valueOf(fxDropdownSelectYears.getValue().split(" ")[0])));
+                                    fxScrollEvents.setContent(fxChartEvents);
                                 } finally {
-                                    chartJPanel.setCursor(null);
+                                    mainFrame.setTopComponentCursor(null);
                                 }
                             }
                         }
@@ -305,25 +293,27 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                     //Adding things to the V and H boxes. 
                     //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Zoom Out|View Year: [Select Year]|►|
-                    hBox_Charts.getChildren().addAll(zoomOutButton, new Label("Go To:"), dropdown_SelectYears);
-                    vBox_FX.getChildren().addAll(hBox_Charts, scroll_Events); //FxBox_V holds things in a visual stack. 
-                    group_Charts.getChildren().add(vBox_FX); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
-                    panel_Charts.setScene(scene_Charts);
+                    fxHBoxCharts.getChildren().addAll(fxZoomOutButton, new Label("Go To:"), fxDropdownSelectYears);
+                    fxVBox.getChildren().addAll(fxHBoxCharts, fxScrollEvents); //FxBox_V holds things in a visual stack. 
+                    fxGroupCharts.getChildren().add(fxVBox); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
+                    fxPanelCharts.setScene(fxSceneCharts);
 
 
-                    panel_Charts.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    fxPanelCharts.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                    chartJPanel.add(panel_Charts);
+                    fxChartTopLevel = createYearChartWithDrill(data);
+                    fxChartEvents = fxChartTopLevel;
+                    fxScrollEvents.setContent(fxChartEvents);
 
-                    chartJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-
-                    chart_TopLevel = createYearChartWithDrill(data);
-                    chart_Events = chart_TopLevel;
-                    scroll_Events.setContent(chart_Events);
-
-                    jf.add(splitYPane);
-                    jf.setVisible(true);
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            mainFrame.setTopPanel(fxPanelCharts);
+                            dataResultPanel.open();
+                            //mainFrame.pack();
+                            mainFrame.setVisible(true);
+                        }
+                    });
                 } finally {
                     // stop the progress bar
                     progress.finish();
@@ -372,8 +362,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
             final javafx.scene.Node barNode = barData.getNode();
             //hover listener
-            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
-            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, fxMouseEnteredListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, fxMouseExitedListener);
 
             //click listener
             barNode.addEventHandler(MouseEvent.MOUSE_CLICKED,
@@ -386,8 +376,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                                 @Override
                                 public void run() {
                                     BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) barData.getXValue())));
-                                    chart_Events = b;
-                                    scroll_Events.setContent(chart_Events);
+                                    fxChartEvents = b;
+                                    fxScrollEvents.setContent(fxChartEvents);
                                 }
                             });
 
@@ -398,7 +388,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         }
 
         bc.autosize(); //Get an auto height
-        bc.setPrefWidth(Width_Frame);  //but override the width
+        bc.setPrefWidth(FRAME_WIDTH);  //but override the width
         bc.setLegendVisible(false); //The legend adds too much extra chart space, it's not necessary.
         return bc;
     }
@@ -436,8 +426,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 barNode.setScaleX(.5);
 
                 //hover listener
-                barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
-                barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+                barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, fxMouseEnteredListener);
+                barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, fxMouseExitedListener);
 
                 //clicks
                 barNode.addEventHandler(MouseEvent.MOUSE_PRESSED,
@@ -449,8 +439,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                                 Platform.runLater(new Runnable() {
                                     @Override
                                     public void run() {
-                                        chart_Events = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) barData.getXValue())), ye);
-                                        scroll_Events.setContent(chart_Events);
+                                        fxChartEvents = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) barData.getXValue())), ye);
+                                        fxScrollEvents.setContent(fxChartEvents);
                                     }
                                 });
                             }
@@ -461,9 +451,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         }
 
         bc.autosize();
-        bc.setPrefWidth(Width_Frame);
+        bc.setPrefWidth(FRAME_WIDTH);
         bc.setLegendVisible(false);
-        stack_PrevCharts.push(bc);
+        fxStackPrevCharts.push(bc);
         return bc;
     }
 
@@ -491,8 +481,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             final javafx.scene.Node barNode = barData.getNode();
 
             //hover listener
-            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, mouseEnteredListener);
-            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, mouseExitedListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_ENTERED_TARGET, fxMouseEnteredListener);
+            barNode.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, fxMouseExitedListener);
 
             barNode.addEventHandler(MouseEvent.MOUSE_PRESSED,
                     new EventHandler<MouseEvent>() {
@@ -514,10 +504,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         @Override
                         public void run() {
                             final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
-                            dataResult.setNode(d);
+                            dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
-                            dataResult.setPath(dateString);
+                            dataResultPanel.setPath(dateString);
                         }
                     });
 
@@ -526,7 +516,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             });
         }
         bc.autosize();
-        bc.setPrefWidth(Width_Frame);
+        bc.setPrefWidth(FRAME_WIDTH);
         return bc;
     }
 
@@ -602,13 +592,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
         if (prop.equals(Case.CASE_ADD_IMAGE)) {
-            if (jf != null && !jf.isVisible()) {
+            if (mainFrame != null && !mainFrame.isVisible()) {
                 // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;
                 return;
             }
 
-            int answer = JOptionPane.showConfirmDialog(jf, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+            int answer = JOptionPane.showConfirmDialog(mainFrame, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
             if (answer != JOptionPane.YES_OPTION) {
                 return;
             }
@@ -618,9 +608,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             // call performAction as if the user selected 'Make Timeline' from the menu
             performAction();
         } else if (prop.equals(Case.CASE_CURRENT_CASE)) {
-            if (jf != null && jf.isVisible()) {
-                jf.dispose();
-                jf = null;
+            if (mainFrame != null && mainFrame.isVisible()) {
+                mainFrame.dispose();
+                mainFrame = null;
             }
 
             data = null;
@@ -636,10 +626,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         mactimeFile.delete();
 
         // close the jframe
-        if (jf != null) {
-            jf.setVisible(false);
-            jf.dispose();
-            jf = null;
+        if (mainFrame != null) {
+            mainFrame.setVisible(false);
+            mainFrame.dispose();
+            mainFrame = null;
         }
 
         // remove ourself as change listener on Case
@@ -1063,12 +1053,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 logger.log(Level.INFO, "Beginning generation of timeline");
 
-                // if the timeline window is already open, do nothing
-                if (jf != null && jf.isVisible()) {
+                // if the timeline window is already open, bring to front and do nothing
+                if (mainFrame != null && mainFrame.isVisible()) {
+                    mainFrame.toFront();
                     return;
                 }
-
-                Platform.setImplicitExit(false);
 
                 // listen for case changes (specifically images being added).
                 if (Case.isCaseOpen() && !listeningToAddImage) {
@@ -1080,7 +1069,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        progressDialog = new TimelineProgressDialog(jf, true);
+                        progressDialog = new TimelineProgressDialog(WindowManager.getDefault().getMainWindow(), true);
                         progressDialog.setVisible(true);
                     }
                 });

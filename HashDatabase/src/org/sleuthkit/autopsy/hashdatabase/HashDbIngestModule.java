@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -42,6 +43,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
@@ -149,15 +151,27 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
             detailsSb.append("</table>");
             services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Lookup Results", detailsSb.toString()));
+            clearHashDatabaseHandles();
         }
     }
 
+    private void clearHashDatabaseHandles() {
+        try {
+            skCase.clearLookupDatabases();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error clearing hash database handles. ", ex);
+        }
+        this.nsrlIsSet = false;
+        this.knownBadIsSet = false;
+    }
+    
     /**
      * notification from manager to stop processing due to some interruption
      * (user, error, exception)
      */
     @Override
     public void stop() {
+        clearHashDatabaseHandles();
     }
 
     /**

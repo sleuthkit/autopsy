@@ -372,7 +372,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
-    public DataResultViewer getInstance() {
+    public DataResultViewer createInstance() {
         return new DataResultViewerTable();
     }
 

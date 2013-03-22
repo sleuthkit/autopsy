@@ -156,12 +156,13 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
 
     /**
-     * Reads the content of this node.
+     * Reads the content of this node (of the underlying content object).
      *
-     * @param offset the starting offset
-     * @param len the length
-     * @return the bytes
-     * @throws TskException
+     * @param buf buffer to read into
+     * @param offset the starting offset in the content object
+     * @param len the length to read
+     * @return the bytes read
+     * @throws TskException exception thrown if the requested part of content could not be read
      */
     public int read(byte[] buf, long offset, long len) throws TskException {
         return content.read(buf, offset, len);

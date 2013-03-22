@@ -28,5 +28,8 @@
         
         <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
         <dependency conf="autopsy_core->*" org="org.fusesource" name="sigar" rev="1.6.4" />
+        
+        <!-- better image resizing -->
+        <dependency conf="autopsy_core->*" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
     </dependencies>
 </ivy-module>
