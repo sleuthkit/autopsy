@@ -93,6 +93,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private BufferedImage currentImage = null;
     private boolean gstInited = false;
     private AbstractFile lastFile;
+    private boolean inImageMode; //keeps track if already in image mode to minimize UI setup
 
     /**
      * Creates new form DataContentViewerVideo
@@ -100,29 +101,23 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public DataContentViewerMedia() {
         initComponents();
         customizeComponents();
+        logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
 
     private void customizeComponents() {
+        inImageMode = false;
 
-        Platform.setImplicitExit(false);
-        PlatformImpl.startup(new Runnable() {
-            @Override
-            public void run() {
-                logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-            }
-        });
         logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
-        
         //initialize supported image types
         //TODO use mime-types instead once we have support
         String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
         IMAGES = new String[fxSupportedImagesSuffixes.length];
-        for (int i=0; i<fxSupportedImagesSuffixes.length; ++i) {
+        for (int i = 0; i < fxSupportedImagesSuffixes.length; ++i) {
             String suffix = fxSupportedImagesSuffixes[i];
             logger.log(Level.INFO, "suffix: " + suffix);
             IMAGES[i] = "." + suffix;
         }
-        
+
         try {
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing");
             Gst.init();
@@ -261,7 +256,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (selectedNode == null) {
             return;
         }
-        
+
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return;
@@ -275,7 +270,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         reset();
         setComponentsVisibility(false);
-        
+
         // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
@@ -288,6 +283,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             showImageFx(file);
         } else if (gstInited
                 && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
+            inImageMode = false;
             setupVideo(file);
         }
     }
@@ -299,13 +295,19 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      */
     private void showImageFx(final AbstractFile file) {
         final String fileName = file.getName();
-        
+
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
+                if (!Case.isCaseOpen()) {
+                    //handle in-between condition when case is being closed
+                    //and an image was previously selected
+                    return;
+                }
+
                 Dimension dims = DataContentViewerMedia.this.getSize();
-                
+
                 final InputStream inputStream = new ReadContentInputStream(file);
 
                 final Image fxImage;
@@ -313,19 +315,24 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     //original input stream
                     BufferedImage bi = ImageIO.read(inputStream);
                     //scale image using Scalr
-                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int)dims.getWidth(), (int)dims.getHeight());
+                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int) dims.getWidth(), (int) dims.getHeight());
                     //convert from awt imageto fx image
                     fxImage = SwingFXUtils.toFXImage(biScaled, null);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex);
                     return;
-                }
-                catch (OutOfMemoryError ex) {
+                } catch (OutOfMemoryError ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex);
-                    MessageNotifyUtil.Notify.warn("Could not load image file (too large): " +  file.getName(), ex.getMessage());
+                    MessageNotifyUtil.Notify.warn("Could not load image file (too large): " + file.getName(), ex.getMessage());
                     return;
+                } finally {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex);
+                    }
                 }
-                
+
                 if (fxImage == null) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
                     return;
@@ -346,27 +353,36 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 Group fxRoot = new Group();
 
                 //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
-                Scene fxScene = new Scene(fxRoot,javafx.scene.paint.Color.BLACK);
+                Scene fxScene = new Scene(fxRoot, javafx.scene.paint.Color.BLACK);
                 fxRoot.getChildren().add(fxImageView);
 
-                final JFXPanel fxPanel = new JFXPanel();
-                fxPanel.setScene(fxScene);
+                if (inImageMode) {
+                    final JFXPanel fxPanel = (JFXPanel) videoPanel.getComponent(0);
+                    fxPanel.setScene(fxScene);
+                    videoPanel.setVisible(true);
+                } else {
+                    inImageMode = true;
+                    final JFXPanel fxPanel = new JFXPanel();
+                    fxPanel.setScene(fxScene);
 
-                //when done, join with the swing panel
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        videoPanel.removeAll();
-                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-                        videoPanel.add(fxPanel);
-                        videoPanel.setVisible(true);
-                        
-                        if (fxImage.isError() ) {
-                            logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
-                            //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName());
+                    //when done, join with the swing panel
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            //remove video panels and recreate image view panel
+                            //TODO use swing layered pane to switch between different modes
+                            videoPanel.removeAll();
+                            videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                            videoPanel.add(fxPanel);
+                            videoPanel.setVisible(true);
+
+                            if (fxImage.isError()) {
+                                logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                                //MessageNotifyUtil.Message.warn("Could not load image file: " +  file.getName());
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
 
@@ -472,7 +488,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerMedia();
     }
 

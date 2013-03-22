@@ -44,7 +44,7 @@ public interface DataResultViewer {
     /**
      * Get a new instance of DataResultViewer
      */
-    public DataResultViewer getInstance();
+    public DataResultViewer createInstance();
     
     /**
      * Get Component to display this DataResultViewer
