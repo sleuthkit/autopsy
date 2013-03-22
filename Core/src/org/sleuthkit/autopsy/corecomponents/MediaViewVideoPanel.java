@@ -140,12 +140,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 }
             });
 
-            gstVideoComponent = new VideoComponent();
 
-            videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-            videoPanel.add(gstVideoComponent);
-
-            videoPanel.setVisible(true);
         }
     }
 
@@ -195,6 +190,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
         java.io.File ioFile = getJFile(file);
 
+          gstVideoComponent = new VideoComponent();
         synchronized (playbinLock) {
             if (gstPlaybin2 != null) {
                 gstPlaybin2.dispose();
@@ -202,29 +198,30 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             gstPlaybin2 = new PlayBin2("VideoPlayer");
             gstPlaybin2.setVideoSink(gstVideoComponent.getElement());
 
-            videoPanel.repaint();
+            videoPanel.removeAll();
+          
+
+            videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+            videoPanel.add(gstVideoComponent);
+
+           
+            videoPanel.setVisible(true);
+            //videoPanel.repaint();
 
             gstPlaybin2.setInputFile(ioFile);
             gstPlaybin2.setState(State.READY);
         }
-        //setComponentsVisibility(true);
+
     }
 
     void reset() {
-        currentFile = null;
-        // get rid of any existing videoProgressWorker thread
-        if (videoProgressWorker != null) {
-            videoProgressWorker.cancel(true);
-            videoProgressWorker = null;
-        }
-
 
         // reset the progress label text on the event dispatch thread
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 progressLabel.setText("");
-                infoLabel.setText("");
+              //  infoLabel.setText("");
 
             }
         });
@@ -245,12 +242,21 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 }
                 gstPlaybin2 = null;
             }
+             gstVideoComponent = null;
             //videoComponent.setBackground(Color.BLACK);
             //videoComponent.repaint();
 
 
             //videoPanel.repaint();
         }
+        
+          // get rid of any existing videoProgressWorker thread
+        if (videoProgressWorker != null) {
+            videoProgressWorker.cancel(true);
+            videoProgressWorker = null;
+        }
+
+        currentFile = null;
     }
 
     private java.io.File getJFile(AbstractFile file) {
@@ -465,6 +471,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 if (gstPlaybin2 != null) {
                     gstPlaybin2.stop();
                     gstPlaybin2.setState(State.READY); // ready to be played again
+                    gstPlaybin2.getState(); //NEW
                 }
             }
             pauseButton.setText("►");
@@ -602,7 +609,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             synchronized (playbinLock) {
                 gstPlaybin2.play(); // must play, then pause and get state to get duration.
                 gstPlaybin2.pause();
-                gstPlaybin2.getState();
+                State state = gstPlaybin2.getState();
                 dur = gstPlaybin2.queryDuration();
             }
             duration = dur.toString();

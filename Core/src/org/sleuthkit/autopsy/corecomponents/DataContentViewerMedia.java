@@ -81,13 +81,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             IMAGES[i] = "." + suffix;
         }
 
-
         add(imagePanel, IMAGE_VIEWER_LAYER);
         add(videoPanel, VIDEO_VIEWER_LAYER);
         
         switchPanels(false);
-        
-    
+
     }
 
     /**
@@ -107,8 +105,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
-
-          videoPanel.reset();
         
         if (selectedNode == null) {
             return;
@@ -124,8 +120,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         } else {
             lastFile = file;
         }
-
-      
+        
+                  videoPanel.reset();
         
         final Dimension dims = DataContentViewerMedia.this.getSize();
         
@@ -153,8 +149,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             layout.show(this, IMAGE_VIEWER_LAYER);
         }
     }
-
-
 
     @Override
     public String getTitle() {
