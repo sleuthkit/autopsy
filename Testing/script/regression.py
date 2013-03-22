@@ -533,7 +533,7 @@ def run_test(image_file, count):
 			gold_path = os.path.join(case.gold)
 			img_gold = os.path.join(case.gold, case.image_name)
 			img_archive = os.path.join(case.gold, case.image_name+"-archive.zip")
-			extrctr = zipfile.ZipFile(img_archive, 'r')
+			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
 			compare_to_gold_db()
@@ -654,7 +654,7 @@ def rebuild():
 	os.chdir(case.gold)
 	img_archive = make_local_path(case.image_name+"-archive.zip")
 	img_gold = os.path.join(case.image_name)
-	comprssr = zipfile.ZipFile(img_archive, 'w')
+	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
 	del_dir(gold_dir)
