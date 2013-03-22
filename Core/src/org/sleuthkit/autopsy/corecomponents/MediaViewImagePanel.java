@@ -31,6 +31,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -80,7 +81,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                         add(fxPanel);
 
                         //TODO
-                       // setVisible(true);
+                        // setVisible(true);
                     }
                 });
 
@@ -141,24 +142,23 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                     return;
                 }
 
-                // simple displays ImageView the image as is
+                BorderPane borderpane = new BorderPane();
+                borderpane.setCenter(fxImageView);
 
                 fxImageView.setImage(fxImage);
                 fxImageView.setFitWidth(dims.getWidth());
                 fxImageView.setFitHeight(dims.getHeight());
 
-                Group fxRoot = new Group();
+                //Group fxRoot = new Group();
 
                 //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
-                Scene fxScene = new Scene(fxRoot, javafx.scene.paint.Color.BLACK);
-                fxRoot.getChildren().add(fxImageView);
+                Scene fxScene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
+                // borderpane.getChildren().add(fxImageView);
+
                 fxPanel.setScene(fxScene);
-                //TODO
-                //setVisible(true);
+
             }
         });
-
-
 
     }
 

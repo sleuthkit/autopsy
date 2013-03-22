@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
 
     private String[] IMAGES; // use javafx supported 
-    private static final String[] VIDEOS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg"};
+    private static final String[] VIDEOS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
     private static final String[] AUDIOS = new String[]{".mp3", ".wav", ".wma"};
 
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
@@ -107,6 +107,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public void setNode(Node selectedNode) {
         
         if (selectedNode == null) {
+             videoPanel.reset();
             return;
         }
 

@@ -118,6 +118,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         initGst();
 
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
+        progressSlider.setValue(0);
 
         if (gstInited) {
             progressSlider.addChangeListener(new ChangeListener() {
@@ -182,7 +183,9 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             return;
         } else {
             try {
-                infoLabel.setText(file.getUniquePath());
+                String path = file.getUniquePath();
+                infoLabel.setText(path);
+                infoLabel.setToolTipText(path);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Cannot get unique path of video file");
             }
@@ -203,10 +206,8 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
             videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
             videoPanel.add(gstVideoComponent);
-
            
             videoPanel.setVisible(true);
-            //videoPanel.repaint();
 
             gstPlaybin2.setInputFile(ioFile);
             gstPlaybin2.setState(State.READY);
@@ -398,28 +399,30 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(pauseButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(pauseButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE))
+                    .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+                .addComponent(progressLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressLabel))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(infoLabel)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(32, 32, 32))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(pauseButton)
                             .addComponent(progressSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(progressLabel))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(progressLabel)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(infoLabel))
                     .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
