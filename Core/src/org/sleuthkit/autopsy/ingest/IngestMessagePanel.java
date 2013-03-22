@@ -24,6 +24,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -36,12 +37,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -52,7 +56,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Notification window showing messages from modules to user
  * 
  */
-class IngestMessagePanel extends javax.swing.JPanel {
+class IngestMessagePanel extends JPanel implements TableModelListener {
 
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;
@@ -71,6 +75,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
         this.mainPanel = mainPanel;
         tableModel = new MessageTableModel();
+        tableModel.addTableModelListener(this);
         initComponents();
         customizeComponents();
     }
@@ -316,6 +321,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
     }
 
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        int newMessages = tableModel.getNumberNewMessages();
+        messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, "NewMessagesChanged", -1, newMessages));
+    }
+
     private class MessageTableModel extends AbstractTableModel {
 
         private String[] columnNames = new String[]{"Module", "Num", "New?", "Subject", "Timestamp"};
@@ -355,6 +366,17 @@ class IngestMessagePanel extends javax.swing.JPanel {
             for (TableEntry entry : messageData) {
                 entry.hasBeenSeen(true);
             }
+            fireTableChanged(new TableModelEvent(this));
+        }
+        
+        public int getNumberNewMessages() {
+            int newMessages = 0;
+            for (TableEntry entry : messageData) {
+                if (!entry.hasBeenSeen()) {
+                    ++newMessages;
+                }
+            }
+            return newMessages;
         }
 
         synchronized int getNumberGroups() {
