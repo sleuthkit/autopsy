@@ -1,4 +1,4 @@
-                   Last Updated: Sept 28, 2012
+                   Last Updated: March 23, 2013
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -14,6 +14,11 @@ STEPS:
 1a) Download and install 32-bit version of JDK version 1.7 (32-bit is currently
 needed even if you have a 64-bit system).
 
+Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
+(http://www.oracle.com/technetwork/java/javase/downloads/index.html).
+
+OpenJDK and OpenJFX might work, but they are not fully tested with Autopsy.
+
 1b) Ensure that JDK_HOME is set to the root JDK directory.
 
 1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
@@ -28,7 +33,7 @@ need to set JRE_HOME to the root JRE directory.
 
 
 2) Get Sleuth Kit Setup
-2a) Download and build the release version of Libewf2 (20120304 or
+2a) Download and build the release version of Libewf2 (20130119 or
 later).  All you need is the dll file.  Note that you will get a
 launching error if you use libewf 1.
 - http://sourceforge.net/projects/libewf/
