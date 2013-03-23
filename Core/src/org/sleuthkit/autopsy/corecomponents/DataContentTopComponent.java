@@ -47,6 +47,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     private static DataContentTopComponent defaultInstance;
     // set to true if this is the TC that always stays open and is the default place to display content
     private boolean isDefault;
+    // the content panel holding tabs with content viewers
+    private final DataContentPanel dataContentPanel;
 
     // contains a list of the undocked TCs
     private static ArrayList<DataContentTopComponent> newWindowList = new ArrayList<DataContentTopComponent>();
@@ -60,6 +62,10 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         setToolTipText(TOOLTIP_TEXT);
 
         this.isDefault = isDefault;
+        
+        dataContentPanel = new DataContentPanel(isDefault);
+        add(dataContentPanel);
+        
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isDefault)); // prevent option to close compoment in GUI
         logger.log(Level.INFO, "Created DataContentTopComponent instance: " + this);
     }
@@ -90,21 +96,9 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        dataContentPanel = new DataContentPanel(true);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
-        );
+        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.corecomponents.DataContentPanel dataContentPanel;
     // End of variables declaration//GEN-END:variables
 
     /**
