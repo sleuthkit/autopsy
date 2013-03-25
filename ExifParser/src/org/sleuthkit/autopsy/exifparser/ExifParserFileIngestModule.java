@@ -248,6 +248,10 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     public void complete() {
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
 
+        if (filesProcessed > 0) {
+            //send the final new data event
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+        }
         //module specific cleanup due to completion here
     }
 
