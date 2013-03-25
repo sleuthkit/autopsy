@@ -69,7 +69,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private volatile long totalMessages = 0;
 
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
-    static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
+    static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed
+    static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared
+    static final String TOTAL_NUM_NEW_MESSAGES_CHANGED = "TOTAL_NUM_NEW_MESSAGES_CHANGED"; // total number of new messages changed
 
     /** Creates new form IngestMessagePanel */
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
@@ -288,7 +290,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         ++totalMessages;
         final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
 
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, 0, newMsgUnreadUnique);
+        messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
 
         //update labels
         this.totalMessagesNameVal.setText(Long.toString(totalMessages));
@@ -306,7 +308,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         tableModel.clearMessages();
         totalMessagesNameVal.setText("-");
         totalUniqueMessagesNameVal.setText("-");
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
+        messagePcs.firePropertyChange(MESSAGES_BOX_CLEARED, origMsgGroups, 0);
     }
     
      public synchronized int getMessagesCount() {
@@ -324,7 +326,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     @Override
     public void tableChanged(TableModelEvent e) {
         int newMessages = tableModel.getNumberNewMessages();
-        messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, "NewMessagesChanged", -1, newMessages));
+        messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, TOTAL_NUM_NEW_MESSAGES_CHANGED, -1, newMessages));
     }
 
     private class MessageTableModel extends AbstractTableModel {
