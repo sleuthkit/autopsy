@@ -43,6 +43,10 @@ public class IngestMessageMainPanel extends JLayeredPane {
         initComponents();
         customizeComponents();
     }
+    
+    public void markAllSeen() {
+        messagePanel.markAllSeen();
+    }
 
     private void customizeComponents() {
         messagePanel = new IngestMessagePanel(this);

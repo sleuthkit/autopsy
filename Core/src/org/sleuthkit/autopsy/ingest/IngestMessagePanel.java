@@ -24,8 +24,11 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -33,14 +36,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -48,31 +56,34 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Notification window showing messages from modules to user
  * 
  */
-class IngestMessagePanel extends javax.swing.JPanel {
+class IngestMessagePanel extends JPanel implements TableModelListener {
 
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;
     private IngestMessageMainPanel mainPanel;
-    private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
-    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
+    private static Font visitedFont = new Font("Arial", Font.PLAIN, 12);
+    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private boolean resized = false;
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
 
-    private enum COLUMN {
-
-        SUBJECT, COUNT, MODULE
-    };
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
-    static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
+    static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed
+    static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared
+    static final String TOTAL_NUM_NEW_MESSAGES_CHANGED = "TOTAL_NUM_NEW_MESSAGES_CHANGED"; // total number of new messages changed
 
     /** Creates new form IngestMessagePanel */
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
         this.mainPanel = mainPanel;
         tableModel = new MessageTableModel();
+        tableModel.addTableModelListener(this);
         initComponents();
         customizeComponents();
+    }
+    
+    public void markAllSeen() {
+        tableModel.markAllSeen();
     }
 
     int getLastRowSelected() {
@@ -120,7 +131,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+        messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -233,10 +244,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getParent().setBackground(messageTable.getBackground());
 
         renderer = new MessageTableRenderer();
-        for (int i = 0; i < 3; i++) {
-            TableColumn column = messageTable.getColumnModel().getColumn(i);
-            //column.setCellRenderer(new MessageTableRenderer());
-            column.setCellRenderer(renderer);
+        int numCols = messageTable.getColumnCount();
+        
+        // add the cell renderer to all columns
+        for (int i = 0; i < numCols; ++i) {
+            messageTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
 
         messageTable.setCellSelectionEnabled(false);
@@ -253,15 +265,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     void setTableSize(Dimension d) {
-        for (int i = 0; i < 3; ++i) {
-            TableColumn column = messageTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column.setPreferredWidth(((int) (d.width * 0.23)));
-            } else if (i == 1) {
-                column.setPreferredWidth(((int) (d.width * 0.09)));
-            } else {
-                column.setPreferredWidth(((int) (d.width * 0.67)));
-            }
+        double[] columnWidths = new double[]{0.20, 0.08, 0.08, 0.49, 0.15};
+        int numCols = messageTable.getColumnCount();
+        for (int i = 0; i < numCols; ++i) {
+            messageTable.getColumnModel().getColumn(i).setPreferredWidth((int)(d.width * columnWidths[i]));
         }
     }
 
@@ -283,7 +290,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         ++totalMessages;
         final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
 
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, 0, newMsgUnreadUnique);
+        messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
 
         //update labels
         this.totalMessagesNameVal.setText(Long.toString(totalMessages));
@@ -301,7 +308,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         tableModel.clearMessages();
         totalMessagesNameVal.setText("-");
         totalUniqueMessagesNameVal.setText("-");
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
+        messagePcs.firePropertyChange(MESSAGES_BOX_CLEARED, origMsgGroups, 0);
     }
     
      public synchronized int getMessagesCount() {
@@ -311,14 +318,20 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private synchronized void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
-        renderer.setSelected(rowNumber);
+        //renderer.setSelected(rowNumber);
         lastRowSelected = rowNumber;
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
     }
 
-    private class MessageTableModel extends AbstractTableModel {
-        //data
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        int newMessages = tableModel.getNumberNewMessages();
+        messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, TOTAL_NUM_NEW_MESSAGES_CHANGED, -1, newMessages));
+    }
 
+    private class MessageTableModel extends AbstractTableModel {
+
+        private String[] columnNames = new String[]{"Module", "Num", "New?", "Subject", "Timestamp"};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
         private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
@@ -343,12 +356,29 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public int getColumnCount() {
-            return 3;
+            return columnNames.length;
         }
-
+        
         @Override
         synchronized public int getRowCount() {
             return getNumberGroups();
+        }
+        
+        public void markAllSeen() {
+            for (TableEntry entry : messageData) {
+                entry.hasBeenSeen(true);
+            }
+            fireTableChanged(new TableModelEvent(this));
+        }
+        
+        public int getNumberNewMessages() {
+            int newMessages = 0;
+            for (TableEntry entry : messageData) {
+                if (!entry.hasBeenSeen()) {
+                    ++newMessages;
+                }
+            }
+            return newMessages;
         }
 
         synchronized int getNumberGroups() {
@@ -358,7 +388,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
-                total += e.messageGroup.count;
+                total += e.messageGroup.getCount();
             }
             return total;
         }
@@ -366,8 +396,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberUnreadMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
-                    total += e.messageGroup.count;
+                if (!e.hasBeenVisited) {
+                    total += e.messageGroup.getCount();
                 }
             }
             return total;
@@ -376,7 +406,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         synchronized int getNumberUnreadGroups() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
+                if (!e.hasBeenVisited) {
                     ++total;
                 }
             }
@@ -385,23 +415,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public String getColumnName(int column) {
-            String colName = null;
-
-            switch (column) {
-                case 0:
-                    colName = "Module";
-                    break;
-                case 1:
-                    colName = "Num";
-                    break;
-                case 2:
-                    colName = "Subject";
-                    break;
-                default:
-                    ;
-
-            }
-            return colName;
+            return columnNames[column];
         }
 
         @Override
@@ -409,7 +423,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             Object ret = null;
 
             int numMessages = messageData.size();
-            if (rowIndex > messageData.size() -1) {
+            if (rowIndex > messageData.size() - 1 ||
+                    columnIndex > columnNames.length - 1) {
                 //temporary check if the rare case still occurrs
                 //#messages is now lower after last regrouping, and gui event thinks it's not
                 logger.log(Level.WARNING, "Requested inbox message at" + rowIndex, ", only have " + numMessages);
@@ -420,17 +435,19 @@ class IngestMessagePanel extends javax.swing.JPanel {
             switch (columnIndex) {
                 case 0:
                     Object module = entry.messageGroup.getSource();
-                    if (module == null) {
-                        ret = "";
-                    } else {
-                        ret = (Object) entry.messageGroup.getSource().getName();
-                    }
+                    ret = module == null ? "" : entry.messageGroup.getSource().getName();
                     break;
                 case 1:
-                    ret = (Object) entry.messageGroup.getCount();
+                    ret = entry.messageGroup.getCount();
                     break;
                 case 2:
-                    ret = (Object) entry.messageGroup.getSubject();
+                    ret = !entry.hasBeenSeen();
+                    break;
+                case 3:
+                    ret = entry.messageGroup.getSubject();
+                    break;
+                case 4:
+                    ret = entry.messageGroup.getDatePosted();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -560,7 +577,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         public synchronized void setVisited(int rowNumber) {
-            messageData.get(rowNumber).visited = true;
+            messageData.get(rowNumber).hasBeenVisited(true);
             //repaint the cell 
             fireTableCellUpdated(rowNumber, 2);
         }
@@ -568,8 +585,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public synchronized void setVisitedAll() {
             int row = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false) {
-                    e.visited = true;
+                if (!e.hasBeenVisited) {
+                    e.hasBeenVisited(true);
                     fireTableCellUpdated(row, 2);
                 }
                 ++row;
@@ -577,7 +594,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         public synchronized boolean isVisited(int rowNumber) {
-            return messageData.get(rowNumber).visited;
+            return messageData.get(rowNumber).hasBeenVisited();
         }
 
         public synchronized MessageType getMessageType(int rowNumber) {
@@ -601,11 +618,27 @@ class IngestMessagePanel extends javax.swing.JPanel {
         class TableEntry implements Comparable<TableEntry> {
 
             IngestMessageGroup messageGroup;
-            boolean visited;
+            boolean hasBeenVisited = false;
+            boolean hasBeenSeen = false;
+
+            public boolean hasBeenVisited() {
+                return hasBeenVisited;
+            }
+            
+            public void hasBeenVisited(boolean visited) {
+                hasBeenVisited = visited;
+            }
+
+            public boolean hasBeenSeen() {
+                return hasBeenSeen;
+            }
+            
+            public void hasBeenSeen(boolean seen) {
+                hasBeenSeen = seen;
+            }
 
             TableEntry(IngestMessageGroup messageGroup) {
                 this.messageGroup = messageGroup;
-                visited = false;
             }
 
             @Override
@@ -613,7 +646,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 if (chronoSort == true) {
                     return this.messageGroup.getDatePosted().compareTo(o.messageGroup.getDatePosted());
                 } else {
-                    return messageGroup.count - o.messageGroup.count;
+                    return messageGroup.getCount() - o.messageGroup.getCount();
                 }
             }
         }
@@ -628,12 +661,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         static final Color MED_PRI_COLOR = new Color(199, 199, 222);
         static final Color LOW_PRI_COLOR = new Color(221, 221, 235);
         private List<IngestMessage> messages;
-        private int count;
 
         IngestMessageGroup(IngestMessage message) {
             messages = new ArrayList<IngestMessage>();
             messages.add(message);
-            count = 1;
         }
 
         List<IngestMessage> getMessages() {
@@ -641,39 +672,18 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         void add(IngestMessage message) {
-
-            IngestMessage first = messages.get(0);
-            //make sure uniqness agrees
-            /*
-            if (!message.getSource().equals(first.getSource())
-            || !message.getUniqueKey().equals(first.getUniqueKey())) {
-            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            } */
-
             messages.add(message);
-            ++count;
         }
 
         //add all messages from another group
         void addAll(IngestMessageGroup group) {
-
-            //IngestMessage first = messages.get(0);
-            //IngestMessage firstG = group.messages.get(0);
-            //make sure uniqness agrees
-            /*
-            if (!firstG.getSource().equals(first.getSource())
-            || !firstG.getUniqueKey().equals(first.getUniqueKey())) {
-            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            } */
-
             for (IngestMessage m : group.getMessages()) {
                 messages.add(m);
-                ++count;
             }
         }
 
         int getCount() {
-            return count;
+            return messages.size();
         }
 
         String getDetails() {
@@ -696,6 +706,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
          * @return 
          */
         Color getColor() {
+            int count = messages.size();
             if (count == 1) {
                 return VERY_HIGH_PRI_COLOR;
             } else if (count < 5) {
@@ -714,7 +725,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
          * @return 
          */
         Date getDatePosted() {
-            return messages.get(count - 1).getDatePosted();
+            return messages.get(messages.size() - 1).getDatePosted();
         }
 
         /**
@@ -753,33 +764,99 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return messages.get(0).getMessageType();
         }
     }
+    
+    /*
+     * Main TableCellRenderer to be used for ingest message inbox. Delegates to
+     * other TableCellRenderers based different factors such as column data type
+     * or column number.
+     */
+    private class MessageTableRenderer extends DefaultTableCellRenderer {
+        
+        private TableCellRenderer booleanRenderer = new BooleanRenderer();
+        private TableCellRenderer defaultRenderer = new DefaultRenderer();
+        private TableCellRenderer dateRenderer = new DateRenderer();
+        protected int rowSelected;
+
+        public void setRowSelected(int rowSelected) {
+            this.rowSelected = rowSelected;
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof Boolean) {
+                return booleanRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            } else if (value instanceof Date) {
+                return dateRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            } else {
+                return defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            }
+        }
+    }
+    
+    /*
+     * TableCellRenderer used to render boolean values with a bullet point.
+     */
+    private class BooleanRenderer extends DefaultTableCellRenderer {
+        
+        private final String bulletChar = new String(Character.toChars(0x2022));
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            super.setForeground(table.getSelectionForeground());
+            super.setBackground(table.getSelectionBackground());
+            
+            boolean boolVal;
+            if (value instanceof Boolean) {
+                boolVal = ((Boolean)value).booleanValue();
+            } else {
+                throw new RuntimeException("Tried to use BooleanRenderer on non-boolean value.");
+            }
+            
+            String aValue = boolVal ? bulletChar : "";
+            
+            JLabel cell = (JLabel)super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
+            
+            // center the bullet in the JLabel
+            cell.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            // increase the font size
+            cell.setFont(new Font("", Font.PLAIN, 16));
+            
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
+            } else {
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
+            }
+            
+            return cell;
+        }
+        
+    }
 
     /**
      * bold font if not visited, colors for errors
      * tooltips that show entire query string, disable selection borders
      */
-    private class MessageTableRenderer extends DefaultTableCellRenderer {
-
-        //custom selection tracking
-        private int selected = -1;
-
-        void setSelected(int row) {
-            this.selected = row;
-        }
+    private class DefaultRenderer extends DefaultTableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(
                 JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
                 int row, int column) {
-
-            final Component cell = super.getTableCellRendererComponent(
+            
+            Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
-
-            if (column == 2) {
-                String val = (String) table.getModel().getValueAt(row, column);
-                setToolTipText(val);
-                //setText(val);
+            
+            if (column == 3) {
+                String subject = (String)value;
+                setToolTipText(subject);
                 if (tableModel.isVisited(row)) {
                     cell.setFont(visitedFont);
                 } else {
@@ -787,41 +864,54 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 }
             }
 
-
-            //if (!isSelected) {
-            if (selected != row) {
-                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-                MessageType mt = messageGroup.getMessageType();
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(ERROR_COLOR);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
-                } else {
-                    //cell.setBackground(table.getBackground());
-                    cell.setBackground(messageGroup.getColor());
-                }
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
             } else {
-                super.setForeground(table.getSelectionForeground());
-                super.setBackground(table.getSelectionBackground());
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
             }
-            //}
-                /*
-            if (column == 1) {
-            if (isSelected) {
-            super.setForeground(table.getSelectionForeground());
-            super.setBackground(table.getSelectionBackground());
-            } else {
-            cell.setBackground(table.getBackground());
-            }
-            } */
 
-            return this;
+            return cell;
         }
+    }
+    
+    private class DateRenderer extends DefaultTableCellRenderer {
 
         @Override
-        protected void setValue(Object value) {
-            super.setValue(value);
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            super.setForeground(table.getSelectionForeground());
+            super.setBackground(table.getSelectionBackground());
+            
+            Object aValue = value;
+            if (value instanceof Date) {
+                Date date = (Date)value;
+                DateFormat df = new SimpleDateFormat("HH:mm:ss");
+                aValue = df.format(date);
+            } else {
+                throw new RuntimeException("Tried to use DateRenderer on non-Date value.");
+            }
+            
+            Component cell =  super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
+            
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
+            } else {
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
+            }
+            
+            return cell;
         }
+        
     }
 
     /**

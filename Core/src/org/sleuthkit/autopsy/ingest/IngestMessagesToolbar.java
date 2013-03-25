@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
@@ -110,13 +109,24 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         this.setBorder(null);
 
         IngestMessagePanel.addPropertyChangeSupportListener(new PropertyChangeListener() {
+            
+            private int numNewMessages = 0;
+            
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                final int numberMessages = (Integer) evt.getNewValue();
-                //ingestMessagesButton.setText(Integer.toString(numberMessages));
-                //repaint button
-                ingestMessagesButton.setMessages(numberMessages);
-                ingestMessagesButton.repaint();
+                
+                String propName = evt.getPropertyName();
+                int newNumNewMessages = numNewMessages;
+                if (propName.equals(IngestMessagePanel.MESSAGES_BOX_CLEARED) ||
+                        propName.equals(IngestMessagePanel.TOTAL_NUM_NEW_MESSAGES_CHANGED)) {
+                    newNumNewMessages = (Integer) evt.getNewValue();
+                }
+                
+                if (newNumNewMessages != numNewMessages) {
+                    ingestMessagesButton.setMessages(newNumNewMessages);
+                    numNewMessages = newNumNewMessages;
+                    ingestMessagesButton.repaint();
+                }
             }
         });
 
