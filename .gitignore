@@ -46,10 +46,9 @@ genfiles.properties
 /branding/nbproject/*
 !/branding/nbproject/project.xml
 !/branding/nbproject/project.properties
-/Testing/script/input/
-/Testing/script/input/*
-/Testing/script/output/
-/Testing/script/gold/
+/Testing/input/
+/Testing/input/*
+/Testing/output/*
 /Testing/script/ScriptLog.txt
 /Testing/build/
 /Testing/dist/
