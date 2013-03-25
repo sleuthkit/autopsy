@@ -150,7 +150,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             fxInited = coreInstaller.isJavaFxInited();
         }
         
-        setEnabled(fxInited);
     }
 
     //Swing components and JavafX components don't play super well together
@@ -1030,7 +1029,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen();
+        return Case.isCaseOpen() && this.fxInited;
     }
 
     @Override
