@@ -63,6 +63,7 @@ public class TagFileAction extends AbstractAction implements Presenter.Popup {
     }
 
     private void refreshDirectoryTree() {
+        //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
         DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
