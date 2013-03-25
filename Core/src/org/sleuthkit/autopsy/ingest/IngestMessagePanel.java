@@ -823,20 +823,15 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             // increase the font size
             cell.setFont(new Font("", Font.PLAIN, 16));
             
-            if (isSelected) {
-                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-                MessageType mt = messageGroup.getMessageType();
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(ERROR_COLOR);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
-                } else {
-                    //cell.setBackground(table.getBackground());
-                    cell.setBackground(messageGroup.getColor());
-                }
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
             } else {
-                super.setForeground(table.getSelectionForeground());
-                super.setBackground(table.getSelectionBackground());
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
             }
             
             return cell;
@@ -869,20 +864,15 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                 }
             }
 
-            if (isSelected) {
-                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-                MessageType mt = messageGroup.getMessageType();
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(ERROR_COLOR);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
-                } else {
-                    //cell.setBackground(table.getBackground());
-                    cell.setBackground(messageGroup.getColor());
-                }
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
             } else {
-                super.setForeground(table.getSelectionForeground());
-                super.setBackground(table.getSelectionBackground());
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
             }
 
             return cell;
@@ -908,20 +898,15 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             
             Component cell =  super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
             
-            if (isSelected) {
-                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-                MessageType mt = messageGroup.getMessageType();
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(ERROR_COLOR);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
-                } else {
-                    //cell.setBackground(table.getBackground());
-                    cell.setBackground(messageGroup.getColor());
-                }
+            final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+            MessageType mt = messageGroup.getMessageType();
+            if (mt == MessageType.ERROR) {
+                cell.setBackground(ERROR_COLOR);
+            } else if (mt == MessageType.WARNING) {
+                cell.setBackground(Color.orange);
             } else {
-                super.setForeground(table.getSelectionForeground());
-                super.setBackground(table.getSelectionBackground());
+                //cell.setBackground(table.getBackground());
+                cell.setBackground(messageGroup.getColor());
             }
             
             return cell;
