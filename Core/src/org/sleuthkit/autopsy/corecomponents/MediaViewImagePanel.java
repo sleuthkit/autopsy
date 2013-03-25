@@ -24,15 +24,17 @@ import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.logging.Level;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
+import org.openide.modules.ModuleInstall;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,13 +51,30 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
     private JFXPanel fxPanel;
     private ImageView fxImageView;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
+    private boolean fxInited = false;
 
     /**
      * Creates new form MediaViewImagePanel
      */
     public MediaViewImagePanel() {
         initComponents();
-        setupFx();
+
+
+
+        org.sleuthkit.autopsy.core.Installer coreInstaller =
+                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
+        if (coreInstaller != null) {
+            fxInited = coreInstaller.isJavaFxInited();
+        }
+
+
+        if (fxInited) {
+            setupFx();
+        }
+    }
+    
+    public boolean isInited() {
+        return fxInited;
     }
 
     /**
@@ -100,11 +119,15 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
      * @param dims dimension of the parent window
      */
     void showImageFx(final AbstractFile file, final Dimension dims) {
+        if (!fxInited) {
+            return;
+        }
+
         final String fileName = file.getName();
 
         //hide the panel during loading/transformations
         fxPanel.setVisible(false);
-        
+
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
@@ -160,7 +183,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 // borderpane.getChildren().add(fxImageView);
 
                 fxPanel.setScene(fxScene);
-                
+
                 //show the panel after fully loaded
                 fxPanel.setVisible(true);
 

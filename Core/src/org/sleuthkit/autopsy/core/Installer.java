@@ -101,6 +101,14 @@ public class Installer extends ModuleInstall {
 
     }
 
+    /**
+     * Check if JavaFx initialized
+     * @return false if java fx not initialized (classes coult not load), true if initialized
+     */
+    public boolean isJavaFxInited() {
+        return this.javaFxInit;
+    }
+    
     private void initJavaFx() {
         //initialize java fx if exists
         try {
