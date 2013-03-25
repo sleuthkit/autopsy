@@ -179,7 +179,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         //fc.setSelectedFile(new File("C:\\Program Files\\"));
         //disableTextField(fc); // disable all the text field on the file chooser
 
-        int returnValue = fc.showSaveDialog((Component)evt.getSource());
+        int returnValue = fc.showDialog((Component)evt.getSource(), "Select");
         if(returnValue == JFileChooser.APPROVE_OPTION){
             String path = fc.getSelectedFile().getPath();
             caseParentDirTextField.setText(path); // put the path to the textfield
