@@ -257,7 +257,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerArtifact();
     }
 

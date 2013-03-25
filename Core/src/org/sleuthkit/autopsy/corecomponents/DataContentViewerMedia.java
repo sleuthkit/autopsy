@@ -101,20 +101,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public DataContentViewerMedia() {
         initComponents();
         customizeComponents();
+        logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
 
     private void customizeComponents() {
         inImageMode = false;
 
-        Platform.setImplicitExit(false);
-        PlatformImpl.startup(new Runnable() {
-            @Override
-            public void run() {
-                logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-            }
-        });
         logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
-
         //initialize supported image types
         //TODO use mime-types instead once we have support
         String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
@@ -303,16 +296,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private void showImageFx(final AbstractFile file) {
         final String fileName = file.getName();
 
-        if (!Case.isCaseOpen()) {
-            //handle in-between condition when case is being closed
-            //and an image was previously selected
-            return;
-        }
-        
         // load the image
         PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
+                if (!Case.isCaseOpen()) {
+                    //handle in-between condition when case is being closed
+                    //and an image was previously selected
+                    return;
+                }
+
                 Dimension dims = DataContentViewerMedia.this.getSize();
 
                 final InputStream inputStream = new ReadContentInputStream(file);
@@ -371,7 +364,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     inImageMode = true;
                     final JFXPanel fxPanel = new JFXPanel();
                     fxPanel.setScene(fxScene);
-                    
+
                     //when done, join with the swing panel
                     EventQueue.invokeLater(new Runnable() {
                         @Override
@@ -495,7 +488,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerMedia();
     }
 

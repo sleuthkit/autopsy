@@ -47,8 +47,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
     private Content dataSource;
-    // for error handling
-    private String className = this.getClass().toString();
+
+    private static final Logger logger = Logger.getLogger(DataContentViewerHex.class.getName());
 
     /**
      * Creates new form DataContentViewerHex
@@ -57,6 +57,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         initComponents();
         customizeComponents();
         this.resetComponent();
+        logger.log(Level.INFO, "Created HexView instance: " + this);
     }
 
     private void customizeComponents() {
@@ -321,7 +322,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 setVisible = true;
                 errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                     + " could not be read)";
-                Logger.getLogger(this.className).log(Level.WARNING, "Error while trying to show the hex content.", ex);
+                logger.log(Level.WARNING, "Error while trying to show the hex content.", ex);
             }
         }
 
@@ -407,7 +408,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public DataContentViewer getInstance() {
+    public DataContentViewer createInstance() {
         return new DataContentViewerHex();
     }
 

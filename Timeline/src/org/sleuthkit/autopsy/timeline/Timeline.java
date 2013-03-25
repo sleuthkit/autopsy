@@ -174,12 +174,12 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 mainFrame.setFrameSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT)); //(Width, Height)
 
 
-                dataContentPanel = new DataContentPanel();
+                dataContentPanel = DataContentPanel.createInstance();
                 //dataContentPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
                 //dataContentPanel.setPreferredSize(new Dimension(FRAME_WIDTH, (int) (FRAME_HEIGHT * 0.4)));
 
                 dataResultPanel = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
-                dataResultPanel.setContentViewer(new DataContentPanel());
+                dataResultPanel.setContentViewer(dataContentPanel);
                 //dataResultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 //dataResultPanel.setPreferredSize(new Dimension((int)(FRAME_WIDTH * 0.5), (int) (FRAME_HEIGHT * 0.5)));
                 logger.log(Level.INFO, "Successfully created viewers");
@@ -198,7 +198,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
-        PlatformImpl.startup(new Runnable() {
+        PlatformImpl.runLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -1058,8 +1058,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     mainFrame.toFront();
                     return;
                 }
-
-                Platform.setImplicitExit(false);
 
                 // listen for case changes (specifically images being added).
                 if (Case.isCaseOpen() && !listeningToAddImage) {

@@ -41,6 +41,7 @@ public class AutopsyExceptionHandler extends Handler {
     static final int SEVERE_VALUE = Level.SEVERE.intValue();
     static final Handler nbErrorManager = new NbErrorManager(); // Default NetBeans handler
     static final Version.Type buildType = Version.getBuildType();
+    private final Logger logger = Logger.getLogger(AutopsyExceptionHandler.class.getName());
     
     public AutopsyExceptionHandler() {
         super();
@@ -75,6 +76,8 @@ public class AutopsyExceptionHandler extends Handler {
                 final int messageType = getMessageTypeForLevelValue(levelValue);
 
                 // publish() was probably not called from the EDT, so run the message box there instead of here.
+                //only show the dialog in dev builds
+                if (buildType == Version.Type.DEVELOPMENT) {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     @Override
@@ -86,6 +89,8 @@ public class AutopsyExceptionHandler extends Handler {
                                 messageType);
                     }
                 });
+                }
+                logger.log(Level.SEVERE, "Unexpected error: " + title + ", " + message );
             } else {
                 // Throwable (unanticipated) error. Use built-in exception handler to offer details, stacktrace.
                 nbErrorManager.publish(record);
