@@ -65,11 +65,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -78,6 +75,7 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.modules.ModuleInstall;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -141,6 +139,18 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private EventHandler fxMouseEnteredListener;
     private EventHandler fxMouseExitedListener;
     private SleuthkitCase skCase;
+    private boolean fxInited = false;
+
+    public Timeline() {
+        super();
+
+        org.sleuthkit.autopsy.core.Installer coreInstaller =
+                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
+        if (coreInstaller != null) {
+            fxInited = coreInstaller.isJavaFxInited();
+        }
+        
+    }
 
     //Swing components and JavafX components don't play super well together
     //Swing components need to be initialized first, in the swing specific thread
@@ -165,7 +175,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             @Override
             public void run() {
                 //Making the main frame *
-                
+
                 mainFrame = new TimelineFrame();
                 mainFrame.setFrameName(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
 
@@ -1019,7 +1029,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen();
+        return Case.isCaseOpen() && this.fxInited;
     }
 
     @Override

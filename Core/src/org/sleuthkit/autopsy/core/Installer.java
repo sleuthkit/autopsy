@@ -101,6 +101,14 @@ public class Installer extends ModuleInstall {
 
     }
 
+    /**
+     * Check if JavaFx initialized
+     * @return false if java fx not initialized (classes coult not load), true if initialized
+     */
+    public boolean isJavaFxInited() {
+        return this.javaFxInit;
+    }
+    
     private void initJavaFx() {
         //initialize java fx if exists
         try {
@@ -118,7 +126,7 @@ public class Installer extends ModuleInstall {
             final String details = " Some features will not be available. "
                     + " Check that you have the right JRE installed (Sun JRE > 1.7.10). ";
             logger.log(Level.SEVERE, msg
-                    + details);
+		       + details, e);
 
             WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
                 @Override

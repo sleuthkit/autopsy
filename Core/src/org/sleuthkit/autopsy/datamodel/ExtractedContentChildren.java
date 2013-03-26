@@ -27,7 +27,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  *
- * @author dfickling
  */
 public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
     
@@ -51,6 +50,9 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
         list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
         return true;
     }
+
+  
+    
     
     @Override
     protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key){

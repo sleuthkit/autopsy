@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -301,7 +302,9 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 500).sleep();
         long size = 0;
         java.io.File rprtfldr = new java.io.File(System.getProperty("out_path")+java.io.File.separator+"AutopsyTestCase"+java.io.File.separator+"Reports"+java.io.File.separator+"AutopsyTestCase "+datenotime+java.io.File.separator+"HTML Report");
-        while(waiting)
+        JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
+        JLabel waiter = JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
+        /*while(waiting)
         {
             new Timeout("pausing", 500).sleep();
             long currsize = size;
@@ -310,19 +313,15 @@ public class RegressionTest extends TestCase{
             {
                 size+=elem.getTotalSpace();
             }
-            System.out.println("\nJAVA:"+size);
-            System.out.println("JAVA:"+currsize);
             waiting = size>currsize;
-        }
+        }*/
         screenshot("Progress");
-        JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
-        System.exit(0);
     }
     
     public void screenshot(String name) {
