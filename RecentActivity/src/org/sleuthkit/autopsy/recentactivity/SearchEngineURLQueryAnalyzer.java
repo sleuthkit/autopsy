@@ -300,7 +300,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs, bbattributes);
                         se.increment();
                         ++totalQueries;
-                        services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
                 }
             }
         } catch (TskException e) {
@@ -309,6 +308,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
             }
+            services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             logger.info("Extracted " + totalQueries + " queries from the blackboard");
         }
     }

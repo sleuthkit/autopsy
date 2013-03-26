@@ -136,15 +136,9 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         //logger.log(Level.INFO, "CLOSED");
         super.componentClosed();
 
-        /*
-         Mode mode = WindowManager.getDefault().findMode("dockedBottom");
-         if (mode != null) {
-         mode.dockInto(this);
-         this.open();
-         }
-         * */
-
-        //this.close();
+        // mark all the messages as seen (this will make the 'New?' columen NOT
+        // show a ckeckmark)
+        messagePanel.markAllSeen();
     }
 
     @Override
