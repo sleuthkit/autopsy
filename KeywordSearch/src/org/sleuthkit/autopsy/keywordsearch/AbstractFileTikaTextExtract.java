@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,6 +40,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.ParseContext;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
@@ -66,10 +70,17 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
+    private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<String>();
 
     AbstractFileTikaTextExtract() {
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
+
+        Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
+        for (MediaType mt : mediaTypes) {
+            TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
+        }
+        logger.log(Level.INFO, "Tika supported media types: " + TIKA_SUPPORTED_TYPES);
 
     }
 
@@ -272,12 +283,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             return false;
         }
 
+
         //TODO might need to add more mime-types to ignore
 
-        //default to true, which includes
-        //text, docs, pdf and others
-
-        return true;
+        //then accept all formats supported by Tika
+        return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
 
     }
 
