@@ -78,6 +78,8 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
     private static int messageId = 0;
+    
+    private int filesProcessed = 0;
 
     //file ingest modules require a private constructor
     //to ensure singleton instances
@@ -164,7 +166,10 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             if(!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                ++filesProcessed;
+                if (filesProcessed %100 == 0) {
+                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                }
             }
             
             return IngestModuleAbstractFile.ProcessResult.OK;
@@ -243,6 +248,10 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     public void complete() {
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
 
+        if (filesProcessed > 0) {
+            //send the final new data event
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+        }
         //module specific cleanup due to completion here
     }
 
@@ -277,6 +286,8 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
+        
+        filesProcessed = 0;
     }
 
     @Override

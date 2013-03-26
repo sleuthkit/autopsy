@@ -54,10 +54,11 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <Component id="pauseButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="progressSlider" pref="367" max="32767" attributes="0"/>
+                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                  <Component id="progressSlider" pref="357" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="progressLabel" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
               <Group type="102" attributes="0">
                   <Component id="infoLabel" min="-2" max="-2" attributes="0"/>
@@ -71,7 +72,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="pauseButton" min="-2" max="-2" attributes="0"/>
                       <Component id="progressSlider" min="-2" max="-2" attributes="0"/>
-                      <Component id="progressLabel" min="-2" max="-2" attributes="0"/>
+                      <Component id="progressLabel" alignment="1" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="infoLabel" min="-2" max="-2" attributes="0"/>

@@ -51,6 +51,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     //UI
     private final MediaViewVideoPanel videoPanel;
     private final MediaViewImagePanel imagePanel;
+    private boolean videoPanelInited;
+    private boolean imagePanelInited;
     
     private static final String IMAGE_VIEWER_LAYER = "IMAGE";
     private static final String VIDEO_VIEWER_LAYER = "VIDEO";
@@ -64,6 +66,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         
         videoPanel = new MediaViewVideoPanel();
         imagePanel = new MediaViewImagePanel();
+        videoPanelInited = videoPanel.isInited();
+        imagePanelInited = imagePanel.isInited();
         
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this);
@@ -126,10 +130,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         
         final Dimension dims = DataContentViewerMedia.this.getSize();
         
-        if (containsExt(file.getName(), IMAGES)) {
+        if (imagePanelInited && containsExt(file.getName(), IMAGES)) {
             imagePanel.showImageFx(file, dims);
                         this.switchPanels(false);
-        } else if (videoPanel.isInited()
+        } else if (videoPanelInited
                 && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
      
             videoPanel.setupVideo(file, dims);
@@ -185,7 +189,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (node == null) {
             return false;
         }
-
+        
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             return false;
@@ -198,11 +202,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         String name = file.getName().toLowerCase();
 
-        if (containsExt(name, IMAGES)) {
+        if (imagePanelInited && containsExt(name, IMAGES)) {
             return true;
         } //for gstreamer formats, check if initialized first, then
         //support audio formats, and video formats
-        else if (videoPanel.isInited()
+        else if (videoPanelInited && videoPanel.isInited()
                 && (containsExt(name, AUDIOS)
                 || (containsExt(name, VIDEOS)))) {
             return true;
