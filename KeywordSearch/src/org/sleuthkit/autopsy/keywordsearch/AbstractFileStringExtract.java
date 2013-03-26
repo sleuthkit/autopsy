@@ -183,20 +183,12 @@ class AbstractFileStringExtract implements AbstractFileExtract {
         if (detectedFormat == null) {
             return true;
         }
-        else if (detectedFormat.equals("application/octet-stream")) {
-            //any binary unstructured blobs (string extraction will be used)
-            return true;
-        }
-        else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+
+        //accept everything other than archives
+        if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
             return false; //let unzipper take care of it
         }
-        //skip images/video/audio
-        else if (detectedFormat.contains("image/")
-                || detectedFormat.contains("audio/")
-                || detectedFormat.contains("video/")
-                ) {
-            return false;
-        }
+
         else {
             return true;
         }
