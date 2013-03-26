@@ -116,6 +116,8 @@ public class Case {
     private static Case currentCase = null;
     private Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
+    static final String CASE_EXTENSION = "aut";
+    static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
 
     /**
      * Constructor for the Case class
@@ -202,7 +204,7 @@ public class Case {
     static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
-        String configFilePath = caseDir + File.separator + caseName + ".aut";
+        String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
@@ -260,7 +262,12 @@ public class Case {
             // close the previous case if there's any
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
-            throw new CaseActionException("Error opening the case", ex);
+            if (!configFilePath.endsWith(CASE_DOT_EXTENSION)) {
+                throw new CaseActionException("Check that you selected the correct case file (usually with "
+                        + CASE_DOT_EXTENSION + " extension)", ex);
+            } else {
+                throw new CaseActionException("Error opening the case", ex);
+            }
         }
     }
 
@@ -561,7 +568,6 @@ public class Case {
             return xmlcm.getCreatedDate();
         }
     }
-
 
     /**
      * Get absolute module output directory path where modules should save their
@@ -916,7 +922,7 @@ public class Case {
 
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
-            
+
             //try to force gc to happen
             System.gc();
             System.gc();
@@ -924,7 +930,7 @@ public class Case {
 
         //log memory usage after case changed
         logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-        
+
 
     }
 

@@ -1,0 +1,13 @@
+This file explains how to setup regression and continuous testing for Autopsy.
+
+1)Create a folder called 'gold', this is where the test standards will go.
+2)Create a folder called 'input', this is where the image, hash, and keyword search files.
+3)Put an idx file called NSRL, that contains known bad hashes, in the input folder.
+4)Put an idx file called notablehashes, that contains notable hashes, in the input folder.
+5)Put an xml file called notablekeywords, that contains keywords, in the input folder.
+6)The xml file should be of the format of the notablekeywords-example.xml file.
+7)Create a folder called 'output', this is where the output from tests go.
+8)The config.xml file is an example of a configuration file and contains all of the available elements.
+9)Use the -g command to create a gold standard without testing.
+10)Use the -r command to rebuild gold standards with testing.
+11)Use the -c command to run testing continuously until interrupted, this will also update all of the sleuthkit and autopsy code from github and will rebuild the code so that it is running the latest version after each test.

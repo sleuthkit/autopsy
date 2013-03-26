@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -27,6 +26,8 @@ import java.util.Collections;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,33 +37,35 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
+
     private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
+    private final JFileChooser fc = new JFileChooser();
+    private FileFilter autFilter;
 
-    JFileChooser fc = new JFileChooser();
-    GeneralFilter autFilter = new GeneralFilter(Collections.<String>singletonList(".aut"), "AUTOPSY File (*.aut)");
-
-    /** The constructor */
+    /**
+     * The constructor
+     */
     public CaseOpenAction() {
+        autFilter = new FileNameExtensionFilter(org.sleuthkit.autopsy.coreutils.Version.getName() 
+                + " Case File ( " + Case.CASE_DOT_EXTENSION + ")", 
+                Case.CASE_EXTENSION);
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        //fc.setAcceptAllFileFilterUsed(false);
-        fc.addChoosableFileFilter(autFilter);
-        //fc.addChoosableFileFilter(fc.getAcceptAllFileFilter());
-        try{
-        if(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE) != null)
-            fc.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE)));
-        }
-        catch(Exception e){
-            
+        fc.setFileFilter(autFilter);
+        try {
+            if (ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE) != null) {
+                fc.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE)));
+            }
+        } catch (Exception e) {
         }
     }
 
     /**
      * Pop-up the File Chooser to open the existing case (.aut file)
-     * 
-     * @param e  the action event
+     *
+     * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -70,6 +73,7 @@ public final class CaseOpenAction implements ActionListener {
 
 
         int retval = fc.showOpenDialog((Component) e.getSource());
+
         if (retval == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getPath();
             String dirPath = fc.getSelectedFile().getParent();
@@ -89,11 +93,10 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.open(path); // open the case
                 } catch (CaseActionException ex) {
-                    JOptionPane.showMessageDialog(null, "Error: could not open the case in folder " + path 
-                            + " due to unexpected error"
-                            , "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Error: could not open the case in folder " + path
+                            + ": " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     logger.log(Level.WARNING, "Error opening case in folder " + path, ex);
-                    
+
                     StartupWindow.getInstance().open();
                 }
             }

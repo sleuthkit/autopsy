@@ -24,6 +24,8 @@ from email.MIMEBase import MIMEBase
 from email import Encoders
 import urllib2
 import re
+import zipfile
+import zlib
 
 #
 # Please read me...
@@ -66,6 +68,7 @@ class Args:
 		self.exception = False
 		self.exception_string = ""
 		self.contin = False
+		self.gold_creation = False
 	
 	def parse(self):
 		global nxtproc 
@@ -103,7 +106,7 @@ class Args:
 			   printout("Ignoring unallocated space.\n")
 			   self.unallocated = True
 			elif(arg == "-i" or arg == "--ignore"):
-				printout("Ignoring the ./input directory.\n")
+				printout("Ignoring the ../input directory.\n")
 				self.ignore = True
 			elif(arg == "-k" or arg == "--keep"):
 				printout("Keeping the Solr index.\n")
@@ -128,6 +131,9 @@ class Args:
 			elif arg == "-c" or arg == "--continuous":
 				printout("Running until interrupted")
 				self.contin = True
+			elif arg == "-g" or arg == "--gold":
+				printout("Creating gold standards")
+				self.gold_creation = True
 			else:
 				printout(usage())
 				return False
@@ -142,9 +148,9 @@ class Args:
 class TestAutopsy:
 	def __init__(self):
 		# Paths:
-		self.input_dir = make_local_path("input")
+		self.input_dir = make_local_path("..","input")
 		self.output_dir = ""
-		self.gold = "gold"
+		self.gold = make_local_path("..", "output", "gold")
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -165,6 +171,7 @@ class TestAutopsy:
 		self.known_bad_path = ""
 		self.keyword_path = ""
 		self.nsrl_path = ""
+		self.build_path = ""
 		# Case info
 		self.start_date = ""
 		self.end_date = ""
@@ -300,7 +307,7 @@ class Database:
 		
 	def generate_autopsy_artifacts(self):
 		if not self.autopsy_artifacts:
-			autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+			autopsy_db_file = make_path(case.output_dir, case.image_name,
 										  "AutopsyTestCase", "autopsy.db")
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -309,10 +316,16 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
+			autopsy_cur.execute("SELECT * FROM blackboard_artifacts")
+			self.autopsy_artifacts_list = []
+			for row in autopsy_cur.fetchall():
+				for item in row:
+					self.autopsy_artifacts_list.append(item)
+
 				
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
-			autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+			autopsy_db_file = make_path(case.output_dir, case.image_name,
 										  "AutopsyTestCase", "autopsy.db")
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -322,7 +335,7 @@ class Database:
 
 	def generate_autopsy_objects(self):
 		if self.autopsy_objects == 0:
-			autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+			autopsy_db_file = make_path(case.output_dir, case.image_name,
 										  "AutopsyTestCase", "autopsy.db")
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -332,7 +345,7 @@ class Database:
 		
 	def generate_gold_artifacts(self):
 		if not self.gold_artifacts:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
+			gold_db_file = make_path(case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -340,10 +353,15 @@ class Database:
 			for type_id in range(1, length):
 				gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.gold_artifacts.append(gold_cur.fetchone()[0])
+			gold_cur.execute("SELECT * FROM blackboard_artifacts")
+			self.gold_artifacts_list = []
+			for row in gold_cur.fetchall():
+				for item in row:
+					self.gold_artifacts_list.append(item)
 				
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
+			gold_db_file = make_path(case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -351,7 +369,7 @@ class Database:
 
 	def generate_gold_objects(self):
 		if self.gold_objects == 0:
-			gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
+			gold_db_file = make_path(case.gold, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -462,6 +480,7 @@ def compile():
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
+	global parsed
 	if image_type(image_file) == IMGTYPE.UNKNOWN:
 		printerror("Error: Image type is unrecognized:")
 		printerror(image_file + "\n")
@@ -474,6 +493,18 @@ def run_test(image_file, count):
 	case.common_log_path = make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
 	case.warning_log = make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
 	case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
+	if(args.list):
+		element = parsed.getElementsByTagName("build")
+		if(len(element)<=0):
+			toval = make_path("..", "build.xml")
+		else:
+			element = element[0]
+			toval = element.getAttribute("value").encode().decode("utf_8")
+			if(toval==None):
+				toval = make_path("..", "build.xml")
+	else:
+		toval = make_path("..", "build.xml")
+	case.build_path = toval	
 	case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
 	case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
 	case.nsrl_path = make_path(case.input_dir, "nsrl.txt-md5.idx")
@@ -512,19 +543,31 @@ def run_test(image_file, count):
 		print_report(exceptions, "EXCEPTION", okay)
 		
 	# Now test in comparison to the gold standards
-	compare_to_gold_db()
-	compare_to_gold_html()
-	
+	if not args.gold_creation:
+		try:
+			gold_path = case.gold
+			img_gold = make_path(case.gold, case.image_name)
+			img_archive = make_path(case.gold, case.image_name+"-archive.zip")
+			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+			extrctr.extractall(gold_path)
+			extrctr.close
+			time.sleep(1)
+			compare_to_gold_db()
+			compare_to_gold_html()
+			compare_errors()
+			del_dir(img_gold)
+		except:
+			print("Tests failed due to an error, try rebuilding or creating gold standards.\n")
 	# Make the CSV log and the html log viewer
 	generate_csv(case.csv)
 	if case.global_csv:
 		generate_csv(case.global_csv)
 	generate_html()
 	# If running in rebuild mode (-r)
-	if args.rebuild:
+	if args.rebuild or args.gold_creation:
 		rebuild()
 	# Reset the case and return the tests sucessfully finished
-	clear_dir(make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "ModuleOutput", "keywordsearch"))
+	clear_dir(make_path(case.output_dir, case.image_name, "AutopsyTestCase", "ModuleOutput", "keywordsearch"))
 	case.reset()
 	return True
 
@@ -536,12 +579,11 @@ def run_ant():
 	if dir_exists(test_case_path):
 		shutil.rmtree(test_case_path)
 	os.makedirs(test_case_path)
-	if not dir_exists(make_local_path("gold")):
-		os.makedirs(make_local_path("gold"))
 	case.ant = ["ant"]
 	case.ant.append("-v")
 	case.ant.append("-f")
-	case.ant.append(os.path.join("..","build.xml"))
+#	case.ant.append(case.build_path)
+	case.ant.append(os.path.join("..","..","Testing","build.xml"))
 	case.ant.append("regression-test")
 	case.ant.append("-l")
 	case.ant.append(case.antlog_dir)
@@ -549,7 +591,7 @@ def run_ant():
 	case.ant.append("-Dknown_bad_path=" + case.known_bad_path)
 	case.ant.append("-Dkeyword_path=" + case.keyword_path)
 	case.ant.append("-Dnsrl_path=" + case.nsrl_path)
-	case.ant.append("-Dgold_path=" + make_local_path(case.gold))
+	case.ant.append("-Dgold_path=" + make_path(case.gold))
 	case.ant.append("-Dout_path=" + make_local_path(case.output_dir, case.image_name))
 	case.ant.append("-Dignore_unalloc=" + "%s" % args.unallocated)
 	case.ant.append("-Dcontin_mode=" + str(args.contin))
@@ -563,7 +605,7 @@ def run_ant():
 	if SYS is OS.CYGWIN:
 		subprocess.call(case.ant, stdout=antout)
 	elif SYS is OS.WIN:
-		theproc = subprocess.Popen(case.ant, shell = True)
+		theproc = subprocess.Popen(case.ant, shell = True, stdout=subprocess.PIPE)
 		theproc.communicate()
 	antout.close()
 	
@@ -597,12 +639,14 @@ def rebuild():
 	# Errors to print
 	errors = []
 	# Delete the current gold standards
-	gold_dir = make_local_path(case.gold, case.image_name)
+	gold_dir = make_path(case.gold, case.image_name)
 	clear_dir(gold_dir)
-	dbinpth = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
-	dboutpth = make_local_path(case.gold, case.image_name, "autopsy.db")
+	dbinpth = make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
+	dboutpth = make_path(case.gold, case.image_name, "autopsy.db")
+	if not os.path.exists(gold_dir):
+		os.makedirs(gold_dir)
 	copy_file(dbinpth, dboutpth)
-	error_pth = make_local_path(case.gold, case.image_name, case.image_name+"SortedErrors.txt")
+	error_pth = make_path(case.gold, case.image_name, case.image_name+"SortedErrors.txt")
 	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
@@ -611,20 +655,34 @@ def rebuild():
 			htmlfolder = fs
 	autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder)
 	
-	html_path = make_local_path(case.output_dir, case.image_name,
+	html_path = make_path(case.output_dir, case.image_name,
 								 "AutopsyTestCase", "Reports")
 	try:
-		os.makedirs(os.path.join(os.getcwd(), case.gold, case.image_name, htmlfolder))
+		os.makedirs(os.path.join(case.gold, case.image_name, htmlfolder))
 		for file in os.listdir(autopsy_html_path):
-			html_to = make_local_path(case.gold, case.image_name, file.replace("HTML Report", "Report"))
+			html_to = make_path(case.gold, case.image_name, file.replace("HTML Report", "Report"))
 			copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
 	except FileNotFoundException as e:
 		errors.append(e.error)
 	except Exception as e:
 		errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 		errors.append(str(e) + "\n")
+	oldcwd = os.getcwd()
+	os.chdir(case.gold)
+	img_archive = make_path(case.image_name+"-archive.zip")
+	img_gold = os.path.join(case.image_name)
+	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
+	zipdir(img_gold, comprssr)
+	comprssr.close()
+	del_dir(gold_dir)
+	os.chdir(oldcwd)
 	okay = "Sucessfully rebuilt all gold standards."
 	print_report(errors, "REBUILDING", okay)
+
+def zipdir(path, zip):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            zip.write(os.path.join(root, file))
 
 # Using the global case's variables, compare the database file made by the
 # regression test to the gold standard database file
@@ -632,8 +690,8 @@ def rebuild():
 # from queries while comparing
 def compare_to_gold_db():
 	# SQLITE needs unix style pathing
-	gold_db_file = os.path.join("./", case.gold, case.image_name, "autopsy.db")
-	autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+	gold_db_file = make_path(case.gold, case.image_name, "autopsy.db")
+	autopsy_db_file = make_path(case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
 	# return an error later on if these do fail
@@ -687,13 +745,12 @@ def compare_to_gold_db():
 # Using the global case's variables, compare the html report file made by
 # the regression test against the gold standard html report
 def compare_to_gold_html():
-	gold_html_file = make_local_path(case.gold, case.image_name, "Report", "index.html")
+	gold_html_file = make_path(case.gold, case.image_name, "Report", "index.html")
 	htmlfolder = ""
-	for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
-		if os.path.isdir(os.path.join(os.getcwd(), case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
+	for fs in os.listdir(make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
+		if os.path.isdir(make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
 			htmlfolder = fs
-	autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, "HTML Report") #, "AutopsyTestCase", "Reports", htmlfolder)
-	print(autopsy_html_path)
+	autopsy_html_path = make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, "HTML Report") #, "AutopsyTestCase", "Reports", htmlfolder)
 	
 	
 	try:
@@ -708,14 +765,14 @@ def compare_to_gold_html():
 			return
 		#Find all gold .html files belonging to this case
 		ListGoldHTML = []
-		for fs in os.listdir(os.path.join(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder)):
+		for fs in os.listdir(make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder)):
 			if(fs.endswith(".html")):
 				ListGoldHTML.append(os.path.join(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, fs))
 		#Find all new .html files belonging to this case
 		ListNewHTML = []
-		for fs in os.listdir(os.path.join(case.gold, case.image_name)):
+		for fs in os.listdir(make_path(case.gold, case.image_name)):
 			if (fs.endswith(".html")):
-				ListNewHTML.append(os.path.join(case.gold, case.image_name, fs))
+				ListNewHTML.append(make_path(case.gold, case.image_name, fs))
 		#ensure both reports have the same number of files and are in the same order
 		if(len(ListGoldHTML) != len(ListNewHTML)):
 			printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
@@ -813,7 +870,6 @@ def generate_common_log():
 	try:
 		logs_path = make_local_path(case.output_dir, case.image_name, "logs")
 		common_log = codecs.open(case.common_log_path, "w", "utf_8")
-		print(case.common_log_path)
 		warning_log = codecs.open(case.warning_log, "w", "utf_8")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(case.image_name + "\n")
@@ -840,14 +896,13 @@ def generate_common_log():
 		case.sorted_log = make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
 		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
 		subprocess.call(srtcmdlst)
-		compare_errors()
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
 		
 def	compare_errors():
-	gold_dir = make_local_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	gold_dir = make_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
 	common_log = codecs.open(case.sorted_log, "r", "utf_8")
 	gold_log = codecs.open(gold_dir, "r", "utf_8")
 	gold_dat = gold_log.read()
@@ -890,9 +945,10 @@ def fill_case_data():
 	start = datetime.datetime.strptime(case.start_date, "%b %d, %Y %I:%M:%S %p")
 	end = datetime.datetime.strptime(case.end_date, "%a %b %d %H:%M:%S %Y")
 	case.total_test_time = str(end - start)
-	
+
 	try:
 		# Set Autopsy version, heap space, ingest time, and service times
+		
 		version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
 		case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
 		
@@ -1169,7 +1225,6 @@ def generate_html():
 		write_html_head()
 	try:
 		global html
-		print(case.html_log)
 		html = open(case.html_log, "a")
 		# The image title
 		title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
@@ -1490,7 +1545,7 @@ def wgetcwd():
 # Copy the log files from Autopsy's default directory
 def copy_logs():
 	try:
-		log_dir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
+		log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
 		shutil.copytree(log_dir, make_local_path(case.output_dir, case.image_name, "logs"))
 	except Exception as e:
 		printerror("Error: Failed to copy the logs.")
@@ -1521,6 +1576,7 @@ def del_dir(dir):
 def copy_file(ffrom, to):
 	try :
 		if not file_exists(ffrom):
+			print("hi")
 			raise FileNotFoundException(ffrom)
 		shutil.copy(ffrom, to)
 	except:
@@ -1604,19 +1660,19 @@ def usage():
 Usage:  ./regression.py [-f FILE] [OPTIONS]
 
 		Run RegressionTest.java, and compare the result with a gold standard.
-		By default, the script tests every image in ./input
+		By default, the script tests every image in ../input
 		When the -f flag is set, this script only tests a single given image.
 		When the -l flag is set, the script looks for a configuration file,
 		which may outsource to a new input directory and to individual images.
 		
 		Expected files:
-		  An NSRL database at:			./input/nsrl.txt-md5.idx
-		  A notable hash database at:	 ./input/notablehashes.txt-md5.idx
-		  A notable keyword file at:	  ./input/notablekeywords.xml
+		  An NSRL database at:			../input/nsrl.txt-md5.idx
+		  A notable hash database at:	 ../input/notablehashes.txt-md5.idx
+		  A notable keyword file at:	  ../input/notablekeywords.xml
 		
 Options:
   -r			Rebuild the gold standards for the image(s) tested.
-  -i			Ignores the ./input directory and all files within it.
+  -i			Ignores the ../input directory and all files within it.
   -u			Tells Autopsy not to ingest unallocated space.
   -k			Keeps each image's Solr index instead of deleting it.
   -v			Verbose mode; prints all errors to the screen.
@@ -1670,7 +1726,7 @@ def execute_test():
 	global failedbool
 	global html
 	global attachl
-	case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
+	case.output_dir = make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
 	os.makedirs(case.output_dir)
 	case.common_log = "AutopsyErrors.txt"
 	case.csv = make_local_path(case.output_dir, "CSV.txt")
@@ -1696,7 +1752,7 @@ def execute_test():
 		   return
 	   run_test(args.single_file, 0)
 	# If user has not selected a single file, and does not want to ignore
-	#  the input directory, continue on to parsing ./input
+	#  the input directory, continue on to parsing ../input
 	if (not args.single) and (not args.ignore):
 	   for file in os.listdir(case.input_dir):
 		   # Make sure it's not a required hash/keyword file or dir
@@ -1720,7 +1776,8 @@ def execute_test():
 		errorem = ""
 		errorem += "There were no Errors.\n"
 		attachl = []
-	send_email()
+	if not args.gold_creation:
+		send_email()
 
 
 def send_email():

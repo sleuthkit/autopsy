@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -51,6 +52,7 @@ import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
+import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
@@ -296,9 +298,24 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 8000).sleep(); // Give it a few seconds to generate
-        screenshot("Progress");
+        boolean waiting = true;
+        new Timeout("pausing", 500).sleep();
+        long size = 0;
+        java.io.File rprtfldr = new java.io.File(System.getProperty("out_path")+java.io.File.separator+"AutopsyTestCase"+java.io.File.separator+"Reports"+java.io.File.separator+"AutopsyTestCase "+datenotime+java.io.File.separator+"HTML Report");
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
+        JLabel waiter = JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
+        /*while(waiting)
+        {
+            new Timeout("pausing", 500).sleep();
+            long currsize = size;
+            size = 0;
+            for(java.io.File elem: rprtfldr.listFiles())
+            {
+                size+=elem.getTotalSpace();
+            }
+            waiting = size>currsize;
+        }*/
+        screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
