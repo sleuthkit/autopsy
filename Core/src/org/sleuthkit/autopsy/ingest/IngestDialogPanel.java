@@ -60,7 +60,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private Map<String, Boolean> moduleStates;
     private ModulesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
-    public static final String ENABLED_MOD = "Enabled_Ingest_Modules";
+    public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
     // The image that's just been added to the database
     private Image image;
@@ -422,25 +422,25 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             currentModule.saveSimpleConfiguration();
         }
         // Save this panel
-        ArrayList<String> modulesEnabled = new ArrayList<String>();
+        List<String> modulesDisabled = new ArrayList<String>();
         for(int i=0; i<modulesTable.getRowCount(); i++) {
             // Column 0 is always the module's checkbox (which is retreived as a boolean)
             Boolean enabled = (Boolean) modulesTable.getValueAt(i, 0);
-            if(enabled) {
+            if(!enabled) {
                 // Column 1 is always the module name
                 String moduleName = (String) modulesTable.getValueAt(i, 1);
-                modulesEnabled.add(moduleName);
+                modulesDisabled.add(moduleName);
             }
         }
         // Add all the enabled modules to the properties separated by a coma
         String list = "";
-        for(int i=0; i<modulesEnabled.size(); i++) {
-            list += modulesEnabled.get(i);
-            if(i+1 < modulesEnabled.size()) {
+        for(int i=0; i<modulesDisabled.size(); i++) {
+            list += modulesDisabled.get(i);
+            if(i+1 < modulesDisabled.size()) {
                 list += ", ";
             }
         }
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD, list);
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, DISABLED_MOD, list);
         String processUnalloc = Boolean.toString(processUnallocCheckbox.isSelected());
         ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC, processUnalloc);
         
@@ -464,16 +464,16 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             simplePanel.repaint();
         }
         // Reload this panel
-        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD);
+        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, DISABLED_MOD);
         if(list!=null) { // if no property is found, list will be null
-            ArrayList<String> modulesEnabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
+            List<String> modulesDisabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
             // For every row, see if that module name is in the ArrayList
             for(int i=0; i<modulesTable.getRowCount(); i++) {
                 String moduleName = (String) modulesTable.getValueAt(i, 1);
-                if(modulesEnabled.contains(moduleName)) {
-                    modulesTable.setValueAt(true, i, 0); // we found it!
+                if(modulesDisabled.contains(moduleName)) {
+                    modulesTable.setValueAt(false, i, 0); // we found it, disable the module
                 } else {
-                    modulesTable.setValueAt(false, i, 0); // not so lucky..
+                    modulesTable.setValueAt(true, i, 0); // not on disabled list, or a new module, enable it
                 }
             }
         }
