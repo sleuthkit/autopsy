@@ -10,6 +10,7 @@ Improvements:
 - improve Keyword Search file indexing (use detected mime-type instead of file extension)
 - exif module - better jpeg detection using signature and not only file extension.
 - show children counts in directory tree
+- Ingest Message Inbox showing which messages are new better
 
 Bugfixes:
 - fixed memory leaks in "Add Image"
