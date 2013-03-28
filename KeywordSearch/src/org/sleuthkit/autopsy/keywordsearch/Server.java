@@ -29,12 +29,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.Long;
+import java.lang.Long;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
@@ -49,7 +54,6 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -283,8 +287,7 @@ public class Server {
                 bw.flush();
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error redirecting Solr output stream");
-            }
-            finally {
+            } finally {
                 if (bw != null) {
                     try {
                         bw.close();
@@ -293,6 +296,39 @@ public class Server {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Get list of PIDs of currently running Solr processes
+     *
+     * @return
+     */
+    List<Long> getSolrPIDs() {
+        List<Long> pids = new ArrayList<Long>();
+
+        //NOTE: these needs to be in sync with process start string in start()
+        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.7.eq=start.jar";
+
+        long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
+        if (pidsArr != null) {
+            for (int i = 0; i < pidsArr.length; ++i) {
+                pids.add(pidsArr[i]);
+            }
+        }
+
+        return pids;
+    }
+
+    /**
+     * Kill residual Solr processes. Note, this method should be used only if
+     * Solr could not be stopped in a graceful manner.
+     */
+    void killSolr() {
+        List<Long> solrPids = getSolrPIDs();
+        for (long pid : solrPids) {
+            logger.log(Level.INFO, "Trying to kill old Solr process, PID: " + pid);
+            PlatformUtil.killProcess(pid);
         }
     }
 
@@ -340,6 +376,9 @@ public class Server {
 
                 errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
                 errorRedirectThread.start();
+
+                final List<Long> pids = this.getSolrPIDs();
+                logger.log(Level.INFO, "New Solr process PID: " + pids);
 
 
             } catch (SecurityException ex) {
@@ -416,7 +455,6 @@ public class Server {
             Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=" + currentSolrStopPort + " -DSTOP.KEY=" + KEY + " -jar start.jar --stop", null, solrFolder);
             logger.log(Level.INFO, "Waiting for stopping Solr server");
             stop.waitFor();
-            logger.log(Level.INFO, "Finished stopping Solr server");
 
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
@@ -434,6 +472,11 @@ public class Server {
                 errorRedirectThread.stopRun();
                 errorRedirectThread = null;
             }
+
+            //if still running, kill it
+            killSolr();
+
+            logger.log(Level.INFO, "Finished stopping Solr server");
         }
     }
 
@@ -484,9 +527,9 @@ public class Server {
         }
 
         Case currentCase = Case.getCurrentCase();
-        
+
         validateIndexLocation(currentCase);
-        
+
         currentCore = openCore(currentCase);
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
@@ -510,8 +553,7 @@ public class Server {
             logger.log(Level.INFO, "Moving keyword search index location from: "
                     + legacyIndexPath + " to: " + properIndexPath);
             try {
-                Files.move(Paths.get(legacyIndexDir.getParent())
-                        , Paths.get(properIndexDir.getParent()));
+                Files.move(Paths.get(legacyIndexDir.getParent()), Paths.get(properIndexDir.getParent()));
             } catch (IOException | SecurityException ex) {
                 logger.log(Level.WARNING, "Error moving keyword search index folder from: "
                         + legacyIndexPath + " to: " + properIndexPath
