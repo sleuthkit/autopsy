@@ -1,3 +1,16 @@
+---------------- VERSION Current (development)  --------------
+
+New features:
+
+Improvements:
+
+
+Bugfixes:
+- Keyword Search: fix when Solr does not cleanly shutdown
+
+
+
+
 ---------------- VERSION 3.0.5 --------------
 
 New features:
