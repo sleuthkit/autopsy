@@ -113,10 +113,9 @@ public class IngestManager {
          *
          */
         DATA,
-        
         /**
-         * Event send when content changed, either its attributes changed, or new content
-         * children have been added
+         * Event send when content changed, either its attributes changed, or
+         * new content children have been added
          */
         CONTENT_CHANGED
     };
@@ -173,10 +172,14 @@ public class IngestManager {
      *
      * @returns Instance of class.
      */
-    public static synchronized IngestManager getDefault() {
+    public static IngestManager getDefault() {
         if (instance == null) {
-            logger.log(Level.INFO, "creating manager instance");
-            instance = new IngestManager();
+            synchronized (IngestManager.class) {
+                if (instance == null) {
+                    logger.log(Level.INFO, "creating manager instance");
+                    instance = new IngestManager();
+                }
+            }
         }
         return instance;
     }
@@ -197,7 +200,7 @@ public class IngestManager {
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
     }
-    
+
     static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
     }
@@ -259,18 +262,18 @@ public class IngestManager {
         logger.log(Level.INFO, "Will enqueue image: " + image.getName());
         execute(modules, images);
     }
-    
+
     /**
-     * Schedule a file for ingest.
-     * Scheduler updates the current progress.
-     * 
-     * The file is usually a product of a recently ran ingest.  
-     * Now we want to process this file with the same ingest context.
-     * 
+     * Schedule a file for ingest. Scheduler updates the current progress.
+     *
+     * The file is usually a product of a recently ran ingest. Now we want to
+     * process this file with the same ingest context.
+     *
      * @param file file to be scheduled
-     * @param pipelineContext ingest context used to ingest parent of the file to be scheduled
+     * @param pipelineContext ingest context used to ingest parent of the file
+     * to be scheduled
      */
-    void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
+    void scheduleFile(AbstractFile file, PipelineContext pipelineContext) {
         scheduler.getFileScheduler().schedule(file, pipelineContext);
     }
 
@@ -325,7 +328,7 @@ public class IngestManager {
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
-                    PipelineContext<IngestModuleImage>imagepipelineContext = 
+                    PipelineContext<IngestModuleImage> imagepipelineContext =
                             new PipelineContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
                     final IngestImageThread newImageWorker = new IngestImageThread(this,
                             imagepipelineContext, imageTask.getImage(), taskModule, moduleInit);
@@ -406,9 +409,9 @@ public class IngestManager {
             if (!cancelled) {
                 logger.log(Level.INFO, "Unable to cancel file ingest worker, likely already stopped");
             }
-            
+
             abstractFileIngester = null;
-            
+
         }
 
         List<IngestImageThread> toStop = new ArrayList<IngestImageThread>();
@@ -612,19 +615,18 @@ public class IngestManager {
             ui.displayMessage(message);
         }
     }
-    
+
     /**
-     * Get free disk space of a drive where ingest data are written to
-     * That drive is being monitored by IngestMonitor thread when ingest is running.
+     * Get free disk space of a drive where ingest data are written to That
+     * drive is being monitored by IngestMonitor thread when ingest is running.
      * Use this method to get amount of free disk space anytime.
-     * 
+     *
      * @return amount of disk space, -1 if unknown
      */
     long getFreeDiskSpace() {
         if (ingestMonitor != null) {
             return ingestMonitor.getFreeSpace();
-        }
-        else {
+        } else {
             return -1;
         }
     }
@@ -734,12 +736,11 @@ public class IngestManager {
                     String moduleName;
                     if (module != null) {
                         moduleName = module.getName();
-                    }
-                    else {
+                    } else {
                         //manager message
                         moduleName = "System";
                     }
-                    
+
                     sb.append("\t").append(moduleName).append(": ").append(errorsModule).append(EOL);
                 }
             }
@@ -816,25 +817,23 @@ public class IngestManager {
         }
     }
 
-    
     /**
-     * File ingest pipeline processor.
-     * Worker runs until AbstractFile queue is consumed
-     * New instance is created and started when data arrives and previous pipeline completed.
+     * File ingest pipeline processor. Worker runs until AbstractFile queue is
+     * consumed New instance is created and started when data arrives and
+     * previous pipeline completed.
      */
     private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
         private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
-        
         //progress  bar
         private ProgressHandle progress;
- 
+
         @Override
         protected Object doInBackground() throws Exception {
 
             logger.log(Level.INFO, "Starting background ingest file processor");
             logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-            
+
             stats.start();
 
             //notify main thread modules started
@@ -869,7 +868,7 @@ public class IngestManager {
                 final PipelineContext<IngestModuleAbstractFile> filepipelineContext = fileTask.context;
                 final ScheduledImageTask<IngestModuleAbstractFile> fileIngestTask = filepipelineContext.getScheduledTask();
                 final AbstractFile fileToProcess = fileTask.file;
-                
+
                 //clear return values from modules for last file
                 synchronized (abstractFileModulesRetValues) {
                     abstractFileModulesRetValues.clear();
@@ -877,7 +876,7 @@ public class IngestManager {
 
                 logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
-                for (IngestModuleAbstractFile module : fileIngestTask.getModules() ) {
+                for (IngestModuleAbstractFile module : fileIngestTask.getModules()) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
@@ -886,8 +885,7 @@ public class IngestManager {
 
                     try {
                         stats.logFileModuleStartProcess(module);
-                        IngestModuleAbstractFile.ProcessResult result = module.process
-                                (filepipelineContext, fileToProcess);
+                        IngestModuleAbstractFile.ProcessResult result = module.process(filepipelineContext, fileToProcess);
                         stats.logFileModuleEndProcess(module);
 
                         //store the result for subsequent modules for this file
@@ -898,13 +896,12 @@ public class IngestManager {
                     } catch (Exception e) {
                         logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
                         stats.addError(module);
-                    }
-                    catch (OutOfMemoryError e) {
+                    } catch (OutOfMemoryError e) {
                         logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
                         stats.addError(module);
                     }
                 } //end for every module
-                
+
                 //free the internal file resource after done with every module
                 fileToProcess.close();
 
@@ -921,8 +918,8 @@ public class IngestManager {
                     ++processedFiles;
                 }
                 //--totalEnqueuedFiles;
-                
-                
+
+
             } //end of for every AbstractFile
             logger.log(Level.INFO, "IngestManager: Finished processing files");
             return null;
@@ -939,7 +936,7 @@ public class IngestManager {
                         IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
                     }
                 }
-                
+
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
                 logger.log(Level.INFO, "Freeing jvm heap resources post file pipeline run");
                 System.gc();
@@ -1105,16 +1102,14 @@ public class IngestManager {
                 //queue to schedulers
                 final boolean processUnalloc = getProcessUnallocSpace();
                 final ScheduledImageTask<IngestModuleImage> imageTask = new ScheduledImageTask<IngestModuleImage>(image, imageMods);
-                final PipelineContext<IngestModuleImage>imagepipelineContext 
-                        = new PipelineContext<IngestModuleImage>(imageTask, processUnalloc);
+                final PipelineContext<IngestModuleImage> imagepipelineContext = new PipelineContext<IngestModuleImage>(imageTask, processUnalloc);
                 logger.log(Level.INFO, "Queing image ingest task: " + imageTask);
                 progress.progress("Image Ingest" + " " + imageName, processed);
                 imageScheduler.schedule(imagepipelineContext);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
                 final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods);
-                final PipelineContext<IngestModuleAbstractFile>filepipelineContext
-                        = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
+                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
                 fileScheduler.schedule(filepipelineContext);
