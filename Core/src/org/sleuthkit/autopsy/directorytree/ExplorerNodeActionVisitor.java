@@ -100,7 +100,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new TagFileAction(d));
+        actions.add(new TagAction(d));
         return actions;
     }
     
@@ -108,7 +108,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
-        actions.add(new TagFileAction(d));
+        actions.add(new TagAction(d));
         return actions;
     }
     
@@ -116,7 +116,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
-        actions.add(new TagFileAction(d));
+        actions.add(new TagAction(d));
         return actions;
     }
 

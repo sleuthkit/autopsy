@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.File;
@@ -83,7 +83,7 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
             actionsList.add(new ExtractAction("Extract File", this));
             actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
             actionsList.add(null); // creates a menu separator
-            actionsList.add(new TagFileAction(this));
+            actionsList.add(new TagAction(this));
         return actionsList.toArray(new Action[0]);
     }
 
