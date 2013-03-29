@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
@@ -36,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();
-    private static IngestMessagesToolbar instance;
+    private static volatile IngestMessagesToolbar instance;
 
     /**
      * Creates new form IngestMessagesToolbar
@@ -51,7 +52,11 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
      */
     public static IngestMessagesToolbar getDefault() {
         if (instance == null) {
-            instance = new IngestMessagesToolbar();
+            synchronized (IngestMessagesToolbar.class) {
+                if (instance == null) {
+                    instance = new IngestMessagesToolbar();
+                }
+            }
         }
         return instance;
     }
@@ -96,7 +101,13 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showIngestMessages();
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        showIngestMessages();
+                    }
+                });
+
             }
         });
         this.add(ingestMessagesButton, BorderLayout.CENTER);
@@ -109,19 +120,18 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         this.setBorder(null);
 
         IngestMessagePanel.addPropertyChangeSupportListener(new PropertyChangeListener() {
-            
             private int numNewMessages = 0;
-            
+
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                
+
                 String propName = evt.getPropertyName();
                 int newNumNewMessages = numNewMessages;
-                if (propName.equals(IngestMessagePanel.MESSAGES_BOX_CLEARED) ||
-                        propName.equals(IngestMessagePanel.TOTAL_NUM_NEW_MESSAGES_CHANGED)) {
+                if (propName.equals(IngestMessagePanel.MESSAGES_BOX_CLEARED)
+                        || propName.equals(IngestMessagePanel.TOTAL_NUM_NEW_MESSAGES_CHANGED)) {
                     newNumNewMessages = (Integer) evt.getNewValue();
                 }
-                
+
                 if (newNumNewMessages != numNewMessages) {
                     ingestMessagesButton.setMessages(newNumNewMessages);
                     numNewMessages = newNumNewMessages;

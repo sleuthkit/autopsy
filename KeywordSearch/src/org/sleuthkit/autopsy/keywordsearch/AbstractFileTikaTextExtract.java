@@ -272,7 +272,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         if (detectedFormat == null) {
             return false;
-        } else if (detectedFormat.equals("application/octet-stream")) {
+        } else if (detectedFormat.equals("application/octet-stream")
+                || detectedFormat.equals("application/x-msdownload") ) {
             //any binary unstructured blobs (string extraction will be used)
             return false;
         } else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {

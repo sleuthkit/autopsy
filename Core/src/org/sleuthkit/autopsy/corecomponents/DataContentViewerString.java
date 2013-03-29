@@ -456,7 +456,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     @Override
     public String getToolTip() {
-        return "Displays ASCII strings extracted from the file.";
+        return "Displays ASCII and Unicode strings extracted from the file.";
     }
 
     @Override

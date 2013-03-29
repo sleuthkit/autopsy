@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,10 +34,12 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the
@@ -404,6 +405,23 @@ public class ExtractedContentViewer implements DataContentViewer {
         int chunkId = 0;
         if (hasChunks) {
             chunkId = currentPage;
+        }
+        else {
+            //if no chunks, it is safe to assume there is no text content
+            //because we are storing extracted text in chunks only
+            //and the non-chunk stores meta-data only
+            String name = contentObj.getName();
+            String msg = "<p style='font-style:italic'>No extracted text present in the index for file: " + name + " </p>";
+            if (contentObj instanceof AbstractFile) { 
+                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
+                boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile)contentObj).getKnown());
+                if (isKnown && KeywordSearchSettings.getSkipKnown()) {
+                    msg += "<p style='font-style:italic'>It is a 'known' file and the current settings opt to skip indexing 'known' files during ingest. </p>";
+                }
+                
+            }
+            String htmlMsg = "<span style='font-style:italic'>" + msg + "</span>";
+            return htmlMsg;
         }
 
         //check if cached

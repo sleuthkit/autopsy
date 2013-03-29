@@ -344,8 +344,21 @@
                 <package>org.apache.commons.lang.exception</package>
                 <package>org.apache.commons.lang.math</package>
                 <package>org.apache.commons.lang.mutable</package>
+                <package>org.apache.commons.lang.reflect</package>
                 <package>org.apache.commons.lang.text</package>
                 <package>org.apache.commons.lang.time</package>
+                <package>org.apache.commons.lang3</package>
+                <package>org.apache.commons.lang3.builder</package>
+                <package>org.apache.commons.lang3.concurrent</package>
+                <package>org.apache.commons.lang3.event</package>
+                <package>org.apache.commons.lang3.exception</package>
+                <package>org.apache.commons.lang3.math</package>
+                <package>org.apache.commons.lang3.mutable</package>
+                <package>org.apache.commons.lang3.reflect</package>
+                <package>org.apache.commons.lang3.text</package>
+                <package>org.apache.commons.lang3.text.translate</package>
+                <package>org.apache.commons.lang3.time</package>
+                <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
                 <package>org.apache.geronimo.mail.handlers</package>
@@ -732,20 +745,12 @@
                 <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
@@ -758,6 +763,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
@@ -776,12 +785,12 @@
                 <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.4-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
@@ -804,16 +813,20 @@
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/avalon-framework-4.1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/avalon-framework-4.1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/ant-launcher-1.8.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/ant-launcher-1.8.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ant-launcher-1.8.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ant-launcher-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
@@ -830,6 +843,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
@@ -854,6 +871,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
@@ -888,8 +909,12 @@
                 <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.4-sources.jar</binary-origin>
+                <runtime-relative-path>ext/commons-lang3-3.0-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.0-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
