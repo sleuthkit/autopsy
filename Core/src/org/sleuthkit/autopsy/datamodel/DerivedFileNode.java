@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.LayoutFile;
 
@@ -97,7 +97,7 @@ public class DerivedFileNode extends AbstractAbstractFileNode<DerivedFile> {
         actionsList.add(new ExtractAction("Extract", content)); //might not need this actions - already local file
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new TagFileAction(content));
+        actionsList.add(new TagAction(content));
 
         return actionsList.toArray(new Action[0]);
     }

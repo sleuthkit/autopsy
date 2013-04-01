@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -26,41 +25,32 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
-import org.openide.util.ImageUtilities;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.Tags.Taggable;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Tag dialog for tagging files and results. User enters an optional comment.
  */
-public class TagDialog extends javax.swing.JDialog {
+public class TagAndCommentDialog extends JDialog {
 
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
-    /**
-     * A return status code - returned if Cancel button has been pressed
-     */
-    public static final int RET_CANCEL = 0;
-    /**
-     * A return status code - returned if OK button has been pressed
-     */
-    public static final int RET_OK = 1;
-    private List<String> tagNames;
-    private String defaultTagName;
-    private boolean selEnabled;
-    private Type type;
-
-    enum Type {
-
-        BOOKMARK, TAG
-    };
+    private static final String NO_TAG_MESSAGE = "No Tags";
+    
+    private Taggable taggable;
 
     /**
      * Creates new form TagDialog
      */
-    public TagDialog(Type type, String title, List<String> tagNames, String defaultTagName, boolean selEnabled) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), title, true);
+    public TagAndCommentDialog(Taggable taggable) {
+        super((JFrame)WindowManager.getDefault().getMainWindow(), "Tag and Comment", true);
+        
+        this.taggable = taggable;
 
         initComponents();
 
@@ -71,49 +61,33 @@ public class TagDialog extends javax.swing.JDialog {
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                doClose(RET_CANCEL);
+                //doClose(RET_CANCEL);
+                dispose();
             }
         });
+        
+        // get the current list of tag names
+        List<String> tags = Tags.getTagNames();
+        
+        // if there are no tags, add the NO_TAG_MESSAGE
+        if (tags.isEmpty()) {
+            tags.add(NO_TAG_MESSAGE);
+        }
 
-        this.type = type;
-        this.tagNames = tagNames;
-        this.defaultTagName = defaultTagName;
-        this.selEnabled = selEnabled;
-
+        // add the tags to the combo box
+        for (String tag : tags) {
+            tagCombo.addItem(tag);
+        }
       
         //center it
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         customizeComponent();
+        
+        setVisible(true); // blocks
     }
 
     private void customizeComponent() {
-
-        if (type.equals(Type.BOOKMARK)) {
-            this.setIconImage(ImageUtilities.loadImage(BOOKMARK_ICON_PATH));
-        } else {
-            this.setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
-        }
-        tagCombo.setEnabled(selEnabled);
-
-        if (tagNames != null) {
-            for (String tagName : tagNames) {
-                tagCombo.<String>addItem(tagName);
-                if (tagName.equals(defaultTagName)) {
-                    tagCombo.setSelectedItem(tagName);
-                }
-            }
-        } else {
-            tagCombo.<String>addItem(defaultTagName);
-            tagCombo.setSelectedItem(defaultTagName);
-        }
-    }
-
-    /**
-     * @return the return status of this dialog - one of RET_OK or RET_CANCEL
-     */
-    public int getReturnStatus() {
-        return returnStatus;
     }
 
     /**
@@ -131,6 +105,7 @@ public class TagDialog extends javax.swing.JDialog {
         tagLabel = new javax.swing.JLabel();
         commentLabel = new javax.swing.JLabel();
         commentText = new javax.swing.JTextField();
+        newTagButton = new javax.swing.JButton();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -138,28 +113,35 @@ public class TagDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        tagCombo.setToolTipText(org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.tagCombo.toolTipText")); // NOI18N
+        tagCombo.setToolTipText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.tagCombo.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(tagLabel, org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.tagLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tagLabel, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.tagLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.commentLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentLabel.text")); // NOI18N
 
-        commentText.setText(org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.commentText.text")); // NOI18N
-        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(TagDialog.class, "TagDialog.commentText.toolTipText")); // NOI18N
+        commentText.setText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentText.text")); // NOI18N
+        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentText.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(newTagButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.newTagButton.text")); // NOI18N
+        newTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newTagButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -169,7 +151,8 @@ public class TagDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 161, Short.MAX_VALUE)
+                        .addComponent(newTagButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
@@ -201,7 +184,8 @@ public class TagDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 37, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(okButton))
+                    .addComponent(okButton)
+                    .addComponent(newTagButton))
                 .addContainerGap())
         );
 
@@ -211,73 +195,57 @@ public class TagDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        doClose(RET_OK);
+        //doClose(RET_OK);
+        
+        // get the selected tag and comment
+        String selectedTag = (String)tagCombo.getSelectedItem();
+        String comment = commentText.getText();
+        
+        // create the tag
+        taggable.createTag(selectedTag, comment);
+        
+        refreshDirectoryTree();
+        
+        dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        doClose(RET_CANCEL);
+        //doClose(RET_CANCEL);
+        dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     /**
      * Closes the dialog
      */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-        doClose(RET_CANCEL);
+        //doClose(RET_CANCEL);
+        dispose();
     }//GEN-LAST:event_closeDialog
 
-    private void doClose(int retStatus) {
-        returnStatus = retStatus;
-        setVisible(false);
-        dispose();
-    }
-
-    String getSelectedTag() {
-        return (String) tagCombo.getSelectedItem();
-    }
-
-    String getComment() {
-        return commentText.getText();
-    }
-
-    TagDialogResult getResult() {
-        TagDialogResult result = new TagDialogResult(getReturnStatus() == TagDialog.RET_OK, getSelectedTag(), getComment());
-        return result;
-    }
-
-    /**
-     * Representation of dialog result
-     */
-    class TagDialogResult {
-
-        private boolean accept;
-        private String selectedTag;
-        private String comment;
-
-        public TagDialogResult(boolean accept, String selectedTag, String comment) {
-            this.accept = accept;
-            this.selectedTag = selectedTag;
-            this.comment = comment;
+    private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
+        String newTagName = CreateTagDialog.getNewTagNameDialog(null);
+        if (newTagName != null) {
+            //tagsModel.addElement(newTagName);
+            tagCombo.addItem(newTagName);
+            tagCombo.setSelectedItem(newTagName);
         }
+    }//GEN-LAST:event_newTagButtonActionPerformed
 
-        public boolean isAccept() {
-            return accept;
-        }
-
-        public String getSelectedTag() {
-            return selectedTag;
-        }
-
-        public String getComment() {
-            return comment;
-        }
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextField commentText;
+    private javax.swing.JButton newTagButton;
     private javax.swing.JButton okButton;
     private javax.swing.JComboBox tagCombo;
     private javax.swing.JLabel tagLabel;
     // End of variables declaration//GEN-END:variables
-    private int returnStatus = RET_CANCEL;
+    //private int returnStatus = RET_CANCEL;
+    
+    private void refreshDirectoryTree() {
+        //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
+        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
+        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
+        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
+    }
 }

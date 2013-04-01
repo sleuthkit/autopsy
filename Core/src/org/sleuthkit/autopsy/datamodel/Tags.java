@@ -520,7 +520,8 @@ public class Tags implements AutopsyVisitableItem {
     public static List<String> getTagNames() {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
+
         ResultSet rs = null;
         try {
             rs = skCase.runQuery("SELECT value_text"
@@ -541,6 +542,11 @@ public class Tags implements AutopsyVisitableItem {
                     logger.log(Level.SEVERE, "Failed to close the query for blackboard for tag names.");
                 }
             }
+        }
+        
+        // add the 'Bookmark' tag, if it's not already in the list
+        if (!names.contains(BOOKMARK_TAG_NAME)) {
+            names.add(BOOKMARK_TAG_NAME);
         }
 
         return names;
@@ -618,5 +624,37 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         return null;
+    }
+    
+    public interface Taggable {
+        void createTag(String name, String comment);
+    }
+    
+    public static class TaggableFile implements Taggable {
+
+        private AbstractFile file;
+
+        public TaggableFile(AbstractFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public void createTag(String name, String comment) {
+            Tags.createTag(file, name, comment);
+        }
+    }
+
+    public static class TaggableBlackboardArtifact implements Taggable {
+
+        private BlackboardArtifact bba;
+
+        public TaggableBlackboardArtifact(BlackboardArtifact bba) {
+            this.bba = bba;
+        }
+
+        @Override
+        public void createTag(String name, String comment) {
+            Tags.createTag(bba, name, comment);
+        }
     }
 }
