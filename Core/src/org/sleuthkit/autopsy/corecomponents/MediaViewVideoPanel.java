@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.IntBuffer;
@@ -47,11 +47,9 @@ import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -69,8 +67,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean gstInited;
-    //frame capture
-    private BufferedImage currentImage = null;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
     //playback
     private long durationMillis = 0;
@@ -284,23 +280,14 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
 
         List<VideoFrame> frames = new ArrayList<>();
+        FrameCaptureRGBListener rgbListener = new FrameCaptureRGBListener();
 
         if (!isInited()) {
             return frames;
         }
 
-        RGBDataSink.Listener listener1 = new RGBDataSink.Listener() {
-            @Override
-            public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
-                BufferedImage curImage = new BufferedImage(w, h,
-                        BufferedImage.TYPE_INT_ARGB);
-                curImage.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
-                currentImage = curImage;
-            }
-        };
-
         // set up a PlayBin2 object
-        RGBDataSink videoSink = new RGBDataSink("rgb", listener1);
+        RGBDataSink videoSink = new RGBDataSink("rgb", rgbListener);
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
@@ -317,7 +304,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             return frames;
         }
 
-        // create a list of timestamps at which to get frames
+        // calculate the number of frames to capture
         int numFramesToGet = numFrames;
         long frameInterval = myDurationMillis / numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
@@ -331,22 +318,40 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             playbin.pause();
             playbin.getState();
 
-            currentImage = null;
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
             playbin.play();
 
-            while (currentImage == null) {
-                System.out.flush(); // not sure why this is needed
+            Image image = null;
+            while (image == null) {
+                image = rgbListener.getImage();
             }
 
             playbin.stop();
 
-            frames.add(new VideoFrame(currentImage, timeStamp));
+            frames.add(new VideoFrame(image, timeStamp));
         }
 
         return frames;
+    }
+    
+    private class FrameCaptureRGBListener implements RGBDataSink.Listener {
+        
+        private BufferedImage bi;
+
+        @Override
+        public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
+            bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
+        }
+
+        public Image getImage() {
+            Image image = bi;
+            bi = null;
+            return image;
+        }
+        
     }
 
     /**
