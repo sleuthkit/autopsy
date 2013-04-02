@@ -325,6 +325,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return this.isMain;
     }
 
+    @Override
+    public List<DataResultViewer> getViewers() {
+        List<DataResultViewer> ret = new ArrayList<DataResultViewer>();
+        for (UpdateWrapper w : viewers) {
+            ret.add(w.getViewer());
+        }
+        
+        return ret;
+    }
+    
+    
+
     public boolean canClose() {
         return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
     }
@@ -434,6 +446,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         UpdateWrapper(DataResultViewer wrapped) {
             this.wrapped = wrapped;
             this.outdated = true;
+        }
+        
+        DataResultViewer getViewer() {
+            return wrapped;
         }
 
         void setNode(Node selectedNode) {
