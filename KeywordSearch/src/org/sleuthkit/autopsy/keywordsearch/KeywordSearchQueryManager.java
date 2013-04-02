@@ -120,9 +120,10 @@ public class KeywordSearchQueryManager {
 
         Node rootNode = null;
 
+        DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search " + (++resultWindowCount));
         if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
+                    Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE, searchResultWin), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -130,7 +131,9 @@ public class KeywordSearchQueryManager {
         }
 
         final String pathText = "Keyword search";
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search " + (++resultWindowCount), pathText, rootNode, things.size());
+        
+        DataResultTopComponent.initInstance(pathText, rootNode, things.size(), searchResultWin);
+        
         searchResultWin.requestActive();
         // }
     }

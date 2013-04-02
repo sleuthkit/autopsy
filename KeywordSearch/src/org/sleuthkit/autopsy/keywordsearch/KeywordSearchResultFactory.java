@@ -39,6 +39,7 @@ import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
@@ -94,22 +95,25 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
         },
     }
-    private Presentation presentation;
+    private final Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
+    private final DataResultTopComponent viewer; //viewer driving this child node factory
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueQuery> things, Presentation presentation) {
+    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueQuery> things, Presentation presentation, DataResultTopComponent viewer) {
         this.queries = queries;
         this.things = things;
         this.presentation = presentation;
+        this.viewer = viewer;
     }
 
-    KeywordSearchResultFactory(Keyword query, Collection<KeyValueQuery> things, Presentation presentation) {
+    KeywordSearchResultFactory(Keyword query, Collection<KeyValueQuery> things, Presentation presentation, DataResultTopComponent viewer) {
         queries = new ArrayList<Keyword>();
         queries.add(query);
         this.presentation = presentation;
         this.things = things;
+        this.viewer = viewer;
     }
 
     /**
@@ -187,7 +191,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 @Override
                 public void run() {
-                    for (DataResultViewer view : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
+                    //expand the new node
+                    for (DataResultViewer view : viewer.getViewers()) {
                         view.expandNode(ret);
                     }
                 }
