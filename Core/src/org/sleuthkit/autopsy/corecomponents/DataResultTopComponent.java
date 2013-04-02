@@ -29,6 +29,7 @@ import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -114,7 +115,14 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         activeComponentIds.add(title);
     }
 
-    private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
+    /**
+     * Initialize previously created tc instance with additional data
+     * @param pathText
+     * @param givenNode
+     * @param totalMatches
+     * @param newDataResult previously created with createInstance() uninitialized instance
+     */
+    public static void initInstance(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
         newDataResult.setNumMatches(totalMatches);
 
         newDataResult.open(); // open it first so the component can be initialized
@@ -127,24 +135,25 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     }
 
     /**
-     * Creates a new non-default DataResult component
+     * Creates a new non-default DataResult component and initializes it
      *
      * @param title Title of the component window
      * @param pathText Descriptive text about the source of the nodes displayed
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children
-     * @return
+     * @return a new, not default, initialized DataResultTopComponent instance
      */
     public static DataResultTopComponent createInstance(String title, String pathText, Node givenNode, int totalMatches) {
         DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
 
-        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
+        initInstance(pathText, givenNode, totalMatches, newDataResult);
 
         return newDataResult;
     }
 
     /**
-     * Creates a new non-default DataResult component
+     * Creates a new non-default DataResult component linked with a custom data content, and initializes it.
+     * 
      *
      * @param title Title of the component window
      * @param mode custom mode to dock this custom TopComponent to
@@ -152,12 +161,25 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children
      * @param dataContentWindow a handle to data content top component window to
-     * @return
+     * @return a new, not default, initialized DataResultTopComponent instance 
      */
     public static DataResultTopComponent createInstance(String title, final String mode, String pathText, Node givenNode, int totalMatches, DataContentTopComponent dataContentWindow) {
         DataResultTopComponent newDataResult = new DataResultTopComponent(title, mode, dataContentWindow);
 
-        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
+        initInstance(pathText, givenNode, totalMatches, newDataResult);
+        return newDataResult;
+    }
+    
+    /**
+     * Creates a new non-default DataResult component.
+     * You probably want to use initInstance after it
+     * 
+     * @param title
+     * @return a new, not default, not fully initialized DataResultTopComponent instance 
+     */
+    public static DataResultTopComponent createInstance(String title) {
+        final DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
+
         return newDataResult;
     }
 
@@ -210,6 +232,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         setCustomMode();
         super.open(); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    public List<DataResultViewer> getViewers() {
+        return dataResultPanel.getViewers();
+    }
+    
+    
 
     private void setCustomMode() {
         if (customModeName != null) {
