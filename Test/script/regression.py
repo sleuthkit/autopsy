@@ -150,7 +150,7 @@ class TestAutopsy:
 		# Paths:
 		self.input_dir = make_local_path("..","input")
 		self.output_dir = ""
-		self.gold = make_local_path("..", "output", "gold")
+		self.gold = make_local_path("..", "output", "gold", "tmp")
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -547,11 +547,15 @@ def run_test(image_file, count):
 		try:
 			gold_path = case.gold
 			img_gold = make_path(case.gold, case.image_name)
-			img_archive = make_path(case.gold, case.image_name+"-archive.zip")
+			img_archive = make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-			extrctr.extractall(gold_path)
+			print(os.getcwd())
+			print(img_archive)
+			print(zipfile.is_zipfile(img_archive))
+			extrctr.extractall()
 			extrctr.close
-			time.sleep(1)
+			print("Here")
+			time.sleep(60)
 			compare_to_gold_db()
 			compare_to_gold_html()
 			compare_errors()
@@ -668,9 +672,10 @@ def rebuild():
 		errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 		errors.append(str(e) + "\n")
 	oldcwd = os.getcwd()
-	os.chdir(case.gold)
+	zpdir = make_path(case.gold, "..")
+	os.chdir(zpdir)
 	img_archive = make_path(case.image_name+"-archive.zip")
-	img_gold = os.path.join(case.image_name)
+	img_gold = make_path("tmp", case.image_name)
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
@@ -1754,6 +1759,17 @@ def execute_test():
 	# If user has not selected a single file, and does not want to ignore
 	#  the input directory, continue on to parsing ../input
 	if (not args.single) and (not args.ignore):
+	   count = 0
+	   for file in os.listdir(case.input_dir):
+			if not(image_type(file) == IMGTYPE.UNKNOWN):
+				count +=1
+	   archivelist = make_path(case.gold,"..")
+	   arcount = 0
+	   for file in os.listdir(archivelist):
+			if not(file == 'tmp'):
+				arcount+=1
+	   if count > arcount:
+			print("*****Alert: There are still some inconsistencies between the number of gold standards and input files.")
 	   for file in os.listdir(case.input_dir):
 		   # Make sure it's not a required hash/keyword file or dir
 		   if (not required_input_file(file) and
@@ -1840,6 +1856,17 @@ def main():
 	global daycount
 	global redo
 	global passed
+	inpvar = raw_input("Your input images may be out of date, do you want to update?(y/n): ")
+	if(inpvar.lower() == 'y' or inpvar.lower() == 'yes'):
+		antin = ["ant"]
+		antin.append("-f")
+		antin.append(os.path.join("..","..","build.xml"))
+		antin.append("test-download-imgs")
+		if SYS is OS.CYGWIN:
+			subprocess.call(antin)
+		elif SYS is OS.WIN:
+			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+			theproc.communicate()
 	daycount = 0
 	failedbool = False
 	redo = False
