@@ -24,7 +24,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -41,6 +44,7 @@ import org.gstreamer.ClockTime;
 import org.gstreamer.Gst;
 import org.gstreamer.GstException;
 import org.gstreamer.State;
+import org.gstreamer.StateChangeReturn;
 import org.gstreamer.elements.PlayBin2;
 import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
@@ -68,6 +72,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
+    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 500;
     //playback
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
@@ -77,6 +82,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
+    private Set<java.io.File> badVideoFiles = Collections.synchronizedSet(new HashSet<java.io.File>());
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -276,14 +282,29 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         return tempFile;
     }
 
+    /**
+     * @param file a video file from which to capture frames
+     * @param numFrames the number of frames to capture. These frames will be
+     * captured at successive intervals given by durationOfVideo/numFrames. If
+     * this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
+     * frame will be captured and returned.
+     * @return a List of VideoFrames representing the captured frames.
+     */
     @Override
-    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
+    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) throws Exception {
 
         List<VideoFrame> frames = new ArrayList<>();
-        FrameCaptureRGBListener rgbListener = new FrameCaptureRGBListener();
-
+        
+        Object lock = new Object();
+        FrameCaptureRGBListener rgbListener = new FrameCaptureRGBListener(lock);
+        
         if (!isInited()) {
             return frames;
+        }
+        
+        // throw exception if this file is known to be problematic
+        if (badVideoFiles.contains(file)) {
+            throw new Exception("Cannot capture frames from this file (" + file.getName() + ").");
         }
 
         // set up a PlayBin2 object
@@ -293,8 +314,18 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         playbin.setVideoSink(videoSink);
 
         // this is necessary to get a valid duration value
-        playbin.play();
-        playbin.pause();
+        StateChangeReturn ret = playbin.play();
+        if (ret == StateChangeReturn.FAILURE) {
+            // add this file to the set of known bad ones
+            badVideoFiles.add(file);
+            throw new Exception("Problem with video file; problem when attempting to play while obtaining duration.");
+        }
+        ret = playbin.pause();
+        if (ret == StateChangeReturn.FAILURE) {
+            // add this file to the set of known bad ones
+            badVideoFiles.add(file);
+            throw new Exception("Problem with video file; problem when attempting to pause while obtaining duration.");
+        }
         playbin.getState();
 
         // get the duration of the video
@@ -315,20 +346,43 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         for (int i = 0; i < numFramesToGet; ++i) {
             long timeStamp = i * frameInterval;
 
-            playbin.pause();
+            ret = playbin.pause();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file);
+                throw new Exception("Problem with video file; problem when attempting to pause while capturing a frame.");
+            }
             playbin.getState();
 
+            //System.out.println("Seeking to " + timeStamp + "milliseconds.");
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
-            playbin.play();
-
-            Image image = null;
-            while (image == null) {
-                image = rgbListener.getImage();
+            
+            ret = playbin.play();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file);
+                throw new Exception("Problem with video file; problem when attempting to play while capturing a frame.");
             }
 
-            playbin.stop();
+            // wait for FrameCaptureRGBListener to finish
+            synchronized(lock) {
+                lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
+            }
+            Image image = rgbListener.getImage();
+
+            ret = playbin.stop();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file);
+                throw new Exception("Problem with video file; problem when attempting to stop while capturing a frame.");
+            }
+            
+            if (image == null) {
+                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName());
+                continue;
+            }
 
             frames.add(new VideoFrame(image, timeStamp));
         }
@@ -337,13 +391,22 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     }
     
     private class FrameCaptureRGBListener implements RGBDataSink.Listener {
+
+        public FrameCaptureRGBListener(Object waiter) {
+            this.waiter = waiter;
+        }
         
         private BufferedImage bi;
+        private final Object waiter;
 
         @Override
         public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
             bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
+            System.out.println("Notify waiting object.");
+            synchronized(waiter) {
+                waiter.notify();
+            }
         }
 
         public Image getImage() {
