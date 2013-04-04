@@ -386,7 +386,9 @@ class Database:
 # Iterates through an XML configuration file to find all given elements		
 def run_config_test(config_file):
 	try:
+		print("here")
 		global parsed
+		count = 0
 		parsed = parse(config_file)
 		counts = {}
 		if parsed.getElementsByTagName("indir"):
@@ -401,10 +403,21 @@ def run_config_test(config_file):
 			value = element.getAttribute("value").encode().decode("utf_8")
 			if file_exists(value):
 				values.append(value)
+		count = len(values)
+		archives = make_path(case.gold, "..")
+		arcount = 0
+		for file in os.listdir(archives):
+			if not(file == 'tmp'):
+				arcount+=1
+		if (count > arcount):
+			print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+		elif not (arcount == count):
+			print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
 		html_add_images(values)
 		images = []
 		# Run the test for each file in the configuration
 		global args
+	
 		if(args.contin):
 			#set all times an image has been processed to 0
 			for element in parsed.getElementsByTagName("image"):
@@ -549,19 +562,16 @@ def run_test(image_file, count):
 			img_gold = make_path(case.gold, case.image_name)
 			img_archive = make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-			print(os.getcwd())
-			print(img_archive)
-			print(zipfile.is_zipfile(img_archive))
-			extrctr.extractall()
+			extrctr.extractall(gold_path)
 			extrctr.close
-			print("Here")
-			time.sleep(60)
+			time.sleep(2)
 			compare_to_gold_db()
 			compare_to_gold_html()
 			compare_errors()
 			del_dir(img_gold)
-		except:
+		except Exception as e:
 			print("Tests failed due to an error, try rebuilding or creating gold standards.\n")
+			print(str(e) + "\n")
 	# Make the CSV log and the html log viewer
 	generate_csv(case.csv)
 	if case.global_csv:
@@ -644,9 +654,13 @@ def rebuild():
 	errors = []
 	# Delete the current gold standards
 	gold_dir = make_path(case.gold, case.image_name)
+	print("here")
 	clear_dir(gold_dir)
+	print("here1")
 	dbinpth = make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
 	dboutpth = make_path(case.gold, case.image_name, "autopsy.db")
+	if not os.path.exists(case.gold):
+		os.makedirs(case.gold)
 	if not os.path.exists(gold_dir):
 		os.makedirs(gold_dir)
 	copy_file(dbinpth, dboutpth)
@@ -672,10 +686,11 @@ def rebuild():
 		errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 		errors.append(str(e) + "\n")
 	oldcwd = os.getcwd()
-	zpdir = make_path(case.gold, "..")
+	zpdir = case.gold
 	os.chdir(zpdir)
-	img_archive = make_path(case.image_name+"-archive.zip")
-	img_gold = make_path("tmp", case.image_name)
+	img_gold = case.image_name
+	print(img_gold)
+	img_archive = make_path("..", case.image_name+"-archive.zip")
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
@@ -1759,22 +1774,12 @@ def execute_test():
 	# If user has not selected a single file, and does not want to ignore
 	#  the input directory, continue on to parsing ../input
 	if (not args.single) and (not args.ignore):
-	   count = 0
-	   for file in os.listdir(case.input_dir):
-			if not(image_type(file) == IMGTYPE.UNKNOWN):
-				count +=1
-	   archivelist = make_path(case.gold,"..")
-	   arcount = 0
-	   for file in os.listdir(archivelist):
-			if not(file == 'tmp'):
-				arcount+=1
-	   if count > arcount:
-			print("*****Alert: There are still some inconsistencies between the number of gold standards and input files.")
-	   for file in os.listdir(case.input_dir):
-		   # Make sure it's not a required hash/keyword file or dir
-		   if (not required_input_file(file) and
-			  not os.path.isdir(make_path(case.input_dir, file))):
-			  run_test(make_path(case.input_dir, file), 0)
+	   args.config_file = "config.xml"
+	   if not file_exists(args.config_file):
+		   printerror("Error: Configuration file does not exist at:")
+		   printerror(args.config_file)
+		   return
+	   run_config_test(args.config_file)
 	write_html_foot()
 	html.close()
 	logres = search_common_log("TskCoreException")
