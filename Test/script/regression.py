@@ -386,7 +386,6 @@ class Database:
 # Iterates through an XML configuration file to find all given elements		
 def run_config_test(config_file):
 	try:
-		print("here")
 		global parsed
 		count = 0
 		parsed = parse(config_file)
@@ -395,9 +394,9 @@ def run_config_test(config_file):
 			case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
 		if parsed.getElementsByTagName("global_csv"):
 			case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+			case.global_csv = make_local_path(case.global_csv)
 		
 		# Generate the top navbar of the HTML for easy access to all images
-		case.global_csv = make_local_path(case.global_csv)
 		values = []
 		for element in parsed.getElementsByTagName("image"):
 			value = element.getAttribute("value").encode().decode("utf_8")
