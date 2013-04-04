@@ -72,7 +72,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
-    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 500;
+    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 100;
     //playback
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
@@ -368,7 +368,11 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
             // wait for FrameCaptureRGBListener to finish
             synchronized(lock) {
-                lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
+                try {
+                    lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
+                } catch (InterruptedException e) {
+                    logger.log(Level.INFO, "Timeout occurred while waiting for frame capture.", e);
+                }
             }
             Image image = rgbListener.getImage();
 
@@ -403,7 +407,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
             bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
-            System.out.println("Notify waiting object.");
             synchronized(waiter) {
                 waiter.notify();
             }
