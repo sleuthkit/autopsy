@@ -106,7 +106,7 @@
         </zip>
 
         <delete dir="${zip-tmp}"/>
-        <delete file="${nbdist.dir}/${app.name}.zip"/>
+        <!-- <delete file="${nbdist.dir}/${app.name}.zip"/> -->
         
         <echo message=" "/>
         <echo message="cleaning and finalizing release" />
