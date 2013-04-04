@@ -50,6 +50,7 @@ genfiles.properties
 /Test/input/*
 /Test/output/*
 !/Test/output/gold
+/Test/output/gold/tmp
 /Test/script/ScriptLog.txt
 /Test/build/
 /Test/dist/
