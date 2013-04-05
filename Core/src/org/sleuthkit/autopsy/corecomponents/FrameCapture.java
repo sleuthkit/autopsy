@@ -15,6 +15,6 @@ public interface FrameCapture {
      * may happen if the video is very short.
      * @return a list of VideoFrames representing the captured frames
      */
-    List<VideoFrame> captureFrames(File file, int numFrames);
+    List<VideoFrame> captureFrames(File file, int numFrames) throws Exception;
 
 }

@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -41,17 +44,16 @@ import org.gstreamer.ClockTime;
 import org.gstreamer.Gst;
 import org.gstreamer.GstException;
 import org.gstreamer.State;
+import org.gstreamer.StateChangeReturn;
 import org.gstreamer.elements.PlayBin2;
 import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -69,9 +71,9 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean gstInited;
-    //frame capture
-    private BufferedImage currentImage = null;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
+    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 100;
+    private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
     //playback
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
@@ -81,6 +83,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
+    private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -115,12 +118,13 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     }
 
     private void customizeComponents() {
-        initGst();
+        if (!initGst()) {
+            return;
+        }
 
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.setValue(0);
 
-        if (gstInited) {
             progressSlider.addChangeListener(new ChangeListener() {
                 /**
                  * Should always try to synchronize any call to
@@ -133,16 +137,21 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                     synchronized (playbinLock) {
                         if (gstPlaybin2 != null && !autoTracking) {
                             State orig = gstPlaybin2.getState();
-                            gstPlaybin2.pause();
-                            gstPlaybin2.seek(ClockTime.fromMillis(time));
+                            if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
+                                logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                                return;
+                            }
+                            if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
+                                logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
+                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                                return;
+                            }
                             gstPlaybin2.setState(orig);
                         }
                     }
                 }
             });
-
-
-        }
     }
 
     private boolean initGst() {
@@ -176,25 +185,27 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
      * @param dims dimension of the parent window
      */
     void setupVideo(final AbstractFile file, final Dimension dims) {
+        infoLabel.setText("");
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
-            infoLabel.setText("Playback of deleted videos is not supported, use an external player. ");
+            infoLabel.setText("Playback of deleted videos is not supported, use an external player.");
             videoPanel.removeAll();
             pauseButton.setEnabled(false);
             progressSlider.setEnabled(false);
             return;
-        } else {
-            try {
-                String path = file.getUniquePath();
-                infoLabel.setText(path);
-                infoLabel.setToolTipText(path);
-                pauseButton.setEnabled(true);
-                progressSlider.setEnabled(true);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Cannot get unique path of video file");
-            }
         }
+            
+        String path = "";
+        try {
+            path = file.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Cannot get unique path of video file");
+        }
+        infoLabel.setText(path);
+        infoLabel.setToolTipText(path);
+        pauseButton.setEnabled(true);
+        progressSlider.setEnabled(true);
 
         java.io.File ioFile = getJFile(file);
 
@@ -215,7 +226,11 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             videoPanel.setVisible(true);
 
             gstPlaybin2.setInputFile(ioFile);
-            gstPlaybin2.setState(State.READY);
+            
+            if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
+                logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
+                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+            }
         }
 
     }
@@ -227,11 +242,8 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             @Override
             public void run() {
                 progressLabel.setText("");
-                //  infoLabel.setText("");
-
             }
         });
-
 
         if (!isInited()) {
             return;
@@ -240,20 +252,23 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         synchronized (playbinLock) {
             if (gstPlaybin2 != null) {
                 if (gstPlaybin2.isPlaying()) {
-                    gstPlaybin2.stop();
+                    if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                        return;
+                    }
                 }
-                gstPlaybin2.setState(State.NULL);
+                if (gstPlaybin2.setState(State.NULL) == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.NULL) failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
                 if (gstPlaybin2.getState().equals(State.NULL)) {
                     gstPlaybin2.dispose();
                 }
                 gstPlaybin2 = null;
             }
             gstVideoComponent = null;
-            //videoComponent.setBackground(Color.BLACK);
-            //videoComponent.repaint();
-
-
-            //videoPanel.repaint();
         }
 
         // get rid of any existing videoProgressWorker thread
@@ -280,34 +295,50 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         return tempFile;
     }
 
+    /**
+     * @param file a video file from which to capture frames
+     * @param numFrames the number of frames to capture. These frames will be
+     * captured at successive intervals given by durationOfVideo/numFrames. If
+     * this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
+     * frame will be captured and returned.
+     * @return a List of VideoFrames representing the captured frames.
+     */
     @Override
-    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) {
+    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) throws Exception {
 
         List<VideoFrame> frames = new ArrayList<>();
-
+        
+        Object lock = new Object();
+        FrameCaptureRGBListener rgbListener = new FrameCaptureRGBListener(lock);
+        
         if (!isInited()) {
             return frames;
         }
-
-        RGBDataSink.Listener listener1 = new RGBDataSink.Listener() {
-            @Override
-            public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
-                BufferedImage curImage = new BufferedImage(w, h,
-                        BufferedImage.TYPE_INT_ARGB);
-                curImage.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
-                currentImage = curImage;
-            }
-        };
+        
+        // throw exception if this file is known to be problematic
+        if (badVideoFiles.contains(file.getName())) {
+            throw new Exception("Cannot capture frames from this file (" + file.getName() + ").");
+        }
 
         // set up a PlayBin2 object
-        RGBDataSink videoSink = new RGBDataSink("rgb", listener1);
+        RGBDataSink videoSink = new RGBDataSink("rgb", rgbListener);
         PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
 
         // this is necessary to get a valid duration value
-        playbin.play();
-        playbin.pause();
+        StateChangeReturn ret = playbin.play();
+        if (ret == StateChangeReturn.FAILURE) {
+            // add this file to the set of known bad ones
+            badVideoFiles.add(file.getName());
+            throw new Exception("Problem with video file; problem when attempting to play while obtaining duration.");
+        }
+        ret = playbin.pause();
+        if (ret == StateChangeReturn.FAILURE) {
+            // add this file to the set of known bad ones
+            badVideoFiles.add(file.getName());
+            throw new Exception("Problem with video file; problem when attempting to pause while obtaining duration.");
+        }
         playbin.getState();
 
         // get the duration of the video
@@ -317,7 +348,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             return frames;
         }
 
-        // create a list of timestamps at which to get frames
+        // calculate the number of frames to capture
         int numFramesToGet = numFrames;
         long frameInterval = myDurationMillis / numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
@@ -328,25 +359,79 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         for (int i = 0; i < numFramesToGet; ++i) {
             long timeStamp = i * frameInterval;
 
-            playbin.pause();
+            ret = playbin.pause();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file.getName());
+                throw new Exception("Problem with video file; problem when attempting to pause while capturing a frame.");
+            }
             playbin.getState();
 
-            currentImage = null;
+            //System.out.println("Seeking to " + timeStamp + "milliseconds.");
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
             }
-            playbin.play();
-
-            while (currentImage == null) {
-                System.out.flush(); // not sure why this is needed
+            
+            ret = playbin.play();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file.getName());
+                throw new Exception("Problem with video file; problem when attempting to play while capturing a frame.");
             }
 
-            playbin.stop();
+            // wait for FrameCaptureRGBListener to finish
+            synchronized(lock) {
+                try {
+                    lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
+                } catch (InterruptedException e) {
+                    logger.log(Level.INFO, "Timeout occurred while waiting for frame capture.", e);
+                }
+            }
+            Image image = rgbListener.getImage();
 
-            frames.add(new VideoFrame(currentImage, timeStamp));
+            ret = playbin.stop();
+            if (ret == StateChangeReturn.FAILURE) {
+                // add this file to the set of known bad ones
+                badVideoFiles.add(file.getName());
+                throw new Exception("Problem with video file; problem when attempting to stop while capturing a frame.");
+            }
+            
+            if (image == null) {
+                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName());
+                badVideoFiles.add(file.getName());
+                break;
+            }
+
+            frames.add(new VideoFrame(image, timeStamp));
         }
 
         return frames;
+    }
+    
+    private class FrameCaptureRGBListener implements RGBDataSink.Listener {
+
+        public FrameCaptureRGBListener(Object waiter) {
+            this.waiter = waiter;
+        }
+        
+        private BufferedImage bi;
+        private final Object waiter;
+
+        @Override
+        public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
+            bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
+            synchronized(waiter) {
+                waiter.notify();
+            }
+        }
+
+        public Image getImage() {
+            Image image = bi;
+            bi = null;
+            return image;
+        }
+        
     }
 
     /**
@@ -434,13 +519,31 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         synchronized (playbinLock) {
             State state = gstPlaybin2.getState();
             if (state.equals(State.PLAYING)) {
-                gstPlaybin2.pause();
+                if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
                 pauseButton.setText("►");
-                gstPlaybin2.setState(State.PAUSED);
+                // Is this call necessary considering we just called gstPlaybin2.pause()?
+                if (gstPlaybin2.setState(State.PAUSED) == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PAUSED) failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
             } else if (state.equals(State.PAUSED)) {
-                gstPlaybin2.play();
+                if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
                 pauseButton.setText("||");
-                gstPlaybin2.setState(State.PLAYING);
+                // Is this call necessary considering we just called gstPlaybin2.play()?
+                if (gstPlaybin2.setState(State.PLAYING) == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PLAYING) failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
             } else if (state.equals(State.READY)) {
                 ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
                 em.execute();
@@ -463,6 +566,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         private long millisElapsed = 0;
         private final long INTER_FRAME_PERIOD_MS = 20;
         private final long END_TIME_MARGIN_MS = 50;
+        private boolean hadError = false;
 
         private boolean isPlayBinReady() {
             synchronized (playbinLock) {
@@ -470,11 +574,18 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             }
         }
 
-        private void resetVideo() {
+        private void resetVideo() throws Exception {
             synchronized (playbinLock) {
                 if (gstPlaybin2 != null) {
-                    gstPlaybin2.stop();
-                    gstPlaybin2.setState(State.READY); // ready to be played again
+                    if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    }
+                    // ready to be played again
+                    if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    }
                     gstPlaybin2.getState(); //NEW
                 }
             }
@@ -611,9 +722,18 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             }
             ClockTime dur = null;
             synchronized (playbinLock) {
-                gstPlaybin2.play(); // must play, then pause and get state to get duration.
-                gstPlaybin2.pause();
-                State state = gstPlaybin2.getState();
+                // must play, then pause and get state to get duration.
+                if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
+                if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
+                gstPlaybin2.getState();
                 dur = gstPlaybin2.queryDuration();
             }
             duration = dur.toString();
@@ -634,7 +754,10 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                     progressSlider.setMinimum(0);
 
                     synchronized (playbinLock) {
-                        gstPlaybin2.play();
+                        if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                        }
                     }
                     pauseButton.setText("||");
                     videoProgressWorker = new VideoProgressWorker();
