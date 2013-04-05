@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -51,6 +52,7 @@ import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
+import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
@@ -296,9 +298,9 @@ public class RegressionTest extends TestCase{
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 8000).sleep(); // Give it a few seconds to generate
-        screenshot("Progress");
+        new Timeout("pausing", 500).sleep();
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
+        screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
