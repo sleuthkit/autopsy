@@ -73,6 +73,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
     private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 100;
+    private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
     //playback
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
@@ -138,12 +139,12 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                             State orig = gstPlaybin2.getState();
                             if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
                                 logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
-                                infoLabel.setText("There was a problem setting up the media player.");
+                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                                 return;
                             }
                             if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
                                 logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
-                                infoLabel.setText("There was a problem setting up the media player.");
+                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                                 return;
                             }
                             gstPlaybin2.setState(orig);
@@ -188,7 +189,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
-            infoLabel.setText("Playback of deleted videos is not supported, use an external player. ");
+            infoLabel.setText("Playback of deleted videos is not supported, use an external player.");
             videoPanel.removeAll();
             pauseButton.setEnabled(false);
             progressSlider.setEnabled(false);
@@ -228,7 +229,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             
             if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
                 logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
-                infoLabel.setText("There was a problem setting up the media player.");
+                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
             }
         }
 
@@ -253,13 +254,13 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 if (gstPlaybin2.isPlaying()) {
                     if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
                         logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
-                        infoLabel.setText("There was a problem resetting the media player.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                         return;
                     }
                 }
                 if (gstPlaybin2.setState(State.NULL) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.NULL) failed.");
-                    infoLabel.setText("There was a problem resetting the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 if (gstPlaybin2.getState().equals(State.NULL)) {
@@ -519,27 +520,27 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             if (state.equals(State.PLAYING)) {
                 if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 pauseButton.setText("►");
                 // Is this call necessary considering we just called gstPlaybin2.pause()?
                 if (gstPlaybin2.setState(State.PAUSED) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PAUSED) failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
             } else if (state.equals(State.PAUSED)) {
                 if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 pauseButton.setText("||");
                 // Is this call necessary considering we just called gstPlaybin2.play()?
                 if (gstPlaybin2.setState(State.PLAYING) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PLAYING) failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
             } else if (state.equals(State.READY)) {
@@ -577,12 +578,12 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 if (gstPlaybin2 != null) {
                     if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
                         logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
-                        infoLabel.setText("There was a problem with the media player.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     // ready to be played again
                     if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
                         logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
-                        infoLabel.setText("There was a problem with the media player.");
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     gstPlaybin2.getState(); //NEW
                 }
@@ -723,12 +724,12 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 // must play, then pause and get state to get duration.
                 if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
-                    infoLabel.setText("There was a problem with the media player.");
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 gstPlaybin2.getState();
@@ -754,7 +755,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                     synchronized (playbinLock) {
                         if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
                             logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
-                            infoLabel.setText("There was a problem with the media player.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                         }
                     }
                     pauseButton.setText("||");
