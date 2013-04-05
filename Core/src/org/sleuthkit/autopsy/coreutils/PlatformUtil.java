@@ -32,9 +32,9 @@ import java.lang.management.MemoryUsage;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.filechooser.FileSystemView;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.ptql.ProcessFinder;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.sleuthkit.autopsy.casemodule.LocalDisk;
@@ -391,7 +391,7 @@ public class PlatformUtil {
     }
 
     /**
-     * Query and get PID fo this process
+     * Query and get PID of this process
      *
      * @return PID of this process or -1 if it couldn't be determined
      */
@@ -408,12 +408,93 @@ public class PlatformUtil {
             if (sigar != null) {
                 pid = sigar.getPid();
             } else {
-                System.out.println("Can't get PID");
+                System.out.println("Can't get PID, sigar not initialized");
             }
         } catch (Exception e) {
-            System.out.println("Can't get PID, " + e.toString());
+            System.out.println("Can't get PID," + e.toString());
         }
         return pid;
+
+    }
+
+    /**
+     * Query and get PID of another java process
+     *
+     * @sigarSubQuery a sigar subquery to identify a unique java process among
+     * other java processes, for example, by class name, use:
+     * Args.*.eq=org.jboss.Main more examples here:
+     * http://support.hyperic.com/display/SIGAR/PTQL
+     *
+     * @return PID of a java process or -1 if it couldn't be determined
+     */
+    public static synchronized long getJavaPID(String sigarSubQuery) {
+        long jpid = -1;
+        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery;
+        try {
+            if (sigar == null) {
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
+            }
+            if (sigar != null) {
+                ProcessFinder finder = new ProcessFinder(sigar);
+                jpid = finder.findSingleProcess(sigarQuery);
+            } else {
+                System.out.println("Can't get PID of a java process, sigar not initialized");
+            }
+        } catch (Exception e) {
+            System.out.println("Can't get PID for query: " + sigarQuery + ", " + e.toString());
+        }
+        return jpid;
+
+    }
+
+    /**
+     * Query and get PIDs of another java processes matching a query
+     *
+     * @sigarSubQuery a sigar subquery to identify a java processes among other
+     * java processes, for example, by class name, use: Args.*.eq=org.jboss.Main
+     * more examples here: http://support.hyperic.com/display/SIGAR/PTQL
+     *
+     * @return array of PIDs of a java processes matching the query or null if
+     * it couldn't be determined
+     */
+    public static synchronized long[] getJavaPIDs(String sigarSubQuery) {
+        long[] jpids = null;
+        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery;
+        try {
+            if (sigar == null) {
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
+            }
+            if (sigar != null) {
+                ProcessFinder finder = new ProcessFinder(sigar);
+                jpids = finder.find(sigarQuery);
+            } else {
+                System.out.println("Can't get PIDs of a java process, sigar not initialized");
+            }
+        } catch (Exception e) {
+            System.out.println("Can't get PIDs for query: " + sigarQuery + ", " + e.toString());
+        }
+        return jpids;
+
+    }
+
+    /**
+     * Kill a process by PID by sending signal to it using Sigar
+     *
+     * @param pid pid of the process to kill
+     */
+    public static synchronized void killProcess(long pid) {
+        try {
+            if (sigar == null) {
+                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
+            }
+            if (sigar != null) {
+                sigar.kill(pid, 9);
+            } else {
+                System.out.println("Can't kill process by pid, sigar not initialized.");
+            }
+        } catch (Exception e) {
+            System.out.println("Can't kill process: " + pid + ", " + e.toString());
+        }
 
     }
 
@@ -432,7 +513,7 @@ public class PlatformUtil {
             }
 
             if (sigar == null || pid == -1) {
-                System.out.println("Can't get virt mem used");
+                System.out.println("Can't get virt mem used, sigar not initialized. ");
                 return -1;
             }
             virtMem = sigar.getProcMem(pid).getSize();
@@ -476,8 +557,8 @@ public class PlatformUtil {
                 + Long.toString(maxMemory) + ", " + Long.toString(totalMemory)
                 + ", " + Long.toString(freeMemory);
     }
-    
-      /**
+
+    /**
      * Return formatted string with all memory usage (jvm, physical, native)
      *
      * @return formatted string with all memory usage info

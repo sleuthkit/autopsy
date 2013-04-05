@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
+import java.util.List;
 import org.openide.nodes.Node;
 
 /**
  * The interface for the "top right component" window.
  *
- * @author jantonius
  */
 public interface DataResult {
 
@@ -59,4 +59,10 @@ public interface DataResult {
      * @return true if it is the main instance, otherwise false
      */
     public boolean isMain();
+    
+    /**
+     * Get child viewers within this DataResult
+     * @return 
+     */
+    public List<DataResultViewer> getViewers();
 }

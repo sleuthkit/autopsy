@@ -180,17 +180,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
 
     @Override
     public boolean isSupported(AbstractFile file, String detectedFormat) {
-        if (detectedFormat == null) {
-            return true;
-        }
-
-        //accept everything other than archives
-        if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
-            return false; //let unzipper take care of it
-        }
-
-        else {
-            return true;
-        }
+        // strings can be run on anything. 
+        return true;
     }
 }

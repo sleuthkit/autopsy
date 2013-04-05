@@ -21,45 +21,46 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.sleuthkit.autopsy.datamodel.Tags;
 
-public class CreateTagDialog extends javax.swing.JDialog {
+public class CreateTagDialog extends JDialog {
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
-    private TagsTableModel tagsTableModel;
-    private String newTagName;
-
+    private static String newTagName;
 
     /**
      * Creates new form CreateTagDialog
      */
-    public CreateTagDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    private CreateTagDialog(JFrame parent) {
+        super(parent, true);
+        init();
+    }
+    
+    public static String getNewTagNameDialog(JFrame parent) {
+        new CreateTagDialog(parent);
+        return newTagName;
+    }
+    
+    private void init() {
+        
+        setTitle("Create a new tag");
+        
         initComponents();
         
-        tagsTableModel = new TagsTableModel();
-        tagsTable.setModel(tagsTableModel);
+        tagsTable.setModel(new TagsTableModel());
         tagsTable.setTableHeader(null);
-        //tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
         //completely disable selections
         tagsTable.setCellSelectionEnabled(false);
         tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
         
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
-        
-    }
-    
-    public String display() {
-        this.setTitle("Create a new tag");
         
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
@@ -68,9 +69,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        this.setVisible(true); //blocks
-        
-        return newTagName;
+        setVisible(true); //blocks
     }
     
     private boolean containsIllegalCharacters(String content) {
@@ -211,8 +210,8 @@ public class CreateTagDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-
-        this.dispose();
+        newTagName = null;
+        dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
@@ -224,7 +223,7 @@ public class CreateTagDialog extends javax.swing.JDialog {
                     "Illegal Characters", JOptionPane.ERROR_MESSAGE);
         } else {
             newTagName = tagName;
-            this.dispose();
+            dispose();
         }
     }//GEN-LAST:event_okButtonActionPerformed
 
@@ -277,9 +276,6 @@ public class CreateTagDialog extends javax.swing.JDialog {
         public String getValueAt(int rowIndex, int columnIndex) {
             return tagNames.get(rowIndex);
         }
-        
     }
-    
-  
-
 }
+

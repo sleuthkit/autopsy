@@ -30,8 +30,6 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -48,9 +46,9 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -176,10 +174,11 @@ public class FileSearchPanel extends javax.swing.JPanel {
                  * the performance maybe be slow and to increase the
                  * performance, tell the users to refine their search.
                  */
-                if (totalMatches > 1000) {
-                    // show the confirmation
-                    NotifyDescriptor d = new NotifyDescriptor.Message("Note: " + totalMatches + " matches found. Due to the large number of search results, performance may be slow for some operations. (In particular the thumbnail view in this version of Autospy, should be fixed in a future version) \n\nPlease refine your search to get better search results and improve performance.");
-                    DialogDisplayer.getDefault().notify(d);
+                if (totalMatches > 10000) {
+                    // show info
+                    String msg = "File Search: " + totalMatches + " matches found";
+                    String details = "Large number of matches may impact performance on some operations";
+                    MessageNotifyUtil.Notify.info(msg, details);
                 }
             } else {
                 throw new FilterValidationException("At least one filter must be selected.");

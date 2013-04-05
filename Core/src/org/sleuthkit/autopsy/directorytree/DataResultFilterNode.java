@@ -190,8 +190,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagFileAction(f));
-                    actions.add(new TagResultAction(ba));
+                    actions.add(new TagAction(f));
+                    actions.add(new TagAction(ba));
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -205,8 +205,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagFileAction(d));
-                    actions.add(new TagResultAction(ba));
+                    actions.add(new TagAction(d));
+                    actions.add(new TagAction(ba));
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 actions.add(null); // creates a menu separator
@@ -219,11 +219,11 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagFileAction(lf));
-                    actions.add(new TagResultAction(ba));
+                    actions.add(new TagAction(lf));
+                    actions.add(new TagAction(ba));
                 }
             }
-
+            
             return actions;
         }
 

@@ -57,6 +57,7 @@ public class Installer extends ModuleInstall {
                 //TODO this could hang if other type of server is running 
                 logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort()
                         + " port, maybe leftover from a previous run. Trying to shut it down.");
+                //stop gracefully
                 server.stop();
                 logger.log(Level.INFO, "Re-checking if server is running");
                 if (server.isRunning()) {
@@ -72,43 +73,52 @@ public class Installer extends ModuleInstall {
                         //some other reason
                         reportInitError();
                     }
-                    
+
                     //in this case give up
 
                 } else {
                     logger.log(Level.INFO, "Old Solr server shutdown successfully.");
+                    //make sure there really isn't a hang Solr process, in case isRunning() reported false
+                    server.killSolr();
                 }
             }
+        } catch (KeywordSearchModuleException e) {
+            logger.log(Level.SEVERE, "Starting server failed, will try to kill. ", e);
+            server.killSolr();
+        }
 
-            try {
-                //Ensure no other process is still bound to that port, even if we think solr is not running
-                //Try to bind to the port 4 times at 1 second intervals. 
-                //TODO move some of this logic to Server class
-                for (int i = 0; i <= 3; i++) {
-                    logger.log(Level.INFO, "Checking if port available.");
-                    if (Server.available(server.getCurrentSolrServerPort())) {
-                        logger.log(Level.INFO, "Port available, trying to start server.");
-                        server.start();
-                        break;
-                    } else if (i == 3) {
-                        logger.log(Level.INFO, "No port available, done retrying.");
-                        reportPortError(server.getCurrentSolrServerPort());
-                        retries = 0;
-                        break;
-                    } else {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException iex) {
-                            logger.log(Level.WARNING, "Timer interrupted");
-                        }
+
+        try {
+            //Ensure no other process is still bound to that port, even if we think solr is not running
+            //Try to bind to the port 4 times at 1 second intervals. 
+            //TODO move some of this logic to Server class
+            for (int i = 0; i <= 3; i++) {
+                logger.log(Level.INFO, "Checking if port available.");
+                if (Server.available(server.getCurrentSolrServerPort())) {
+                    logger.log(Level.INFO, "Port available, trying to start server.");
+                    server.start();
+                    break;
+                } else if (i == 3) {
+                    logger.log(Level.INFO, "No port available, done retrying.");
+                    reportPortError(server.getCurrentSolrServerPort());
+                    retries = 0;
+                    break;
+                } else {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException iex) {
+                        logger.log(Level.WARNING, "Timer interrupted");
                     }
                 }
-            } catch (SolrServerNoPortException npe) {
-                logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe);
             }
+        } catch (SolrServerNoPortException npe) {
+            logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe);
+            //try to kill it
+
         } catch (KeywordSearchModuleException e) {
             logger.log(Level.SEVERE, "Starting server failed. ", e);
         }
+
 
         //retry if needed
         //TODO this loop may be now redundant

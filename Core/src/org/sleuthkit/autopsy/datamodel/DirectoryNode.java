@@ -23,7 +23,7 @@ import java.util.List;
 import javax.swing.Action;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -75,7 +75,7 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         actions.add(null); // creates a menu separator
         actions.add(new ExtractAction("Extract Directory", this));
         actions.add(null); // creates a menu separator
-        actions.add(new TagFileAction(this));
+        actions.add(new TagAction(this));
         return actions.toArray(new Action[0]);
     }
 

@@ -109,3 +109,8 @@ Sigar for process monitoring
 7Zip and 7Zip java bindings for 7Zip extractor module
 - Web page: http://sevenzipjbind.sourceforge.net/
 - License: http://sourceforge.net/directory/license:lgpl/
+
+ImgScalr 4.2 for image resizing in image viewers
+- Web page: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/
+- License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
+

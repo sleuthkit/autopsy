@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.directorytree.TagFileAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -90,7 +90,7 @@ public class KeyValueFileNode extends KeyValueNode {
             actions.add(new ExtractAction("Extract File", new FileNode(f)));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(new FileNode(f)));
+            actions.add(new TagAction(new FileNode(f)));
             return actions;
         }
 
@@ -103,7 +103,7 @@ public class KeyValueFileNode extends KeyValueNode {
             actions.add(new ExtractAction("Extract File", new DerivedFileNode(f)));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", new DerivedFileNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(new DerivedFileNode(f)));
+            actions.add(new TagAction(new DerivedFileNode(f)));
             return actions;
         }
 
@@ -115,7 +115,7 @@ public class KeyValueFileNode extends KeyValueNode {
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", new DirectoryNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new TagFileAction(new FileNode(f)));
+            actions.add(new TagAction(new FileNode(f)));
             return actions;
         }
 
