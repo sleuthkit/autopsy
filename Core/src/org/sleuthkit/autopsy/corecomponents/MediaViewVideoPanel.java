@@ -83,7 +83,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
-    private Set<java.io.File> badVideoFiles = Collections.synchronizedSet(new HashSet<java.io.File>());
+    private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -316,7 +316,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         }
         
         // throw exception if this file is known to be problematic
-        if (badVideoFiles.contains(file)) {
+        if (badVideoFiles.contains(file.getName())) {
             throw new Exception("Cannot capture frames from this file (" + file.getName() + ").");
         }
 
@@ -330,13 +330,13 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         StateChangeReturn ret = playbin.play();
         if (ret == StateChangeReturn.FAILURE) {
             // add this file to the set of known bad ones
-            badVideoFiles.add(file);
+            badVideoFiles.add(file.getName());
             throw new Exception("Problem with video file; problem when attempting to play while obtaining duration.");
         }
         ret = playbin.pause();
         if (ret == StateChangeReturn.FAILURE) {
             // add this file to the set of known bad ones
-            badVideoFiles.add(file);
+            badVideoFiles.add(file.getName());
             throw new Exception("Problem with video file; problem when attempting to pause while obtaining duration.");
         }
         playbin.getState();
@@ -362,7 +362,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             ret = playbin.pause();
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
-                badVideoFiles.add(file);
+                badVideoFiles.add(file.getName());
                 throw new Exception("Problem with video file; problem when attempting to pause while capturing a frame.");
             }
             playbin.getState();
@@ -375,7 +375,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             ret = playbin.play();
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
-                badVideoFiles.add(file);
+                badVideoFiles.add(file.getName());
                 throw new Exception("Problem with video file; problem when attempting to play while capturing a frame.");
             }
 
@@ -392,13 +392,14 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             ret = playbin.stop();
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
-                badVideoFiles.add(file);
+                badVideoFiles.add(file.getName());
                 throw new Exception("Problem with video file; problem when attempting to stop while capturing a frame.");
             }
             
             if (image == null) {
                 logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName());
-                continue;
+                badVideoFiles.add(file.getName());
+                break;
             }
 
             frames.add(new VideoFrame(image, timeStamp));
