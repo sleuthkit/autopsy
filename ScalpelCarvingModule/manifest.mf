@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: com.basistech.autopsy.scalpel
+OpenIDE-Module-Localizing-Bundle: com/basistech/autopsy/scalpel/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+
