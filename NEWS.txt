@@ -3,7 +3,7 @@
 New features:
 
 Improvements:
-
+- Improvements to tagging of files and keyword search results
 
 Bugfixes:
 - Keyword Search: fix when Solr does not cleanly shutdown
