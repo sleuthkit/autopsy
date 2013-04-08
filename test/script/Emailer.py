@@ -13,8 +13,6 @@ import sys
 import os
 
 def send_email(parsed, errorem, attachl, passFail):
-	if(not args.list):
-		sys.exit()
 	element = parsed.getElementsByTagName("email")
 	if(len(element)<=0):
 		return

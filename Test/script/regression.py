@@ -441,6 +441,7 @@ def run_config_test(config_file):
 			for img in images:
 				run_test(img, 0 )
 		else:
+			print(values)
 			for img in values:  
 				if file_exists(img):
 					run_test(img, 0)
@@ -457,6 +458,7 @@ def run_config_test(config_file):
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
 	global parsed
+	print(args.config_file)
 	if image_type(image_file) == IMGTYPE.UNKNOWN:
 		printerror("Error: Image type is unrecognized:")
 		printerror(image_file + "\n")
@@ -1613,7 +1615,7 @@ def execute_test():
 	   run_test(args.single_file, 0)
 	# If user has not selected a single file, and does not want to ignore
 	#  the input directory, continue on to parsing ../input
-	if (not args.single) and (not args.ignore):
+	if (not args.single) and (not args.ignore) and (not args.list):
 	   args.config_file = "config.xml"
 	   if not file_exists(args.config_file):
 		   printerror("Error: Configuration file does not exist at:")
