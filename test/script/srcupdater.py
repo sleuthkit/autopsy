@@ -42,7 +42,7 @@ def compile():
 			redo = False
 		else:
 			print("Compile Failed")
-			time.sleep(14400)
+			time.sleep(3600)
 	attachl = []
 	errorem = "The test standard didn't match the gold standard.\n"
 	failedbool = False
