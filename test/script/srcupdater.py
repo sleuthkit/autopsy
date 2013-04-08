@@ -42,13 +42,13 @@ def compile():
 			redo = False
 		else:
 			print("Compile Failed")
-			time.sleep(3600)
+			time.sleep(14400)
 	attachl = []
 	errorem = "The test standard didn't match the gold standard.\n"
 	failedbool = False
 	if(tryredo):
 		errorem += "Rebuilt properly.\n"
-		send_email(parsed, errorem, attachl)
+		Emailer.send_email(parsed, errorem, attachl, True)
 		attachl = []
 		errorem = "The test standard didn't match the gold standard.\n"	
 		passed = True
@@ -100,7 +100,7 @@ def vsBuild():
 		if(not tryredo):
 			errorem += "LIBTSK C++ failed to build.\n"
 			attachl.append(VSpth)
-			send_email(parsed, errorem, attachl)
+			Emailer.send_email(parsed, errorem, attachl, False)
 		tryredo = True
 		passed = False
 		redo = True
@@ -139,13 +139,13 @@ def antBuild(which, Build):
 			if(not tryredo):
 				errorem += "DataModel Java build failed.\n"
 				attachl.append(antpth)
-				send_email()
+				Emailer.send_email(parsed, errorem, attachl, False)
 			passed = False
 			tryredo = True
 	elif (succd != 0 and (not tryredo)):
 		errorem += "Autopsy build failed.\n"
 		attachl.append(antpth)
-		send_email(parsed, errorem, attachl)
+		Emailer.send_email(parsed, errorem, attachl, False)
 		tryredo = True
 	elif (succd != 0):
 		passed = False
@@ -155,11 +155,9 @@ def main():
 	global parsed
 	global errorem
 	global attachl
-	print("hello")
 	errorem = ""
 	attachl = []
 	config_file = ""
-	print("hi")
 	arg = sys.argv.pop(0)
 	arg = sys.argv.pop(0)
 	config_file = arg

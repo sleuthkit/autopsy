@@ -12,7 +12,7 @@ import subprocess
 import sys
 import os
 
-def send_email(parsed, errorem, attachl):
+def send_email(parsed, errorem, attachl, passFail):
 	if(not args.list):
 		sys.exit()
 	element = parsed.getElementsByTagName("email")
@@ -26,7 +26,10 @@ def send_email(parsed, errorem, attachl):
 	serverval = element.getAttribute("value").encode().decode("utf_8")
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
-	msg['Subject'] = 'Email Test'
+	if(passFail):
+		msg['Subject'] = 'Autopsy Nightly test passed.'
+	else:
+		msg['Subject'] = 'Autopsy Nightly test failed.'
 	# me == the sender's email address
 	# family = the list of all recipients' email addresses
 	msg['From'] = 'AutopsyContinuousTest'

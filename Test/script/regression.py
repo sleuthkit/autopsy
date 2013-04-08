@@ -617,9 +617,7 @@ def rebuild():
 	errors = []
 	# Delete the current gold standards
 	gold_dir = Emailer.make_path(case.gold, case.image_name)
-	print("here")
 	clear_dir(gold_dir)
-	print("here1")
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
 	dboutpth = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
 	if not os.path.exists(case.gold):
@@ -1437,7 +1435,6 @@ def del_dir(dir):
 def copy_file(ffrom, to):
 	try :
 		if not file_exists(ffrom):
-			print("hi")
 			raise FileNotFoundException(ffrom)
 		shutil.copy(ffrom, to)
 	except:
@@ -1629,7 +1626,8 @@ def execute_test():
 	if (len(logres)>0):
 		failedbool = True
 		global errorem
-		errorem += "There were Autopsy errors.\n"
+		errorem += "Autopsy Nightly test failed.\n"
+		passFail = False
 		for lm in logres:
 			errorem += lm
 	html.close()
@@ -1638,7 +1636,8 @@ def execute_test():
 		attachl.insert(0, html.name)
 	else:
 		errorem = ""
-		errorem += "There were no Errors.\n"
+		errorem += "Autopsy Nightly test passed.\n"
+		passFail = True
 		attachl = []
 	if not args.gold_creation:
 		Emailer.send_email(parsed, errorem, attachl, html)
@@ -1691,7 +1690,6 @@ def main():
 		pass
 	# Otherwise test away!
 	else:
-		print(args.daily and args.contin)
 		execute_test()
 		if(args.daily and args.contin):
 			time.sleep(secs_till_tommorow())
