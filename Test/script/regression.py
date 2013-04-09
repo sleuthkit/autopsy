@@ -441,7 +441,6 @@ def run_config_test(config_file):
 			for img in images:
 				run_test(img, 0 )
 		else:
-			print(values)
 			for img in values:  
 				if file_exists(img):
 					run_test(img, 0)
