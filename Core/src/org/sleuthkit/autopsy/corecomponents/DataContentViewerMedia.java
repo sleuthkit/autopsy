@@ -27,6 +27,7 @@ import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -111,7 +112,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public void setNode(Node selectedNode) {
         
         if (selectedNode == null) {
-             videoPanel.reset();
+            videoPanel.reset();
             return;
         }
 
@@ -126,7 +127,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             lastFile = file;
         }
         
-                  videoPanel.reset();
+        videoPanel.reset();
         
         final Dimension dims = DataContentViewerMedia.this.getSize();
         
@@ -135,9 +136,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                         this.switchPanels(false);
         } else if (videoPanelInited
                 && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
-     
             videoPanel.setupVideo(file, dims);
-                   this.switchPanels(true);
+            switchPanels(true);
         }
     }
 
