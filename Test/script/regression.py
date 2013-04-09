@@ -457,7 +457,6 @@ def run_config_test(config_file):
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
 	global parsed
-	print(args.config_file)
 	if image_type(image_file) == IMGTYPE.UNKNOWN:
 		printerror("Error: Image type is unrecognized:")
 		printerror(image_file + "\n")
