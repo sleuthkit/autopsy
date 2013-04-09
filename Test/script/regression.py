@@ -27,6 +27,7 @@ import re
 import zipfile
 import zlib
 import Emailer
+import srcupdater
 
 #
 # Please read me...
@@ -392,6 +393,8 @@ class Database:
 def run_config_test(config_file):
 	try:
 		global parsed
+		global errorem
+		global attachl
 		count = 0
 		parsed = parse(config_file)
 		counts = {}
@@ -430,6 +433,8 @@ def run_config_test(config_file):
 			#Begin infiniloop
 			if(newDay()):
 				global daycount
+				setDay()
+				srcupdater.compile(errorem, attachl, parsed)
 				if(daycount > 0):
 					print("starting process")
 					outputer = open("ScriptLog.txt", "a")
