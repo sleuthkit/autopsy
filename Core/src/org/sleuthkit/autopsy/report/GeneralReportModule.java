@@ -23,19 +23,19 @@ import javax.swing.JPanel;
 public interface GeneralReportModule extends ReportModule {
     
     /**
-     * Generate the report and update the report's ProgressPanel, then save the report
-     * to the reportPath.
+     * Called to generate the report.  Method is responsible for saving the file at the 
+     * path specified and updating progress via the progressPanel object.
      * 
      * @param reportPath path to save the report
-     * @param progressPanel panel to update the report's progress
+     * @param progressPanel panel to update the report's progress with
      */
     public void generateReport(String reportPath, ReportProgressPanel progressPanel);
     
     /**
      * Returns the configuration panel for the report, which is displayed in
-     * the report configuration step of the report wizard.
+     * the report configuration step of the report wizard. 
      * 
-     * @return the report's configuration panel
+     * @return Configuration panel or null if the module does not need configuration.
      */
     public JPanel getConfigurationPanel();
     
