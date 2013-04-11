@@ -5,3 +5,4 @@ dist/
 nbproject/*
 !nbproject/project.xml
 !nbproject/project.properties
+!nbproject/suite.properties
