@@ -16,30 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.scalpel;
+package org.sleuthkit.autopsy.scalpel.jni;
+
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
  */
-public class ScalpelException extends Exception {
+public class ScalpelCarver {
 
-    public ScalpelException() {
+    /**
+     * Carve the file passed in as an argument and save the results.
+     *
+     * @param file File to carve
+     * @param outputFolder Location to save the reults to (should be in the case
+     * folder)
+     * @throws ScalpelException on errors
+     */
+    public void carve(AbstractFile file, String outputFolder) throws ScalpelException {
     }
-
-    public ScalpelException(String message) {
-        super(message);
-    }
-
-    public ScalpelException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ScalpelException(Throwable cause) {
-        super(cause);
-    }
-
-    public ScalpelException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
-    
 }
