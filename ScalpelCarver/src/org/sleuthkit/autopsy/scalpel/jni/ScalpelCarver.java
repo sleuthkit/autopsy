@@ -35,7 +35,7 @@ public class ScalpelCarver {
     private boolean initialized = false;
     private static final Logger logger = Logger.getLogger(ScalpelCarver.class.getName());
 
-    private static native void carveNat(ReadContentInputStream input, String configFilePath, String outputFolderPath) throws ScalpelException;
+    private static native void carveNat(String carverInputId, ReadContentInputStream input, String configFilePath, String outputFolderPath) throws ScalpelException;
 
     private ScalpelCarver() {
         init();
@@ -127,10 +127,12 @@ public class ScalpelCarver {
             throw new ScalpelException("Invalid arguments for scalpel carving. ");
         }
 
+        final String carverInputId = file.getId() + ": " + file.getName();
         final ReadContentInputStream carverInput = new ReadContentInputStream(file);
+        
 
         try {
-            carveNat(carverInput, configFilePath, outputFolderPath);
+            carveNat(carverInputId, carverInput, configFilePath, outputFolderPath);
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Error while caving file " + file, e);
