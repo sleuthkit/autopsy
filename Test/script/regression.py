@@ -1546,6 +1546,7 @@ Options:
   -e ex		 Prints out all errors containing ex.
   -l cfg		Runs from configuration file cfg.
   -c			Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
+  -fr			Will not try download gold standard images
 	"""
 
 
@@ -1680,6 +1681,12 @@ def main():
 	database = Database()
 	printout("")
 	args = Args()
+	attachl = []
+	passed = False
+	# The arguments were given wrong:
+	if not args.parse():
+		case.reset()
+		pass
 	if(not args.fr):
 		antin = ["ant"]
 		antin.append("-f")
@@ -1690,12 +1697,6 @@ def main():
 		elif SYS is OS.WIN:
 			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
 			theproc.communicate()
-	attachl = []
-	passed = False
-	# The arguments were given wrong:
-	if not args.parse():
-		case.reset()
-		pass
 	# Otherwise test away!
 	else:
 		execute_test()
