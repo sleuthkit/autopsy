@@ -72,6 +72,7 @@ class Args:
 		self.contin = False
 		self.gold_creation = False
 		self.daily = False
+		self.fr = False
 	
 	def parse(self):
 		global nxtproc 
@@ -140,6 +141,9 @@ class Args:
 			elif arg == "-d" or arg == "--daily":
 				printout("Running daily")
 				self.daily = True
+			elif arg == "-fr" or arg == "--forcerun":
+				printout("Not downloading new images")
+				self.fr = True
 			else:
 				printout(usage())
 				return False
@@ -1668,15 +1672,6 @@ def main():
 	global daycount
 	global redo
 	global passed
-	antin = ["ant"]
-	antin.append("-f")
-	antin.append(os.path.join("..","..","build.xml"))
-	antin.append("test-download-imgs")
-	if SYS is OS.CYGWIN:
-		subprocess.call(antin)
-	elif SYS is OS.WIN:
-		theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-		theproc.communicate()
 	daycount = 0
 	failedbool = False
 	redo = False
@@ -1685,6 +1680,16 @@ def main():
 	database = Database()
 	printout("")
 	args = Args()
+	if(not args.fr):
+		antin = ["ant"]
+		antin.append("-f")
+		antin.append(os.path.join("..","..","build.xml"))
+		antin.append("test-download-imgs")
+		if SYS is OS.CYGWIN:
+			subprocess.call(antin)
+		elif SYS is OS.WIN:
+			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+			theproc.communicate()
 	attachl = []
 	passed = False
 	# The arguments were given wrong:
