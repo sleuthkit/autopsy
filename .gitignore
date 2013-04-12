@@ -34,6 +34,8 @@
 /Ingest/nbproject/*
 !/Ingest/nbproject/project.xml
 !/Ingest/nbproject/project.properties
+/ScalpelCarver/release/modules/lib/
+/ScalpelCarver/release/modules/ext/
 /branding_spear
 /installer_spear
 Bundle_*.properties
