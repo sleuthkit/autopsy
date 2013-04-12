@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.scalpel.jni;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -39,25 +40,41 @@ public class ScalpelCarver {
         init();
     }
 
+    private void init() {
+        initialized = true;
+        for (String library : Arrays.asList("libtre-4", "pthreadGC2", SCALPEL_JNI_LIB)) {
+            if (!loadLib(library)) {
+                initialized = false;
+                logger.log(Level.SEVERE, "Failed initializing " + ScalpelCarver.class.getName() + " due to failure loading library: " + library);
+                break;
+            }
+        }
+        
+        if (initialized) {
+            logger.log(Level.INFO, ScalpelCarver.class.getName() + " JNI initialized successfully. ");
+        }
+    }
+
     /**
      * initialize, load dynamic libraries
      */
-    private void init() {
+    private boolean loadLib(String id) {
+        boolean success = false;
         try {
             //rely on netbeans / jna to locate the lib variation for architecture/OS
-            System.loadLibrary(SCALPEL_JNI_LIB);
-            initialized = true;
+            System.loadLibrary(id);
+            success = true;
         } catch (UnsatisfiedLinkError ex) {
-            initialized = false;
-            String msg = "Could not load " + SCALPEL_JNI_LIB + " for your environment ";
+            String msg = "Could not load library " + id + " for your environment ";
             System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         } catch (Exception ex) {
-            initialized = false;
-            String msg = "Could not load " + SCALPEL_JNI_LIB + " for your environment ";
+            String msg = "Could not load library " + id + " for your environment ";
             System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         }
+
+        return success;
     }
 
     /**
@@ -102,15 +119,15 @@ public class ScalpelCarver {
         if (!initialized) {
             throw new ScalpelException("Scalpel library is not fully initialized. ");
         }
-        
+
         //basic check of arguments before going to jni land
         if (file == null || configFilePath == null || configFilePath.isEmpty()
-                || outputFolderPath == null || outputFolderPath.isEmpty() ) {
+                || outputFolderPath == null || outputFolderPath.isEmpty()) {
             throw new ScalpelException("Invalid arguments for scalpel carving. ");
         }
 
         final ReadContentInputStream carverInput = new ReadContentInputStream(file);
-        
+
         carveNat(carverInput, configFilePath, outputFolderPath);
     }
 }
