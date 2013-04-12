@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.scalpel.jni;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -128,6 +129,19 @@ public class ScalpelCarver {
 
         final ReadContentInputStream carverInput = new ReadContentInputStream(file);
 
-        carveNat(carverInput, configFilePath, outputFolderPath);
+        try {
+            carveNat(carverInput, configFilePath, outputFolderPath);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error while caving file " + file, e);
+            throw new ScalpelException(e);
+        }
+        finally {
+            try {
+                carverInput.close();
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error closing input stream after carving, file: " + file, ex);
+            }
+        }
     }
 }
