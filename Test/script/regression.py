@@ -1668,17 +1668,15 @@ def main():
 	global daycount
 	global redo
 	global passed
-	inpvar = raw_input("Your input images may be out of date, do you want to update?(y/n): ")
-	if(inpvar.lower() == 'y' or inpvar.lower() == 'yes'):
-		antin = ["ant"]
-		antin.append("-f")
-		antin.append(os.path.join("..","..","build.xml"))
-		antin.append("test-download-imgs")
-		if SYS is OS.CYGWIN:
-			subprocess.call(antin)
-		elif SYS is OS.WIN:
-			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-			theproc.communicate()
+	antin = ["ant"]
+	antin.append("-f")
+	antin.append(os.path.join("..","..","build.xml"))
+	antin.append("test-download-imgs")
+	if SYS is OS.CYGWIN:
+		subprocess.call(antin)
+	elif SYS is OS.WIN:
+		theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+		theproc.communicate()
 	daycount = 0
 	failedbool = False
 	redo = False
