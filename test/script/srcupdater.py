@@ -82,9 +82,10 @@ def vsBuild():
 	global passed
 	global parsed
 	#Please ensure that the current working directory is $autopsy/testing/script
+	os.chdir(os.path.join("..", "..", "..","sleuthkit", "win32"))
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
-	vs.append(os.path.join("..", "..", "..","sleuthkit", "win32", "Tsk-win.sln"))
+	vs.append(os.path.join("Tsk-win.sln"))
 	vs.append("/p:configuration=release")
 	vs.append("/p:platform=win32")
 	vs.append("/t:clean")
