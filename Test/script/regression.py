@@ -871,15 +871,15 @@ def generate_common_log():
 			for line in log:
 				line = line.replace(rep_path, "CASE")
 				if line.startswith("Exception"):
-					common_log.write("From " + file +": " +  line)
+					common_log.write(file +": " +  line)
 				elif line.startswith("WARNING"):
-					common_log.write("From " + file +": " +  line
+					common_log.write(file +": " +  line
 				elif line.startswith("Error"):
-					common_log.write("From " + file +": " +  line)
+					common_log.write(file +": " +  line)
 				elif line.startswith("SEVERE"):
-					common_log.write("From " + file +":" +  line)
+					common_log.write(file +":" +  line)
 				else:
-					warning_log.write("From " + file +": " +  line)
+					warning_log.write(file +": " +  line)
 			log.close()
 		common_log.write("\n")
 		common_log.close()
