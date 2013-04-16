@@ -132,6 +132,17 @@ public class ScalpelCarver {
                 || outputFolderPath == null || outputFolderPath.isEmpty()) {
             throw new ScalpelException("Invalid arguments for scalpel carving. ");
         }
+        
+        //validate the paths passed in
+        File config = new File(configFilePath);
+        if (! config.exists() || ! config.canRead()) {
+            throw new ScalpelException("Cannot read libscalpel config file: " + configFilePath);
+        }
+        
+        File outDir = new File(outputFolderPath);
+        if (! outDir.exists() || ! outDir.canWrite()) {
+            throw new ScalpelException("Cannot write to libscalpel output dir: " + outputFolderPath);
+        }
 
         final String carverInputId = file.getId() + ": " + file.getName();
         final ReadContentInputStream carverInput = new ReadContentInputStream(file);
