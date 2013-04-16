@@ -96,7 +96,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         TskFileRange inputFileRange = fileData.get(0);
         
         // create the output directory for this run
-        String scalpelOutputDirPath = moduleOutputDirPath + abstractFile.getId();
+        String scalpelOutputDirPath = moduleOutputDirPath + File.separator + abstractFile.getId();
         File scalpelOutputDir = new File(scalpelOutputDirPath);
         if (!scalpelOutputDir.exists()) {
             if (!scalpelOutputDir.mkdir()) {
@@ -139,6 +139,9 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         } catch (ScalpelException ex) {
             java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+//        output = new ArrayList<CarvedFileMeta>();
+//        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, inputFileRange.getByteLen()));
         
         // add a carved file to the DB for each file that scalpel carved
         SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
@@ -229,16 +232,10 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         
         // copy the default config file to the user's home directory if one
         // is not already there
-        boolean succeeded = false;
         try {
-            succeeded = PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
+            PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Could not obtain the path to the Scalpel configuration file.", ex);
-            return;
-        }
-        
-        // we're not initialize if we failed
-        if (!succeeded) {
             return;
         }
         
