@@ -161,7 +161,6 @@ def main():
 	arg = sys.argv.pop(0)
 	arg = sys.argv.pop(0)
 	config_file = arg
-	print(config_file)
 	parsedin = parse(config_file)
 	compile(errore, attachli, parsedin)
 	
