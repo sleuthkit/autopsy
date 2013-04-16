@@ -57,7 +57,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
     private final String MODULE_NAME = "Scalpel Carver";
     private final String MODULE_DESCRIPTION = "Carves files from unallocated space at ingest time.\nCarved files are reanalyzed and displayed in the directory tree.";
     private final String MODULE_VERSION = "1.0";
-    private String configFileName = "scalpel.cfg";
+    private String configFileName = "scalpel.conf";
     private String configFilePath;
     private boolean initialized = false;
 
@@ -194,19 +194,6 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         return instance;
     }
     
-    private String getScalpelConfigPath() throws IOException {
-        
-        // create path to scalpel config file in user's home directory
-        String scalpelConfig = PlatformUtil.getUserConfigDirectory()
-                + File.pathSeparator + configFileName;
-        
-        // copy the default config file to the user's home directory if one
-        // is not already there
-        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
-        
-        return scalpelConfig;
-    }
-
     @Override
     public void init(IngestModuleInit initContext) {
         
@@ -216,12 +203,23 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             logger.log(Level.WARNING, "Scalpel carving module is not compatible with non-Windows OS's at this time.");
             return;
         }
-
-        // get the path to the config file
+        
+        // create path to scalpel config file in user's home directory
+        configFilePath = PlatformUtil.getUserConfigDirectory()
+                + File.pathSeparator + configFileName;
+        
+        // copy the default config file to the user's home directory if one
+        // is not already there
+        boolean succeeded = false;
         try {
-            configFilePath = getScalpelConfigPath();
+            succeeded = PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Could not obtain the path to the Scalpel configuration file.", ex);
+            return;
+        }
+        
+        // we're not initialize if we failed
+        if (!succeeded) {
             return;
         }
         
