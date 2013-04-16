@@ -1687,16 +1687,16 @@ def main():
 	if not args.parse():
 		case.reset()
 		pass
-	if(not args.fr):
-		antin = ["ant"]
-		antin.append("-f")
-		antin.append(os.path.join("..","..","build.xml"))
-		antin.append("test-download-imgs")
-		if SYS is OS.CYGWIN:
-			subprocess.call(antin)
-		elif SYS is OS.WIN:
-			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-			theproc.communicate()
+		if(not args.fr):
+			antin = ["ant"]
+			antin.append("-f")
+			antin.append(os.path.join("..","..","build.xml"))
+			antin.append("test-download-imgs")
+			if SYS is OS.CYGWIN:
+				subprocess.call(antin)
+			elif SYS is OS.WIN:
+				theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+				theproc.communicate()
 	# Otherwise test away!
 	else:
 		execute_test()
