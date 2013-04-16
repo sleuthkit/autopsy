@@ -214,7 +214,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         
         // make sure module output directory exists; create it if it doesn't
         moduleOutputDirPath = Case.getCurrentCase().getModulesOutputDirAbsPath() +
-                File.pathSeparator + MODULE_OUTPUT_DIR_NAME;
+                File.separator + MODULE_OUTPUT_DIR_NAME;
         File moduleOutputDir = new File(moduleOutputDirPath);
         if (!moduleOutputDir.exists()) {
             if (!moduleOutputDir.mkdir()) {
@@ -225,7 +225,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         
         // create path to scalpel config file in user's home directory
         configFilePath = PlatformUtil.getUserConfigDirectory()
-                + File.pathSeparator + configFileName;
+                + File.separator + configFileName;
         
         // copy the default config file to the user's home directory if one
         // is not already there
