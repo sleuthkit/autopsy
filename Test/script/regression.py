@@ -1686,31 +1686,29 @@ def main():
 	# The arguments were given wrong:
 	if not args.parse():
 		case.reset()
-		pass
-		if(not args.fr):
-			antin = ["ant"]
-			antin.append("-f")
-			antin.append(os.path.join("..","..","build.xml"))
-			antin.append("test-download-imgs")
-			if SYS is OS.CYGWIN:
-				subprocess.call(antin)
-			elif SYS is OS.WIN:
-				theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-				theproc.communicate()
+		return
+	if(not args.fr):
+		antin = ["ant"]
+		antin.append("-f")
+		antin.append(os.path.join("..","..","build.xml"))
+		antin.append("test-download-imgs")
+		if SYS is OS.CYGWIN:
+			subprocess.call(antin)
+		elif SYS is OS.WIN:
+			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+			theproc.communicate()
 	# Otherwise test away!
-	else:
+	execute_test()
+	if(args.daily and args.contin):
+		time.sleep(secs_till_tommorow())
+	while args.contin:
+		redo = False
+		attachl = []
+		errorem = "The test standard didn't match the gold standard.\n"
+		failedbool = False
+		passed = False
 		execute_test()
-		if(args.daily and args.contin):
-			time.sleep(secs_till_tommorow())
-		while args.contin:
-			redo = False
-			attachl = []
-			errorem = "The test standard didn't match the gold standard.\n"
-			failedbool = False
-			passed = False
-			execute_test()
-			case = TestAutopsy()
-
+		case = TestAutopsy()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)	  
