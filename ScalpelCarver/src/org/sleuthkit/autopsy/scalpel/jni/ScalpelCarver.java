@@ -18,10 +18,16 @@
  */
 package org.sleuthkit.autopsy.scalpel.jni;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.scalpel.ScalpelOutputParser;
+import org.sleuthkit.autopsy.scalpel.ScalpelOutputParser.CarvedFileMeta;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -116,7 +122,7 @@ public class ScalpelCarver {
      * folder)
      * @throws ScalpelException on errors
      */
-    public void carve(AbstractFile file, String configFilePath, String outputFolderPath) throws ScalpelException {
+    public List<CarvedFileMeta> carve(AbstractFile file, String configFilePath, String outputFolderPath) throws ScalpelException {
         if (!initialized) {
             throw new ScalpelException("Scalpel library is not fully initialized. ");
         }
@@ -145,5 +151,20 @@ public class ScalpelCarver {
                 logger.log(Level.SEVERE, "Error closing input stream after carving, file: " + file, ex);
             }
         }
+        
+        // create a file object for the output
+        File outputFile = new File(outputFolderPath);
+        
+        // parse the output
+        List<CarvedFileMeta> output = Collections.EMPTY_LIST;
+        try {
+            output = ScalpelOutputParser.parse(outputFile);
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Could not find scalpel output file.", ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "IOException while processing scalpel output file.", ex);
+        }
+        
+        return output;
     }
 }
