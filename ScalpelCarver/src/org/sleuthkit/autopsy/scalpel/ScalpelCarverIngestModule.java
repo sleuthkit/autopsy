@@ -57,6 +57,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
     private final String MODULE_NAME = "Scalpel Carver";
     private final String MODULE_DESCRIPTION = "Carves files from unallocated space at ingest time.\nCarved files are reanalyzed and displayed in the directory tree.";
     private final String MODULE_VERSION = "1.0";
+    private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver";
+    private String moduleOutputDirPath;
     private String configFileName = "scalpel.conf";
     private String configFilePath;
     private boolean initialized = false;
@@ -93,9 +95,15 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         }
         TskFileRange inputFileRange = fileData.get(0);
         
-        // create a name for the scalpel output file
-        String scalpelOutput = Case.getCurrentCase().getModulesOutputDirAbsPath()
-                + File.pathSeparator + "scalpel-output-" + abstractFile.getId() + ".txt";
+        // create the output directory for this run
+        String scalpelOutputDirPath = moduleOutputDirPath + abstractFile.getId();
+        File scalpelOutputDir = new File(scalpelOutputDirPath);
+        if (!scalpelOutputDir.exists()) {
+            if (!scalpelOutputDir.mkdir()) {
+                logger.log(Level.SEVERE, "Could not create Scalpel output directory: " + scalpelOutputDirPath);
+                return ProcessResult.OK;
+            }
+        }
         
         // find the ID of the parent FileSystem or Volume
         long systemID = -1;
@@ -127,7 +135,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         // carve the AbstractFile
         List<CarvedFileMeta> output = null;
         try {
-            output = ScalpelCarver.getInstance().carve(abstractFile, configFilePath, scalpelOutput);
+            output = ScalpelCarver.getInstance().carve(abstractFile, configFilePath, scalpelOutputDirPath);
         } catch (ScalpelException ex) {
             java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -202,6 +210,17 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         if (!os.startsWith("Windows")) {
             logger.log(Level.WARNING, "Scalpel carving module is not compatible with non-Windows OS's at this time.");
             return;
+        }
+        
+        // make sure module output directory exists; create it if it doesn't
+        moduleOutputDirPath = Case.getCurrentCase().getModulesOutputDirAbsPath() +
+                File.pathSeparator + MODULE_OUTPUT_DIR_NAME;
+        File moduleOutputDir = new File(moduleOutputDirPath);
+        if (!moduleOutputDir.exists()) {
+            if (!moduleOutputDir.mkdir()) {
+                logger.log(Level.SEVERE, "Could not create the output directory for the Scalpel module.");
+                return;
+            }
         }
         
         // create path to scalpel config file in user's home directory
