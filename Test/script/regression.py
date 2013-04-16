@@ -871,17 +871,17 @@ def generate_common_log():
 			for line in log:
 				line = line.replace(rep_path, "CASE")
 				if line.startswith("Exception"):
-					common_log.write("From " + file +":\n" +  line + "\n")
+					common_log.write("From " + file +": " +  line)
 				elif line.startswith("WARNING"):
-					common_log.write("From " + file +":\n" +  line + "\n")
+					common_log.write("From " + file +": " +  line
 				elif line.startswith("Error"):
-					common_log.write("From " + file +":\n" +  line + "\n")
+					common_log.write("From " + file +": " +  line)
 				elif line.startswith("SEVERE"):
-					common_log.write("From " + file +":\n" +  line + "\n")
+					common_log.write("From " + file +":" +  line)
 				else:
-					warning_log.write("From " + file +":\n" +  line + "\n")
+					warning_log.write("From " + file +": " +  line)
 			log.close()
-		common_log.write("\n\n")
+		common_log.write("\n")
 		common_log.close()
 		case.sorted_log = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name + "SortedErrors.txt")
 		srtcmdlst = ["sort", case.common_log_path, "-o", case.sorted_log]
