@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * This class is used to represent the "Node" for the file.
  * It may have derived files children.
  */
-public class FileNode extends AbstractFsContentNode<FsContent> {
+public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
     /**
      * @param file underlying Content
@@ -49,13 +49,13 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
 
     }
 
-    public FileNode(FsContent file, boolean directoryBrowseMode) {
+    public FileNode(AbstractFile file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
         setIcon(file);
     }
 
-    private void setIcon(FsContent file) {
+    private void setIcon(AbstractFile file) {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");

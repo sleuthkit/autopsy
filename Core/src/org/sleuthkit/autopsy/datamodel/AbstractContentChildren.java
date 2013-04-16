@@ -129,6 +129,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
+        public AbstractNode visit(DeletedContent dc) {
+            return new DeletedContentsNode(dc.getSleuthkitCase());
+        }
+        
+        @Override
         public AbstractNode visit(KeywordHits kh) {
             return kh.new KeywordHitsRootNode();
         }
