@@ -872,8 +872,6 @@ def generate_common_log():
 				line = line.replace(rep_path, "CASE")
 				if line.startswith("Exception"):
 					common_log.write(file +": " +  line)
-				elif line.startswith("WARNING"):
-					common_log.write(file +": " +  line
 				elif line.startswith("Error"):
 					common_log.write(file +": " +  line)
 				elif line.startswith("SEVERE"):
@@ -1650,7 +1648,7 @@ def execute_test():
 		passFail = True
 		attachl = []
 	if not args.gold_creation:
-		Emailer.send_email(parsed, errorem, attachl, html)
+		Emailer.send_email(parsed, errorem, attachl, passFail)
 		
 def secs_till_tommorow():
 	seconds = (23*3600)-(int(strftime("%H", localtime()))*3600)
