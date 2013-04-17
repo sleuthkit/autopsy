@@ -63,8 +63,11 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
     private String configFileName = "scalpel.conf";
     private String configFilePath;
     private boolean initialized = false;
+    private ScalpelCarver carver;
 
-    private ScalpelCarverIngestModule() { }
+    private ScalpelCarverIngestModule() {
+        ScalpelCarver.init();
+    }
     
     @Override
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
@@ -137,7 +140,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         // carve the AbstractFile
         List<CarvedFileMeta> output = null;
         try {
-            output = ScalpelCarver.getInstance().carve(abstractFile, configFilePath, scalpelOutputDirPath);
+            output = carver.carve(abstractFile, configFilePath, scalpelOutputDirPath);
         } catch (ScalpelException ex) {
             logger.log(Level.SEVERE, "Error when attempting to carved data from AbstractFile with ID " + abstractFile.getId());
             return ProcessResult.OK;
@@ -215,6 +218,13 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         String os = System.getProperty("os.name");
         if (!os.startsWith("Windows")) {
             logger.log(Level.WARNING, "Scalpel carving module is not compatible with non-Windows OS's at this time.");
+            return;
+        }
+        
+
+        carver = new ScalpelCarver();
+        if (! carver.isInitialized()) {
+            logger.log(Level.SEVERE, "Error initializing scalpel carver. ");
             return;
         }
         
