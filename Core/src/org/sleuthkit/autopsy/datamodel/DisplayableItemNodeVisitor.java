@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;

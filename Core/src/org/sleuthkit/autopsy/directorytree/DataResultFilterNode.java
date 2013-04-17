@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -38,6 +37,8 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -320,6 +321,16 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public AbstractAction visit(RecentFilesNode rfn) {
             return openChild(rfn);
+        }
+        
+        @Override
+        public AbstractAction visit(DeletedContentsNode dcn) {
+            return openChild(dcn);
+        }
+        
+        @Override
+        public AbstractAction visit(DeletedContentNode dcn) {
+            return openChild(dcn);
         }
 
         @Override

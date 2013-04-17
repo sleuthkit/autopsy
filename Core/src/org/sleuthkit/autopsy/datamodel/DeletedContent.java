@@ -56,7 +56,6 @@ public class DeletedContent implements AutopsyVisitableItem {
         CARVED_CONTENT_FILTER(3, "Carved_CONTENT_FILTER", "Carved Content"),
         UNUSED_FILES_FILTER(4, "UNUSED_FILES_FILTER", "Unused Files"),
         UNUSED_BLOCKS_FILTER(5, "UNUSED_BLOCKS_FILTER", "Unused Blocks");
-    
         private int id;
         private String name;
         private String displayName;
@@ -98,212 +97,212 @@ public class DeletedContent implements AutopsyVisitableItem {
     public SleuthkitCase getSleuthkitCase() {
         return this.skCase;
     }
-}
 
-class DeletedContentsNode extends DisplayableItemNode {
+    public static class DeletedContentsNode extends DisplayableItemNode {
 
-    private static final String NAME = "Deleted Content";
-    private SleuthkitCase skCase;
+        private static final String NAME = "Deleted Content";
+        private SleuthkitCase skCase;
 
-    DeletedContentsNode(SleuthkitCase skCase) {
-        super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
-        super.setName(NAME);
-        super.setDisplayName(NAME);
-        this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        DeletedContentsNode(SleuthkitCase skCase) {
+            super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
+            super.setName(NAME);
+            super.setDisplayName(NAME);
+            this.skCase = skCase;
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
-                NAME));
-        return s;
-    }
-}
-
-class DeletedContentsChildren extends ChildFactory<DeletedContent.DeletedContentFilter> {
-
-    private SleuthkitCase skCase;
-
-    public DeletedContentsChildren(SleuthkitCase skCase) {
-        this.skCase = skCase;
-
-    }
-
-    @Override
-    protected boolean createKeys(List<DeletedContent.DeletedContentFilter> list) {
-        list.addAll(Arrays.asList(DeletedContent.DeletedContentFilter.values()));
-        return true;
-    }
-
-    @Override
-    protected Node createNodeForKey(DeletedContent.DeletedContentFilter key) {
-        return new DeletedContentNode(skCase, key);
-    }
-}
-
-class DeletedContentNode extends DisplayableItemNode {
-
-    private SleuthkitCase skCase;
-    private DeletedContent.DeletedContentFilter filter;
-    private final static Logger logger = Logger.getLogger(DeletedContentNode.class.getName());
-
-    DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter) {
-        super(Children.create(new DeletedContentChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
-        super.setName(filter.getName());
-        super.setDisplayName(filter.getDisplayName());
-        this.skCase = skCase;
-        this.filter = filter;
-
-        String tooltip = filter.getDisplayName();
-        this.setShortDescription(tooltip);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.META;
         }
 
-        ss.put(new NodeProperty("Filter Type",
-                "Filter Type",
-                "no description",
-                filter.getDisplayName()));
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
 
-        return s;
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty("Name",
+                    "Name",
+                    "no description",
+                    NAME));
+            return s;
+        }
     }
 
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
-    }
+    public static class DeletedContentsChildren extends ChildFactory<DeletedContent.DeletedContentFilter> {
 
-    @Override
-    public boolean isLeafTypeNode() {
-        return true;
-    }
-}
+        private SleuthkitCase skCase;
 
-class DeletedContentChildren extends ChildFactory<AbstractFile> {
-
-    private SleuthkitCase skCase;
-    private DeletedContent.DeletedContentFilter filter;
-    private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
-
-    DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
-        this.skCase = skCase;
-        this.filter = filter;
-    }
-
-    @Override
-    protected boolean createKeys(List<AbstractFile> list) {
-        list.addAll(runFsQuery());
-        return true;
-    }
-
-    private String makeQuery() {
-        String query = null;
-        switch (filter) {       
-            case DELETED_FILES_FILTER:
-                query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                        + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType();
-                break;
-            case UNUSED_FILES_FILTER:
-                query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNUSED.getValue();
-                break;
-            case ORPHAN_FILES_FILTER:
-                query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue();
-                break;
-            case UNALLOC_CONTENT_FILTER:
-                query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                        + " OR meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue();
-                break;
-            case UNUSED_BLOCKS_FILTER:
-                query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType();
-                break;
-            case CARVED_CONTENT_FILTER:
-                query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType();
-                break;
-            default:
-                logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: " + filter);
+        public DeletedContentsChildren(SleuthkitCase skCase) {
+            this.skCase = skCase;
 
         }
 
-        return query;
-    }
-
-    private List<AbstractFile> runFsQuery() {
-        List<AbstractFile> ret = new ArrayList<AbstractFile>();
-
-        String query = makeQuery();
-        try {
-            ret = skCase.findAllFilesWhere(query);
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + query, e);
+        @Override
+        protected boolean createKeys(List<DeletedContent.DeletedContentFilter> list) {
+            list.addAll(Arrays.asList(DeletedContent.DeletedContentFilter.values()));
+            return true;
         }
 
-        return ret;
+        @Override
+        protected Node createNodeForKey(DeletedContent.DeletedContentFilter key) {
+            return new DeletedContentNode(skCase, key);
+        }
 
-    }
+        public class DeletedContentNode extends DisplayableItemNode {
 
-    @Override
-    protected Node createNodeForKey(AbstractFile key) {
-        return key.accept(new ContentVisitor.Default<AbstractNode>() {
-            public FileNode visit(AbstractFile f) {
-                return new FileNode(f, false);
-            }
+            private SleuthkitCase skCase;
+            private DeletedContent.DeletedContentFilter filter;
+            private final Logger logger = Logger.getLogger(DeletedContentNode.class.getName());
 
-            public FileNode visit(FsContent f) {
-                return new FileNode(f, false);
-            }
+            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter) {
+                super(Children.create(new DeletedContentChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
+                super.setName(filter.getName());
+                super.setDisplayName(filter.getDisplayName());
+                this.skCase = skCase;
+                this.filter = filter;
 
-            @Override
-            public FileNode visit(LayoutFile f) {
-                return new FileNode(f, false);
-            }
-
-            @Override
-            public FileNode visit(File f) {
-                return new FileNode(f, false);
-            }
-
-            @Override
-            public FileNode visit(Directory f) {
-                return new FileNode(f, false);
+                String tooltip = filter.getDisplayName();
+                this.setShortDescription(tooltip);
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
             }
 
             @Override
-            protected AbstractNode defaultVisit(Content di) {
-                throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+            public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+                return v.visit(this);
             }
-        });
+
+            @Override
+            protected Sheet createSheet() {
+                Sheet s = super.createSheet();
+                Sheet.Set ss = s.get(Sheet.PROPERTIES);
+                if (ss == null) {
+                    ss = Sheet.createPropertiesSet();
+                    s.put(ss);
+                }
+
+                ss.put(new NodeProperty("Filter Type",
+                        "Filter Type",
+                        "no description",
+                        filter.getDisplayName()));
+
+                return s;
+            }
+
+            @Override
+            public TYPE getDisplayableItemNodeType() {
+                return TYPE.META;
+            }
+
+            @Override
+            public boolean isLeafTypeNode() {
+                return true;
+            }
+        }
+
+        class DeletedContentChildren extends ChildFactory<AbstractFile> {
+
+            private SleuthkitCase skCase;
+            private DeletedContent.DeletedContentFilter filter;
+            private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
+
+            DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
+                this.skCase = skCase;
+                this.filter = filter;
+            }
+
+            @Override
+            protected boolean createKeys(List<AbstractFile> list) {
+                list.addAll(runFsQuery());
+                return true;
+            }
+
+            private String makeQuery() {
+                String query = null;
+                switch (filter) {
+                    case DELETED_FILES_FILTER:
+                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                                + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType();
+                        break;
+                    case UNUSED_FILES_FILTER:
+                        query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNUSED.getValue();
+                        break;
+                    case ORPHAN_FILES_FILTER:
+                        query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue();
+                        break;
+                    case UNALLOC_CONTENT_FILTER:
+                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
+                                + " OR meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue();
+                        break;
+                    case UNUSED_BLOCKS_FILTER:
+                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType();
+                        break;
+                    case CARVED_CONTENT_FILTER:
+                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType();
+                        break;
+                    default:
+                        logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: " + filter);
+
+                }
+
+                return query;
+            }
+
+            private List<AbstractFile> runFsQuery() {
+                List<AbstractFile> ret = new ArrayList<AbstractFile>();
+
+                String query = makeQuery();
+                try {
+                    ret = skCase.findAllFilesWhere(query);
+                } catch (TskCoreException e) {
+                    logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + query, e);
+                }
+
+                return ret;
+
+            }
+
+            @Override
+            protected Node createNodeForKey(AbstractFile key) {
+                return key.accept(new ContentVisitor.Default<AbstractNode>() {
+                    public FileNode visit(AbstractFile f) {
+                        return new FileNode(f, false);
+                    }
+
+                    public FileNode visit(FsContent f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(LayoutFile f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(File f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(Directory f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    protected AbstractNode defaultVisit(Content di) {
+                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+                    }
+                });
+            }
+        }
     }
 }
