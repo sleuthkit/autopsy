@@ -37,17 +37,19 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public class ScalpelCarver {
 
     private static final String SCALPEL_JNI_LIB = "libscalpel_jni";
-    private static volatile ScalpelCarver instance;
-    private boolean initialized = false;
+    private static boolean initialized = false;
     private static final Logger logger = Logger.getLogger(ScalpelCarver.class.getName());
 
     private static native void carveNat(String carverInputId, ReadContentInputStream input, String configFilePath, String outputFolderPath) throws ScalpelException;
 
-    private ScalpelCarver() {
-        init();
+    public  ScalpelCarver() {
+        
     }
 
-    private void init() {
+    public static boolean init() {
+        if (initialized) {
+            return true;
+        }
         initialized = true;
         for (String library : Arrays.asList("libtre-4", "pthreadGC2", SCALPEL_JNI_LIB)) {
             if (!loadLib(library)) {
@@ -60,12 +62,14 @@ public class ScalpelCarver {
         if (initialized) {
             logger.log(Level.INFO, ScalpelCarver.class.getName() + " JNI initialized successfully. ");
         }
+        
+        return initialized;
     }
 
     /**
      * initialize, load dynamic libraries
      */
-    private boolean loadLib(String id) {
+    private static boolean loadLib(String id) {
         boolean success = false;
         try {
             //rely on netbeans / jna to locate the lib variation for architecture/OS
@@ -84,23 +88,6 @@ public class ScalpelCarver {
         return success;
     }
 
-    /**
-     * Singleton getter for ScalpelCarver. Initializes and returns a
-     * ready-instance of scalpel wrapper.
-     *
-     * @return ScalpelCarver instance
-     */
-    public static ScalpelCarver getInstance() {
-        if (instance == null) {
-            synchronized (ScalpelCarver.class) {
-                if (instance == null) {
-                    instance = new ScalpelCarver();
-                }
-            }
-        }
-
-        return instance;
-    }
 
     /**
      * Check if initialized
@@ -113,10 +100,12 @@ public class ScalpelCarver {
 
     /**
      * Carve the file passed in as an argument and save the results.
+     * Requires prior call to ScalpelCarver.init()
      *
      * TODO consider returning a data structure representing carved files.
      *
-     * @param file File to carve #param configFilePath file path to scalpel
+     * @param file File to carve 
+     * @param configFilePath file path to scalpel
      * configuration file with signatures, such as scalpel.conf
      * @param outputFolder Location to save the reults to (should be in the case
      * folder)
