@@ -102,13 +102,13 @@ public class ScalpelCarver {
      * Carve the file passed in as an argument and save the results.
      * Requires prior call to ScalpelCarver.init()
      *
-     * TODO consider returning a data structure representing carved files.
      *
      * @param file File to carve 
      * @param configFilePath file path to scalpel
      * configuration file with signatures, such as scalpel.conf
      * @param outputFolder Location to save the reults to (should be in the case
      * folder)
+     * @return list of carved files info
      * @throws ScalpelException on errors
      */
     public List<CarvedFileMeta> carve(AbstractFile file, String configFilePath, String outputFolderPath) throws ScalpelException {
