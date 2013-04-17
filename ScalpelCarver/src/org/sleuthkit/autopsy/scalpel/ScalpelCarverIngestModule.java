@@ -39,12 +39,13 @@ import org.sleuthkit.autopsy.scalpel.jni.ScalpelException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskFileRange;
-import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * Scalpel carving ingest module
@@ -105,8 +106,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             }
         }
         
-        // find the ID of the parent FileSystem or Volume
-        long systemID = -1;
+        // find the ID of the parent FileSystem, Volume or Image
+        long id = -1;
         Content parent = null;
         try {
             parent = abstractFile.getParent();
@@ -115,8 +116,9 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         }
         while (parent != null) {
             if (parent instanceof FileSystem ||
-                    parent instanceof VolumeSystem) {
-                systemID = parent.getId();
+                    parent instanceof Volume ||
+                    parent instanceof Image) {
+                id = parent.getId();
                 break;
             }
             try {
@@ -127,8 +129,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         }
         
         // make sure we have a valid systemID
-        if (systemID == -1) {
-            logger.log(Level.SEVERE, "Could not get an ID for a FileSystem or Volume for the given AbstractFile.");
+        if (id == -1) {
+            logger.log(Level.SEVERE, "Could not get an ID for a FileSystem, Volume or Image for the given AbstractFile.");
             return ProcessResult.OK;
         }
         
@@ -137,7 +139,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         try {
             output = ScalpelCarver.getInstance().carve(abstractFile, configFilePath, scalpelOutputDirPath);
         } catch (ScalpelException ex) {
-            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, "Error when attempting to carved data from AbstractFile with ID " + abstractFile.getId());
+            return ProcessResult.OK;
         }
         
 //        output = new ArrayList<CarvedFileMeta>();
@@ -160,7 +163,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             
             // add the carved file
             try {
-                carvedFiles.add(db.addCarvedFile(carvedFileMeta.getFileName(), size, systemID, data));
+                carvedFiles.add(db.addCarvedFile(carvedFileMeta.getFileName(), size, id, data));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "There was a problem while trying to add a carved file to the database.", ex);
             }
