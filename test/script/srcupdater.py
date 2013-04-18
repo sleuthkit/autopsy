@@ -96,8 +96,8 @@ def vsBuild():
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
 	VSout.close()
-	chk = os.path.join("sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	os.chdir(oldpath)
+	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
 	except IOError as e:
