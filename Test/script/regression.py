@@ -1594,6 +1594,8 @@ def execute_test():
 	global failedbool
 	global html
 	global attachl
+	if(not dir_exists(Emailer.make_path("..", "output", "results"))):
+		os.makedirs(Emailer.make_path("..", "output", "results",))
 	case.output_dir = Emailer.make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
 	os.makedirs(case.output_dir)
 	case.common_log = "AutopsyErrors.txt"
