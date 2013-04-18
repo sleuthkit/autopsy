@@ -26,8 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.scalpel.ScalpelOutputParser;
-import org.sleuthkit.autopsy.scalpel.ScalpelOutputParser.CarvedFileMeta;
+import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 

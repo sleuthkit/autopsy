@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.scalpel.ScalpelOutputParser.CarvedFileMeta;
+import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelCarver;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelException;
 import org.sleuthkit.datamodel.AbstractFile;
