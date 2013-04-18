@@ -128,6 +128,16 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
         
+//        try {
+//            output = ScalpelOutputParser.parse(new File("C:\\Users\\mciver\\Documents\\df\\scalpel\\carve_test\\audit.txt"));
+//        } catch (FileNotFoundException ex) {
+//            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
+//            return ProcessResult.OK;
+//        } catch (IOException ex) {
+//            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
+//            return ProcessResult.OK;
+//        }
+        
 //        output = new ArrayList<CarvedFileMeta>();
 //        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, abstractFile.getSize()));
         
@@ -137,7 +147,13 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         for (CarvedFileMeta carvedFileMeta : output) {
             
             // calculate the byte offset of this carved file
-            long byteOffset = abstractFile.convertToImgOffset(carvedFileMeta.getByteStart());
+            long byteOffset;
+            try {
+                byteOffset = abstractFile.convertToImgOffset(carvedFileMeta.getByteStart());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not calculate the image byte offset of AbstractFile (" + abstractFile.getName() + ")");
+                break;
+            }
             
             // get the size of the carved file
             long size = carvedFileMeta.getByteLength();
