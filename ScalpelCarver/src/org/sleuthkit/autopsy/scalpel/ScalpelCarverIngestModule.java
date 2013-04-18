@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.scalpel;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -82,23 +81,6 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
         
-        // get the TskFileRange object for this AbstractFile
-        List<TskFileRange> fileData = Collections.EMPTY_LIST;
-        try {
-            fileData = abstractFile.getRanges();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "There was a problem while getting the TskFileRanges for this AbstractFile: " + abstractFile.getName(), ex);
-        }
-        if (fileData.size() > 1) {
-            logger.log(Level.WARNING, "The AbstractFile to be parsed (" +
-                    abstractFile.getName() + ") has more than one TskFileRange object; carving supports only processing one TskFileRange object at this time.");
-        } else if (fileData.size() == 0) {
-            logger.log(Level.SEVERE, "The AbstractFile to be parsed (" +
-                    abstractFile.getName() + ") has only one TskFileRange object; aborting.");
-            return ProcessResult.OK;
-        }
-        TskFileRange inputFileRange = fileData.get(0);
-        
         // create the output directory for this run
         String scalpelOutputDirPath = moduleOutputDirPath + File.separator + abstractFile.getId();
         File scalpelOutputDir = new File(scalpelOutputDirPath);
@@ -147,22 +129,22 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         }
         
 //        output = new ArrayList<CarvedFileMeta>();
-//        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, inputFileRange.getByteLen()));
+//        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, abstractFile.getSize()));
         
         // add a carved file to the DB for each file that scalpel carved
         SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
-        List<LayoutFile> carvedFiles = new ArrayList<LayoutFile>();
+        List<LayoutFile> carvedFiles = new ArrayList<LayoutFile>(output.size());
         for (CarvedFileMeta carvedFileMeta : output) {
             
             // calculate the byte offset of this carved file
-            long byteOffset = inputFileRange.getByteStart() + carvedFileMeta.getByteStart();
+            long byteOffset = abstractFile.convertToImgOffset(carvedFileMeta.getByteStart());
+            
+            // get the size of the carved file
+            long size = carvedFileMeta.getByteLength();
             
             // create the list of TskFileRange objects
             List<TskFileRange> data = new ArrayList<TskFileRange>();
-            data.add(new TskFileRange(byteOffset, carvedFileMeta.getByteLength(), 0));
-            
-            // get the size of this carved file
-            long size = carvedFileMeta.getByteLength();
+            data.add(new TskFileRange(byteOffset, size, 0));
             
             // add the carved file
             try {
