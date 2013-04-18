@@ -1,0 +1,15 @@
+This file contains info abouut the Testing script.
+
+Output from the various externally run processes are stored in text files in the Test directory above the script directory.
+antautopsyOutput.txt stores the output from compiling autopsy.
+antdatamodelOutput.txt stores the output from compiling the TSK java bindings.
+The two git pull output files store the output from the git pulls.
+VsOutput.txt stores the TSK C++ compiliation output.
+Be sure to have at least 5 or 10 GB of free space before running tests because certain parts of the test can take several Gb, especially keyword search, however these files are deleted after the test.
+Only use rebuild mode to update gold standards if you have made changes to autopsy or if you are using images that aren't part of the standard set of testing images.
+Make sure to the specify config file when running srcupdater, otherwise it won't handle errors correctly.
+It is also recommended that you give a valid email address and mail server in the config file so that you will be informed of any build errors.
+Srcupdater pulls from the sleuthkit TSK and autopsy repositories, so you will have to modify the code if you want it to pull from your github repo.
+Microsoft Visual studio express C++, Ant, and git all have to be properly set up to run srcupdater, only ant has to properly set up to run the tests.
+Regression --help will list all command line arguments and their effects, the same is true of srcupdater.
+Emailer is not executable and cannot be run on its own.

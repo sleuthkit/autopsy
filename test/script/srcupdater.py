@@ -82,6 +82,7 @@ def vsBuild():
 	global passed
 	global parsed
 	#Please ensure that the current working directory is $autopsy/testing/script
+	oldpath = os.getcwd()
 	os.chdir(os.path.join("..", "..", "..","sleuthkit", "win32"))
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
@@ -95,6 +96,7 @@ def vsBuild():
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
 	VSout.close()
+	os.chdir(oldpath)
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
