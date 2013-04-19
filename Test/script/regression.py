@@ -157,10 +157,15 @@ class Args:
 #-----------------------------------------------------#
 class TestAutopsy:
 	def __init__(self):
+		global pars
 		# Paths:
 		self.input_dir = Emailer.make_local_path("..","input")
 		self.output_dir = ""
 		self.gold = Emailer.make_local_path("..", "output", "gold", "tmp")
+		if parsed.getElementsByTagName("golddir"):
+			self.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+		else:
+			self.gold_parse = self.gold
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -532,6 +537,9 @@ def run_test(image_file, count):
 		try:
 			gold_path = case.gold
 			img_gold = Emailer.make_path(case.gold, case.image_name)
+			if(not file_exists(img_gold)):
+				gold_path = case.gold_parse
+				img_gold = Emailer.make_path(img_gold, case.image_name)
 			img_archive = Emailer.make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
@@ -625,16 +633,16 @@ def rebuild():
 	# Errors to print
 	errors = []
 	# Delete the current gold standards
-	gold_dir = Emailer.make_path(case.gold, case.image_name)
+	gold_dir = Emailer.make_path(case.gold_parse, case.image_name)
 	clear_dir(gold_dir)
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
-	dboutpth = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
-	if not os.path.exists(case.gold):
-		os.makedirs(case.gold)
+	dboutpth = Emailer.make_path(gold_dir, "autopsy.db")
+	if not os.path.exists(case.gold_parse):
+		os.makedirs(case.gold_parse)
 	if not os.path.exists(gold_dir):
 		os.makedirs(gold_dir)
 	copy_file(dbinpth, dboutpth)
-	error_pth = Emailer.make_path(case.gold, case.image_name, case.image_name+"SortedErrors.txt")
+	error_pth = Emailer.make_path(gold_dir, case.image_name+"SortedErrors.txt")
 	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
@@ -646,9 +654,9 @@ def rebuild():
 	html_path = Emailer.make_path(case.output_dir, case.image_name,
 								 "AutopsyTestCase", "Reports")
 	try:
-		os.makedirs(os.path.join(case.gold, case.image_name, htmlfolder))
+		os.makedirs(os.path.join(gold_dir, htmlfolder))
 		for file in os.listdir(autopsy_html_path):
-			html_to = Emailer.make_path(case.gold, case.image_name, file.replace("HTML Report", "Report"))
+			html_to = Emailer.make_path(gold_dir, file.replace("HTML Report", "Report"))
 			copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
 	except FileNotFoundException as e:
 		errors.append(e.error)
@@ -656,7 +664,7 @@ def rebuild():
 		errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 		errors.append(str(e) + "\n")
 	oldcwd = os.getcwd()
-	zpdir = case.gold
+	zpdir = case.gold_parse
 	os.chdir(zpdir)
 	img_gold = case.image_name
 	print(img_gold)
