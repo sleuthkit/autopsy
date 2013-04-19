@@ -29,7 +29,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentFilter.DELETED_FILES_FILTER;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -50,12 +49,8 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
-        DELETED_FILES_FILTER(0, "DELETED_FILES_FILTER", "Deleted Files"),
-        ORPHAN_FILES_FILTER(1, "ORPHAN_FILES_FILTER", "Orphan Files"),
-        UNALLOC_CONTENT_FILTER(2, "UNALLOC_CONTENT_FILTER", "Unallocated Content"),
-        CARVED_CONTENT_FILTER(3, "Carved_CONTENT_FILTER", "Carved Content"),
-        UNUSED_FILES_FILTER(4, "UNUSED_FILES_FILTER", "Unused Files"),
-        UNUSED_BLOCKS_FILTER(5, "UNUSED_BLOCKS_FILTER", "Unused Blocks");
+        FS_DELETED_FILTER(0, "FS_DELETED_FILTER", "File System"),
+        ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", "All");
         private int id;
         private String name;
         private String displayName;
@@ -100,7 +95,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public static class DeletedContentsNode extends DisplayableItemNode {
 
-        private static final String NAME = "Deleted Content";
+        private static final String NAME = "Deleted Files";
         private SleuthkitCase skCase;
 
         DeletedContentsNode(SleuthkitCase skCase) {
@@ -227,28 +222,33 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             private String makeQuery() {
-                String query = null;
+                String query = "";
                 switch (filter) {
-                    case DELETED_FILES_FILTER:
-                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType();
+                    case FS_DELETED_FILTER:
+                        query =  "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
+                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType();
+                                
                         break;
-                    case UNUSED_FILES_FILTER:
-                        query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNUSED.getValue();
+                    case ALL_DELETED_FILTER:
+                        query =  " ( "
+                                + "( "
+                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                                + " OR "
+                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() 
+                                + ")"
+                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()
+                                + " )"
+                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType()
+                                + " )";
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
+                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
                         break;
-                    case ORPHAN_FILES_FILTER:
-                        query = "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue();
-                        break;
-                    case UNALLOC_CONTENT_FILTER:
-                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                                + " OR meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue();
-                        break;
-                    case UNUSED_BLOCKS_FILTER:
-                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType();
-                        break;
-                    case CARVED_CONTENT_FILTER:
-                        query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType();
-                        break;
+                    
                     default:
                         logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: " + filter);
 
