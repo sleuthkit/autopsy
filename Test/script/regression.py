@@ -157,15 +157,10 @@ class Args:
 #-----------------------------------------------------#
 class TestAutopsy:
 	def __init__(self):
-		global pars
 		# Paths:
 		self.input_dir = Emailer.make_local_path("..","input")
 		self.output_dir = ""
 		self.gold = Emailer.make_local_path("..", "output", "gold", "tmp")
-		if parsed.getElementsByTagName("golddir"):
-			self.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-		else:
-			self.gold_parse = self.gold
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -361,6 +356,8 @@ class Database:
 	def generate_gold_artifacts(self):
 		if not self.gold_artifacts:
 			gold_db_file = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
+			if(not file_exists(gold_db_file)):
+				gold_db_file = Emailer.make_path(case.gold_parse, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -377,6 +374,8 @@ class Database:
 	def generate_gold_attributes(self):
 		if self.gold_attributes == 0:
 			gold_db_file = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
+			if(not file_exists(gold_db_file)):
+				gold_db_file = Emailer.make_path(case.gold_parse, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -385,6 +384,8 @@ class Database:
 	def generate_gold_objects(self):
 		if self.gold_objects == 0:
 			gold_db_file = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
+			if(not file_exists(gold_db_file)):
+				gold_db_file = Emailer.make_path(case.gold_parse, case.image_name, "autopsy.db")
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -406,13 +407,17 @@ def run_config_test(config_file):
 		global attachl
 		count = 0
 		parsed = parse(config_file)
+		case
 		counts = {}
 		if parsed.getElementsByTagName("indir"):
 			case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
 		if parsed.getElementsByTagName("global_csv"):
 			case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
 			case.global_csv = Emailer.make_local_path(case.global_csv)
-		
+		if parsed.getElementsByTagName("golddir"):
+			case.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+		else:
+			case.gold_parse = self.gold
 		# Generate the top navbar of the HTML for easy access to all images
 		values = []
 		for element in parsed.getElementsByTagName("image"):
@@ -632,6 +637,8 @@ def image_type(image_file):
 def rebuild():
 	# Errors to print
 	errors = []
+	if(case.gold_parse == None):
+		case.gold_parse = case.gold
 	# Delete the current gold standards
 	gold_dir = Emailer.make_path(case.gold_parse, case.image_name)
 	clear_dir(gold_dir)
@@ -744,6 +751,8 @@ def compare_to_gold_db():
 # the regression test against the gold standard html report
 def compare_to_gold_html():
 	gold_html_file = Emailer.make_path(case.gold, case.image_name, "Report", "index.html")
+	if(not file_exists(gold_html_file)):
+		gold_html_file = Emailer.make_path(case.gold_parse, case.image_name, "Report", "index.html")
 	htmlfolder = ""
 	for fs in os.listdir(Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
 		if os.path.isdir(Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
@@ -771,6 +780,11 @@ def compare_to_gold_html():
 		for fs in os.listdir(Emailer.make_path(case.gold, case.image_name)):
 			if (fs.endswith(".html")):
 				ListNewHTML.append(Emailer.make_path(case.gold, case.image_name, fs))
+		if(not case.gold_parse == None):
+			if(file_exists(Emailer.make_path(case.gold_parse, case.image_name))):
+				for fs in os.listdir(Emailer.make_path(case.gold_parse, case.image_name)):
+					if (fs.endswith(".html")):
+						ListNewHTML.append(Emailer.make_path(case.gold_parse, case.image_name, fs))
 		#ensure both reports have the same number of files and are in the same order
 		if(len(ListGoldHTML) != len(ListNewHTML)):
 			printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
@@ -899,6 +913,8 @@ def generate_common_log():
 		
 def	compare_errors():
 	gold_dir = Emailer.make_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	if(not file_exists(gold_dir)):
+			gold_dir = Emailer.make_path(case.gold_parse, case.image_name, case.image_name + "SortedErrors.txt")
 	common_log = codecs.open(case.sorted_log, "r", "utf_8")
 	gold_log = codecs.open(gold_dir, "r", "utf_8")
 	gold_dat = gold_log.read()
