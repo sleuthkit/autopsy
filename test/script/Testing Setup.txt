@@ -1,8 +1,0 @@
-This file explains how to setup regression and continuous testing for Autopsy.
-
-1)Create a folder called 'results', this is where the test results will go.
-2)Run the "test-download-imgs" ant command to get the default testing images, the images will be downloaded with the git pull.
-3)The config.xml file is an example of a configuration file and contains all of the available elements, as well as the default config file.
-4)Use the -g flag to create a gold standard without testing.
-5)Use the -r flag to rebuild gold standards with testing.
-6)Use the -c flag to run testing continuously until interrupted, this will also update all of the sleuthkit and autopsy code from github and will rebuild the code so that it is running the latest version after each test.
