@@ -416,8 +416,9 @@ def run_config_test(config_file):
 			case.global_csv = Emailer.make_local_path(case.global_csv)
 		if parsed.getElementsByTagName("golddir"):
 			case.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+			case.gold_parse = Emailer.make_path(case.gold_parse, "tmp")
 		else:
-			case.gold_parse = self.gold
+			case.gold_parse = case.gold
 		# Generate the top navbar of the HTML for easy access to all images
 		values = []
 		for element in parsed.getElementsByTagName("image"):
@@ -546,6 +547,9 @@ def run_test(image_file, count):
 				gold_path = case.gold_parse
 				img_gold = Emailer.make_path(img_gold, case.image_name)
 			img_archive = Emailer.make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
+			if(not file_exists(img_archive)):
+				img_archive = Emailer.make_path(case.gold_parse, "..", case.image_name+"-archive.zip")
+			print(img_archive)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
@@ -696,6 +700,8 @@ def zipdir(path, zip):
 def compare_to_gold_db():
 	# SQLITE needs unix style pathing
 	gold_db_file = Emailer.make_path(case.gold, case.image_name, "autopsy.db")
+	if(not file_exists(gold_db_file)):
+		gold_db_file = Emailer.make_path(case.gold_parse, case.image_name, "autopsy.db")
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
@@ -777,10 +783,11 @@ def compare_to_gold_html():
 				ListGoldHTML.append(os.path.join(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, fs))
 		#Find all new .html files belonging to this case
 		ListNewHTML = []
-		for fs in os.listdir(Emailer.make_path(case.gold, case.image_name)):
-			if (fs.endswith(".html")):
-				ListNewHTML.append(Emailer.make_path(case.gold, case.image_name, fs))
-		if(not case.gold_parse == None):
+		if(os.path.exists(Emailer.make_path(case.gold, case.image_name))):
+			for fs in os.listdir(Emailer.make_path(case.gold, case.image_name)):
+				if (fs.endswith(".html")):
+					ListNewHTML.append(Emailer.make_path(case.gold, case.image_name, fs))
+		if(not case.gold_parse == None or case.gold == case.gold_parse):
 			if(file_exists(Emailer.make_path(case.gold_parse, case.image_name))):
 				for fs in os.listdir(Emailer.make_path(case.gold_parse, case.image_name)):
 					if (fs.endswith(".html")):
