@@ -817,10 +817,6 @@
                 <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/avalon-framework-4.1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/avalon-framework-4.1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
             </class-path-extension>
@@ -829,12 +825,12 @@
                 <binary-origin>release/modules/ext/ant-launcher-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xml-apis-1.0.b2.jar</runtime-relative-path>
@@ -919,6 +915,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/avalon-framework-4.1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/avalon-framework-4.1.5.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
