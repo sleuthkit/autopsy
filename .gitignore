@@ -47,6 +47,9 @@ genfiles.properties
 !/branding/nbproject/project.xml
 !/branding/nbproject/project.properties
 /test/input/
+!/test/input/notablehashes.txt-md5.idx
+!/test/input/notablekeywords.xml
+!/test/input/NSRL.txt-md5.idx
 /test/input/*
 /test/output/*
 !/test/output/gold
