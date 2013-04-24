@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public class ScalpelCarver {
 
     private static final String SCALPEL_JNI_LIB = "libscalpel_jni";
+    private static final String SCALPEL_OUTPUT_FILE_NAME = "audit.txt";
     private static boolean initialized = false;
     private static final Logger logger = Logger.getLogger(ScalpelCarver.class.getName());
 
@@ -152,7 +153,7 @@ public class ScalpelCarver {
         }
         
         // create a file object for the output
-        File outputFile = new File(outputFolderPath);
+        File outputFile = new File(outputFolderPath, SCALPEL_OUTPUT_FILE_NAME);
         
         // parse the output
         List<CarvedFileMeta> output = Collections.EMPTY_LIST;
