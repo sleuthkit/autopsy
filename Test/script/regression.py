@@ -677,7 +677,6 @@ def rebuild():
 	zpdir = case.gold_parse
 	os.chdir(zpdir)
 	img_gold = case.image_name
-	print(img_gold)
 	img_archive = Emailer.make_path("..", case.image_name+"-archive.zip")
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
