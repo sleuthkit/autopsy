@@ -1,6 +1,8 @@
 ---------------- VERSION Current (development)  --------------
 
 New features:
+- File carving ingest module
+- Deleted files view in directory tree
 
 Improvements:
 - Improvements to tagging of files and keyword search results
