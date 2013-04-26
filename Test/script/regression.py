@@ -300,7 +300,6 @@ class Database:
 			global failedbool
 			global errorem
 			failedbool = True
-			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 			return "; ".join(self.artifact_comparison)
 		
 	def get_attribute_comparison(self):
@@ -309,7 +308,6 @@ class Database:
 		global failedbool
 		global errorem
 		failedbool = True
-		errorem += "There was a difference in the number of attributes for " + case.image + ".\n"
 		list = []
 		for error in self.attribute_comparison:
 			list.append(error)
@@ -425,6 +423,8 @@ def run_config_test(config_file):
 			value = element.getAttribute("value").encode().decode("utf_8")
 			if file_exists(value):
 				values.append(value)
+			else:
+				print("File: ", value, " doesn't exist")
 		count = len(values)
 		archives = Emailer.make_path(case.gold, "..")
 		arcount = 0
@@ -823,6 +823,11 @@ def compare_to_gold_html():
 def compare_bb_artifacts():
 	exceptions = []
 	try:
+		global failedbool
+		global errorem
+		if database.gold_artifacts != database.autopsy_artifacts:
+			failedbool = True
+			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 		for type_id in range(1, 13):
 			if database.gold_artifacts != database.autopsy_artifacts:
 				error = str("Artifact counts do not match for type id %d. " % type_id)
@@ -830,11 +835,7 @@ def compare_bb_artifacts():
 							(database.gold_artifacts[type_id],
 							 database.autopsy_artifacts[type_id]))
 				exceptions.append(error)
-				global failedbool
-				global errorem
-				failedbool = True
-				errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
-				return exceptions
+		return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
 		return exceptions
