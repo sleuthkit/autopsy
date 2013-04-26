@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class SearchFilters implements AutopsyVisitableItem {
 
-    SleuthkitCase skCase;
+    private SleuthkitCase skCase;
 
     public enum FileSearchFilter implements AutopsyVisitableItem,SearchFilterInterface {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
@@ -35,10 +35,10 @@ public class SearchFilters implements AutopsyVisitableItem {
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
         TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt"));
 
-        int id;
-        String name;
-        String displayName;
-        List<String> filter;
+        private int id;
+        private String name;
+        private String displayName;
+        private List<String> filter;
 
         private FileSearchFilter(int id, String name, String displayName, List<String> filter){
             this.id = id;
