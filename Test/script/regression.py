@@ -1253,13 +1253,14 @@ def printout(string):
 def generate_html():
 	# If the file doesn't exist yet, this is the first case to run for
 	# this test, so we need to make the start of the html log
+	global imgfail
 	if not file_exists(case.html_log):
 		write_html_head()
 	try:
 		global html
 		html = open(case.html_log, "a")
 		# The image title
-		title = "<a id='"case.image_name"'>"case.image_name"</a>\
+		title = "<a id='" + case.image_name +"'>" + case.image_name + "</a>\
 				<h1><a name='" + case.image_name + "'>" + case.image_name + " \
 					<span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
 				 <h2 align='center'>\
@@ -1270,9 +1271,13 @@ def generate_html():
 				 </h2>"
 				 
 		# The script errors found
+		if imgfail:
+			clr = '#0000FF'
+		else:
+			clr = '#282828'
 		errors = "<div id='errors'>\
 				  <h2><a name='" + case.image_name + "-errors'>Errors and Warnings</a></h2>\
-				  <hr color='#FF0000'>"
+				  <hr color='" + clr + "'>"
 		# For each error we have logged in the case
 		for error in case.printerror:
 			# Replace < and > to avoid any html display errors
@@ -1285,7 +1290,7 @@ def generate_html():
 		# Links to the logs
 		logs = "<div id='logs'>\
 				<h2><a name='" + case.image_name + "-logs'>Logs</a></h2>\
-				<hr color='#00a00f'>"
+				<hr color='#282828'>"
 		logs_path = Emailer.make_local_path(case.output_dir, case.image_name, "logs")
 		for file in os.listdir(logs_path):
 			logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
@@ -1294,7 +1299,7 @@ def generate_html():
 		# All the testing information
 		info = "<div id='info'>\
 				<h2><a name='" + case.image_name + "-info'>Information</a></h2>\
-				<hr color='#0005FF'>\
+				<hr color='#282828'>\
 				<table cellspacing='5px'>"
 		# The individual elements
 		info += "<tr><td>Image Path:</td>"
