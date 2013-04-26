@@ -40,8 +40,8 @@ import javax.swing.event.ListDataListener;
 final class AddImageVisualPanel1 extends JPanel {
     
     enum EVENT {UPDATE_UI, FOCUS_NEXT};
-    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
-    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
+    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", "raw"});
+    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
     static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
     static final String encaseDesc = "Encase Images (*.e01)";
