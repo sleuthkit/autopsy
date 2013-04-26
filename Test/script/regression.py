@@ -829,7 +829,7 @@ def compare_bb_artifacts():
 			failedbool = True
 			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 		for type_id in range(1, 13):
-			if database.gold_artifacts != database.autopsy_artifacts:
+			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
 				error = str("Artifact counts do not match for type id %d. " % type_id)
 				error += str("Gold: %d, Test: %d" %
 							(database.gold_artifacts[type_id],
