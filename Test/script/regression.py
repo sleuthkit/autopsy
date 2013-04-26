@@ -300,6 +300,8 @@ class Database:
 			global failedbool
 			global errorem
 			failedbool = True
+			global imgfail
+			imgfail = True
 			return "; ".join(self.artifact_comparison)
 		
 	def get_attribute_comparison(self):
@@ -308,6 +310,8 @@ class Database:
 		global failedbool
 		global errorem
 		failedbool = True
+		global imgfail
+		imgfail = True
 		list = []
 		for error in self.attribute_comparison:
 			list.append(error)
@@ -477,6 +481,8 @@ def run_config_test(config_file):
 # The path must be guarenteed to be a correct path.
 def run_test(image_file, count):
 	global parsed
+	global imgfail
+	imgfail = False
 	if image_type(image_file) == IMGTYPE.UNKNOWN:
 		printerror("Error: Image type is unrecognized:")
 		printerror(image_file + "\n")
@@ -827,6 +833,8 @@ def compare_bb_artifacts():
 		global errorem
 		if database.gold_artifacts != database.autopsy_artifacts:
 			failedbool = True
+			global imgfail
+			imgfail = True
 			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
 		for type_id in range(1, 13):
 			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
@@ -852,6 +860,8 @@ def compare_bb_attributes():
 			global failedbool
 			global errorem
 			failedbool = True
+			global imgfail
+			imgfail = True
 			errorem += "There was a difference in the number of attributes for " + case.image + ".\n"
 			return exceptions
 	except Exception as e:
@@ -870,6 +880,8 @@ def compare_tsk_objects():
 			global failedbool
 			global errorem
 			failedbool = True
+			global imgfail
+			imgfail = True
 			errorem += "There was a difference between the tsk object counts for " + case.image + " .\n"
 			return exceptions
 	except Exception as e:
@@ -938,6 +950,8 @@ def compare_errors():
 		errorem += "There was a difference in the exceptions Log.\n"
 		print("Exceptions didn't match.\n")
 		failedbool = True
+		global imgfail
+		imgfail = True
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
@@ -1245,7 +1259,8 @@ def generate_html():
 		global html
 		html = open(case.html_log, "a")
 		# The image title
-		title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
+		title = "<a id='"case.image_name"'>"case.image_name"</a>\
+				<h1><a name='" + case.image_name + "'>" + case.image_name + " \
 					<span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
 				 <h2 align='center'>\
 				 <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
@@ -1665,6 +1680,8 @@ def execute_test():
 	logres = search_common_log("TskCoreException")
 	if (len(logres)>0):
 		failedbool = True
+		global imgfail
+		imgfail = True
 		global errorem
 		errorem += "Autopsy Nightly test failed.\n"
 		passFail = False
