@@ -549,12 +549,11 @@ def run_test(image_file, count):
 		try:
 			gold_path = case.gold
 			img_gold = Emailer.make_path(case.gold, case.image_name)
-			if(not file_exists(img_gold)):
-				gold_path = case.gold_parse
-				img_gold = Emailer.make_path(img_gold, case.image_name)
 			img_archive = Emailer.make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			if(not file_exists(img_archive)):
 				img_archive = Emailer.make_path(case.gold_parse, "..", case.image_name+"-archive.zip")
+				gold_path = case.gold_parse
+				img_gold = Emailer.make_path(gold_path, case.image_name)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
@@ -649,7 +648,7 @@ def rebuild():
 	if(case.gold_parse == None):
 		case.gold_parse = case.gold
 	# Delete the current gold standards
-	gold_dir = Emailer.make_path(case.gold_parse, case.image_name)
+	gold_dir = Emailer.make_path(case.gold_parse)
 	clear_dir(gold_dir)
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
 	dboutpth = Emailer.make_path(gold_dir, "autopsy.db")
@@ -1272,12 +1271,12 @@ def generate_html():
 				 
 		# The script errors found
 		if imgfail:
-			clr = '#0000FF'
+			ids = 'errors1'
 		else:
-			clr = '#282828'
-		errors = "<div id='errors'>\
+			ids = 'errors'
+		errors = "<div id='" + ids + "'>\
 				  <h2><a name='" + case.image_name + "-errors'>Errors and Warnings</a></h2>\
-				  <hr color='" + clr + "'>"
+				  <hr color='#FF0000'>"
 		# For each error we have logged in the case
 		for error in case.printerror:
 			# Replace < and > to avoid any html display errors
@@ -1388,13 +1387,14 @@ def write_html_head():
 			h1 span { font-size: 12px; font-weight: 100; }\
 			h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
 			hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
-			#errors { background: #FFCFCF; border: 1px solid #FF0000; color: #FF0000; padding: 10px; margin: 20px; }\
-			#info { background: #D2D3FF; border: 1px solid #0005FF; color: #0005FF; padding: 10px; margin: 20px; }\
+			#errors { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+			#errors1 { background: #CC0000; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+			#info { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
 			#general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#logs { background: #8cff97; border: 1px solid #00820c; color: #00820c; padding: 10px; margin: 20px; }\
+			#logs { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
 			#errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
-			#info table td { color: #0005FF; font-size: 12px; min-width: 225px; }\
-			#logs a { color: #00820c; }\
+			#info table td { color: ##282828; font-size: 12px; min-width: 225px; }\
+			#logs a { color: ##282828; }\
 			</style>\
 			<body>"
 	html.write(head)
