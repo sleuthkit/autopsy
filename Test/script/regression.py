@@ -1259,8 +1259,7 @@ def generate_html():
 		global html
 		html = open(case.html_log, "a")
 		# The image title
-		title = "<a id='" + case.image_name +"'>" + case.image_name + "</a>\
-				<h1><a name='" + case.image_name + "'>" + case.image_name + " \
+		title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
 					<span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
 				 <h2 align='center'>\
 				 <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
@@ -1268,7 +1267,7 @@ def generate_html():
 				 <a href='#" + case.image_name + "-general'>General Output</a> |\
 				 <a href='#" + case.image_name + "-logs'>Logs</a>\
 				 </h2>"
-				 
+		print("<a id='" + case.image_name +"'></a>")
 		# The script errors found
 		if imgfail:
 			ids = 'errors1'
@@ -1417,7 +1416,7 @@ def html_add_images(full_image_names):
 	links = []
 	for full_name in full_image_names:
 		name = case.get_image_name(full_name)
-		links.append("<a href='#" + name + "'>" + name + "</a>")
+		links.append("<a href='#" + name + "(0)'>" + name + "</a>")
 	html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
 
 
