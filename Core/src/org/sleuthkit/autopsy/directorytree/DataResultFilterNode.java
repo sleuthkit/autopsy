@@ -379,6 +379,15 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
+        public AbstractAction visit(LayoutFileNode lfn) {
+            if (lfn.hasContentChildren()) {
+                return openChild(lfn);
+            } else {
+                return null;
+            }
+        }
+        
+        @Override
         public AbstractAction visit(DerivedFileNode dfn) {
             if (dfn.hasContentChildren()) {
                 return openChild(dfn);
