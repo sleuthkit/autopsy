@@ -57,7 +57,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
 
     
     private String createQuery(){
-        String query = "known <> 1 AND (0";
+        String query = "(known IS NULL OR known != 1) AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }

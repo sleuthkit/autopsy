@@ -60,7 +60,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
     }
 
     private String createQuery() {
-        String query = "known <> 1 AND (";
+        String query = "(known IS NULL OR known != 1) AND (";
         long lowerLimit = prevDay.getTimeInMillis() / 1000;
         prevDay.add(Calendar.DATE, 1);
         prevDay.add(Calendar.MILLISECOND, -1);
