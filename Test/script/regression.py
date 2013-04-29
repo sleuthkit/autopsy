@@ -1267,7 +1267,6 @@ def generate_html():
 				 <a href='#" + case.image_name + "-general'>General Output</a> |\
 				 <a href='#" + case.image_name + "-logs'>Logs</a>\
 				 </h2>"
-		print("<a id='" + case.image_name +"'></a>")
 		# The script errors found
 		if imgfail:
 			ids = 'errors1'
