@@ -137,9 +137,18 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
 //            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
 //            return ProcessResult.OK;
 //        }
-        
+
 //        output = new ArrayList<CarvedFileMeta>();
 //        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, abstractFile.getSize()));
+
+        // get the image's size
+        long imageSize = Long.MAX_VALUE;
+        try {
+            
+            imageSize = abstractFile.getImage().getSize();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Could not obtain the image's size.");
+        }
         
         // add a carved file to the DB for each file that scalpel carved
         SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
@@ -157,6 +166,12 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             
             // get the size of the carved file
             long size = carvedFileMeta.getByteLength();
+            
+            // hack to fix the size of carved files that run to the end of the image
+            long endByte = byteOffset + size - 1;
+            if (endByte >= imageSize) {
+                size = imageSize - byteOffset;
+            }
             
             // create the list of TskFileRange objects
             List<TskFileRange> data = new ArrayList<TskFileRange>();
