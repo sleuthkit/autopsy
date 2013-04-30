@@ -945,8 +945,9 @@ def compare_errors():
 		global attachl
 		global errorem
 		global failedbool
+		attachl.append(case.sorted_log)
 		attachl.append(diff_dir)
-		errorem += "There was a difference in the exceptions Log.\n"
+		errorem += "There was a difference in the exceptions Log for " + case.image_name + ".\n"
 		print("Exceptions didn't match.\n")
 		failedbool = True
 		global imgfail
@@ -1267,7 +1268,6 @@ def generate_html():
 				 <a href='#" + case.image_name + "-general'>General Output</a> |\
 				 <a href='#" + case.image_name + "-logs'>Logs</a>\
 				 </h2>"
-		print("<a id='" + case.image_name +"'></a>")
 		# The script errors found
 		if imgfail:
 			ids = 'errors1'
