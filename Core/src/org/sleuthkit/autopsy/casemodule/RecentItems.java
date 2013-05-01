@@ -65,7 +65,7 @@ class RecentItems implements ActionListener {
 
                     @Override
                     public void run() {
-                        StartupWindow.getInstance().open();
+                        StartupWindowProvider.getInstance().open();
                     }
                     
                 });
