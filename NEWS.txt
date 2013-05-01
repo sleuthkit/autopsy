@@ -7,6 +7,7 @@ Improvements:
 
 Bugfixes:
 - Keyword Search: fix when Solr does not cleanly shutdown
+- fix for "Process Unallocated Space" option doesn't do anything
 
 
 
