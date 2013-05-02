@@ -578,24 +578,21 @@ class IngestScheduler {
          * of skipped
          * @return true if should be enqueued, false otherwise
          */
-        private static boolean shouldEnqueueTask(ProcessTask processTask) {
+        private static boolean shouldEnqueueTask(final ProcessTask processTask) {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.context.isProcessUnalloc() == false) {
-                if (aFile.isVirtual() == true //virtual dir
-                        || aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
+            if (processTask.context.isProcessUnalloc() == false
+                    && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                         ) ) {
                     return false;
-                }
             }
 
             String fileName = aFile.getName();
             if (fileName.equals(".") || fileName.equals("..")) {
                 return false;
             }
-            if (aFile.isVirtual() == false && aFile.isFile() == true
-                    && aFile.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
+            else if (aFile instanceof org.sleuthkit.datamodel.File ) {
                 final org.sleuthkit.datamodel.File f = (File) aFile;
 
                 //skip files in root dir, starting with $, containing : (not default attributes)
