@@ -583,7 +583,9 @@ class IngestScheduler {
 
             //if it's unalloc file, skip if so scheduled
             if (processTask.context.isProcessUnalloc() == false) {
-                if (aFile.isVirtual() == true) {
+                if (aFile.isVirtual() == true //virtual dir
+                        || aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
+                        ) ) {
                     return false;
                 }
             }
