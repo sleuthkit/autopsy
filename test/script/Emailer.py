@@ -25,12 +25,12 @@ def send_email(parsed, errorem, attachl, passFail):
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
 	if(passFail):
-		msg['Subject'] = 'Autopsy Nightly test passed.'
+		msg['Subject'] = '[Test]Autopsy test passed.'
 	else:
-		msg['Subject'] = 'Autopsy Nightly test failed.'
+		msg['Subject'] = '[Test]Autopsy test failed.'
 	# me == the sender's email address
 	# family = the list of all recipients' email addresses
-	msg['From'] = 'AutopsyContinuousTest'
+	msg['From'] = 'AutopsyTest'
 	msg['To'] = toval
 	msg.preamble = 'This is a test'
 	container = MIMEText(errorem, 'plain')
