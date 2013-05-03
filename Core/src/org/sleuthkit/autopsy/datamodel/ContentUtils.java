@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
@@ -102,7 +103,14 @@ public final class ContentUtils {
 
     public static TimeZone getTimeZone(Content c) {
         try {
-            return TimeZone.getTimeZone(c.getImage().getTimeZone());
+            final Image image = c.getImage();
+            if (image != null) {
+                return TimeZone.getTimeZone(image.getTimeZone());
+            }
+            else {
+                //case such as top level VirtualDirectory
+                return TimeZone.getDefault();
+            }
         } catch (TskException ex) {
             return TimeZone.getDefault();
         }
