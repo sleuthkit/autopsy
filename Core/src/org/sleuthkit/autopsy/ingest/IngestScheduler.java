@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -860,6 +861,13 @@ class IngestScheduler {
                 //can have derived files
                 //TODO test this and overall scheduler with derived files
                 return getAllFromChildren(derivedFile);
+            }
+            
+            @Override
+            public Collection<AbstractFile> visit(LocalFile localFile) {
+                //can have derived files
+                //TODO test this and overall scheduler with local files
+                return getAllFromChildren(localFile);
             }
         }
     }

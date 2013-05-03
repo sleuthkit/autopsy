@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -32,6 +30,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -95,8 +94,13 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             }
 
             @Override
-            public DerivedFileNode visit(DerivedFile df) {
-                return new DerivedFileNode(df);
+            public LocalFileNode visit(DerivedFile df) {
+                return new LocalFileNode(df);
+            }
+            
+            @Override
+            public LocalFileNode visit(LocalFile lf) {
+                return new LocalFileNode(lf);
             }
 
             @Override

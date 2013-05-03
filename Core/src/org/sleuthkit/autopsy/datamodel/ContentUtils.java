@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
 
@@ -276,6 +277,18 @@ public final class ContentUtils {
             }
             return null;
         }
+        
+        @Override
+        public Void visit(LocalFile lf) {
+            try {
+                ContentUtils.writeToFile(lf, dest, progress, worker, source);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Error extracting local file to " + dest.getAbsolutePath(),
+                        ex);
+            }
+            return null;
+        }
 
         @Override
         public Void visit(Directory dir) {
@@ -348,9 +361,14 @@ public final class ContentUtils {
                 return getFsContentDest(lf);
             }
             
-             @Override
+            @Override
             public java.io.File visit(DerivedFile df) {
                 return getFsContentDest(df);
+            }
+            
+            @Override
+            public java.io.File visit(LocalFile lf) {
+                return getFsContentDest(lf);
             }
 
             @Override

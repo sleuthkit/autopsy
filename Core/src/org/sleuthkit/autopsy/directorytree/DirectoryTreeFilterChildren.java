@@ -25,7 +25,7 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -200,7 +200,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(DerivedFileNode dfn) {
+        public Boolean visit(LocalFileNode dfn) {
             //is a leaf if has no children, or children are files not dirs
             boolean hasChildren = dfn.hasContentChildren();
             if (!hasChildren) {
@@ -251,7 +251,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(DerivedFileNode dfn) {
+        public Boolean visit(LocalFileNode dfn) {
             return dfn.hasContentChildren();
         }
 

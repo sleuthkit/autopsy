@@ -95,6 +95,11 @@ public class TagAction extends AbstractAction implements Presenter.Popup {
         public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile lf) {
             return lf;
         }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
+            return lf;
+        }
 
         @Override
         public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory ld) {

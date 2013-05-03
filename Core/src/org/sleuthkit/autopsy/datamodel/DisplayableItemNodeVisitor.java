@@ -61,7 +61,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
     T visit(LayoutFileNode lfn);
-    T visit(DerivedFileNode dfn);
+    T visit(LocalFileNode dfn);
     T visit(VirtualDirectoryNode ldn);
 
     /**
@@ -194,7 +194,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(DerivedFileNode dfn) {
+        public T visit(LocalFileNode dfn) {
             return defaultVisit(dfn);
         }
         

@@ -23,7 +23,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +42,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Volume;
 
 public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
@@ -106,6 +106,14 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     
     @Override
     public List<? extends Action> visit(final DerivedFile d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new ExtractAction("Extract File", d));
+        actions.add(new TagAction(d));
+        return actions;
+    }
+    
+    @Override
+    public List<? extends Action> visit(final LocalFile d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
         actions.add(new TagAction(d));

@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
@@ -368,7 +368,7 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(DerivedFileNode dfn) {
+        public AbstractAction visit(LocalFileNode dfn) {
             if (dfn.hasContentChildren()) {
                 return openChild(dfn);
             } else {

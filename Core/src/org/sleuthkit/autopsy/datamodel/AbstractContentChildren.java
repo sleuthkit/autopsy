@@ -94,7 +94,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         
         @Override
         public AbstractContentNode visit(DerivedFile df) {
-            return new DerivedFileNode(df);
+            return new LocalFileNode(df);
         }
         
         @Override

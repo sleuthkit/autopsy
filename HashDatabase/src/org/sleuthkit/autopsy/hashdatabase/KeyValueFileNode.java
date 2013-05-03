@@ -24,10 +24,10 @@ import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.LocalFile;
 
 /**
  * Node for KeyValueContent, following the simple design of a KeyValueNode, but
@@ -97,13 +98,26 @@ public class KeyValueFileNode extends KeyValueNode {
         @Override
         public List<Action> visit(DerivedFile f) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", new DerivedFileNode(f)));
-            actions.add(new ExternalViewerAction("Open in External Viewer", new DerivedFileNode(f)));
+            actions.add(new NewWindowViewAction("View in New Window", new LocalFileNode(f)));
+            actions.add(new ExternalViewerAction("Open in External Viewer", new LocalFileNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new ExtractAction("Extract File", new DerivedFileNode(f)));
-            actions.add(new HashSearchAction("Search for files with the same MD5 hash", new DerivedFileNode(f)));
+            actions.add(new ExtractAction("Extract File", new LocalFileNode(f)));
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", new LocalFileNode(f)));
             actions.add(null); // creates a menu separator
-            actions.add(new TagAction(new DerivedFileNode(f)));
+            actions.add(new TagAction(new LocalFileNode(f)));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(LocalFile f) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", new LocalFileNode(f)));
+            actions.add(new ExternalViewerAction("Open in External Viewer", new LocalFileNode(f)));
+            actions.add(null); // creates a menu separator
+            actions.add(new ExtractAction("Extract File", new LocalFileNode(f)));
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", new LocalFileNode(f)));
+            actions.add(null); // creates a menu separator
+            actions.add(new TagAction(new LocalFileNode(f)));
             return actions;
         }
 

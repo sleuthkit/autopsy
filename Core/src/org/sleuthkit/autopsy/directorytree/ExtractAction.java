@@ -85,6 +85,11 @@ public final class ExtractAction extends AbstractAction {
         public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
             return df;
         }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
+            return lf;
+        }
 
         @Override
         public AbstractFile visit(Directory dir) {
