@@ -86,7 +86,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
             EventQueue.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    StartupWindow.getInstance().open();
+                    StartupWindowProvider.getInstance().open();
                 }
             });
         } catch (Exception ex) {

@@ -26,40 +26,28 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
- * Displays 
+ * The default implementation of the Autopsy startup window
  */
-public final class StartupWindow extends JDialog {
+@ServiceProvider(service=StartupWindowInterface.class)
+public final class StartupWindow extends JDialog implements StartupWindowInterface {
 
     private static StartupWindow instance;
     private static final String TITLE = "Welcome";
     private static Dimension DIMENSIONS = new Dimension(750, 400);
 
-    private StartupWindow(JFrame frame, String title, boolean isModal) {
-        super(frame, title, isModal);
+    public StartupWindow() {
+        super(new JFrame(TITLE), TITLE, true);
         init();
     }
 
-    /**
-     * Get the startup window
-     * @return the startup window singleton
-     */
-    public static synchronized StartupWindow getInstance() {
-        if (StartupWindow.instance == null) {
-            JFrame frame = new JFrame(TITLE);
-            boolean isModal = true;
-            StartupWindow.instance = new StartupWindow(frame, TITLE, isModal);
-        }
-
-
-        return instance;
-    }
 
     /**
      * Shows the startup window.
      */
-    public void init() {
+    private void init() {
 
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -88,6 +76,7 @@ public final class StartupWindow extends JDialog {
 
     }
     
+    @Override
     public void open() {
         setVisible(true);
     }
@@ -95,6 +84,7 @@ public final class StartupWindow extends JDialog {
     /**
      * Closes the startup window.
      */
+    @Override
     public void close() {
         this.setVisible(false);
     }
