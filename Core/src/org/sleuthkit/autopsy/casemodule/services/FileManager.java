@@ -29,6 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -133,6 +134,67 @@ public class FileManager implements Closeable {
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
 
+     /**
+     * Creates a single local file under $LocalFiles for the case, adds it to the database and returns it.
+     * 
+     * @param fileName file name the derived file
+     * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
+     * @param size  size of the derived file in bytes
+     * @param ctime
+     * @param crtime
+     * @param atime
+     * @param mtime
+     * @param isFile whether a file or directory, true if a file
+	 * @return newly created local file object added to the database
+	 * @throws TskCoreException exception thrown if the object creation failed
+	 * due to a critical system error or of the file manager has already been closed
+     * 
+     */
+    public synchronized LocalFile addLocalFileSingle(String fileName, String localPath, long size,
+            long ctime, long crtime, long atime, long mtime,
+            boolean isFile) throws TskCoreException {
+        
+        if (tskCase == null) {
+            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+        }
+        
+        return tskCase.addLocalFile(fileName, localPath, size,
+                ctime, crtime, atime, mtime,
+                isFile, null);
+    }
+    
+    
+     /**
+     * Creates a single local file under parentFile for the case, adds it to the database and returns it.
+     * 
+     * @param fileName file name the derived file
+     * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
+     * @param size  size of the derived file in bytes
+     * @param ctime
+     * @param crtime
+     * @param atime
+     * @param mtime
+     * @param isFile whether a file or directory, true if a file
+     * @param parentFile parent file object (such as virtual directory, another local file, or fscontent File),
+	 * @return newly created local file object added to the database
+	 * @throws TskCoreException exception thrown if the object creation failed
+	 * due to a critical system error or of the file manager has already been closed
+     * 
+     */
+    public synchronized LocalFile addLocalFileSingle(String fileName, String localPath, long size,
+            long ctime, long crtime, long atime, long mtime,
+            boolean isFile, AbstractFile parentFile) throws TskCoreException {
+        
+        if (tskCase == null) {
+            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+        }
+        
+        return tskCase.addLocalFile(fileName, localPath, size,
+                ctime, crtime, atime, mtime,
+                isFile, parentFile);
+    }
+    
+    
     @Override
     public synchronized void close() throws IOException {
         tskCase = null;
