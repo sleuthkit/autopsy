@@ -167,12 +167,6 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             // get the size of the carved file
             long size = carvedFileMeta.getByteLength();
             
-            // hack to fix the size of carved files that run to the end of the image
-            long endByte = byteOffset + size - 1;
-            if (endByte >= imageSize) {
-                size = imageSize - byteOffset;
-            }
-            
             // create the list of TskFileRange objects
             List<TskFileRange> data = new ArrayList<TskFileRange>();
             data.add(new TskFileRange(byteOffset, size, 0));

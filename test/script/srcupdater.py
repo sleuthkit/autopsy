@@ -15,14 +15,17 @@ import xml
 from xml.dom.minidom import parse, parseString
 import Emailer
 
-def compile():
+def compile(errore, attachli, parsedin):
 	global redo
 	global tryredo
 	global failedbool
 	global errorem
+	errorem = errore
 	global attachl
+	attachl = attachli
 	global passed
 	global parsed
+	parsed = parsedin
 	passed = True
 	tryredo = False
 	redo = True
@@ -79,9 +82,11 @@ def vsBuild():
 	global passed
 	global parsed
 	#Please ensure that the current working directory is $autopsy/testing/script
+	oldpath = os.getcwd()
+	os.chdir(os.path.join("..", "..", "..","sleuthkit", "win32"))
 	vs = []
 	vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
-	vs.append(os.path.join("..", "..", "..","sleuthkit", "win32", "Tsk-win.sln"))
+	vs.append(os.path.join("Tsk-win.sln"))
 	vs.append("/p:configuration=release")
 	vs.append("/p:platform=win32")
 	vs.append("/t:clean")
@@ -91,6 +96,7 @@ def vsBuild():
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
 	VSout.close()
+	os.chdir(oldpath)
 	chk = os.path.join("..", "..", "..","sleuthkit", "win32", "Release", "libtsk_jni.dll")
 	try:
 		open(chk)
@@ -152,18 +158,14 @@ def antBuild(which, Build):
 
 
 def main():
-	global parsed
-	global errorem
-	global attachl
-	errorem = ""
-	attachl = []
+	errore = ""
+	attachli = []
 	config_file = ""
 	arg = sys.argv.pop(0)
 	arg = sys.argv.pop(0)
 	config_file = arg
-	print(config_file)
-	parsed = parse(config_file)
-	compile()
+	parsedin = parse(config_file)
+	compile(errore, attachli, parsedin)
 	
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)	  
