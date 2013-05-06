@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.LocalFile;
 
 /**
@@ -39,22 +40,18 @@ import org.sleuthkit.datamodel.LocalFile;
  * TODO should be able to extend FileNode after FileNode extends
  * AbstractFsContentNode<AbstractFile>
  */
-public class LocalFileNode extends AbstractAbstractFileNode<LocalFile> {
+public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
-    public static String nameForLayoutFile(LocalFile lf) {
-        return lf.getName();
-    }
+    public LocalFileNode(AbstractFile af) {
+        super(af);
 
-    public LocalFileNode(LocalFile lf) {
-        super(lf);
-
-        this.setDisplayName(lf.getName());
+        this.setDisplayName(af.getName());
 
         // set name, display name, and icon
-        if (lf.isDir()) {
+        if (af.isDir()) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
         } else {
-            this.setIconBaseWithExtension(FileNode.getIconForFileType(lf));
+            this.setIconBaseWithExtension(FileNode.getIconForFileType(af));
         }
 
     }
