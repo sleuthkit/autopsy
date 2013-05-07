@@ -100,101 +100,110 @@ public class FileManager implements Closeable {
 
     /**
      * Creates a derived file, adds it to the database and returns it.
-     * 
+     *
      * @param fileName file name the derived file
-     * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
-     * @param size  size of the derived file in bytes
+     * @param localPath local path of the derived file, including the file name.
+     * The path is relative to the database path.
+     * @param size size of the derived file in bytes
      * @param ctime
      * @param crtime
      * @param atime
      * @param mtime
      * @param isFile whether a file or directory, true if a file
-     * @param parentFile the parent file object this the new file was derived from, either a fs file or parent derived file/dikr\\r
+     * @param parentFile the parent file object this the new file was derived
+     * from, either a fs file or parent derived file/dikr\\r
      * @param rederiveDetails details needed to re-derive file (will be specific
-	 * to the derivation method), currently unused
-	 * @param toolName name of derivation method/tool, currently unused
-	 * @param toolVersion version of derivation method/tool, currently unused
-	 * @param otherDetails details of derivation method/tool, currently unused
-	 * @return newly created derived file object added to the database
-	 * @throws TskCoreException exception thrown if the object creation failed
-	 * due to a critical system error or of the file manager has already been closed
-     * 
+     * to the derivation method), currently unused
+     * @param toolName name of derivation method/tool, currently unused
+     * @param toolVersion version of derivation method/tool, currently unused
+     * @param otherDetails details of derivation method/tool, currently unused
+     * @return newly created derived file object added to the database
+     * @throws TskCoreException exception thrown if the object creation failed
+     * due to a critical system error or of the file manager has already been
+     * closed
+     *
      */
     public synchronized DerivedFile addDerivedFile(String fileName, String localPath, long size,
             long ctime, long crtime, long atime, long mtime,
             boolean isFile, AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
-        
+
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        
+
         return tskCase.addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
 
-     /**
-     * Creates a single local file under $LocalFiles for the case, adds it to the database and returns it.
-     * 
-     * @param fileName file name the derived file
-     * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
-     * @param size  size of the derived file in bytes
-     * @param ctime
-     * @param crtime
-     * @param atime
-     * @param mtime
-     * @param isFile whether a file or directory, true if a file
-	 * @return newly created local file object added to the database
-	 * @throws TskCoreException exception thrown if the object creation failed
-	 * due to a critical system error or of the file manager has already been closed
-     * 
+    /**
+     * Creates a single local file under $LocalFiles for the case, adds it to
+     * the database and returns it.
+     *
+     * @param localAbsPath local absolute path of the local file, including the
+     * file name.
+     * @return newly created local file object added to the database
+     * @throws TskCoreException exception thrown if the object creation failed
+     * due to a critical system error or of the file manager has already been
+     * closed
+     *
      */
-    public synchronized LocalFile addLocalFileSingle(String fileName, String localPath, long size,
-            long ctime, long crtime, long atime, long mtime,
-            boolean isFile) throws TskCoreException {
-        
+    public synchronized LocalFile addLocalFileSingle(String localAbsPath) throws TskCoreException {
+
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        
-        return tskCase.addLocalFile(fileName, localPath, size,
-                ctime, crtime, atime, mtime,
-                isFile, null);
+
+        return addLocalFileSingle(localAbsPath, null);
     }
-    
-    
-     /**
-     * Creates a single local file under parentFile for the case, adds it to the database and returns it.
-     * 
-     * @param fileName file name the derived file
-     * @param localPath local path of the derived file, including the file name.  The path is relative to the database path.
-     * @param size  size of the derived file in bytes
-     * @param ctime
-     * @param crtime
-     * @param atime
-     * @param mtime
-     * @param isFile whether a file or directory, true if a file
-     * @param parentFile parent file object (such as virtual directory, another local file, or fscontent File),
-	 * @return newly created local file object added to the database
-	 * @throws TskCoreException exception thrown if the object creation failed
-	 * due to a critical system error or of the file manager has already been closed
-     * 
+
+    /**
+     * Creates a single local file under parentFile for the case, adds it to the
+     * database and returns it.
+     *
+     * @param localAbsPath local absolute path of the local file, including the
+     * file name
+     * @param parentFile parent file object (such as virtual directory, another
+     * local file, or fscontent File),
+     * @return newly created local file object added to the database
+     * @throws TskCoreException exception thrown if the object creation failed
+     * due to a critical system error or of the file manager has already been
+     * closed
+     *
      */
-    public synchronized LocalFile addLocalFileSingle(String fileName, String localPath, long size,
-            long ctime, long crtime, long atime, long mtime,
-            boolean isFile, AbstractFile parentFile) throws TskCoreException {
-        
+    public synchronized LocalFile addLocalFileSingle(String localAbsPath, AbstractFile parentFile) throws TskCoreException {
+
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        
-        return tskCase.addLocalFile(fileName, localPath, size,
+
+        java.io.File localFile = new java.io.File(localAbsPath);
+        if (!localFile.exists()) {
+            throw new TskCoreException("Attempted to add a local file that does not exist: " + localAbsPath);
+        }
+        if (!localFile.canRead()) {
+            throw new TskCoreException("Attempted to add a local file that is not readable: " + localAbsPath);
+        }
+
+        long size = localFile.length();
+        boolean isFile = localFile.isFile();
+
+        //TODO what should do with mac times?
+        long ctime = 0;
+        long crtime = 0;
+        long atime = 0;
+        long mtime = 0;
+
+        String fileName = localFile.getName();
+
+        return tskCase.addLocalFile(fileName, localAbsPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
+        
+        //TODO decide if send event to viewers, or client should
     }
-    
-    
+
     @Override
     public synchronized void close() throws IOException {
         tskCase = null;
