@@ -25,6 +25,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
@@ -197,11 +198,15 @@ public class FileManager implements Closeable {
 
         String fileName = localFile.getName();
 
-        return tskCase.addLocalFile(fileName, localAbsPath, size,
+        LocalFile lf = tskCase.addLocalFile(fileName, localAbsPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
         
-        //TODO decide if send event to viewers, or client should
+        //refresh the content tree
+        //TODO decouple, use Node autorefresh once implemented
+        DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
+        
+        return lf;
     }
 
     @Override

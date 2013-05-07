@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public class ImagesNode extends DisplayableItemNode {
 
-    public static final String NAME = "Images";
+    public static final String NAME = "Data Sources";
 
     public ImagesNode(List<Content> images) {
         super(new RootContentChildren(images), Lookups.singleton(NAME));

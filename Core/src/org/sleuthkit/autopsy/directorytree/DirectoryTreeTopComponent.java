@@ -737,6 +737,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
+     * Refresh the content node part of the dir tree safely in the EDT thread
+     */
+    public void refreshContentTreeSafe() {
+        SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    refreshContentTree();
+                }
+            });
+    }
+    
+    /**
      * Refreshes changed content nodes
      */
     void refreshContentTree() {
