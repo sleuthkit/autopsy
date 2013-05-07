@@ -1108,7 +1108,7 @@ public class IngestManager {
                 imageScheduler.schedule(imagepipelineContext);
                 progress.progress("Image Ingest" + " " + imageName, ++processed);
 
-                final ScheduledImageTask fTask = new ScheduledImageTask(image, fileMods);
+                final ScheduledImageTask<IngestModuleAbstractFile> fTask = new ScheduledImageTask(image, fileMods);
                 final PipelineContext<IngestModuleAbstractFile> filepipelineContext = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + imageName, processed);
