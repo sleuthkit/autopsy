@@ -651,14 +651,17 @@ def rebuild():
 	# Delete the current gold standards
 	gold_dir = Emailer.make_path(case.gold_parse)
 	clear_dir(gold_dir)
+	tmpdir = Emailer.make_path(gold_dir, case.image_name)
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
-	dboutpth = Emailer.make_path(gold_dir, "autopsy.db")
+	dboutpth = Emailer.make_path(tmpdir, "autopsy.db")
 	if not os.path.exists(case.gold_parse):
 		os.makedirs(case.gold_parse)
 	if not os.path.exists(gold_dir):
 		os.makedirs(gold_dir)
+	if not os.path.exists(tmpdir):
+		os.makedirs(tmpdir)
 	copy_file(dbinpth, dboutpth)
-	error_pth = Emailer.make_path(gold_dir, case.image_name+"SortedErrors.txt")
+	error_pth = Emailer.make_path(tmpdir, case.image_name+"SortedErrors.txt")
 	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
@@ -670,9 +673,9 @@ def rebuild():
 	html_path = Emailer.make_path(case.output_dir, case.image_name,
 								 "AutopsyTestCase", "Reports")
 	try:
-		os.makedirs(os.path.join(gold_dir, htmlfolder))
+		os.makedirs(os.path.join(tmpdir, htmlfolder))
 		for file in os.listdir(autopsy_html_path):
-			html_to = Emailer.make_path(gold_dir, file.replace("HTML Report", "Report"))
+			html_to = Emailer.make_path(tmpdir, file.replace("HTML Report", "Report"))
 			copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
 	except FileNotFoundException as e:
 		errors.append(e.error)
