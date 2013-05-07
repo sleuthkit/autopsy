@@ -160,7 +160,7 @@ class TestAutopsy:
 		# Paths:
 		self.input_dir = Emailer.make_local_path("..","input")
 		self.output_dir = ""
-		self.gold = Emailer.make_local_path("..", "output", "gold", "tmp")
+		self.gold = Emailer.make_path("..", "output", "gold", "tmp")
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -328,11 +328,12 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
-			autopsy_cur.execute("SELECT * FROM blackboard_artifacts")
+			autopsy_cur.execute("SELECT blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN blackboard_attributes ON blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id")
 			self.autopsy_artifacts_list = []
 			for row in autopsy_cur.fetchall():
 				for item in row:
 					self.autopsy_artifacts_list.append(item)
+			print(self.autopsy_artifacts_list)
 
 				
 	def generate_autopsy_attributes(self):
@@ -681,8 +682,9 @@ def rebuild():
 	oldcwd = os.getcwd()
 	zpdir = case.gold_parse
 	os.chdir(zpdir)
-	img_gold = case.image_name
-	img_archive = Emailer.make_path("..", case.image_name+"-archive.zip")
+	os.chdir("..")
+	img_gold = "tmp"
+	img_archive = Emailer.make_path(case.image_name+"-archive.zip")
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
@@ -744,7 +746,7 @@ def compare_to_gold_db():
 	# Testing tsk_objects
 	exceptions.append(compare_tsk_objects())
 	# Testing blackboard_artifacts
-	exceptions.append(compare_bb_artifacts())
+	exceptions.append(count_bb_artifacts())
 	# Testing blackboard_attributes
 	exceptions.append(compare_bb_attributes())
 	
@@ -823,9 +825,12 @@ def compare_to_gold_html():
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
 
+def compare_bb_artifacts():
+	count_bb_artifacts()
+	
 # Compares the blackboard artifact counts of two databases
 # given the two database cursors
-def compare_bb_artifacts():
+def count_bb_artifacts():
 	exceptions = []
 	try:
 		global failedbool
@@ -835,7 +840,8 @@ def compare_bb_artifacts():
 			global imgfail
 			imgfail = True
 			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
-		for type_id in range(1, 13):
+		rner = database.gold_artifacts.length
+		for type_id in range(1, rner):
 			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
 				error = str("Artifact counts do not match for type id %d. " % type_id)
 				error += str("Gold: %d, Test: %d" %
