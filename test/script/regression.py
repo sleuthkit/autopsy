@@ -160,7 +160,7 @@ class TestAutopsy:
 		# Paths:
 		self.input_dir = Emailer.make_local_path("..","input")
 		self.output_dir = ""
-		self.gold = Emailer.make_local_path("..", "output", "gold", "tmp")
+		self.gold = Emailer.make_path("..", "output", "gold", "tmp")
 		# Logs:
 		self.antlog_dir = ""
 		self.common_log = ""
@@ -328,7 +328,7 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
-			autopsy_cur.execute("SELECT * FROM blackboard_artifacts")
+			autopsy_cur.execute("SELECT blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN blackboard_attributes ON blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id")
 			self.autopsy_artifacts_list = []
 			for row in autopsy_cur.fetchall():
 				for item in row:
@@ -547,7 +547,7 @@ def run_test(image_file, count):
 	# Now test in comparison to the gold standards
 	if not args.gold_creation:
 		try:
-			gold_path = case.gold
+			gold_path = Emailer.make_path(case.gold, "..")
 			img_gold = Emailer.make_path(case.gold, case.image_name)
 			img_archive = Emailer.make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			if(not file_exists(img_archive)):
@@ -650,14 +650,17 @@ def rebuild():
 	# Delete the current gold standards
 	gold_dir = Emailer.make_path(case.gold_parse)
 	clear_dir(gold_dir)
+	tmpdir = Emailer.make_path(gold_dir, case.image_name)
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
-	dboutpth = Emailer.make_path(gold_dir, "autopsy.db")
+	dboutpth = Emailer.make_path(tmpdir, "autopsy.db")
 	if not os.path.exists(case.gold_parse):
 		os.makedirs(case.gold_parse)
 	if not os.path.exists(gold_dir):
 		os.makedirs(gold_dir)
+	if not os.path.exists(tmpdir):
+		os.makedirs(tmpdir)
 	copy_file(dbinpth, dboutpth)
-	error_pth = Emailer.make_path(gold_dir, case.image_name+"SortedErrors.txt")
+	error_pth = Emailer.make_path(tmpdir, case.image_name+"SortedErrors.txt")
 	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
 	htmlfolder = ""
@@ -669,9 +672,9 @@ def rebuild():
 	html_path = Emailer.make_path(case.output_dir, case.image_name,
 								 "AutopsyTestCase", "Reports")
 	try:
-		os.makedirs(os.path.join(gold_dir, htmlfolder))
+		os.makedirs(os.path.join(tmpdir, htmlfolder))
 		for file in os.listdir(autopsy_html_path):
-			html_to = Emailer.make_path(gold_dir, file.replace("HTML Report", "Report"))
+			html_to = Emailer.make_path(tmpdir, file.replace("HTML Report", "Report"))
 			copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
 	except FileNotFoundException as e:
 		errors.append(e.error)
@@ -681,13 +684,14 @@ def rebuild():
 	oldcwd = os.getcwd()
 	zpdir = case.gold_parse
 	os.chdir(zpdir)
-	img_gold = case.image_name
-	img_archive = Emailer.make_path("..", case.image_name+"-archive.zip")
+	os.chdir("..")
+	img_gold = "tmp"
+	img_archive = Emailer.make_path(case.image_name+"-archive.zip")
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
-	del_dir(gold_dir)
 	os.chdir(oldcwd)
+	del_dir(gold_dir)
 	okay = "Sucessfully rebuilt all gold standards."
 	print_report(errors, "REBUILDING", okay)
 
@@ -744,7 +748,7 @@ def compare_to_gold_db():
 	# Testing tsk_objects
 	exceptions.append(compare_tsk_objects())
 	# Testing blackboard_artifacts
-	exceptions.append(compare_bb_artifacts())
+	exceptions.append(count_bb_artifacts())
 	# Testing blackboard_attributes
 	exceptions.append(compare_bb_attributes())
 	
@@ -823,9 +827,12 @@ def compare_to_gold_html():
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
 
+def compare_bb_artifacts():
+	count_bb_artifacts()
+	
 # Compares the blackboard artifact counts of two databases
 # given the two database cursors
-def compare_bb_artifacts():
+def count_bb_artifacts():
 	exceptions = []
 	try:
 		global failedbool
@@ -835,7 +842,8 @@ def compare_bb_artifacts():
 			global imgfail
 			imgfail = True
 			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
-		for type_id in range(1, 13):
+		rner = len(database.gold_artifacts)
+		for type_id in range(1, rner):
 			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
 				error = str("Artifact counts do not match for type id %d. " % type_id)
 				error += str("Gold: %d, Test: %d" %
@@ -844,6 +852,7 @@ def compare_bb_artifacts():
 				exceptions.append(error)
 		return exceptions
 	except Exception as e:
+		print(str(e))
 		exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
 		return exceptions
 
