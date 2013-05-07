@@ -168,6 +168,9 @@ public class FileManager implements Closeable {
 
     /**
      * Add a local directory and its children recursively.
+     * Does not refresh the views of data (client must do it currently, 
+     * will be addressed in future with node auto-refresh support)
+     * .
      *
      *
      * @param localAbsPath local absolute path of root folder whose children are
@@ -227,7 +230,7 @@ public class FileManager implements Closeable {
 
     /**
      * Creates a single local file under $LocalFiles for the case, adds it to
-     * the database and returns it.
+     * the database and returns it.   Does not refresh the views of data.
      *
      * @param localAbsPath local absolute path of the local file, including the
      * file name.
@@ -248,7 +251,7 @@ public class FileManager implements Closeable {
 
     /**
      * Creates a single local file under parentFile for the case, adds it to the
-     * database and returns it.
+     * database and returns it.  Does not refresh the views of data.
      *
      * @param localAbsPath local absolute path of the local file, including the
      * file name
@@ -289,10 +292,7 @@ public class FileManager implements Closeable {
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
 
-        //refresh the content tree
-        //TODO decouple at least using events, and later use Node autorefresh once implemented
-        //DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
-
+        
         return lf;
     }
 
