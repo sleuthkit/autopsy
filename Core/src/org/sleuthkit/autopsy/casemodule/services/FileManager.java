@@ -25,7 +25,8 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
@@ -33,6 +34,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Abstraction to facilitate access to files and directories.
@@ -40,6 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class FileManager implements Closeable {
 
     private SleuthkitCase tskCase;
+    private static final Logger logger = Logger.getLogger(FileManager.class.getName());
 
     public FileManager(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
@@ -139,6 +142,90 @@ public class FileManager implements Closeable {
     }
 
     /**
+     * Helper (internal) to add child of local dir recursively
+     * @param parentVd
+     * @param childLocalFile
+     * @throws TskCoreException 
+     */
+    private void addLocalDirectoryRecInt(VirtualDirectory parentVd,
+            java.io.File childLocalFile) throws TskCoreException {
+
+        final boolean isDir = childLocalFile.isDirectory();
+
+        if (isDir) {
+            //create virtual folder
+            final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), childLocalFile.getName());
+            //add children recursively
+            for (java.io.File childChild : childLocalFile.listFiles()) {
+                addLocalDirectoryRecInt(childVd, childChild);
+            }
+        } else {
+            //add leaf file, base case
+            this.addLocalFileSingle(childLocalFile.getAbsolutePath(), parentVd);
+        }
+
+    }
+
+    /**
+     * Add a local directory and its children recursively.
+     *
+     *
+     * @param localAbsPath local absolute path of root folder whose children are
+     * to be added recursively
+     * @return parent virtual directory folder created representing the
+     * localAbsPath node
+     * @throws TskCoreException exception thrown if the object creation failed
+     * due to a critical system error or of the file manager has already been
+     * closed, or if the localAbsPath could not be accessed
+     */
+    public synchronized VirtualDirectory addLocalDir(String localAbsPath) throws TskCoreException {
+        if (tskCase == null) {
+            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+        }
+
+        java.io.File localDir = new java.io.File(localAbsPath);
+        if (!localDir.exists()) {
+            throw new TskCoreException("Attempted to add a local dir that does not exist: " + localAbsPath);
+        }
+        if (!localDir.canRead()) {
+            throw new TskCoreException("Attempted to add a local dir that is not readable: " + localAbsPath);
+        }
+
+        if (!localDir.isDirectory()) {
+            throw new TskCoreException("Attempted to add a local dir that is not a directory: " + localAbsPath);
+        }
+
+        final String rootVdName = localDir.getName();
+
+        VirtualDirectory rootVd = null;
+        try {
+            final long localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
+            rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+        } catch (TskCoreException e) {
+            //log and rethrow
+            final String msg = "Error creating root dir for local dir to be added, can't addLocalDir: " + localDir;
+            logger.log(Level.SEVERE, msg, e);
+            throw new TskCoreException(msg);
+        }
+
+        try {
+            java.io.File[] localChildren = localDir.listFiles();
+            for (java.io.File localChild : localChildren) {
+                //add childrnen recursively, at a time in separate transaction
+                //consider a single transaction for everything
+                addLocalDirectoryRecInt(rootVd, localChild);
+            }
+        } catch (TskCoreException e) {
+            final String msg = "Error creating local children for local dir to be added, can't fully add addLocalDir: " + localDir;
+            logger.log(Level.SEVERE, msg, e);
+            throw new TskCoreException(msg);
+        }
+
+
+        return rootVd;
+    }
+
+    /**
      * Creates a single local file under $LocalFiles for the case, adds it to
      * the database and returns it.
      *
@@ -147,7 +234,7 @@ public class FileManager implements Closeable {
      * @return newly created local file object added to the database
      * @throws TskCoreException exception thrown if the object creation failed
      * due to a critical system error or of the file manager has already been
-     * closed
+     * closed, or if the localAbsPath could not be accessed
      *
      */
     public synchronized LocalFile addLocalFileSingle(String localAbsPath) throws TskCoreException {
@@ -201,11 +288,11 @@ public class FileManager implements Closeable {
         LocalFile lf = tskCase.addLocalFile(fileName, localAbsPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
-        
+
         //refresh the content tree
-        //TODO decouple, use Node autorefresh once implemented
-        DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
-        
+        //TODO decouple at least using events, and later use Node autorefresh once implemented
+        //DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
+
         return lf;
     }
 
