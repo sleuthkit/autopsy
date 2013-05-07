@@ -333,7 +333,6 @@ class Database:
 			for row in autopsy_cur.fetchall():
 				for item in row:
 					self.autopsy_artifacts_list.append(item)
-			print(self.autopsy_artifacts_list)
 
 				
 	def generate_autopsy_attributes(self):
@@ -548,7 +547,7 @@ def run_test(image_file, count):
 	# Now test in comparison to the gold standards
 	if not args.gold_creation:
 		try:
-			gold_path = case.gold
+			gold_path = Emailer.make_path(case.gold, "..")
 			img_gold = Emailer.make_path(case.gold, case.image_name)
 			img_archive = Emailer.make_local_path("..", "output", "gold", case.image_name+"-archive.zip")
 			if(not file_exists(img_archive)):
@@ -691,8 +690,8 @@ def rebuild():
 	comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 	zipdir(img_gold, comprssr)
 	comprssr.close()
-	del_dir(gold_dir)
 	os.chdir(oldcwd)
+	del_dir(gold_dir)
 	okay = "Sucessfully rebuilt all gold standards."
 	print_report(errors, "REBUILDING", okay)
 
@@ -843,7 +842,7 @@ def count_bb_artifacts():
 			global imgfail
 			imgfail = True
 			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
-		rner = database.gold_artifacts.length
+		rner = len(database.gold_artifacts)
 		for type_id in range(1, rner):
 			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
 				error = str("Artifact counts do not match for type id %d. " % type_id)
@@ -853,6 +852,7 @@ def count_bb_artifacts():
 				exceptions.append(error)
 		return exceptions
 	except Exception as e:
+		print(str(e))
 		exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
 		return exceptions
 
