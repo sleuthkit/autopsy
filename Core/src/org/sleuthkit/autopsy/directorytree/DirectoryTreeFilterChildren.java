@@ -229,8 +229,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
-            //return visitDeep(vdn); 
-            return ! vdn.hasContentChildren();
+            return visitDeep(vdn); 
+            //return ! vdn.hasContentChildren();
         }
     }
 
