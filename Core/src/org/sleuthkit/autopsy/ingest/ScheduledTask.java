@@ -20,26 +20,25 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Scheduled task added to the scheduler
  *
  * @param T type of ingest modules (file or image) associated with this task
  */
-class ScheduledImageTask<T extends IngestModuleAbstract> {
+class ScheduledTask<T extends IngestModuleAbstract> {
 
-    private Image image;
+    private Content input;
     private List<T> modules;
 
-    public ScheduledImageTask(Image image, List<T> modules) {
-        this.image = image;
+    public ScheduledTask(Content input, List<T> modules) {
+        this.input = input;
         this.modules = modules;
     }
 
-    public Image getImage() {
-        return image;
+    public Content getContent() {
+        return input;
     }
 
     public List<T> getModules() {
@@ -56,7 +55,7 @@ class ScheduledImageTask<T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "ScheduledImageTask{" + "image=" + image + ", modules=" + modules + '}';
+        return "ScheduledImageTask{" + "input=" + input + ", modules=" + modules + '}';
     }
 
     /**
@@ -75,8 +74,8 @@ class ScheduledImageTask<T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ScheduledImageTask<T> other = (ScheduledImageTask<T>) obj;
-        if (this.image != other.image && (this.image == null || !this.image.equals(other.image))) {
+        final ScheduledTask<T> other = (ScheduledTask<T>) obj;
+        if (this.input != other.input && (this.input == null || !this.input.equals(other.input))) {
             return false;
         }
         if (this.modules != other.modules && (this.modules == null || !this.modules.equals(other.modules))) {
