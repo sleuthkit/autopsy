@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
@@ -57,9 +56,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  *
  * Currently a singleton object only.
  *
- * Contains internal schedulers for image and file ingests.
- *
- * TODO test derived files scheduling
+ * Contains internal schedulers for content objects into image and file ingest pipelines.
  *
  */
 class IngestScheduler {
@@ -376,7 +373,7 @@ class IngestScheduler {
         }
 
         /**
-         * Schedule new image for a file ingest with associated modules.
+         * Schedule new Content object for a file ingest with associated modules.
          *
          * @param task image schedule task with image and associated modules
          */
@@ -389,7 +386,9 @@ class IngestScheduler {
                 return;
             }
 
-            if (getSourceContent().contains(task.getContent())) {
+            final Content contentToSchedule = task.getContent();
+            
+            if (getSourceContent().contains(contentToSchedule)) {
                 //reset counters if the same image enqueued twice
                 //Note, not very accurate, because we may have processed some files from 
                 //another image
