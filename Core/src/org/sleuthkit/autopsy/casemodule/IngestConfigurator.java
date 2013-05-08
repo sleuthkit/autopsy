@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Lookup interface for ingest configuration dialog
@@ -32,10 +32,10 @@ public interface IngestConfigurator {
     JPanel getIngestConfigPanel();
     
     /**
-     * set image for the ingest
-     * @param image to enqueue to ingest
+     * set input Content to be configured for ingest
+     * @param inputContent content to be configured for ingest
      */
-    void setImage(Image image);
+    void setContent(Content inputContent);
     
     /**
      * start ingest enqueing previously set image

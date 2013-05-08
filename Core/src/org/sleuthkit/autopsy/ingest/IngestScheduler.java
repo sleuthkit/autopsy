@@ -816,14 +816,16 @@ class IngestScheduler {
         }
 
         /**
-         * Visitor that gets a collection of Root Dirs (if there is FS) Or
-         * LayoutFiles (if there is no FS)
+         * Visitor that gets a collection of top level objects to be scheduled, 
+         * such as root Dirs (if there is FS) or
+         * LayoutFiles and virtual directories, also if there is no FS.
          */
         static class GetRootDirVisitor extends GetFilesContentVisitor {
 
             @Override
             public Collection<AbstractFile> visit(VirtualDirectory ld) {
-                //case when we hit a layout directory, not under a real FS
+                //case when we hit a layout directoryor local file container, not under a real FS
+                //or when root virt dir is scheduled 
                 Collection<AbstractFile> ret = new ArrayList<AbstractFile>();
                 ret.add(ld);
                 return ret;
@@ -869,7 +871,7 @@ class IngestScheduler {
             
             @Override
             public Collection<AbstractFile> visit(LocalFile localFile) {
-                //can have derived files
+                //can have local files
                 //TODO test this and overall scheduler with local files
                 return getAllFromChildren(localFile);
             }

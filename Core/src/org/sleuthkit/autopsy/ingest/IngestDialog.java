@@ -31,7 +31,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * IngestDialog shown on Case.CASE_ADD_IMAGE property change
@@ -40,7 +40,7 @@ public class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private Image image = null;
+    private Content inputContent = null;
     private IngestDialogPanel panel = null;
     
     private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
@@ -81,7 +81,7 @@ public class IngestDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 
                 panel.save();
-                panel.setImage(image);
+                panel.setContent(inputContent);
                 panel.start();
                 close();
             }
@@ -115,8 +115,8 @@ public class IngestDialog extends JDialog {
         setVisible(true);
     }
     
-    public void setImage(Image image) {
-        this.image = image;
+    public void setContent(Content inputContent) {
+        this.inputContent = inputContent;
     }
     
     
