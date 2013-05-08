@@ -328,12 +328,25 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
-			autopsy_cur.execute("SELECT blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN blackboard_attributes ON blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id")
-			self.autopsy_artifacts_list = []
-			for row in autopsy_cur.fetchall():
-				for item in row:
-					self.autopsy_artifacts_list.append(item)
-
+			autopsy_cur2 = autopsy_con.cursor()
+			autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN tsk_files ON tsk_files.obj_id = tsk_objects.obj_id")
+			self.databaselist = []
+			rw = autopsy_cur2.fetchone()
+			print(rw)
+			while (rw != None):
+				autopsy_cur1 = autopsy_con.cursor()
+				autopsy_cur1.execute("SELECT * FROM blackboard_attributes WHERE artifact_id = " + str(rw[3]))
+				addstrng = rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" />'
+				attributes = autopsy_cur1.fetchall()
+				attributes.sort()
+				for attr in attributes:
+					val = 6 + attr[4]
+					addstrng += '< type = "' + attrs[1] + '" value = "' + attrs[val] + '" />'
+				addstrng += '<artifact/>'
+				print(addstrng)
+				self.databaselist.append(addstrng)
+				rw = autopsy_cur2.fetchone()
+			#print(self.databaselist)
 				
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
@@ -718,14 +731,14 @@ def compare_to_gold_db():
 		database.generate_gold_objects()
 		database.generate_gold_artifacts()
 		database.generate_gold_attributes()
-	except:
-		pass
+	except Exception as e:
+		print(str(e))
 	try:
 		database.generate_autopsy_objects()
 		database.generate_autopsy_artifacts()
 		database.generate_autopsy_attributes()
-	except:
-		pass
+	except Exception as e:
+		print(str(e))
 	# This is where we return if a file doesn't exist, because we don't want to
 	# compare faulty databases, but we do however want to try to run all queries
 	# regardless of the other database
