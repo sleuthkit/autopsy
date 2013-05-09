@@ -70,6 +70,11 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
         public AbstractFile visit(org.sleuthkit.datamodel.File f) {
             return f;
         }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
+            return lf;
+        }
 
         @Override
         public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
