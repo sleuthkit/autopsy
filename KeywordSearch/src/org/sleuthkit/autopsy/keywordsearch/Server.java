@@ -448,7 +448,7 @@ public class Server {
      *
      * Waits for the stop command to finish before returning.
      */
-    synchronized void stop() throws KeywordSearchModuleException {
+    synchronized void stop() {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
@@ -463,18 +463,18 @@ public class Server {
             }
 
         } catch (InterruptedException ex) {
-            throw new KeywordSearchModuleException("Could not stop Solr server", ex);
         } catch (IOException ex) {
-            throw new KeywordSearchModuleException("Could not stop Solr server", ex);
         } finally {
             //stop Solr stream -> log redirect threads
-            if (errorRedirectThread != null) {
-                errorRedirectThread.stopRun();
-                errorRedirectThread = null;
+            try {
+                if (errorRedirectThread != null) {
+                    errorRedirectThread.stopRun();
+                    errorRedirectThread = null;
+                }
+            } finally {
+                //if still running, kill it
+                killSolr();
             }
-
-            //if still running, kill it
-            killSolr();
 
             logger.log(Level.INFO, "Finished stopping Solr server");
         }
