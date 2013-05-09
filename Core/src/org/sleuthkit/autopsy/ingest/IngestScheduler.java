@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -41,6 +40,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
@@ -893,6 +893,11 @@ class IngestScheduler {
 
             //skip if task contains no modules
             if (task.getModules().isEmpty()) {
+                return;
+            }
+            
+            if (! (task.getContent() instanceof Image) ){
+                //only accepting Image content objects
                 return;
             }
 
