@@ -18,12 +18,19 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskData;
@@ -62,6 +69,24 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         
     }
 
+        /**
+     * Right click action for this node
+     *
+     * @param popup
+     * @return
+     */
+    @Override
+    public Action[] getActions(boolean popup) {
+        List<Action> actions = new ArrayList<Action>();
+
+        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new ExtractAction("Extract Directory", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new TagAction(this));
+        return actions.toArray(new Action[0]);
+    }
+    
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();

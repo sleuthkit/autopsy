@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -60,12 +59,15 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -156,6 +158,10 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
+            //set up actions for artifact node based on its Content object
+            //TODO all actions need to be consolidated in single place!
+            //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
+            
             List<Action> actions = new ArrayList<Action>();
 
             //merge predefined specific node actions if bban subclasses have their own
@@ -177,6 +183,7 @@ public class DataResultFilterNode extends FilterNode {
             }
             File f = ban.getLookup().lookup(File.class);
             LayoutFile lf = null;
+            AbstractFile locF = null;
             Directory d = null;
             if (f != null) {
                 actions.add(null); // creates a menu separator
@@ -214,6 +221,22 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ExternalViewerAction("Open in External Viewer", new LayoutFileNode(lf)));
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new LayoutFileNode(lf)));
+
+                //add tag if itself is not a tag
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
+                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                    actions.add(null); // creates a menu separator
+                    actions.add(new TagAction(lf));
+                    actions.add(new TagAction(ba));
+                }
+            }
+             else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
+                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
+                actions.add(null); // creates a menu separator
+                actions.add(new NewWindowViewAction("View in New Window", new LocalFileNode(locF)));
+                actions.add(new ExternalViewerAction("Open in External Viewer", new LocalFileNode(locF)));
+                actions.add(null); // creates a menu separator
+                actions.add(new ExtractAction("Extract File", new LocalFileNode(lf)));
 
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
