@@ -167,14 +167,15 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Add a local directory and its children recursively.
+     * Add a local directory and its children recursively. 
+     * Parent container of the local dir is added for context.
+     * 
      * Does not refresh the views of data (client must do it currently, 
      * will be addressed in future with node auto-refresh support)
-     * .
-     *
+     * 
      *
      * @param localAbsPath local absolute path of root folder whose children are
-     * to be added recursively
+     * to be added recursively.  If there is a parent dir, it is added as a container, for context.
      * @return parent virtual directory folder created representing the
      * localAbsPath node
      * @throws TskCoreException exception thrown if the object creation failed
@@ -197,13 +198,26 @@ public class FileManager implements Closeable {
         if (!localDir.isDirectory()) {
             throw new TskCoreException("Attempted to add a local dir that is not a directory: " + localAbsPath);
         }
+        
+        String parentName = null;
+        java.io.File parentDir = localDir.getParentFile();
+        if (parentDir != null) {
+            parentName = parentDir.getName();
+        }
 
         final String rootVdName = localDir.getName();
 
         VirtualDirectory rootVd = null;
         try {
             final long localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
-            rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+            if (parentName == null) {
+                rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+            }
+            else {
+                //add parent dir for context
+                final VirtualDirectory contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
+                rootVd = tskCase.addVirtualDirectory(contextDir.getId(), rootVdName);
+            }
         } catch (TskCoreException e) {
             //log and rethrow
             final String msg = "Error creating root dir for local dir to be added, can't addLocalDir: " + localDir;
