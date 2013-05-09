@@ -201,7 +201,7 @@ public class Case {
      * @param caseNumber the case number
      * @param examiner the examiner for this case
      */
-    static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
+    public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
@@ -220,7 +220,7 @@ public class Case {
         }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-
+        
         changeCase(newCase);
     }
 
@@ -254,7 +254,7 @@ public class Case {
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-
+            
             changeCase(openedCase);
 
         } catch (Exception ex) {
@@ -903,8 +903,6 @@ public class Case {
             } else {
                 // close all top components
                 CoreComponentControl.closeCoreWindows();
-                // prompt user to add an image
-                Case.runAddImageAction();
             }
         } else { // case is closed
             // close all top components first
