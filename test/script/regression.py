@@ -193,6 +193,7 @@ class TestAutopsy:
 		self.ingest_messages = 0
 		self.indexed_files = 0
 		self.indexed_chunks = 0
+		self.autopsy_data_file = ""
 		# Infinite Testing info
 		timer = 0
 		
@@ -330,22 +331,41 @@ class Database:
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
 			autopsy_cur2 = autopsy_con.cursor()
 			autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN tsk_files ON tsk_files.obj_id = tsk_objects.obj_id")
-			self.databaselist = []
+			database_log = codecs.open(case.autopsy_data_file, "w", "utf_8")
 			rw = autopsy_cur2.fetchone()
 			print(rw)
 			while (rw != None):
 				autopsy_cur1 = autopsy_con.cursor()
-				autopsy_cur1.execute("SELECT * FROM blackboard_attributes WHERE artifact_id = " + str(rw[3]))
-				addstrng = rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" />'
+				autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id = " + str(rw[3]))
+				database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" /> ')
 				attributes = autopsy_cur1.fetchall()
 				attributes.sort()
-				for attr in attributes:
-					val = 6 + attr[4]
-					addstrng += '< type = "' + attrs[1] + '" value = "' + attrs[val] + '" />'
-				addstrng += '<artifact/>'
-				print(addstrng)
-				self.databaselist.append(addstrng)
-				rw = autopsy_cur2.fetchone()
+				print(attributes)
+				try:
+					for attr in attributes:
+						print(attr)
+						val = 3 + attr[2]
+						numvals = 0
+						for x in range(3, 6):
+							if(attr[x] != None):
+								numvals += 1
+						if(numvals > 1):
+							global failedbool
+							global errorem
+							global attachl
+							errorem += "There were too many values for attribute type: " + attr[1] + "for artifact with id #" + str(rw[3]) + ".\n"
+							failedbool = True
+							attachl.append(autopsy_db_file)
+						database_log.write('< type = "' + attr[1] + '" value = "')
+						inpval = attr[val]
+						if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
+							inpval = str(inpval)
+						database_log.write(inpval)
+						database_log.write('" />')
+					database_log.write(' <artifact/>\n')
+					rw = autopsy_cur2.fetchone()
+				except Exception as e:
+					print(str(e))
 			#print(self.databaselist)
 				
 	def generate_autopsy_attributes(self):
@@ -504,6 +524,7 @@ def run_test(image_file, count):
 	# Set the case to work for this test
 	case.image_file = image_file
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
+	case.autopsy_data_file = Emailer.make_path(case.output_dir, case.image_name, "Autopsy_data.txt")
 	case.image = case.get_image_name(image_file)
 	case.common_log_path = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
 	case.warning_log = Emailer.make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
