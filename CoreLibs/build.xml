@@ -53,7 +53,7 @@
     <target name="retrieve-deps-local" description="build library dependencies that are stored local-only"> 
         <!-- javafx: note: this a workaround, needs to match the one from jre/jdk and ideally be automatically included -->
         <!-- javafx native libs are always on runtime classpath from jre -->
-        <copy file="${thirdparty.dir}/jfxrt/1.7.13/jfxrt.jar" todir="release/modules/ext/" />
+        <copy file="${thirdparty.dir}/jfxrt/1.7.21/jfxrt.jar" todir="release/modules/ext/" />
     </target>
     
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">

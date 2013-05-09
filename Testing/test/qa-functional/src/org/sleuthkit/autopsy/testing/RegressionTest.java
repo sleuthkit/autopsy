@@ -302,6 +302,7 @@ public class RegressionTest extends TestCase{
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
+        JLabel waiter = JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe

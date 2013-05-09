@@ -291,7 +291,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             createdDirectory = caseDirPath;
             // try to close Startup window if there's one
             try {
-                StartupWindow.getInstance().close();
+                StartupWindowProvider.getInstance().close();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Startup window didn't close as expected.", ex);
 

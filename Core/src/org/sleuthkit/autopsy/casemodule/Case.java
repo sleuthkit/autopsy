@@ -816,7 +816,7 @@ public class Case {
      * Invoke the creation of startup dialog window.
      */
     static public void invokeStartupDialog() {
-        StartupWindow.getInstance().open();
+        StartupWindowProvider.getInstance().open();
     }
 
     /**

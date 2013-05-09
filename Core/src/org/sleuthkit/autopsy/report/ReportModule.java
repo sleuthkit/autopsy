@@ -43,8 +43,7 @@ public interface ReportModule {
     public String getDescription();
 
     /**
-     * Calls to the report module to execute a method to get the extension that
-     * is used for the report
+     * Returns the extension that is used for the report
      *
      * @return String the extension the file will be saved as
      *
