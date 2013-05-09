@@ -44,7 +44,6 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
@@ -61,6 +60,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -162,7 +162,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         }
         try {
             //add image id of the file to the set, keeping track of images being ingested
-            curImageIds.add(abstractFile.getImage().getId());
+            final Image fileImage = abstractFile.getImage();
+            if (fileImage != null) {
+                //not all Content objects have an image associated (e.g. LocalFiles)
+                curImageIds.add(fileImage.getId());
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
