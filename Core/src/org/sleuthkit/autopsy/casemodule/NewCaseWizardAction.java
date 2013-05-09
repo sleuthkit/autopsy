@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.awt.Dialog;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
@@ -87,7 +88,9 @@ public final class NewCaseWizardAction extends CallableSystemAction {
 
         // if the finish button is pressed (not cancelled)
         if (finished) {
-            // nothing to do, the Add Image dialog will pop up on its own because we've just opened a case with no images
+            // now start the 'Add Image' wizard
+            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+            addImageAction.actionPerformed(null);
         }
 
         // if Cancel button is pressed
