@@ -109,7 +109,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
             
             //ingest action
-             actions.add(new AbstractAction("Restart Ingest Modules") {
+             actions.add(new AbstractAction("Ingest (with children)") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
