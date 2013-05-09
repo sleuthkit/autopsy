@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * This class is used to represent the "Node" for the directory. Its children
  * are more directories.
  */
-public class DirectoryNode extends AbstractFsContentNode<Directory> {
+public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
 
     public static final String DOTDOTDIR = "[parent folder]";
     public static final String DOTDIR = "[current folder]";
@@ -43,13 +44,13 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         setIcon(dir);
     }
 
-    public DirectoryNode(Directory dir, boolean directoryBrowseMode) {
+    public DirectoryNode(AbstractFile dir, boolean directoryBrowseMode) {
         super(dir, directoryBrowseMode);
 
         setIcon(dir);
     }
 
-    private void setIcon(Directory dir) {
+    private void setIcon(AbstractFile dir) {
         // set name, display name, and icon
         if (dir.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
