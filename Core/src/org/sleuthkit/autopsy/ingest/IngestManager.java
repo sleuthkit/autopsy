@@ -230,7 +230,7 @@ public class IngestManager {
      * @param modules modules to execute on every image
      * @param inputs inputs  to enqueue and execute the ingest modules on
      */
-    void execute(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
+    public void execute(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
         logger.log(Level.INFO, "Will enqueue number of inputs: " + inputs.size() 
                 + " to " + modules.size() + " modules.");
 
@@ -261,7 +261,7 @@ public class IngestManager {
      * @param modules modules to execute on the image
      * @param input input Content objects to execute the ingest modules on
      */
-    void execute(final List<IngestModuleAbstract> modules, final Content input) {
+    public void execute(final List<IngestModuleAbstract> modules, final Content input) {
         List<Content> inputs = new ArrayList<Content>();
         inputs.add(input);
         logger.log(Level.INFO, "Will enqueue input: " + input.getName());
