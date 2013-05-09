@@ -648,7 +648,10 @@ public class Case {
         Set<TimeZone> timezones = new HashSet<TimeZone>();
         for (Content c : getRootObjects()) {
             try {
-                timezones.add(TimeZone.getTimeZone(c.getImage().getTimeZone()));
+                final Image image = c.getImage();
+                if (image != null) {
+                    timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
+                }
             } catch (TskException ex) {
                 logger.log(Level.INFO, "Error getting time zones", ex);
             }

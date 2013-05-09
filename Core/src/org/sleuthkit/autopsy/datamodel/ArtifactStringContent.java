@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -148,7 +149,14 @@ public class ArtifactStringContent implements StringContent {
 
     private static TimeZone getTimeZone(BlackboardArtifact artifact) {
         try {
-            return TimeZone.getTimeZone(getAssociatedContent(artifact).getImage().getTimeZone());
+            final Content content = getAssociatedContent(artifact);
+            final Image image = content.getImage();
+            if (image != null) {
+                return TimeZone.getTimeZone(image.getTimeZone());
+            }
+            else {
+                return TimeZone.getDefault();
+            }
         } catch(TskException ex) {
             return TimeZone.getDefault();
         }
