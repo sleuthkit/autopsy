@@ -229,7 +229,7 @@ public class IngestManager {
      * @param modules modules to execute on every image
      * @param images images to execute modules on
      */
-    void execute(final List<IngestModuleAbstract> modules, final List<Image> images) {
+    public void execute(final List<IngestModuleAbstract> modules, final List<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size() + " to " + modules.size() + " modules.");
 
         if (!isIngestRunning() && ui != null) {
@@ -256,7 +256,7 @@ public class IngestManager {
      * @param modules modules to execute on the image
      * @param image image to execute modules on
      */
-    void execute(final List<IngestModuleAbstract> modules, final Image image) {
+    public void execute(final List<IngestModuleAbstract> modules, final Image image) {
         List<Image> images = new ArrayList<Image>();
         images.add(image);
         logger.log(Level.INFO, "Will enqueue image: " + image.getName());
