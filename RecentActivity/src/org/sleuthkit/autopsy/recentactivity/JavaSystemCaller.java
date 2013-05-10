@@ -75,10 +75,12 @@ public final class JavaSystemCaller {
         private InputStream is;
         private String type;
         private StringBuffer output = new StringBuffer();
+        private boolean doRun = false;
 
         StreamGobbler(final InputStream anIs, final String aType) {
             this.is = anIs;
             this.type = aType;
+            this.doRun = true;
         }
 
         /**
@@ -89,17 +91,26 @@ public final class JavaSystemCaller {
          */
         @Override
         public final void run() {
+            final String SEP = System.getProperty("line.separator");
             try {
                 final InputStreamReader isr = new InputStreamReader(this.is);
                 final BufferedReader br = new BufferedReader(isr);
                 String line = null;
-                while ((line = br.readLine()) != null) {
+                while ( doRun && (line = br.readLine()) != null) {
                     logger.log(Level.INFO, this.type + ">" + line);
-                    this.output.append(line + System.getProperty("line.separator"));
+                    this.output.append(line + SEP);
                 }
             } catch (final IOException ioe) {
                 logger.log(Level.WARNING, ioe.getMessage());
             }
+        }
+        
+        /**
+         * Stop running the stream gobbler
+         * The thread will exit out gracefully after the current readLine() on stream unblocks
+         */
+        public void stopRun() {
+            doRun = false;
         }
 
         /**
@@ -167,6 +178,9 @@ public final class JavaSystemCaller {
             final int exitVal = proc.waitFor();
             logger.log(Level.INFO, "ExitValue: " + exitVal);
 
+            errorGobbler.stopRun();
+            outputGobbler.stopRun();
+            
             output = outputGobbler.getOutput();
 
             return output;
