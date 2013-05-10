@@ -182,6 +182,9 @@ public final class JavaSystemCaller {
             outputGobbler.stopRun();
             
             output = outputGobbler.getOutput();
+            
+            //gc process with its streams
+            proc = null;
 
             return output;
         }
