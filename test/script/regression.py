@@ -329,21 +329,42 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
-			autopsy_cur2 = autopsy_con.cursor()
-			autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN tsk_files ON tsk_files.obj_id = tsk_objects.obj_id")
-			database_log = codecs.open(case.autopsy_data_file, "w", "utf_8")
-			rw = autopsy_cur2.fetchone()
-			print(rw)
+			self.retrieve_data(case.autopsy_data_file, autopsy_con)
+
+			#print(self.databaselist)
+	
+	def retrieve_data(self, data_file, autopsy_con):
+		autopsy_con.text_factory = lambda x: unicode(x, "utf-8", "ignore")
+		autopsy_cur2 = autopsy_con.cursor()
+		autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN tsk_files ON tsk_files.obj_id = tsk_objects.obj_id")
+		database_log = codecs.open(data_file, "w", "utf_8")
+		print(database_log)
+		rw = autopsy_cur2.fetchone()
+		appnd = False
+		try:
 			while (rw != None):
+				if(rw[0] != None):
+					database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" > ')
+				else:
+					database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
 				autopsy_cur1 = autopsy_con.cursor()
-				autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id = " + str(rw[3]))
-				database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" /> ')
-				attributes = autopsy_cur1.fetchall()
-				attributes.sort()
-				print(attributes)
+				looptry = True
 				try:
+					key = ""
+					for num in str(rw[3]):
+						key += num
+					key = key,
+					autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =?", key)
+					attributes = autopsy_cur1.fetchall()
+					attributes.sort()
+				except Exception as e:
+					print(str(e))
+					print(str(rw[3]))
+					looptry = False
+					print('hello')
+					pass
+				if(looptry == True):
 					for attr in attributes:
-						print(attr)
 						val = 3 + attr[2]
 						numvals = 0
 						for x in range(3, 6):
@@ -354,20 +375,29 @@ class Database:
 							global errorem
 							global attachl
 							errorem += "There were too many values for attribute type: " + attr[1] + "for artifact with id #" + str(rw[3]) + ".\n"
+							printerror("There were too many values for attribute type: " + attr[1] + "for artifact with id #" + str(rw[3]) + ".")
 							failedbool = True
-							attachl.append(autopsy_db_file)
-						database_log.write('< type = "' + attr[1] + '" value = "')
-						inpval = attr[val]
-						if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
-							inpval = str(inpval)
-						database_log.write(inpval)
-						database_log.write('" />')
-					database_log.write(' <artifact/>\n')
-					rw = autopsy_cur2.fetchone()
-				except Exception as e:
-					print(str(e))
-			#print(self.databaselist)
-				
+							if(not appnd):
+								attachl.append(autopsy_db_file)
+								appnd = True
+						try:
+							database_log.write('< attribute type = "' + attr[1] + '" value = "')
+							inpval = attr[val]
+							if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
+								inpval = str(inpval)
+							database_log.write(inpval)
+						except Exception as e:
+								print(str(e))
+								print(attr[val])
+					database_log.write('" />')
+				database_log.write(' <artifact/>\n')
+				rw = autopsy_cur2.fetchone()
+		except Exception as e:
+			print('outer exception: ' + str(e))
+			print(rw[0])
+			print(rw[1])
+			print(rw[2])
+	
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
 			autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
@@ -981,7 +1011,7 @@ def compare_errors():
 	common_dat = common_log.read()
 	patrn = re.compile("\d")
 	if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
-		diff_dir = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+"_AutopsyErrors-Diff.txt")
+		diff_dir = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+"AutopsyErrors-Diff.txt")
 		diff_file = open(diff_dir, "w") 
 		dffcmdlst = ["diff", case.sorted_log, gold_dir]
 		subprocess.call(dffcmdlst, stdout = diff_file)
