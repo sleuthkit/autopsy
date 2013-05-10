@@ -355,10 +355,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //After the series are created, 1 or more series are packaged into a single chart.
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
-        for (final YearEpoch ye : allYears) {
-            se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
+        if (allYears != null) {
+            for (final YearEpoch ye : allYears) {
+               se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
+            }
         }
         bcData.add(se);
+        
 
         //Note: 
         // BarChart.Data wraps the Java Nodes class. BUT, until a BarChart.Data gets added to an actual series, it's node is null, and you can perform no operations on it.
