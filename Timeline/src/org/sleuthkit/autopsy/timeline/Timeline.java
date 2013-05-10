@@ -513,7 +513,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
+                            final FileRootNode d = new FileRootNode("Test Root", afs);
                             dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
@@ -809,11 +809,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     }
 
     // The node factories used to make lists of files to send to the result viewer
-    private class FsContentNodeChildFactory extends ChildFactory<AbstractFile> {
+    private class FileNodeChildFactory extends ChildFactory<AbstractFile> {
 
         List<AbstractFile> l;
 
-        FsContentNodeChildFactory(List<AbstractFile> l) {
+        FileNodeChildFactory(List<AbstractFile> l) {
             this.l = l;
         }
 
@@ -827,18 +827,18 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         protected Node createNodeForKey(AbstractFile file) {
             Node wrapped;
             if (file.isDir()) {
-                wrapped = new DirectoryNode((Directory) file, false);
+                wrapped = new DirectoryNode(file, false);
             } else {
-                wrapped = new FileNode((File) file, false);
+                wrapped = new FileNode(file, false);
             }
             return new FilterNodeLeaf(wrapped);
         }
     }
 
-    private class FsContentRootNode extends DisplayableItemNode {
+    private class FileRootNode extends DisplayableItemNode {
 
-        FsContentRootNode(String NAME, List<AbstractFile> l) {
-            super(Children.create(new FsContentNodeChildFactory(l), true));
+        FileRootNode(String NAME, List<AbstractFile> l) {
+            super(Children.create(new FileNodeChildFactory(l), true));
             super.setName(NAME);
             super.setDisplayName(NAME);
         }
@@ -920,12 +920,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
-        String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-                + "AND name != '.' "
+        String filesAndDirs = "name != '.' "
                 + "AND name != '..'";
-        List<FsContent> fs = null;
+        List<AbstractFile> files = null;
         try {
-            fs = skCase.findFilesWhere(filesAndDirs);
+            files = skCase.findAllFilesWhere(filesAndDirs);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
             return null;
@@ -943,7 +942,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         BufferedWriter out = null;
         try {
             out = new BufferedWriter(fileWriter);
-            for (FsContent file : fs) {
+            for (AbstractFile file : files) {
                 // try {
                 // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
                 if (file.getMd5Hash() != null) {
