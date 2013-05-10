@@ -72,7 +72,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
-    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 100;
+    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 1000;
     private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
     //playback
     private long durationMillis = 0;
@@ -384,7 +384,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                 try {
                     lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
                 } catch (InterruptedException e) {
-                    logger.log(Level.INFO, "Timeout occurred while waiting for frame capture.", e);
+                    logger.log(Level.INFO, "InterruptedException occurred while waiting for frame capture.", e);
                 }
             }
             Image image = rgbListener.getImage();
@@ -419,17 +419,19 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
         @Override
         public void rgbFrame(boolean bln, int w, int h, IntBuffer rgbPixels) {
-            bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
-            synchronized(waiter) {
+            synchronized (waiter) {
+                bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+                bi.setRGB(0, 0, w, h, rgbPixels.array(), 0, w);
                 waiter.notify();
             }
         }
 
         public Image getImage() {
-            Image image = bi;
-            bi = null;
-            return image;
+            synchronized (waiter) {
+                Image image = bi;
+                bi = null;
+                return image;
+            }
         }
         
     }
