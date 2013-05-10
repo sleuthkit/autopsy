@@ -187,7 +187,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         if (!casePath.equals("")) {
             // Close the startup menu
             try {
-                StartupWindow.getInstance().close();
+                StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex);
@@ -200,7 +200,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
                      //if case is not opened, open the start window
                     if (Case.isCaseOpen() == false) {
-                        StartupWindow.getInstance().open();
+                        StartupWindowProvider.getInstance().open();
                     }
  
                 } else {
