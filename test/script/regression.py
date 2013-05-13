@@ -194,6 +194,7 @@ class TestAutopsy:
 		self.indexed_files = 0
 		self.indexed_chunks = 0
 		self.autopsy_data_file = ""
+		self.sorted_data_file = ""
 		# Infinite Testing info
 		timer = 0
 		
@@ -329,24 +330,26 @@ class Database:
 			for type_id in range(1, length):
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
+			
 			self.retrieve_data(case.autopsy_data_file, autopsy_con)
-
+			srtcmdlst = ["sort", case.autopsy_data_file, "-o", case.sorted_data_file]
+			subprocess.call(srtcmdlst)
 			#print(self.databaselist)
-	
+
 	def retrieve_data(self, data_file, autopsy_con):
 		autopsy_con.text_factory = lambda x: unicode(x, "utf-8", "ignore")
 		autopsy_cur2 = autopsy_con.cursor()
-		autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_objects ON tsk_objects.obj_id = blackboard_artifacts.obj_id INNER JOIN tsk_files ON tsk_files.obj_id = tsk_objects.obj_id")
-		database_log = codecs.open(data_file, "w", "utf_8")
-		print(database_log)
+		autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
+		database_log = codecs.open(data_file, "wb", "utf_8")
 		rw = autopsy_cur2.fetchone()
 		appnd = False
+		counter = 0
 		try:
 			while (rw != None):
 				if(rw[0] != None):
-					database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" > ')
+					database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" id = "' + rw[3] + '" > ')
 				else:
-					database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
+					database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" id = "' + rw[3] + '" > ')
 				autopsy_cur1 = autopsy_con.cursor()
 				looptry = True
 				try:
@@ -354,9 +357,9 @@ class Database:
 					for num in str(rw[3]):
 						key += num
 					key = key,
-					autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =?", key)
+					autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
 					attributes = autopsy_cur1.fetchall()
-					attributes.sort()
+					print(attributes)
 				except Exception as e:
 					print(str(e))
 					print(str(rw[3]))
@@ -364,6 +367,7 @@ class Database:
 					print('hello')
 					pass
 				if(looptry == True):
+					src = attributes[0][0]
 					for attr in attributes:
 						val = 3 + attr[2]
 						numvals = 0
@@ -374,22 +378,36 @@ class Database:
 							global failedbool
 							global errorem
 							global attachl
-							errorem += "There were too many values for attribute type: " + attr[1] + "for artifact with id #" + str(rw[3]) + ".\n"
-							printerror("There were too many values for attribute type: " + attr[1] + "for artifact with id #" + str(rw[3]) + ".")
+							errorem += "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".\n"
+							printerror("There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".")
+							failedbool = True
+							if(not appnd):
+								attachl.append(autopsy_db_file)
+								appnd = True
+						if(not attr[0] == src):
+							global failedbool
+							global errorem
+							global attachl
+							errorem += "There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".\n"
+							printerror("There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".")
 							failedbool = True
 							if(not appnd):
 								attachl.append(autopsy_db_file)
 								appnd = True
 						try:
-							database_log.write('< attribute type = "' + attr[1] + '" value = "')
+							database_log.write('<attribute source = "' + attr[0] + 'type = "' + attr[1] + '" value = "')
 							inpval = attr[val]
 							if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
 								inpval = str(inpval)
-							database_log.write(inpval)
-						except Exception as e:
-								print(str(e))
-								print(attr[val])
-					database_log.write('" />')
+							for outp in inpval:
+								try:
+									database_log.write(outp)
+								except Exception as e:
+									print("Inner exception" + outp)
+									database_log.write("?")
+						except:
+								pass
+						database_log.write('" />')
 				database_log.write(' <artifact/>\n')
 				rw = autopsy_cur2.fetchone()
 		except Exception as e:
@@ -554,7 +572,8 @@ def run_test(image_file, count):
 	# Set the case to work for this test
 	case.image_file = image_file
 	case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
-	case.autopsy_data_file = Emailer.make_path(case.output_dir, case.image_name, "Autopsy_data.txt")
+	case.autopsy_data_file = Emailer.make_path(case.output_dir, case.image_name, case.image_name + "Autopsy_data.txt")
+	case.sorted_data_file = Emailer.make_path(case.output_dir, case.image_name, "Sorted_Autopsy_data.txt")
 	case.image = case.get_image_name(image_file)
 	case.common_log_path = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+case.common_log)
 	case.warning_log = Emailer.make_local_path(case.output_dir, case.image_name, "AutopsyLogs.txt")
@@ -625,6 +644,7 @@ def run_test(image_file, count):
 			compare_to_gold_db()
 			compare_to_gold_html()
 			compare_errors()
+			compare_data()
 			del_dir(img_gold)
 		except Exception as e:
 			print("Tests failed due to an error, try rebuilding or creating gold standards.\n")
@@ -717,6 +737,7 @@ def rebuild():
 	tmpdir = Emailer.make_path(gold_dir, case.image_name)
 	dbinpth = Emailer.make_path(case.output_dir, case.image_name, "AutopsyTestCase", "autopsy.db")
 	dboutpth = Emailer.make_path(tmpdir, "autopsy.db")
+	dataoutpth = Emailer.make_path(tmpdir, case.image_name + "SortedData.txt")
 	if not os.path.exists(case.gold_parse):
 		os.makedirs(case.gold_parse)
 	if not os.path.exists(gold_dir):
@@ -724,6 +745,7 @@ def rebuild():
 	if not os.path.exists(tmpdir):
 		os.makedirs(tmpdir)
 	copy_file(dbinpth, dboutpth)
+	copy_file(case.sorted_data_file, dataoutpth)
 	error_pth = Emailer.make_path(tmpdir, case.image_name+"SortedErrors.txt")
 	copy_file(case.sorted_log, error_pth)
 	# Rebuild the HTML report
@@ -1001,6 +1023,31 @@ def generate_common_log():
 		printerror(str(e) + "\n")
 		logging.critical(traceback.format_exc())
 		
+def compare_data():
+	gold_dir = Emailer.make_path(case.gold, case.image_name, case.image_name + "SortedData.txt")
+	if(not file_exists(gold_dir)):
+			gold_dir = Emailer.make_path(case.gold_parse, case.image_name, case.image_name + "SortedData.txt")
+	srtd_data = codecs.open(case.sorted_data_file, "r", "utf_8")
+	gold_data = codecs.open(gold_dir, "r", "utf_8")
+	gold_dat = gold_data.read()
+	srtd_dat = common_log.read()
+	patrn = re.compile("\d")
+	if (not(gold_dat == common_dat)):
+		diff_dir = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+"AutopsyErrors-Diff.txt")
+		diff_file = codecs.open(diff_dir, "wb", "utf_8") 
+		dffcmdlst = ["diff", case.sorted_data_file, gold_dir]
+		subprocess.call(dffcmdlst, stdout = diff_file)
+		global attachl
+		global errorem
+		global failedbool
+		attachl.append(case.sorted_data_file)
+		attachl.append(diff_dir)
+		errorem += "There was a difference in the Database data for " + case.image_name + ".\n"
+		print("Databases didn't match.\n")
+		failedbool = True
+		global imgfail
+		imgfail = True
+
 def compare_errors():
 	gold_dir = Emailer.make_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
 	if(not file_exists(gold_dir)):
