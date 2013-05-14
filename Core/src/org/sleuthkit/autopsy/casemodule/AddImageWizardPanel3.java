@@ -23,7 +23,9 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JProgressBar;
@@ -33,8 +35,10 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -55,11 +59,12 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * component from this class, just use getComponent().
      */
     private Component component = null;
-    private volatile Image newImage = null;
+    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private boolean ingested = false;
     private boolean readyToIngest = false;
     // the paths of the image files to be added
-    private String imgPath;
+    private String dataSourcePath;
+    private ContentType dataSourceType;
     // the time zone where the image is added
     private String timeZone;
     //whether to not process FAT filesystem orphans
@@ -71,7 +76,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     private CurrentDirectoryFetcher fetcher;
     private AddImageProcess process;
     private AddImageAction action;
-    private AddImgTask addImageTask;
+    private AddContentTask addImageTask;
     private AddImageWizardPanel2 wizPanel;
 
     AddImageWizardPanel3(AddImageAction action, AddImageWizardPanel2 wizPanel) {
@@ -164,12 +169,16 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         cleanupImage = null;
         readyToIngest = false;
         imgAdded = false;
-        imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
+        newContents.clear();
+        dataSourcePath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
+        dataSourceType = (ContentType) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
-        addImageTask = new AddImgTask(settings);
+        //start the process of adding the content
+        addImageTask = new AddContentTask(settings);
         addImageTask.execute();
+        
     }
 
     /**
@@ -195,9 +204,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * and we haven't already ingested.
      */
     private void startIngest() {
-        if (newImage != null && readyToIngest && !ingested) {
+        if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            ingestConfig.setContent(newImage);
+            ingestConfig.setContent(newContents);
             ingestConfig.start();
             wizPanel.getComponent().appendProgressText(" Ingest started.");
         }
@@ -209,7 +218,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     
     private static class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
-        AddImgTask task;
+        AddContentTask task;
         JProgressBar prog;
         AddImageVisualPanel2 wiz;
         AddImageProcess proc;
@@ -255,9 +264,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
 
     /**
-     * Thread that will make the JNI call to ingest the image.
+     * Thread that will make the JNI call to add image to database, and then kick-off 
+     * ingest modules.
      */
-    private class AddImgTask extends SwingWorker<Integer, Integer> {
+    private class AddContentTask extends SwingWorker<Integer, Integer> {
 
         private JProgressBar progressBar;
         private Case currentCase;
@@ -267,9 +277,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         private String errorString = null;
         private long start;
         private WizardDescriptor settings;
-        private Logger logger = Logger.getLogger(AddImgTask.class.getName());
+        private Logger logger = Logger.getLogger(AddContentTask.class.getName());
 
-        protected AddImgTask(WizardDescriptor settings) {
+        protected AddContentTask(WizardDescriptor settings) {
             this.progressBar = wizPanel.getComponent().getCrDbProgressBar();
             currentCase = Case.getCurrentCase();
             this.settings = settings;
@@ -323,7 +333,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             try {
                 wizPanel.setStateStarted();
                 fetcher.execute();
-                process.run(new String[]{imgPath});
+                process.run(new String[]{dataSourcePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
@@ -359,7 +369,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
          */
         private void commitImage(WizardDescriptor settings) throws Exception {
 
-            String imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
+            String contentPath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
+            ContentType contentType = (ContentType) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
+            //TODO check type and skip commit if local files
+            
             String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
             settings.putProperty(AddImageAction.IMAGEID_PROP, "");
 
@@ -374,7 +387,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 SleuthkitCase.dbWriteUnlock();
 
                 if (imageId != 0) {
-                    newImage = Case.getCurrentCase().addImage(imgPath, imageId, timezone);
+                    Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
+                    newContents.add(newImage);
                     settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
                 }
 
@@ -446,7 +460,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 wizPanel.setStateFinished();
 
                 // Commit the image
-                if (newImage != null) //already commited
+                if (! newContents.isEmpty()) //already commited
                 {
                     logger.log(Level.INFO, "Assuming image already committed, will not commit.");
                     return;

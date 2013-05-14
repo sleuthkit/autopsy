@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
@@ -40,12 +39,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
-public class LocalDiskPanel extends ImageTypePanel {
+public class LocalDiskPanel extends ContentTypePanel {
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private List<LocalDisk> disks = new ArrayList<LocalDisk>();
@@ -131,11 +129,12 @@ public class LocalDiskPanel extends ImageTypePanel {
      * @return String selected disk path
      */
     @Override
-    public String getImagePath() {
+    public String getContentPaths() {
         if(disks.size() > 0) {
             LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
             return selected.getPath();
-        } else {
+        } 
+        else {
             return "";
         }
     }
@@ -144,12 +143,17 @@ public class LocalDiskPanel extends ImageTypePanel {
      * Set the selected disk.
      */
     @Override
-    public void setImagePath(String s) {
+    public void setContentPath(String s) {
         for(int i=0; i<disks.size(); i++) {
             if(disks.get(i).getPath().equals(s)) {
                 diskComboBox.setSelectedIndex(i);
             }
         }
+    }
+    
+    @Override
+    public ContentType getContentType() {
+        return ContentType.DISK;
     }
 
     /**

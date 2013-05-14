@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.List;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
 
@@ -35,7 +36,7 @@ public interface IngestConfigurator {
      * set input Content to be configured for ingest
      * @param inputContent content to be configured for ingest
      */
-    void setContent(Content inputContent);
+    void setContent(List<Content> inputContent);
     
     /**
      * start ingest enqueing previously set image

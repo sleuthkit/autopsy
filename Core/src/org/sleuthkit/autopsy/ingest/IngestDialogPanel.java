@@ -61,7 +61,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
     // The inut content that's just been added to the database
-    private Content inputContent;
+    private List<Content> inputContent;
     private static IngestDialogPanel instance = null;
 
     /** Creates new form IngestDialogPanel */
@@ -488,7 +488,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     }
 
     @Override
-    public void setContent(Content inputContent) {
+    public void setContent(List<Content> inputContent) {
         this.inputContent = inputContent;
     }
 

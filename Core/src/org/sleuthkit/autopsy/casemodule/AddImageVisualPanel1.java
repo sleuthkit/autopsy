@@ -31,6 +31,7 @@ import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 
 /**
  * The "Add Image" wizard panel 1. This class is used to design the "form" of
@@ -40,8 +41,8 @@ import javax.swing.event.ListDataListener;
 final class AddImageVisualPanel1 extends JPanel {
     
     enum EVENT {UPDATE_UI, FOCUS_NEXT};
-    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
-    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
+    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
+    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
     static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
     static final String encaseDesc = "Encase Images (*.e01)";
@@ -54,9 +55,9 @@ final class AddImageVisualPanel1 extends JPanel {
     static final String allDesc = "All Supported Types";
     static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private AddImageWizardPanel1 wizPanel;
-    private ImageTypeModel model;
+    private ContentTypeModel model;
     
-    ImageTypePanel currentPanel;
+    ContentTypePanel currentPanel;
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -70,7 +71,7 @@ final class AddImageVisualPanel1 extends JPanel {
     }
     
     private void customInit() {
-        model = new ImageTypeModel();
+        model = new ContentTypeModel();
         typeComboBox.setModel(model);
         typeComboBox.setSelectedIndex(0);
         typePanel.setLayout(new BorderLayout());
@@ -81,7 +82,7 @@ final class AddImageVisualPanel1 extends JPanel {
      * Changes the current panel to the given panel.
      * @param panel instance of ImageTypePanel to change to
      */
-    private void updateCurrentPanel(ImageTypePanel panel) {
+    private void updateCurrentPanel(ContentTypePanel panel) {
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
@@ -112,24 +113,33 @@ final class AddImageVisualPanel1 extends JPanel {
      */
     @Override
     public String getName() {
-        return "Enter Image Information";
+        return "Enter Data Source Information";
     }
 
     /**
-     * Gets the image path from the Image Path Text Field.
+     * Gets the data sources path from the Image Path Text Field.
      *
-     * @return imagePath  the image path
+     * @return data source path, can be comma separated for multiples
      */
-    public String getImagePath() {
-        return currentPanel.getImagePath();
+    public String getContentPaths() {
+        return currentPanel.getContentPaths();
+    }
+    
+     /**
+     * Gets the data sources type selected
+     *
+     * @return data source selected
+     */
+    public ContentType getContentType() {
+        return currentPanel.getContentType();
     }
     
     /**
      * Sets the image path of the current panel.
      * @param s the image path to set
      */
-    public void setImagePath(String s) {
-        currentPanel.setImagePath(s);
+    public void setContentPath(String s) {
+        currentPanel.setContentPath(s);
     }
     
     /**
@@ -242,7 +252,7 @@ final class AddImageVisualPanel1 extends JPanel {
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 65, Short.MAX_VALUE)
+            .addGap(0, 77, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
@@ -268,8 +278,8 @@ final class AddImageVisualPanel1 extends JPanel {
                     .addComponent(typeTabel)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
 
         imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -304,8 +314,8 @@ final class AddImageVisualPanel1 extends JPanel {
                 .addContainerGap()
                 .addComponent(imgInfoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -313,7 +323,7 @@ final class AddImageVisualPanel1 extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 69, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 75, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
@@ -349,13 +359,13 @@ final class AddImageVisualPanel1 extends JPanel {
     /**
      * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
      */
-    private class ImageTypeModel implements ComboBoxModel {
-        ImageTypePanel selected;
-        ImageTypePanel[] types = ImageTypePanel.getPanels();
+    private class ContentTypeModel implements ComboBoxModel {
+        ContentTypePanel selected;
+        ContentTypePanel[] types = ContentTypePanel.getPanels();
         
         @Override
         public void setSelectedItem(Object anItem) {
-            selected = (ImageTypePanel) anItem;
+            selected = (ContentTypePanel) anItem;
             updateCurrentPanel(selected);
         }
 

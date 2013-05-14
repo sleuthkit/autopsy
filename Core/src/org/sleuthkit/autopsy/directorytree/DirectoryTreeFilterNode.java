@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -113,7 +114,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
-                        ingestDialog.setContent(content);
+                        ingestDialog.setContent(Collections.<Content>singletonList(content));
                         ingestDialog.display();
                     }
                 });

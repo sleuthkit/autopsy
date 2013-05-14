@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -40,7 +41,7 @@ public class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private Content inputContent = null;
+    private List<Content> inputContent = null;
     private IngestDialogPanel panel = null;
     
     private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
@@ -115,7 +116,7 @@ public class IngestDialog extends JDialog {
         setVisible(true);
     }
     
-    public void setContent(Content inputContent) {
+    public void setContent(List<Content> inputContent) {
         this.inputContent = inputContent;
     }
     
