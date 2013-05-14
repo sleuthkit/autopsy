@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.Images;
-import org.sleuthkit.autopsy.datamodel.ImagesNode;
+import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -332,7 +332,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Case currentCase = Case.getCurrentCase();
 
                 // close the top component if there's no image in this case
-                if (currentCase.getImageIDs().length == 0) {
+                if (currentCase.getRootObjectsCount() == 0) {
                     //this.close();
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
@@ -756,7 +756,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
 
         Children rootChildren = em.getRootContext().getChildren();
-        Node imagesFilterNode = rootChildren.findChild(ImagesNode.NAME);
+        Node imagesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
         OriginalNode imagesNodeOrig = imagesFilterNode.getLookup().lookup(OriginalNode.class);
 
         if (imagesNodeOrig == null) {
@@ -772,7 +772,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         //final TreeView tree = getTree();
         //tree.expandNode(imagesNode);
 
-        setSelectedNode(selectedPath, ImagesNode.NAME);
+        setSelectedNode(selectedPath, DataSourcesNode.NAME);
 
     }
 

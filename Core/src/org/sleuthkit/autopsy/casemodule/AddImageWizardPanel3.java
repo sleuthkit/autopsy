@@ -319,7 +319,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 for (String path : paths) {
                     absLocalPaths.add(path);
                 }
-                currentCase.getServices().getFileManager().addLocalFilesDirs(absLocalPaths);
+                newContents.addAll(currentCase.getServices().getFileManager().addLocalFilesDirs(absLocalPaths));
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Errors occurred while running add local files. ", ex);
                 hasCritError = true;
