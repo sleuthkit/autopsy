@@ -24,9 +24,11 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
@@ -142,10 +144,65 @@ public class FileManager implements Closeable {
     }
 
     /**
+     * Add local files and dirs - the general method that does it all for files
+     * and dirs and in bulk/
+     * Sends event to inform listeners of new content (note, this is temporary, we will be using 
+     * datamodel observer and node auto-refresh in future)
+     *
+     * @param localAbsPaths list of absolute paths to local files and dirs
+     * @return list of root AbstractFile objects created to represent roots of
+     * added local files/dirs
+     * @throws TskCoreException exception thrown if the object creation failed
+     * due to a critical system error or of the file manager has already been
+     * closed. There is no "revert" logic if one of the additions fails. The
+     * addition stops with the first error encountered.
+     */
+    public synchronized List<AbstractFile> addLocalFilesDirs(List<String> localAbsPaths) throws TskCoreException {
+        final List<AbstractFile> added = new ArrayList<AbstractFile>();
+
+        final List<java.io.File> rootsToAdd = new ArrayList<java.io.File>();
+        //first validate all the inputs before any additions
+        for (String absPath : localAbsPaths) {
+            java.io.File localFile = new java.io.File(absPath);
+            if (!localFile.exists() || !localFile.canRead()) {
+                String msg = "One of the local files/dirs to add is not readable: " + localFile.getAbsolutePath() + ", aborting the process before any files added";
+                logger.log(Level.SEVERE, msg);
+                throw new TskCoreException(msg);
+            }
+            rootsToAdd.add(localFile);
+        }
+
+        for (java.io.File localRootToAdd : rootsToAdd) {
+            AbstractFile localFileAdded = null;
+            if (localRootToAdd.isFile()) {
+                localFileAdded = addLocalFileSingle(localRootToAdd.getAbsolutePath());
+            } else {
+                localFileAdded = this.addLocalDir(localRootToAdd.getAbsolutePath());
+            }
+            if (localFileAdded == null) {
+                String msg = "One of the local files/dirs could not be added: " + localRootToAdd.getAbsolutePath();
+                logger.log(Level.SEVERE, msg);
+                throw new TskCoreException(msg);
+            } else {
+                added.add(localFileAdded);
+            }
+        }
+        
+        if (! added.isEmpty()) {
+            //TODO use datamodel observer that sends such events, and node-autorefresh
+           // DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
+        }
+
+
+        return added;
+    }
+
+    /**
      * Helper (internal) to add child of local dir recursively
+     *
      * @param parentVd
      * @param childLocalFile
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
     private void addLocalDirectoryRecInt(VirtualDirectory parentVd,
             java.io.File childLocalFile) throws TskCoreException {
@@ -167,22 +224,23 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Add a local directory and its children recursively. 
-     * Parent container of the local dir is added for context.
-     * 
-     * Does not refresh the views of data (client must do it currently, 
-     * will be addressed in future with node auto-refresh support)
-     * 
+     * Add a local directory and its children recursively. Parent container of
+     * the local dir is added for context.
+     *
+     * Does not refresh the views of data (client must do it currently, will be
+     * addressed in future with node auto-refresh support)
+     *
      *
      * @param localAbsPath local absolute path of root folder whose children are
-     * to be added recursively.  If there is a parent dir, it is added as a container, for context.
+     * to be added recursively. If there is a parent dir, it is added as a
+     * container, for context.
      * @return parent virtual directory folder created representing the
      * localAbsPath node
      * @throws TskCoreException exception thrown if the object creation failed
      * due to a critical system error or of the file manager has already been
      * closed, or if the localAbsPath could not be accessed
      */
-    public synchronized VirtualDirectory addLocalDir(String localAbsPath) throws TskCoreException {
+    private synchronized VirtualDirectory addLocalDir(String localAbsPath) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
@@ -198,7 +256,7 @@ public class FileManager implements Closeable {
         if (!localDir.isDirectory()) {
             throw new TskCoreException("Attempted to add a local dir that is not a directory: " + localAbsPath);
         }
-        
+
         String parentName = null;
         java.io.File parentDir = localDir.getParentFile();
         if (parentDir != null) {
@@ -212,8 +270,7 @@ public class FileManager implements Closeable {
             final long localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
             if (parentName == null) {
                 rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
-            }
-            else {
+            } else {
                 //add parent dir for context
                 final VirtualDirectory contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
                 rootVd = tskCase.addVirtualDirectory(contextDir.getId(), rootVdName);
@@ -244,7 +301,7 @@ public class FileManager implements Closeable {
 
     /**
      * Creates a single local file under $LocalFiles for the case, adds it to
-     * the database and returns it.   Does not refresh the views of data.
+     * the database and returns it. Does not refresh the views of data.
      *
      * @param localAbsPath local absolute path of the local file, including the
      * file name.
@@ -254,7 +311,7 @@ public class FileManager implements Closeable {
      * closed, or if the localAbsPath could not be accessed
      *
      */
-    public synchronized LocalFile addLocalFileSingle(String localAbsPath) throws TskCoreException {
+    private synchronized LocalFile addLocalFileSingle(String localAbsPath) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
@@ -265,7 +322,7 @@ public class FileManager implements Closeable {
 
     /**
      * Creates a single local file under parentFile for the case, adds it to the
-     * database and returns it.  Does not refresh the views of data.
+     * database and returns it. Does not refresh the views of data.
      *
      * @param localAbsPath local absolute path of the local file, including the
      * file name
@@ -277,7 +334,7 @@ public class FileManager implements Closeable {
      * closed
      *
      */
-    public synchronized LocalFile addLocalFileSingle(String localAbsPath, AbstractFile parentFile) throws TskCoreException {
+    private synchronized LocalFile addLocalFileSingle(String localAbsPath, AbstractFile parentFile) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
@@ -306,7 +363,7 @@ public class FileManager implements Closeable {
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
 
-        
+
         return lf;
     }
 

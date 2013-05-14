@@ -89,6 +89,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
         // if the finish button is pressed (not cancelled)
         if (finished) {
             // now start the 'Add Image' wizard
+            //TODO fix for local
             AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
             addImageAction.actionPerformed(null);
         }

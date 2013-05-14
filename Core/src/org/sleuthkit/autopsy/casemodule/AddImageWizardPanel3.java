@@ -76,7 +76,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     private CurrentDirectoryFetcher fetcher;
     private AddImageProcess process;
     private AddImageAction action;
-    private AddContentTask addImageTask;
+    private AddImageTask addImageTask;
+    private AddLocalFilesTask addLocalFilesTask;
     private AddImageWizardPanel2 wizPanel;
 
     AddImageWizardPanel3(AddImageAction action, AddImageWizardPanel2 wizPanel) {
@@ -165,7 +166,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     public void readSettings(WizardDescriptor settings) {
         JButton cancel = new JButton("Cancel");
         cancel.setEnabled(false);
-        settings.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
+        settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupImage = null;
         readyToIngest = false;
         imgAdded = false;
@@ -176,9 +177,15 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
         //start the process of adding the content
-        addImageTask = new AddContentTask(settings);
-        addImageTask.execute();
-        
+        if (dataSourceType.equals(ContentType.LOCAL) ) {
+            addLocalFilesTask = new AddLocalFilesTask(settings);
+            addLocalFilesTask.execute();
+        }
+        else {
+            //disk or image
+            addImageTask = new AddImageTask(settings);
+            addImageTask.execute();
+        }
     }
 
     /**
@@ -216,14 +223,14 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Class for getting the currently processing directory.
      *
      */
-    
-    private static class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
-        AddContentTask task;
+    private static class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
+
+        AddImageTask task;
         JProgressBar prog;
         AddImageVisualPanel2 wiz;
         AddImageProcess proc;
-		
-        CurrentDirectoryFetcher(JProgressBar prog, AddImageVisualPanel2 wiz, AddImageProcess proc){
+
+        CurrentDirectoryFetcher(JProgressBar prog, AddImageVisualPanel2 wiz, AddImageProcess proc) {
             this.wiz = wiz;
             this.proc = proc;
             this.prog = prog;
@@ -233,10 +240,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
          * @return the currently processing directory
          */
         @Override
-        protected Integer doInBackground(){
-            try{
-                while(prog.getValue() < 100 || prog.isIndeterminate()){ //TODO Rely on state variable in AddImgTask class
-                    
+        protected Integer doInBackground() {
+            try {
+                while (prog.getValue() < 100 || prog.isIndeterminate()) { //TODO Rely on state variable in AddImgTask class
+
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
@@ -261,13 +268,134 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         }
     }
 
+    /**
+     * Thread that will add local files to database, and then kick-off ingest
+     * modules. Note: the add local files task cannot currently be reverted as
+     * the add image task can.
+     * This is a separate task from AddImgTask because it is much simpler and does not require locks,
+     * since the underlying file manager methods acquire the locks for each transaction when adding local files.
+     */
+    private class AddLocalFilesTask extends SwingWorker<Integer, Integer> {
 
+        private JProgressBar progressBar;
+        private Case currentCase;
+        // true if the process was requested to stop
+        private boolean interrupted = false;
+        private boolean hasCritError = false;
+        private String errorString = null;
+        private WizardDescriptor settings;
+        private Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
+
+        protected AddLocalFilesTask(WizardDescriptor settings) {
+            this.progressBar = wizPanel.getComponent().getCrDbProgressBar();
+            currentCase = Case.getCurrentCase();
+            this.settings = settings;
+        }
+
+        /**
+         * Starts the addImage process, but does not commit the results.
+         *
+         * @return
+         * @throws Exception
+         */
+        @Override
+        protected Integer doInBackground() {
+            this.setProgress(0);
+            // Add a cleanup task to interupt the backgroud process if the
+            // wizard exits while the background process is running.
+            AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
+                @Override
+                void cleanup() throws Exception {
+                    logger.log(Level.INFO, "Add local files process interrupted.");
+                    //nothing to be cleanedup
+                }
+            };
+
+            cancelledWhileRunning.enable();
+            try {
+                wizPanel.setStateStarted();
+                String [] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
+                List<String>absLocalPaths = new ArrayList<String>();
+                for (String path : paths) {
+                    absLocalPaths.add(path);
+                }
+                currentCase.getServices().getFileManager().addLocalFilesDirs(absLocalPaths);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Errors occurred while running add local files. ", ex);
+                hasCritError = true;
+                errorString = ex.getMessage();
+            } finally {
+                // process is over, doesn't need to be dealt with if cancel happens
+                cancelledWhileRunning.disable();
+                //enqueue what would be in done() to EDT thread
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        postProcess();
+                    }
+                });
+            }
+            return 0;
+        }
+
+        /**
+         *
+         * (called by EventDispatch Thread after doInBackground finishes)
+         */
+        protected void postProcess() {
+            progressBar.setIndeterminate(false);
+            setProgress(100);
+
+            if (interrupted || hasCritError) {
+                logger.log(Level.INFO, "Handling errors or interruption that occured in local files process");
+                if (hasCritError) {
+                    //core error
+                    wizPanel.getComponent().setErrors(errorString, true);
+                }
+                return;
+            } else if (errorString != null) {
+                //data error (non-critical)
+                logger.log(Level.INFO, "Handling non-critical errors that occured in local files process");
+                wizPanel.getComponent().setErrors(errorString, false);
+            }
+            try {
+                // When everything happens without an error:
+                if (errorString == null) { // complete progress bar
+                    wizPanel.getComponent().changeProgressBarTextAndColor("*Local Files added.", 100, Color.black);
+                }
+
+                // Get attention for the process finish
+                java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
+                AddImageVisualPanel2 panel = wizPanel.getComponent();
+                if (panel != null) {
+                    Window w = SwingUtilities.getWindowAncestor(panel);
+                    if (w != null) {
+                        w.toFront();
+                    }
+                }
+
+                wizPanel.setStateFinished();
+
+                settings.putProperty(AddImageAction.IMAGEID_PROP, "");
+                settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
+
+                // Start ingest if we can
+                startIngest();
+
+            } catch (Exception ex) {
+                //handle unchecked exceptions
+                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
+                wizPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
+                logger.log(Level.SEVERE, "Error adding image to case", ex);
+            } 
+        }
+    }
 
     /**
-     * Thread that will make the JNI call to add image to database, and then kick-off 
-     * ingest modules.
+     * Thread that will make the JNI call to add image to database, and then
+     * kick-off ingest modules.
      */
-    private class AddContentTask extends SwingWorker<Integer, Integer> {
+    private class AddImageTask extends SwingWorker<Integer, Integer> {
 
         private JProgressBar progressBar;
         private Case currentCase;
@@ -277,9 +405,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         private String errorString = null;
         private long start;
         private WizardDescriptor settings;
-        private Logger logger = Logger.getLogger(AddContentTask.class.getName());
+        private Logger logger = Logger.getLogger(AddImageTask.class.getName());
 
-        protected AddContentTask(WizardDescriptor settings) {
+        protected AddImageTask(WizardDescriptor settings) {
             this.progressBar = wizPanel.getComponent().getCrDbProgressBar();
             currentCase = Case.getCurrentCase();
             this.settings = settings;
@@ -326,7 +454,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 return 0;
             }
 
-
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             fetcher = new CurrentDirectoryFetcher(this.progressBar, wizPanel.getComponent(), process);
             cancelledWhileRunning.enable();
@@ -370,9 +497,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         private void commitImage(WizardDescriptor settings) throws Exception {
 
             String contentPath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
-            ContentType contentType = (ContentType) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
-            //TODO check type and skip commit if local files
-            
+
             String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
             settings.putProperty(AddImageAction.IMAGEID_PROP, "");
 
@@ -396,7 +521,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // task
                 cleanupImage.disable();
                 settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
-                
+
                 logger.log(Level.INFO, "Image committed, imageId: " + imageId);
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             }
@@ -460,7 +585,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 wizPanel.setStateFinished();
 
                 // Commit the image
-                if (! newContents.isEmpty()) //already commited
+                if (!newContents.isEmpty()) //already commited
                 {
                     logger.log(Level.INFO, "Assuming image already committed, will not commit.");
                     return;
@@ -489,7 +614,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 wizPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
 
                 // Log error/display warning
-               
+
                 logger.log(Level.SEVERE, "Error adding image to case", ex);
             } finally {
             }

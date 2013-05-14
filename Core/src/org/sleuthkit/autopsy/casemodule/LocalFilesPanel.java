@@ -34,6 +34,7 @@ public class LocalFilesPanel extends ContentTypePanel {
     private List<File> currentFiles = new ArrayList<File>();
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
+    public static final String FILES_SEP = ",";
 
     /**
      * Creates new form LocalFilesPanel
@@ -59,13 +60,15 @@ public class LocalFilesPanel extends ContentTypePanel {
 
     @Override
     public String getContentPaths() {
+        //TODO consider interface change to return list of paths instead
+        
         if (currentFiles == null) {
             return "";
         }
         StringBuilder b = new StringBuilder();
         for (File f : currentFiles) {
             b.append(f.getAbsolutePath() );
-            b.append(",");
+            b.append(FILES_SEP);
         }
         return b.toString();
     }
