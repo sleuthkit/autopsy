@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private Logger logger = Logger.getLogger(AddImageWizardPanel3.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardPanel3.class.getName());
     private IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
     /**
      * The visual component that displays this panel. If you need to access the

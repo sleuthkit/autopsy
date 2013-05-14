@@ -154,6 +154,11 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     public ContentType getContentType() {
         return ContentType.IMAGE;
     }
+
+    @Override
+    public void reset() {
+        //nothing to reset
+    }
     
     
 

@@ -59,6 +59,11 @@ abstract class ContentTypePanel extends JPanel {
     abstract public boolean enableNext();
     
     /**
+     * Tells this panel to reset itself
+     */
+    abstract public void reset();
+    
+    /**
      * Tells this panel it has been selected.
      */
     abstract public void select();

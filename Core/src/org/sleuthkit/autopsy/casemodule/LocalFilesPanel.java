@@ -91,7 +91,13 @@ public class LocalFilesPanel extends ContentTypePanel {
 
     @Override
     public void select() {
-        //nothing needed
+        reset();
+    }
+    
+    @Override
+    public void reset() {
+        currentFiles.clear();
+        selectedPaths.setText("");
     }
 
     @Override
@@ -213,8 +219,7 @@ public class LocalFilesPanel extends ContentTypePanel {
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
-        currentFiles.clear();
-        selectedPaths.setText("");
+        reset();
         
     }//GEN-LAST:event_clearButtonActionPerformed
 

@@ -166,6 +166,11 @@ public class LocalDiskPanel extends ContentTypePanel {
         return enableNext;
     }
     
+    @Override
+    public void reset() {
+        //nothing to reset
+    }
+    
     /**
      * @return the representation of this panel as a String.
      */

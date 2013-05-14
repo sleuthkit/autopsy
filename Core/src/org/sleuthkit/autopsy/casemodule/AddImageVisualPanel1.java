@@ -135,6 +135,13 @@ final class AddImageVisualPanel1 extends JPanel {
     }
     
     /**
+     * Reset the data sources panel selected
+     */
+    public void reset() {
+        currentPanel.reset();
+    }
+    
+    /**
      * Sets the image path of the current panel.
      * @param s the image path to set
      */
