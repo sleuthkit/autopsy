@@ -202,6 +202,11 @@ public class LocalFilesPanel extends ContentTypePanel {
             this.selectedPaths.setToolTipText(allPaths.toString());
             
         }
+        
+        if (!currentFiles.isEmpty()) {
+            enableNext = true;
+            pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
+        }
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
