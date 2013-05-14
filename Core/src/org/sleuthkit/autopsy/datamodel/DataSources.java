@@ -23,11 +23,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Images nodes support
  */
-public class Images implements AutopsyVisitableItem{
+public class DataSources implements AutopsyVisitableItem{
     
     private SleuthkitCase skCase;
     
-    public Images(SleuthkitCase skCase) {
+    public DataSources(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 

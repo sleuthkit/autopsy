@@ -156,7 +156,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
-        public AbstractNode visit(Images i) {
+        public AbstractNode visit(DataSources i) {
             try {
                 return new DataSourcesNode(i.getSleuthkitCase().getRootObjects());
             } catch (TskException ex) {

@@ -27,7 +27,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -54,7 +53,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
-import org.sleuthkit.autopsy.datamodel.Images;
+import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Results;
@@ -68,6 +67,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -338,9 +338,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 } else {
                     // if there's at least one image, load the image and open the top component
                     List<Object> items = new ArrayList<Object>();
-                    items.add(new Images(currentCase.getSleuthkitCase()));
-                    items.add(new Views(currentCase.getSleuthkitCase()));
-                    items.add(new Results(currentCase.getSleuthkitCase()));
+                    final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+                    items.add(new DataSources(tskCase));
+                    items.add(new Views(tskCase));
+                    items.add(new Results(tskCase));
                     contentChildren = new RootContentChildren(items);
                     Node root = new AbstractNode(contentChildren) {
                         /**
@@ -429,6 +430,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public void componentClosed() {
         //@@@ push the selection node to null?
+        contentChildren = null;
     }
 
     void writeProperties(java.util.Properties p) {
@@ -756,11 +758,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
 
         Children rootChildren = em.getRootContext().getChildren();
-        Node imagesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
-        OriginalNode imagesNodeOrig = imagesFilterNode.getLookup().lookup(OriginalNode.class);
+        Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
+        if (dataSourcesFilterNode == null) {
+            logger.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree");
+            return;
+        }
+        OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(OriginalNode.class);
 
         if (imagesNodeOrig == null) {
-            logger.log(Level.SEVERE, "Cannot find Images node, won't refresh the content tree");
+            logger.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree");
             return;
         }
 

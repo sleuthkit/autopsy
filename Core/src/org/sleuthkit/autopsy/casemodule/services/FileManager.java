@@ -146,8 +146,6 @@ public class FileManager implements Closeable {
     /**
      * Add local files and dirs - the general method that does it all for files
      * and dirs and in bulk/
-     * Sends event to inform listeners of new content (note, this is temporary, we will be using 
-     * datamodel observer and node auto-refresh in future)
      *
      * @param localAbsPaths list of absolute paths to local files and dirs
      * @return list of root AbstractFile objects created to represent roots of
@@ -188,11 +186,7 @@ public class FileManager implements Closeable {
             }
         }
         
-        if (! added.isEmpty()) {
-            //TODO use datamodel observer that sends such events, and node-autorefresh
-           // DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
-        }
-
+       
 
         return added;
     }
@@ -226,9 +220,6 @@ public class FileManager implements Closeable {
     /**
      * Add a local directory and its children recursively. Parent container of
      * the local dir is added for context.
-     *
-     * Does not refresh the views of data (client must do it currently, will be
-     * addressed in future with node auto-refresh support)
      *
      *
      * @param localAbsPath local absolute path of root folder whose children are
