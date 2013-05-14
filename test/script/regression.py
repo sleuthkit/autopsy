@@ -354,8 +354,7 @@ class Database:
 				looptry = True
 				try:
 					key = ""
-					for num in str(rw[3]):
-						key += num
+					key = str(rw[3])
 					key = key,
 					autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
 					attributes = autopsy_cur1.fetchall()
@@ -415,6 +414,18 @@ class Database:
 			print(rw[0])
 			print(rw[1])
 			print(rw[2])
+			print(rw[3])
+			
+	def dbDump(self):
+		autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
+										  "AutopsyTestCase", "autopsy.db")
+		autopsy_con = sqlite3.connect(autopsy_db_file)
+		dump_file = Emailer.make_path(case.output_dir, case.image_name, "Dump.txt")
+		database_log = codecs.open(dump_file, "wb", "utf_8")
+		for line in autopsy_con.iterdump():
+			database_log.write(line + "\n")
+		
+		
 	
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
@@ -809,6 +820,7 @@ def compare_to_gold_db():
 	try:
 		database.generate_autopsy_objects()
 		database.generate_autopsy_artifacts()
+		database.dbDump()
 		database.generate_autopsy_attributes()
 	except Exception as e:
 		print(str(e))
@@ -1030,9 +1042,9 @@ def compare_data():
 	srtd_data = codecs.open(case.sorted_data_file, "r", "utf_8")
 	gold_data = codecs.open(gold_dir, "r", "utf_8")
 	gold_dat = gold_data.read()
-	srtd_dat = common_log.read()
+	srtd_dat = srtd_data.read()
 	patrn = re.compile("\d")
-	if (not(gold_dat == common_dat)):
+	if (not(gold_dat == srtd_dat)):
 		diff_dir = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+"AutopsyErrors-Diff.txt")
 		diff_file = codecs.open(diff_dir, "wb", "utf_8") 
 		dffcmdlst = ["diff", case.sorted_data_file, gold_dir]
