@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
@@ -183,10 +184,12 @@ public class FileManager implements Closeable {
                 throw new TskCoreException(msg);
             } else {
                 added.add(localFileAdded);
+                //send new content event
+                //for now reusing ingest events, in future this will be replaced by datamodel / observer sending out events
+                IngestServices.getDefault().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
             }
         }
-        
-       
+
 
         return added;
     }
