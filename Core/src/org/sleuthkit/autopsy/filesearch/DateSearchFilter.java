@@ -247,12 +247,12 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             }
 
             // if the image is added to the case
-            if (changed.equals(Case.CASE_ADD_IMAGE)) {
+            if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
                 DateSearchFilter.this.updateTimeZoneList();
             }
 
             // if the image is removed from the case
-            if (changed.equals(Case.CASE_DEL_IMAGE)) {
+            if (changed.equals(Case.CASE_DEL_DATA_SOURCE)) {
                 DateSearchFilter.this.updateTimeZoneList();
             }
         }

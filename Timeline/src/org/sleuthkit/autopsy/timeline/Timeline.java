@@ -604,7 +604,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (prop.equals(Case.CASE_ADD_IMAGE)) {
+        if (prop.equals(Case.CASE_ADD_DATA_SOURCE)) {
             if (mainFrame != null && !mainFrame.isVisible()) {
                 // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;

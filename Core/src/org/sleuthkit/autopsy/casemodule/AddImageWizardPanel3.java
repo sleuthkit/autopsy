@@ -376,11 +376,15 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
                 wizPanel.setStateFinished();
 
-                settings.putProperty(AddImageAction.IMAGEID_PROP, "");
-                settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
-
+                //notify the case
+                 if (! newContents.isEmpty()) {
+                    Case.getCurrentCase().addLocalDataSource(newContents.get(0));
+                }
+                
                 // Start ingest if we can
                 startIngest();
+                
+                newContents.clear();
 
             } catch (Exception ex) {
                 //handle unchecked exceptions

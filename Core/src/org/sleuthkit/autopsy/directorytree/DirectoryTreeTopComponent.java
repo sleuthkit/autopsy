@@ -536,7 +536,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 resetHistoryListAndButtons();
             }
         } // if the image is added to the case
-        else if (changed.equals(Case.CASE_ADD_IMAGE)) {
+        else if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
             componentOpened();
 //            Image img = (Image)newValue;
 //
@@ -798,6 +798,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node results = dirChilds.findChild(ResultsNode.NAME);
 
+        if (results == null) {
+            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree");
+            return;
+        }
         OriginalNode original = results.getLookup().lookup(OriginalNode.class);
         ResultsNode resultsNode = (ResultsNode) original.getNode();
         RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
