@@ -177,8 +177,8 @@ class IngestScheduler {
         }
 
         /**
-         * get total est. number of files to be enqueued for current ingest input sources in
-         * queues
+         * get total est. number of files to be enqueued for current ingest
+         * input sources in queues
          *
          * @return total number of files
          */
@@ -267,29 +267,35 @@ class IngestScheduler {
              */
             private static List<ProcessTask> createFromScheduledTask(PipelineContext<IngestModuleAbstractFile> context) {
                 ScheduledTask<IngestModuleAbstractFile> scheduledTask = context.getScheduledTask();
-                Collection<AbstractFile> rootObjects = scheduledTask.getContent().accept(new GetRootDirVisitor());
+                final Content scheduledContent = scheduledTask.getContent();
+                Collection<AbstractFile> rootObjects = scheduledContent.accept(new GetRootDirVisitor());
                 List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
-                for (AbstractFile root : rootObjects) {
-                    //TODO use more specific get AbstractFile children method
-                    List<Content> children;
-                    try {
-                        children = root.getChildren();
-                        if (children.isEmpty()) {
-                            //add the root itself, could be unalloc file, child of volume or image
-                            firstLevelFiles.add(root);
-                        } else {
-                            //root for fs root dir, schedule children dirs/files
-                            for (Content child : children) {
-                                if (child instanceof AbstractFile) {
-                                    firstLevelFiles.add((AbstractFile) child);
+                if (rootObjects.isEmpty() && scheduledContent instanceof AbstractFile) {
+                    //add the root, which is a leaf itself
+                    firstLevelFiles.add((AbstractFile) scheduledContent);
+                } else {
+                    for (AbstractFile root : rootObjects) {
+                        //TODO the type-specific AbstractFile getChildren() method
+                        List<Content> children;
+                        try {
+                            children = root.getChildren();
+                            if (children.isEmpty()) {
+                                //add the root itself, could be unalloc file, child of volume or image
+                                firstLevelFiles.add(root);
+                            } else {
+                                //root for fs root dir, schedule children dirs/files
+                                for (Content child : children) {
+                                    if (child instanceof AbstractFile) {
+                                        firstLevelFiles.add((AbstractFile) child);
+                                    }
                                 }
                             }
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.WARNING, "Could not get children of root to enqueue: "
+                                    + root.getId() + ": " + root.getName(), ex);
                         }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Could not get children of root to enqueue: "
-                                + root.getId() + ": " + root.getName(), ex);
-                    }
 
+                    }
                 }
 
                 List<ProcessTask> processTasks = new ArrayList<ProcessTask>();
@@ -895,8 +901,8 @@ class IngestScheduler {
             if (task.getModules().isEmpty()) {
                 return;
             }
-            
-            if (! (task.getContent() instanceof Image) ){
+
+            if (!(task.getContent() instanceof Image)) {
                 //only accepting Image content objects
                 return;
             }
