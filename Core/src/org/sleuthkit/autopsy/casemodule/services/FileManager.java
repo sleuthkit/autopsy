@@ -27,10 +27,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -46,9 +48,28 @@ public class FileManager implements Closeable {
 
     private SleuthkitCase tskCase;
     private static final Logger logger = Logger.getLogger(FileManager.class.getName());
+    private volatile long localFilesRootId = -1;
 
     public FileManager(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
+        init();
+    }
+    
+    /**
+     * initialize the file manager for the case
+     */
+    private synchronized void init() {
+        //get a handle of local files root
+        //or create if not present
+        //this saves number of queries, and ensures LocalFiles is the first file object created for consistency
+        if (localFilesRootId == -1) {
+            try {
+                localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting/creating local files root at file manager init", ex);
+            }
+        }
+        
     }
 
     /**
@@ -219,6 +240,31 @@ public class FileManager implements Closeable {
         }
 
     }
+    
+    
+    /**
+     * Gets matching child of LocalFiles local files root with a matching name, or null if it does not exist
+     * @param name
+     * @return matching root child or null
+     */
+    private AbstractFile getMatchingLocalFilesRootChild(String name) {
+        AbstractFile ret = null;
+        try {
+            AbstractFile localRoot = tskCase.getAbstractFileById(localFilesRootId);
+            for (Content child : localRoot.getChildren()) {
+                if (child.getName().equals(name)) {
+                    ret = (AbstractFile) child;
+                    break;
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error quering matching children of local files root, ", ex);
+        }
+        
+        return ret;
+        
+        
+    }
 
     /**
      * Add a local directory and its children recursively. Parent container of
@@ -261,7 +307,6 @@ public class FileManager implements Closeable {
 
         VirtualDirectory rootVd = null;
         try {
-            final long localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
             if (parentName == null) {
                 rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
             } else {
