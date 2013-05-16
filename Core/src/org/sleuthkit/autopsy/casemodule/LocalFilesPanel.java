@@ -98,6 +98,8 @@ public class LocalFilesPanel extends ContentTypePanel {
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
+        enableNext = false;
+        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
@@ -216,12 +218,16 @@ public class LocalFilesPanel extends ContentTypePanel {
         
         if (!currentFiles.isEmpty()) {
             enableNext = true;
-            pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
         }
+        else {
+            enableNext = false;
+        }
+        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
         reset();
+     
         
     }//GEN-LAST:event_clearButtonActionPerformed
 
