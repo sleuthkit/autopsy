@@ -105,10 +105,12 @@ final class AddImageVisualPanel1 extends JPanel {
         if (currentPanel.getContentType().equals(ContentType.LOCAL)) {
             //disable image specific options
             noFatOrphansCheckbox.setEnabled(false);
+            descLabel.setEnabled(false);
             timeZoneComboBox.setEnabled(false);
         }
         else {
             noFatOrphansCheckbox.setEnabled(true);
+            descLabel.setEnabled(true);
             timeZoneComboBox.setEnabled(true);
         }
         updateUI(null);
@@ -282,7 +284,7 @@ final class AddImageVisualPanel1 extends JPanel {
                         .addComponent(typeTabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 123, Short.MAX_VALUE))
+                        .addGap(0, 115, Short.MAX_VALUE))
                     .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE))
                 .addContainerGap())
         );
