@@ -383,8 +383,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 
                 // Start ingest if we can
                 startIngest();
-                
-                newContents.clear();
 
             } catch (Exception ex) {
                 //handle unchecked exceptions
