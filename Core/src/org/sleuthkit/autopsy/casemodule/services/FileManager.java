@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -39,6 +38,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -49,12 +49,13 @@ public class FileManager implements Closeable {
     private SleuthkitCase tskCase;
     private static final Logger logger = Logger.getLogger(FileManager.class.getName());
     private volatile long localFilesRootId = -1;
+    private volatile VirtualDirectory localFilesRoot = null;
 
     public FileManager(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
         init();
     }
-    
+
     /**
      * initialize the file manager for the case
      */
@@ -65,11 +66,12 @@ public class FileManager implements Closeable {
         if (localFilesRootId == -1) {
             try {
                 localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
+                localFilesRoot = (VirtualDirectory) tskCase.getAbstractFileById(localFilesRootId);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error getting/creating local files root at file manager init", ex);
             }
         }
-        
+
     }
 
     /**
@@ -240,19 +242,22 @@ public class FileManager implements Closeable {
         }
 
     }
-    
-    
+
     /**
-     * Gets matching child of LocalFiles local files root with a matching name, or null if it does not exist
+     * Gets matching (LocalFile or VirtualDirectory) child of LocalFiles root
+     * with a matching name, or null if it does not exist
+     *
      * @param name
      * @return matching root child or null
      */
     private AbstractFile getMatchingLocalFilesRootChild(String name) {
         AbstractFile ret = null;
         try {
-            AbstractFile localRoot = tskCase.getAbstractFileById(localFilesRootId);
-            for (Content child : localRoot.getChildren()) {
-                if (child.getName().equals(name)) {
+            for (Content child : localFilesRoot.getChildren()) {
+                TSK_DB_FILES_TYPE_ENUM fileType = ((AbstractFile) child).getType();
+                if ((fileType.equals(TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                        || fileType.equals(TSK_DB_FILES_TYPE_ENUM.LOCAL))
+                        && child.getName().equals(name)) {
                     ret = (AbstractFile) child;
                     break;
                 }
@@ -260,10 +265,10 @@ public class FileManager implements Closeable {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error quering matching children of local files root, ", ex);
         }
-        
+
         return ret;
-        
-        
+
+
     }
 
     /**
@@ -308,11 +313,25 @@ public class FileManager implements Closeable {
         VirtualDirectory rootVd = null;
         try {
             if (parentName == null) {
-                rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+                //check if such parent already exists, if so, add to it
+                final AbstractFile existing = getMatchingLocalFilesRootChild(rootVdName);
+                if (existing != null && existing instanceof VirtualDirectory) {
+                    rootVd = (VirtualDirectory) existing;
+                } else {
+                    rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+                }
             } else {
                 //add parent dir for context
-                final VirtualDirectory contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
+                VirtualDirectory contextDir = null;
+                final AbstractFile existing = getMatchingLocalFilesRootChild(parentName);
+                if (existing != null && existing instanceof VirtualDirectory) {
+                    contextDir = (VirtualDirectory) existing;
+                } else {
+                    contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
+                }
+
                 rootVd = tskCase.addVirtualDirectory(contextDir.getId(), rootVdName);
+
             }
         } catch (TskCoreException e) {
             //log and rethrow
