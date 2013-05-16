@@ -1048,8 +1048,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         skCase = currentCase.getSleuthkitCase();
 
         try {
-            if (currentCase.getImages().isEmpty()) {
-                logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+            if (currentCase.getRootObjectsCount() == 0) {
+                logger.log(Level.INFO, "Error creating timeline, there are no data sources. ");
             } else {
 
                 if (IngestManager.getDefault().isIngestRunning()) {
