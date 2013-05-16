@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -234,8 +235,13 @@ public class Ingester {
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
+            long imageId = -1;
             try {
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getImage().getId()));
+                Image image = af.getImage();
+                if (image != null) {
+                    imageId = image.getId();
+                }
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(imageId));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get image id to properly index the file " + af.getId());
             }
