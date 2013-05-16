@@ -249,8 +249,9 @@ public class FileManager implements Closeable {
      *
      * @param name
      * @return matching root child or null
+     * @throws TskCoreException
      */
-    private AbstractFile getMatchingLocalFilesRootChild(String name) {
+    private AbstractFile getMatchingLocalFilesRootChild(String name) throws TskCoreException {
         AbstractFile ret = null;
         try {
             for (Content child : localFilesRoot.getChildren()) {
@@ -264,10 +265,63 @@ public class FileManager implements Closeable {
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error quering matching children of local files root, ", ex);
+            throw new TskCoreException("Error quering matching children of local files root, ", ex);
         }
 
         return ret;
+    }
 
+    /**
+     * Return count of local files already in this case that represent the same
+     * file/dir (have the same localAbsPath)
+     *
+     * @param parent parent dir of the files to check
+     * @param localAbsPath local absolute path of the file to check
+     * @param localName the name of the file to check
+     * @return count of objects representing the same local file
+     * @throws TskCoreException
+     */
+    private int getCountMatchingLocalFiles(AbstractFile parent, String localAbsPath, String localName) throws TskCoreException {
+        int count = 0;
+
+        for (Content child : parent.getChildren()) {
+
+            if (child instanceof VirtualDirectory && localName.equals(child.getName())) {
+                ++count;
+            } else if (child instanceof AbstractFile
+                    && localAbsPath.equals(((AbstractFile) child).getLocalAbsPath())) {
+                ++count;
+            }
+
+        }
+
+        return count;
+
+    }
+
+    /**
+     * Return count of local files already in this case that represent the same
+     * file/dir (have the same localAbsPath), for a folder directly under
+     * LocalFiles root dir
+     *
+     * @param localAbsPath local absolute path of the file to check
+     * @param localName the name of the file to check
+     * @return count of objects representing the same local file
+     * @throws TskCoreException
+     */
+    private int getCountMatchingLocalFiles(String localAbsPath, String localName) throws TskCoreException {
+        int count = 0;
+
+        for (Content child : this.localFilesRoot.getChildren()) {
+            if (child instanceof VirtualDirectory && localName.equals(child.getName())) {
+                ++count;
+            } else if (child instanceof AbstractFile
+                    && localAbsPath.equals(((AbstractFile) child).getLocalAbsPath())) {
+                ++count;
+            }
+        }
+
+        return count;
 
     }
 
@@ -290,7 +344,8 @@ public class FileManager implements Closeable {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
 
-        java.io.File localDir = new java.io.File(localAbsPath);
+        final java.io.File localDir = new java.io.File(localAbsPath);
+        final String localName = localDir.getName();
         if (!localDir.exists()) {
             throw new TskCoreException("Attempted to add a local dir that does not exist: " + localAbsPath);
         }
@@ -308,18 +363,18 @@ public class FileManager implements Closeable {
             parentName = parentDir.getName();
         }
 
-        final String rootVdName = localDir.getName();
+        String rootVdName = localDir.getName();
 
         VirtualDirectory rootVd = null;
         try {
             if (parentName == null) {
-                //check if such parent already exists, if so, add to it
-                final AbstractFile existing = getMatchingLocalFilesRootChild(rootVdName);
-                if (existing != null && existing instanceof VirtualDirectory) {
-                    rootVd = (VirtualDirectory) existing;
-                } else {
-                    rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+                //check if parentless dir already exists, if so, append number to it
+                int existingCount = getCountMatchingLocalFiles(localAbsPath, localName);
+                if (existingCount > 0) {
+                    rootVdName = rootVdName + "_" + Integer.toString(existingCount);
                 }
+                rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+
             } else {
                 //add parent dir for context
                 VirtualDirectory contextDir = null;
@@ -330,6 +385,11 @@ public class FileManager implements Closeable {
                     contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
                 }
 
+                //check if parentless dir already exists, if so, append number to it
+                int existingCount = getCountMatchingLocalFiles(contextDir, localAbsPath, localName);
+                if (existingCount > 0) {
+                    rootVdName = rootVdName + "_" + Integer.toString(existingCount);
+                }
                 rootVd = tskCase.addVirtualDirectory(contextDir.getId(), rootVdName);
 
             }
@@ -343,7 +403,7 @@ public class FileManager implements Closeable {
         try {
             java.io.File[] localChildren = localDir.listFiles();
             for (java.io.File localChild : localChildren) {
-                //add childrnen recursively, at a time in separate transaction
+                //add children recursively, at a time in separate transaction
                 //consider a single transaction for everything
                 addLocalDirectoryRecInt(rootVd, localChild);
             }
@@ -409,7 +469,6 @@ public class FileManager implements Closeable {
         long size = localFile.length();
         boolean isFile = localFile.isFile();
 
-        //TODO what should do with mac times?
         long ctime = 0;
         long crtime = 0;
         long atime = 0;
@@ -417,6 +476,10 @@ public class FileManager implements Closeable {
 
         String fileName = localFile.getName();
 
+        int existingCount = getCountMatchingLocalFiles(localFilesRoot, localAbsPath, fileName);
+        if (existingCount > 0) {
+            fileName = fileName + "_" + Integer.toString(existingCount);
+        }
         LocalFile lf = tskCase.addLocalFile(fileName, localAbsPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
