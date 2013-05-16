@@ -102,6 +102,15 @@ final class AddImageVisualPanel1 extends JPanel {
             
         });
         currentPanel.select();
+        if (currentPanel.getContentType().equals(ContentType.LOCAL)) {
+            //disable image specific options
+            noFatOrphansCheckbox.setEnabled(false);
+            timeZoneComboBox.setEnabled(false);
+        }
+        else {
+            noFatOrphansCheckbox.setEnabled(true);
+            timeZoneComboBox.setEnabled(true);
+        }
         updateUI(null);
     }
 
