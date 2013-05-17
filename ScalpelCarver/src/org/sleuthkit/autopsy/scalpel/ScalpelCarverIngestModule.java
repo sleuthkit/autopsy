@@ -128,18 +128,6 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
         
-//        try {
-//            output = ScalpelOutputParser.parse(new File("C:\\Users\\mciver\\Documents\\df\\scalpel\\carve_test\\audit.txt"));
-//        } catch (FileNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
-//            return ProcessResult.OK;
-//        } catch (IOException ex) {
-//            java.util.logging.Logger.getLogger(ScalpelCarverIngestModule.class.getName()).log(Level.SEVERE, null, ex);
-//            return ProcessResult.OK;
-//        }
-
-//        output = new ArrayList<CarvedFileMeta>();
-//        output.add(new CarvedFileMeta("carved-from-" + abstractFile.getId() + ".txt", 0, abstractFile.getSize()));
 
         // get the image's size
         long imageSize = Long.MAX_VALUE;
