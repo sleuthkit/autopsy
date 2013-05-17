@@ -2,9 +2,6 @@ import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.MIMEBase import MIMEBase
-from email import Encoders
-import urllib2
 import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
@@ -55,16 +52,16 @@ def Build_email(msg, attachl):
 # Returns a Windows style path starting with the cwd and
 # ending with the list of directories given
 def make_local_path(*dirs):
-	path = wgetcwd()
+	path = wgetcwd().decode("utf-8")
 	for dir in dirs:
-		path += ("\\" + dir)
+		path += ("\\" + str(dir))
 	return path_fix(path)
 
 # Returns a Windows style path based only off the given directories
 def make_path(*dirs):
 	path = dirs[0]
 	for dir in dirs[1:]:
-		path += ("\\" + dir)
+		path += ("\\" + str(dir))
 	return path_fix(path)
 	
 # Fix a standard os.path by making it Windows format
