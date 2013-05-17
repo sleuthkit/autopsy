@@ -48,7 +48,7 @@ public class IngestDialog extends JDialog {
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        panel = IngestDialogPanel.getDefault();
+        panel = new IngestDialogPanel();
     }
     
     public IngestDialog(){

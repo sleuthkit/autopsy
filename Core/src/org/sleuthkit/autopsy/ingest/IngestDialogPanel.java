@@ -42,6 +42,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -50,6 +51,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * main configuration panel for all ingest modules, reusable JPanel component
  */
+@ServiceProvider(service = IngestConfigurator.class)
 public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfigurator {
 
     private IngestManager manager = null;
@@ -60,12 +62,13 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
     public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
-    // The inut content that's just been added to the database
+    // The input content that's just been added to the database
     private List<Content> inputContent;
     private static IngestDialogPanel instance = null;
 
+
     /** Creates new form IngestDialogPanel */
-    private IngestDialogPanel() {
+    public IngestDialogPanel() {
         tableModel = new ModulesTableModel();
         modules = new ArrayList<IngestModuleAbstract>();
         moduleStates = new HashMap<String, Boolean>();
@@ -73,13 +76,6 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         customizeComponents();
     }
 
-    synchronized static IngestDialogPanel getDefault() {
-        if (instance == null) {
-            instance = new IngestDialogPanel();
-        }
-        return instance;
-    }
-    
     private void loadModules() {
         this.modules.clear();
         //this.moduleStates.clear(); maintain the state
