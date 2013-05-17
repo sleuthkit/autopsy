@@ -404,9 +404,9 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 	try:
 		while (rw != None):
 			if(rw[0] != None):
-				database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" id = "' + str(rw[3]) + '" > ')
+				database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" > ')
 			else:
-				database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" id = "' + str(rw[3]) + '" > ')
+				database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
 			autopsy_cur1 = autopsy_con.cursor()
 			looptry = True
 			try:
