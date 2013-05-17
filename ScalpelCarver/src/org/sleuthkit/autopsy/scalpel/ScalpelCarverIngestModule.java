@@ -27,7 +27,9 @@ import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.ModuleType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -49,7 +51,7 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
+public class ScalpelCarverIngestModule { // disable autodiscovery for now // implements IngestModuleAbstractFile {
     
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     
@@ -68,7 +70,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         ScalpelCarver.init();
     }
     
-    @Override
+   // @Override
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
         
         if (!initialized) {
@@ -195,8 +197,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         return ProcessResult.OK;
     }
     
-    //disable auto-discovery
-    private static ScalpelCarverIngestModule getDefault() {
+
+    public static ScalpelCarverIngestModule getDefault() {
         if (instance == null) {
             synchronized (ScalpelCarverIngestModule.class) {
                 if (instance == null) {
@@ -207,7 +209,7 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         return instance;
     }
     
-    @Override
+  //  @Override
     public void init(IngestModuleInit initContext) {
         
         // make sure this is Windows
@@ -251,69 +253,69 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         initialized = true;
     }
 
-    @Override
+   // @Override
     public void complete() { }
 
-    @Override
+   // @Override
     public void stop() { }
 
-    @Override
+   // @Override
     public String getName() {
         return MODULE_NAME;
     }
 
-    @Override
+  //  @Override
     public String getVersion() {
         return MODULE_VERSION;
     }
 
-    @Override
+   // @Override
     public String getDescription() {
         return MODULE_DESCRIPTION;
     }
 
-    @Override
+   // @Override
     public ModuleType getType() {
         return ModuleType.AbstractFile;
     }
 
-    @Override
+   // @Override
     public String getArguments() {
         return "";
     }
 
-    @Override
+   // @Override
     public void setArguments(String args) { }
 
-    @Override
+   // @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
 
-    @Override
+  //  @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
 
-    @Override
+   // @Override
     public boolean hasAdvancedConfiguration() {
         return false;
     }
 
-    @Override
+  //  @Override
     public void saveSimpleConfiguration() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
+   // @Override
     public void saveAdvancedConfiguration() { }
 
-    @Override
+   // @Override
     public JPanel getSimpleConfiguration() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
+  //  @Override
     public JPanel getAdvancedConfiguration() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
