@@ -361,7 +361,13 @@ public class FileManager implements Closeable {
         java.io.File parentDir = localDir.getParentFile();
         if (parentDir != null) {
             parentName = parentDir.getName();
+            if (parentName == null || parentName.equals("")) {
+                // parent is root
+                parentName = "/";
+            }
         }
+        //else this is root and parentName is null
+
 
         String rootVdName = localDir.getName();
 
