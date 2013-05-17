@@ -632,6 +632,13 @@ def run_test(image_file, count):
 		print_report(exceptions, "EXCEPTION", okay)
 	case.autopsy_dbdump = Emailer.make_path(case.output_dir, case.image_name,
 										  case.image_name + "Dump.txt")
+	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
+										  "AutopsyTestCase", "autopsy.db")
+	autopsy_con = sqlite3.connect(autopsy_db_file)
+	retrieve_data(case.autopsy_data_file, autopsy_con,autopsy_db_file)
+	srtcmdlst = ["sort", case.autopsy_data_file, "-o", case.sorted_data_file]
+	subprocess.call(srtcmdlst)
+	dbDump()
 	# Now test in comparison to the gold standards
 	if not args.gold_creation:
 		try:
@@ -658,13 +665,6 @@ def run_test(image_file, count):
 			print("Tests failed due to an error, try rebuilding or creating gold standards.\n")
 			print(str(e) + "\n")
 	# Make the CSV log and the html log viewer
-	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
-										  "AutopsyTestCase", "autopsy.db")
-	autopsy_con = sqlite3.connect(autopsy_db_file)
-	retrieve_data(case.autopsy_data_file, autopsy_con,autopsy_db_file)
-	srtcmdlst = ["sort", case.autopsy_data_file, "-o", case.sorted_data_file]
-	subprocess.call(srtcmdlst)
-	dbDump()
 	generate_csv(case.csv)
 	if case.global_csv:
 		generate_csv(case.global_csv)
@@ -1047,16 +1047,15 @@ def generate_common_log():
 		logging.critical(traceback.format_exc())
 		
 def compare_data(aut, gld):
-	gold_dir = Emailer.make_path(case.gold, case.image_name, case.image_name + gld + ".txt")
+	gold_dir = Emailer.make_path(case.gold, "tmp", case.image_name, case.image_name + gld + ".txt")
 	if(not file_exists(gold_dir)):
-			gold_dir = Emailer.make_path(case.gold_parse, case.image_name, case.image_name + gld + ".txt")
+			gold_dir = Emailer.make_path(case.gold_parse, "tmp",  case.image_name, case.image_name + gld + ".txt")
 	if(not file_exists(aut)):
 		return
 	srtd_data = codecs.open(aut, "r", "utf_8")
 	gold_data = codecs.open(gold_dir, "r", "utf_8")
 	gold_dat = gold_data.read()
 	srtd_dat = srtd_data.read()
-	patrn = re.compile("\d")
 	if (not(gold_dat == srtd_dat)):
 		diff_dir = Emailer.make_local_path(case.output_dir, case.image_name, case.image_name+gld+"-Diff.txt")
 		diff_file = codecs.open(diff_dir, "wb", "utf_8") 
@@ -1067,14 +1066,14 @@ def compare_data(aut, gld):
 		global failedbool
 		attachl.append(case.sorted_data_file)
 		attachl.append(diff_dir)
-		errorem += "There was a difference in the Database data for " + case.image_name + ".\n"
-		print("Databases didn't match.\n")
+		errorem += "There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n"
+		print("There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n")
 		failedbool = True
 		global imgfail
 		imgfail = True
 
 def compare_errors():
-	gold_dir = Emailer.make_path(case.gold, case.image_name, case.image_name + "SortedErrors.txt")
+	gold_dir = Emailer.make_path(case.gold, "tmp",  case.image_name, case.image_name + "SortedErrors.txt")
 	if(not file_exists(gold_dir)):
 			gold_dir = Emailer.make_path(case.gold_parse, 'tmp', case.image_name, case.image_name + "SortedErrors.txt")
 	common_log = codecs.open(case.sorted_log, "r", "utf_8")
