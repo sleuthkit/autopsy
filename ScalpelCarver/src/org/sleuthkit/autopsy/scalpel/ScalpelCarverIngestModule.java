@@ -207,7 +207,8 @@ public class ScalpelCarverIngestModule implements IngestModuleAbstractFile {
         return ProcessResult.OK;
     }
     
-    public static ScalpelCarverIngestModule getDefault() {
+    //disable auto-discovery
+    private static ScalpelCarverIngestModule getDefault() {
         if (instance == null) {
             synchronized (ScalpelCarverIngestModule.class) {
                 if (instance == null) {
