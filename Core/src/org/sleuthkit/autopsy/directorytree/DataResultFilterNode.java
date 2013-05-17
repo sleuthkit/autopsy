@@ -38,6 +38,8 @@ import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
@@ -362,6 +364,16 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public AbstractAction visit(RecentFilesNode rfn) {
             return openChild(rfn);
+        }
+        
+        @Override
+        public AbstractAction visit(DeletedContentsNode dcn) {
+            return openChild(dcn);
+        }
+        
+        @Override
+        public AbstractAction visit(DeletedContentNode dcn) {
+            return openChild(dcn);
         }
 
         @Override

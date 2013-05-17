@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LocalFile;
-
+import org.sleuthkit.datamodel.LayoutFile;
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
  * original data result children nodes of the passed in parent node, and creates
@@ -176,6 +176,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         public Boolean visit(LocalFile f) {
             return isSupported(f);
         }
+
+        public Boolean visit(LayoutFile f) {
+            return isSupported(f);
+        }
+
 
         @Override
         public Boolean visit(File f) {
