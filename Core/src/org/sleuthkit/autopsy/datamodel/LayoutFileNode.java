@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node for layout file
@@ -54,7 +55,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         super(lf);
 
         this.setDisplayName(nameForLayoutFile(lf));
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+
+        if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png");
+        } else {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+        }
     }
 
     @Override
