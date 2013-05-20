@@ -97,8 +97,7 @@ public final class JavaSystemCaller {
                 final BufferedReader br = new BufferedReader(isr);
                 String line = null;
                 while ( doRun && (line = br.readLine()) != null) {
-                    logger.log(Level.INFO, this.type + ">" + line);
-                    this.output.append(line + SEP);
+                    this.output.append(line).append(SEP);
                 }
             } catch (final IOException ioe) {
                 logger.log(Level.WARNING, ioe.getMessage());
@@ -152,11 +151,18 @@ public final class JavaSystemCaller {
             JavaSystemCaller.ExecEnvironmentFactory anExecEnvFactory = getExecEnvironmentFactory(aCommand, someParameters);
             aShell = anExecEnvFactory.createShell();
             command = anExecEnvFactory.createCommandLine();
+            
+            // build command array
+            String[] arrayCommand = new String[someParameters.length + 1];
+            arrayCommand[0] = aCommand;
+            for (int i = 1; i < arrayCommand.length; i++) {
+                arrayCommand[i] = someParameters[i - 1];
+            }
 
             final Runtime rt = Runtime.getRuntime();
             logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
 
-            proc = rt.exec(aShell.getShellCommand() + " " + command);
+            proc = rt.exec(arrayCommand);
             try {
                 //give time to fully start the process
                 Thread.sleep(2000);
