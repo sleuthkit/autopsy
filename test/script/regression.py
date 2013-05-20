@@ -449,7 +449,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 							attachl.append(autopsy_db_file)
 							appnd = True
 					try:
-						database_log.write('<attribute source = "' + attr[0] + 'type = "' + attr[1] + '" value = "')
+						database_log.write('<attribute source = "' + attr[0] + '" type = "' + attr[1] + '" value = "')
 						inpval = attr[val]
 						if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
 							inpval = str(inpval)
