@@ -96,7 +96,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.recentactivity.JavaSystemCaller;
+import org.sleuthkit.autopsy.recentactivity.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -1019,9 +1019,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         String[] mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
 
         String output = "";
+        ExecUtil execUtil = new ExecUtil();
         try {
             //JavaSystemCaller.Exec.execute("\"" + command + "\"");
-            output = JavaSystemCaller.Exec.execute(macpath, mactimeArgs);
+            output = execUtil.execute(macpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;

@@ -66,6 +66,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
     private String args;
+    private ExecUtil execRR;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
@@ -184,7 +185,8 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                 type = "1security";
             }
             String command = "\"" + RR_PATH + "\" -r \"" + regFilePath + "\" -f " + type + " > \"" + txtPath + "\" 2> NUL";
-            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            execRR = new ExecUtil();
+            execRR.execute("\"" + command + "\"");
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
@@ -405,9 +407,11 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 
     @Override
     public void stop() {
-        if (JavaSystemCaller.Exec.getProcess() != null) {
-            JavaSystemCaller.Exec.stop();
+        if (execRR != null) {
+            execRR.stop();
+            execRR = null;
         }
+        
     }
 
     @Override

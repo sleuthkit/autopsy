@@ -30,7 +30,93 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Takes of forking a process and reading output / error streams to either a
  * string buffer or directly to a file writer
  */
-public final class JavaSystemCaller {
+public final class ExecUtil {
+
+    private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
+    private Process proc = null;
+    private String command = null;
+    private ExecUtil.StreamToStringRedirect errorRedirect = null;
+    private ExecUtil.StreamToStringRedirect outputRedirect = null;
+
+    /**
+     * Execute a process. Redirect asynchronously stdout to a string and stderr
+     * to nowhere.
+     *
+     * @param aCommand command to be executed
+     * @param params parameters of the command
+     * @return string buffer with captured stdout
+     */
+    public synchronized String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
+        String output = "";
+
+        // build command array
+        String[] arrayCommand = new String[params.length + 1];
+        arrayCommand[0] = aCommand;
+
+        StringBuilder arrayCommandToLog = new StringBuilder();
+        arrayCommandToLog.append(aCommand).append(" ");
+
+        for (int i = 1; i < arrayCommand.length; i++) {
+            arrayCommand[i] = params[i - 1];
+            arrayCommandToLog.append(arrayCommand[i]).append(" ");
+        }
+
+        final Runtime rt = Runtime.getRuntime();
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+
+        proc = rt.exec(arrayCommand);
+        try {
+            //give time to fully start the process
+            Thread.sleep(2000);
+        } catch (InterruptedException ex) {
+            logger.log(Level.WARNING, "Pause interrupted", ex);
+        }
+
+        //stderr redirect
+        errorRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        //stdout redirect
+        outputRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
+
+        //start redurectors
+        errorRedirect.start();
+        outputRedirect.start();
+
+        //wait for process to complete and capture error core
+        final int exitVal = proc.waitFor();
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+
+        errorRedirect.stopRun();
+        errorRedirect = null;
+
+        outputRedirect.stopRun();
+        output = outputRedirect.getOutput();
+
+        outputRedirect = null;
+
+        //gc process with its streams
+        proc = null;
+
+        return output;
+    }
+
+    public synchronized void stop() {
+        logger.log(Level.INFO, "Stopping Execution of: " + command);
+
+        if (errorRedirect != null) {
+            errorRedirect.stopRun();
+            errorRedirect = null;
+        }
+
+        if (outputRedirect != null) {
+            outputRedirect.stopRun();
+            outputRedirect = null;
+        }
+
+        if (proc != null) {
+            proc.destroy();
+            proc = null;
+        }
+    }
 
     /**
      * Asynchronously read the output of a given input stream and write to a
@@ -146,86 +232,4 @@ public final class JavaSystemCaller {
             doRun = false;
         }
     }
-
-
-
-    public static final class Exec {
-
-        private static final Logger logger = Logger.getLogger(Exec.class.getName());
-        private static Process proc = null;
-        private static String command = null;
-
-        /**
-         * Execute a process. Redirect asynchronously stdout to a string and
-         * stderr to nowhere.
-         *
-         * @param aCommand command to be executed
-         * @param params parameters of the command
-         * @return string buffer with captured stdout
-         */
-        public static String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
-            String output = "";
-
-            // build command array
-            String[] arrayCommand = new String[params.length + 1];
-            arrayCommand[0] = aCommand;
-
-            StringBuilder arrayCommandToLog = new StringBuilder();
-            arrayCommandToLog.append(aCommand).append(" ");
-
-            for (int i = 1; i < arrayCommand.length; i++) {
-                arrayCommand[i] = params[i - 1];
-                arrayCommandToLog.append(arrayCommand[i]).append(" ");
-            }
-
-            final Runtime rt = Runtime.getRuntime();
-            logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
-
-            proc = rt.exec(arrayCommand);
-            try {
-                //give time to fully start the process
-                Thread.sleep(2000);
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Pause interrupted", ex);
-            }
-
-            //stderr redirect
-            final JavaSystemCaller.StreamToStringRedirect errorRedirect = new JavaSystemCaller.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
-            //stdout redirect
-            final JavaSystemCaller.StreamToStringRedirect outputRedirect = new JavaSystemCaller.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
-
-            //start redurectors
-            errorRedirect.start();
-            outputRedirect.start();
-
-            //wait for process to complete and capture error core
-            final int exitVal = proc.waitFor();
-            logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
-
-            errorRedirect.stopRun();
-            outputRedirect.stopRun();
-
-            output = outputRedirect.getOutput();
-
-            //gc process with its streams
-            proc = null;
-
-            return output;
-        }
-
-        public static synchronized void stop() {
-            logger.log(Level.INFO, "Stopping Execution of: " + command);
-            
-            if (proc != null) {
-                proc.destroy();
-                proc = null;
-            }
-        }
-
-        public static Process getProcess() {
-            return proc;
-        }
-    }
-
-    private JavaSystemCaller() { }
 }

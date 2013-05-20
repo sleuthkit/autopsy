@@ -95,6 +95,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     final public static String MODULE_VERSION = "1.0";
     private String args;
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    
+    private  ExecUtil execPasco;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
@@ -401,7 +403,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\" + filename + "\"");
             // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-            JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " " + cmd + "\"");
+            execPasco = new ExecUtil();
+            execPasco.execute("\"" + JAVA_PATH + " " + cmd + "\"");
 
         } catch (IOException ex) {
             success = false;
@@ -571,9 +574,11 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
     @Override
     public void stop() {
-        if (JavaSystemCaller.Exec.getProcess() != null) {
-            JavaSystemCaller.Exec.stop();
+        if (execPasco != null) {
+            execPasco.stop();
+            execPasco = null;
         }
+        
 
         //call regular cleanup from complete() method
         complete();
