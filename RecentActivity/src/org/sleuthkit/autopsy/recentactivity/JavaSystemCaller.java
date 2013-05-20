@@ -155,19 +155,24 @@ public final class JavaSystemCaller {
             // build command array
             String[] arrayCommand = new String[someParameters.length + 1];
             arrayCommand[0] = aCommand;
+            
+            StringBuilder arrayCommandToLog = new StringBuilder();
+            arrayCommandToLog.append(aCommand).append(" ");
+            
             for (int i = 1; i < arrayCommand.length; i++) {
                 arrayCommand[i] = someParameters[i - 1];
+                 arrayCommandToLog.append(arrayCommand[i]).append(" ");
             }
 
             final Runtime rt = Runtime.getRuntime();
-            logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
+            logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
 
             proc = rt.exec(arrayCommand);
             try {
                 //give time to fully start the process
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Pause interrupted");
+                logger.log(Level.WARNING, "Pause interrupted", ex);
             }
 
             // any error message?
