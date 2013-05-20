@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -1011,12 +1012,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
-        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
-        macfile = PlatformUtil.getOSFilePath(macfile);
-        String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + "> " + macfile;
 
+        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
+        String[] mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
+
+        String output = "";
         try {
-            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            //JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            output = JavaSystemCaller.Exec.execute(macpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;
@@ -1024,6 +1027,16 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
             return null;
         }
+        
+        // write the output to file
+        try {
+            Writer writer = new FileWriter(macfile);
+            writer.write(output);
+            writer.close();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ex);
+        }
+        
         return macfile;
     }
 
