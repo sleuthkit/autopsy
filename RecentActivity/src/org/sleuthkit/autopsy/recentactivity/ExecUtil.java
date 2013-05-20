@@ -194,7 +194,7 @@ public final class ExecUtil {
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
         private InputStream is;
         private StringBuffer output = new StringBuffer();
-        private boolean doRun = false;
+        private volatile boolean doRun = false;
 
         StreamToStringRedirect(final InputStream anIs, final String aType) {
             this.is = anIs;
@@ -253,7 +253,7 @@ public final class ExecUtil {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
         private InputStream is;
-        private boolean doRun = false;
+        private volatile boolean doRun = false;
         private Writer writer = null;
 
         StreamToWriterRedirect(final InputStream anIs, final Writer writer) {
