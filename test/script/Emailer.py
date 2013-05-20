@@ -2,6 +2,8 @@ import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
@@ -45,7 +47,7 @@ def Build_email(msg, attachl):
 		noml = file.split("\\")
 		nom = noml[len(noml)-1]
 		part.set_payload(attch)
-		Encoders.encode_base64(part)
+		encoders.encode_base64(part)
 		part.add_header('Content-Disposition', 'attachment; filename="' + nom + '"')
 		msg.attach(part)
 		
