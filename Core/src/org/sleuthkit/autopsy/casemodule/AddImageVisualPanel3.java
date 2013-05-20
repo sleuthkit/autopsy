@@ -95,7 +95,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(subtitleLabel)))
-                .addContainerGap(247, Short.MAX_VALUE))
+                .addContainerGap(218, Short.MAX_VALUE))
             .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
