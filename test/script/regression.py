@@ -1064,7 +1064,6 @@ def compare_data(aut, gld):
 		global attachl
 		global errorem
 		global failedbool
-		attachl.append(case.sorted_data_file)
 		attachl.append(diff_dir)
 		errorem += "There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n"
 		print("There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n")
