@@ -80,6 +80,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -1020,9 +1021,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         String output = "";
         ExecUtil execUtil = new ExecUtil();
+        Writer writer = null;
         try {
             //JavaSystemCaller.Exec.execute("\"" + command + "\"");
-            output = execUtil.execute(macpath, mactimeArgs);
+            writer = new FileWriter(macfile);
+            execUtil.execute(writer, macpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;
@@ -1030,14 +1033,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
             return null;
         }
-        
-        // write the output to file
-        try {
-            Writer writer = new FileWriter(macfile);
-            writer.write(output);
-            writer.close();
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ex);
+        finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Could not clsoe writer after creating mactime file, encountered error ", ex);
+                }
+            }
         }
         
         return macfile;

@@ -35,12 +35,13 @@ public final class ExecUtil {
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
     private String command = null;
-    private ExecUtil.StreamToStringRedirect errorRedirect = null;
-    private ExecUtil.StreamToStringRedirect outputRedirect = null;
+    private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
+    private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
+    private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
 
     /**
      * Execute a process. Redirect asynchronously stdout to a string and stderr
-     * to nowhere.
+     * to nowhere.  Use only for small outputs, otherwise use the execute() variant with Writer.
      *
      * @param aCommand command to be executed
      * @param params parameters of the command
@@ -73,25 +74,25 @@ public final class ExecUtil {
         }
 
         //stderr redirect
-        errorRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
         //stdout redirect
-        outputRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
+        outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
 
         //start redurectors
-        errorRedirect.start();
-        outputRedirect.start();
+        errorStringRedirect.start();
+        outputStringRedirect.start();
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
         logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
 
-        errorRedirect.stopRun();
-        errorRedirect = null;
+        errorStringRedirect.stopRun();
+        errorStringRedirect = null;
 
-        outputRedirect.stopRun();
-        output = outputRedirect.getOutput();
+        outputStringRedirect.stopRun();
+        output = outputStringRedirect.getOutput();
 
-        outputRedirect = null;
+        outputStringRedirect = null;
 
         //gc process with its streams
         proc = null;
@@ -99,17 +100,81 @@ public final class ExecUtil {
         return output;
     }
 
+    
+      /**
+     * Execute a process. Redirect asynchronously stdout to a passed in writer and stderr
+     * to nowhere.
+     *
+     * @param stdoutWriter file writer to write stdout to
+     * @param aCommand command to be executed
+     * @param params parameters of the command
+     * @return string buffer with captured stdout
+     */
+    public synchronized void execute(final Writer stdoutWriter, final String aCommand, final String... params) throws IOException, InterruptedException {
+
+        // build command array
+        String[] arrayCommand = new String[params.length + 1];
+        arrayCommand[0] = aCommand;
+
+        StringBuilder arrayCommandToLog = new StringBuilder();
+        arrayCommandToLog.append(aCommand).append(" ");
+
+        for (int i = 1; i < arrayCommand.length; i++) {
+            arrayCommand[i] = params[i - 1];
+            arrayCommandToLog.append(arrayCommand[i]).append(" ");
+        }
+
+        final Runtime rt = Runtime.getRuntime();
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+
+        proc = rt.exec(arrayCommand);
+        try {
+            //give time to fully start the process
+            Thread.sleep(2000);
+        } catch (InterruptedException ex) {
+            logger.log(Level.WARNING, "Pause interrupted", ex);
+        }
+
+        //stderr redirect
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        //stdout redirect
+        outputWriterRedirect = new ExecUtil.StreamToWriterRedirect(proc.getInputStream(), stdoutWriter);
+
+        //start redurectors
+        errorStringRedirect.start();
+        outputWriterRedirect.start();
+
+        //wait for process to complete and capture error core
+        final int exitVal = proc.waitFor();
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+
+        errorStringRedirect.stopRun();
+        errorStringRedirect = null;
+
+        outputWriterRedirect.stopRun();
+        outputWriterRedirect = null;
+
+        //gc process with its streams
+        proc = null;
+    }
+
+    
     public synchronized void stop() {
         logger.log(Level.INFO, "Stopping Execution of: " + command);
 
-        if (errorRedirect != null) {
-            errorRedirect.stopRun();
-            errorRedirect = null;
+        if (errorStringRedirect != null) {
+            errorStringRedirect.stopRun();
+            errorStringRedirect = null;
         }
 
-        if (outputRedirect != null) {
-            outputRedirect.stopRun();
-            outputRedirect = null;
+        if (outputStringRedirect != null) {
+            outputStringRedirect.stopRun();
+            outputStringRedirect = null;
+        }
+        
+        if (outputWriterRedirect != null) {
+            outputWriterRedirect.stopRun();
+            outputWriterRedirect = null;
         }
 
         if (proc != null) {
@@ -158,7 +223,7 @@ public final class ExecUtil {
         }
 
         /**
-         * Stop running the stream gobbler The thread will exit out gracefully
+         * Stop running the stream redirect. The thread will exit out gracefully
          * after the current readLine() on stream unblocks
          */
         public void stopRun() {
@@ -225,7 +290,7 @@ public final class ExecUtil {
         }
 
         /**
-         * Stop running the stream gobbler The thread will exit out gracefully
+         * Stop running the stream redirect.  The thread will exit out gracefully
          * after the current readLine() on stream unblocks
          */
         public void stopRun() {
