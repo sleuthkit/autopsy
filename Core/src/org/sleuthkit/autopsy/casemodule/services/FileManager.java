@@ -29,8 +29,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskFileRange;
 
 /**
  * Abstraction to facilitate access to files and directories.
@@ -131,6 +133,26 @@ public class FileManager implements Closeable {
         return tskCase.addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
+    }
+    
+    /**
+     * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume
+     * or file system given by systemId.
+     *
+     * @param name the name of the carved file (containing appropriate
+     * extension)
+     * @param systemId the ID of the parent volume or file system
+     * @param sectors a list of SectorGroups giving this sectors that make up
+     * this carved file.
+     */
+    public synchronized LayoutFile addCarvedFile(String carvedFileName, long carvedFileSize,
+			long systemId, List<TskFileRange> data) throws TskCoreException {
+        
+        if (tskCase == null) {
+            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+        }
+
+        return tskCase.addCarvedFile(carvedFileName, carvedFileSize, systemId, data);
     }
 
     @Override

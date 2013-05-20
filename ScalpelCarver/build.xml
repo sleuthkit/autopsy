@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See harness/README in the NetBeans platform -->
+<!-- for some information on what you could do (e.g. targets to override). -->
+<!-- If you delete this file and reopen the project it will be recreated. -->
+<project name="org.sleuthkit.autopsy.scalpel" default="netbeans" basedir=".">
+    <description>Builds, tests, and runs the project org.sleuthkit.autopsy.scalpel.</description>
+    <import file="nbproject/build-impl.xml"/>
+    
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="lib.dir" value="release/modules/lib" />
+    
+     <target name="get-native-libs" description="get native library dependencies"> 
+        <mkdir dir="${lib.dir}"/>
+        <unzip src="${thirdparty.dir}/libscalpel_jni/current/libscalpel_jni.zip" dest="${lib.dir}" >
+           <!-- get all, rely on jna to locate <patternset>
+                <include name="**/*.dll"/>
+            </patternset> -->
+        </unzip>
+    </target>
+    
+    
+     <target name="init" depends="basic-init,files-init,build-init,-javac-init,get-native-libs">
+        <!-- overrode depends attribute -->
+        
+    </target>
+</project>

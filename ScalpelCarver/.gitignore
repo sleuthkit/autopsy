@@ -1,0 +1,9 @@
+*~
+*.class
+build/
+dist/
+release/
+#nbproject/*
+#!nbproject/project.xml
+#!nbproject/project.properties
+#!nbproject/suite.properties

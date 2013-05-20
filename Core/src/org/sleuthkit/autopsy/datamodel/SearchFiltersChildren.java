@@ -27,12 +27,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  *
- * @author dfickling
  */
 class SearchFiltersChildren extends ChildFactory<SearchFilters.SearchFilterInterface> {
     
-    SleuthkitCase skCase;
-    boolean root;
+    private SleuthkitCase skCase;
+    private boolean root;
 
     public SearchFiltersChildren(SleuthkitCase skCase, boolean root) {
         this.skCase = skCase;
