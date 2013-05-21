@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.JFileChooser;
 
 /**
@@ -31,7 +31,7 @@ import javax.swing.JFileChooser;
 public class LocalFilesPanel extends ContentTypePanel {
 
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private List<File> currentFiles = new ArrayList<File>();
+    private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
