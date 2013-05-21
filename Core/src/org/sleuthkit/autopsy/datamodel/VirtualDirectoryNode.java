@@ -42,6 +42,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     
     private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
 
+    //prefix for special VirtualDirectory root nodes grouping local files
+    public final static String LOCAL_FILE_SET_PREFIX = "FileSet ";
+    
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
     }
@@ -57,7 +60,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
         }
-        else if (name.equals(VirtualDirectory.NAME_LOCAL)) {
+        else if (name.startsWith(LOCAL_FILE_SET_PREFIX)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-local-icon-16.png");
         }
         else if (name.equals(VirtualDirectory.NAME_CARVED)) {

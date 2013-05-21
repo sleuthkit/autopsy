@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -50,8 +52,7 @@ public class FileManager implements Closeable {
 
     private SleuthkitCase tskCase;
     private static final Logger logger = Logger.getLogger(FileManager.class.getName());
-    private volatile long localFilesRootId = -1;
-    private volatile VirtualDirectory localFilesRoot = null;
+    private volatile int curNumFileSets;  //current number of filesets (root virt dir objects)
 
     public FileManager(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
@@ -62,17 +63,20 @@ public class FileManager implements Closeable {
      * initialize the file manager for the case
      */
     private synchronized void init() {
-        //get a handle of local files root
-        //or create if not present
-        //this saves number of queries, and ensures LocalFiles is the first file object created for consistency
-        if (localFilesRootId == -1) {
-            try {
-                localFilesRootId = tskCase.getLocalFilesRootDirectoryId();
-                localFilesRoot = (VirtualDirectory) tskCase.getAbstractFileById(localFilesRootId);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting/creating local files root at file manager init", ex);
+        //get the number of local file sets in db
+        List<VirtualDirectory> virtRoots;
+        curNumFileSets = 0;
+        try {
+            virtRoots = tskCase.getVirtualDirectoryRoots();
+            for (VirtualDirectory vd : virtRoots) {
+                if (vd.getName().startsWith(VirtualDirectoryNode.LOCAL_FILE_SET_PREFIX)) {
+                    ++curNumFileSets;
+                }
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error initializing FileManager and getting number of local file sets");
         }
+
 
     }
 
@@ -215,13 +219,15 @@ public class FileManager implements Closeable {
             }
             rootsToAdd.add(localFile);
         }
+        
+        final VirtualDirectory fileSetDir = addLocalFileSetDir();
 
         for (java.io.File localRootToAdd : rootsToAdd) {
             AbstractFile localFileAdded = null;
             if (localRootToAdd.isFile()) {
-                localFileAdded = addLocalFileSingle(localRootToAdd.getAbsolutePath());
+                localFileAdded = addLocalFileSingle(localRootToAdd.getAbsolutePath(), fileSetDir);
             } else {
-                localFileAdded = this.addLocalDir(localRootToAdd.getAbsolutePath());
+                localFileAdded = this.addLocalDir(localRootToAdd.getAbsolutePath(), fileSetDir);
             }
             if (localFileAdded == null) {
                 String msg = "One of the local files/dirs could not be added: " + localRootToAdd.getAbsolutePath();
@@ -237,6 +243,33 @@ public class FileManager implements Closeable {
 
 
         return added;
+    }
+    
+    /**
+     * Adds a new virtual directory root object with FileSet X name and consecutive sequence number
+     * characteristic to every add operation
+     * 
+     * @return the virtual dir root container created
+     * @throws TskCoreException
+     */
+    private VirtualDirectory addLocalFileSetDir() throws TskCoreException {
+        
+        VirtualDirectory created = null;
+        
+        int newFileSetCount = curNumFileSets + 1;
+        final String fileSetName = VirtualDirectoryNode.LOCAL_FILE_SET_PREFIX + newFileSetCount;
+        
+        try {
+            created = tskCase.addVirtualDirectory(0, fileSetName);
+            curNumFileSets = newFileSetCount;
+        }
+        catch (TskCoreException ex) {
+            String msg = "Error creating local file set dir: " + fileSetName;
+            logger.log(Level.SEVERE, msg, ex);
+            throw new TskCoreException(msg, ex);
+        }
+        
+        return created;
     }
 
     /**
@@ -265,33 +298,7 @@ public class FileManager implements Closeable {
 
     }
 
-    /**
-     * Gets matching (LocalFile or VirtualDirectory) child of LocalFiles root
-     * with a matching name, or null if it does not exist
-     *
-     * @param name
-     * @return matching root child or null
-     * @throws TskCoreException
-     */
-    private AbstractFile getMatchingLocalFilesRootChild(String name) throws TskCoreException {
-        AbstractFile ret = null;
-        try {
-            for (Content child : localFilesRoot.getChildren()) {
-                TSK_DB_FILES_TYPE_ENUM fileType = ((AbstractFile) child).getType();
-                if ((fileType.equals(TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                        || fileType.equals(TSK_DB_FILES_TYPE_ENUM.LOCAL))
-                        && child.getName().equals(name)) {
-                    ret = (AbstractFile) child;
-                    break;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error quering matching children of local files root, ", ex);
-            throw new TskCoreException("Error quering matching children of local files root, ", ex);
-        }
-
-        return ret;
-    }
+  
 
     /**
      * Return count of local files already in this case that represent the same
@@ -321,32 +328,7 @@ public class FileManager implements Closeable {
 
     }
 
-    /**
-     * Return count of local files already in this case that represent the same
-     * file/dir (have the same localAbsPath), for a folder directly under
-     * LocalFiles root dir
-     *
-     * @param localAbsPath local absolute path of the file to check
-     * @param localName the name of the file to check
-     * @return count of objects representing the same local file
-     * @throws TskCoreException
-     */
-    private int getCountMatchingLocalFiles(String localAbsPath, String localName) throws TskCoreException {
-        int count = 0;
-
-        for (Content child : this.localFilesRoot.getChildren()) {
-            if (child instanceof VirtualDirectory && localName.equals(child.getName())) {
-                ++count;
-            } else if (child instanceof AbstractFile
-                    && localAbsPath.equals(((AbstractFile) child).getLocalAbsPath())) {
-                ++count;
-            }
-        }
-
-        return count;
-
-    }
-
+    
     /**
      * Add a local directory and its children recursively. Parent container of
      * the local dir is added for context.
@@ -355,19 +337,20 @@ public class FileManager implements Closeable {
      * @param localAbsPath local absolute path of root folder whose children are
      * to be added recursively. If there is a parent dir, it is added as a
      * container, for context.
+     * @param fileSetDir the parent file set directory container
      * @return parent virtual directory folder created representing the
      * localAbsPath node
      * @throws TskCoreException exception thrown if the object creation failed
      * due to a critical system error or of the file manager has already been
      * closed, or if the localAbsPath could not be accessed
      */
-    private synchronized VirtualDirectory addLocalDir(String localAbsPath) throws TskCoreException {
+    private synchronized VirtualDirectory addLocalDir(String localAbsPath, VirtualDirectory fileSetDir) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
 
         final java.io.File localDir = new java.io.File(localAbsPath);
-        final String localName = localDir.getName();
+        //final String localName = localDir.getName();
         if (!localDir.exists()) {
             throw new TskCoreException("Attempted to add a local dir that does not exist: " + localAbsPath);
         }
@@ -384,15 +367,7 @@ public class FileManager implements Closeable {
 
         VirtualDirectory rootVd = null;
         try {
-
-            //check if parentless dir already exists, if so, append number to it
-            int existingCount = getCountMatchingLocalFiles(localAbsPath, localName);
-            if (existingCount > 0) {
-                rootVdName = rootVdName + "_" + Integer.toString(existingCount);
-            }
-            rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
-
-
+            rootVd = tskCase.addVirtualDirectory(fileSetDir.getId(), rootVdName);
         } catch (TskCoreException e) {
             //log and rethrow
             final String msg = "Error creating root dir for local dir to be added, can't addLocalDir: " + localDir;
@@ -417,26 +392,7 @@ public class FileManager implements Closeable {
         return rootVd;
     }
 
-    /**
-     * Creates a single local file under $LocalFiles for the case, adds it to
-     * the database and returns it. Does not refresh the views of data.
-     *
-     * @param localAbsPath local absolute path of the local file, including the
-     * file name.
-     * @return newly created local file object added to the database
-     * @throws TskCoreException exception thrown if the object creation failed
-     * due to a critical system error or of the file manager has already been
-     * closed, or if the localAbsPath could not be accessed
-     *
-     */
-    private synchronized LocalFile addLocalFileSingle(String localAbsPath) throws TskCoreException {
-
-        if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
-        }
-
-        return addLocalFileSingle(localAbsPath, null);
-    }
+   
 
     /**
      * Creates a single local file under parentFile for the case, adds it to the
@@ -444,7 +400,7 @@ public class FileManager implements Closeable {
      *
      * @param localAbsPath local absolute path of the local file, including the
      * file name
-     * @param parentFile parent file object (such as virtual directory, another
+     * @param parentFile parent file object container (such as virtual directory, another
      * local file, or fscontent File),
      * @return newly created local file object added to the database
      * @throws TskCoreException exception thrown if the object creation failed
@@ -476,10 +432,6 @@ public class FileManager implements Closeable {
 
         String fileName = localFile.getName();
 
-        int existingCount = getCountMatchingLocalFiles(localFilesRoot, localAbsPath, fileName);
-        if (existingCount > 0) {
-            fileName = fileName + "_" + Integer.toString(existingCount);
-        }
         LocalFile lf = tskCase.addLocalFile(fileName, localAbsPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile);
