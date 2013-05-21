@@ -41,7 +41,8 @@ public final class ExecUtil {
 
     /**
      * Execute a process. Redirect asynchronously stdout to a string and stderr
-     * to nowhere.  Use only for small outputs, otherwise use the execute() variant with Writer.
+     * to nowhere. Use only for small outputs, otherwise use the execute()
+     * variant with Writer.
      *
      * @param aCommand command to be executed
      * @param params parameters of the command
@@ -100,10 +101,9 @@ public final class ExecUtil {
         return output;
     }
 
-    
-      /**
-     * Execute a process. Redirect asynchronously stdout to a passed in writer and stderr
-     * to nowhere.
+    /**
+     * Execute a process. Redirect asynchronously stdout to a passed in writer
+     * and stderr to nowhere.
      *
      * @param stdoutWriter file writer to write stdout to
      * @param aCommand command to be executed
@@ -128,12 +128,14 @@ public final class ExecUtil {
         logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
 
         proc = rt.exec(arrayCommand);
+       if (false) {
         try {
             //give time to fully start the process
             Thread.sleep(2000);
         } catch (InterruptedException ex) {
             logger.log(Level.WARNING, "Pause interrupted", ex);
         }
+       }
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
@@ -148,17 +150,13 @@ public final class ExecUtil {
         final int exitVal = proc.waitFor();
         logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
 
-        errorStringRedirect.stopRun();
-        errorStringRedirect = null;
-
-        outputWriterRedirect.stopRun();
-        outputWriterRedirect = null;
-
         //gc process with its streams
         proc = null;
     }
 
-    
+    /**
+     * Interrupt the running process and stop its stream redirect threads
+     */
     public synchronized void stop() {
         logger.log(Level.INFO, "Stopping Execution of: " + command);
 
@@ -171,7 +169,7 @@ public final class ExecUtil {
             outputStringRedirect.stopRun();
             outputStringRedirect = null;
         }
-        
+
         if (outputWriterRedirect != null) {
             outputWriterRedirect.stopRun();
             outputWriterRedirect = null;
@@ -210,15 +208,25 @@ public final class ExecUtil {
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
+            InputStreamReader isr = null;
+            BufferedReader br = null;
             try {
-                final InputStreamReader isr = new InputStreamReader(this.is);
-                final BufferedReader br = new BufferedReader(isr);
+                isr = new InputStreamReader(this.is);
+                br = new BufferedReader(isr);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
                     this.output.append(line).append(SEP);
                 }
             } catch (final IOException ex) {
                 logger.log(Level.WARNING, "Error redirecting stream to string buffer", ex);
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "Error closing stream reader", ex);
+                    }
+                }
             }
         }
 
@@ -271,9 +279,11 @@ public final class ExecUtil {
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
+            InputStreamReader isr = null;
+            BufferedReader br = null;
             try {
-                final InputStreamReader isr = new InputStreamReader(this.is);
-                final BufferedReader br = new BufferedReader(isr);
+                isr = new InputStreamReader(this.is);
+                br = new BufferedReader(isr);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
                     writer.append(line).append(SEP);
@@ -282,7 +292,13 @@ public final class ExecUtil {
                 logger.log(Level.SEVERE, "Error reading output and writing to file writer", ex);
             } finally {
                 try {
-                    writer.flush();
+                    if (doRun) {
+                        writer.flush();
+                    }
+                    if (br != null) {
+                        br.close();
+                    }
+
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error flushing file writer", ex);
                 }
@@ -290,7 +306,7 @@ public final class ExecUtil {
         }
 
         /**
-         * Stop running the stream redirect.  The thread will exit out gracefully
+         * Stop running the stream redirect. The thread will exit out gracefully
          * after the current readLine() on stream unblocks
          */
         public void stopRun() {
