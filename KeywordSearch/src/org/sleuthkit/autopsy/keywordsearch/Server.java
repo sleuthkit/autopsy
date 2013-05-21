@@ -292,7 +292,14 @@ public class Server {
                     try {
                         bw.close();
                     } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing Solr output stream");
+                        logger.log(Level.WARNING, "Error closing Solr output stream writer");
+                    }
+                }
+                 if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Error closing Solr output stream reader");
                     }
                 }
             }
