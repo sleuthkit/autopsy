@@ -43,7 +43,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
 
     //prefix for special VirtualDirectory root nodes grouping local files
-    public final static String LOCAL_FILE_SET_PREFIX = "FileSet ";
+    public final static String LOCAL_FILE_SET_PREFIX = "FileSet";
     
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
