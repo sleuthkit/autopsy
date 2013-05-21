@@ -23,6 +23,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

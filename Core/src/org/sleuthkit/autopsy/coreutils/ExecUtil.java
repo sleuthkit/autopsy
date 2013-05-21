@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Takes of forking a process and reading output / error streams to either a
+ * Takes care of forking a process and reading output / error streams to either a
  * string buffer or directly to a file writer
  */
 public final class ExecUtil {
@@ -67,12 +67,6 @@ public final class ExecUtil {
         logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
 
         proc = rt.exec(arrayCommand);
-        try {
-            //give time to fully start the process
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, "Pause interrupted", ex);
-        }
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
@@ -128,14 +122,6 @@ public final class ExecUtil {
         logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
 
         proc = rt.exec(arrayCommand);
-       if (false) {
-        try {
-            //give time to fully start the process
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, "Pause interrupted", ex);
-        }
-       }
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");

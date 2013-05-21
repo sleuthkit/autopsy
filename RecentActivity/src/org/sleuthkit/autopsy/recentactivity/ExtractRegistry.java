@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.*;
 import java.io.File;
 import java.sql.ResultSet;
