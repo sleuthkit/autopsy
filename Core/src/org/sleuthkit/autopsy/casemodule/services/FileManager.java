@@ -43,7 +43,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
-
 /**
  * Abstraction to facilitate access to files and directories.
  */
@@ -169,7 +168,7 @@ public class FileManager implements Closeable {
                 ctime, crtime, atime, mtime,
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
-    
+
     /**
      * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume
      * or file system given by systemId.
@@ -181,8 +180,8 @@ public class FileManager implements Closeable {
      * this carved file.
      */
     public synchronized LayoutFile addCarvedFile(String carvedFileName, long carvedFileSize,
-			long systemId, List<TskFileRange> data) throws TskCoreException {
-        
+            long systemId, List<TskFileRange> data) throws TskCoreException {
+
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
@@ -380,48 +379,20 @@ public class FileManager implements Closeable {
             throw new TskCoreException("Attempted to add a local dir that is not a directory: " + localAbsPath);
         }
 
-        String parentName = null;
-        java.io.File parentDir = localDir.getParentFile();
-        if (parentDir != null) {
-            parentName = parentDir.getName();
-            if (parentName == null || parentName.equals("")) {
-                // parent is root
-                parentName = "/";
-            }
-        }
-        //else this is root and parentName is null
-
 
         String rootVdName = localDir.getName();
 
         VirtualDirectory rootVd = null;
         try {
-            if (parentName == null) {
-                //check if parentless dir already exists, if so, append number to it
-                int existingCount = getCountMatchingLocalFiles(localAbsPath, localName);
-                if (existingCount > 0) {
-                    rootVdName = rootVdName + "_" + Integer.toString(existingCount);
-                }
-                rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
 
-            } else {
-                //add parent dir for context
-                VirtualDirectory contextDir = null;
-                final AbstractFile existing = getMatchingLocalFilesRootChild(parentName);
-                if (existing != null && existing instanceof VirtualDirectory) {
-                    contextDir = (VirtualDirectory) existing;
-                } else {
-                    contextDir = tskCase.addVirtualDirectory(localFilesRootId, parentName);
-                }
-
-                //check if parentless dir already exists, if so, append number to it
-                int existingCount = getCountMatchingLocalFiles(contextDir, localAbsPath, localName);
-                if (existingCount > 0) {
-                    rootVdName = rootVdName + "_" + Integer.toString(existingCount);
-                }
-                rootVd = tskCase.addVirtualDirectory(contextDir.getId(), rootVdName);
-
+            //check if parentless dir already exists, if so, append number to it
+            int existingCount = getCountMatchingLocalFiles(localAbsPath, localName);
+            if (existingCount > 0) {
+                rootVdName = rootVdName + "_" + Integer.toString(existingCount);
             }
+            rootVd = tskCase.addVirtualDirectory(localFilesRootId, rootVdName);
+
+
         } catch (TskCoreException e) {
             //log and rethrow
             final String msg = "Error creating root dir for local dir to be added, can't addLocalDir: " + localDir;
