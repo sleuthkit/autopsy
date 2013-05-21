@@ -1831,13 +1831,13 @@ def execute_test():
 		global imgfail
 		imgfail = True
 		global errorem
-		errorem += "Autopsy Nightly test failed.\n"
 		passFail = False
 		for lm in logres:
 			errorem += lm
 	html.close()
 	if failedbool:
 		passFail = False
+		errorem += "Autopsy Nightly test failed.\n"
 		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 	else:
