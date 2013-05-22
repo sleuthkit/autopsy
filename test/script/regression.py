@@ -194,6 +194,8 @@ class TestAutopsy:
 		self.sorted_data_file = ""
 		self.gold_dbdump = ""
 		self.autopsy_dbdump = ""
+		self.artifact_count = 0
+		self.artifact_fail = 0
 		# Infinite Testing info
 		timer = 0
 		
@@ -399,6 +401,8 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 	autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
 	database_log = codecs.open(data_file, "wb", "utf_8")
 	rw = autopsy_cur2.fetchone()
+	case.artifact_count = 0
+	case.artifact_fail = 0
 	appnd = False
 	counter = 0
 	try:
@@ -409,6 +413,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
 			autopsy_cur1 = autopsy_con.cursor()
 			looptry = True
+			case.artifact_count += 1
 			try:
 				key = ""
 				key = str(rw[3])
@@ -419,6 +424,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				print(str(e))
 				print(str(rw[3]))
 				looptry = False
+				case.artifact_fail += 1
 				pass
 			if(looptry == True):
 				src = attributes[0][0]
@@ -1828,9 +1834,7 @@ def execute_test():
 	logres = search_common_log("TskCoreException")
 	if (len(logres)>0):
 		failedbool = True
-		global imgfail
 		imgfail = True
-		global errorem
 		passFail = False
 		for lm in logres:
 			errorem += lm
@@ -1845,6 +1849,7 @@ def execute_test():
 		errorem += "Autopsy Nightly test passed.\n"
 		passFail = True
 		attachl = []
+	errorem += "There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " of them were unusable."
 	if not args.gold_creation:
 		Emailer.send_email(parsed, errorem, attachl, passFail)
 		
