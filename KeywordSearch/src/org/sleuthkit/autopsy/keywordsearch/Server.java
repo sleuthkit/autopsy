@@ -349,9 +349,9 @@ public class Server {
         if (available(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr");
             try {
-                final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
+                final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
 
-                String loggingPropertiesOpt = " -Djava.util.logging.config.file=";
+                String loggingPropertiesOpt = "-Djava.util.logging.config.file=";
                 String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator;
 
                 if (DEBUG) {
@@ -362,12 +362,15 @@ public class Server {
                 loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
                 final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
 
-
-
-                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR
-                        + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort
-                        + " -DSTOP.KEY=" + KEY + " "
-                        + loggingProperties + " -jar start.jar";
+                final String [] SOLR_START_CMD = {
+                    javaPath,
+                    MAX_SOLR_MEM_MB_PAR,
+                    "-DSTOP.PORT=" + currentSolrStopPort,
+                    "-Djetty.port=" + currentSolrServerPort,
+                    "-DSTOP.KEY=" + KEY,
+                    loggingProperties,
+                    "-jar",
+                    "start.jar"};
                 logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
                 curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
                 logger.log(Level.INFO, "Finished starting Solr");
@@ -459,7 +462,15 @@ public class Server {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
-            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=" + currentSolrStopPort + " -DSTOP.KEY=" + KEY + " -jar start.jar --stop", null, solrFolder);
+            final String [] SOLR_STOP_CMD = {
+              javaPath,
+              "-DSTOP.PORT=" + currentSolrStopPort,
+              "-DSTOP.KEY=" + KEY,
+              "-jar",
+              "start.jar",
+              "--stop",
+            };
+            Process stop = Runtime.getRuntime().exec(SOLR_STOP_CMD, null, solrFolder);
             logger.log(Level.INFO, "Waiting for stopping Solr server");
             stop.waitFor();
 
