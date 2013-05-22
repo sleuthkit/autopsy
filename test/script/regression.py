@@ -424,6 +424,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			except Exception as e:
 				print(str(e))
 				print(str(rw[3]))
+				errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
 				looptry = False
 				case.artifact_fail += 1
 				pass
