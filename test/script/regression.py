@@ -1845,11 +1845,11 @@ def execute_test():
 	if failedbool:
 		passFail = False
 		errorem += "The test output didn't match the gold standard.\n"
-		errorem += "Autopsy Nightly test failed.\n"
+		errorem += "Autopsy test failed.\n"
 		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 	else:
-		errorem += "Autopsy Nightly test passed.\n"
+		errorem += "Autopsy test passed.\n"
 		passFail = True
 		attachl = []
 	if not args.gold_creation:
