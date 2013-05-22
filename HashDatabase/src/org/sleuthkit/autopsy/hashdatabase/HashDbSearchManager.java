@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
@@ -29,17 +28,15 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Interface/Node manager for hash searching. The manager takes in the raw
  * map of MD5 hashes to files, flattens the map, and sends it to the HashDbSearchResultFactory.
  */
 public class HashDbSearchManager {
-    Map<String, List<AbstractFile>> map;
-    List<KeyValueContent> kvContents;
+    private Map<String, List<AbstractFile>> map;
+    private List<AbstractFile> kvContents;
     
     public HashDbSearchManager(Map<String, List<AbstractFile>> map) {
         this.map = map;
@@ -53,15 +50,11 @@ public class HashDbSearchManager {
      */
     private void init() {
         if(!map.isEmpty()) {
-            kvContents = new ArrayList<KeyValueContent>();
+            kvContents = new ArrayList<AbstractFile>();
             int id = 0;
             for(String s : map.keySet()) {
                 for(AbstractFile file : map.get(s)) {
-                    Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
-                    keyMap.put("MD5 Hash", s);
-                    AbstractFsContentNode.fillPropertyMap(keyMap, file);
-                    KeyValueContent kv = new KeyValueContent(file.getName(), keyMap, ++id, file);
-                    kvContents.add(kv);
+                    kvContents.add(file);
                 }
             }
         }
@@ -73,7 +66,7 @@ public class HashDbSearchManager {
      */
     public void execute() {
         if(!map.isEmpty()) {
-            Collection<KeyValueContent> kvCollection = kvContents;
+            Collection<AbstractFile> kvCollection = kvContents;
             Node rootNode = null;
 
             if (kvCollection.size() > 0) {
