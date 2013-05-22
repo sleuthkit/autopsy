@@ -45,8 +45,6 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         this(file, true);
 
         setIcon(file);
-
-
     }
 
     public FileNode(AbstractFile file, boolean directoryBrowseMode) {

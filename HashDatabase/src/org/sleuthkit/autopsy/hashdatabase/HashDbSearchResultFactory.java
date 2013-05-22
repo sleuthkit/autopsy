@@ -23,6 +23,7 @@ import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FilterNodeLeaf;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -43,6 +44,6 @@ public class HashDbSearchResultFactory extends ChildFactory<AbstractFile> {
 
     @Override
     protected Node createNodeForKey(AbstractFile content) {
-        return new FileNode(content, false);
+        return new FilterNodeLeaf(new FileNode(content, false));
     }
 }
