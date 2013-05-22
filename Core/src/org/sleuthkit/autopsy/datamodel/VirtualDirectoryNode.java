@@ -22,16 +22,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
-import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskData;
 
@@ -61,7 +57,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
         }
         else if (name.startsWith(LOCAL_FILE_SET_PREFIX)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-local-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png");
         }
         else if (name.equals(VirtualDirectory.NAME_CARVED)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO
