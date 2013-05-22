@@ -23,7 +23,7 @@ def send_email(parsed, errorem, attachl, passFail):
 	serverval = element.getAttribute("value").encode().decode("utf_8")
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
-	element = parsed.getElementsByTagName("subject")
+	element = parsed.getElementsByTagName("subject")[0]
 	toval = element.getAttribute("value").encode().decode("utf_8")
 	if(passFail):
 		msg['Subject'] = '[Test]Autopsy ' + toval + ' test passed.'
