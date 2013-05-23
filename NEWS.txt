@@ -12,7 +12,7 @@ Bugfixes:
 - Keyword Search: fix when Solr does not cleanly shutdown
 - fix for "Process Unallocated Space" option doesn't do anything
 - fixed result viewer for "File Search by MD5 Hash"
-
+- fix Solr, Timeline and RecentActivity issues with java 7.0.21 
 
 
 ---------------- VERSION 3.0.5 --------------
