@@ -24,11 +24,11 @@ def send_email(parsed, errorem, attachl, passFail):
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
 	element = parsed.getElementsByTagName("subject")[0]
-	toval = element.getAttribute("value").encode().decode("utf_8")
+	subval = element.getAttribute("value").encode().decode("utf_8")
 	if(passFail):
-		msg['Subject'] = '[Test]Autopsy ' + toval + ' test passed.'
+		msg['Subject'] = '[Test]Autopsy ' + subval + ' test passed.'
 	else:
-		msg['Subject'] = '[Test]Autopsy ' + toval + ' test failed.'
+		msg['Subject'] = '[Test]Autopsy ' + subval + ' test failed.'
 	# me == the sender's email address
 	# family = the list of all recipients' email addresses
 	msg['From'] = 'AutopsyTest'

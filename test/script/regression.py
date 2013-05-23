@@ -657,7 +657,7 @@ def run_test(image_file, count):
 			if(not file_exists(img_archive)):
 				img_archive = Emailer.make_path(case.gold_parse, case.image_name+"-archive.zip")
 				gold_path = case.gold_parse
-				img_gold = Emailer.make_path(gold_path, case.image_name)
+				img_gold = Emailer.make_path(gold_path, "tmp", case.image_name)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
