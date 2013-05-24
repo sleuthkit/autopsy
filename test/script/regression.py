@@ -194,6 +194,8 @@ class TestAutopsy:
 		self.sorted_data_file = ""
 		self.gold_dbdump = ""
 		self.autopsy_dbdump = ""
+		self.artifact_count = 0
+		self.artifact_fail = 0
 		# Infinite Testing info
 		timer = 0
 		
@@ -396,9 +398,12 @@ class Database:
 
 def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 	autopsy_cur2 = autopsy_con.cursor()
+	global errorem
 	autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
 	database_log = codecs.open(data_file, "wb", "utf_8")
 	rw = autopsy_cur2.fetchone()
+	case.artifact_count = 0
+	case.artifact_fail = 0
 	appnd = False
 	counter = 0
 	try:
@@ -409,6 +414,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
 			autopsy_cur1 = autopsy_con.cursor()
 			looptry = True
+			case.artifact_count += 1
 			try:
 				key = ""
 				key = str(rw[3])
@@ -418,7 +424,9 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			except Exception as e:
 				print(str(e))
 				print(str(rw[3]))
+				errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
 				looptry = False
+				case.artifact_fail += 1
 				pass
 			if(looptry == True):
 				src = attributes[0][0]
@@ -464,6 +472,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			rw = autopsy_cur2.fetchone()
 	except Exception as e:
 		print('outer exception: ' + str(e))
+	errorem += "There were " + str(case.artifact_count) + " artifacts for " + case.image_name + " and " + str(case.artifact_fail) + " of them were unusable.\n"
 		
 def dbDump():
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
@@ -648,7 +657,7 @@ def run_test(image_file, count):
 			if(not file_exists(img_archive)):
 				img_archive = Emailer.make_path(case.gold_parse, case.image_name+"-archive.zip")
 				gold_path = case.gold_parse
-				img_gold = Emailer.make_path(gold_path, case.image_name)
+				img_gold = Emailer.make_path(gold_path, "tmp", case.image_name)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 			extrctr.extractall(gold_path)
 			extrctr.close
@@ -1828,21 +1837,19 @@ def execute_test():
 	logres = search_common_log("TskCoreException")
 	if (len(logres)>0):
 		failedbool = True
-		global imgfail
 		imgfail = True
-		global errorem
-		errorem += "Autopsy Nightly test failed.\n"
 		passFail = False
 		for lm in logres:
 			errorem += lm
 	html.close()
 	if failedbool:
 		passFail = False
+		errorem += "The test output didn't match the gold standard.\n"
+		errorem += "Autopsy test failed.\n"
 		attachl.append(case.common_log_path)
 		attachl.insert(0, html.name)
 	else:
-		errorem = ""
-		errorem += "Autopsy Nightly test passed.\n"
+		errorem += "Autopsy test passed.\n"
 		passFail = True
 		attachl = []
 	if not args.gold_creation:
@@ -1872,7 +1879,7 @@ def main():
 	daycount = 0
 	failedbool = False
 	redo = False
-	errorem = "The test standard didn't match the gold standard.\n"
+	errorem = ""
 	case = TestAutopsy()
 	database = Database()
 	printout("")
