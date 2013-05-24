@@ -20,11 +20,9 @@ package org.sleuthkit.autopsy.exifparser;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
-import com.drew.imaging.jpeg.JpegProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.lang.Rational;
 import com.drew.metadata.Metadata;
-import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
@@ -33,26 +31,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -62,14 +53,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * Ingests an image file and, if available, adds it's date, latitude, longitude,
  * altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestModule implements IngestModuleAbstractFile {
+public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
     
     final public static String MODULE_NAME = "Exif Parser";
     final public static String MODULE_VERSION = "1.0";
-    
-    private String args;
     
     private static final int readHeaderSize = 2;
     private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
@@ -260,17 +249,6 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
-    
     
     @Override
     public String getName() {
@@ -298,40 +276,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     }
 
     @Override
-    public IngestModuleAbstract.ModuleType getType() {
-        return IngestModuleAbstract.ModuleType.AbstractFile;
-    }
-
-     @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-    
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-    
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-    
-    @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
-    }
-    
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-    
-    @Override
-    public void saveSimpleConfiguration() {
     }
 }

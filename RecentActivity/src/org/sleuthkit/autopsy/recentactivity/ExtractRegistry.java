@@ -57,7 +57,7 @@ import org.xml.sax.SAXException;
 /**
  * Extracting windows registry data using regripper
  */
-public class ExtractRegistry extends Extract implements IngestModuleImage {
+public class ExtractRegistry extends Extract {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -65,7 +65,6 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     private int sysid;
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
-    private String args;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
@@ -103,15 +102,6 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
     
     private void getRegistryFiles(Image image, IngestImageWorkerController controller) {
         
@@ -420,38 +410,6 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         return "Extracts activity from the Windows registry utilizing RegRipper.";
     }
 
-    @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {

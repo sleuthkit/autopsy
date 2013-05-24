@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -31,7 +30,6 @@ import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Image;
@@ -40,7 +38,7 @@ import org.sleuthkit.datamodel.Image;
  * Recent activity image ingest module
  *
  */
-public final class RAImageIngestModule implements IngestModuleImage {
+public final class RAImageIngestModule extends IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private static RAImageIngestModule defaultInstance = null;
@@ -49,7 +47,6 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private StringBuilder subCompleted = new StringBuilder();
     private ArrayList<Extract> modules;
     final public static String MODULE_VERSION = "1.0";
-    private String args;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -179,52 +176,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "Recent Activity processes has been shutdown.");
     }
 
-    @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
-    }
 
     @Override
     public String getVersion() {
         return MODULE_VERSION;
-    }
-
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
     }
 
     @Override
