@@ -30,10 +30,9 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -50,8 +49,9 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * FileSearchPanel that present search options
@@ -135,7 +135,6 @@ public class FileSearchPanel extends javax.swing.JPanel {
      * Action when the "Search" button is pressed.
      *
      */
-    @SuppressWarnings("deprecation")
     private void search() {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -146,26 +145,24 @@ public class FileSearchPanel extends javax.swing.JPanel {
 
                 // try to get the number of matches first
                 Case currentCase = Case.getCurrentCase(); // get the most updated case
-                int totalMatches = 0;
-                ArrayList<FsContent> fsContentList = new ArrayList<FsContent>();
+                long totalMatches = 0;
+                List<AbstractFile> contentList = null;
                 try {
-                    List<FsContent> currentDbList;
-                    SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-                    ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
-                    totalMatches = totalMatches + rs.getInt("TotalMatches");
-                    tempDb.closeRunQuery(rs);
+                    SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                    //ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
+                    contentList = tskDb.findAllFilesWhere(this.getQuery());
 
-                    rs = tempDb.runQuery(this.getQuery(null));
-                    currentDbList = tempDb.resultSetToFsContents(rs);
-                    tempDb.closeRunQuery(rs);
-
-                    fsContentList.addAll(currentDbList);
-                } catch (SQLException ex) {
+                } catch (TskCoreException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());
                     logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex);
                 }
+                
+                if (contentList == null) {
+                    contentList = Collections.<AbstractFile>emptyList();
+                }
 
-                final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText, new TableFilterNode(new SearchNode(fsContentList), true), totalMatches);
+                final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
+                        new TableFilterNode(new SearchNode(contentList), true), contentList.size());
 
                 searchResultWin.requestActive(); // make it the active top component
 
@@ -197,20 +194,15 @@ public class FileSearchPanel extends javax.swing.JPanel {
      * Gets the SQL query to get the data from the database based on the
      * criteria that user chooses on the FileSearch.
      *
-     * @param addition the additional selection for query. If nothing/null, will
-     * select all.
      * @return query the SQL query
      * @throws
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
      * if an enabled filter is in an invalid state
      */
-    private String getQuery(String addition) throws FilterValidationException {
-        String tempQuery = "*";
-        if (addition != null && !addition.equals("")) {
-            tempQuery = addition;
-        }
+    private String getQuery() throws FilterValidationException {
 
-        String query = "select " + tempQuery + " from tsk_files where 1";
+        //String query = "select " + tempQuery + " from tsk_files where 1";
+        String query = " 1";
 
         for (FileSearchFilter f : this.getEnabledFilters()) {
             query += " and (" + f.getPredicate() + ")";

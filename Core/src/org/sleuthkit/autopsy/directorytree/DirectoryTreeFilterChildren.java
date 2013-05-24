@@ -26,12 +26,11 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
-import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -211,15 +210,17 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return visitDeep(fn);
         }
         
+        
+        @Override
+        public Boolean visit(LocalFileNode lfn) {
+            return visitDeep(lfn);
+        }
+        
         @Override
         public Boolean visit(LayoutFileNode fn) {
             return visitDeep(fn);
         }
 
-        @Override
-        public Boolean visit(DerivedFileNode dfn) {
-            return visitDeep(dfn);
-        }
 
         @Override
         public Boolean visit(VolumeNode vn) {
@@ -228,7 +229,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
-            return ! vdn.hasContentChildren();
+            return visitDeep(vdn); 
+            //return ! vdn.hasContentChildren();
         }
     }
 
@@ -253,8 +255,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(DerivedFileNode dfn) {
-            return dfn.hasContentChildren();
+        public Boolean visit(LocalFileNode lfn) {
+            return lfn.hasContentChildren();
         }
 
         @Override
@@ -264,7 +266,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
-            return vdn.hasContentChildren();
+            return true;
+            //return vdn.hasContentChildren();
         }
     }
 }

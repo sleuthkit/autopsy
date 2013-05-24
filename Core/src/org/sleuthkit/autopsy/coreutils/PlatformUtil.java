@@ -120,8 +120,6 @@ public class PlatformUtil {
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
             System.out.println("Embedded jre directory found in: " + jrePath.getAbsolutePath());
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
-            javaPath = getOSFilePath(javaPath);
-
         } else {
             //else use system installed java in PATH env variable
             javaPath = "java";

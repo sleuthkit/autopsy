@@ -46,7 +46,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * main configuration panel for all ingest modules, reusable JPanel component
@@ -62,8 +62,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
     public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
-    // The image that's just been added to the database
-    private Image image;
+    // The input content that's just been added to the database
+    private List<Content> inputContent;
+    private static IngestDialogPanel instance = null;
+
 
     /** Creates new form IngestDialogPanel */
     public IngestDialogPanel() {
@@ -482,8 +484,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     }
 
     @Override
-    public void setImage(Image image) {
-        this.image = image;
+    public void setContent(List<Content> inputContent) {
+        this.inputContent = inputContent;
     }
 
     @Override
@@ -492,7 +494,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         List<IngestModuleAbstract> modulesToStart = getModulesToStart();
 
         if (!modulesToStart.isEmpty()) {
-            manager.execute(modulesToStart, image);
+            manager.execute(modulesToStart, inputContent);
         }
 
 

@@ -29,6 +29,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskException;
@@ -95,7 +96,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         
         @Override
         public AbstractContentNode visit(DerivedFile df) {
-            return new DerivedFileNode(df);
+            return new LocalFileNode(df);
+        }
+        
+        @Override
+        public AbstractContentNode visit(LocalFile lf) {
+            return new LocalFileNode(lf);
         }
         
         @Override
@@ -156,9 +162,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
-        public AbstractNode visit(Images i) {
+        public AbstractNode visit(DataSources i) {
             try {
-                return new ImagesNode(i.getSleuthkitCase().getRootObjects());
+                return new DataSourcesNode(i.getSleuthkitCase().getRootObjects());
             } catch (TskException ex) {
                 return defaultVisit(i);
             }

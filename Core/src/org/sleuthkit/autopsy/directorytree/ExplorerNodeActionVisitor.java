@@ -23,7 +23,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +42,8 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
@@ -103,7 +104,15 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         actions.add(new TagAction(d));
         return actions;
     }
-    
+
+    @Override
+    public List<? extends Action> visit(final VirtualDirectory d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new TagAction(d));
+        actions.add(new ExtractAction("Extract Directory", d));
+        return actions;
+    }
+
     @Override
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actions = new ArrayList<Action>();
@@ -111,8 +120,16 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         actions.add(new TagAction(d));
         return actions;
     }
-    
-     @Override
+
+    @Override
+    public List<? extends Action> visit(final LocalFile d) {
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new ExtractAction("Extract File", d));
+        actions.add(new TagAction(d));
+        return actions;
+    }
+
+    @Override
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
@@ -318,16 +335,16 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             }
 
             Arrays.fill(rowValues, 0, 1, new Object[]{
-                        fs.getId(),
-                        fs.getImageOffset(),
-                        id,
-                        fs.getFsType(),
-                        fs.getBlock_size(),
-                        fs.getBlock_count(),
-                        fs.getRoot_inum(),
-                        fs.getFirst_inum(),
-                        fs.getLastInum()
-                    });
+                fs.getId(),
+                fs.getImageOffset(),
+                id,
+                fs.getFsType(),
+                fs.getBlock_size(),
+                fs.getBlock_count(),
+                fs.getRoot_inum(),
+                fs.getFirst_inum(),
+                fs.getLastInum()
+            });
 
 
             JTable table = new JTable(new DefaultTableModel(rowValues, columnNames));

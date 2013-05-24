@@ -25,36 +25,33 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.TYPE;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.LocalFile;
 
 /**
- * A Node for a DerivedFile content object.
+ * A Node for a LocalFile or DerivedFile content object.
  *
  * TODO should be able to extend FileNode after FileNode extends
  * AbstractFsContentNode<AbstractFile>
  */
-public class DerivedFileNode extends AbstractAbstractFileNode<DerivedFile> {
+public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
-    public static String nameForLayoutFile(LayoutFile lf) {
-        return lf.getName();
-    }
+    public LocalFileNode(AbstractFile af) {
+        super(af);
 
-    public DerivedFileNode(DerivedFile df) {
-        super(df);
-
-        this.setDisplayName(df.getName());
+        this.setDisplayName(af.getName());
 
         // set name, display name, and icon
-        if (df.isDir()) {
+        if (af.isDir()) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
         } else {
-            this.setIconBaseWithExtension(FileNode.getIconForFileType(df));
+            this.setIconBaseWithExtension(FileNode.getIconForFileType(af));
         }
 
     }

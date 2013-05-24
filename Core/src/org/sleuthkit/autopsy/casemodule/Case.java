@@ -81,17 +81,17 @@ public class Case {
      */
     public static final String CASE_EXAMINER = "caseExaminer";
     /**
-     * Property name that indicates a new image has been added to the current
-     * case. The new value is the newly-added instance of Image, and the old
+     * Property name that indicates a new data source (image, disk or local file) has been added to the current
+     * case. The new value is the newly-added instance of the new data source, and the old
      * value is always null.
      */
-    public static final String CASE_ADD_IMAGE = "addImages";
+    public static final String CASE_ADD_DATA_SOURCE = "addDataSource";
     /**
-     * Property name that indicates an image has been removed from the current
-     * case. The "old value" is the (int) image ID of the image that was
-     * removed, the new value is the instance of the Image.
+     * Property name that indicates a data source has been removed from the current
+     * case. The "old value" is the (int) content ID of the data source that was
+     * removed, the new value is the instance of the data source.
      */
-    public static final String CASE_DEL_IMAGE = "removeImages";
+    public static final String CASE_DEL_DATA_SOURCE = "removeDataSource";
     /**
      * Property name that indicates the currently open case has changed. The new
      * value is the instance of the opened Case, or null if there is no open
@@ -314,6 +314,7 @@ public class Case {
 
     /**
      * Adds the image to the current case after it has been added to the DB
+     * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
      * @param imgId the ID of the image that being added
@@ -324,13 +325,26 @@ public class Case {
 
         try {
             Image newImage = db.getImageById(imgId);
-            pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
-            doAddImage();
+            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newImage); // the new value is the instance of the image
+            CoreComponentControl.openCoreWindows();
             return newImage;
         } catch (Exception ex) {
             throw new CaseActionException("Error adding image to the case", ex);
         }
     }
+    
+    /**
+     * Finishes adding new local data source to the case
+     * Sends out event and reopens windows if needed.
+     * 
+     * @param newDataSource new data source added
+     */
+    void addLocalDataSource(Content newDataSource) {
+         pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+         CoreComponentControl.openCoreWindows();
+    }
+    
+     
 
     /**
      * @return The Services object for this case.
@@ -648,7 +662,10 @@ public class Case {
         Set<TimeZone> timezones = new HashSet<TimeZone>();
         for (Content c : getRootObjects()) {
             try {
-                timezones.add(TimeZone.getTimeZone(c.getImage().getTimeZone()));
+                final Image image = c.getImage();
+                if (image != null) {
+                    timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
+                }
             } catch (TskException ex) {
                 logger.log(Level.INFO, "Error getting time zones", ex);
             }
@@ -941,11 +958,7 @@ public class Case {
         }
     }
 
-    //add image helper
-    private void doAddImage() {
-        // open all top components
-        CoreComponentControl.openCoreWindows();
-    }
+
 
     //delete image helper
     private void doDeleteImage() {

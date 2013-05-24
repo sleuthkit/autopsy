@@ -36,7 +36,7 @@ public interface AutopsyItemVisitor<T> {
     T visit(HashsetHits hh);
     T visit(EmailExtracted ee);
     T visit(Tags t);
-    T visit(Images i);
+    T visit(DataSources i);
     T visit(Views v);
     T visit(Results r);
     
@@ -106,7 +106,7 @@ public interface AutopsyItemVisitor<T> {
         }
         
         @Override
-        public T visit(Images i) {
+        public T visit(DataSources i) {
             return defaultVisit(i);
         }
         

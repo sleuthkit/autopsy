@@ -58,8 +58,10 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // <TYPE>: <DESCRIPTION>
     // String: time zone that the image is from
     static final String TIMEZONE_PROP = "timeZone";
-    // String[]: array of paths to each image selected
-    static final String IMGPATH_PROP = "imgPath";
+    // String[]: array of paths to each data source selected
+    static final String DATASOURCEPATH_PROP = "dataSrcPath";
+    // String data source type selected
+    static final String DATASOURCETYPE_PROP = "dataSrcType";
     // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
     static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup";
     // int: the next availble id for a new image
@@ -108,7 +110,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         
         final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
         if (ingestConfig.isIngestRunning()) {
-            final String msg = "<html>Ingest is ongoing on another image. Adding a new image now might slow down the current ingest.<br />Do you want to proceed and add a new image now?</html>";
+            final String msg = "<html>Ingest is ongoing on another data source. Adding a new source now might slow down the current ingest.<br />Do you want to proceed and add a new data source now?</html>";
             if (JOptionPane.showConfirmDialog(null, msg, "Ingest in progress", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
             }
@@ -116,7 +118,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
-        wizardDescriptor.setTitle("Add Image");
+        wizardDescriptor.setTitle("Add Data Source");
         wizardDescriptor.putProperty(NAME, e);
 
         if (dialog != null) {

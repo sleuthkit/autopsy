@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -92,27 +92,32 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<Action>();
 
-        Content c = this.getLookup().lookup(Content.class);
-        if (c != null) {
-            actions.addAll(DirectoryTreeFilterNode.getDetailActions(c));
+        final Content content = this.getLookup().lookup(Content.class);
+        if (content != null) {
+            actions.addAll(DirectoryTreeFilterNode.getDetailActions(content));
 
+            //extract dir action
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(new ExtractAction("Extract Directory",
                         getOriginal()));
             }
+            
+            // file search action
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
                 actions.add(new FileSearchAction("Open File Search by Attributes"));
-                actions.add(new AbstractAction("Restart Ingest Modules") {
+            }
+            
+            //ingest action
+             actions.add(new AbstractAction("Run Ingest Modules") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
-                        ingestDialog.setImage(img);
+                        ingestDialog.setContent(Collections.<Content>singletonList(content));
                         ingestDialog.display();
                     }
                 });
-            }
         }
 
         //check if delete actions should be added

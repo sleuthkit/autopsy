@@ -23,15 +23,13 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
-// SQL imports
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.Writer;
 
 //Util Imports
 import java.text.ParseException;
@@ -95,6 +93,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     final public static String MODULE_VERSION = "1.0";
     private String args;
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    
+    private  ExecUtil execPasco;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
@@ -390,18 +390,15 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         }
         boolean success = true;
 
+        Writer writer = null;
         try {
-            StringBuilder command = new StringBuilder();
-
-            command.append(" -cp");
-            command.append(" \"").append(PASCO_LIB_PATH).append("\"");
-            command.append(" isi.pasco2.Main");
-            command.append(" -T history");
-            command.append(" \"").append(indexFilePath).append("\"");
-            command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\" + filename + "\"");
-            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
-            String cmd = command.toString();
-            JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " " + cmd + "\"");
+            final String pascoOutFile = PASCO_RESULTS_PATH + File.separator + filename;
+            logger.log(Level.INFO, "Writing pasco results to: " + pascoOutFile);
+            writer = new FileWriter(pascoOutFile);
+            execPasco = new ExecUtil();
+            execPasco.execute(writer, JAVA_PATH, 
+                    "-cp", PASCO_LIB_PATH, 
+                    "isi.pasco2.Main", "-T", "history", indexFilePath );
 
         } catch (IOException ex) {
             success = false;
@@ -409,6 +406,16 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         } catch (InterruptedException ex) {
             success = false;
             logger.log(Level.SEVERE, "Pasco has been interrupted, failed to extract some web history from Internet Explorer.", ex);
+        }
+        finally {
+            if (writer != null) {
+                try {
+                    writer.flush();
+                    writer.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error closing writer stream after for Pasco result", ex);
+                }
+            }
         }
 
         return success;
@@ -571,9 +578,11 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
     @Override
     public void stop() {
-        if (JavaSystemCaller.Exec.getProcess() != null) {
-            JavaSystemCaller.Exec.stop();
+        if (execPasco != null) {
+            execPasco.stop();
+            execPasco = null;
         }
+        
 
         //call regular cleanup from complete() method
         complete();

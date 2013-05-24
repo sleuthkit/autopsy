@@ -41,12 +41,10 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     /**
      * @param file underlying Content
      */
-    public FileNode(FsContent file) {
+    public FileNode(AbstractFile file) {
         this(file, true);
 
         setIcon(file);
-
-
     }
 
     public FileNode(AbstractFile file, boolean directoryBrowseMode) {
