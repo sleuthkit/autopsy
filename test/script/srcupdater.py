@@ -50,10 +50,10 @@ def compile(errore, attachli, parsedin):
 	errorem = "The test standard didn't match the gold standard.\n"
 	failedbool = False
 	if(tryredo):
+		errorem = ""
 		errorem += "Rebuilt properly.\n"
 		Emailer.send_email(parsed, errorem, attachl, True)
 		attachl = []
-		errorem = "The test standard didn't match the gold standard.\n"	
 		passed = True
 		
 #Pulls from git
