@@ -399,6 +399,7 @@ class Database:
 def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 	autopsy_cur2 = autopsy_con.cursor()
 	global errorem
+	global attachl
 	autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
 	database_log = codecs.open(data_file, "wb", "utf_8")
 	rw = autopsy_cur2.fetchone()
@@ -425,6 +426,8 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				print(str(e))
 				print(str(rw[3]))
 				errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
+				if attachl.count(autopsy_db_file) < 1
+					attachl.append(autopsy_db_file)
 				looptry = False
 				case.artifact_fail += 1
 				pass
@@ -655,7 +658,7 @@ def run_test(image_file, count):
 			img_gold = Emailer.make_path(case.gold, "tmp", case.image_name)
 			img_archive = Emailer.make_path("..", "output", "gold", case.image_name+"-archive.zip")
 			if(not file_exists(img_archive)):
-				img_archive = Emailer.make_path(case.gold_parse, case.image_name+"-archive.zip")
+				img_archive = Emailer.make_path(case.gold_parse, "tmp", case.image_name+"-archive.zip")
 				gold_path = case.gold_parse
 				img_gold = Emailer.make_path(gold_path, "tmp", case.image_name)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
@@ -826,7 +829,7 @@ def compare_to_gold_db():
 	# SQLITE needs unix style pathing
 	gold_db_file = Emailer.make_path(case.gold, 'tmp', case.image_name, "autopsy.db")
 	if(not file_exists(gold_db_file)):
-		gold_db_file = Emailer.make_path(case.gold_parse, case.image_name, "autopsy.db")
+		gold_db_file = Emailer.make_path(case.gold_parse, 'tmp', case.image_name, "autopsy.db")
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
 									  "AutopsyTestCase", "autopsy.db")
 	# Try to query the databases. Ignore any exceptions, the function will
