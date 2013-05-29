@@ -426,7 +426,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				print(str(e))
 				print(str(rw[3]))
 				errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
-				if attachl.count(autopsy_db_file) < 1
+				if attachl.count(autopsy_db_file) < 1:
 					attachl.append(autopsy_db_file)
 				looptry = False
 				case.artifact_fail += 1
