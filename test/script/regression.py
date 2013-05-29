@@ -426,8 +426,6 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 				print(str(e))
 				print(str(rw[3]))
 				errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
-				if attachl.count(autopsy_db_file) < 1:
-					attachl.append(autopsy_db_file)
 				looptry = False
 				case.artifact_fail += 1
 				pass
@@ -658,7 +656,7 @@ def run_test(image_file, count):
 			img_gold = Emailer.make_path(case.gold, "tmp", case.image_name)
 			img_archive = Emailer.make_path("..", "output", "gold", case.image_name+"-archive.zip")
 			if(not file_exists(img_archive)):
-				img_archive = Emailer.make_path(case.gold_parse, "tmp", case.image_name+"-archive.zip")
+				img_archive = Emailer.make_path(case.gold_parse, case.image_name+"-archive.zip")
 				gold_path = case.gold_parse
 				img_gold = Emailer.make_path(gold_path, "tmp", case.image_name)
 			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
