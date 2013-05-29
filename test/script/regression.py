@@ -441,7 +441,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 						global failedbool
 						global errorem
 						global attachl
-						errorem += "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".\n"
+						errorem += case.image_name + ":There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
 						printerror("There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".")
 						failedbool = True
 						if(not appnd):
@@ -451,7 +451,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 						global failedbool
 						global errorem
 						global attachl
-						errorem += "There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".\n"
+						errorem += case.image_name + ":There were inconsistents sources for artifact with id #" + str(rw[3]) + ".\n"
 						printerror("There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + case.image_name + ".")
 						failedbool = True
 						if(not appnd):
@@ -473,7 +473,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			rw = autopsy_cur2.fetchone()
 	except Exception as e:
 		print('outer exception: ' + str(e))
-	errorem += "There were " + str(case.artifact_count) + " artifacts for " + case.image_name + " and " + str(case.artifact_fail) + " of them were unusable.\n"
+	errorem += case.image_name + ":There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " of them were unusable.\n"
 		
 def dbDump():
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
@@ -960,7 +960,7 @@ def count_bb_artifacts():
 			failedbool = True
 			global imgfail
 			imgfail = True
-			errorem += "There was a difference in the number of artifacts for " + case.image + ".\n"
+			errorem += case.image + ":There was a difference in the number of artifacts.\n"
 		rner = len(database.gold_artifacts)
 		for type_id in range(1, rner):
 			if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
@@ -989,7 +989,7 @@ def compare_bb_attributes():
 			failedbool = True
 			global imgfail
 			imgfail = True
-			errorem += "There was a difference in the number of attributes for " + case.image + ".\n"
+			errorem += case.image + ":There was a difference in the number of attributes.\n"
 			return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare blackboard_attributes.\n")
@@ -1009,7 +1009,7 @@ def compare_tsk_objects():
 			failedbool = True
 			global imgfail
 			imgfail = True
-			errorem += "There was a difference between the tsk object counts for " + case.image + " .\n"
+			errorem += case.image + ":There was a difference between the tsk object counts.\n"
 			return exceptions
 	except Exception as e:
 		exceptions.append("Error: Unable to compare tsk_objects.\n")
@@ -1075,7 +1075,7 @@ def compare_data(aut, gld):
 		global errorem
 		global failedbool
 		attachl.append(diff_dir)
-		errorem += "There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n"
+		errorem += case.image_name + ":There was a difference in the Database data for the file " + gld + ".\n"
 		print("There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n")
 		failedbool = True
 		global imgfail
@@ -1100,7 +1100,7 @@ def compare_errors():
 		global failedbool
 		attachl.append(case.sorted_log)
 		attachl.append(diff_dir)
-		errorem += "There was a difference in the exceptions Log for " + case.image_name + ".\n"
+		errorem += case.image_name + ":There was a difference in the exceptions Log.\n"
 		print("Exceptions didn't match.\n")
 		failedbool = True
 		global imgfail
