@@ -69,7 +69,7 @@ public class FileManager implements Closeable {
         try {
             virtRoots = tskCase.getVirtualDirectoryRoots();
             for (VirtualDirectory vd : virtRoots) {
-                if (vd.getName().startsWith(VirtualDirectoryNode.LOCAL_FILE_SET_PREFIX)) {
+                if (vd.getName().startsWith(VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX)) {
                     ++curNumFileSets;
                 }
             }
@@ -257,7 +257,7 @@ public class FileManager implements Closeable {
         VirtualDirectory created = null;
         
         int newFileSetCount = curNumFileSets + 1;
-        final String fileSetName = VirtualDirectoryNode.LOCAL_FILE_SET_PREFIX + newFileSetCount;
+        final String fileSetName = VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + newFileSetCount;
         
         try {
             created = tskCase.addVirtualDirectory(0, fileSetName);
