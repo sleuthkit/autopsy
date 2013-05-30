@@ -44,7 +44,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
     long obj_id;
     SleuthkitCase db;
-    ImageTypePanel currentPanel;
+    ContentTypePanel currentPanel;
     ImageTypeModel model;
     
     private MissingImageDialog(long obj_id, SleuthkitCase db) {
@@ -96,7 +96,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
      * Refresh this panel.
      * @param panel current typepanel
      */
-    private void updateCurrentPanel(ImageTypePanel panel) {
+    private void updateCurrentPanel(ContentTypePanel panel) {
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
@@ -268,7 +268,8 @@ public class MissingImageDialog extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
         try {
-            String newPath = currentPanel.getImagePath();
+            String newPath = currentPanel.getContentPaths();
+            //TODO handle local files
             db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error setting image paths", ex);
@@ -309,12 +310,12 @@ public class MissingImageDialog extends javax.swing.JDialog {
      * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
      */
     private class ImageTypeModel implements ComboBoxModel {
-        ImageTypePanel selected;
-        ImageTypePanel[] types = ImageTypePanel.getPanels();
+        ContentTypePanel selected;
+        ContentTypePanel[] types = ContentTypePanel.getPanels();
 
         @Override
         public void setSelectedItem(Object anItem) {
-            selected = (ImageTypePanel) anItem;
+            selected = (ContentTypePanel) anItem;
             updateCurrentPanel(selected);
         }
 

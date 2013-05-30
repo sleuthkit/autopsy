@@ -31,6 +31,7 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -65,8 +66,8 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
         return pipelineContext;
     }
     
-    Image getImage() {
-        return pipelineContext.getScheduledTask().getImage();
+    Content getContent() {
+        return pipelineContext.getScheduledTask().getContent();
     }
 
     IngestModuleImage getModule() {

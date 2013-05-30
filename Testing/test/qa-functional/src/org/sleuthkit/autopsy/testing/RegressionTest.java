@@ -93,12 +93,12 @@ public class RegressionTest extends TestCase{
                 enableModules(".*");
         conf = conf.addTest("testNewCaseWizardOpen",
                 "testNewCaseWizard",
-                "testStartAddImage",
+                "testStartAddDataSource",
                 "testConfigureIngest1",
                 "testConfigureHash",
                 "testConfigureIngest2",
                 "testConfigureSearch",
-                "testAddImageWizard1",
+                "testAddSourceWizard1",
                 "testIngest",
                 "testGenerateReportToolbar",
                 "testGenerateReportButton"
@@ -143,17 +143,17 @@ public class RegressionTest extends TestCase{
         wo.btFinish().clickMouse();
     }
     
-    public void testStartAddImage() {
+    public void testStartAddDataSource() {
         logger.info("Starting Add Image process");
-        WizardOperator wo = new WizardOperator("Add Image");
+        WizardOperator wo = new WizardOperator("Add Data");
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
         String imageDir = System.getProperty("img_path");
         ((JTextField)jtfo0.getSource()).setText(imageDir);
         wo.btNext().clickMouse();
     }
     
-    public void testAddImageWizard1() {
-        WizardOperator wo = new WizardOperator("Add Image");
+    public void testAddSourceWizard1() {
+        WizardOperator wo = new WizardOperator("Add Data");
         while(!wo.btFinish().isEnabled()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
@@ -163,7 +163,7 @@ public class RegressionTest extends TestCase{
     
     public void testConfigureIngest1() {
         logger.info("Ingest 1");
-        WizardOperator wo = new WizardOperator("Add Image");
+        WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Hash Lookup", 1, 0);
         jto.clickOnCell(row, 1);
@@ -203,7 +203,7 @@ public class RegressionTest extends TestCase{
     
     public void testConfigureIngest2() {
         logger.info("Ingest 2");
-        WizardOperator wo = new WizardOperator("Add Image");
+        WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 1, 0);
         jto.clickOnCell(row, 1);        
@@ -239,7 +239,7 @@ public class RegressionTest extends TestCase{
         }
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
-        WizardOperator wo = new WizardOperator("Add Image");
+        WizardOperator wo = new WizardOperator("Add Data");
         JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
         if(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
             jbco0.doClick();

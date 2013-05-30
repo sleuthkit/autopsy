@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.LayoutFileNode.LayoutContentPropertyType;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskData;
 
@@ -35,6 +38,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     
     private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
 
+    //prefix for special VirtualDirectory root nodes grouping local files
+    public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet";
+    
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
     }
@@ -43,9 +49,43 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         super(ld);
 
         this.setDisplayName(nameForLayoutFile(ld));
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
+        
+        String name = ld.getName();
+        
+        //set icon for name, special case for some built-ins
+        if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
+        }
+        else if (name.startsWith(LOGICAL_FILE_SET_PREFIX)) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png");
+        }
+        else if (name.equals(VirtualDirectory.NAME_CARVED)) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO
+        }
+        else {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+        }
+        
     }
 
+        /**
+     * Right click action for this node
+     *
+     * @param popup
+     * @return
+     */
+    @Override
+    public Action[] getActions(boolean popup) {
+        List<Action> actions = new ArrayList<Action>();
+
+        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new ExtractAction("Extract Directory", this));
+        actions.add(null); // creates a menu separator
+        actions.add(new TagAction(this));
+        return actions.toArray(new Action[0]);
+    }
+    
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();

@@ -25,11 +25,13 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.DerivedFileNode;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -37,6 +39,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -123,7 +126,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         try {
             for (Content c : vol.getChildren()) {
-                if (!(c instanceof LayoutFile)) {
+                if (!(c instanceof LayoutFile
+                        || c instanceof VirtualDirectory
+                        )
+                        
+                        ) {
                     ret = false;
                     break;
                 }
@@ -173,14 +180,13 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return isLeafDirectory(dn);
         }
 
-        @Override
-        public Boolean visit(FileNode fn) {
+        private Boolean visitDeep(AbstractAbstractFileNode node) {
             //is a leaf if has no children, or children are files not dirs
-            boolean hasChildren = fn.hasContentChildren();
+            boolean hasChildren = node.hasContentChildren();
             if (!hasChildren) {
                 return true;
             }
-            List<Content> derivedChildren = fn.getContentChildren();
+            List<Content> derivedChildren = node.getContentChildren();
             //child of a file, must be a (derived) file too
             for (Content childContent : derivedChildren) {
                 if (((AbstractFile) childContent).isDir()) {
@@ -198,35 +204,33 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             }
             return true;
         }
-
+        
         @Override
-        public Boolean visit(DerivedFileNode dfn) {
-            //is a leaf if has no children, or children are files not dirs
-            boolean hasChildren = dfn.hasContentChildren();
-            if (!hasChildren) {
-                return true;
-            }
-            List<Content> derivedChildren = dfn.getContentChildren();
-            //child of a file, must be a (derived) file too
-            for (Content childContent : derivedChildren) {
-                if (((AbstractFile) childContent).isDir()) {
-                    return false;
-                } else {
-                    try {
-                        if (childContent.hasChildren()) {
-                            return false;
-                        }
-                    } catch (TskCoreException e) {
-                        logger.log(Level.SEVERE, "Error checking if derived file node is leaf.", e);
-                    }
-                }
-            }
-            return true;
+        public Boolean visit(FileNode fn) {
+            return visitDeep(fn);
         }
+        
+        
+        @Override
+        public Boolean visit(LocalFileNode lfn) {
+            return visitDeep(lfn);
+        }
+        
+        @Override
+        public Boolean visit(LayoutFileNode fn) {
+            return visitDeep(fn);
+        }
+
 
         @Override
         public Boolean visit(VolumeNode vn) {
             return isLeafVolume(vn);
+        }
+        
+        @Override
+        public Boolean visit(VirtualDirectoryNode vdn) {
+            return visitDeep(vdn); 
+            //return ! vdn.hasContentChildren();
         }
     }
 
@@ -251,13 +255,19 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(DerivedFileNode dfn) {
-            return dfn.hasContentChildren();
+        public Boolean visit(LocalFileNode lfn) {
+            return lfn.hasContentChildren();
         }
 
         @Override
         public Boolean visit(LayoutFileNode ln) {
-            return false;
+            return ln.hasContentChildren();
+        }
+        
+        @Override
+        public Boolean visit(VirtualDirectoryNode vdn) {
+            return true;
+            //return vdn.hasContentChildren();
         }
     }
 }

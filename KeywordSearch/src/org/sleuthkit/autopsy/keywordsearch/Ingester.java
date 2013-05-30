@@ -52,7 +52,9 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -212,9 +214,17 @@ public class Ingester {
         public Map<String, String> visit(LayoutFile lf) {
             return getCommonFields(lf);
         }
+        
+        @Override
+        public Map<String, String> visit(LocalFile lf) {
+            final Map<String, String> params = new HashMap<String, String>();
+            params.put(Server.Schema.ID.toString(), Long.toString(lf.getId()));
+            params.put(Server.Schema.FILE_NAME.toString(), lf.getName());
+            params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
+            return params;
+        }
 
         private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
-            //aaa
             params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getCtime(), fsContent));
             params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getAtime(), fsContent));
             params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getMtime(), fsContent));
@@ -225,8 +235,13 @@ public class Ingester {
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
+            long imageId = -1;
             try {
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getImage().getId()));
+                Image image = af.getImage();
+                if (image != null) {
+                    imageId = image.getId();
+                }
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(imageId));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get image id to properly index the file " + af.getId());
             }
@@ -366,11 +381,9 @@ public class Ingester {
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Cannot close core while restating", ex);
         }
-        try {
-            solrServer.stop();
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot stop while restating", ex);
-        }
+
+        solrServer.stop();
+
         try {
             solrServer.start();
         } catch (KeywordSearchModuleException ex) {

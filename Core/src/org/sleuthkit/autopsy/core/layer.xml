@@ -287,11 +287,6 @@
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.FileSearchProvider"/>
             <attr name="position" intvalue="250"/>
         </file>
-        <file name="org-sleuthkit-autopsy-ingest-IngestDialogPanel.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.casemodule.IngestConfigurator"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestDialogPanel.getDefault"/>
-            <attr name="position" intvalue="50"/> 
-        </file>
         <file name="org-sleuthkit-autopsy-report-ReportHTML.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.TableReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>

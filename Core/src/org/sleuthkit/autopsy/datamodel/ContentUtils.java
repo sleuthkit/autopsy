@@ -33,9 +33,12 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Static class of utility methods for Content objects
@@ -102,7 +105,13 @@ public final class ContentUtils {
 
     public static TimeZone getTimeZone(Content c) {
         try {
-            return TimeZone.getTimeZone(c.getImage().getTimeZone());
+            final Image image = c.getImage();
+            if (image != null) {
+                return TimeZone.getTimeZone(image.getTimeZone());
+            } else {
+                //case such as top level VirtualDirectory
+                return TimeZone.getDefault();
+            }
         } catch (TskException ex) {
             return TimeZone.getDefault();
         }
@@ -126,7 +135,8 @@ public final class ContentUtils {
     private static final int TO_FILE_BUFFER_SIZE = 8192;
 
     /**
-     * Reads all the data from any content object and writes (extracts) it to a file.
+     * Reads all the data from any content object and writes (extracts) it to a
+     * file.
      *
      * @param content Any content object.
      * @param outputFile Will be created if it doesn't exist, and overwritten if
@@ -185,7 +195,7 @@ public final class ContentUtils {
     /**
      * Helper to ignore the '.' and '..' directories
      */
-    public static boolean isDotDirectory(Directory dir) {
+    public static boolean isDotDirectory(AbstractFile dir) {
         String name = dir.getName();
         return name.equals(".") || name.equals("..");
     }
@@ -270,7 +280,34 @@ public final class ContentUtils {
         }
 
         @Override
+        public Void visit(LocalFile lf) {
+            try {
+                ContentUtils.writeToFile(lf, dest, progress, worker, source);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Error extracting local file to " + dest.getAbsolutePath(),
+                        ex);
+            }
+            return null;
+        }
+
+        @Override
         public Void visit(Directory dir) {
+            return visitDir(dir);
+        }
+
+        @Override
+        public Void visit(VirtualDirectory dir) {
+            return visitDir(dir);
+        }
+
+        private java.io.File getFsContentDest(Content fsc) {
+            String path = dest.getAbsolutePath() + java.io.File.separator
+                    + fsc.getName();
+            return new java.io.File(path);
+        }
+
+        public Void visitDir(AbstractFile dir) {
 
             // don't extract . and .. directories
             if (isDotDirectory(dir)) {
@@ -279,14 +316,13 @@ public final class ContentUtils {
 
             dest.mkdir();
 
-            // member visitor to generate destination files for children
-            DestFileContentVisitor destFileCV = new DestFileContentVisitor();
+
 
             try {
                 int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
-                    java.io.File childFile = child.accept(destFileCV);
+                    java.io.File childFile = getFsContentDest(child);
                     ExtractFscContentVisitor childVisitor =
                             new ExtractFscContentVisitor(childFile, progress, worker, false);
                     // If this is the source directory of an extract it
@@ -313,48 +349,6 @@ public final class ContentUtils {
         protected Void defaultVisit(Content cntnt) {
             throw new UnsupportedOperationException("Can't extract a "
                     + cntnt.getClass().getSimpleName());
-        }
-
-        /**
-         * Helper visitor to get the destination file for a child Content object
-         */
-        private class DestFileContentVisitor extends ContentVisitor.Default<java.io.File> {
-
-            /**
-             * Get destination file by adding File/Directory name to the path of
-             * parent
-             */
-            private java.io.File getFsContentDest(AbstractFile fsc) {
-                String path = dest.getAbsolutePath() + java.io.File.separator
-                        + fsc.getName();
-                return new java.io.File(path);
-            }
-
-            @Override
-            public java.io.File visit(File f) {
-                return getFsContentDest(f);
-            }
-
-            @Override
-            public java.io.File visit(LayoutFile lf) {
-                return getFsContentDest(lf);
-            }
-            
-             @Override
-            public java.io.File visit(DerivedFile df) {
-                return getFsContentDest(df);
-            }
-
-            @Override
-            public java.io.File visit(Directory dir) {
-                return getFsContentDest(dir);
-            }
-
-            @Override
-            protected java.io.File defaultVisit(Content cntnt) {
-                throw new UnsupportedOperationException("Can't get destination file for a "
-                        + cntnt.getClass().getSimpleName());
-            }
         }
     }
 }

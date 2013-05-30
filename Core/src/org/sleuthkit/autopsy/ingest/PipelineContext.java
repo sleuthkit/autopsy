@@ -33,17 +33,17 @@ import java.util.Objects;
  * 
  */
 public class PipelineContext <T extends IngestModuleAbstract> {
-    private final ScheduledImageTask<T> task;
+    private final ScheduledTask<T> task;
     private final boolean processUnalloc;
     
-    PipelineContext(ScheduledImageTask<T> task, boolean processUnalloc) {
+    PipelineContext(ScheduledTask<T> task, boolean processUnalloc) {
         this.task = task;
         this.processUnalloc = processUnalloc;
     }
     
     
 
-    ScheduledImageTask<T> getScheduledTask() {
+    ScheduledTask<T> getScheduledTask() {
         return task;
     }
 

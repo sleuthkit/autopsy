@@ -74,7 +74,7 @@ public class IngestImageWorkerController {
      */
     public void progress(int workUnits) {
         if (progress != null) {
-            progress.progress(worker.getImage().getName(), workUnits);
+            progress.progress(worker.getContent().getName(), workUnits);
         }
     }
 }

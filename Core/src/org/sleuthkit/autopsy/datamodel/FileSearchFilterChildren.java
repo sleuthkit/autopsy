@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -27,23 +25,25 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author dfickling
+ * Children factory for the file by type view in dir tree
  */
 class FileSearchFilterChildren extends ChildFactory<Content> {
 
-    SleuthkitCase skCase;
-    SearchFilters.SearchFilterInterface filter;
-    Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
+    private SleuthkitCase skCase;
+    private SearchFilters.SearchFilterInterface filter;
+    private static final Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
     //private final static int MAX_OBJECTS = 2000;
 
     public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
@@ -59,7 +59,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
 
     
     private String createQuery(){
-        String query = "known <> 1 AND (0";
+        String query = "(known IS NULL OR known != 1) AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
@@ -69,11 +69,11 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     }
 
     
-    private List<FsContent> runQuery(){
-        List<FsContent> list = new ArrayList<FsContent>();
+    private List<AbstractFile> runQuery(){
+        List<AbstractFile> list = new ArrayList<AbstractFile>();
         try {
-            List<FsContent> res = skCase.findFilesWhere(createQuery());
-            for(FsContent c : res){
+            List<AbstractFile> res = skCase.findAllFilesWhere(createQuery());
+            for(AbstractFile c : res){
                 if(c.isFile()){
                     list.add(c);
                 }
@@ -93,10 +93,20 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             public FileNode visit(File f) {
                 return new FileNode(f, false);
             }
-
+            
             @Override
-            public DerivedFileNode visit(DerivedFile df) {
-                return new DerivedFileNode(df);
+            public LayoutFileNode visit(LayoutFile lf) {
+                return new LayoutFileNode(lf);
+            }
+                      
+            @Override
+            public LocalFileNode visit(DerivedFile df) {
+                return new LocalFileNode(df);
+            }
+            
+            @Override
+            public LocalFileNode visit(LocalFile lf) {
+                return new LocalFileNode(lf);
             }
 
             @Override

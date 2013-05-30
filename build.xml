@@ -91,7 +91,7 @@
         <antcall target="copyExternalLibsToZip"></antcall>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx768m -J-XX:MaxPermSize=256M -J-Xverify:none&quot;" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none&quot;" />
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />

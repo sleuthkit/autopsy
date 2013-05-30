@@ -1,15 +1,18 @@
 ---------------- VERSION Current (development)  --------------
 
 New features:
+- Local files and folders support
+- Deleted files view in directory tree
 
 Improvements:
 - Improvements to tagging of files and keyword search results
+- Any file and folder can be selectively ingested using the directory tree view
 
 Bugfixes:
 - Keyword Search: fix when Solr does not cleanly shutdown
 - fix for "Process Unallocated Space" option doesn't do anything
-
-
+- fixed result viewer for "File Search by MD5 Hash"
+- fix Solr, Timeline and RecentActivity issues with java 7.0.21 
 
 
 ---------------- VERSION 3.0.5 --------------

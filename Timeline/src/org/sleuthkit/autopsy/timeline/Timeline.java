@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -79,6 +80,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -95,7 +97,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.recentactivity.JavaSystemCaller;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -355,10 +357,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //After the series are created, 1 or more series are packaged into a single chart.
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
-        for (final YearEpoch ye : allYears) {
-            se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
+        if (allYears != null) {
+            for (final YearEpoch ye : allYears) {
+               se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
+            }
         }
         bcData.add(se);
+        
 
         //Note: 
         // BarChart.Data wraps the Java Nodes class. BUT, until a BarChart.Data gets added to an actual series, it's node is null, and you can perform no operations on it.
@@ -513,7 +518,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            final FsContentRootNode d = new FsContentRootNode("Test Root", afs);
+                            final FileRootNode d = new FileRootNode("Test Root", afs);
                             dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
@@ -601,7 +606,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (prop.equals(Case.CASE_ADD_IMAGE)) {
+        if (prop.equals(Case.CASE_ADD_DATA_SOURCE)) {
             if (mainFrame != null && !mainFrame.isVisible()) {
                 // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;
@@ -809,11 +814,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     }
 
     // The node factories used to make lists of files to send to the result viewer
-    private class FsContentNodeChildFactory extends ChildFactory<AbstractFile> {
+    private class FileNodeChildFactory extends ChildFactory<AbstractFile> {
 
         List<AbstractFile> l;
 
-        FsContentNodeChildFactory(List<AbstractFile> l) {
+        FileNodeChildFactory(List<AbstractFile> l) {
             this.l = l;
         }
 
@@ -827,18 +832,18 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         protected Node createNodeForKey(AbstractFile file) {
             Node wrapped;
             if (file.isDir()) {
-                wrapped = new DirectoryNode((Directory) file, false);
+                wrapped = new DirectoryNode(file, false);
             } else {
-                wrapped = new FileNode((File) file, false);
+                wrapped = new FileNode(file, false);
             }
             return new FilterNodeLeaf(wrapped);
         }
     }
 
-    private class FsContentRootNode extends DisplayableItemNode {
+    private class FileRootNode extends DisplayableItemNode {
 
-        FsContentRootNode(String NAME, List<AbstractFile> l) {
-            super(Children.create(new FsContentNodeChildFactory(l), true));
+        FileRootNode(String NAME, List<AbstractFile> l) {
+            super(Children.create(new FileNodeChildFactory(l), true));
             super.setName(NAME);
             super.setDisplayName(NAME);
         }
@@ -920,12 +925,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
-        String filesAndDirs = "type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-                + "AND name != '.' "
+        String filesAndDirs = "name != '.' "
                 + "AND name != '..'";
-        List<FsContent> fs = null;
+        List<AbstractFile> files = null;
         try {
-            fs = skCase.findFilesWhere(filesAndDirs);
+            files = skCase.findAllFilesWhere(filesAndDirs);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
             return null;
@@ -943,7 +947,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         BufferedWriter out = null;
         try {
             out = new BufferedWriter(fileWriter);
-            for (FsContent file : fs) {
+            for (AbstractFile file : files) {
                 // try {
                 // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
                 if (file.getMd5Hash() != null) {
@@ -1011,12 +1015,17 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         } else {
             macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
         }
-        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
-        macfile = PlatformUtil.getOSFilePath(macfile);
-        String command = macpath + " -b " + pathToBodyFile + " -d " + " -y " + "> " + macfile;
 
+        String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
+        String[] mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
+
+        String output = "";
+        ExecUtil execUtil = new ExecUtil();
+        Writer writer = null;
         try {
-            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            //JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            writer = new FileWriter(macfile);
+            execUtil.execute(writer, macpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;
@@ -1024,6 +1033,16 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
             return null;
         }
+        finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Could not clsoe writer after creating mactime file, encountered error ", ex);
+                }
+            }
+        }
+        
         return macfile;
     }
 
@@ -1046,8 +1065,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         skCase = currentCase.getSleuthkitCase();
 
         try {
-            if (currentCase.getImages().isEmpty()) {
-                logger.log(Level.INFO, "Error creating timeline, there are no images to parse");
+            if (currentCase.getRootObjectsCount() == 0) {
+                logger.log(Level.INFO, "Error creating timeline, there are no data sources. ");
             } else {
 
                 if (IngestManager.getDefault().isIngestRunning()) {

@@ -183,12 +183,18 @@ public class Installer extends ModuleInstall {
 
     @Override
     public boolean closing() {
-        try {
-            KeywordSearch.getServer().stop();
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.INFO, "Could not stop server while unloading the module");
-        }
+        //platform about to close
+
+        KeywordSearch.getServer().stop();
+
         return true;
+    }
+
+    @Override
+    public void uninstalled() {
+        //module is being unloaded
+        KeywordSearch.getServer().stop();
+
     }
 
     private void reportPortError(final int curFailPort) {

@@ -2,9 +2,8 @@ import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.MIMEBase import MIMEBase
-from email import Encoders
-import urllib2
+from email.mime.base import MIMEBase
+from email import encoders
 import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
@@ -24,10 +23,12 @@ def send_email(parsed, errorem, attachl, passFail):
 	serverval = element.getAttribute("value").encode().decode("utf_8")
 	# Create the container (outer) email message.
 	msg = MIMEMultipart()
+	element = parsed.getElementsByTagName("subject")[0]
+	subval = element.getAttribute("value").encode().decode("utf_8")
 	if(passFail):
-		msg['Subject'] = '[Test]Autopsy test passed.'
+		msg['Subject'] = '[Test]Autopsy ' + subval + ' test passed.'
 	else:
-		msg['Subject'] = '[Test]Autopsy test failed.'
+		msg['Subject'] = '[Test]Autopsy ' + subval + ' test failed.'
 	# me == the sender's email address
 	# family = the list of all recipients' email addresses
 	msg['From'] = 'AutopsyTest'
@@ -48,23 +49,23 @@ def Build_email(msg, attachl):
 		noml = file.split("\\")
 		nom = noml[len(noml)-1]
 		part.set_payload(attch)
-		Encoders.encode_base64(part)
+		encoders.encode_base64(part)
 		part.add_header('Content-Disposition', 'attachment; filename="' + nom + '"')
 		msg.attach(part)
 		
 # Returns a Windows style path starting with the cwd and
 # ending with the list of directories given
 def make_local_path(*dirs):
-	path = wgetcwd()
+	path = wgetcwd().decode("utf-8")
 	for dir in dirs:
-		path += ("\\" + dir)
+		path += ("\\" + str(dir))
 	return path_fix(path)
 
 # Returns a Windows style path based only off the given directories
 def make_path(*dirs):
 	path = dirs[0]
 	for dir in dirs[1:]:
-		path += ("\\" + dir)
+		path += ("\\" + str(dir))
 	return path_fix(path)
 	
 # Fix a standard os.path by making it Windows format

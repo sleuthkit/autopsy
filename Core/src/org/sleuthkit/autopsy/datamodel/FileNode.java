@@ -28,37 +28,39 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is used to represent the "Node" for the file.
- * It may have derived files children.
+ * This class is used to represent the "Node" for the file. It may have derived
+ * files children.
  */
-public class FileNode extends AbstractFsContentNode<FsContent> {
+public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
     /**
      * @param file underlying Content
      */
-    public FileNode(FsContent file) {
+    public FileNode(AbstractFile file) {
         this(file, true);
 
         setIcon(file);
-
-
     }
 
-    public FileNode(FsContent file, boolean directoryBrowseMode) {
+    public FileNode(AbstractFile file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
         setIcon(file);
     }
 
-    private void setIcon(FsContent file) {
+    private void setIcon(AbstractFile file) {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+            if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png");
+            } else {
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+            }
         } else {
             this.setIconBaseWithExtension(getIconForFileType(file));
         }
@@ -74,16 +76,16 @@ public class FileNode extends AbstractFsContentNode<FsContent> {
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<Action>();
         if (!this.getDirectoryBrowseMode()) {
-                actionsList.add(new ViewContextAction("View File in Directory", this));
-                actionsList.add(null); // creates a menu separator
-            }
-            actionsList.add(new NewWindowViewAction("View in New Window", this));
-            actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+            actionsList.add(new ViewContextAction("View File in Directory", this));
             actionsList.add(null); // creates a menu separator
-            actionsList.add(new ExtractAction("Extract File", this));
-            actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
-            actionsList.add(null); // creates a menu separator
-            actionsList.add(new TagAction(this));
+        }
+        actionsList.add(new NewWindowViewAction("View in New Window", this));
+        actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new ExtractAction("Extract File", this));
+        actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new TagAction(this));
         return actionsList.toArray(new Action[0]);
     }
 

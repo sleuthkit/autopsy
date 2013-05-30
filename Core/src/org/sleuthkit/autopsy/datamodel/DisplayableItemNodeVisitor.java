@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
@@ -43,6 +45,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ArtifactTypeNode atn);
     T visit(ExtractedContentNode ecn);
     T visit(FileSearchFilterNode fsfn);
+    T visit(DeletedContentNode dcn);
+    T visit(DeletedContentsNode dcn);
     T visit(SearchFiltersNode sfn);
     T visit(RecentFilesNode rfn);
     T visit(RecentFilesFilterNode rffn);
@@ -59,9 +63,9 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(TagNodeRoot tnr);
     T visit(ViewsNode vn);
     T visit(ResultsNode rn);
-    T visit(ImagesNode in);
+    T visit(DataSourcesNode in);
     T visit(LayoutFileNode lfn);
-    T visit(DerivedFileNode dfn);
+    T visit(LocalFileNode dfn);
     T visit(VirtualDirectoryNode ldn);
 
     /**
@@ -117,6 +121,16 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(FileSearchFilterNode fsfn){
             return defaultVisit(fsfn);
         }
+        
+        @Override
+        public T visit(DeletedContentNode dcn){
+            return defaultVisit(dcn);
+        }
+            
+        @Override
+        public T visit(DeletedContentsNode dcn){
+            return defaultVisit(dcn);
+        }
 
         @Override
         public T visit(SearchFiltersNode sfn){
@@ -159,7 +173,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(ImagesNode in) {
+        public T visit(DataSourcesNode in) {
             return defaultVisit(in);
         }
         
@@ -194,7 +208,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(DerivedFileNode dfn) {
+        public T visit(LocalFileNode dfn) {
             return defaultVisit(dfn);
         }
         

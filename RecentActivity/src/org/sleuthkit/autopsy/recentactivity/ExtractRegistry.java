@@ -24,8 +24,6 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.*;
 import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -35,18 +33,18 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FileSystem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -65,6 +63,8 @@ public class ExtractRegistry extends Extract {
     private int sysid;
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
+
+    private ExecUtil execRR;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
@@ -154,32 +154,49 @@ public class ExtractRegistry extends Extract {
         String txtPath = regFilePath + Integer.toString(fileIndex) + ".txt";
         String type = "";
 
+        Writer writer = null;
         try {
             if (regFilePath.toLowerCase().contains("system")) {
                 type = "autopsysystem";
             }
-            if (regFilePath.toLowerCase().contains("software")) {
+            else if (regFilePath.toLowerCase().contains("software")) {
                 type = "autopsysoftware";
             }
-            if (regFilePath.toLowerCase().contains("ntuser")) {
+            else  if (regFilePath.toLowerCase().contains("ntuser")) {
                 type = "autopsy";
             }
-            if (regFilePath.toLowerCase().contains("default")) {
+            else if (regFilePath.toLowerCase().contains("default")) {
                 type = "1default";
             }
-            if (regFilePath.toLowerCase().contains("sam")) {
+            else  if (regFilePath.toLowerCase().contains("sam")) {
                 type = "1sam";
             }
-            if (regFilePath.toLowerCase().contains("security")) {
+            else if (regFilePath.toLowerCase().contains("security")) {
                 type = "1security";
             }
-            String command = "\"" + RR_PATH + "\" -r \"" + regFilePath + "\" -f " + type + " > \"" + txtPath + "\" 2> NUL";
-            JavaSystemCaller.Exec.execute("\"" + command + "\"");
+            else {
+                type = "1default";
+            }
+            
+            logger.log(Level.INFO, "Writing RegRipper results to: " + txtPath);
+            writer = new FileWriter(txtPath);
+            execRR = new ExecUtil();
+            execRR.execute(writer, RR_PATH,
+                    "-r", regFilePath, "-f", type);
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
         } catch (InterruptedException ex) {
             logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
+        }
+        finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex);
+                }
+            }
         }
         
         return txtPath;
@@ -395,9 +412,11 @@ public class ExtractRegistry extends Extract {
 
     @Override
     public void stop() {
-        if (JavaSystemCaller.Exec.getProcess() != null) {
-            JavaSystemCaller.Exec.stop();
+        if (execRR != null) {
+            execRR.stop();
+            execRR = null;
         }
+        
     }
 
     @Override

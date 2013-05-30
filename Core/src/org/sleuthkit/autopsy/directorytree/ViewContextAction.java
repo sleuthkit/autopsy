@@ -35,7 +35,7 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ImagesNode;
+import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -86,7 +86,7 @@ public class ViewContextAction extends AbstractAction {
                 ExplorerManager man = directoryTree.getExplorerManager();
                 Node dirRoot = man.getRootContext();
                 Children dirChilds = dirRoot.getChildren();
-                Node imagesRoot = dirChilds.findChild(ImagesNode.NAME);
+                Node imagesRoot = dirChilds.findChild(DataSourcesNode.NAME);
                 dirChilds = imagesRoot.getChildren();
 
                 Node dirExplored = null;

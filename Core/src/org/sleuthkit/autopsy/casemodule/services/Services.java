@@ -44,13 +44,12 @@ public class Services implements Closeable {
 
     public Services(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
+        //create and initialize FileManager as early as possibly in the new/opened Case
+        fileManager = new FileManager(tskCase);
+        services.add(fileManager);
     }
     
-    public synchronized FileManager getFileManager() {
-        if (fileManager == null) {
-            fileManager = new FileManager(tskCase);
-            services.add(fileManager);
-        }
+    public FileManager getFileManager() {
         return fileManager;
     }
 

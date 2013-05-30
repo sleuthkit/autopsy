@@ -30,11 +30,13 @@ public interface AutopsyItemVisitor<T> {
     T visit(SearchFilters.DocumentFilter df);
     T visit(RecentFiles rf);
     T visit(RecentFiles.RecentFilesFilter rff);
+    T visit(DeletedContent dc);
+    T visit(DeletedContent.DeletedContentFilter dcf);
     T visit(KeywordHits kh);
     T visit(HashsetHits hh);
     T visit(EmailExtracted ee);
     T visit(Tags t);
-    T visit(Images i);
+    T visit(DataSources i);
     T visit(Views v);
     T visit(Results r);
     
@@ -60,6 +62,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(SearchFilters.DocumentFilter df) {
             return defaultVisit(df);
+        }
+        
+         @Override
+        public T visit(DeletedContent dc) {
+            return defaultVisit(dc);
+        }
+         
+        @Override
+        public T visit(DeletedContent.DeletedContentFilter dcf) {
+            return defaultVisit(dcf);
         }
         
         @Override
@@ -94,7 +106,7 @@ public interface AutopsyItemVisitor<T> {
         }
         
         @Override
-        public T visit(Images i) {
+        public T visit(DataSources i) {
             return defaultVisit(i);
         }
         

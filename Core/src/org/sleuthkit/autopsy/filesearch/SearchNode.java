@@ -19,9 +19,9 @@
 
 package org.sleuthkit.autopsy.filesearch;
 
-import java.util.ArrayList;
+import java.util.List;
 import org.openide.nodes.AbstractNode;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
@@ -31,7 +31,7 @@ class SearchNode extends AbstractNode {
 
     private SearchChildren children;
 
-    SearchNode(ArrayList<FsContent> keys) {
+    SearchNode(List<AbstractFile> keys) {
         super(new SearchChildren(true, keys));
         this.children = (SearchChildren)this.getChildren();
     }

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -28,7 +30,7 @@ import javax.swing.event.DocumentListener;
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
-public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
+public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
     private static ImageFilePanel instance;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private JFileChooser fc = new JFileChooser();
@@ -136,7 +138,7 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
      * @return the image path
      */
     @Override
-    public String getImagePath() {
+    public String getContentPaths() {
         return pathTextField.getText();
     }
 
@@ -144,9 +146,21 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
      * Set the path of the image file.
      */
     @Override
-    public void setImagePath(String s) {
+    public void setContentPath(String s) {
         pathTextField.setText(s);
     }
+
+    @Override
+    public ContentType getContentType() {
+        return ContentType.IMAGE;
+    }
+
+    @Override
+    public void reset() {
+        //nothing to reset
+    }
+    
+    
 
     /**
      * Should we enable the next button of the wizard?
@@ -154,7 +168,10 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
      */
     @Override
     public boolean enableNext() {
-        String path = getImagePath();
+        String path = getContentPaths();
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
@@ -201,7 +218,6 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
     
     @Override
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs = new PropertyChangeSupport(this);
         pcs.addPropertyChangeListener(pcl);
     }
     

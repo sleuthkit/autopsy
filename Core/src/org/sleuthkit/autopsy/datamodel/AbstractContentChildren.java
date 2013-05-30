@@ -22,12 +22,14 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskException;
@@ -94,7 +96,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         
         @Override
         public AbstractContentNode visit(DerivedFile df) {
-            return new DerivedFileNode(df);
+            return new LocalFileNode(df);
+        }
+        
+        @Override
+        public AbstractContentNode visit(LocalFile lf) {
+            return new LocalFileNode(lf);
         }
         
         @Override
@@ -129,6 +136,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
+        public AbstractNode visit(DeletedContent dc) {
+            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase());
+        }
+        
+        @Override
         public AbstractNode visit(KeywordHits kh) {
             return kh.new KeywordHitsRootNode();
         }
@@ -150,9 +162,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
-        public AbstractNode visit(Images i) {
+        public AbstractNode visit(DataSources i) {
             try {
-                return new ImagesNode(i.getSleuthkitCase().getRootObjects());
+                return new DataSourcesNode(i.getSleuthkitCase().getRootObjects());
             } catch (TskException ex) {
                 return defaultVisit(i);
             }

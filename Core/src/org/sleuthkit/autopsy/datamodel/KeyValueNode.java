@@ -16,41 +16,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
-import java.awt.datatransfer.Transferable;
 import java.util.Map;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
-import org.openide.util.datatransfer.PasteType;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Node that contains a KeyValue object. The node also has that KeyValue object
  * set to its lookup so that when the node is passed to the content viewers its
  * string will be displayed.
+ *
  * @author alawrence
  */
 public class KeyValueNode extends AbstractNode {
-    
+
     private KeyValue data;
-    
+
     public KeyValueNode(KeyValue thing, Children children) {
         super(children, Lookups.singleton(thing));
         this.setName(thing.getName());
         this.data = thing;
+
+        setIcon();
+    }
+
+    public KeyValueNode(KeyValue thing, Children children, Lookup lookup) {
+        super(children, lookup);
+        this.setName(thing.getName());
+        this.data = thing;
+        
+        setIcon();
     }
     
-    public KeyValueNode(KeyValue thing, Children children, Lookup lookup) {
-         super(children, lookup);
-         this.setName(thing.getName());
-         this.data = thing;
-     }
-    
-    
+    private void setIcon() {
+         //if file/dir, set icon
+        AbstractFile af = Lookup.getDefault().lookup(AbstractFile.class);
+        if (af != null) {
+            // set name, display name, and icon
+            if (af.isDir()) {
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+            } else {
+                this.setIconBaseWithExtension(FileNode.getIconForFileType(af));
+            }
+
+        }
+    }
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -59,11 +75,11 @@ public class KeyValueNode extends AbstractNode {
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         // table view drops first column of properties under assumption
         // that it contains the node's name
         ss.put(new NodeProperty("Name", "Name", "n/a", data.getName()));
-        
+
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
