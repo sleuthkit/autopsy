@@ -222,27 +222,18 @@ public final class IngestModuleLoader {
                     //netbeans uses custom class loader, otherwise can't load classes from other modules
 
                     final Class<?> moduleClass = Class.forName(location, false, classLoader);
-                    
-                    final Type[] intfs = moduleClass.getGenericInterfaces();
+                    final Type intf = moduleClass.getGenericSuperclass();
 
-                    if (intfs.length != 0 && pType != null) {
-                        //check if one of the module interfaces matches the pipeline type
-                        boolean interfaceFound = false;
+                    if (pType != null) {
                         Class<?> moduleMeta = ((IngestModuleMapping) pType).getIngestModuleInterface();
                         String moduleIntNameCan = moduleMeta.getCanonicalName();
                         String[] moduleIntNameTok = moduleIntNameCan.split(" ");
                         String moduleIntName = moduleIntNameTok[moduleIntNameTok.length - 1];
-                        for (Type intf : intfs) {
-                            String intNameCan = intf.toString();
-                            String[] intNameCanTok = intNameCan.split(" ");
-                            String intName = intNameCanTok[intNameCanTok.length - 1];
-                            if (intName.equals(moduleIntName)) {
-                                interfaceFound = true;
-                                break;
-                            }
-                        }
-
-                        if (interfaceFound == false) {
+                                                
+                        String intNameCan = intf.toString();
+                        String[] intNameCanTok = intNameCan.split(" ");
+                        String intName = intNameCanTok[intNameCanTok.length - 1];
+                        if (!intName.equals(moduleIntName)) {
                             moduleErrors = true;
                             logger.log(Level.WARNING, "Module class: " + location
                                     + " does not implement correct interface: " + moduleMeta.getName()
