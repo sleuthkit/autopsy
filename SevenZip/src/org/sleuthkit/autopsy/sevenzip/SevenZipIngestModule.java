@@ -64,13 +64,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Updates datamodel / directory tree with new files.
  */
-public final class SevenZipIngestModule implements IngestModuleAbstractFile {
+public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     public static final String MODULE_NAME = "Archive Extractor";
     public static final String MODULE_DESCRIPTION = "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
     final public static String MODULE_VERSION = "1.0";
-    private String args;
     private IngestServices services;
     private volatile int messageID = 0;
     private int processedFiles = 0;
@@ -600,53 +599,12 @@ public final class SevenZipIngestModule implements IngestModuleAbstractFile {
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
-    @Override
-    public ModuleType getType() {
-        return ModuleType.AbstractFile;
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
 
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public JPanel getAdvancedConfiguration() {
-        return null;
-    }
 
     public boolean isSupported(AbstractFile file) {
         String fileNameLower = file.getName().toLowerCase();

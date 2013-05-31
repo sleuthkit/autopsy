@@ -825,7 +825,10 @@ public class IngestManager {
     }
 
     /**
-     * File ingest pipeline processor. Worker runs until AbstractFile queue is
+     * File ingest pipeline processor. Worker thread that queries
+     * the scheduler for new files.  
+     * Modules are assumed to already be initialized. 
+     * runs until AbstractFile queue is
      * consumed New instance is created and started when data arrives and
      * previous pipeline completed.
      */

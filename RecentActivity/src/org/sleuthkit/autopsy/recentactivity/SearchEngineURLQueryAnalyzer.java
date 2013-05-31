@@ -48,7 +48,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
@@ -66,13 +65,12 @@ import org.xml.sax.SAXException;
  * To add search engines, edit SearchEngines.xml under RecentActivity
  *
  */
-public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModuleImage {
+public class SearchEngineURLQueryAnalyzer extends Extract {
 
     private IngestServices services;
     
     public static final String MODULE_NAME = "Search Engine URL Query Analyzer";
     public final static String MODULE_VERSION = "1.0";
-    private String args;
     
     public static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
@@ -401,51 +399,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
-    @Override
-    public IngestModuleAbstract.ModuleType getType() {
-        return IngestModuleAbstract.ModuleType.Image;
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public JPanel getAdvancedConfiguration() {
-        return null;
     }
 }

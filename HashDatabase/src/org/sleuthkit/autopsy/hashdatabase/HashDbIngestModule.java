@@ -47,13 +47,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
-public class HashDbIngestModule implements IngestModuleAbstractFile {
+public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     final public static String MODULE_VERSION = "1.0";
-    private String args;
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private IngestServices services;
     private SleuthkitCase skCase;
@@ -195,16 +194,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
 
     @Override
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile file) {
@@ -216,10 +205,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         return processFile(file);
     }
 
-    @Override
-    public ModuleType getType() {
-        return ModuleType.AbstractFile;
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {

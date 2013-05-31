@@ -359,7 +359,7 @@ public class Server {
                 } else {
                     loggingPropertiesFilePath += "logging-release.properties";
                 }
-                loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
+                //loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
                 final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
 
                 final String [] SOLR_START_CMD = {

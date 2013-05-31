@@ -77,7 +77,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  *
  * Registered as a module in layer.xml
  */
-public final class KeywordSearchIngestModule implements IngestModuleAbstractFile {
+public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
     enum UpdateFrequency {
 
@@ -98,7 +98,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     final public static String MODULE_VERSION = "1.0";
-    private String args;
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
     private Ingester ingester = null;
@@ -326,16 +325,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
-
     /**
      * Initializes the module for new ingest run Sets up threads, timers,
      * retrieves settings, keyword lists to run on
@@ -425,11 +414,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         commitTimer.start();
         searchTimer.start();
-    }
-
-    @Override
-    public ModuleType getType() {
-        return ModuleType.AbstractFile;
     }
 
     @Override

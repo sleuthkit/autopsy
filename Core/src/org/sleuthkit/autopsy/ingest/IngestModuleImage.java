@@ -26,26 +26,27 @@ import org.sleuthkit.datamodel.Image;
  * Image ingest modules run each in its own background thread
  * in parallel to the file processing ingest pipeline and other image ingest modules
  */
-public interface IngestModuleImage extends IngestModuleAbstract {
+public abstract class IngestModuleImage extends IngestModuleAbstract {
 
+    @Override
+    public ModuleType getType() {
+        return ModuleType.Image;
+    }
     
     /**
-     * Entry point to process the image by the module.
+     * Called with the image to analyze. 
      * 
-     * Module does all the processing work in this method.
-     * It is responsible for extracting content of interest from the image (i.e. using DataModel API) and processing it.
-     * Results of processing, such as extracted data or analysis results, should be posted to the blackboard. 
+     * Modules typically use FileManager to get specific files to analyze.  
      * 
-     * The module notifies the ingest inbox of interesting events (data, errors, warnings, infos) 
-     * by posting ingest messages
+     * Results should be posted to the blackboard. 
+     * The module should also send messages to the ingest inbox of interesting events (data, errors, warnings, infos).
      * The module notifies data viewers by firing events using IngestManagerProxy.fireModuleDataEvent
      * 
-     * The module is responsible for posting progress to controller
-     * And to periodically check controller if it should break out of the processing loop because task has been canceled
+     * The module will have its own progress bar while it is running and it should update it with the Controller object. 
      * 
-     * @param pipelineContext the context in which the ingest runs (with its own settings, modules, etc)
-     * @param image to process
-     * @param controller to post progress to and to use for checking if cancellation has occurred
+     * @param pipelineContext Context in which the ingest pipeline is running (Settings, modules, etc)
+     * @param image Image to process
+     * @param controller Used to update progress bar and to check if the task has been canceled. 
      */
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller);
+    abstract public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller);
 }
