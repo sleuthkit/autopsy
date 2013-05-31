@@ -473,7 +473,7 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			rw = autopsy_cur2.fetchone()
 	except Exception as e:
 		print('outer exception: ' + str(e))
-	errorem += case.image_name + ":There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " threw exceptions while loading.\n"
+	errorem += case.image_name + ":There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " threw an exception while loading.\n"
 		
 def dbDump():
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
