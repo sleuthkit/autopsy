@@ -124,10 +124,10 @@ public class SearchFilters implements AutopsyVisitableItem {
     
     public enum ExecutableFilter implements AutopsyVisitableItem,SearchFilterInterface {
         ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")),
-        ExecutableFilter_DLL(0, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")),
-        ExecutableFilter_BAT(0, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")),
-        ExecutableFilter_CMD(0, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")),
-        ExecutableFilter_COM(0, "ExecutableFilter_COM", ".com", Arrays.asList(".com"));
+        ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")),
+        ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")),
+        ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")),
+        ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com"));
         
         private int id;
         private String name;
