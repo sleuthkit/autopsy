@@ -103,6 +103,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JCheckBox" name="noFatOrphansCheckbox">
       <Properties>
@@ -200,6 +203,9 @@
               <StringArray count="0"/>
             </Property>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ContentTypePanel&gt;"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>
