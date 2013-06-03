@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -78,11 +79,24 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get search results", ex);
+            logger.log(Level.SEVERE, "Couldn't get search results", ex);
         }
 
         return list;
         
+    }
+    
+    /**
+     * Get children count without actually loading all nodes
+     * @return 
+     */
+    long calculateItems() {
+        try {
+            return skCase.countFilesWhere(createQuery());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting file search view count", ex);
+            return 0;
+        }
     }
 
     @Override
