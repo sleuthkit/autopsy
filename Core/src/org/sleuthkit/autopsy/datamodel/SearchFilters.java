@@ -33,7 +33,8 @@ public class SearchFilters implements AutopsyVisitableItem {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", FileTypeExtensions.getVideoExtensions()),
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
-        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt"));
+        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")),
+        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", "Archives", FileTypeExtensions.getArchiveExtensions());
 
         private int id;
         private String name;
