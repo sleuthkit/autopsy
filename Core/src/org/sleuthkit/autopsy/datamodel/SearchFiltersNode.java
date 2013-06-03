@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
@@ -30,17 +29,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class SearchFiltersNode extends DisplayableItemNode {
 
     private static final String FNAME = "File Types";
-    private static final String DNAME = "Documents";
-    SleuthkitCase skCase;
+    private SleuthkitCase skCase;
 
-    SearchFiltersNode(SleuthkitCase skCase, boolean root) {
-        super(Children.create(new SearchFiltersChildren(skCase, root), true), Lookups.singleton(root ? FNAME : DNAME));
-        if (root) {
+    SearchFiltersNode(SleuthkitCase skCase, SearchFilters.FileSearchFilter filter) {
+        super(Children.create(new SearchFiltersChildren(skCase, filter), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        if (filter == null) {
             super.setName(FNAME);
             super.setDisplayName(FNAME);
         } else {
-            super.setName(DNAME);
-            super.setDisplayName(DNAME);
+            super.setName(filter.getName());
+            super.setDisplayName(filter.getDisplayName());
         }
         this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");

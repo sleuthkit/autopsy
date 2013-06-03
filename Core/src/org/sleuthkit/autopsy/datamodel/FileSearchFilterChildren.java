@@ -30,7 +30,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;

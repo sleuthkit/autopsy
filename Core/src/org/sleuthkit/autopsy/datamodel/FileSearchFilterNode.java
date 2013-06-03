@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
