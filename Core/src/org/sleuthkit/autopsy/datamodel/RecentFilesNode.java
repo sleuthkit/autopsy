@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class RecentFilesNode extends DisplayableItemNode {
 
     private static final String NAME = "Recent Files";
-    SleuthkitCase skCase;
+    private SleuthkitCase skCase;
 
     RecentFilesNode(SleuthkitCase skCase) {
         super(Children.create(new RecentFilesChildren(skCase), true), Lookups.singleton(NAME));
@@ -38,6 +38,7 @@ public class RecentFilesNode extends DisplayableItemNode {
         super.setDisplayName(NAME);
         this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
+        
     }
 
     @Override
