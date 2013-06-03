@@ -44,9 +44,9 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class RecentFilesFilterChildren extends ChildFactory<Content> {
 
-    SleuthkitCase skCase;
-    RecentFilesFilter filter;
-    Calendar prevDay;
+    private SleuthkitCase skCase;
+    private RecentFilesFilter filter;
+    private Calendar prevDay;
     private final static Logger logger = Logger.getLogger(RecentFilesFilterChildren.class.getName());
     //private final static int MAX_OBJECTS = 1000000;
 
@@ -64,12 +64,13 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
     }
 
     private String createQuery() {
-        String query = "dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()
+        Calendar prevDayQuery = (Calendar) prevDay.clone();
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
         + " AND (known IS NULL OR known != 1) AND (";
-        long lowerLimit = prevDay.getTimeInMillis() / 1000;
-        prevDay.add(Calendar.DATE, 1);
-        prevDay.add(Calendar.MILLISECOND, -1);
-        long upperLimit = prevDay.getTimeInMillis() / 1000;
+        long lowerLimit = prevDayQuery.getTimeInMillis() / 1000;
+        prevDayQuery.add(Calendar.DATE, 1);
+        prevDayQuery.add(Calendar.MILLISECOND, -1);
+        long upperLimit = prevDayQuery.getTimeInMillis() / 1000;
         query += "(crtime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
         query += "(ctime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
         //query += "(atime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
@@ -83,9 +84,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
         try {
             List<AbstractFile> found = skCase.findAllFilesWhere(createQuery());
             for (AbstractFile c : found) {
-                if (c.isFile()) {
                     ret.add(c);
-                }
             }
 
         } catch (TskCoreException ex) {
