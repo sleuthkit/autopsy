@@ -27,12 +27,16 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.RecentFiles.RecentFilesFilter;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  *
@@ -55,12 +59,13 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
 
     @Override
     protected boolean createKeys(List<Content> list) {
-        list.addAll(runFsQuery());
+        list.addAll(runQuery());
         return true;
     }
 
     private String createQuery() {
-        String query = "(known IS NULL OR known != 1) AND (";
+        String query = "dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()
+        + " AND (known IS NULL OR known != 1) AND (";
         long lowerLimit = prevDay.getTimeInMillis() / 1000;
         prevDay.add(Calendar.DATE, 1);
         prevDay.add(Calendar.MILLISECOND, -1);
@@ -73,11 +78,11 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
         return query;
     }
 
-    private List<FsContent> runFsQuery() {
-        List<FsContent> ret = new ArrayList<FsContent>();
+    private List<AbstractFile> runQuery() {
+        List<AbstractFile> ret = new ArrayList<AbstractFile>();
         try {
-            List<FsContent> found = skCase.findFilesWhere(createQuery());
-            for (FsContent c : found) {
+            List<AbstractFile> found = skCase.findAllFilesWhere(createQuery());
+            for (AbstractFile c : found) {
                 if (c.isFile()) {
                     ret.add(c);
                 }
@@ -89,6 +94,21 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
         return ret;
 
     }
+    
+     /**
+     * Get children count without actually loading all nodes
+     * @return 
+     */
+    long calculateItems() {
+        try {
+            return skCase.countFilesWhere(createQuery());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting recent files search view count", ex);
+            return 0;
+        }
+    }
+    
+ 
 
     @Override
     protected Node createNodeForKey(Content key) {
@@ -97,7 +117,23 @@ public class RecentFilesFilterChildren extends ChildFactory<Content> {
             public FileNode visit(File f) {
                 return new FileNode(f, false);
             }
-
+            
+            @Override
+            public DirectoryNode visit(Directory d) {
+                return new DirectoryNode(d);
+            }
+            
+            @Override
+            public LocalFileNode visit(DerivedFile f) {
+                return new LocalFileNode(f);
+            }
+            
+            @Override
+            public LocalFileNode visit(LocalFile f) {
+                return new LocalFileNode(f);
+            }
+            
+          
 
             @Override
             protected AbstractNode defaultVisit(Content di) {

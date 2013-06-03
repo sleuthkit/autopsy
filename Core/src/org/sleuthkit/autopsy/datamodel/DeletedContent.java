@@ -162,13 +162,17 @@ public class DeletedContent implements AutopsyVisitableItem {
             DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter) {
                 super(Children.create(new DeletedContentChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
                 super.setName(filter.getName());
-                super.setDisplayName(filter.getDisplayName());
                 this.skCase = skCase;
                 this.filter = filter;
 
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+
+                //get count of children without preloading all children nodes
+                final long count = new DeletedContentChildren(filter, skCase).calculateItems();
+                //final long count = getChildren().getNodesCount(true);
+                super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
             }
 
             @Override
@@ -225,30 +229,30 @@ public class DeletedContent implements AutopsyVisitableItem {
                 String query = "";
                 switch (filter) {
                     case FS_DELETED_FILTER:
-                        query =  "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
                                 + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
                                 + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType();
-                                
+
                         break;
                     case ALL_DELETED_FILTER:
-                        query =  " ( "
+                        query = " ( "
                                 + "( "
                                 + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
                                 + " OR "
-                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() 
+                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
                                 + ")"
                                 + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()
                                 + " )"
                                 + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType()
                                 + " )";
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
-                                //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
+                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
                         break;
-                    
+
                     default:
                         logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: " + filter);
 
@@ -269,6 +273,20 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 return ret;
 
+            }
+
+            /**
+             * Get children count without actually loading all nodes
+             *
+             * @return
+             */
+            long calculateItems() {
+                try {
+                    return skCase.countFilesWhere(makeQuery());
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting deleted files search view count", ex);
+                    return 0;
+                }
             }
 
             @Override
