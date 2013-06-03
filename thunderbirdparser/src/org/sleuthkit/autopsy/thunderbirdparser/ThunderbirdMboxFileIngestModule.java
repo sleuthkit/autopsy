@@ -32,8 +32,6 @@ import java.util.logging.Level;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.*;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -52,12 +50,10 @@ import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
-public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile {
+public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
@@ -67,7 +63,6 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     private static final String MODULE_NAME = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
     final public static String MODULE_VERSION = "1.0";
-    private String args;
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
@@ -262,15 +257,6 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
 
     @Override
     public void init(IngestModuleInit initContext) {
@@ -289,40 +275,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     }
 
     @Override
-    public ModuleType getType() {
-        return ModuleType.AbstractFile;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
     }
 }

@@ -22,11 +22,8 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.*;
 import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,18 +33,18 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FileSystem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -58,7 +55,7 @@ import org.xml.sax.SAXException;
 /**
  * Extracting windows registry data using regripper
  */
-public class ExtractRegistry extends Extract implements IngestModuleImage {
+public class ExtractRegistry extends Extract {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -66,7 +63,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     private int sysid;
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
-    private String args;
+
     private ExecUtil execRR;
 
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -105,15 +102,6 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
     
     private void getRegistryFiles(Image image, IngestImageWorkerController controller) {
         
@@ -441,38 +429,6 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         return "Extracts activity from the Windows registry utilizing RegRipper.";
     }
 
-    @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {

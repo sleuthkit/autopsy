@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Firefox recent activity extraction
  */
-public class Firefox extends Extract implements IngestModuleImage {
+public class Firefox extends Extract {
 
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
@@ -60,7 +60,6 @@ public class Firefox extends Extract implements IngestModuleImage {
     private static final String ffdownloadquery = "select target, source,(startTime/1000000) as startTime, maxBytes  from moz_downloads";
     public int FireFoxCount = 0;
     final public static String MODULE_VERSION = "1.0";
-    private String args;
     private IngestServices services;
 
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -71,16 +70,6 @@ public class Firefox extends Extract implements IngestModuleImage {
     @Override
     public String getVersion() {
         return MODULE_VERSION;
-    }
-
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
     }
 
     @Override
@@ -362,39 +351,6 @@ public class Firefox extends Extract implements IngestModuleImage {
     @Override
     public String getDescription() {
         return "Extracts activity from the Mozilla FireFox browser.";
-    }
-
-    @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
     }
 
     @Override

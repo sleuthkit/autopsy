@@ -23,7 +23,9 @@ package org.sleuthkit.autopsy.ingest;
 /**
  * Base interface for ingest modules
  */
-public interface IngestModuleAbstract {
+public abstract class IngestModuleAbstract {
+    
+    private String args;
     
     /**
      * Possible module types for the implementing classes
@@ -41,68 +43,78 @@ public interface IngestModuleAbstract {
     };
 
     /**
-     * Notification from manager that brand new ingest should be initiated..
-     * Module loads its configuration and performs initialization.
-     * Invoked once per new worker thread, per ingest.
-     * In this method initialize always IngestServices handle 
-     * using IngestServices.getDefault() lazy-loading approach.
+     * Invoked every time an ingest session is started by the framework.  
+     * A module should support multiple invocations of init() throughout the application life-cycle.  
+     * In this method, the module should reinitialize its internal objects and resources and get them ready 
+     * for a brand new ingest processing.  
+     * 
+     * Here are some things you may do in this method if you'll need them later. 
+     * - Get a handle to the ingest services using org.sleuthkit.autopsy.ingest.IngestServices.getDefault().
+     * - Get the current case using org.sleuthkit.autopsy.ingest.IngestServices.getCurrentSleuthkitCaseDb().
+     * 
      * NEVER initialize IngestServices handle in the member declaration, because it might result
      * in multiple instances of the singleton -- different class loaders are used in different modules.
      * @param initContext context used to initialize some modules
      */
-    public void init(IngestModuleInit initContext);
+    abstract public void init(IngestModuleInit initContext);
 
     /**
-     * Notification from manager that there is no more content to process and all work is done.
-     * Module performs any clean-up of internal resources, and finalizes processing to produce complete result
-     * Module also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
+     * Invoked when an ingest session completes.  
+     * The module should perform any resource (files, handles, caches) 
+     * cleanup in this method and submit final results and post a final ingest inbox message. 
      */
-    public void complete();
+    abstract public void complete();
 
     /**
-     * Notification from manager to stop processing due to some interruption (user, error, exception)
-     * Module performs any clean-up of internal resources
-     * It may also discard any pending results, but it should ensure it is in a defined state so that ingest can be rerun later.
+     * Invoked on a module when an ingest session is interrupted by the user or system.
+     * The method implementation should be similar to complete() in that the 
+     * module should perform any cleanup work.  
+     * If there is pending data to be processed or pending results to be reported by the module 
+     * then the results should be rejected and ignored and the method should return as early as possible.
+     * It should ensure it is in a defined state so that ingest can be rerun later.
      */
-    public void stop();
+    abstract public void stop();
 
     /**
-     * Gets specific name of the module
-     * The name should be unique across modules
+     * Returns unique name of the module.  Should not have collisions.
      * @return unique module name
      */
-    public String getName();
+    abstract public String getName();
     
     /**
      * Gets the module version
      * @return module version string
      */
-    public String getVersion();
+    abstract public String getVersion();
     
     /**
      * Gets user-friendly description of the module
      * @return module description
      */
-    public String getDescription();
+    abstract public String getDescription();
     
     /**
-     * Returns type of the module
+     * Returns type of the module (Image-level or file-level)
      * @return module type
      */
-    public ModuleType getType();
+    abstract public ModuleType getType();
     
     
     /**
      * Gets the arguments as set in XML
      * @return arguments string
      */
-    public String getArguments();
+    public String getArguments() {
+        return args;
+    }
     
     /**
      * Sets the arguments from XML
      * @param args arguments string in XML
      */
-    public void setArguments(String args);
+    public void setArguments(String a_args) {
+        args = a_args;
+    }
     
      /**
      * A module can manage and use additional threads to perform some work in the background.
@@ -112,7 +124,7 @@ public interface IngestModuleAbstract {
      * @return true if any background threads/workers managed by this module are still running or are pending to be run,
      * false if all work has been done, or if background threads are not used/managed by this module
      */
-    public boolean hasBackgroundJobsRunning();
+    abstract public boolean hasBackgroundJobsRunning();
     
     
     /**
@@ -121,7 +133,9 @@ public interface IngestModuleAbstract {
      * 
      * @return true if this module has a simple (run-time) configuration
      */
-    public boolean hasSimpleConfiguration();
+    public boolean hasSimpleConfiguration() {
+        return false;
+    }
     
     /**
      * Used to determine if a module has implemented an advanced (general)
@@ -129,21 +143,23 @@ public interface IngestModuleAbstract {
      * 
      * @return true if this module has an advanced configuration
      */
-    public boolean hasAdvancedConfiguration();
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
     
     /**	
      * Called by the ingest manager if the simple (run-time) configuration
      * panel should save its current state so that the settings can be used
      * during the ingest.
      */
-    public void saveSimpleConfiguration();
+    public void saveSimpleConfiguration() {}
 
     /**	
      * If module implements advanced configuration panel
      * it should read its current state and make it persistent / save it in this method
      * so that the new configuration will be in effect during the ingest.
      */
-    public void saveAdvancedConfiguration();
+    public void saveAdvancedConfiguration() {}
 
     /**
      * Returns a panel that displays the simple (run-time) configuration. 
@@ -155,14 +171,18 @@ public interface IngestModuleAbstract {
      * 
      * @return JPanel containing basic configuration widgets or null if simple configuration is not available
      */
-    public javax.swing.JPanel getSimpleConfiguration();
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
     
      /**
-     * Implements advanced module configuration exposed to the user before ingest starts
+     * Implements advanced module conf  iguration exposed to the user before ingest starts
      * The module is responsible for preserving / saving its configuration state
      * In addition, saveAdvancedConfiguration() can be used
      * 
      * @return JPanel containing advanced configuration widgets or null if advanced configuration is not available
      */
-    public javax.swing.JPanel getAdvancedConfiguration();
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
+    };
 }

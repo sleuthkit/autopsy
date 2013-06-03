@@ -74,7 +74,7 @@
               <Component id="pagePreviousButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
               <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="71" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Component id="sourceComboBox" min="-2" max="-2" attributes="0"/>
           </Group>
           <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
@@ -105,7 +105,7 @@
                   <Component id="pagePreviousButton" min="-2" pref="23" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="293" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="377" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

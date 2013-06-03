@@ -23,7 +23,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Ingest module interface that will be called for every file in the image
  */
-public interface IngestModuleAbstractFile extends IngestModuleAbstract {
+public abstract class IngestModuleAbstractFile extends IngestModuleAbstract {
 
     /**
      * Return value resulting from processing AbstractFile
@@ -36,6 +36,11 @@ public interface IngestModuleAbstractFile extends IngestModuleAbstract {
         UNKNOWN ///< Indicates that a return value for the module is not known.  This should not be returned directly by modules, but is used to indicate the module has not set its return value (e.g. it never ran)
     };
     
+    @Override
+    public ModuleType getType() {
+        return ModuleType.AbstractFile;
+    }
+    
     /**
      * Entry point to process file / directory by the module.  See \ref ingestmodule_making for details
      * on what modules are responsible for doing. 
@@ -44,5 +49,5 @@ public interface IngestModuleAbstractFile extends IngestModuleAbstract {
      * @param abstractFile file to process
      * @return ProcessResult result of the processing that can be used in the pipeline as a hint whether to further process this file
      */
-    public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile abstractFile);
+    abstract public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile abstractFile);
 }

@@ -3,121 +3,58 @@
 
 \section ingestmodule_modules Ingest Module Basics
 
+This section tells you how to make an Ingest Module. 
 Ingest modules analyze data from a disk image.  
 They typically focus on a specific type of data analysis.  
 The modules are loaded each time that Autopsy starts.  
-The user can choose to enable each module when they add an image to the case.
+The user can choose to enable each module when they add an image to the case.  It assumes you have already setup your development environment as described in \ref mod_dev_page. 
 
-There are two types of ingest modules. 
+First, you need to choose the type of Ingest Module. 
+
 - Image-level modules are passed in a reference to an image and perform general analysis on it.  
-These modules may query the database for a small set of specific files, thus are generally quicker to execute.
+These modules may query the database for a small set of specific files. For example, a Windows registry module that runs on the hive files.  It is interested in only a small subset of the hard drive files. 
 
 - File-level modules are passed in a reference to each file.  
 The Ingest Manager chooses which files to pass and when.  
 These modules are intended to analyze most of the files on the system 
-or that want to examine the file content of all files 
-(i.e. to detect file type based on signature instead of file extension). 
-
-An example of Image-level module is a registry module, that extracts only the registry files.
-An example of File-level module is a search module, that indexes and searches content of every file.
-
-Modules post their results to the \ref platform_blackboard  
-(@@@ NEED REFERENCE FOR THIS -- org.sleuthkit.datamodel) 
-and can query the blackboard to get the results of previous modules.  
-For example, the hash database lookup module may want to query for a previously calculated hash value. 
+For example, a hash calculation module that reads in the content of every file. 
 
 
-
-\section ingestmodule_relevant_api Relevant APIs
-
-Relevant APIs to a ingest module writer are:
-
-- The org.sleuthkit.autopsy.ingest.IngestServices class, which contains methods to post ingest results and
-to get access to services in the framework (Case and blackboard, logging, configuration , and others).
-- Interfaces org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile and org.sleuthkit.autopsy.ingest.IngestModuleImage, one of which needs to be implemented by the module.
-There is also a parent interface, org.sleuthkit.autopsy.ingest.IngestModuleAbstract, common to all ingest modules.
-- Additional utilities in the Autopsy \ref org.sleuthkit.autopsy.coreutils module for getting information about the platform,
-versions and for file operations.
-
-
-\section ingestmodule_making Making Ingest Modules
-
-First, you will need to setup your environment and 
-make a new Autopsy module using Netbeans IDE.  Refer to \ref mod_dev_page for general instructions.
 
 Refer to org.sleuthkit.autopsy.ingest.example for sample source code of dummy modules. 
 
-\subsection ingestmodule_making_api Module Interface
+\section ingest_common Commonalities
 
-The next step is to choose the correct module type and implement the correct interface.   
+There are several things about these module types that are common and we'll outline those here.  For both modules, you will extend an interface and implement some methods.
 
-Image-level modules will implement the org.sleuthkit.autopsy.ingest.IngestModuleImage interface 
-and file-level modules will implement the org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile interface. 
-
-
-The interfaces have several standard methods that need to be implemented:
-  
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.init() is invoked every time an ingest session starts by the framework.  
-A module should support multiple invocations of init() throughout the application life-cycle.
-
-In this method, module should reinitialize its internal objects and resources and get them ready 
-for a brand new ingest processing.
-
-At minimum, the module should get a handle to the ingest services using 
-org.sleuthkit.autopsy.ingest.IngestServices.getDefault().
-If the module posts results, then it needs the blackboard API; the module should get 
-an updated handle to the current Case database (and the blackboard API) 
-using org.sleuthkit.autopsy.ingest.IngestServices.getCurrentSleuthkitCaseDb().
-This gives access to the underlying datamodel for the current Case.
-Make sure not to store stale handles to Case objects across ingests,
- because Case can likely be changed for the next ingest.
-
-
+Refer to the documentation for each method for its use. 
+- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.init() is invoked when an ingest session starts. 
 - org.sleuthkit.autopsy.ingest.IngestModuleAbstract.complete() is invoked when an ingest session completes.  
-The module should perform any resource (files, handles, caches) cleanup in this method 
-and submit final results and post a final ingest inbox message, using org.sleuthkit.autopsy.ingest.IngestServices.
-
--  org.sleuthkit.autopsy.ingest.IngestModuleAbstract.stop() is invoked on a module when an ingest session is interrupted by the user or by the system.
-The method implementation should be similar to complete() in that the module should perform any cleanup work.  
-If there is pending data to be processed or pending results to be reported by the module 
-then the results should be rejected and ignored if stop() 
-is invoked and the method should return as early as possible.
-
-The main difference between complete() and stop() is that stop() does not need to worry about 
-finalizing and reporting final results, it can simply reject them.  
-The quicker it acts, the easier it will for the application to transition to the next state.
-
-- process() method is invoked to analyze the data. The specific method depends on the module type; it is passed
-either an Image or a File to process.
-
-\subsubsection ingestmodule_making_process Process Method
-The process method is where the work is done in each type of module, on the Image of File passed as an argument.  
-
-Once a result is found, in this method the module should post result to the blackboard 
-and it could post an inbox message to the user.
-
-Some notes:
-- File-level modules will be called on each file in an order determined by the org.sleuthkit.autopsy.ingest.IngestManager.  
-Each module is free to quickly ignore a file based on name, signature, etc.  
-
-- If a module wants to know the return value from a previously run module on this file, 
-it should use the org.sleuthkit.autopsy.ingest.IngestServices.getAbstractFileModuleResult() method.
- 
-- Image-level modules are expected not passed in specific files and are expected to query the database 
-to find the files that they are interested in.   They can use the org.sleuthkit.datamodel.SleuthkitCase object handle (initialized in the init() method) to query the database.
-
-- File-level module could be passed in files from different images in consecutive calls to process().  
+- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.stop() is invoked on a module when an ingest session is interrupted by the user or system.
+- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getName() returns the name of the module.
+- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getDescription() returns a short description of the module.
+- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getVersion() returns the version of the module. 
 
 
-\subsubsection ingestmodule_making_process_controller Image Ingest Controller (Image-level modules only)
+The process() method is invoked to analyze the data. This is where the analysis is done. The specific method depends on the module type; it is passed
+either an Image or a File to process.  We'll cover this in later sections.  This method will post results to the blackboard 
+and with inbox messages to the user.
 
-Image-level modules receive in org.sleuthkit.autopsy.ingest.IngestModuleImage.process() method 
+
+\section ingest_image Image-level Modules
+
+To make an Image-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleImage". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the links above to fill in the details.
+
+The org.sleuthkit.autopsy.ingest.IngestModuleImage.process() method gets several objects passed in.  
 get a reference to org.sleuthkit.autopsy.ingest.IngestImageWorkerController object.
 
 They should use this object to:
-
 - report progress (number of work units processed),
 - add thread cancellation support.
+
+New instances of image-level modules will be created when the second image is added. 
+Therefore, image-level modules can assume that the process() method will be called at most once after init() is called. 
+
 
 Example snippet of an ingest-level module process() method:
 
@@ -155,21 +92,25 @@ public void process(Image image, IngestImageWorkerController controller) {
 \endcode
 
 
-\subsection ingestmodule_module_lifecycle Module Lifecycle
+\section ingest_file File-level Modules
 
-File-level modules are singletons and are long-lived and image-level modules are short lived.
+To make a File-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the links above to fill in the details.
+
+File-level modules are singletons.  Only a single instance is created for all files. 
 The same file-level module instance can be invoked again by the org.sleuthkit.autopsy.ingest.IngestManager when more work is enqueued or 
 when ingest is restarted.  The same file-level ingest module instance can also be invoked for different Cases or files from different images in the Case.
 
-Every file-level module should support multiple init() - process() - complete(), and init() - process() - stop() invocations.
+Every file-level module should support multiple init() -> process() -> complete(), and init() -> process() -> stop() invocations.  It shoudl also support init() -> complete() sequences.
 
-New instances of image-level modules will be created when the second image is added. 
-Therefore, image-level modules can assume that the process() method will be called at most once after init() is called. 
 
-Every module (file or image) should also support multiple init() - complete() and init() - stop() invocations, 
-which can occur if ingest pipeline is started but no work is enqueued for the particular module.
+------
+
+
+
+
 
 \subsection ingestmodule_additional_method Additional Methods to Implement
+MOVE THIS TO COMMON
 
 Besides methods defined in the interfaces, you will need to implement 
 a public static getDefault() method (both for an image or a file module), which needs
@@ -410,4 +351,62 @@ The event is an indication for listeners to perform the final data refresh by qu
 Module developers are encouraged to generate periodic IngestModuleEvent.DATA 
 ModuleDataEvent events when they post data to the blackboard, 
 but the IngestManager will make a final event to handle scenarios where the module did not notify listeners while it was running. 
+
+
+
+
+---- MERGE THIS IN -----
+\subsection mod_dev_configuration_ingest Ingest Dialog Panel
+
+Each ingest module has a small configuration panel when the user 
+
+The ingest configuration dialog panel is displayed anytime ingest is to be started/restarted. 
+It provides framework for two-levels of settings:  "simple panel" as well as an "advanced panel". 
+The simple panel is shown directly in the ingest configuration panel on the right-hand side when a specific module is selected.
+The advanced panel is opened in a new window if the user presses the Advanced button in the ingest configuration dialog. 
+
+Both of these panels can be created as a standard \c JPanel, and returned by your ingest module using 
+of the the ingest module methods implemented, that are declared in the ingest module interface.
+
+It is recommended when making an ingest module to have the advanced panel also be accessible also via the main Options panel, 
+allowing the user access to the settings from Tools > Options and not only via the ingest module configuration.
+
+See \ref ingestmodule_making_configuration how to implement hooks for having your ingest module configurations registered.
+
+
+----- MERGE THIS IN ----
+When developing Ingest modules specifically - their life cycle is managed by ingest manager 
+and an ingest module does not need to listen for case change events 
+or other general system-wide events.  
+However, it should make sure that it gets a new handle to the current Case every time the module's init() is invoked.
+
+
+---- MERGE
+\section ingestmodule_relevant_api Relevant APIs
+
+Relevant APIs to a ingest module writer are:
+
+- The org.sleuthkit.autopsy.ingest.IngestServices class, which contains methods to post ingest results and
+to get access to services in the framework (Case and blackboard, logging, configuration , and others).
+- Interfaces org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile and org.sleuthkit.autopsy.ingest.IngestModuleImage, one of which needs to be implemented by the module.
+There is also a parent interface, org.sleuthkit.autopsy.ingest.IngestModuleAbstract, common to all ingest modules.
+- Additional utilities in the Autopsy \ref org.sleuthkit.autopsy.coreutils module for getting information about the platform,
+versions and for file operations.
+
+
+
+-------
+Some notes:
+- File-level modules will be called on each file in an order determined by the org.sleuthkit.autopsy.ingest.IngestManager.  
+Each module is free to quickly ignore a file based on name, signature, etc.  
+
+- If a module wants to know the return value from a previously run module on this file, 
+it should use the org.sleuthkit.autopsy.ingest.IngestServices.getAbstractFileModuleResult() method.
+ 
+- Image-level modules are not passed in specific files and are expected to query the database 
+to find the files that they are interested in.   They can use the org.sleuthkit.datamodel.SleuthkitCase object handle (initialized in the init() method) to query the database.
+
+- File-level module could be passed in files from different images in consecutive calls to process().  
+
+
 */

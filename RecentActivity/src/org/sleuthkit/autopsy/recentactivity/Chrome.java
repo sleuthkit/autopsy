@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Chrome recent activity extraction
  */
-public class Chrome extends Extract implements IngestModuleImage {
+public class Chrome extends Extract {
 
     private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
@@ -67,7 +67,6 @@ public class Chrome extends Extract implements IngestModuleImage {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
     final public static String MODULE_VERSION = "1.0";
-    private String args;
     private IngestServices services;
 
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -80,15 +79,6 @@ public class Chrome extends Extract implements IngestModuleImage {
         return MODULE_VERSION;
     }
 
-    @Override
-    public String getArguments() {
-        return args;
-    }
-
-    @Override
-    public void setArguments(String args) {
-        this.args = args;
-    }
 
     @Override
     public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
@@ -468,38 +458,6 @@ public class Chrome extends Extract implements IngestModuleImage {
         return "Extracts activity from the Google Chrome browser.";
     }
 
-    @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
-    }
-
-    @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
-
-    @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-
-    @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void saveAdvancedConfiguration() {
-    }
-
-    @Override
-    public void saveSimpleConfiguration() {
-    }
 
     @Override
     public boolean hasBackgroundJobsRunning() {

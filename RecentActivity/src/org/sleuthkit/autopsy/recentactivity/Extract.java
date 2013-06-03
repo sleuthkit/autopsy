@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract implements IngestModuleImage{
+abstract public class Extract extends IngestModuleImage{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
