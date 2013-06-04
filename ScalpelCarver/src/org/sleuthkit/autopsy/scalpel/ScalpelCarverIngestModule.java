@@ -311,12 +311,12 @@ public class ScalpelCarverIngestModule { // disable autodiscovery for now // imp
     public void saveAdvancedConfiguration() { }
 
    // @Override
-    public JPanel getSimpleConfiguration() {
+    public JPanel getSimpleConfiguration(String context) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
   //  @Override
-    public JPanel getAdvancedConfiguration() {
+    public JPanel getAdvancedConfiguration(String context) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

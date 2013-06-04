@@ -427,13 +427,13 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
+    public javax.swing.JPanel getSimpleConfiguration(String context) {
         KeywordSearchListsXML.getCurrent().reload();
         return new KeywordSearchIngestSimplePanel();
     }
 
     @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
+    public javax.swing.JPanel getAdvancedConfiguration(String context) {
         //return KeywordSearchConfigurationPanel.getDefault();
         getPanel().load();
         return getPanel();
