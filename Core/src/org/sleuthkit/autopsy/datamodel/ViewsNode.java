@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -34,7 +33,13 @@ public class ViewsNode extends DisplayableItemNode {
     public static final String NAME = "Views";
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
-        super(new RootContentChildren(Arrays.asList(new SearchFilters(sleuthkitCase), new RecentFiles(sleuthkitCase), new DeletedContent(sleuthkitCase))), Lookups.singleton(NAME));
+        super(new RootContentChildren(Arrays.asList(
+                new SearchFilters(sleuthkitCase), 
+                new RecentFiles(sleuthkitCase), 
+                new DeletedContent(sleuthkitCase),
+                new FileSize(sleuthkitCase)
+                )), 
+                Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png");
