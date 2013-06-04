@@ -12,9 +12,9 @@ and open the template in the editor.
             <tocitem text="About Cases" target="org.sleuthkit.autopsy.casemodule.about"/>
             <tocitem text="Creating a Case" target="org.sleuthkit.autopsy.casemodule.how-to-create-case"/>
        </tocitem>
-       <tocitem text="Image">
-            <tocitem text="About Images" target="org.sleuthkit.autopsy.casemodule.image-about"/>
-            <tocitem text="Adding an Image" target="org.sleuthkit.autopsy.casemodule.add-image"/>
+       <tocitem text="Data Source">
+            <tocitem text="About Data Source" target="org.sleuthkit.autopsy.casemodule.image-about"/>
+            <tocitem text="Adding a Data Source" target="org.sleuthkit.autopsy.casemodule.add-image"/>
        </tocitem>
        <tocitem text="Case Properties Window" target="org.sleuthkit.autopsy.casemodule.caseproperties"/>
        <tocitem text="Hash Database Management Window" target="org.sleuthkit.autopsy.casemodule.hashdbmgmt"/>
