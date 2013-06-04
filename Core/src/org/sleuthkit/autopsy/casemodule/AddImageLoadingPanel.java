@@ -105,10 +105,10 @@ public class AddImageLoadingPanel extends javax.swing.JPanel {
     void setErrors(final String errors, boolean critical) {
         crDbProgressBar.setValue(100); //always invoked when process completed
         if (critical) {
-            progressLabel.setText("*Failed to add image (critical errors encountered). Click below to view the Add Image Log.");
+            progressLabel.setText("*Failed to add image (critical errors encountered). Click below to view the log.");
         }
         else {
-            progressLabel.setText("*Image added (non-critical image errors encountered). Click below to view the Add Image Log.");
+            progressLabel.setText("*Data Source added (non-critical errors encountered). Click below to view the log.");
         }
         errorButton = new JButton();
         errorButton.setText("View Log");

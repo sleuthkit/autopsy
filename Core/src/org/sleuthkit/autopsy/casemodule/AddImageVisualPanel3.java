@@ -23,7 +23,7 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 /**
- * Image added, ingest configure wizard visual panel 3
+ * Data Source added, ingest configure wizard visual panel 3
  */
 public class AddImageVisualPanel3 extends javax.swing.JPanel {
     private JPanel ingestPanel = null;

@@ -570,7 +570,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 cleanupImage.enable();
 
                 if (errorString == null) { // complete progress bar
-                    wizPanel.getComponent().changeProgressBarTextAndColor("*Image added.", 100, Color.black);
+                    wizPanel.getComponent().changeProgressBarTextAndColor("*Data Source added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
