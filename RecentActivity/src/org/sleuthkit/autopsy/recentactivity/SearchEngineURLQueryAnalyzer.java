@@ -149,7 +149,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
             }
 
             SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
-            System.out.println("Search Engine: " + Se.toString());
+            //System.out.println("Search Engine: " + Se.toString());
             listEngines[i] = Se;
         }
         engines = listEngines;
@@ -345,7 +345,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
         try {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
             File f = new File(path);
-            System.out.println("Load successful");
+            logger.log(Level.INFO, "Load successful");
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document xml = db.parse(f);
