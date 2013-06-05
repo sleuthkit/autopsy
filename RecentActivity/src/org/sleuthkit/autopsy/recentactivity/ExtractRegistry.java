@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USB_Info;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -135,9 +136,10 @@ public class ExtractRegistry extends Extract {
             }
             File aRegFile = new File(temps);
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
+            ExtractUSB extrctr = new ExtractUSB();
             String txtPath = executeRegRip(temps, j++);
             if (txtPath.length() > 0) {
-                if (parseReg(txtPath, regFile.getId()) == false) {
+                if (parseReg(txtPath, regFile.getId(),extrctr) == false) {
                     continue;
                 }
             }
@@ -202,7 +204,7 @@ public class ExtractRegistry extends Extract {
         return txtPath;
     }
 
-    private boolean parseReg(String regRecord, long orgId) {
+    private boolean parseReg(String regRecord, long orgId, ExtractUSB extrctr) {
         FileInputStream fstream = null;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -287,6 +289,9 @@ public class ExtractRegistry extends Extract {
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", dev));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
+                                USB_Info info = extrctr.get(dev);
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Vendor()));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Product()));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");

@@ -410,9 +410,9 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 	try:
 		while (rw != None):
 			if(rw[0] != None):
-				database_log.write(rw[0] + rw[1] + ' <artifact type = "' + rw[2] + '" > ')
+				database_log.write(rw[0] + rw[1] + ' <artifact type="' + rw[2] + '" > ')
 			else:
-				database_log.write(rw[1] + ' <artifact type = "' + rw[2] + '" > ')
+				database_log.write(rw[1] + ' <artifact type="' + rw[2] + '" > ')
 			autopsy_cur1 = autopsy_con.cursor()
 			looptry = True
 			case.artifact_count += 1
@@ -458,10 +458,12 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 							attachl.append(autopsy_db_file)
 							appnd = True
 					try:
-						database_log.write('<attribute source = "' + attr[0] + '" type = "' + attr[1] + '" value = "')
+						database_log.write('<attribute source="' + attr[0] + '" type="' + attr[1] + '" value="')
 						inpval = attr[val]
 						if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
 							inpval = str(inpval)
+						patrn = re.compile("\n")
+						inpval = re.sub(patrn, ' ', inpval)
 						try:
 							database_log.write(inpval)
 						except Exception as e:
@@ -473,7 +475,8 @@ def retrieve_data(data_file, autopsy_con,autopsy_db_file):
 			rw = autopsy_cur2.fetchone()
 	except Exception as e:
 		print('outer exception: ' + str(e))
-	errorem += case.image_name + ":There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " threw an exception while loading.\n"
+		if(case.artifact_fail > 0):
+			errorem += case.image_name + ":There were " + str(case.artifact_count) + " artifacts and " + str(case.artifact_fail) + " threw an exception while loading.\n"
 		
 def dbDump():
 	autopsy_db_file = Emailer.make_path(case.output_dir, case.image_name,
@@ -1075,7 +1078,7 @@ def compare_data(aut, gld):
 		global errorem
 		global failedbool
 		attachl.append(diff_dir)
-		errorem += case.image_name + ":There was a difference in the Database data for the file " + gld + ".\n"
+		errorem += case.image_name + ":There was a database difference in the file " + gld + ".\n"
 		print("There was a difference in the Database data for " + case.image_name + " for the file " + gld + ".\n")
 		failedbool = True
 		global imgfail
