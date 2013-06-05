@@ -64,7 +64,6 @@ public class ExtractRegistry extends Extract {
     private int sysid;
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
-
     private ExecUtil execRR;
 
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -92,8 +91,7 @@ public class ExtractRegistry extends Extract {
 
         if (PlatformUtil.isWindowsOS()) {
             RR_PATH = rrHome + File.separator + "rip.exe";
-        }
-        else {
+        } else {
             RR_PATH = "perl " + rrHome + File.separator + "rip.pl";
         }
     }
@@ -103,9 +101,8 @@ public class ExtractRegistry extends Extract {
         return MODULE_VERSION;
     }
 
-    
     private void getRegistryFiles(Image image, IngestImageWorkerController controller) {
-        
+
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> allRegistryFiles = new ArrayList<FsContent>();
         try {
@@ -113,10 +110,10 @@ public class ExtractRegistry extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file.");
         }
-        
+
         // try to find each of the listed registry files whose parent directory
         // is like '%/system32/config%'
-        String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
+        String[] regFileNames = new String[]{"system", "software", "security", "sam", "default"};
         for (String regFileName : regFileNames) {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(image, regFileName, "%/system32/config%"));
@@ -124,7 +121,7 @@ public class ExtractRegistry extends Extract {
                 logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
             }
         }
-        
+        ExtractUSB extrctr = new ExtractUSB();
         int j = 0;
         for (FsContent regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
@@ -136,14 +133,13 @@ public class ExtractRegistry extends Extract {
             }
             File aRegFile = new File(temps);
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
-            ExtractUSB extrctr = new ExtractUSB();
             String txtPath = executeRegRip(temps, j++);
             if (txtPath.length() > 0) {
-                if (parseReg(txtPath, regFile.getId(),extrctr) == false) {
+                if (parseReg(txtPath, regFile.getId(), extrctr) == false) {
                     continue;
                 }
             }
-            
+
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
             aRegFile.delete();
@@ -160,26 +156,20 @@ public class ExtractRegistry extends Extract {
         try {
             if (regFilePath.toLowerCase().contains("system")) {
                 type = "autopsysystem";
-            }
-            else if (regFilePath.toLowerCase().contains("software")) {
+            } else if (regFilePath.toLowerCase().contains("software")) {
                 type = "autopsysoftware";
-            }
-            else  if (regFilePath.toLowerCase().contains("ntuser")) {
+            } else if (regFilePath.toLowerCase().contains("ntuser")) {
                 type = "autopsy";
-            }
-            else if (regFilePath.toLowerCase().contains("default")) {
+            } else if (regFilePath.toLowerCase().contains("default")) {
                 type = "1default";
-            }
-            else  if (regFilePath.toLowerCase().contains("sam")) {
+            } else if (regFilePath.toLowerCase().contains("sam")) {
                 type = "1sam";
-            }
-            else if (regFilePath.toLowerCase().contains("security")) {
+            } else if (regFilePath.toLowerCase().contains("security")) {
                 type = "1security";
-            }
-            else {
+            } else {
                 type = "1default";
             }
-            
+
             logger.log(Level.INFO, "Writing RegRipper results to: " + txtPath);
             writer = new FileWriter(txtPath);
             execRR = new ExecUtil();
@@ -190,8 +180,7 @@ public class ExtractRegistry extends Extract {
             logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
         } catch (InterruptedException ex) {
             logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
-        }
-        finally {
+        } finally {
             if (writer != null) {
                 try {
                     writer.close();
@@ -200,7 +189,7 @@ public class ExtractRegistry extends Extract {
                 }
             }
         }
-        
+
         return txtPath;
     }
 
@@ -229,13 +218,13 @@ public class ExtractRegistry extends Extract {
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
             int len = children.getLength();
-            for(int i=0; i<len; i++) {
+            for (int i = 0; i < len; i++) {
                 Element tempnode = (Element) children.item(i);
                 String context = tempnode.getNodeName();
 
                 NodeList timenodes = tempnode.getElementsByTagName("time");
                 Long time = null;
-                if(timenodes.getLength() > 0) {
+                if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
                     try {
@@ -249,7 +238,7 @@ public class ExtractRegistry extends Extract {
                 }
 
                 NodeList artroots = tempnode.getElementsByTagName("artifacts");
-                if(artroots.getLength() == 0) {
+                if (artroots.getLength() == 0) {
                     // If there isn't an artifact node, skip this entry
                     continue;
                 }
@@ -257,10 +246,10 @@ public class ExtractRegistry extends Extract {
                 NodeList myartlist = artroot.getChildNodes();
                 String winver = "";
                 String installdate = "";
-                for(int j=0; j<myartlist.getLength(); j++) {
+                for (int j = 0; j < myartlist.getLength(); j++) {
                     Node artchild = myartlist.item(j);
                     // If it has attributes, then it is an Element (based off API)
-                    if(artchild.hasAttributes()) {
+                    if (artchild.hasAttributes()) {
                         Element artnode = (Element) artchild;
                         String name = artnode.getAttribute("name");
                         String value = artnode.getTextContent().trim();
@@ -282,16 +271,18 @@ public class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity",  utime));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", utime));
                                 String dev = artnode.getAttribute("dev");
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", dev));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
-                                USB_Info info = extrctr.get(dev);
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Vendor()));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Product()));
+                                if (dev.toLowerCase().contains("vid")) {
+                                    USB_Info info = extrctr.get(dev);
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Vendor()));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.get_Product()));
+                                }
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
@@ -305,15 +296,15 @@ public class ExtractRegistry extends Extract {
                             } catch (ParseException e) {
                                 logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.");
                             }
-                            
+
                             //TODO Revisit usage of deprecated constructor as per TSK-583
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, ftime));
-                                
+
                             try {
-                                if(time != null) {
-                                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                if (time != null) {
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
                                 }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ftime));
@@ -349,7 +340,7 @@ public class ExtractRegistry extends Extract {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", installtime));
                                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                     bbart.addAttributes(bbattributes);
-                                } catch(TskCoreException ex) {
+                                } catch (TskCoreException ex) {
                                     logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
                                 }
                             }
@@ -361,14 +352,14 @@ public class ExtractRegistry extends Extract {
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
-                                 if(time != null) {
+                                if (time != null) {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
-                                 }
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
+                                }
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
                                 bbart.addAttributes(bbattributes);
-                            } catch(TskCoreException ex) {
+                            } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.");
                             }
 
@@ -401,7 +392,7 @@ public class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
+    public void process(PipelineContext<IngestModuleImage> pipelineContext, Image image, IngestImageWorkerController controller) {
         this.getRegistryFiles(image, controller);
     }
 
@@ -421,7 +412,7 @@ public class ExtractRegistry extends Extract {
             execRR.stop();
             execRR = null;
         }
-        
+
     }
 
     @Override
@@ -433,7 +424,6 @@ public class ExtractRegistry extends Extract {
     public String getDescription() {
         return "Extracts activity from the Windows registry utilizing RegRipper.";
     }
-
 
     @Override
     public boolean hasBackgroundJobsRunning() {

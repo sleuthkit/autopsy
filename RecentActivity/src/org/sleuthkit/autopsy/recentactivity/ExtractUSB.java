@@ -22,12 +22,15 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public class ExtractUSB {
 
     private HashMap<String, USB_Info> devices;
@@ -41,11 +44,11 @@ public class ExtractUSB {
         } else {
             pID = mID + dtokens[3];
         }
-        //if (!devices.containsKey(pID)) {
-        //    return new String[]{"No such Device", null};
-        //} else {
-        return devices.get(pID);
-        //}
+        if (!devices.containsKey(pID)) {
+            return new USB_Info("No such Device", null);
+        } else {
+            return devices.get(pID);
+        }
     }
 
     public ExtractUSB() {
@@ -54,12 +57,15 @@ public class ExtractUSB {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(ExtractUSB.class.getName()).log(Level.SEVERE, null, ex);
             devices = null;
+        } catch (IOException ex) {
+            Logger.getLogger(ExtractUSB.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void Devices() throws FileNotFoundException {
+    private void Devices() throws FileNotFoundException, IOException {
         devices = new HashMap<String, USB_Info>();
-        try (Scanner dat = new Scanner(new FileInputStream(new java.io.File("src" + java.io.File.separator + "org" + java.io.File.separator + "sleuthkit" + java.io.File.separator + "autopsy" + java.io.File.separator + "recentactivity" + java.io.File.separator + "USB_DATA.txt")))) {
+        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), "USB_DATA.txt");
+        try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
             String line = dat.nextLine();
             while (dat.hasNext()) {
                 String dvc = "";
@@ -69,23 +75,22 @@ public class ExtractUSB {
                     for (int n = 1; n < tokens.length; n++) {
                         dvc += tokens[n] + " ";
                     }
+                    String pID = vID + "0000";
+                    USB_Info info = new USB_Info(dvc, null);
+                    devices.put(pID, info);
                     line = dat.nextLine();
                     if (line.startsWith("\t")) {
                         while (dat.hasNext() && line.startsWith("\t")) {
                             tokens = line.split("[\\t\\s]+");
-                            String pID = vID + tokens[1];
+                            pID = vID + tokens[1];
                             String device = "";
                             line = dat.nextLine();
                             for (int n = 2; n < tokens.length; n++) {
                                 device += tokens[n] + " ";
                             }
-                            USB_Info info = new USB_Info(dvc, device);
+                            info = new USB_Info(dvc, device);
                             devices.put(pID, info);
                         }
-                    } else {
-                        String pID = vID + "0000";
-                        USB_Info info = new USB_Info(dvc, null);
-                        devices.put(pID, info);
                     }
                 } else {
                     line = dat.nextLine();
