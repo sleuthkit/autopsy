@@ -177,20 +177,22 @@ public class FileManager implements Closeable {
      * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume
      * or file system given by systemId.
      *
-     * @param name the name of the carved file (containing appropriate
+     * @param carvedFileName the name of the carved file (containing appropriate
      * extension)
+     * @param carvedFileSize size of the carved file to add
      * @param systemId the ID of the parent volume or file system
      * @param sectors a list of SectorGroups giving this sectors that make up
      * this carved file.
+     * @throws TskCoreException exception thrown when critical tsk error occurred and carved file could not be added
      */
     public synchronized LayoutFile addCarvedFile(String carvedFileName, long carvedFileSize,
-            long systemId, List<TskFileRange> data) throws TskCoreException {
+            long systemId, List<TskFileRange> sectors) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
 
-        return tskCase.addCarvedFile(carvedFileName, carvedFileSize, systemId, data);
+        return tskCase.addCarvedFile(carvedFileName, carvedFileSize, systemId, sectors);
     }
 
     /**

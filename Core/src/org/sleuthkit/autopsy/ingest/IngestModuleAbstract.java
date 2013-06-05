@@ -101,7 +101,7 @@ public abstract class IngestModuleAbstract {
     
     
     /**
-     * Gets the arguments as set in XML
+     * Gets the module arguments as set in pipeline/module configuration
      * @return arguments string
      */
     public String getArguments() {
@@ -109,11 +109,11 @@ public abstract class IngestModuleAbstract {
     }
     
     /**
-     * Sets the arguments from XML
-     * @param args arguments string in XML
+     * Sets the module arguments (e.g. from pipeline/module configuration)
+     * @param moduleArgs arguments string 
      */
-    public void setArguments(String a_args) {
-        args = a_args;
+    public void setArguments(String moduleArgs) {
+        args = moduleArgs;
     }
     
      /**
