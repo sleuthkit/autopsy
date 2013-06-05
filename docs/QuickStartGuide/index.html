@@ -26,10 +26,10 @@
         </p>
         <p>Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.</p> 
 
-        <h1>Adding a Disk Image</h1>
+        <h1>Adding a Data Source (image, local disk, logical files)</h1>
         <p>
-            Disk images are added to a <strong>case</strong>. A case can have a single image or it can have multiple images if they are related.
-            Currently, a single report is generated for an entire case, so if you need to report on individual images, then you should use one image per case.
+            Data sources are added to a <strong>case</strong>. A case can have a single data source or it can have multiple data source if they are related.
+            Currently, a single report is generated for an entire case, so if you need to report on individual data sources, then you should use one data source per case.
         </p>
 
         <h2>Creating a Case</h2>
@@ -40,16 +40,32 @@
         </p>
 
 
-        <h2>Adding an Image</h2>
+        <h2>Adding a Data Source</h2>
         <p>
-            The next step is to add a disk image to the case.
-            The <strong>Add Image Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;File&quot; menu or toolbar.
-            You will need to supply it with the location of the disk image to add. Autopsy currently supports E01 and raw (dd) files.
-            You need to specify only the first file in an image set (i.e. the E01 file) and Autopsy will find the rest of the files.
+            The next step is to add input data source to the case.
+            The <strong>Add Data Source Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;File&quot; menu or toolbar.
+            You will need to choose the type of input data source to add (image, local disk or logical files and folders).
+            Next, supply it with the location of the source to add. 
         </p>
+        <ul>
+            <li>For image, point to location of disk image on your system.  Autopsy currently supports E01 and raw (dd) files.  
+            For multi-part/split images, you will need to specify only the first file in an image set (i.e. the E01 file) and Autopsy will find the rest of the files.
+            </li>
+            <li>
+            For local disk, select one of the detected disks.  
+            Autopsy will add the current view of the disk to the case (i.e. snapshot of the meta-data). 
+            However, the individual file content (not meta-data) does get updated with the changes made to the disk.
+            
+            
+            Note, you may need run Autopsy as an Administrator to detect all disks.
+            </li>
+            <li>For logical files, add one or more local files or folders on your system.</li>
+        </ul>
+            
+     
 
         <p>
-            It may take a few minutes to add the disk image.
+            It may take a few minutes to add the data source to the case.
             During this time, an internal database is being created of the file system contents.
         </p>
 
@@ -105,7 +121,9 @@
         <img src="screenshot.png" alt="Autopsy Screenshot" />
         <p>You will start all of your analysis techniques from the tree on the left.</p>
         <ul>
-            <li>The Images node shows the file system structure of the disk images.</li>
+            <li>The Data Sources root node shows all data in the case.</li>
+            <li>The individual image nodes show the file system structure of the disk images or local disks in the case.</li>
+            <li>The LogicalFileSet nodes show the logical files in the case.</li>
             <li>The Views node shows the same data from a file type or timeline perspective.</li>
             <li>The Results node shows the output from the ingest modules.</li>
         </ul>
@@ -157,7 +175,7 @@
 
         <h2>Known Bad Hash Files</h2>
         <p>
-            If you want to see if the image had known bad files, make sure that the Hash Lookup ingest module was enabled.
+            If you want to see if the data source had known bad files, make sure that the Hash Lookup ingest module was enabled.
             You can then view the &quot;Hashset Hits&quot; section in the &quot;Results&quot; area of the tree on the left.
             Note that hash lookup can take a long time, so this section will be updated as long as the ingest process is occurring.
             Use the Ingest Inbox to keep track of what known bad files were recently found.
@@ -167,7 +185,7 @@
             You may find additional files that are relevant and stored in the same folder as this file.
         </p>
 
-        <h2>Images and Videos</h2>
+        <h2>Media: Images and Videos</h2>
         <p>
             If you want to see all images and video on the disk image, then go to the &quot;Views&quot; section in the tree on the left and then &quot;File Types&quot;.
             Select either &quot;Images&quot; or &quot;Videos&quot;.

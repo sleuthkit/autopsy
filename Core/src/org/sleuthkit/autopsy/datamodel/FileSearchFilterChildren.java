@@ -29,12 +29,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Children factory for the file by type view in dir tree
@@ -59,7 +60,8 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
 
     
     private String createQuery(){
-        String query = "(known IS NULL OR known != 1) AND (0";
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + " AND (known IS NULL OR known != 1) AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
@@ -74,16 +76,27 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         try {
             List<AbstractFile> res = skCase.findAllFilesWhere(createQuery());
             for(AbstractFile c : res){
-                if(c.isFile()){
                     list.add(c);
-                }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get search results", ex);
+            logger.log(Level.SEVERE, "Couldn't get search results", ex);
         }
 
         return list;
         
+    }
+    
+    /**
+     * Get children count without actually loading all nodes
+     * @return 
+     */
+    long calculateItems() {
+        try {
+            return skCase.countFilesWhere(createQuery());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting file search view count", ex);
+            return 0;
+        }
     }
 
     @Override
@@ -92,6 +105,11 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             @Override
             public FileNode visit(File f) {
                 return new FileNode(f, false);
+            }
+            
+            @Override
+            public DirectoryNode visit(Directory d) {
+                return new DirectoryNode(d);
             }
             
             @Override

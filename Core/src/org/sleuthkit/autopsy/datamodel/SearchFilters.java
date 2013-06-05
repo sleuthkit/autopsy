@@ -33,7 +33,9 @@ public class SearchFilters implements AutopsyVisitableItem {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", FileTypeExtensions.getVideoExtensions()),
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
-        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt"));
+        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", "Archives", FileTypeExtensions.getArchiveExtensions()),
+        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")),
+        TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER", "Executable", Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com"));
 
         private int id;
         private String name;
@@ -81,12 +83,58 @@ public class SearchFilters implements AutopsyVisitableItem {
         AUT_DOC_TXT(3, "AUT_DOC_TXT", "Plain Text", Arrays.asList(".txt")),
         AUT_DOC_RTF(4, "AUT_DOC_RTF", "Rich Text", Arrays.asList(".rtf"));
 
-        int id;
-        String name;
-        String displayName;
-        List<String> filter;
+        private int id;
+        private String name;
+        private String displayName;
+        private List<String> filter;
 
         private DocumentFilter(int id, String name, String displayName, List<String> filter){
+            this.id = id;
+            this.name = name;
+            this.displayName = displayName;
+            this.filter = filter;
+        }
+
+        @Override
+        public <T> T accept(AutopsyItemVisitor<T> v) {
+            return v.visit(this);
+        }
+
+        @Override
+        public String getName(){
+            return this.name;
+        }
+
+        @Override
+        public int getId(){
+            return this.id;
+        }
+
+        @Override
+        public String getDisplayName(){
+            return this.displayName;
+        }
+
+        @Override
+        public List<String> getFilter(){
+            return this.filter;
+        }
+    }
+    
+    
+    public enum ExecutableFilter implements AutopsyVisitableItem,SearchFilterInterface {
+        ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")),
+        ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")),
+        ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")),
+        ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")),
+        ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com"));
+        
+        private int id;
+        private String name;
+        private String displayName;
+        private List<String> filter;
+
+        private ExecutableFilter(int id, String name, String displayName, List<String> filter){
             this.id = id;
             this.name = name;
             this.displayName = displayName;

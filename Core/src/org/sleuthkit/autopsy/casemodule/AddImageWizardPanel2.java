@@ -29,7 +29,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 /**
- * The "Add Image" wizard panel2. Handles processing the image in a worker
+ * The "Add Data Source" wizard panel2. Handles processing the image in a worker
  * thread, and any errors that may occur during the add process.
  */
 class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
@@ -90,7 +90,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     void setStateStarted() {
         component.getCrDbProgressBar().setIndeterminate(true);
-        component.changeProgressBarTextAndColor("*Adding the image may take some time for large images.", 0, Color.black);
+        component.changeProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
     }
 
     /**

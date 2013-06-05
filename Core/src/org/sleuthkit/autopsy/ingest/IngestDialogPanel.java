@@ -325,7 +325,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             }
         });
         save(); // save the simple panel
-        dialog.display(currentModule.getAdvancedConfiguration());
+        dialog.display(currentModule.getAdvancedConfiguration(null));
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
@@ -452,7 +452,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         if(this.modulesTable.getSelectedRow() != -1) {
             simplePanel.removeAll();
             if (currentModule.hasSimpleConfiguration()) {
-                simplePanel.add(currentModule.getSimpleConfiguration());
+                simplePanel.add(currentModule.getSimpleConfiguration(null));
             }
             simplePanel.revalidate();
             simplePanel.repaint();

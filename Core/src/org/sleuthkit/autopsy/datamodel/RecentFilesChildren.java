@@ -36,8 +36,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
 
-    SleuthkitCase skCase;
-    Calendar lastDay;
+    private SleuthkitCase skCase;
+    private Calendar lastDay;
     private final static Logger logger = Logger.getLogger(RecentFilesChildren.class.getName());
 
     public RecentFilesChildren(SleuthkitCase skCase) {
@@ -74,8 +74,9 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
         return Math.max(maxcr, Math.max(maxc, maxm));
     }
 
+    //TODO add a generic query to SleuthkitCase
     private String createMaxQuery(String attr) {
-        return "select max(" + attr + ") from tsk_files where " + attr + " < " + System.currentTimeMillis() / 1000;
+        return "SELECT MAX(" + attr + ") from tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000;
     }
 
     @SuppressWarnings("deprecation")

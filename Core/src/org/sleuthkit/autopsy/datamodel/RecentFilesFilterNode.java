@@ -40,7 +40,7 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
     RecentFilesFilterNode(SleuthkitCase skCase, RecentFilesFilter filter, Calendar lastDay) {
         super(Children.create(new RecentFilesFilterChildren(filter, skCase, lastDay), true), Lookups.singleton(filter.getDisplayName()));
         super.setName(filter.getName());
-        super.setDisplayName(filter.getDisplayName());
+        //super.setDisplayName(filter.getDisplayName());
         this.skCase = skCase;
         this.filter = filter;
         Calendar prevDay = (Calendar) lastDay.clone();
@@ -50,6 +50,11 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
                 + prevDay.get(Calendar.YEAR);
         this.setShortDescription(tooltip);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
+        
+        //get count of children without preloading all children nodes
+        final long count = new RecentFilesFilterChildren(filter, skCase, lastDay).calculateItems();
+        //final long count = getChildren().getNodesCount(true);
+        super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
     }
 
     @Override

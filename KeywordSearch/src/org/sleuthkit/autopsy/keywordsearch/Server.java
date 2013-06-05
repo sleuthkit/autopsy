@@ -359,7 +359,7 @@ public class Server {
                 } else {
                     loggingPropertiesFilePath += "logging-release.properties";
                 }
-                //loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
+
                 final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
 
                 final String [] SOLR_START_CMD = {
@@ -371,7 +371,13 @@ public class Server {
                     loggingProperties,
                     "-jar",
                     "start.jar"};
-                logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
+                
+                StringBuilder cmdSb = new StringBuilder();
+                for (int i = 0; i<SOLR_START_CMD.length; ++i ) {
+                    cmdSb.append(SOLR_START_CMD[i]).append(" ");
+                }
+                
+                logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString());
                 curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
                 logger.log(Level.INFO, "Finished starting Solr");
 

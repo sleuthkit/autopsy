@@ -222,13 +222,13 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
+    public javax.swing.JPanel getSimpleConfiguration(String context) {
         HashDbXML.getCurrent().reload();
         return new HashDbSimplePanel();
     }
 
     @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
+    public javax.swing.JPanel getAdvancedConfiguration(String context) {
         //return HashDbManagementPanel.getDefault();
         getPanel().load();
         return getPanel();

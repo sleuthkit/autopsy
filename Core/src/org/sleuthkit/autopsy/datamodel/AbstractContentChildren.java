@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
@@ -39,14 +38,14 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
-*/
+ */
 abstract class AbstractContentChildren<T> extends Keys<T> {
 
     private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
     private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();
-            
+
     /**
-     * Uses lazy Content.Keys 
+     * Uses lazy Content.Keys
      */
     AbstractContentChildren() {
         super(true); // use lazy behavior
@@ -54,21 +53,18 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
     @Override
     protected Node[] createNodes(T key) {
-        if(key instanceof SleuthkitVisitableItem) {
+        if (key instanceof SleuthkitVisitableItem) {
             return new Node[]{((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor)};
-        }
-        else {
+        } else {
             return new Node[]{((AutopsyVisitableItem) key).accept(createAutopsyNodeVisitor)};
         }
     }
 
-   
-    
     /**
      * Creates appropriate Node for each sub-class of Content
      */
     public static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode> {
-        
+
         @Override
         public AbstractContentNode visit(Directory drctr) {
             return new DirectoryNode(drctr);
@@ -88,22 +84,22 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         public AbstractContentNode visit(Volume volume) {
             return new VolumeNode(volume);
         }
-        
+
         @Override
         public AbstractContentNode visit(LayoutFile lf) {
             return new LayoutFileNode(lf);
         }
-        
+
         @Override
         public AbstractContentNode visit(DerivedFile df) {
             return new LocalFileNode(df);
         }
-        
+
         @Override
         public AbstractContentNode visit(LocalFile lf) {
             return new LocalFileNode(lf);
         }
-        
+
         @Override
         public AbstractContentNode visit(VirtualDirectory ld) {
             return new VirtualDirectoryNode(ld);
@@ -114,53 +110,57 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             throw new UnsupportedOperationException("No Node defined for the given SleuthkitItem");
         }
     }
-    
+
     /**
      * Creates appropriate Node for each supported artifact category / grouping
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
-        
+
         @Override
         public ExtractedContentNode visit(ExtractedContent ec) {
             return new ExtractedContentNode(ec.getSleuthkitCase());
         }
-        
+
         @Override
         public AbstractNode visit(SearchFilters sf) {
-            return new SearchFiltersNode(sf.getSleuthkitCase(), true);
+            return new SearchFiltersNode(sf.getSleuthkitCase(), null);
         }
-        
+
         @Override
         public AbstractNode visit(RecentFiles rf) {
             return new RecentFilesNode(rf.getSleuthkitCase());
         }
-        
+
         @Override
         public AbstractNode visit(DeletedContent dc) {
             return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase());
         }
-        
+
+        @Override
+        public AbstractNode visit(FileSize dc) {
+            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase());
+        }
+
         @Override
         public AbstractNode visit(KeywordHits kh) {
             return kh.new KeywordHitsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(HashsetHits hh) {
             return hh.new HashsetHitsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(EmailExtracted ee) {
             return ee.new EmailExtractedRootNode();
         }
-        
-        
+
         @Override
         public AbstractNode visit(Tags t) {
             return t.new TagsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(DataSources i) {
             try {
@@ -169,12 +169,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
                 return defaultVisit(i);
             }
         }
-        
+
         @Override
         public AbstractNode visit(Views v) {
             return new ViewsNode(v.getSleuthkitCase());
         }
-        
+
         @Override
         public AbstractNode visit(Results r) {
             return new ResultsNode(r.getSleuthkitCase());
@@ -185,5 +185,4 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
         }
     }
-    
 }

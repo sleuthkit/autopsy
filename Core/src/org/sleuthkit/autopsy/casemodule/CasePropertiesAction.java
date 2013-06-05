@@ -75,7 +75,7 @@ public final class CasePropertiesAction extends CallableSystemAction {
             int totalImage = currentCase.getRootObjectsCount();
 
             // put the image paths information into hashmap
-            Map<Long, String> imgPaths = currentCase.getImagePaths(currentCase.getSleuthkitCase());
+            Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
 
             // create the case properties form
             CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);

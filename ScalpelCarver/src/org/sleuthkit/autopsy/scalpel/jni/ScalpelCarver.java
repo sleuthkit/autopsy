@@ -156,7 +156,7 @@ public class ScalpelCarver {
         File outputFile = new File(outputFolderPath, SCALPEL_OUTPUT_FILE_NAME);
         
         // parse the output
-        List<CarvedFileMeta> output = Collections.EMPTY_LIST;
+        List<CarvedFileMeta> output = Collections.<CarvedFileMeta>emptyList();
         try {
             output = ScalpelOutputParser.parse(outputFile);
         } catch (FileNotFoundException ex) {
