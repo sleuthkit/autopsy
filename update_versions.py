@@ -711,7 +711,7 @@ def handleRemoveReadonly(func, path, exc):
 # Run git clone and git checkout for the tag
 def do_git(tag, tag_dir):
     try:
-        printt("Cloning Autopsy (this could take a while)...")
+        printt("Cloning Autopsy tag " + tag + " into dir " + tag_dir + " (this could take a while)...")
         subprocess.call(["git", "clone", "https://github.com/sleuthkit/autopsy.git", tag_dir],
                         stdout=subprocess.PIPE)
         printt("Checking out tag " + tag + "...")
@@ -719,8 +719,9 @@ def do_git(tag, tag_dir):
                         stdout=subprocess.PIPE,
                         cwd=tag_dir)
         return True
-    except:
-        print("Error cloning and checking out Autopsy.")
+    except Exception as ex:
+        print("Error cloning and checking out Autopsy: ",  sys.exc_info()[0])
+        print ex
         print("The terminal you are using most likely does not recognize git commands.")
         return False
 

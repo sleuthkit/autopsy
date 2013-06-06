@@ -418,7 +418,7 @@ public class PlatformUtil {
     /**
      * Query and get PID of another java process
      *
-     * @sigarSubQuery a sigar subquery to identify a unique java process among
+     * @param sigarSubQuery a sigar subquery to identify a unique java process among
      * other java processes, for example, by class name, use:
      * Args.*.eq=org.jboss.Main more examples here:
      * http://support.hyperic.com/display/SIGAR/PTQL
@@ -448,7 +448,7 @@ public class PlatformUtil {
     /**
      * Query and get PIDs of another java processes matching a query
      *
-     * @sigarSubQuery a sigar subquery to identify a java processes among other
+     * @param sigarSubQuery a sigar subquery to identify a java processes among other
      * java processes, for example, by class name, use: Args.*.eq=org.jboss.Main
      * more examples here: http://support.hyperic.com/display/SIGAR/PTQL
      *

@@ -1,8 +1,8 @@
----------------- VERSION Current (development)  --------------
+---------------- VERSION 3.0.6  --------------
 
 New features:
-- Local files and folders support
-- Deleted files view in directory tree
+- Logical files and folders support
+- New file views in directory tree to view: deleted, executable, archive files and files by size
 
 Improvements:
 - Improvements to tagging of files and keyword search results
@@ -13,6 +13,7 @@ Bugfixes:
 - fix for "Process Unallocated Space" option doesn't do anything
 - fixed result viewer for "File Search by MD5 Hash"
 - fix Solr, Timeline and RecentActivity issues with java 7.0.21 
+- Views->Recent Files showing inconsistent results when clicked many times
 
 
 ---------------- VERSION 3.0.5 --------------

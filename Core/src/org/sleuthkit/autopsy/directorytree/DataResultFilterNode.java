@@ -48,6 +48,8 @@ import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
+import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
@@ -365,15 +367,25 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(RecentFilesNode rfn) {
             return openChild(rfn);
         }
-        
+
         @Override
         public AbstractAction visit(DeletedContentsNode dcn) {
             return openChild(dcn);
         }
-        
+
         @Override
         public AbstractAction visit(DeletedContentNode dcn) {
             return openChild(dcn);
+        }
+
+        @Override
+        public AbstractAction visit(FileSizeRootNode fsrn) {
+            return openChild(fsrn);
+        }
+
+        @Override
+        public AbstractAction visit(FileSizeNode fsn) {
+            return openChild(fsn);
         }
 
         @Override

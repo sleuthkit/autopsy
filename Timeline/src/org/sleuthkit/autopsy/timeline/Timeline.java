@@ -80,7 +80,6 @@ import org.openide.modules.ModuleInstall;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -99,15 +98,11 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
-@ActionRegistration(displayName = "#CTL_MakeTimeline")
+@ActionRegistration(displayName = "#CTL_MakeTimeline", lazy=false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
@@ -121,14 +116,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private HBox fxHBoxCharts;      //Holds the navigation buttons in horiztonal fashion. 
     private VBox fxVBox;        //Holds the JavaFX Elements in vertical fashion. 
     private JFXPanel fxPanelCharts;  //FX panel to hold the group
-    private BarChart fxChartEvents;      //Yearly/Monthly events - Bar chart
+    private BarChart<String,Number> fxChartEvents;      //Yearly/Monthly events - Bar chart
     private ScrollPane fxScrollEvents;  //Scroll Panes for dealing with oversized an oversized chart
     private static final int FRAME_HEIGHT = 700; //Sizing constants
     private static final int FRAME_WIDTH = 1200;
     private Button fxZoomOutButton;  //Navigation buttons
     private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
-    private final Stack<BarChart> fxStackPrevCharts = new Stack<BarChart>();  //Stack for storing drill-up information.
-    private BarChart fxChartTopLevel; //the topmost chart, used for resetting to default view.
+    private final Stack<BarChart<String,Number>> fxStackPrevCharts = new Stack<BarChart<String,Number>>();  //Stack for storing drill-up information.
+    private BarChart<String,Number> fxChartTopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResultPanel;
     private DataContentPanel dataContentPanel;
     private ProgressHandle progress;
@@ -138,8 +133,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private boolean listeningToAddImage = false;
     private long lastObjectId = -1;
     private TimelineProgressDialog progressDialog;
-    private EventHandler fxMouseEnteredListener;
-    private EventHandler fxMouseExitedListener;
+    private EventHandler<MouseEvent> fxMouseEnteredListener;
+    private EventHandler<MouseEvent> fxMouseExitedListener;
     private SleuthkitCase skCase;
     private boolean fxInited = false;
 
@@ -270,14 +265,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         lsi.add(ye.year + " : " + ye.getNumFiles());
                     }
                     ObservableList<String> listSelect = FXCollections.observableArrayList(lsi);
-                    fxDropdownSelectYears = new ComboBox(listSelect);
+                    fxDropdownSelectYears = new ComboBox<String>(listSelect);
 
                     //Buttons for navigating up and down the timeline
                     fxZoomOutButton = new Button("Zoom Out");
                     fxZoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
-                            BarChart bc;
+                            BarChart<String,Number> bc;
                             if (fxStackPrevCharts.size() == 0) {
                                 bc = fxChartTopLevel;
                             } else {
@@ -344,7 +339,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * @param allYears The list of years that have barData from the mactime file
      * @return BarChart scaled to the year level
      */
-    private BarChart createYearChartWithDrill(final List<YearEpoch> allYears) {
+    private BarChart<String,Number> createYearChartWithDrill(final List<YearEpoch> allYears) {
         final CategoryAxis xAxis = new CategoryAxis(); //Axes are very specific types. Categorys are strings.
         final NumberAxis yAxis = new NumberAxis();
         final Label l = new Label("");
@@ -372,7 +367,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         // But it is for this reason that the chart generating functions have two forloops. I do not believe they can be condensed into a single loop due to the nodes being null until 
         // an undetermined point in time. 
         BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
-        for (final BarChart.Data barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
+        for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
             barData.getNode().setScaleX(.5);
 
             final javafx.scene.Node barNode = barData.getNode();
@@ -390,7 +385,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                             Platform.runLater(new Runnable() {
                                 @Override
                                 public void run() {
-                                    BarChart b = createMonthsWithDrill((YearEpoch) findYear(allYears, Integer.valueOf((String) barData.getXValue())));
+                                    BarChart<String,Number> b = 
+                                            createMonthsWithDrill(findYear(allYears, Integer.valueOf(barData.getXValue())));
                                     fxChartEvents = b;
                                     fxScrollEvents.setContent(fxChartEvents);
                                 }
@@ -412,7 +408,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Displays a chart with events from one year only, separated into 1-month chunks.
      * Always 12 per year, empty months are represented by no bar.
      */
-    private BarChart createMonthsWithDrill(final YearEpoch ye) {
+    private BarChart<String,Number> createMonthsWithDrill(final YearEpoch ye) {
 
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
@@ -431,7 +427,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
 
         for (int i = 0; i < 12; i++) {
-            for (final BarChart.Data barData : bc.getData().get(0).getData()) {
+            for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) {
                 //Note: 
                 // All the charts of this package have a problem where when the chart gets below a certain pixel ratio, the barData stops drawing. The axes and the labels remain, 
                 // But the actual chart barData is invisible, unclickable, and unrendered. To partially compensate for that, barData.getNode() can be manually scaled up to increase visibility.
@@ -454,7 +450,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                                 Platform.runLater(new Runnable() {
                                     @Override
                                     public void run() {
-                                        fxChartEvents = createEventsByMonth(findMonth(ye.months, monthStringToInt((String) barData.getXValue())), ye);
+                                        fxChartEvents = createEventsByMonth(findMonth(ye.months, monthStringToInt(barData.getXValue())), ye);
                                         fxScrollEvents.setContent(fxChartEvents);
                                     }
                                 });
@@ -477,20 +473,22 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Displays a chart with events from one month only.
      * Up to 31 days per month, as low as 28 as determined by the specific MonthEpoch
      */
-    private BarChart createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
+    private BarChart<String,Number> createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Day of Month");
         yAxis.setLabel("Number of Events");
-        ObservableList<BarChart.Data> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
-        BarChart.Series<String, Number> series = new BarChart.Series(bcData);
+        ObservableList<BarChart.Data<String,Number>> bcData 
+                = makeObservableListByMonthAllDays(me, ye.getYear());
+        BarChart.Series<String, Number> series = new BarChart.Series<String,Number>(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
 
 
-        ObservableList<BarChart.Series<String, Number>> ol = FXCollections.observableArrayList(series);
+        ObservableList<BarChart.Series<String, Number>> ol = 
+                FXCollections.<BarChart.Series<String, Number>>observableArrayList(series);
 
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, ol);
-        for (final BarChart.Data barData : bc.getData().get(0).getData()) {
+        for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) {
             //data.getNode().setScaleX(2);
 
             final javafx.scene.Node barNode = barData.getNode();
@@ -505,7 +503,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 @Override
                 public void handle(MouseEvent e) {
-                    final int day = (Integer.valueOf(((String) barData.getXValue()).split("-")[1]));
+                    final int day = (Integer.valueOf((barData.getXValue()).split("-")[1]));
                     final DayEpoch de = myme.getDay(day);
                     final List<AbstractFile> afs;
                     if (de != null) {
@@ -535,13 +533,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         return bc;
     }
 
-    private static ObservableList<BarChart.Data> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
-        ObservableList<BarChart.Data> bcData = FXCollections.observableArrayList();
+    private static ObservableList<BarChart.Data<String,Number>> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
+        ObservableList<BarChart.Data<String,Number>> bcData = FXCollections.observableArrayList();
         int totalDays = me.getTotalNumDays(year);
         for (int i = 1; i <= totalDays; ++i) {
             DayEpoch day = me.getDay(i);
             int numFiles = day == null ? 0 : day.getNumFiles();
-            BarChart.Data d = new BarChart.Data(me.month + 1 + "-" + i, numFiles);
+            BarChart.Data<String,Number> d = new BarChart.Data<String,Number>(me.month + 1 + "-" + i, numFiles);
             d.setExtraValue(me);
             bcData.add(d);
         }

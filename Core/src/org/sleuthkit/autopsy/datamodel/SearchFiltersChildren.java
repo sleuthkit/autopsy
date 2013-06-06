@@ -31,28 +31,38 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 class SearchFiltersChildren extends ChildFactory<SearchFilters.SearchFilterInterface> {
     
     private SleuthkitCase skCase;
-    private boolean root;
+    private SearchFilters.FileSearchFilter filter;
 
-    public SearchFiltersChildren(SleuthkitCase skCase, boolean root) {
+    public SearchFiltersChildren(SleuthkitCase skCase, SearchFilters.FileSearchFilter filter) {
         this.skCase = skCase;
-        this.root = root;
+        this.filter = filter;
     }
 
     @Override
     protected boolean createKeys(List<SearchFilters.SearchFilterInterface> list) {
-        if(root)
+        if (filter == null) {
             list.addAll(Arrays.asList(FileSearchFilter.values()));
-        else
+        }
+        else if (filter.equals(FileSearchFilter.TSK_DOCUMENT_FILTER) ){
             list.addAll(Arrays.asList(SearchFilters.DocumentFilter.values()));
+        }
+        else if (filter.equals(FileSearchFilter.TSK_EXECUTABLE_FILTER) ){
+            list.addAll(Arrays.asList(SearchFilters.ExecutableFilter.values()));
+        }
         return true;
     }
     
     @Override
     protected Node createNodeForKey(SearchFilters.SearchFilterInterface key){
         if(key.getName().equals(SearchFilters.FileSearchFilter.TSK_DOCUMENT_FILTER.getName())){
-            return new SearchFiltersNode(skCase, false);
+            return new SearchFiltersNode(skCase, SearchFilters.FileSearchFilter.TSK_DOCUMENT_FILTER);
         }
-        return new FileSearchFilterNode(key, skCase);
+        else if(key.getName().equals(SearchFilters.FileSearchFilter.TSK_EXECUTABLE_FILTER.getName())){
+            return new SearchFiltersNode(skCase, SearchFilters.FileSearchFilter.TSK_EXECUTABLE_FILTER);
+        }
+        else {
+            return new FileSearchFilterNode(key, skCase);
+        }
     }
     
 }

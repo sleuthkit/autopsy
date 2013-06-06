@@ -57,7 +57,7 @@ final class AddImageVisualPanel1 extends JPanel {
     private AddImageWizardPanel1 wizPanel;
     private ContentTypeModel model;
     
-    ContentTypePanel currentPanel;
+    private ContentTypePanel currentPanel;
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -231,13 +231,13 @@ final class AddImageVisualPanel1 extends JPanel {
         jLabel2 = new javax.swing.JLabel();
         nextLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox();
+        timeZoneComboBox = new javax.swing.JComboBox<String>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
         inputPanel = new javax.swing.JPanel();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
-        typeComboBox = new javax.swing.JComboBox();
+        typeComboBox = new javax.swing.JComboBox<ContentTypePanel>();
         imgInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
@@ -355,9 +355,9 @@ final class AddImageVisualPanel1 extends JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel nextLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JComboBox timeZoneComboBox;
+    private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
-    private javax.swing.JComboBox typeComboBox;
+    private javax.swing.JComboBox<ContentTypePanel> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
@@ -377,9 +377,10 @@ final class AddImageVisualPanel1 extends JPanel {
     /**
      * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
      */
-    private class ContentTypeModel implements ComboBoxModel {
-        ContentTypePanel selected;
-        ContentTypePanel[] types = ContentTypePanel.getPanels();
+    private class ContentTypeModel implements ComboBoxModel<ContentTypePanel> {
+        private ContentTypePanel selected;
+        private ContentTypePanel[] types = ContentTypePanel.getPanels();
+        
         
         @Override
         public void setSelectedItem(Object anItem) {
@@ -398,7 +399,7 @@ final class AddImageVisualPanel1 extends JPanel {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public ContentTypePanel getElementAt(int index) {
             return types[index];
         }
 

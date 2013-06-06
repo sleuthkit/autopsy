@@ -38,24 +38,24 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
- * deleted content view nodes
+ * Files by Size View node and related child nodes
  */
-public class DeletedContent implements AutopsyVisitableItem {
+public class FileSize implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 
-    public enum DeletedContentFilter implements AutopsyVisitableItem {
+    public enum FileSizeFilter implements AutopsyVisitableItem {
 
-        FS_DELETED_FILTER(0, "FS_DELETED_FILTER", "File System"),
-        ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", "All");
+        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"),
+        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"),
+        SIZE_1000_(2, "SIZE_1000+", "1GB+");
         private int id;
         private String name;
         private String displayName;
 
-        private DeletedContentFilter(int id, String name, String displayName) {
+        private FileSizeFilter(int id, String name, String displayName) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -80,7 +80,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
     }
 
-    public DeletedContent(SleuthkitCase skCase) {
+    public FileSize(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 
@@ -93,22 +93,22 @@ public class DeletedContent implements AutopsyVisitableItem {
         return this.skCase;
     }
 
-    public static class DeletedContentsNode extends DisplayableItemNode {
+    public static class FileSizeRootNode extends DisplayableItemNode {
 
-        private static final String NAME = "Deleted Files";
+        private static final String NAME = "File Size";
         private SleuthkitCase skCase;
 
-        DeletedContentsNode(SleuthkitCase skCase) {
-            super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
+        FileSizeRootNode(SleuthkitCase skCase) {
+            super(Children.create(new FileSizeRootChildren(skCase), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.skCase = skCase;
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png");
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.META;
+        public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
+            return DisplayableItemNode.TYPE.META;
         }
 
         @Override
@@ -133,44 +133,44 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
     }
 
-    public static class DeletedContentsChildren extends ChildFactory<DeletedContent.DeletedContentFilter> {
+    public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
 
-        public DeletedContentsChildren(SleuthkitCase skCase) {
+        public FileSizeRootChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
 
         }
 
         @Override
-        protected boolean createKeys(List<DeletedContent.DeletedContentFilter> list) {
-            list.addAll(Arrays.asList(DeletedContent.DeletedContentFilter.values()));
+        protected boolean createKeys(List<FileSizeFilter> list) {
+            list.addAll(Arrays.asList(FileSizeFilter.values()));
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(DeletedContent.DeletedContentFilter key) {
-            return new DeletedContentNode(skCase, key);
+        protected Node createNodeForKey(FileSizeFilter key) {
+            return new FileSizeNode(skCase, key);
         }
 
-        public class DeletedContentNode extends DisplayableItemNode {
+        public class FileSizeNode extends DisplayableItemNode {
 
             private SleuthkitCase skCase;
-            private DeletedContent.DeletedContentFilter filter;
-            private final Logger logger = Logger.getLogger(DeletedContentNode.class.getName());
+            private FileSizeFilter filter;
+            private final Logger logger = Logger.getLogger(FileSizeNode.class.getName());
 
-            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter) {
-                super(Children.create(new DeletedContentChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
+            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter) {
+                super(Children.create(new FileSizeChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
                 super.setName(filter.getName());
                 this.skCase = skCase;
                 this.filter = filter;
 
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png");
 
                 //get count of children without preloading all children nodes
-                final long count = new DeletedContentChildren(filter, skCase).calculateItems();
+                final long count = new FileSizeChildren(filter, skCase).calculateItems();
                 //final long count = getChildren().getNodesCount(true);
                 super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
             }
@@ -198,8 +198,8 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            public TYPE getDisplayableItemNodeType() {
-                return TYPE.META;
+            public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
+                return DisplayableItemNode.TYPE.META;
             }
 
             @Override
@@ -208,13 +208,13 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
         }
 
-        class DeletedContentChildren extends ChildFactory<AbstractFile> {
+        class FileSizeChildren extends ChildFactory<AbstractFile> {
 
             private SleuthkitCase skCase;
-            private DeletedContent.DeletedContentFilter filter;
-            private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
+            private FileSizeFilter filter;
+            private final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
-            DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
+            FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase) {
                 this.skCase = skCase;
                 this.filter = filter;
             }
@@ -228,33 +228,21 @@ public class DeletedContent implements AutopsyVisitableItem {
             private String makeQuery() {
                 String query = "";
                 switch (filter) {
-                    case FS_DELETED_FILTER:
-                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType();
+                    case SIZE_50_200:
+                        query = "size >= 50000000 AND size < 200000000";
 
                         break;
-                    case ALL_DELETED_FILTER:
-                        query = " ( "
-                                + "( "
-                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " OR "
-                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
-                                + ")"
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()
-                                + " )"
-                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType()
-                                + " )";
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
+                    case SIZE_200_1000:
+                        query = "size >= 200000000 AND size < 1000000000";
+
+                        break;
+                        
+                    case SIZE_1000_:
+                        query = "size >= 1000000000";
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: " + filter);
+                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: " + filter);
 
                 }
 
@@ -268,7 +256,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + query, e);
+                    logger.log(Level.SEVERE, "Error getting files for the file size view using: " + query, e);
                 }
 
                 return ret;
@@ -284,7 +272,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 try {
                     return skCase.countFilesWhere(makeQuery());
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting deleted files search view count", ex);
+                    logger.log(Level.SEVERE, "Error getting files by size search view count", ex);
                     return 0;
                 }
             }

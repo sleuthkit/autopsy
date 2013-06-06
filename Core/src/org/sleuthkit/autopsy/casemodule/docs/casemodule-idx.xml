@@ -9,8 +9,8 @@ and open the template in the editor.
     <indexitem text="Quick Start" target="org.sleuthkit.autopsy.casemodule.quickstart"/>
     <indexitem text="About Cases" target="org.sleuthkit.autopsy.casemodule.about"/>
     <indexitem text="Creating a Case" target="org.sleuthkit.autopsy.casemodule.how-to-create-case"/>
-    <indexitem text="About Images" target="org.sleuthkit.autopsy.casemodule.image-about"/>
-    <indexitem text="Adding an Image" target="org.sleuthkit.autopsy.casemodule.add-image"/>
+    <indexitem text="About Data Sources" target="org.sleuthkit.autopsy.casemodule.image-about"/>
+    <indexitem text="Adding a Data Source" target="org.sleuthkit.autopsy.casemodule.add-image"/>
     <indexitem text="Case Properties Window" target="org.sleuthkit.autopsy.casemodule.caseproperties"/>
     <indexitem text="Hash Database Management" target="org.sleuthkit.autopsy.casemodule.hashdbmgmt"/>
 </index>

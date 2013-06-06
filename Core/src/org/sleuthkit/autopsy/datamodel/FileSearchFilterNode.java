@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -35,10 +33,17 @@ public class FileSearchFilterNode extends DisplayableItemNode {
 
     FileSearchFilterNode(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         super(Children.create(new FileSearchFilterChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
-        super.setName(filter.getName());
-        super.setDisplayName(filter.getDisplayName());
+        
         this.filter = filter;
         this.skCase = skCase;
+        
+        super.setName(filter.getName());
+        
+        //get count of children without preloading all children nodes
+        final long count = new FileSearchFilterChildren(filter, skCase).calculateItems();
+        //final long count = getChildren().getNodesCount(true);
+        super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
+
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
     }
 
