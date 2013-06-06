@@ -106,7 +106,7 @@ public class ScalpelCarver {
      * @param file File to carve 
      * @param configFilePath file path to scalpel
      * configuration file with signatures, such as scalpel.conf
-     * @param outputFolder Location to save the reults to (should be in the case
+     * @param outputFolderPath Location to save the reults to (should be in the case
      * folder)
      * @return list of carved files info
      * @throws ScalpelException on errors

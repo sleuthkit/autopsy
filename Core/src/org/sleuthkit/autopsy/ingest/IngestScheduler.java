@@ -197,7 +197,8 @@ class IngestScheduler {
         }
 
         /**
-         * Task to process returned by FileScheduler.getNext()
+         * Task for a specific file to process.  
+         * More specific than the higher-level ScheduledTask.
          */
         static class ProcessTask {
 

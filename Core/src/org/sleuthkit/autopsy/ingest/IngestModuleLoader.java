@@ -782,24 +782,9 @@ public final class IngestModuleLoader {
                                     imagePipeline.add(imageModuleInstance);
                                 }
 
-                            } catch (NoSuchMethodException ex) {
+                            } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                                 logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
                                 pMod.valid = false;
-                            } catch (SecurityException ex) {
-                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
-                                pMod.valid = false;
-                            } catch (InstantiationException ex) {
-                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
-                                pMod.valid = false; //prevent from trying to load again
-                            } catch (IllegalAccessException ex) {
-                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
-                                pMod.valid = false; //prevent from trying to load again
-                            } catch (IllegalArgumentException ex) {
-                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
-                                pMod.valid = false; //prevent from trying to load again
-                            } catch (InvocationTargetException ex) {
-                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
-                                pMod.valid = false; //prevent from trying to load again
                             }
 
 

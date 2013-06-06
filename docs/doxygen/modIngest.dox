@@ -43,21 +43,9 @@ and with inbox messages to the user.
 
 \section ingest_image Image-level Modules
 
-To make an Image-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleImage". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the links above to fill in the details.
-
-The org.sleuthkit.autopsy.ingest.IngestModuleImage.process() method gets several objects passed in.  
-get a reference to org.sleuthkit.autopsy.ingest.IngestImageWorkerController object.
-
-They should use this object to:
-- report progress (number of work units processed),
-- add thread cancellation support.
-
-New instances of image-level modules will be created when the second image is added. 
-Therefore, image-level modules can assume that the process() method will be called at most once after init() is called. 
-
+To make an Image-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleImage". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleImage class for details on what each needs to do. 
 
 Example snippet of an ingest-level module process() method:
-
 
 \code
 @Override
@@ -94,30 +82,15 @@ public void process(Image image, IngestImageWorkerController controller) {
 
 \section ingest_file File-level Modules
 
-To make a File-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the links above to fill in the details.
+To make a File-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the method documentation in the org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile class to fill in the details.
 
-File-level modules are singletons.  Only a single instance is created for all files. 
-The same file-level module instance can be invoked again by the org.sleuthkit.autopsy.ingest.IngestManager when more work is enqueued or 
-when ingest is restarted.  The same file-level ingest module instance can also be invoked for different Cases or files from different images in the Case.
+Unlike Image-level modules, file-level modules are singletons.  Only a single instance is created for all files. 
+The same file-level module instance will be used for files in different images and even different cases if new cases are opened. 
 
-Every file-level module should support multiple init() -> process() -> complete(), and init() -> process() -> stop() invocations.  It shoudl also support init() -> complete() sequences.
+Every file-level module should support multiple init() -> process() -> complete(), and init() -> process() -> stop() invocations.  It should also support init() -> complete() sequences.
 
-
-------
-
-
-
-
-
-\subsection ingestmodule_additional_method Additional Methods to Implement
-MOVE THIS TO COMMON
-
-Besides methods defined in the interfaces, you will need to implement 
-a public static getDefault() method (both for an image or a file module), which needs
-to return a static instance of the module.  This is required for proper module registration.
-
-Presence of that method is validated when the module is loaded, and the module will fail validation
-and will not be loaded if the method is not implemented.  
+Currently (and this is likely to change in the future), File-level ingest modules are Singletons (meaning that only a single instance is created for the runtime of Autopsy).  
+You will need to implement a public static getDefault() method that returns a static instance of the module.  Note that if you skip this step, you will not see an error until Autopsy tries to load your module and the log will say that it does not have a getDefault method. 
 
 The implementation of this method is very standard, example:
 
@@ -133,10 +106,10 @@ public static synchronized MyIngestModule getDefault() {
 \endcode
 
 
-File-level modules need to be singleton.  To ensure this, make the constructor private. 
+You should also make the constructor private to ensure the singleton status. 
 
-Image-level modules require a public constructor.
 
+----- ENDED HERE ----
 
 \subsection ingestmodule_making_registration Module Registration
 

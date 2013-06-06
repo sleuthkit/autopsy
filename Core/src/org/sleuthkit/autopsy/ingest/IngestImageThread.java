@@ -35,8 +35,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * worker for every ingest image module there is a separate instance per image /
- * module pair
+ * Worker thread that runs an image-level ingest module. 
+ * Used to process only a single image and single module. 
  */
 public class IngestImageThread extends SwingWorker<Void, Void> {
 
