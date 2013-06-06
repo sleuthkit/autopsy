@@ -12,7 +12,7 @@ This page describes the basic concepts and setup that are needed regardless of t
 
 \subsection mod_dev_setup_nb NetBeans 
 
-Autopsy is built on top of the NetBeans Rich Client Platform, which makes it easy to make plug-in infrastructures. To do any development, you really need to download NetBeans first. You can in theory develop modules by command line only, but this document assumes that you are using the IDE. Download and install the latest version of the IDE from X. 
+Autopsy is built on top of the NetBeans Rich Client Platform, which makes it easy to make plug-in infrastructures. To do any development, you really need to download NetBeans first. You can in theory develop modules by command line only, but this document assumes that you are using the IDE. Download and install the latest version of the IDE from http://www.netbeans.org. 
 
 \subsection mod_dev_setup_java Java
 
@@ -31,9 +31,7 @@ The easiest approach is install Autopsy on your computer.  It will have everythi
 
 \subsubsection mod_dev_setup_platform_src Source Code-based Platform
 
-If you want to build against the bleeding edge code and updates that have occured since the last release, then you must download the latest source code and build it.  This involves getting a full development environment setup. 
-
-// @@@ ADD LINK IN HERE TO DEV SETUP ON WIKI
+If you want to build against the bleeding edge code and updates that have occured since the last release, then you must download the latest source code and build it.  This involves getting a full development environment setup. Refer to the wiki page at http://wiki.sleuthkit.org/index.php?title=Autopsy_Developer%27s_Guide for details on getting the source code and a development environment setup.
 
 To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT in the root source repository to properly build and setup Autopsy in NetBeans. 
 
@@ -81,8 +79,10 @@ under Build -> Packaging.  Check the box that says Needs Restart on Install.
 \subsubsection mod_dev_mod_config_other Optional Settings
 There are several optional things in the Properties section.  You can add a description and specify the version.  You can do all of this later though and it does not need to be done before you start development. 
 
-TODO: @@@ Add link here about NetBeans versioning scheme. 
-TODO: @@@ Add mention somwhere in the docs about Autopsy's versioning scheme
+A link about the NetBeans versioning scheme can be found here http://wiki.netbeans.org/VersioningPolicy. 
+Autopsy follows this scheme and we will make a wiki page about it.
+
+TODO: @@@ Add link to our wiki with Autopsy's versioning scheme
 
 
 
