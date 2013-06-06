@@ -22,12 +22,8 @@ import java.util.Objects;
 
 
 /**
- *
- * Context associated with ingest module instance.
- * Context may contain details in which the module runs, such as data, 
- * configuration, and the encompassing ingest task.
- * 
- * Context contains the task ingest was scheduled with.
+ * Stores information about a given pipeline, which is a series of modules. 
+ * This is passed into modules for their reference. 
  * 
  * @param T type of the ingest associated with the context (file or image)
  * 
@@ -43,11 +39,19 @@ public class PipelineContext <T extends IngestModuleAbstract> {
     
     
 
+    /**
+     * Returns the currently scheduled task.
+     * @return 
+     */
     ScheduledTask<T> getScheduledTask() {
         return task;
     }
 
 
+    /**
+     * Returns value of if unallocated space is going to be scheduled.
+     * @return True if pipeline is processing unallocated space. 
+     */
     boolean isProcessUnalloc() {
         return processUnalloc;
     }

@@ -53,13 +53,6 @@ public final class RAImageIngestModule extends IngestModuleImage {
     public RAImageIngestModule() {
     }
 
-    //default instance used for module registration
-    public static synchronized RAImageIngestModule getDefault() {
-        if (defaultInstance == null) {
-            defaultInstance = new RAImageIngestModule();
-        }
-        return defaultInstance;
-    }
 
     @Override
     public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
