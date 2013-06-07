@@ -32,9 +32,9 @@ public abstract class IngestModuleAbstract {
      */
     public enum ModuleType {
         /**
-         * Image type module
+         * DataSource type module
          */
-        Image,  
+        DataSource,  
         
         /**
          * AbstractFile type module
@@ -94,7 +94,7 @@ public abstract class IngestModuleAbstract {
     abstract public String getDescription();
     
     /**
-     * Returns type of the module (Image-level or file-level)
+     * Returns type of the module (data source-level or file-level)
      * @return module type
      */
     abstract public ModuleType getType();

@@ -350,7 +350,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
-            for (IngestModuleAbstract module : manager.enumerateImageModules()) {
+            for (IngestModuleAbstract module : manager.enumerateDataSourceModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
         }

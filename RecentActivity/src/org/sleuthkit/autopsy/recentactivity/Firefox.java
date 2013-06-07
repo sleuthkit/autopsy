@@ -35,17 +35,17 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -73,22 +73,22 @@ public class Firefox extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
-        this.getHistory(image, controller);
-        this.getBookmark(image, controller);
-        this.getDownload(image, controller);
-        this.getCookie(image, controller);
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        this.getHistory(dataSource, controller);
+        this.getBookmark(dataSource, controller);
+        this.getDownload(dataSource, controller);
+        this.getCookie(dataSource, controller);
     }
 
-    private void getHistory(Image image, IngestImageWorkerController controller) {
+    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
         //Make these seperate, this is for history
 
-        //List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
+        //List<FsContent> FFSqlitedb = this.extractFiles(dataSource, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> historyFiles = null;
+        List<AbstractFile> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles(image, "%places.sqlite%", "Firefox");
+            historyFiles = fileManager.findFiles(dataSource, "%places.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching internet history files for Firefox.");
         }
@@ -98,7 +98,7 @@ public class Firefox extends Extract {
         }
 
         int j = 0;
-        for (FsContent historyFile : historyFiles) {
+        for (AbstractFile historyFile : historyFiles) {
             String fileName = historyFile.getName();
             String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
             int errors = 0;
@@ -139,12 +139,12 @@ public class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
-    private void getBookmark(Image image, IngestImageWorkerController controller) {
+    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> bookmarkFiles = null;
+        List<AbstractFile> bookmarkFiles = null;
         try {
-            bookmarkFiles = fileManager.findFiles(image, "places.sqlite", "Firefox");
+            bookmarkFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching bookmark files for Firefox.");
         }
@@ -154,7 +154,7 @@ public class Firefox extends Extract {
         }
 
         int j = 0;
-        for (FsContent bookmarkFile : bookmarkFiles) {
+        for (AbstractFile bookmarkFile : bookmarkFiles) {
             String fileName = bookmarkFile.getName();
             String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
             int errors = 0;
@@ -194,12 +194,12 @@ public class Firefox extends Extract {
 
     //COOKIES section
     // This gets the cookie info
-    private void getCookie(Image image, IngestImageWorkerController controller) {
+    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles(image, "cookies.sqlite", "Firefox");
+            cookiesFiles = fileManager.findFiles(dataSource, "cookies.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching cookies files for Firefox.");
         }
@@ -209,7 +209,7 @@ public class Firefox extends Extract {
         }
 
         int j = 0;
-        for (FsContent cookiesFile : cookiesFiles) {
+        for (AbstractFile cookiesFile : cookiesFiles) {
             String fileName = cookiesFile.getName();
             String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
             int errors = 0;
@@ -270,12 +270,12 @@ public class Firefox extends Extract {
 
     //Downloads section
     // This gets the downloads info
-    private void getDownload(Image image, IngestImageWorkerController controller) {
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> downloadsFiles = null;
+        List<AbstractFile> downloadsFiles = null;
         try {
-            downloadsFiles = fileManager.findFiles(image, "downloads.sqlite", "Firefox");
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'downloads' files for Firefox.");
         }
@@ -285,7 +285,7 @@ public class Firefox extends Extract {
         }
 
         int j = 0;
-        for (FsContent downloadsFile : downloadsFiles) {
+        for (AbstractFile downloadsFile : downloadsFiles) {
             String fileName = downloadsFile.getName();
             String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
             int errors = 0;
@@ -312,7 +312,7 @@ public class Firefox extends Extract {
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", (Long.valueOf(result.get("startTime").toString()))));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(image, urldecodedtarget)));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, urldecodedtarget)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", ((result.get("target").toString() != null) ? result.get("target").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));

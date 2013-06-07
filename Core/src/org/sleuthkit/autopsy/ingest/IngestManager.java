@@ -43,7 +43,6 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
 
 /**
  * IngestManager sets up and manages ingest modules runs them in a background
@@ -62,10 +61,10 @@ public class IngestManager {
     private final IngestScheduler scheduler;
     //workers
     private IngestAbstractFileProcessor abstractFileIngester;
-    private List<IngestImageThread> imageIngesters;
+    private List<IngestDataSourceThread> dataSourceIngesters;
     private SwingWorker<Object, Void> queueWorker;
     //modules
-    private List<IngestModuleImage> imageModules;
+    private List<IngestModuleDataSource> dataSourceModules;
     private List<IngestModuleAbstractFile> abstractFileModules;
     // module return values
     private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<String, IngestModuleAbstractFile.ProcessResult>();
@@ -127,7 +126,7 @@ public class IngestManager {
     private static volatile IngestManager instance;
 
     private IngestManager() {
-        imageIngesters = new ArrayList<IngestImageThread>();
+        dataSourceIngesters = new ArrayList<IngestDataSourceThread>();
 
         scheduler = IngestScheduler.getInstance();
 
@@ -147,11 +146,11 @@ public class IngestManager {
                     if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
                         //TODO might need to not allow to remove modules if they are running
                         abstractFileModules = moduleLoader.getAbstractFileIngestModules();
-                        imageModules = moduleLoader.getImageIngestModules();
+                        dataSourceModules = moduleLoader.getDataSourceIngestModules();
                     }
                 }
             });
-            imageModules = moduleLoader.getImageIngestModules();
+            dataSourceModules = moduleLoader.getDataSourceIngestModules();
         } catch (IngestModuleLoaderException ex) {
             logger.log(Level.SEVERE, "Error getting module loader");
         }
@@ -224,11 +223,11 @@ public class IngestManager {
     }
 
     /**
-     * Multiple image version of execute() method. Enqueues multiple data inputs (Content objects) 
+     * Multiple data-sources version of execute() method. Enqueues multiple sources inputs (Content objects) 
      * and associated modules at once
      *
-     * @param modules modules to execute on every image
-     * @param inputs inputs  to enqueue and execute the ingest modules on
+     * @param modules modules to execute on every data source
+     * @param inputs input data sources  to enqueue and execute the ingest modules on
      */
     public void execute(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
         logger.log(Level.INFO, "Will enqueue number of inputs: " + inputs.size() 
@@ -244,7 +243,7 @@ public class IngestManager {
         if (ui != null) {
             ui.restoreMessages();
         }
-        //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + AbstractFileQueue.toString());
+
     }
 
     /**
@@ -258,8 +257,8 @@ public class IngestManager {
      * not block and can be called multiple times to enqueue more work to
      * already running background ingest process.
      *
-     * @param modules modules to execute on the image
-     * @param input input Content objects to execute the ingest modules on
+     * @param modules modules to execute on the data source input
+     * @param input input data source Content objects to execute the ingest modules on
      */
     public void execute(final List<IngestModuleAbstract> modules, final Content input) {
         List<Content> inputs = new ArrayList<Content>();
@@ -269,7 +268,7 @@ public class IngestManager {
     }
 
     /**
-     * Schedule a file for ingest and add it to ongoing file ingest process on the same image. 
+     * Schedule a file for ingest and add it to ongoing file ingest process on the same data source. 
      * Scheduler updates the current progress.
      *
      * The file to be added is usually a product of a currently ran ingest. 
@@ -289,14 +288,14 @@ public class IngestManager {
      * if AbstractFile module is still running, do nothing and allow it to
      * consume queue otherwise start /restart AbstractFile worker
      *
-     * image workers run per (module,image). Check if one for the (module,image)
+     * data source ingest workers run per (module,content). Checks if one for the same (module,content)
      * is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
-        final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+        final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
         final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
 
-        logger.log(Level.INFO, "Image queue: " + imageScheduler.toString());
+        logger.log(Level.INFO, "DataSource queue: " + dataSourceScheduler.toString());
         logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
 
         if (!ingestMonitor.isRunning()) {
@@ -304,45 +303,45 @@ public class IngestManager {
         }
 
         //image ingesters
-        // cycle through each image in the queue
-        while (imageScheduler.hasNext()) {
+        // cycle through each data source content in the queue
+        while (dataSourceScheduler.hasNext()) {
             //dequeue
-            // get next image and set of modules
-            final ScheduledTask<IngestModuleImage> imageTask = imageScheduler.next();
+            // get next data source content and set of modules
+            final ScheduledTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
 
-            // check if each module for this image is already running
-            for (IngestModuleImage taskModule : imageTask.getModules()) {
+            // check if each module for this data source content is already running
+            for (IngestModuleDataSource taskModule : dataSourceTask.getModules()) {
                 boolean alreadyRunning = false;
-                for (IngestImageThread worker : imageIngesters) {
-                    // ignore threads that are on different images
-                    if (!worker.getContent().equals(imageTask.getContent())) {
+                for (IngestDataSourceThread worker : dataSourceIngesters) {
+                    // ignore threads that are on different data sources
+                    if (!worker.getContent().equals(dataSourceTask.getContent())) {
                         continue; //check next worker
                     }
-                    //same image, check module (by name, not id, since different instances)
+                    //same data source, check module (by name, not id, since different instances)
                     if (worker.getModule().getName().equals(taskModule.getName())) {
                         alreadyRunning = true;
-                        logger.log(Level.INFO, "Image Ingester <" + imageTask.getContent()
+                        logger.log(Level.INFO, "Data Source Ingester <" + dataSourceTask.getContent()
                                 + ", " + taskModule.getName() + "> is already running");
                         break;
                     }
                 }
                 //checked all workers
                 if (alreadyRunning == false) {
-                    logger.log(Level.INFO, "Starting new image Ingester <" + imageTask.getContent()
+                    logger.log(Level.INFO, "Starting new data source Ingester <" + dataSourceTask.getContent()
                             + ", " + taskModule.getName() + ">");
-                    //image modules are now initialized per instance
+                    //data source modules are now initialized per instance
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
-                    PipelineContext<IngestModuleImage> imagepipelineContext =
-                            new PipelineContext<IngestModuleImage>(imageTask, getProcessUnallocSpace());
-                    final IngestImageThread newImageWorker = new IngestImageThread(this,
-                            imagepipelineContext, (Image)imageTask.getContent(), taskModule, moduleInit);
+                    PipelineContext<IngestModuleDataSource> dataSourcepipelineContext =
+                            new PipelineContext<IngestModuleDataSource>(dataSourceTask, getProcessUnallocSpace());
+                    final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
+                            dataSourcepipelineContext, dataSourceTask.getContent(), taskModule, moduleInit);
 
-                    imageIngesters.add(newImageWorker);
+                    dataSourceIngesters.add(newDataSourceWorker);
 
                     //wrap the module in a worker, that will run init, process and complete on the module
-                    newImageWorker.execute();
+                    newDataSourceWorker.execute();
                     IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), taskModule.getName());
                 }
             }
@@ -395,7 +394,7 @@ public class IngestManager {
 
         //empty queues
         scheduler.getFileScheduler().empty();
-        scheduler.getImageScheduler().empty();
+        scheduler.getDataSourceScheduler().empty();
 
         //stop module workers
         if (abstractFileIngester != null) {
@@ -420,24 +419,24 @@ public class IngestManager {
 
         }
 
-        List<IngestImageThread> toStop = new ArrayList<IngestImageThread>();
-        toStop.addAll(imageIngesters);
+        List<IngestDataSourceThread> toStop = new ArrayList<IngestDataSourceThread>();
+        toStop.addAll(dataSourceIngesters);
 
 
-        for (IngestImageThread imageWorker : toStop) {
-            IngestModuleImage s = imageWorker.getModule();
+        for (IngestDataSourceThread dataSourceWorker : toStop) {
+            IngestModuleDataSource s = dataSourceWorker.getModule();
 
             //stop the worker thread if thread is running
-            boolean cancelled = imageWorker.cancel(true);
+            boolean cancelled = dataSourceWorker.cancel(true);
             if (!cancelled) {
-                logger.log(Level.INFO, "Unable to cancel image ingest worker for module: " 
-                        + imageWorker.getModule().getName() + " img: " + imageWorker.getContent().getName());
+                logger.log(Level.INFO, "Unable to cancel data source ingest worker for module: " 
+                        + dataSourceWorker.getModule().getName() + " data source: " + dataSourceWorker.getContent().getName());
             }
 
             //stop notification to module to cleanup resources
             if (isModuleRunning(s)) {
                 try {
-                    imageWorker.getModule().stop();
+                    dataSourceWorker.getModule().stop();
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
                 }
@@ -458,7 +457,7 @@ public class IngestManager {
             return true;
         } else if (isFileIngestRunning()) {
             return true;
-        } else if (isImageIngestRunning()) {
+        } else if (isDataSourceIngestRunning()) {
             return true;
         } else {
             return false;
@@ -477,7 +476,7 @@ public class IngestManager {
                 return true;
             }
         }
-        for (IngestImageThread thread : imageIngesters) {
+        for (IngestDataSourceThread thread : dataSourceIngesters) {
             if (isModuleRunning(thread.getModule())) {
                 return false;
             }
@@ -506,16 +505,16 @@ public class IngestManager {
     }
 
     /**
-     * check the status of the image-level ingest pipeline
+     * check the status of the data-source-level ingest pipeline
      */
-    public synchronized boolean isImageIngestRunning() {
-        if (imageIngesters.isEmpty()) {
+    public synchronized boolean isDataSourceIngestRunning() {
+        if (dataSourceIngesters.isEmpty()) {
             return false;
         }
 
-        //in case there are still image ingesters in the queue but already done
+        //in case there are still data source ingesters in the queue but already done
         boolean allDone = true;
-        for (IngestImageThread ii : imageIngesters) {
+        for (IngestDataSourceThread ii : dataSourceIngesters) {
             if (ii.isDone() == false) {
                 allDone = false;
                 break;
@@ -549,13 +548,13 @@ public class IngestManager {
 
 
         } else {
-            //image module
+            //data source module
             synchronized (this) {
-                if (imageIngesters.isEmpty()) {
+                if (dataSourceIngesters.isEmpty()) {
                     return false;
                 }
-                IngestImageThread imt = null;
-                for (IngestImageThread ii : imageIngesters) {
+                IngestDataSourceThread imt = null;
+                for (IngestDataSourceThread ii : dataSourceIngesters) {
                     if (ii.getModule().equals(module)) {
                         imt = ii;
                         break;
@@ -639,11 +638,11 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all loaded image modules managed sorted in order as
+     * helper to return all loaded data-source ingest modules managed sorted in order as
      * specified in pipeline_config XML
      */
-    public List<IngestModuleImage> enumerateImageModules() {
-        return moduleLoader.getImageIngestModules();
+    public List<IngestModuleDataSource> enumerateDataSourceModules() {
+        return moduleLoader.getDataSourceIngestModules();
     }
 
     /**
@@ -654,11 +653,11 @@ public class IngestManager {
         return moduleLoader.getAbstractFileIngestModules();
     }
 
-    //image worker to remove itself when complete or interrupted
-    void removeImageIngestWorker(IngestImageThread worker) {
+    //data source worker to remove itself when complete or interrupted
+    void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
         //remove worker
         synchronized (this) {
-            imageIngesters.remove(worker);
+            dataSourceIngesters.remove(worker);
         }
     }
 
@@ -674,7 +673,7 @@ public class IngestManager {
         private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         private final StopWatch timer = new StopWatch();
         private IngestModuleAbstract currentModuleForTimer;
-        //file module timing stats, image module timers are logged in IngestImageThread class
+        //file module timing stats, datasource module timers are logged in IngestDataSourceThread class
         private final Map<String, Long> fileModuleTimers = new HashMap<String, Long>();
 
         IngestManagerStats() {
@@ -924,7 +923,7 @@ public class IngestManager {
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
-                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same image enqueued twice
+                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same datasource Content enqueued twice
                     ++processedFiles;
                 }
                 //--totalEnqueuedFiles;
@@ -999,7 +998,7 @@ public class IngestManager {
         }
     }
 
-    /* Thread that adds image/file and module pairs to queues */
+    /* Thread that adds content/file and module pairs to queues */
     private class EnqueueWorker extends SwingWorker<Object, Void> {
 
         private List<IngestModuleAbstract> modules;
@@ -1065,14 +1064,14 @@ public class IngestManager {
 
         private void queueAll(List<IngestModuleAbstract> modules, final List<Content> inputs) {
 
-            final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+            final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
             final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
 
             int processed = 0;
             for (Content input : inputs) {
                 final String inputName = input.getName();
 
-                final List<IngestModuleImage> imageMods = new ArrayList<IngestModuleImage>();
+                final List<IngestModuleDataSource> dataSourceMods = new ArrayList<IngestModuleDataSource>();
                 final List<IngestModuleAbstractFile> fileMods = new ArrayList<IngestModuleAbstractFile>();
 
                 for (IngestModuleAbstract module : modules) {
@@ -1085,11 +1084,11 @@ public class IngestManager {
                     progress.progress(moduleName + " " + inputName, processed);
 
                     switch (module.getType()) {
-                        case Image:
-                            final IngestModuleImage newModuleInstance =
-                                    (IngestModuleImage) moduleLoader.getNewIngestModuleInstance(module);
+                        case DataSource:
+                            final IngestModuleDataSource newModuleInstance =
+                                    (IngestModuleDataSource) moduleLoader.getNewIngestModuleInstance(module);
                             if (newModuleInstance != null) {
-                                imageMods.add(newModuleInstance);
+                                dataSourceMods.add(newModuleInstance);
                             } else {
                                 logger.log(Level.INFO, "Error loading module and adding input " + inputName 
                                         + " with module " + module.getName());
@@ -1112,16 +1111,16 @@ public class IngestManager {
 
                 //queue to schedulers
                 
-                //queue to image-level ingest pipeline(s)
+                //queue to datasource-level ingest pipeline(s)
                 final boolean processUnalloc = getProcessUnallocSpace();
-                final ScheduledTask<IngestModuleImage> imageTask = 
-                        new ScheduledTask<IngestModuleImage>(input, imageMods);
-                final PipelineContext<IngestModuleImage> imagepipelineContext = 
-                        new PipelineContext<IngestModuleImage>(imageTask, processUnalloc);
-                logger.log(Level.INFO, "Queing image ingest task: " + imageTask);
-                progress.progress("Image Ingest" + " " + inputName, processed);
-                imageScheduler.schedule(imagepipelineContext);
-                progress.progress("Image Ingest" + " " + inputName, ++processed);
+                final ScheduledTask<IngestModuleDataSource> dataSourceTask = 
+                        new ScheduledTask<IngestModuleDataSource>(input, dataSourceMods);
+                final PipelineContext<IngestModuleDataSource> dataSourcePipelineContext = 
+                        new PipelineContext<IngestModuleDataSource>(dataSourceTask, processUnalloc);
+                logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
+                progress.progress("DataSource Ingest" + " " + inputName, processed);
+                dataSourceScheduler.schedule(dataSourcePipelineContext);
+                progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
                 //queue to file-level ingest pipeline
                 final ScheduledTask<IngestModuleAbstractFile> fTask = 
@@ -1133,7 +1132,7 @@ public class IngestManager {
                 fileScheduler.schedule(filepipelineContext);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
 
-            } //for images
+            } //for data sources
 
 
             //logger.log(Level.INFO, AbstractFileQueue.printQueue());
@@ -1143,7 +1142,7 @@ public class IngestManager {
             logger.log(Level.SEVERE, "Error while enqueing files. ", ex);
             //empty queues
             scheduler.getFileScheduler().empty();
-            scheduler.getImageScheduler().empty();
+            scheduler.getDataSourceScheduler().empty();
         }
     }
 }

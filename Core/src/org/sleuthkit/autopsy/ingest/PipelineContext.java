@@ -25,7 +25,7 @@ import java.util.Objects;
  * Stores information about a given pipeline, which is a series of modules. 
  * This is passed into modules for their reference. 
  * 
- * @param T type of the ingest associated with the context (file or image)
+ * @param T type of the ingest associated with the context (file or data source Content)
  * 
  */
 public class PipelineContext <T extends IngestModuleAbstract> {

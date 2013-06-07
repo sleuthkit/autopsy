@@ -41,9 +41,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -187,7 +187,7 @@ public class Util {
         return path;
     }
     
-    public static long findID(Image image, String path) {
+    public static long findID(Content dataSource, String path) {
         String parent_path = path.replace('\\', '/'); // fix Chrome paths
         if (parent_path.length() > 2 && parent_path.charAt(1) == ':') {
             parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
@@ -198,9 +198,9 @@ public class Util {
         //String query = "select * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
         
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        List<FsContent> files = null;
+        List<AbstractFile> files = null;
         try {
-            files = fileManager.findFiles(image, name, parent_path);
+            files = fileManager.findFiles(dataSource, name, parent_path);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }

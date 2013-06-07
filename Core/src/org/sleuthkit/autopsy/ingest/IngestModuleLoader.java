@@ -100,7 +100,7 @@ public final class IngestModuleLoader {
     private final List<IngestModuleLoader.XmlPipelineRaw> pipelinesXML;
     //validated pipelines with instantiated modules
     private final List<IngestModuleAbstractFile> filePipeline;
-    private final List<IngestModuleImage> imagePipeline;
+    private final List<IngestModuleDataSource> dataSourcePipeline;
     private static final Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
     private ClassLoader classLoader;
     private PropertyChangeSupport pcs;
@@ -121,7 +121,7 @@ public final class IngestModuleLoader {
     private IngestModuleLoader() {
         pipelinesXML = new ArrayList<IngestModuleLoader.XmlPipelineRaw>();
         filePipeline = new ArrayList<IngestModuleAbstractFile>();
-        imagePipeline = new ArrayList<IngestModuleImage>();
+        dataSourcePipeline = new ArrayList<IngestModuleDataSource>();
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
 
         String numModDiscoveredStr = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, CUR_MODULES_DISCOVERED_SETTING);
@@ -263,8 +263,8 @@ public final class IngestModuleLoader {
                         } catch (SecurityException ex) {
                             Exceptions.printStackTrace(ex);
                         }
-                    } //if image module: check if has public constructor with no args
-                    else if (pType == IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS) {
+                    } //if data source module: check if has public constructor with no args
+                    else if (pType == IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS) {
                         try {
                             Constructor<?> constr = moduleClass.getConstructor();
                             int modifiers = constr.getModifiers();
@@ -487,10 +487,10 @@ public final class IngestModuleLoader {
                     logger.log(Level.INFO, "Found file ingest module in: " + basePackageName + ": " + it.next().toString());
                 }
 
-                Set<?> imageModules = reflections.getSubTypesOf(IngestModuleImage.class);
-                it = imageModules.iterator();
+                Set<?> dataSourceModules = reflections.getSubTypesOf(IngestModuleDataSource.class);
+                it = dataSourceModules.iterator();
                 while (it.hasNext()) {
-                    logger.log(Level.INFO, "Found image ingest module in: " + basePackageName + ": " + it.next().toString());
+                    logger.log(Level.INFO, "Found DataSource ingest module in: " + basePackageName + ": " + it.next().toString());
                 }
 
                 //find out which modules to add
@@ -528,13 +528,13 @@ public final class IngestModuleLoader {
 
                 }
 
-                it = imageModules.iterator();
+                it = dataSourceModules.iterator();
                 while (it.hasNext()) {
                     boolean exists = false;
-                    Class<IngestModuleImage> foundClass = (Class<IngestModuleImage>) it.next();
+                    Class<IngestModuleDataSource> foundClass = (Class<IngestModuleDataSource>) it.next();
 
                     for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
-                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS.toString())) {
+                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS.toString())) {
                             continue; //skip
                         }
 
@@ -552,9 +552,9 @@ public final class IngestModuleLoader {
                     }
 
                     if (exists == false) {
-                        logger.log(Level.INFO, "Discovered a new image module to load: " + foundClass.getName());
+                        logger.log(Level.INFO, "Discovered a new DataSource module to load: " + foundClass.getName());
                         //ADD MODULE 
-                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS);
+                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS);
                         modulesChanged = true;
                     }
 
@@ -703,7 +703,7 @@ public final class IngestModuleLoader {
 
         //clear current
         filePipeline.clear();
-        imagePipeline.clear();
+        dataSourcePipeline.clear();
 
         //add autodiscovered modules to pipelinesXML
         autodiscover();
@@ -768,18 +768,18 @@ public final class IngestModuleLoader {
                             }
                             filePipeline.add(fileModuleInstance);
                             break;
-                        case IMAGE_ANALYSIS:
-                            final Class<IngestModuleImage> imageModuleClass =
-                                    (Class<IngestModuleImage>) Class.forName(pMod.location, true, classLoader);
+                        case DATA_SOURCE_ANALYSIS:
+                            final Class<IngestModuleDataSource> dataSourceModuleClass =
+                                    (Class<IngestModuleDataSource>) Class.forName(pMod.location, true, classLoader);
 
                             try {
-                                Constructor<IngestModuleImage> constr = imageModuleClass.getConstructor();
-                                IngestModuleImage imageModuleInstance = constr.newInstance();
+                                Constructor<IngestModuleDataSource> constr = dataSourceModuleClass.getConstructor();
+                                IngestModuleDataSource dataSourceModuleInstance = constr.newInstance();
 
-                                if (imageModuleInstance != null) {
+                                if (dataSourceModuleInstance != null) {
                                     //set arguments
-                                    imageModuleInstance.setArguments(pMod.arguments);
-                                    imagePipeline.add(imageModuleInstance);
+                                    dataSourceModuleInstance.setArguments(pMod.arguments);
+                                    dataSourcePipeline.add(dataSourceModuleInstance);
                                 }
 
                             } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -940,12 +940,12 @@ public final class IngestModuleLoader {
     }
 
     /**
-     * Get loaded image modules
+     * Get loaded data source modules
      *
-     * @return image modules loaded
+     * @return data source modules loaded
      */
-    public List<IngestModuleImage> getImageIngestModules() {
-        return imagePipeline;
+    public List<IngestModuleDataSource> getDataSourceIngestModules() {
+        return dataSourcePipeline;
     }
 
     //pipeline XML representation
@@ -964,7 +964,7 @@ public final class IngestModuleLoader {
                     return IngestModuleAbstractFile.class;
                 }
             },
-            IMAGE_ANALYSIS {
+            DATA_SOURCE_ANALYSIS {
                 @Override
                 public String toString() {
                     return "ImageAnalysis";
@@ -972,7 +972,7 @@ public final class IngestModuleLoader {
 
                 @Override
                 public Class getIngestModuleInterface() {
-                    return IngestModuleImage.class;
+                    return IngestModuleDataSource.class;
                 }
             },;
         }

@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Ingest module that acts on entire image. 
@@ -26,15 +26,15 @@ import org.sleuthkit.datamodel.Image;
  * A new instance of this module will be created for each image.  
  * Therefore, image-level modules can assume that the process() method will be called at most once after init() is called. 
  */
-public abstract class IngestModuleImage extends IngestModuleAbstract {
+public abstract class IngestModuleDataSource extends IngestModuleAbstract {
 
     @Override
     public ModuleType getType() {
-        return ModuleType.Image;
+        return ModuleType.DataSource;
     }
     
     /**
-     * Called with the image to analyze. 
+     * Called with the data source Content object to analyze. 
      * 
      * Modules typically use FileManager to get specific files to analyze.  
      * 
@@ -42,11 +42,11 @@ public abstract class IngestModuleImage extends IngestModuleAbstract {
      * The module should also send messages to the ingest inbox with interesting events (data, errors, warnings, infos).
      * The module notifies data viewers by firing events using IngestManagerProxy.fireModuleDataEvent
      * 
-     * The module will have its own progress bar while it is running and it should update it with the IngestImageWorkerController object. 
+     * The module will have its own progress bar while it is running and it should update it with the IngestDataSourceWorkerController object. 
      * 
      * @param pipelineContext Context in which the ingest pipeline is running (Settings, modules, etc)
-     * @param image Image to process
+     * @param dataSource data source to process (such as Image, VirtualDirectory for file etc, etc)
      * @param controller Used to update progress bar and to check if the task has been canceled. 
      */
-    abstract public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller);
+    abstract public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller);
 }

@@ -79,8 +79,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private void loadModules() {
         this.modules.clear();
         //this.moduleStates.clear(); maintain the state
-        Collection<IngestModuleImage> imageModules = manager.enumerateImageModules();
-        for (final IngestModuleImage module : imageModules) {
+        Collection<IngestModuleDataSource> imageModules = manager.enumerateDataSourceModules();
+        for (final IngestModuleDataSource module : imageModules) {
             addModule(module);
         }
         Collection<IngestModuleAbstractFile> fsModules = manager.enumerateAbstractFileModules();

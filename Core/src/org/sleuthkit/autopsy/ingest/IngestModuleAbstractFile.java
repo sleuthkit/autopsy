@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Ingest module interface that will be called for every file in the image
+ * Ingest module interface that will be called for every file in the data source Content
  */
 public abstract class IngestModuleAbstractFile extends IngestModuleAbstract {
 

@@ -27,7 +27,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,20 +35,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -81,27 +79,27 @@ public class Chrome extends Extract {
 
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
-        this.getHistory(image, controller);
-        this.getBookmark(image, controller);
-        this.getCookie(image, controller);
-        this.getLogin(image, controller);
-        this.getDownload(image, controller);
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        this.getHistory(dataSource, controller);
+        this.getBookmark(dataSource, controller);
+        this.getCookie(dataSource, controller);
+        this.getLogin(dataSource, controller);
+        this.getDownload(dataSource, controller);
     }
 
-    private void getHistory(Image image, IngestImageWorkerController controller) {
+    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> historyFiles = null;
+        List<AbstractFile> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles(image, "History", "Chrome");
+            historyFiles = fileManager.findFiles(dataSource, "History", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
         
         // get only the allocated ones, for now
-        List<FsContent> allocatedHistoryFiles = new ArrayList<>();
-        for (FsContent historyFile : historyFiles) {
+        List<AbstractFile> allocatedHistoryFiles = new ArrayList<>();
+        for (AbstractFile historyFile : historyFiles) {
             if (historyFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
                 allocatedHistoryFiles.add(historyFile);
             }
@@ -117,7 +115,7 @@ public class Chrome extends Extract {
         while (j < historyFiles.size()) {
             String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
             int errors = 0;
-            final FsContent historyFile = historyFiles.get(j++);
+            final AbstractFile historyFile = historyFiles.get(j++);
             if (historyFile.getSize() == 0) {
                 continue;
             }
@@ -160,12 +158,12 @@ public class Chrome extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
-    private void getBookmark(Image image, IngestImageWorkerController controller) {
+    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> bookmarkFiles = null;
+        List<AbstractFile> bookmarkFiles = null;
         try {
-            bookmarkFiles = fileManager.findFiles(image, "Bookmarks", "Chrome");
+            bookmarkFiles = fileManager.findFiles(dataSource, "Bookmarks", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -173,7 +171,7 @@ public class Chrome extends Extract {
         int j = 0;
         if (bookmarkFiles != null && !bookmarkFiles.isEmpty()) {
             while (j < bookmarkFiles.size()) {
-                FsContent bookmarkFile =  bookmarkFiles.get(j++);
+                AbstractFile bookmarkFile =  bookmarkFiles.get(j++);
                 String temps = currentCase.getTempDirectory() + File.separator + bookmarkFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
@@ -258,12 +256,12 @@ public class Chrome extends Extract {
 
     //COOKIES section
     // This gets the cookie info
-    private void getCookie(Image image, IngestImageWorkerController controller) {
+    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles(image, "Cookies", "Chrome");
+            cookiesFiles = fileManager.findFiles(dataSource, "Cookies", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -271,7 +269,7 @@ public class Chrome extends Extract {
         int j = 0;
         if (cookiesFiles != null && !cookiesFiles.isEmpty()) {
             while (j < cookiesFiles.size()) {
-                FsContent cookiesFile = cookiesFiles.get(j++);
+                AbstractFile cookiesFile = cookiesFiles.get(j++);
                 String temps = currentCase.getTempDirectory() + File.separator + cookiesFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
@@ -318,12 +316,12 @@ public class Chrome extends Extract {
 
     //Downloads section
     // This gets the downloads info
-    private void getDownload(Image image, IngestImageWorkerController controller) {
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> historyFiles = null;
+        List<AbstractFile> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles(image, "History", "Chrome");
+            historyFiles = fileManager.findFiles(dataSource, "History", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -331,7 +329,7 @@ public class Chrome extends Extract {
         int j = 0;
         if (historyFiles != null && !historyFiles.isEmpty()) {
             while (j < historyFiles.size()) {
-                FsContent historyFile = historyFiles.get(j++);
+                AbstractFile historyFile = historyFiles.get(j++);
                 if (historyFile.getSize() == 0) {
                     continue;
                 }
@@ -354,7 +352,7 @@ public class Chrome extends Extract {
                 for (HashMap<String, Object> result : tempList) {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", (result.get("full_path").toString())));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID(image, (result.get("full_path").toString()))));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID(dataSource, (result.get("full_path").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                     Long time = (Long.valueOf(result.get("start_time").toString()));
@@ -382,12 +380,12 @@ public class Chrome extends Extract {
 
     //Login/Password section
     // This gets the user info
-    private void getLogin(Image image, IngestImageWorkerController controller) {
+    private void getLogin(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> signonFiles = null;
+        List<AbstractFile> signonFiles = null;
         try {
-            signonFiles = fileManager.findFiles(image, "signons.sqlite", "Chrome");
+            signonFiles = fileManager.findFiles(dataSource, "signons.sqlite", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -395,7 +393,7 @@ public class Chrome extends Extract {
         int j = 0;
         if (signonFiles != null && !signonFiles.isEmpty()) {
             while (j < signonFiles.size()) {
-                FsContent signonFile = signonFiles.get(j++);
+                AbstractFile signonFile = signonFiles.get(j++);
                 String temps = currentCase.getTempDirectory() + File.separator + signonFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
@@ -450,7 +448,7 @@ public class Chrome extends Extract {
 
     @Override
     public void stop() {
-        logger.info("Attmped to stop chrome extract, but operation is not supported; skipping...");
+        logger.info("Attempted to stop chrome extract, but operation is not supported; skipping...");
     }
 
     @Override

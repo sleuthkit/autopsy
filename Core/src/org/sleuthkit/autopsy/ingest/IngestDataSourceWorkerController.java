@@ -21,20 +21,20 @@ package org.sleuthkit.autopsy.ingest;
 import org.netbeans.api.progress.ProgressHandle;
 
 /**
- * Controller for image level ingest modules
+ * Controller for DataSource level ingest modules
  * Used by modules to check task status and to post progress to
  */
-public class IngestImageWorkerController {
+public class IngestDataSourceWorkerController {
 
-    private IngestImageThread worker;
+    private IngestDataSourceThread worker;
     private ProgressHandle progress;
 
     /**
      * Instantiate the controller for the worker
-     * @param worker underlying image ingest thread
+     * @param worker underlying DataSource ingest thread
      * @param progress the progress handle
      */
-    IngestImageWorkerController(IngestImageThread worker, ProgressHandle progress) {
+    IngestDataSourceWorkerController(IngestDataSourceThread worker, ProgressHandle progress) {
         this.worker = worker;
         this.progress = progress;
     }
@@ -51,7 +51,7 @@ public class IngestImageWorkerController {
 
     /**
      * Update the progress bar and switch to determinate mode once number of total work units is known
-     * @param workUnits total number of work units for the image ingest task
+     * @param workUnits total number of work units for the DataSource ingest task
      */
     public void switchToDeterminate(int workUnits) {
         if (progress != null) {

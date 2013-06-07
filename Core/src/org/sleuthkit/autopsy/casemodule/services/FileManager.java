@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -35,10 +34,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -81,57 +77,57 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * @param image image where to find files
+     * @param dataSource data source Content (Image, parent-less VirtualDirectory) where to find files
      * @param fileName the name of the file or directory to match
-     * @return a list of FsContent for files/directories whose name matches the
+     * @return a list of AbstractFile for files/directories whose name matches the
      * given fileName
      */
-    public synchronized List<FsContent> findFiles(Image image, String fileName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        return tskCase.findFiles(image, fileName);
+        return tskCase.findFiles(dataSource, fileName);
     }
 
     /**
-     * @param image image where to find files
+     * @param dataSource data source Content (Image, parent-less VirtualDirectory) where to find files
      * @param fileName the name of the file or directory to match
      * @param dirName the name of a parent directory of fileName
-     * @return a list of FsContent for files/directories whose name matches
+     * @return a list of AbstractFile for files/directories whose name matches
      * fileName and whose parent directory contains dirName.
      */
-    public synchronized List<FsContent> findFiles(Image image, String fileName, String dirName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String dirName) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        return tskCase.findFiles(image, fileName, dirName);
+        return tskCase.findFiles(dataSource, fileName, dirName);
     }
 
     /**
-     * @param image image where to find files
+     * @param dataSource data source Content (Image, parent-less VirtualDirectory) where to find files
      * @param fileName the name of the file or directory to match
-     * @param parentFsContent
-     * @return a list of FsContent for files/directories whose name matches
+     * @param parentFile parent file/dir of the file to find
+     * @return a list of AbstractFile for files/directories whose name matches
      * fileName and that were inside a directory described by parentFsContent.
      */
-    public synchronized List<FsContent> findFiles(Image image, String fileName, FsContent parentFsContent) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parentFile) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        return findFiles(image, fileName, parentFsContent.getName());
+        return findFiles(dataSource, fileName, parentFile.getName());
     }
 
     /**
-     * @param image image where to find files
+     * @param dataSource data source Content (Image, parent-less VirtualDirectory) where to find files
      * @param filePath The full path to the file(s) of interest. This can
      * optionally include the image and volume names.
-     * @return a list of FsContent that have the given file path.
+     * @return a list of AbstractFile that have the given file path.
      */
-    public synchronized List<FsContent> openFiles(Image image, String filePath) throws TskCoreException {
+    public synchronized List<AbstractFile> openFiles(Content dataSource, String filePath) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
         }
-        return tskCase.openFiles(image, filePath);
+        return tskCase.openFiles(dataSource, filePath);
     }
 
     /**

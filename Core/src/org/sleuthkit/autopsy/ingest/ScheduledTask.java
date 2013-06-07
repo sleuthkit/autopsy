@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.Content;
  * A task that will be scheduled. Contains the top-level data to analyze and the pipeline.
  * Children of the data will also be scheduled. 
  *
- * @param T type of Ingest Module / Pipeline (file or image) associated with this task
+ * @param T type of Ingest Module / Pipeline (file or data source content) associated with this task
  */
 class ScheduledTask<T extends IngestModuleAbstract> {
 
