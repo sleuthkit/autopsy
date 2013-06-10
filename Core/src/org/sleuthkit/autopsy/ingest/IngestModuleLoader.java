@@ -760,12 +760,7 @@ public final class IngestModuleLoader {
                                 logger.log(Level.WARNING, "Validated module, but not public getDefault() found: " + pMod.location);
                                 pMod.valid = false; //prevent from trying to load again
                             }
-                            //final IngestModuleAbstract fileModuleInstance =
-                            //      getNewIngestModuleInstance(fileModuleClass);
-                            if (fileModuleInstance != null) {
-                                //set arguments
-                                fileModuleInstance.setArguments(pMod.arguments);
-                            }
+
                             filePipeline.add(fileModuleInstance);
                             break;
                         case DATA_SOURCE_ANALYSIS:
@@ -777,8 +772,6 @@ public final class IngestModuleLoader {
                                 IngestModuleDataSource dataSourceModuleInstance = constr.newInstance();
 
                                 if (dataSourceModuleInstance != null) {
-                                    //set arguments
-                                    dataSourceModuleInstance.setArguments(pMod.arguments);
                                     dataSourcePipeline.add(dataSourceModuleInstance);
                                 }
 
@@ -814,8 +807,6 @@ public final class IngestModuleLoader {
     IngestModuleAbstract getNewIngestModuleInstance(IngestModuleAbstract module) {
         try {
             IngestModuleAbstract newInstance = module.getClass().newInstance();
-            //copy arguments from the registered "template" module 
-            newInstance.setArguments(module.getArguments());
             return newInstance;
         } catch (InstantiationException e) {
             logger.log(Level.SEVERE, "Cannot instantiate module: " + module.getName(), e);

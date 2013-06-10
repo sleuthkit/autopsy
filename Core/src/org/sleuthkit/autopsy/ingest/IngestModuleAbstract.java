@@ -99,23 +99,7 @@ public abstract class IngestModuleAbstract {
      */
     abstract public ModuleType getType();
     
-    
-    /**
-     * Gets the module arguments as set in pipeline/module configuration
-     * @return arguments string
-     */
-    public String getArguments() {
-        return args;
-    }
-    
-    /**
-     * Sets the module arguments (e.g. from pipeline/module configuration)
-     * @param moduleArgs arguments string 
-     */
-    public void setArguments(String moduleArgs) {
-        args = moduleArgs;
-    }
-    
+   
      /**
      * A module can manage and use additional threads to perform some work in the background.
      * This method provides insight to the manager if the module has truly completed its work or not.

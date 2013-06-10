@@ -332,7 +332,7 @@ public class IngestManager {
                     //data source modules are now initialized per instance
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
-                    moduleInit.setModuleArgs(taskModule.getArguments());
+                    
                     PipelineContext<IngestModuleDataSource> dataSourcepipelineContext =
                             new PipelineContext<IngestModuleDataSource>(dataSourceTask, getProcessUnallocSpace());
                     final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
@@ -371,7 +371,6 @@ public class IngestManager {
             //init all fs modules, everytime new worker starts
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
-                moduleInit.setModuleArgs(s.getArguments());
                 try {
                     s.init(moduleInit);
                 } catch (Exception e) {

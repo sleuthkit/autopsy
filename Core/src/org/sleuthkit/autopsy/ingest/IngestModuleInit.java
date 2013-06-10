@@ -25,24 +25,24 @@ package org.sleuthkit.autopsy.ingest;
  */
 public class IngestModuleInit {
     
-    private String moduleArgs;
+//    private String moduleArgs;
 
     /**
      * Get module arguments
      * @return module args string, used by some modules
      */
-    public String getModuleArgs() {
-        return moduleArgs;
-    }
+//    public String getModuleArgs() {
+//        return moduleArgs;
+//    }
 
     /**
      * Sets module args. string (only used by module pipeline)
      * @param moduleArgs arguments to set for the module
      */
-    void setModuleArgs(String moduleArgs) {
-        this.moduleArgs = moduleArgs;
-    }
-    
+//    void setModuleArgs(String moduleArgs) {
+//        this.moduleArgs = moduleArgs;
+//    }
+//    
     
     
     
