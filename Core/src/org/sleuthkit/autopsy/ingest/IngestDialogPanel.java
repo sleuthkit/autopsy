@@ -493,15 +493,15 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         //pick the modules
         List<IngestModuleAbstract> modulesToStart = getModulesToStart();
 
-        if (!modulesToStart.isEmpty()) {
-            manager.execute(modulesToStart, inputContent);
-        }
-
-
         //update ingest proc. unalloc space
         if (processUnallocSpaceEnabled() ) {
             manager.setProcessUnallocSpace(processUnallocCheckbox.isSelected());
         }
+        
+        if (!modulesToStart.isEmpty()) {
+            manager.execute(modulesToStart, inputContent);
+        }
+
     }
 
     @Override
