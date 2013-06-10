@@ -36,8 +36,10 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -177,11 +179,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
         //start the process of adding the content
-        if (dataSourceType.equals(ContentType.LOCAL) ) {
+        if (dataSourceType.equals(ContentType.LOCAL)) {
             addLocalFilesTask = new AddLocalFilesTask(settings);
             addLocalFilesTask.execute();
-        }
-        else {
+        } else {
             //disk or image
             addImageTask = new AddImageTask(settings);
             addImageTask.execute();
@@ -269,11 +270,12 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     }
 
     /**
-     * Thread that will add local files to database, and then kick-off ingest
-     * modules. Note: the add local files task cannot currently be reverted as
-     * the add image task can.
-     * This is a separate task from AddImgTask because it is much simpler and does not require locks,
-     * since the underlying file manager methods acquire the locks for each transaction when adding local files.
+     * Thread that will add logical files to database, and then kick-off ingest
+     * modules. Note: the add logical files task cannot currently be reverted as
+     * the add image task can. This is a separate task from AddImgTask because
+     * it is much simpler and does not require locks, since the underlying file
+     * manager methods acquire the locks for each transaction when adding
+     * logical files.
      */
     private class AddLocalFilesTask extends SwingWorker<Integer, Integer> {
 
@@ -306,22 +308,24 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
                 @Override
                 void cleanup() throws Exception {
-                    logger.log(Level.INFO, "Add local files process interrupted.");
+                    logger.log(Level.INFO, "Add logical files process interrupted.");
                     //nothing to be cleanedup
                 }
             };
 
             cancelledWhileRunning.enable();
+            final LocalFilesAddProgressUpdater progUpdater = new LocalFilesAddProgressUpdater(this.progressBar, wizPanel.getComponent());
             try {
+                final FileManager fileManager = currentCase.getServices().getFileManager();
                 wizPanel.setStateStarted();
-                String [] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
-                List<String>absLocalPaths = new ArrayList<String>();
+                String[] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
+                List<String> absLocalPaths = new ArrayList<String>();
                 for (String path : paths) {
                     absLocalPaths.add(path);
                 }
-                newContents.addAll(currentCase.getServices().getFileManager().addLocalFilesDirs(absLocalPaths));
+                newContents.add(fileManager.addLocalFilesDirs(absLocalPaths, progUpdater));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add local files. ", ex);
+                logger.log(Level.WARNING, "Errors occurred while running add logical files. ", ex);
                 hasCritError = true;
                 errorString = ex.getMessage();
             } finally {
@@ -345,9 +349,12 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         protected void postProcess() {
             progressBar.setIndeterminate(false);
             setProgress(100);
+            
+            //clear updates
+            wizPanel.getComponent().setProcessInvis();
 
             if (interrupted || hasCritError) {
-                logger.log(Level.INFO, "Handling errors or interruption that occured in local files process");
+                logger.log(Level.INFO, "Handling errors or interruption that occured in logical files process");
                 if (hasCritError) {
                     //core error
                     wizPanel.getComponent().setErrors(errorString, true);
@@ -355,13 +362,13 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 return;
             } else if (errorString != null) {
                 //data error (non-critical)
-                logger.log(Level.INFO, "Handling non-critical errors that occured in local files process");
+                logger.log(Level.INFO, "Handling non-critical errors that occured in logical files process");
                 wizPanel.getComponent().setErrors(errorString, false);
             }
             try {
                 // When everything happens without an error:
                 if (errorString == null) { // complete progress bar
-                    wizPanel.getComponent().changeProgressBarTextAndColor("*Local Files added.", 100, Color.black);
+                    wizPanel.getComponent().changeProgressBarTextAndColor("*Logical Files added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
@@ -377,10 +384,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 wizPanel.setStateFinished();
 
                 //notify the case
-                 if (! newContents.isEmpty()) {
+                if (!newContents.isEmpty()) {
                     Case.getCurrentCase().addLocalDataSource(newContents.get(0));
                 }
-                
+
                 // Start ingest if we can
                 startIngest();
 
@@ -389,7 +396,35 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
                 wizPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
                 logger.log(Level.SEVERE, "Error adding image to case", ex);
-            } 
+            }
+        }
+
+        /**
+         * Updates the wizard status with logical file/folder
+         */
+        private class LocalFilesAddProgressUpdater implements FileManager.FileAddProgressUpdater {
+
+            private int count = 0;
+            private JProgressBar prog;
+            private AddImageVisualPanel2 wiz;
+
+            LocalFilesAddProgressUpdater(JProgressBar prog, AddImageVisualPanel2 wiz) {
+                this.wiz = wiz;
+                this.prog = prog;
+            }
+
+            @Override
+            public void fileAdded(final AbstractFile newFile) {
+                if (count++ % 10 == 0 && (prog.getValue() < 100 || prog.isIndeterminate())) {
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            wiz.changeCurrentDir(newFile.getParentPath() + "/" + newFile.getName());
+                        }
+                    });
+
+                }
+            }
         }
     }
 
