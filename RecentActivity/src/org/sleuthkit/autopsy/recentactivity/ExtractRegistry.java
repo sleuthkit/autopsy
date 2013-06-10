@@ -114,11 +114,11 @@ public class ExtractRegistry extends Extract {
         }
         
         // try to find each of the listed registry files whose parent directory
-        // is like '%/system32/config%'
+        // is like '/system32/config'
         String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
         for (String regFileName : regFileNames) {
             try {
-                allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "%/system32/config%"));
+                allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
             }
