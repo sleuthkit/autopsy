@@ -33,9 +33,9 @@ import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public class ExtractUSB {
 
-    private HashMap<String, USB_Info> devices;
+    private HashMap<String, USBInfo> devices;
 
-    public USB_Info get(String dev) {
+    public USBInfo get(String dev) {
         String[] dtokens = dev.split("[_&]");
         String mID = dtokens[1];
         String pID;
@@ -45,7 +45,7 @@ public class ExtractUSB {
             pID = mID + dtokens[3];
         }
         if (!devices.containsKey(pID)) {
-            return new USB_Info("No such Device", null);
+            return new USBInfo(null, null);
         } else {
             return devices.get(pID);
         }
@@ -63,7 +63,7 @@ public class ExtractUSB {
     }
 
     private void Devices() throws FileNotFoundException, IOException {
-        devices = new HashMap<String, USB_Info>();
+        devices = new HashMap<String, USBInfo>();
         PlatformUtil.extractResourceToUserConfigDir(this.getClass(), "USB_DATA.txt");
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
             String line = dat.nextLine();
@@ -76,7 +76,7 @@ public class ExtractUSB {
                         dvc += tokens[n] + " ";
                     }
                     String pID = vID + "0000";
-                    USB_Info info = new USB_Info(dvc, null);
+                    USBInfo info = new USBInfo(dvc, null);
                     devices.put(pID, info);
                     line = dat.nextLine();
                     if (line.startsWith("\t")) {
@@ -88,7 +88,7 @@ public class ExtractUSB {
                             for (int n = 2; n < tokens.length; n++) {
                                 device += tokens[n] + " ";
                             }
-                            info = new USB_Info(dvc, device);
+                            info = new USBInfo(dvc, device);
                             devices.put(pID, info);
                         }
                     }
@@ -99,21 +99,21 @@ public class ExtractUSB {
         }
     }
 
-    public class USB_Info {
+    public class USBInfo {
 
         private String vendor;
         private String product;
 
-        private USB_Info(String vend, String prod) {
+        private USBInfo(String vend, String prod) {
             vendor = vend;
             product = prod;
         }
 
-        public String get_Vendor() {
+        public String getVendor() {
             return vendor;
         }
 
-        public String get_Product() {
+        public String getProduct() {
             return product;
         }
         public String toString(){
