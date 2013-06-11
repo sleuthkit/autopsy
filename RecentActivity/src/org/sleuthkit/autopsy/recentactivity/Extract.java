@@ -30,11 +30,11 @@ import java.util.*;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract extends IngestModuleImage{
+abstract public class Extract extends IngestModuleDataSource{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
@@ -51,62 +51,18 @@ abstract public class Extract extends IngestModuleImage{
         return errorMessages;
     }
 
+
     /**
-     * Returns a List of FsContent objects from TSK based on sql query.
+     * Generic method for adding a blackboard artifact to the blackboard
      *
-     * @param  image is a Image object that denotes which image to get the files from
-     * @param  query is a sql string query that is to be run
-     * @return  FFSqlitedb is a List of FsContent objects
+     * @param type is a blackboard.artifact_type enum to determine which type
+     * the artifact should be
+     * @param content is the AbstractFile object that needs to have the artifact
+     * added for it
+     * @param bbattributes is the collection of blackboard attributes that need
+     * to be added to the artifact after the artifact has been created
      */
-    @SuppressWarnings("deprecation")
-    public List<FsContent> extractFiles(Image image, String query) {
-
-        Collection<FileSystem> imageFS = tskCase.getFileSystems(image);
-        List<String> fsIds = new LinkedList<String>();
-        for (FileSystem img : imageFS) {
-            Long tempID = img.getId();
-            fsIds.add(tempID.toString());
-        }
-
-        String allFS = new String();
-        for (int i = 0; i < fsIds.size(); i++) {
-            if (i == 0) {
-                allFS += " AND (0";
-            }
-            allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
-            if (i == fsIds.size() - 1) {
-                allFS += ")";
-            }
-        }
-        List<FsContent> FFSqlitedb = null;
-        ResultSet rs = null;
-        try {
-            rs = tskCase.runQuery(query + allFS);
-            FFSqlitedb = tskCase.resultSetToFsContents(rs);
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to extract files for:" + this.getClass().getName(), ex);
-            this.addErrorMessage(this.getName() + ": Error while trying to extract files to analyze.");
-        }
-        finally {
-            if (rs != null) {
-                try {
-                    tskCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error while trying to close result set after extract files for:" + this.getClass().getName(), ex);
-                }
-            }
-        }
-        return FFSqlitedb;
-    }
-
-        /**
-     *  Generic method for adding a blackboard artifact to the blackboard
-     *
-     * @param  type is a blackboard.artifact_type enum to determine which type the artifact should be
-     * @param  content is the FsContent object that needs to have the artifact added for it
-     * @param bbattributes is the collection of blackboard attributes that need to be added to the artifact after the artifact has been created
-     */
-    public void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, FsContent content, Collection<BlackboardAttribute> bbattributes) {
+    public void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
 
         try {
             BlackboardArtifact bbart = content.newArtifact(type);
@@ -116,8 +72,9 @@ abstract public class Extract extends IngestModuleImage{
         }
     }
 
-        /**
+     /**
      * Returns a List from a result set based on sql query.
+     * This is used to query sqlite databases storing user recent activity data, such as in firefox sqlite db
      *
      * @param  path is the string path to the sqlite db file
      * @param  query is a sql string query that is to be run
@@ -140,12 +97,12 @@ abstract public class Extract extends IngestModuleImage{
     }
 
         /**
-     * Returns a List of FsContent objects from TSK based on sql query.
+     * Returns a List of AbstractFile objects from TSK based on sql query.
      *
      * @param  rs is the resultset that needs to be converted to an arraylist
      * @return  list returns the arraylist built from the converted resultset
      */
-    public List<HashMap<String,Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
+    private List<HashMap<String,Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int columns = md.getColumnCount();
         List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>(50);

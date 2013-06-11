@@ -41,7 +41,6 @@ public class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private List<Content> inputContent = null;
     private IngestDialogPanel panel = null;
     
     private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
@@ -82,7 +81,6 @@ public class IngestDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 
                 panel.save();
-                panel.setContent(inputContent);
                 panel.start();
                 close();
             }
@@ -117,7 +115,7 @@ public class IngestDialog extends JDialog {
     }
     
     public void setContent(List<Content> inputContent) {
-        this.inputContent = inputContent;
+         panel.setContent(inputContent);
     }
     
     

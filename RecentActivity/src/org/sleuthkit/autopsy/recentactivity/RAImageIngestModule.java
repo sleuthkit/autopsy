@@ -26,19 +26,19 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Recent activity image ingest module
  *
  */
-public final class RAImageIngestModule extends IngestModuleImage {
+public final class RAImageIngestModule extends IngestModuleDataSource {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private static RAImageIngestModule defaultInstance = null;
@@ -53,17 +53,10 @@ public final class RAImageIngestModule extends IngestModuleImage {
     public RAImageIngestModule() {
     }
 
-    //default instance used for module registration
-    public static synchronized RAImageIngestModule getDefault() {
-        if (defaultInstance == null) {
-            defaultInstance = new RAImageIngestModule();
-        }
-        return defaultInstance;
-    }
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + dataSource.getName()));
         
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
@@ -76,7 +69,7 @@ public final class RAImageIngestModule extends IngestModuleImage {
                 break;
             }
             try {
-                module.process(pipelineContext, image, controller);
+                module.process(pipelineContext, dataSource, controller);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
@@ -104,7 +97,7 @@ public final class RAImageIngestModule extends IngestModuleImage {
             errorMessage.append("No errors encountered.");
             errorMsgSubject = "No errors reported";
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Finished " + image.getName()+ " - " + errorMsgSubject, errorMessage.toString());
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
     }
 

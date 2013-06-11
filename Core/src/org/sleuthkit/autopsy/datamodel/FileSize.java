@@ -32,12 +32,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Files by Size View node and related child nodes
@@ -236,7 +239,7 @@ public class FileSize implements AutopsyVisitableItem {
                         query = "size >= 200000000 AND size < 1000000000";
 
                         break;
-                        
+
                     case SIZE_1000_:
                         query = "size >= 1000000000";
                         break;
@@ -300,6 +303,21 @@ public class FileSize implements AutopsyVisitableItem {
 
                     @Override
                     public FileNode visit(Directory f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(LocalFile f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(DerivedFile f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(VirtualDirectory f) {
                         return new FileNode(f, false);
                     }
 

@@ -41,7 +41,6 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,7 +53,7 @@ import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -62,11 +61,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
 
@@ -76,14 +74,14 @@ public class ExtractIE extends Extract {
     private IngestServices services;
     private String recentQuery = "select * from `tsk_files` where parent_path LIKE '%/Recent%' and name LIKE '%.lnk'";
     //sleauthkit db handle
-    SleuthkitCase tempDb;
+    SleuthkitCase tskCase;
     //paths set in init()
     private String PASCO_RESULTS_PATH;
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;
     //Results List to be referenced/used outside the class
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
-    // List of Pasco result files for this image
+    // List of Pasco result files for this data source
     private List<String> pascoResults;
     //Look Up Table  that holds Pasco2 results
     private HashMap<String, Object> PASCO_RESULTS_LUT;
@@ -107,29 +105,29 @@ public class ExtractIE extends Extract {
 
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
-        this.getHistory(image, controller);
-        this.getBookmark(image, controller);
-        this.getCookie(image, controller);
-        this.getRecentDocuments(image, controller);
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        this.getHistory(dataSource, controller);
+        this.getBookmark(dataSource, controller);
+        this.getCookie(dataSource, controller);
+        this.getRecentDocuments(dataSource, controller);
         this.parsePascoResults(pascoResults);
     }
 
     //Favorites section
     // This gets the favorite info
-    private void getBookmark(Image image, IngestImageWorkerController controller) {
+    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
 
         int errors = 0;
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> favoritesFiles = null;
+        List<AbstractFile> favoritesFiles = null;
         try {
-            favoritesFiles = fileManager.findFiles(image, "%.url", "Favorites");
+            favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
 
-        for (FsContent favoritesFile : favoritesFiles) {
+        for (AbstractFile favoritesFile : favoritesFiles) {
             if (controller.isCancelled()) {
                 break;
             }
@@ -175,18 +173,18 @@ public class ExtractIE extends Extract {
 
     //Cookies section
     // This gets the cookies info
-    private void getCookie(Image image, IngestImageWorkerController controller) {
+    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles(image, "%.txt", "Cookies");
+            cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
 
         int errors = 0;
-        for (FsContent cookiesFile : cookiesFiles) {
+        for (AbstractFile cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
             }
@@ -230,17 +228,17 @@ public class ExtractIE extends Extract {
 
     //Recent Documents section
     // This gets the recent object info
-    private void getRecentDocuments(Image image, IngestImageWorkerController controller) {
+    private void getRecentDocuments(Content dataSource, IngestDataSourceWorkerController controller) {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> recentFiles = null;
+        List<AbstractFile> recentFiles = null;
         try {
-            recentFiles = fileManager.findFiles(image, "%.lnk", "Recent");
+            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
 
-        for (FsContent recentFile : recentFiles) {
+        for (AbstractFile recentFile : recentFiles) {
             if (controller.isCancelled()) {
                 break;
             }
@@ -264,7 +262,7 @@ public class ExtractIE extends Extract {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
-            long id = Util.findID(image, path);
+            long id = Util.findID(dataSource, path);
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", id));
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
@@ -280,9 +278,10 @@ public class ExtractIE extends Extract {
         return IE_PASCO_LUT;
     }
 
-    private void getHistory(Image image, IngestImageWorkerController controller) {
-        final Case currentCase = Case.getCurrentCase();
-        final String caseDir = Case.getCurrentCase().getCaseDirectory();
+    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
+        currentCase = Case.getCurrentCase();
+        tskCase = currentCase.getSleuthkitCase();
+        
         PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
         JAVA_PATH = PlatformUtil.getJavaPath();
         pascoResults = new ArrayList<String>();
@@ -306,38 +305,20 @@ public class ExtractIE extends Extract {
 
         File resultsDir = new File(PASCO_RESULTS_PATH);
         resultsDir.mkdirs();
-
-        tempDb = currentCase.getSleuthkitCase();
-        Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
-        List<String> fsIds = new LinkedList<String>();
-        for (FileSystem img : imageFS) {
-            Long tempID = img.getId();
-            fsIds.add(tempID.toString());
-        }
-
-        String allFS = new String();
-        for (int i = 0; i < fsIds.size(); i++) {
-            if (i == 0) {
-                allFS += " AND (0";
-            }
-            allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
-            if (i == fsIds.size() - 1) {
-                allFS += ")";
-            }
-        }
-
+     
+ 
         // get index.dat files
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> indexFiles = null;
+        List<AbstractFile> indexFiles = null;
         try {
-            indexFiles = fileManager.findFiles(image, "index.dat");
+            indexFiles = fileManager.findFiles(dataSource, "index.dat");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
 
         String temps;
         String indexFileName;
-        for (FsContent indexFile : indexFiles) {
+        for (AbstractFile indexFile : indexFiles) {
             // Since each result represent an index.dat file,
             // just create these files with the following notation:
             // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
@@ -497,7 +478,7 @@ public class ExtractIE extends Extract {
 
                                     // TODO: Need to fix this so we have the right obj_id
                                     try {
-                                        BlackboardArtifact bbart = tempDb.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                        BlackboardArtifact bbart = tskCase.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));

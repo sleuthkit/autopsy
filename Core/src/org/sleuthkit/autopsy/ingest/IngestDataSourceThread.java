@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-//ingester worker for image queue
+//ingester worker for DataSource queue
 import java.awt.EventQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,37 +32,36 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
 
 /**
- * worker for every ingest image module there is a separate instance per image /
- * module pair
+ * Worker thread that runs a data source-level ingest module (image, file set virt dir, etc). 
+ * Used to process only a single data-source and single module. 
  */
-public class IngestImageThread extends SwingWorker<Void, Void> {
+public class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
-    private final Logger logger = Logger.getLogger(IngestImageThread.class.getName());
+    private final Logger logger = Logger.getLogger(IngestDataSourceThread.class.getName());
     private ProgressHandle progress;
-    private final PipelineContext<IngestModuleImage>pipelineContext;
-    private final Image image;
-    private final IngestModuleImage module;
-    private IngestImageWorkerController controller;
+    private final PipelineContext<IngestModuleDataSource>pipelineContext;
+    private final Content dataSource;
+    private final IngestModuleDataSource module;
+    private IngestDataSourceWorkerController controller;
     private final IngestManager manager;
     private final IngestModuleInit init;
-    //current method of enqueuing image ingest modules with locks and internal lock queue
-    //allows to init, run and complete a single image ingest module at time
+    //current method of enqueuing data source ingest modules with locks and internal lock queue
+    //ensures that we init, run and complete a single data source ingest module at a time
     //uses fairness policy to run them in order enqueued
     //TODO  use a real queue and manager to allow multiple different modules to run in parallel
-    private static final Lock imageIngestModuleLock = new ReentrantReadWriteLock(true).writeLock();
+    private static final Lock dataSourceIngestModuleLock = new ReentrantReadWriteLock(true).writeLock();
 
-    IngestImageThread(IngestManager manager, PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestModuleImage module, IngestModuleInit init) {
+    IngestDataSourceThread(IngestManager manager, PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestModuleDataSource module, IngestModuleInit init) {
         this.manager = manager;
         this.pipelineContext = pipelineContext;
-        this.image = image;
+        this.dataSource = dataSource;
         this.module = module;
         this.init = init;
     }
 
-    PipelineContext<IngestModuleImage>getContext() {
+    PipelineContext<IngestModuleDataSource>getContext() {
         return pipelineContext;
     }
     
@@ -70,7 +69,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
         return pipelineContext.getScheduledTask().getContent();
     }
 
-    IngestModuleImage getModule() {
+    IngestModuleDataSource getModule() {
         return module;
     }
 
@@ -79,21 +78,21 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
 
         logger.log(Level.INFO, "Pending module: " + module.getName());
         
-        final String displayName = module.getName() + " image id:" + image.getId();
+        final String displayName = module.getName() + " dataSource id:" + dataSource.getId();
         progress = ProgressHandleFactory.createHandle(displayName + " (Pending...)", new Cancellable() {
             @Override
             public boolean cancel() {
-                logger.log(Level.INFO, "Image ingest module " + module.getName() + " cancelled by user.");
+                logger.log(Level.INFO, "DataSource ingest module " + module.getName() + " cancelled by user.");
                 if (progress != null) {
                     progress.setDisplayName(displayName + " (Cancelling...)");
                 }
-                return IngestImageThread.this.cancel(true);
+                return IngestDataSourceThread.this.cancel(true);
             }
         });
         progress.start();
         progress.switchToIndeterminate();
 
-        imageIngestModuleLock.lock();
+        dataSourceIngestModuleLock.lock();
         try {
             if (this.isCancelled()) {
                 logger.log(Level.INFO, "Cancelled while pending, module: " + module.getName());
@@ -114,26 +113,26 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
 
             logger.log(Level.INFO, "Starting processing of module: " + module.getName());
 
-            controller = new IngestImageWorkerController(this, progress);
+            controller = new IngestDataSourceWorkerController(this, progress);
 
             if (isCancelled()) {
-                logger.log(Level.INFO, "Terminating image ingest module " + module.getName() + " due to cancellation.");
+                logger.log(Level.INFO, "Terminating DataSource ingest module " + module.getName() + " due to cancellation.");
                 return Void.TYPE.newInstance();
             }
             final StopWatch timer = new StopWatch();
             timer.start();
             try {
-                module.process(pipelineContext, image, controller);
+                module.process(pipelineContext, dataSource, controller);
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Exception in module: " + module.getName() + " image: " + image.getName(), e);
+                logger.log(Level.WARNING, "Exception in module: " + module.getName() + " DataSource: " + dataSource.getName(), e);
             } finally {
                 timer.stop();
                 logger.log(Level.INFO, "Done processing of module: " + module.getName()
                         + " took " + timer.getElapsedTimeSecs() + " secs. to process()");
 
 
-                //cleanup queues (worker and image/module)
-                manager.removeImageIngestWorker(this);
+                //cleanup queues (worker and DataSource/module)
+                manager.removeDataSourceIngestWorker(this);
 
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Module " + module.getName() + " completed");
@@ -157,7 +156,7 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
             return Void.TYPE.newInstance();
         } finally {
             //release the lock so next module can run
-            imageIngestModuleLock.unlock();
+            dataSourceIngestModuleLock.unlock();
             EventQueue.invokeLater(new Runnable() {
                 @Override
                 public void run() {

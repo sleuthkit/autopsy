@@ -23,9 +23,10 @@ import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Scheduled task added to the scheduler
+ * A task that will be scheduled. Contains the top-level data to analyze and the pipeline.
+ * Children of the data will also be scheduled. 
  *
- * @param T type of ingest modules (file or image) associated with this task
+ * @param T type of Ingest Module / Pipeline (file or data source content) associated with this task
  */
 class ScheduledTask<T extends IngestModuleAbstract> {
 
@@ -55,11 +56,11 @@ class ScheduledTask<T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "ScheduledImageTask{" + "input=" + input + ", modules=" + modules + '}';
+        return "ScheduledTask{" + "input=" + input + ", modules=" + modules + '}';
     }
 
     /**
-     * Two scheduled tasks are equal when the image and modules are the same.
+     * Two scheduled tasks are equal when the content and modules are the same.
      * This enables us not to enqueue the equal schedules tasks twice into the
      * queue/set
      *

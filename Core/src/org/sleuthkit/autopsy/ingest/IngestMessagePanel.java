@@ -64,7 +64,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 12);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
-    private boolean resized = false;
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
 
@@ -77,7 +76,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
         this.mainPanel = mainPanel;
         tableModel = new MessageTableModel();
-        tableModel.addTableModelListener(this);
         initComponents();
         customizeComponents();
     }
@@ -129,6 +127,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
         jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jScrollPane1.setOpaque(false);
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
         messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
@@ -255,7 +254,18 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
+        
+        //this should be done at the end to make it easy to initialize before events are handled
+        tableModel.addTableModelListener(this);
 
+    }
+    
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        //workaround to force table resize when window resizes.  Use better layout instead?
+        setTableSize(messageTable.getParent().getSize());
     }
 
     @Override
@@ -272,16 +282,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
     }
 
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        //workaround to force initial resize when window fully initialized
-        if (resized == false) {
-            mainPanel.doResize();
-            resized = true;
-        }
-    }
-
+   
     public synchronized void addMessage(IngestMessage m) {
         //final int origMsgUnreadUnique = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
@@ -349,10 +350,13 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
-            for (IngestModuleAbstract module : manager.enumerateImageModules()) {
+            for (IngestModuleAbstract module : manager.enumerateDataSourceModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
         }
+        
+   
+        
 
         @Override
         public int getColumnCount() {

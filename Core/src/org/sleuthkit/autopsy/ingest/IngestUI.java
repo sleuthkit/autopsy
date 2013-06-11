@@ -19,7 +19,7 @@
 
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * UI support for ingest
@@ -29,7 +29,7 @@ public interface IngestUI {
     int getMessagesCount();
     void clearMessages();
     void restoreMessages();
-    void displayIngestDialog(final Image image);
+    void displayIngestDialog(final Content ingestDataSource);
     void displayReport(final String report);
     
 }

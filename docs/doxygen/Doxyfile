@@ -26,7 +26,7 @@ DOXYFILE_ENCODING      = UTF-8
 # identify the project. Note that if you do not use Doxywizard you need
 # to put quotes around the project name if it contains spaces.
 
-PROJECT_NAME           = "Autopsy Forensic Browser"
+PROJECT_NAME           = "Autopsy"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
 # This could be handy for archiving the generated documentation or
@@ -38,7 +38,7 @@ PROJECT_NUMBER         = 3
 # for a project that appears at the top of each page and should give viewer
 # a quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "Graphical interface to The Sleuth Kit and other digital forensics tools."
+PROJECT_BRIEF          = "Graphical digital forensics platform for The Sleuth Kit and other tools."
 
 # With the PROJECT_LOGO tag one can specify an logo or icon that is
 # included in the documentation. The maximum height of the logo should not
@@ -671,10 +671,15 @@ INPUT                  = main.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
                          ../../Core/src \
+                         ../../CoreLibs/src \
+                         ../../ExifParser/src \
                          ../../HashDatabase/src \
                          ../../KeywordSearch/src \
                          ../../RecentActivity/src \
+                         ../../ScalpelCarver/src \
+                         ../../SevenZip/src \
                          ../../Testing/src \
+                         ../../Timeline/src \
                          ../../thunderbirdparser/src
 
 # This tag can be used to specify the character encoding of the source files

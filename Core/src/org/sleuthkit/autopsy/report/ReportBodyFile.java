@@ -78,16 +78,14 @@ public class ReportBodyFile implements GeneralReportModule {
         skCase = currentCase.getSleuthkitCase();
         
         // Run query to get all files
-        ResultSet rs = null;
+        
         try {
             // exclude non-fs files/dirs and . and .. files
-            rs = skCase.runQuery("SELECT * FROM tsk_files "
-                               + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
-                               + "AND name != '.' "
-                               + "AND name != '..'");
+            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() 
+                               + " AND name != '.' AND name != '..'";
             
             progressPanel.updateStatusLabel("Loading files...");  
-            List<FsContent> fs = skCase.resultSetToFsContents(rs);
+            List<FsContent> fs = skCase.findFilesWhere(query);
             
             // Check if ingest has finished
             String ingestwarning = "";
@@ -156,19 +154,9 @@ public class ReportBodyFile implements GeneralReportModule {
                 }
             }
             progressPanel.complete();
-        } catch(SQLException ex) {
-            logger.log(Level.WARNING, "Failed to get all file information.", ex);
-        } catch(TskCoreException ex) {
+        }  catch(TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex);
-        } finally {
-            try {// Close the query
-                if(rs!=null) {
-                    skCase.closeRunQuery(rs);
-                }
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to close the query.", ex);
-            }
-        }
+        } 
     }
 
     @Override

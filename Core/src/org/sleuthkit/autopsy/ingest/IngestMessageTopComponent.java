@@ -39,7 +39,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component which displays something.
@@ -327,7 +327,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     }
 
     @Override
-    public void displayIngestDialog(final Image image) {
+    public void displayIngestDialog(final Content ingestDataSource) {
         /*
          final IngestDialog ingestDialog = new IngestDialog();
          ingestDialog.setImage(image);

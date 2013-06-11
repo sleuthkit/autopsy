@@ -31,25 +31,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -241,7 +240,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
         return basereturn;
     }
 
-    private void getURLs(Image image, IngestImageWorkerController controller) {
+    private void getURLs(Content dataSource, IngestDataSourceWorkerController controller) {
         int totalQueries = 0;
         try {
             //from blackboard_artifacts
@@ -255,12 +254,19 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
                 String searchEngineDomain = "";
                 String browser = "";
                 long last_accessed = -1;
-                //from tsk_files
-                List<FsContent> fslst = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'");
-                if (fslst.isEmpty() || fslst == null) {
-                    continue; //File was from a different image, and does not exist in current examination. Skipping to a new list of artifacts.
+
+                long fileId = artifact.getObjectID();
+                boolean isFromSource = tskCase.isFileFromSource(dataSource, fileId);
+                if (!isFromSource) {
+                    //File was from a different dataSource. Skipping.
+                    continue;
                 }
-                FsContent fs = fslst.get(0); //associated file
+                
+                AbstractFile file = tskCase.getAbstractFileById(fileId);
+                if (file == null ) {
+                    continue; 
+                }
+
                 SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
                 //from blackboard_attributes
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
@@ -295,7 +301,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), MODULE_NAME, browser));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), MODULE_NAME, last_accessed));
-                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs, bbattributes);
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
                         se.increment();
                         ++totalQueries;
                 }
@@ -323,8 +329,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleImage>pipelineContext, Image image, IngestImageWorkerController controller) {
-        this.getURLs(image, controller);
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        this.getURLs(dataSource, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }
 

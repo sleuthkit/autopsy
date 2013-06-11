@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -101,29 +101,29 @@ public class ExtractRegistry extends Extract {
         return MODULE_VERSION;
     }
 
-    private void getRegistryFiles(Image image, IngestImageWorkerController controller) {
-
+    private void getRegistryFiles(Content dataSource, IngestDataSourceWorkerController controller) {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<FsContent> allRegistryFiles = new ArrayList<FsContent>();
+        List<AbstractFile> allRegistryFiles = new ArrayList<AbstractFile>();
         try {
-            allRegistryFiles.addAll(fileManager.findFiles(image, "ntuser.dat"));
+            allRegistryFiles.addAll(fileManager.findFiles(dataSource, "ntuser.dat"));
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file.");
         }
 
         // try to find each of the listed registry files whose parent directory
-        // is like '%/system32/config%'
-        String[] regFileNames = new String[]{"system", "software", "security", "sam", "default"};
+
+        // is like '/system32/config'
+        String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
         for (String regFileName : regFileNames) {
             try {
-                allRegistryFiles.addAll(fileManager.findFiles(image, regFileName, "%/system32/config%"));
+                allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
             }
         }
         ExtractUSB extrctr = new ExtractUSB();
         int j = 0;
-        for (FsContent regFile : allRegistryFiles) {
+        for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
             String temps = currentCase.getTempDirectory() + "\\" + regFileName;
             try {
@@ -392,8 +392,9 @@ public class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleImage> pipelineContext, Image image, IngestImageWorkerController controller) {
-        this.getRegistryFiles(image, controller);
+
+    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        this.getRegistryFiles(dataSource, controller);
     }
 
     @Override

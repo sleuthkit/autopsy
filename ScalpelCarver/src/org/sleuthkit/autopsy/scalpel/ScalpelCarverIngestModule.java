@@ -23,11 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.ModuleType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -51,7 +49,7 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-public class ScalpelCarverIngestModule { // disable autodiscovery for now // implements IngestModuleAbstractFile {
+public class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { // disable autodiscovery for now  {
     
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     
@@ -275,49 +273,13 @@ public class ScalpelCarverIngestModule { // disable autodiscovery for now // imp
     }
 
    // @Override
-    public ModuleType getType() {
-        return ModuleType.AbstractFile;
-    }
-
-   // @Override
-    public String getArguments() {
-        return "";
-    }
-
-   // @Override
-    public void setArguments(String args) { }
-
-   // @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
+    
+    
 
-  //  @Override
-    public boolean hasSimpleConfiguration() {
-        return false;
-    }
 
-   // @Override
-    public boolean hasAdvancedConfiguration() {
-        return false;
-    }
 
-  //  @Override
-    public void saveSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-   // @Override
-    public void saveAdvancedConfiguration() { }
-
-   // @Override
-    public JPanel getSimpleConfiguration(String context) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-  //  @Override
-    public JPanel getAdvancedConfiguration(String context) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
     
 }

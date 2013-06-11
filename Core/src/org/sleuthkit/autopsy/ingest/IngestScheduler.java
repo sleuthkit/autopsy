@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
@@ -51,12 +50,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
- * Schedules images and files with their associated modules for ingest, and
+ * Schedules data source (images, file-sets, etc) and files with their associated modules for ingest, and
  * manage queues of the scheduled tasks.
  *
- * Currently a singleton object only.
+ * Currently a singleton object only (as there is one pipeline at a time)
  *
- * Contains internal schedulers for content objects into image and file ingest
+ * Contains internal schedulers for content objects into data source and and file ingest
  * pipelines.
  *
  */
@@ -64,7 +63,7 @@ class IngestScheduler {
 
     private static IngestScheduler instance;
     private static Logger logger = Logger.getLogger(IngestScheduler.class.getName());
-    private final ImageScheduler imageScheduler = new ImageScheduler();
+    private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();
     private final FileScheduler fileScheduler = new FileScheduler();
 
     private IngestScheduler() {
@@ -83,8 +82,8 @@ class IngestScheduler {
         return instance;
     }
 
-    ImageScheduler getImageScheduler() {
-        return imageScheduler;
+    DataSourceScheduler getDataSourceScheduler() {
+        return dataSourceScheduler;
     }
 
     FileScheduler getFileScheduler() {
@@ -94,10 +93,10 @@ class IngestScheduler {
     /**
      * FileScheduler ingest scheduler
      *
-     * Supports addition ScheduledTasks - tuples of (image, modules)
+     * Supports addition ScheduledTasks - tuples of (data-source, modules)
      *
      * Enqueues files and modules, and sorts the files by priority. Maintains
-     * only top level directories in memory, not all files in image.
+     * only top level directories in memory (not all children files of the scheduled container content objects)
      *
      * getNext() will return next ProcessTask - tuple of (file, modules)
      *
@@ -110,7 +109,7 @@ class IngestScheduler {
         private List<ProcessTask> curDirProcessTasks;
         //list of files being processed in the currently processed directory
         private LinkedList<ProcessTask> curFileProcessTasks; //need to add to start and end quickly
-        //estimated files to be enqueued for current images
+        //estimated total files to be enqueued for currently scheduled content objects
         private int filesEnqueuedEst;
         private int filesDequeued;
         private final static int FAT_NTFS_FLAGS =
@@ -188,7 +187,7 @@ class IngestScheduler {
 
         /**
          * Get number of files dequeued so far This is reset after the same
-         * image is enqueued that is already in a queue
+         * content is enqueued that is already in a queue
          *
          * @return number of files dequeued so far
          */
@@ -197,7 +196,8 @@ class IngestScheduler {
         }
 
         /**
-         * Task to process returned by FileScheduler.getNext()
+         * Task for a specific file to process. More specific than the
+         * higher-level ScheduledTask.
          */
         static class ProcessTask {
 
@@ -259,7 +259,7 @@ class IngestScheduler {
             }
 
             /**
-             * Create 1 or more ProcessTasks for each root dir in the image from
+             * Create 1 or more ProcessTasks for each root dir in the Content from
              * the context supplied
              *
              * @param context the original ingest context
@@ -357,8 +357,8 @@ class IngestScheduler {
          * as the parent origin file.
          *
          * @param file file to be scheduled
-         * @param originalContext original image schedule context that was used
-         * to schedule the parent origin file, with the modules, settings, etc.
+         * @param originalContext original content schedule context that was used
+         * to schedule the parent origin content, with the modules, settings, etc.
          */
         synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
             ScheduledTask originalTask = originalContext.getScheduledTask();
@@ -381,7 +381,7 @@ class IngestScheduler {
          * Schedule new Content object for a file ingest with associated
          * modules.
          *
-         * @param task image schedule task with image and associated modules
+         * @param context context to schedule, with scheduled task containing content to process and modules
          */
         synchronized void schedule(PipelineContext<IngestModuleAbstractFile> context) {
 
@@ -395,13 +395,13 @@ class IngestScheduler {
             final Content contentToSchedule = task.getContent();
 
             if (getSourceContent().contains(contentToSchedule)) {
-                //reset counters if the same image enqueued twice
+                //reset counters if the same content enqueued twice
                 //Note, not very accurate, because we may have processed some files from 
-                //another image
+                //another content
                 this.filesDequeued = 0;
             }
 
-            //remove duplicate scheduled tasks for this image if enqueued previously
+            //remove duplicate scheduled tasks still in queues for this content if enqueued previously
             removeDupTasks(task);
 
             List<ProcessTask> rootTasks = ProcessTask.createFromScheduledTask(context);
@@ -751,9 +751,9 @@ class IngestScheduler {
         }
 
         /**
-         * Get counts of ingestable files/dirs for the image input source.
+         * Get counts of ingestable files/dirs for the content input source.
          *
-         * Includes counts of all unalloc files (for the fs, image, volume) even
+         * Note, also includes counts of all unalloc children files (for the fs, image, volume) even
          * if ingest didn't ask for them
          */
         static class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
@@ -883,32 +883,38 @@ class IngestScheduler {
     }
 
     /**
-     * ImageScheduler ingest scheduler
+     * DataSourceScheduler ingest scheduler
      */
-    static class ImageScheduler implements Iterator<ScheduledTask<IngestModuleImage>> {
+    static class DataSourceScheduler implements Iterator<ScheduledTask<IngestModuleDataSource>> {
 
-        private LinkedList<ScheduledTask<IngestModuleImage>> tasks;
+        private LinkedList<ScheduledTask<IngestModuleDataSource>> tasks;
 
-        ImageScheduler() {
-            tasks = new LinkedList<ScheduledTask<IngestModuleImage>>();
+        DataSourceScheduler() {
+            tasks = new LinkedList<ScheduledTask<IngestModuleDataSource>>();
         }
 
-        synchronized void schedule(PipelineContext<IngestModuleImage> context) {
+        synchronized void schedule(PipelineContext<IngestModuleDataSource> context) {
 
-            ScheduledTask<IngestModuleImage> task = context.getScheduledTask();
+            ScheduledTask<IngestModuleDataSource> task = context.getScheduledTask();
 
             //skip if task contains no modules
             if (task.getModules().isEmpty()) {
                 return;
             }
 
-            if (!(task.getContent() instanceof Image)) {
-                //only accepting Image content objects
+            try {
+                if (task.getContent().getParent() != null) {
+                    //only accepting parent-less content objects (Image, parentless VirtualDirectory)
+                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: " + task.getContent());
+                    return;
+                }
+            } catch (TskCoreException e) {
+                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + task.getContent(), e);
                 return;
             }
 
-            ScheduledTask<IngestModuleImage> existTask = null;
-            for (ScheduledTask<IngestModuleImage> curTask : tasks) {
+            ScheduledTask<IngestModuleDataSource> existTask = null;
+            for (ScheduledTask<IngestModuleDataSource> curTask : tasks) {
                 if (curTask.getContent().equals(task.getContent())) {
                     existTask = curTask;
                     break;
@@ -916,7 +922,7 @@ class IngestScheduler {
             }
 
             if (existTask != null) {
-                //merge modules for the image task
+                //merge modules for the data source task
                 existTask.addModules(task.getModules());
             } else {
                 //enqueue a new task
@@ -925,23 +931,23 @@ class IngestScheduler {
         }
 
         @Override
-        public synchronized ScheduledTask<IngestModuleImage> next() throws IllegalStateException {
+        public synchronized ScheduledTask<IngestModuleDataSource> next() throws IllegalStateException {
             if (!hasNext()) {
-                throw new IllegalStateException("There is image tasks in the queue, check hasNext()");
+                throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
             }
 
-            final ScheduledTask<IngestModuleImage> ret = tasks.pollFirst();
+            final ScheduledTask<IngestModuleDataSource> ret = tasks.pollFirst();
             return ret;
         }
 
         /**
-         * get all images that are scheduled to process
+         * get all data source that are scheduled to process
          *
-         * @return list of images in the queue scheduled to process
+         * @return list of data sources in the queue scheduled to process
          */
         synchronized List<org.sleuthkit.datamodel.Content> getContents() {
             List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (ScheduledTask<IngestModuleImage> task : tasks) {
+            for (ScheduledTask<IngestModuleDataSource> task : tasks) {
                 contents.add(task.getContent());
             }
             return contents;
@@ -954,7 +960,7 @@ class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Removing of scheduled image ingest tasks is not supported. ");
+            throw new UnsupportedOperationException("Removing of scheduled data source ingest tasks is not supported. ");
         }
 
         synchronized void empty() {
@@ -968,8 +974,8 @@ class IngestScheduler {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("ImageQueue, size: ").append(getCount());
-            for (ScheduledTask<IngestModuleImage> task : tasks) {
+            sb.append("DataSourceQueue, size: ").append(getCount());
+            for (ScheduledTask<IngestModuleDataSource> task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();

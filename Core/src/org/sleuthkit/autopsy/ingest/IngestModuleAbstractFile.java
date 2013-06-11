@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Ingest module interface that will be called for every file in the image
+ * Ingest module interface that will be called for every file in the data source Content
  */
 public abstract class IngestModuleAbstractFile extends IngestModuleAbstract {
 
@@ -42,8 +42,7 @@ public abstract class IngestModuleAbstractFile extends IngestModuleAbstract {
     }
     
     /**
-     * Entry point to process file / directory by the module.  See \ref ingestmodule_making for details
-     * on what modules are responsible for doing. 
+     * Entry point to process file / directory by the module.  
      * 
      * @param pipelineContext the context in which the ingest runs (with its own settings, modules, etc)
      * @param abstractFile file to process
