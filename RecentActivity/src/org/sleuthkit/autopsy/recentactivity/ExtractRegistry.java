@@ -280,8 +280,10 @@ public class ExtractRegistry extends Extract {
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
                                 if (dev.toLowerCase().contains("vid")) {
                                     USBInfo info = extrctr.get(dev);
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.getVendor()));
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.getProduct()));
+                                    if(info.getVendor()!=null)
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.getVendor()));
+                                    if(info.getProduct() != null)
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.getProduct()));
                                 }
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {

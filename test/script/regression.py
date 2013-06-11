@@ -1858,12 +1858,7 @@ def execute_test():
 		attachl = []
 	if not args.gold_creation:
 		Emailer.send_email(parsed, errorem, attachl, passFail)
-		
-def secs_till_tommorow():
-	seconds = (23*3600)-(int(strftime("%H", localtime()))*3600)
-	seconds += (59*60)-(int(strftime("%M", localtime()))*60)
-	seconds += 60-(int(strftime("%S", localtime())))
-	return seconds+5
+
 #----------------------#
 #		 Main		 #
 #----------------------#
