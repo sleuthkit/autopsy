@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public class LocalDiskPanel extends ContentTypePanel {
     private static LocalDiskPanel instance;
-    private PropertyChangeSupport pcs;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(LocalDiskPanel.class);
     private List<LocalDisk> disks = new ArrayList<LocalDisk>();
     private LocalDiskModel model;
     private boolean enableNext = false;
@@ -64,15 +64,10 @@ public class LocalDiskPanel extends ContentTypePanel {
     public static synchronized LocalDiskPanel getDefault() {
         if (instance == null) {
             instance = new LocalDiskPanel();
-            instance.init();
         }
         return instance;
     }
     
-    //post - constructor initialization
-    private void init() {
-        pcs = new PropertyChangeSupport(this);
-    }
     
     private void customInit() {
         model = new LocalDiskModel();

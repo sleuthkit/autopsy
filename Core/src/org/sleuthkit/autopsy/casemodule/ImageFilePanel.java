@@ -32,7 +32,7 @@ import javax.swing.event.DocumentListener;
  */
 public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
     private static ImageFilePanel instance;
-    private PropertyChangeSupport pcs;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(ImageFilePanel.class);
     private JFileChooser fc = new JFileChooser();
 
     /**
@@ -56,15 +56,11 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     public static synchronized ImageFilePanel getDefault() {
         if (instance == null) {
             instance = new ImageFilePanel();
-            instance.init();
         }
         return instance;
     }
     
-    //post - constructor initialization
-    private void init() {
-        pcs = new PropertyChangeSupport(this);
-    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
