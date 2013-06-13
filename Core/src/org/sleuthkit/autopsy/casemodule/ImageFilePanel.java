@@ -31,9 +31,9 @@ import javax.swing.event.DocumentListener;
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
 public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
-    private static ImageFilePanel instance;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private JFileChooser fc = new JFileChooser();
+    private static volatile ImageFilePanel instance = null;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private final JFileChooser fc = new JFileChooser();
 
     /**
      * Creates new form ImageFilePanel
@@ -53,7 +53,7 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     /**
      * Returns the default instance of a ImageFilePanel.
      */
-    public static ImageFilePanel getDefault() {
+    public static synchronized ImageFilePanel getDefault() {
         if (instance == null) {
             instance = new ImageFilePanel();
         }
