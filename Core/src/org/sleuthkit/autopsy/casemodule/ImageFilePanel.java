@@ -53,7 +53,7 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     /**
      * Returns the default instance of a ImageFilePanel.
      */
-    public static ImageFilePanel getDefault() {
+    public static synchronized ImageFilePanel getDefault() {
         if (instance == null) {
             instance = new ImageFilePanel();
             instance.init();

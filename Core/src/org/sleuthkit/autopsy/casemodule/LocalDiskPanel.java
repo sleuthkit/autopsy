@@ -61,7 +61,7 @@ public class LocalDiskPanel extends ContentTypePanel {
     /**
      * Get the default instance of this panel.
      */
-    public static LocalDiskPanel getDefault() {
+    public static synchronized LocalDiskPanel getDefault() {
         if (instance == null) {
             instance = new LocalDiskPanel();
             instance.init();
