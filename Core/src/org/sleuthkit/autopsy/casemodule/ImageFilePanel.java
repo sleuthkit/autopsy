@@ -31,8 +31,8 @@ import javax.swing.event.DocumentListener;
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
 public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
-    private static ImageFilePanel instance;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(ImageFilePanel.class);
+    private static ImageFilePanel instance = null;
+    private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
 
     /**
@@ -47,7 +47,6 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
         fc.addChoosableFileFilter(AddImageVisualPanel1.rawFilter);
         fc.addChoosableFileFilter(AddImageVisualPanel1.encaseFilter);
         fc.setFileFilter(AddImageVisualPanel1.allFilter);
-        pathTextField.getDocument().addDocumentListener(this);
     }
     
     /**
@@ -56,8 +55,15 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     public static synchronized ImageFilePanel getDefault() {
         if (instance == null) {
             instance = new ImageFilePanel();
+	    instance.postInit();
         }
         return instance;
+    }
+
+    //post-constructor initialization to properly initialize listener support
+    //without leaking references of uninitialized objects
+    private void postInit() {
+        pathTextField.getDocument().addDocumentListener(this);
     }
     
 
@@ -219,12 +225,20 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     }
     
     @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
+	super.addPropertyChangeListener(pcl);
+
+	if (pcs == null) {
+	    pcs = new PropertyChangeSupport(this);
+	}
+
         pcs.addPropertyChangeListener(pcl);
     }
     
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
+	super.removePropertyChangeListener(pcl);
+
         pcs.removePropertyChangeListener(pcl);
     }
 

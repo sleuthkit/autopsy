@@ -68,9 +68,5 @@ abstract class ContentTypePanel extends JPanel {
      */
     abstract public void select();
     
-    @Override
-    abstract public void addPropertyChangeListener(PropertyChangeListener pcl);
-    @Override
-    abstract public void removePropertyChangeListener(PropertyChangeListener pcl);
     
 }
