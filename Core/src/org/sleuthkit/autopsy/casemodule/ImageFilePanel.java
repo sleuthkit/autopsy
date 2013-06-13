@@ -32,7 +32,7 @@ import javax.swing.event.DocumentListener;
  */
 public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
     private static ImageFilePanel instance;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs;
     private JFileChooser fc = new JFileChooser();
 
     /**
@@ -56,8 +56,14 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     public static ImageFilePanel getDefault() {
         if (instance == null) {
             instance = new ImageFilePanel();
+            instance.init();
         }
         return instance;
+    }
+    
+    //post - constructor initialization
+    private void init() {
+        pcs = new PropertyChangeSupport(this);
     }
 
     /**
