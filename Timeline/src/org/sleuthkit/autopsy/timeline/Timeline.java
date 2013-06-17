@@ -106,6 +106,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
+/**
+ * The Timeline Action entry point.  Collects data and pushes data to javafx widgets
+ * 
+ * 2 known memory issues:
+ * - makeBodyFile() - stores all AbstractFile objects.  It should either store IDs only, or iterate over result set (need API addition)
+ * - charts are also storing all AbstractFile objects.  It should only keep datamodel objects in memory that pertain to current selection.
+ * And it should only be using IDs for the high level zoomed-out chart.
+ */
 public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
 
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
@@ -927,6 +935,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 + "AND name != '..'";
         List<AbstractFile> files = null;
         try {
+            //TODO this causes one of the Timelines memory limitations
+            //need another method findAllFileIdsWhere() not to store all file objects in memory
+            //then create the AbstractFile object as needed later
+            //OR pass in object reader to optional findAllFilesWhere(query, reader) 
+            //to collect 1 object at a time (much like cursor, but hiding SQL layer)
             files = skCase.findAllFilesWhere(filesAndDirs);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
