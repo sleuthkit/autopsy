@@ -508,6 +508,15 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 @Override
                 public void handle(MouseEvent e) {
+                     SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            //reset the view and free the current nodes before loading new ones
+                            final FileRootNode d = new FileRootNode("Empty Root", new ArrayList<Long>());
+                            dataResultPanel.setNode(d);
+                            dataResultPanel.setPath("Loading...");
+                        }
+                    });
                     final int day = (Integer.valueOf((barData.getXValue()).split("-")[1]));
                     final DayEpoch de = myme.getDay(day);
                     final List<Long> afs;
@@ -521,7 +530,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            final FileRootNode d = new FileRootNode("Test Root", afs);
+                            final FileRootNode d = new FileRootNode("Root", afs);
                             dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
