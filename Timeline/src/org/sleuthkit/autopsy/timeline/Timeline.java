@@ -77,14 +77,13 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
@@ -99,6 +98,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -817,21 +817,40 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     }
 
     // The node factories used to make lists of files to send to the result viewer
-    private class FileNodeChildFactory extends ChildFactory<Long> {
+    // using the lazy loading (rather than background) loading option to facilitate
+    // loading a huge number of nodes for the given day
+    private class FileNodeChildFactory extends Children.Keys<Long> {
 
-        List<Long> fileIds;
+        private List<Long> fileIds;
 
         FileNodeChildFactory(List<Long> fileIds) {
+            super(true);
             this.fileIds = fileIds;
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
-            list.addAll(fileIds);
-            return true;
+        protected void addNotify() {
+            super.addNotify();
+            setKeys(fileIds);
         }
 
         @Override
+        protected void removeNotify() {
+            super.removeNotify();
+            setKeys(new ArrayList<Long>());
+        }
+
+        @Override
+        protected Node[] createNodes(Long t) {
+            return new Node[]{createNodeForKey(t)};
+        }
+
+        //  @Override
+        //  protected boolean createKeys(List<Long> list) {
+        //     list.addAll(fileIds);
+        //     return true;
+        //  }
+        //@Override
         protected Node createNodeForKey(Long fileId) {
             AbstractFile af = null;
             try {
@@ -841,7 +860,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 //no node will be shown for this object
                 return null;
             }
-            
+
             Node wrapped;
             if (af.isDir()) {
                 wrapped = new DirectoryNode(af, false);
@@ -855,7 +874,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private class FileRootNode extends DisplayableItemNode {
 
         FileRootNode(String NAME, List<Long> fileIds) {
-            super(Children.create(new FileNodeChildFactory(fileIds), true));
+            //super(Children.create(new FileNodeChildFactory(fileIds), true));
+            super(new FileNodeChildFactory(fileIds), Lookups.singleton(fileIds));
             super.setName(NAME);
             super.setDisplayName(NAME);
         }
