@@ -1728,7 +1728,7 @@ class Test_Runner:
 			test_img.gold_parse = test_img.gold
 			test_img.img_gold_parse = test_img.img_gold
 		# Delete the current gold standards
-		gold_dir = test_img.gold_parse
+		gold_dir = test_img.img_gold_parse
 		print(gold_dir)
 		clear_dir(test_img.img_gold_parse)
 		tmpdir = Emailer.make_path(gold_dir, test_img.image_name)
