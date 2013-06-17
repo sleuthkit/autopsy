@@ -698,7 +698,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             return month;
         }
 
-        public void add(AbstractFile af, int month, int day) {
+        public void add(long fileId, int month, int day) {
             // see if this month is in the list
             MonthEpoch monthEpoch = null;
             for (MonthEpoch me : months) {
@@ -714,7 +714,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             }
 
             // add the file the the MonthEpoch object
-            monthEpoch.add(af, day);
+            monthEpoch.add(fileId, day);
         }
     }
 
@@ -757,7 +757,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             return de;
         }
 
-        public void add(AbstractFile af, int day) {
+        public void add(long fileId, int day) {
             DayEpoch dayEpoch = null;
             for (DayEpoch de : days) {
                 if (de.getDayInt() == day) {
@@ -771,7 +771,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 days.add(dayEpoch);
             }
 
-            dayEpoch.add(af);
+            dayEpoch.add(fileId);
         }
 
         /**
@@ -807,8 +807,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             return fileIds.size();
         }
 
-        public void add(AbstractFile af) {
-            fileIds.add(af.getId());
+        public void add(long fileId) {
+            fileIds.add(fileId);
         }
 
         List<Long> getEvents() {
@@ -901,16 +901,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 prevYear = year;
             }
 
-            // create and add the file
-            AbstractFile file;
-            try {
-                file = skCase.getAbstractFileById(ObjId);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not find a file with ID " + ObjId, ex);
-                continue;
-            }
             if (ye != null) {
-                ye.add(file, month, day);
+                ye.add(ObjId, month, day);
             }
         }
 
