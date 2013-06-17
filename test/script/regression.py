@@ -448,6 +448,8 @@ class Database:
 						database_log.write('" />')
 				database_log.write(' <artifact/>\n')
 				rw = autopsy_cur2.fetchone()
+			srtcmdlst = ["sort", test_img.autopsy_data_file, "-o", test_img.sorted_data_file]
+			subprocess.call(srtcmdlst)
 		except Exception as e:
 			printerror('outer exception: ' + str(e))
 			if(test_img.artifact_fail > 0):
@@ -469,7 +471,7 @@ class Database:
 			for line in dump_list:
 				try:
 					database_log.write(line + "\n")
-				except:
+				except Exception as e:
 					printerror("Inner dump Exception:" + str(e))
 		except Exception as e:
 			printerror("Outer dump Exception:" + str(e))
@@ -512,7 +514,6 @@ class Database:
 			printerror("Error: Gold database file does not exist at:")
 			printerror(gold_db_file + "\n")
 			return
-			
 		# compare size of bb artifacts, attributes, and tsk objects
 		gold_con = sqlite3.connect(gold_db_file)
 		gold_cur = gold_con.cursor()
@@ -531,7 +532,7 @@ class Database:
 		# Testing blackboard_artifacts
 		exceptions.append(TestDiffer.count_bb_artifacts(test_img, database))
 		# Testing blackboard_attributes
-		exceptions.append(TestDiffer.compare_bb_attributes())
+		exceptions.append(TestDiffer.compare_bb_attributes(test_img, database))
 		
 		database.artifact_comparison = exceptions[1]
 		database.attribute_comparison = exceptions[2]
@@ -793,8 +794,10 @@ class TestDiffer:
 			logging.critical(traceback.format_exc())
 class TestData:
 	def __init__(self, test_img_in):
-		self.img_gold = Emailer.make_path(test_img_in.gold, 'tmp')
-		self.img_gold_parse = Emailer.make_path(test_img_in.gold_parse, 'tmp')
+		self.gold = test_img_in.gold
+		self.gold_parse = test_img_in.gold_parse
+		self.img_gold = Emailer.make_path(self.gold, 'tmp')
+		self.img_gold_parse = Emailer.make_path(self.gold_parse, 'tmp')
 		self.image_name = test_img_in.image_name
 		self.output_dir = test_img_in.output_dir
 		self.sorted_log = ""
@@ -1351,18 +1354,21 @@ def copy_file(ffrom, to):
 	try :
 		if not Emailer.file_exists(ffrom):
 			raise FileNotFoundException(ffrom)
+		print('hilo*****************************************************************************************************')
 		shutil.copy(ffrom, to)
 	except:
 		raise FileNotFoundException(to)
 
 # Copies a directory file from "ffrom" to "to"
 def copy_dir(ffrom, to):
-	#try :
-	if not os.path.isdir(ffrom):
-		raise FileNotFoundException(ffrom)
-	shutil.copytree(ffrom, to)
-	#except:
-		#raise FileNotFoundException(to)
+	try :
+		if not os.path.isdir(ffrom):
+			print('hilo************************************************************')
+			raise FileNotFoundException(ffrom)
+		print('hilo************************************************************')
+		shutil.copytree(ffrom, to)
+	except:
+		raise FileNotFoundException(to)
 # Returns the first file in the given directory with the given extension
 def get_file_in_dir(dir, ext):
 	try:
@@ -1511,7 +1517,6 @@ class Test_Runner:
 		   logres = Test_Runner.run_config_test(args.config_file)
 		write_html_foot()
 		html.close()
-		print(logres)
 		if (len(logres)>0):
 			failedbool = True
 			imgfail = True
@@ -1559,7 +1564,7 @@ class Test_Runner:
 				if Emailer.file_exists(value):
 					values.append(value)
 				else:
-					printout("File: ", value, " doesn't exist")
+					printout("File: " + value + " doesn't exist")
 			count = len(values)
 			archives = Emailer.make_path(test_case.gold, "..")
 			arcount = 0
@@ -1596,7 +1601,6 @@ class Test_Runner:
 			for img in values:  
 				if Emailer.file_exists(img):
 					logres.append(Test_Runner.run_test(str(img), 0))
-					print(logres)
 				else:
 					printerror("Warning: Image file listed in configuration does not exist:")
 					printrttot(value + "\n")
@@ -1663,7 +1667,6 @@ class Test_Runner:
 		# If NOT keeping Solr index (-k)
 		if not args.keep:
 			solr_index = Emailer.make_local_path(test_case.output_dir, test_case.image_name, test_img.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
-			print(solr_index)
 			if clear_dir(solr_index):
 				print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
 		elif args.keep:
@@ -1680,8 +1683,6 @@ class Test_Runner:
 			print_report(exceptions, "EXCEPTION", okay)
 		test_case.test_dbdump = Emailer.make_path(test_case.output_dir, test_case.image_name,
 											  test_case.image_name + "Dump.txt")
-		srtcmdlst = ["sort", test_case.autopsy_data_file, "-o", test_case.sorted_data_file]
-		subprocess.call(srtcmdlst)
 		database = Database(test_img)
 		# Now test in comparison to the gold standards
 		if not args.gold_creation:
@@ -1697,8 +1698,8 @@ class Test_Runner:
 				extrctr.extractall(gold_path)
 				extrctr.close
 				time.sleep(2)
-				TestDiffer.run_diff(test_img)
 				Database.compare_to_gold_db(test_img, database)
+				TestDiffer.run_diff(test_img)
 				del_dir(img_gold)
 			except Exception as e:
 				printerror("Tests failed due to an error, try rebuilding or creating gold standards.\n")
@@ -1723,46 +1724,51 @@ class Test_Runner:
 	def rebuild(test_img):
 		# Errors to print
 		errors = []
-		if(test_case.gold_parse == None):
-			test_case.gold_parse = test_case.gold
+		if(test_img.gold_parse == None ):
+			test_img.gold_parse = test_img.gold
+			test_img.img_gold_parse = test_img.img_gold
 		# Delete the current gold standards
-		gold_dir = Emailer.make_path(test_case.gold_parse,'tmp')
-		clear_dir(gold_dir)
-		tmpdir = Emailer.make_path(gold_dir, test_case.image_name)
-		dbinpth = Emailer.make_path(test_case.output_dir, test_case.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
+		gold_dir = test_img.gold_parse
+		print(gold_dir)
+		clear_dir(test_img.img_gold_parse)
+		tmpdir = Emailer.make_path(gold_dir, test_img.image_name)
+		dbinpth = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
 		dboutpth = Emailer.make_path(tmpdir, test_img.test_db_file)
-		dataoutpth = Emailer.make_path(tmpdir, test_case.image_name + "SortedData.txt")
-		dbdumpinpth = test_case.test_dbdump
-		dbdumpoutpth = Emailer.make_path(tmpdir, test_case.image_name + "DBDump.txt")
-		if not os.path.exists(test_case.gold_parse):
-			os.makedirs(test_case.gold_parse)
+		dataoutpth = Emailer.make_path(tmpdir, test_img.image_name + "SortedData.txt")
+		dbdumpinpth = test_img.test_dbdump
+		dbdumpoutpth = Emailer.make_path(tmpdir, test_img.image_name + "DBDump.txt")
+		if not os.path.exists(test_img.img_gold_parse):
+			os.makedirs(test_img.img_gold_parse)
 		if not os.path.exists(gold_dir):
 			os.makedirs(gold_dir)
 		if not os.path.exists(tmpdir):
 			os.makedirs(tmpdir)
 		try:
 			copy_file(dbinpth, dboutpth)
-			copy_file(test_case.sorted_data_file, dataoutpth)
+			copy_file(test_img.sorted_data_file, dataoutpth)
 			copy_file(dbdumpinpth, dbdumpoutpth)
-			error_pth = Emailer.make_path(tmpdir, test_case.image_name+"SortedErrors.txt")
-			copy_file(test_case.sorted_log, error_pth)
+			error_pth = Emailer.make_path(tmpdir, test_img.image_name+"SortedErrors.txt")
+			print(error_pth)
+			print(file_exists(test_img.sorted_log))
+			print('hilo')
+			copy_file(test_img.sorted_log, error_pth)
 		except Exception as e:
 			printerror(str(e))
 		# Rebuild the HTML report
 		htmlfolder = ""
-		for fs in os.listdir(os.path.join(os.getcwd(),test_case.output_dir, test_case.image_name, test_img.Img_Test_Folder, "Reports")):
-			if os.path.isdir(os.path.join(os.getcwd(), test_case.output_dir, test_case.image_name, test_img.Img_Test_Folder, "Reports", fs)):
+		for fs in os.listdir(os.path.join(os.getcwd(),test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
+			if os.path.isdir(os.path.join(os.getcwd(), test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
 				htmlfolder = fs
-		autopsy_html_path = Emailer.make_local_path(test_case.output_dir, test_case.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)
+		autopsy_html_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)
 		
-		html_path = Emailer.make_path(test_case.output_dir, test_case.image_name,
+		html_path = Emailer.make_path(test_img.output_dir, test_img.image_name,
 									 test_img.Img_Test_Folder, "Reports")
 		try:
 			if not os.path.exists(Emailer.make_path(tmpdir, htmlfolder)):
 				os.makedirs(Emailer.make_path(tmpdir, htmlfolder))
 			for file in os.listdir(autopsy_html_path):
 				html_to = Emailer.make_path(tmpdir, file.replace("HTML Report", "Report"))
-				Emailer.copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
+				copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
 		except FileNotFoundException as e:
 			errors.append(e.error)
 		except Exception as e:
@@ -1774,12 +1780,12 @@ class Test_Runner:
 		os.chdir(zpdir)
 		os.chdir("..")
 		img_gold = "tmp"
-		img_archive = Emailer.make_path(test_case.image_name+"-archive.zip")
+		img_archive = Emailer.make_path(test_img.image_name+"-archive.zip")
 		comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
 		Test_Runner.zipdir(img_gold, comprssr)
 		comprssr.close()
 		os.chdir(oldcwd)
-		del_dir(gold_dir)
+		del_dir(test_img.img_gold_parse)
 		okay = "Sucessfully rebuilt all gold standards."
 		print_report(errors, "REBUILDING", okay)
 
