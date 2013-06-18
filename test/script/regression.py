@@ -483,24 +483,17 @@ class Database:
 	# from queries while comparing
 	def compare_to_gold_db(test_img, database):
 		# SQLITE needs unix style pathing
+		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+										  test_img.Img_Test_Folder, test_img.test_db_file)
+		autopsy_con = sqlite3.connect(autopsy_db_file)
+		autopsy_cur = autopsy_con.cursor()
 		gold_db_file = Emailer.make_path(test_img.img_gold, test_img.image_name, test_img.test_db_file)
 		if(not Emailer.file_exists(gold_db_file)):
 			gold_db_file = Emailer.make_path(test_img.img_gold_parse, test_img.image_name, test_img.test_db_file)
-		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
-										  test_img.Img_Test_Folder, test_img.test_db_file)
-		# Try to query the databases. Ignore any exceptions, the function will
-		# return an error later on if these do fail
-		database.clear()
 		try:
 			database.generate_gold_objects()
 			database.generate_gold_artifacts()
 			database.generate_gold_attributes()
-		except Exception as e:
-			printerror("Way out:" + str(e))
-		try:
-			database.generate_autopsy_objects()
-			database.generate_autopsy_artifacts()
-			database.generate_autopsy_attributes()
 		except Exception as e:
 			printerror("Way out:" + str(e))
 		# This is where we return if a file doesn't exist, because we don't want to
@@ -517,16 +510,18 @@ class Database:
 		# compare size of bb artifacts, attributes, and tsk objects
 		gold_con = sqlite3.connect(gold_db_file)
 		gold_cur = gold_con.cursor()
-		autopsy_con = sqlite3.connect(autopsy_db_file)
-		autopsy_cur = autopsy_con.cursor()
 		
 		exceptions = []
 		
 		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
 											  test_img.Img_Test_Folder, test_img.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
-		Database._retrieve_data(test_img.autopsy_data_file, autopsy_con,autopsy_db_file, test_img)
-		Database._dbDump(test_img)
+		try:
+			database.generate_autopsy_objects()
+			database.generate_autopsy_artifacts()
+			database.generate_autopsy_attributes()
+		except Exception as e:
+			printerror("Way out:" + str(e))
 		# Testing tsk_objects
 		exceptions.append(TestDiffer.compare_tsk_objects(test_img, database))
 		# Testing blackboard_artifacts
@@ -541,6 +536,16 @@ class Database:
 		print_report(exceptions[0], "COMPARE TSK OBJECTS", okay)
 		print_report(exceptions[1], "COMPARE ARTIFACTS", okay)
 		print_report(exceptions[2], "COMPARE ATTRIBUTES", okay)
+			
+	def get_Data(test_img):
+		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+										  test_img.Img_Test_Folder, test_img.test_db_file)
+		autopsy_con = sqlite3.connect(autopsy_db_file)
+		autopsy_cur = autopsy_con.cursor()
+		# Try to query the databases. Ignore any exceptions, the function will
+		# return an error later on if these do fail
+		Database._retrieve_data(test_img.autopsy_data_file, autopsy_con,autopsy_db_file, test_img)
+		Database._dbDump(test_img)
 		
 # Tests Autopsy with RegressionTest.java by by running
 # the build.xml file through ant
@@ -792,6 +797,7 @@ class TestDiffer:
 			printerror("Error: Unknown fatal error comparing reports.")
 			printerror(str(e) + "\n")
 			logging.critical(traceback.format_exc())
+		
 class TestData:
 	def __init__(self, test_img_in):
 		self.gold = test_img_in.gold
@@ -1354,7 +1360,6 @@ def copy_file(ffrom, to):
 	try :
 		if not Emailer.file_exists(ffrom):
 			raise FileNotFoundException(ffrom)
-		print('hilo*****************************************************************************************************')
 		shutil.copy(ffrom, to)
 	except:
 		raise FileNotFoundException(to)
@@ -1363,9 +1368,7 @@ def copy_file(ffrom, to):
 def copy_dir(ffrom, to):
 	try :
 		if not os.path.isdir(ffrom):
-			print('hilo************************************************************')
 			raise FileNotFoundException(ffrom)
-		print('hilo************************************************************')
 		shutil.copytree(ffrom, to)
 	except:
 		raise FileNotFoundException(to)
@@ -1687,6 +1690,7 @@ class Test_Runner:
 		# Now test in comparison to the gold standards
 		if not args.gold_creation:
 			try:
+				Database.get_Data(test_img)
 				gold_path = test_case.gold
 				img_gold = Emailer.make_path(test_case.gold, "tmp", test_case.image_name)
 				img_archive = Emailer.make_path("..", "output", "gold", test_case.image_name+"-archive.zip")
@@ -1729,7 +1733,6 @@ class Test_Runner:
 			test_img.img_gold_parse = test_img.img_gold
 		# Delete the current gold standards
 		gold_dir = test_img.img_gold_parse
-		print(gold_dir)
 		clear_dir(test_img.img_gold_parse)
 		tmpdir = Emailer.make_path(gold_dir, test_img.image_name)
 		dbinpth = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
@@ -1748,9 +1751,6 @@ class Test_Runner:
 			copy_file(test_img.sorted_data_file, dataoutpth)
 			copy_file(dbdumpinpth, dbdumpoutpth)
 			error_pth = Emailer.make_path(tmpdir, test_img.image_name+"SortedErrors.txt")
-			print(error_pth)
-			print(file_exists(test_img.sorted_log))
-			print('hilo')
 			copy_file(test_img.sorted_log, error_pth)
 		except Exception as e:
 			printerror(str(e))
