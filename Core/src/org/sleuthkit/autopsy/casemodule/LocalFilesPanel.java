@@ -30,7 +30,7 @@ import javax.swing.JFileChooser;
  */
 public class LocalFilesPanel extends ContentTypePanel {
 
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
@@ -55,9 +55,8 @@ public class LocalFilesPanel extends ContentTypePanel {
         localFileChooser.setMultiSelectionEnabled(true);
         selectedPaths.setText("");
         
-
     }
-
+    
     @Override
     public String getContentPaths() {
         //TODO consider interface change to return list of paths instead
@@ -102,15 +101,24 @@ public class LocalFilesPanel extends ContentTypePanel {
         pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
     }
 
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+      @Override
+    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
+	super.addPropertyChangeListener(pcl);
+
+	if (pcs == null) {
+	    pcs = new PropertyChangeSupport(this);
+	}
+
         pcs.addPropertyChangeListener(pcl);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
+	super.removePropertyChangeListener(pcl);
+
         pcs.removePropertyChangeListener(pcl);
     }
+
 
     @Override
     public String toString() {

@@ -44,6 +44,7 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
@@ -60,6 +61,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -115,7 +117,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private Map<Keyword, List<Long>> currentResults;
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
-    private Set<Long> curImageIds;
+    private Set<Long> curDataSourceIds;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
@@ -128,6 +130,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private boolean initialized = false;
     private KeywordSearchConfigurationPanel panel;
     private Tika tikaFormatDetector;
+    
 
     private enum IngestStatus {
 
@@ -160,12 +163,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
         try {
-            //add image id of the file to the set, keeping track of images being ingested
-            final Image fileImage = abstractFile.getImage();
-            if (fileImage != null) {
-                //not all Content objects have an image associated (e.g. LocalFiles)
-                curImageIds.add(fileImage.getId());
-            }
+            //add data source id of the file to the set, keeping track of images being ingested
+            final long fileSourceId = caseHandle.getFileDataSource(abstractFile);
+            curDataSourceIds.add(fileSourceId);
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
@@ -288,7 +289,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private void cleanup() {
         ingestStatus.clear();
         currentResults.clear();
-        curImageIds.clear();
+        curDataSourceIds.clear();
         currentSearcher = null;
         //finalSearcher = null; //do not collect, might be finalizing
 
@@ -399,7 +400,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<Long>>();
 
-        curImageIds = new HashSet<Long>();
+        curDataSourceIds = new HashSet<Long>();
 
         indexer = new Indexer();
 
@@ -930,15 +931,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         del = new TermComponentQuery(keywordQuery);
                     }
 
-                    //limit search to currently ingested images
-                    final long imageIds[] = new long[curImageIds.size()];
-                    final Iterator<Long> it = curImageIds.iterator();
-                    for (int imageI = 0; it.hasNext(); ++imageI) {
-                        imageIds[imageI] = it.next();
-                    }
+                    //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
-                    final KeywordQueryFilter imageFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.IMAGE, imageIds);
-                    del.addFilter(imageFilter);
+                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, curDataSourceIds);
+                    del.addFilter(dataSourceFilter);
 
                     Map<String, List<ContentHit>> queryResult = null;
 

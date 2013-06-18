@@ -77,13 +77,13 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
@@ -98,14 +98,20 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
-@ActionRegistration(displayName = "#CTL_MakeTimeline", lazy=false)
+@ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 @NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
+/**
+ * The Timeline Action entry point. Collects data and pushes data to javafx
+ * widgets
+ *
+ */
 public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
 
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
@@ -116,14 +122,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private HBox fxHBoxCharts;      //Holds the navigation buttons in horiztonal fashion. 
     private VBox fxVBox;        //Holds the JavaFX Elements in vertical fashion. 
     private JFXPanel fxPanelCharts;  //FX panel to hold the group
-    private BarChart<String,Number> fxChartEvents;      //Yearly/Monthly events - Bar chart
+    private BarChart<String, Number> fxChartEvents;      //Yearly/Monthly events - Bar chart
     private ScrollPane fxScrollEvents;  //Scroll Panes for dealing with oversized an oversized chart
     private static final int FRAME_HEIGHT = 700; //Sizing constants
     private static final int FRAME_WIDTH = 1200;
     private Button fxZoomOutButton;  //Navigation buttons
     private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
-    private final Stack<BarChart<String,Number>> fxStackPrevCharts = new Stack<BarChart<String,Number>>();  //Stack for storing drill-up information.
-    private BarChart<String,Number> fxChartTopLevel; //the topmost chart, used for resetting to default view.
+    private final Stack<BarChart<String, Number>> fxStackPrevCharts = new Stack<BarChart<String, Number>>();  //Stack for storing drill-up information.
+    private BarChart<String, Number> fxChartTopLevel; //the topmost chart, used for resetting to default view.
     private DataResultPanel dataResultPanel;
     private DataContentPanel dataContentPanel;
     private ProgressHandle progress;
@@ -146,7 +152,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         if (coreInstaller != null) {
             fxInited = coreInstaller.isJavaFxInited();
         }
-        
+
     }
 
     //Swing components and JavafX components don't play super well together
@@ -272,7 +278,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     fxZoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
-                            BarChart<String,Number> bc;
+                            BarChart<String, Number> bc;
                             if (fxStackPrevCharts.size() == 0) {
                                 bc = fxChartTopLevel;
                             } else {
@@ -339,7 +345,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * @param allYears The list of years that have barData from the mactime file
      * @return BarChart scaled to the year level
      */
-    private BarChart<String,Number> createYearChartWithDrill(final List<YearEpoch> allYears) {
+    private BarChart<String, Number> createYearChartWithDrill(final List<YearEpoch> allYears) {
         final CategoryAxis xAxis = new CategoryAxis(); //Axes are very specific types. Categorys are strings.
         final NumberAxis yAxis = new NumberAxis();
         final Label l = new Label("");
@@ -354,11 +360,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
         if (allYears != null) {
             for (final YearEpoch ye : allYears) {
-               se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
+                se.getData().add(new BarChart.Data<String, Number>(String.valueOf(ye.year), ye.getNumFiles()));
             }
         }
         bcData.add(se);
-        
+
 
         //Note: 
         // BarChart.Data wraps the Java Nodes class. BUT, until a BarChart.Data gets added to an actual series, it's node is null, and you can perform no operations on it.
@@ -367,7 +373,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         // But it is for this reason that the chart generating functions have two forloops. I do not believe they can be condensed into a single loop due to the nodes being null until 
         // an undetermined point in time. 
         BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
-        for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
+        for (final BarChart.Data<String, Number> barData : bc.getData().get(0).getData()) { //.get(0) refers to the BarChart.Series class to work on. There is only one series in this graph, so get(0) is safe.
             barData.getNode().setScaleX(.5);
 
             final javafx.scene.Node barNode = barData.getNode();
@@ -385,7 +391,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                             Platform.runLater(new Runnable() {
                                 @Override
                                 public void run() {
-                                    BarChart<String,Number> b = 
+                                    BarChart<String, Number> b =
                                             createMonthsWithDrill(findYear(allYears, Integer.valueOf(barData.getXValue())));
                                     fxChartEvents = b;
                                     fxScrollEvents.setContent(fxChartEvents);
@@ -408,7 +414,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Displays a chart with events from one year only, separated into 1-month chunks.
      * Always 12 per year, empty months are represented by no bar.
      */
-    private BarChart<String,Number> createMonthsWithDrill(final YearEpoch ye) {
+    private BarChart<String, Number> createMonthsWithDrill(final YearEpoch ye) {
 
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
@@ -427,7 +433,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, bcData);
 
         for (int i = 0; i < 12; i++) {
-            for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) {
+            for (final BarChart.Data<String, Number> barData : bc.getData().get(0).getData()) {
                 //Note: 
                 // All the charts of this package have a problem where when the chart gets below a certain pixel ratio, the barData stops drawing. The axes and the labels remain, 
                 // But the actual chart barData is invisible, unclickable, and unrendered. To partially compensate for that, barData.getNode() can be manually scaled up to increase visibility.
@@ -473,22 +479,21 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Displays a chart with events from one month only.
      * Up to 31 days per month, as low as 28 as determined by the specific MonthEpoch
      */
-    private BarChart<String,Number> createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
+    private BarChart<String, Number> createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Day of Month");
         yAxis.setLabel("Number of Events");
-        ObservableList<BarChart.Data<String,Number>> bcData 
-                = makeObservableListByMonthAllDays(me, ye.getYear());
-        BarChart.Series<String, Number> series = new BarChart.Series<String,Number>(bcData);
+        ObservableList<BarChart.Data<String, Number>> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
+        BarChart.Series<String, Number> series = new BarChart.Series<String, Number>(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
 
 
-        ObservableList<BarChart.Series<String, Number>> ol = 
+        ObservableList<BarChart.Series<String, Number>> ol =
                 FXCollections.<BarChart.Series<String, Number>>observableArrayList(series);
 
         final BarChart<String, Number> bc = new BarChart<String, Number>(xAxis, yAxis, ol);
-        for (final BarChart.Data<String,Number> barData : bc.getData().get(0).getData()) {
+        for (final BarChart.Data<String, Number> barData : bc.getData().get(0).getData()) {
             //data.getNode().setScaleX(2);
 
             final javafx.scene.Node barNode = barData.getNode();
@@ -503,9 +508,18 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 @Override
                 public void handle(MouseEvent e) {
+                     SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            //reset the view and free the current nodes before loading new ones
+                            final FileRootNode d = new FileRootNode("Empty Root", new ArrayList<Long>());
+                            dataResultPanel.setNode(d);
+                            dataResultPanel.setPath("Loading...");
+                        }
+                    });
                     final int day = (Integer.valueOf((barData.getXValue()).split("-")[1]));
                     final DayEpoch de = myme.getDay(day);
-                    final List<AbstractFile> afs;
+                    final List<Long> afs;
                     if (de != null) {
                         afs = de.getEvents();
                     } else {
@@ -516,7 +530,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            final FileRootNode d = new FileRootNode("Test Root", afs);
+                            final FileRootNode d = new FileRootNode("Root", afs);
                             dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
@@ -533,13 +547,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         return bc;
     }
 
-    private static ObservableList<BarChart.Data<String,Number>> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
-        ObservableList<BarChart.Data<String,Number>> bcData = FXCollections.observableArrayList();
+    private static ObservableList<BarChart.Data<String, Number>> makeObservableListByMonthAllDays(final MonthEpoch me, int year) {
+        ObservableList<BarChart.Data<String, Number>> bcData = FXCollections.observableArrayList();
         int totalDays = me.getTotalNumDays(year);
         for (int i = 1; i <= totalDays; ++i) {
             DayEpoch day = me.getDay(i);
             int numFiles = day == null ? 0 : day.getNumFiles();
-            BarChart.Data<String,Number> d = new BarChart.Data<String,Number>(me.month + 1 + "-" + i, numFiles);
+            BarChart.Data<String, Number> d = new BarChart.Data<String, Number>(me.month + 1 + "-" + i, numFiles);
             d.setExtraValue(me);
             bcData.add(d);
         }
@@ -693,7 +707,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             return month;
         }
 
-        public void add(AbstractFile af, int month, int day) {
+        public void add(long fileId, int month, int day) {
             // see if this month is in the list
             MonthEpoch monthEpoch = null;
             for (MonthEpoch me : months) {
@@ -709,7 +723,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             }
 
             // add the file the the MonthEpoch object
-            monthEpoch.add(af, day);
+            monthEpoch.add(fileId, day);
         }
     }
 
@@ -752,7 +766,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             return de;
         }
 
-        public void add(AbstractFile af, int day) {
+        public void add(long fileId, int day) {
             DayEpoch dayEpoch = null;
             for (DayEpoch de : days) {
                 if (de.getDayInt() == day) {
@@ -766,7 +780,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 days.add(dayEpoch);
             }
 
-            dayEpoch.add(af);
+            dayEpoch.add(fileId);
         }
 
         /**
@@ -786,7 +800,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     private class DayEpoch extends Epoch {
 
-        private List<AbstractFile> files = new ArrayList<>();
+        private final List<Long> fileIds = new ArrayList<>();
         int dayNum = 0; //Day of the month this Epoch represents, 1 indexed: 28=28.
 
         DayEpoch(int dayOfMonth) {
@@ -799,40 +813,68 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         @Override
         public int getNumFiles() {
-            return files.size();
+            return fileIds.size();
         }
 
-        public void add(AbstractFile af) {
-            files.add(af);
+        public void add(long fileId) {
+            fileIds.add(fileId);
         }
 
-        List<AbstractFile> getEvents() {
-            return this.files;
+        List<Long> getEvents() {
+            return this.fileIds;
         }
     }
 
     // The node factories used to make lists of files to send to the result viewer
-    private class FileNodeChildFactory extends ChildFactory<AbstractFile> {
+    // using the lazy loading (rather than background) loading option to facilitate
+    // loading a huge number of nodes for the given day
+    private class FileNodeChildFactory extends Children.Keys<Long> {
 
-        List<AbstractFile> l;
+        private List<Long> fileIds;
 
-        FileNodeChildFactory(List<AbstractFile> l) {
-            this.l = l;
+        FileNodeChildFactory(List<Long> fileIds) {
+            super(true);
+            this.fileIds = fileIds;
         }
 
         @Override
-        protected boolean createKeys(List<AbstractFile> list) {
-            list.addAll(l);
-            return true;
+        protected void addNotify() {
+            super.addNotify();
+            setKeys(fileIds);
         }
 
         @Override
-        protected Node createNodeForKey(AbstractFile file) {
+        protected void removeNotify() {
+            super.removeNotify();
+            setKeys(new ArrayList<Long>());
+        }
+
+        @Override
+        protected Node[] createNodes(Long t) {
+            return new Node[]{createNodeForKey(t)};
+        }
+
+        //  @Override
+        //  protected boolean createKeys(List<Long> list) {
+        //     list.addAll(fileIds);
+        //     return true;
+        //  }
+        //@Override
+        protected Node createNodeForKey(Long fileId) {
+            AbstractFile af = null;
+            try {
+                af = skCase.getAbstractFileById(fileId);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting file by id and creating a node in Timeline: " + fileId, ex);
+                //no node will be shown for this object
+                return null;
+            }
+
             Node wrapped;
-            if (file.isDir()) {
-                wrapped = new DirectoryNode(file, false);
+            if (af.isDir()) {
+                wrapped = new DirectoryNode(af, false);
             } else {
-                wrapped = new FileNode(file, false);
+                wrapped = new FileNode(af, false);
             }
             return new FilterNodeLeaf(wrapped);
         }
@@ -840,8 +882,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     private class FileRootNode extends DisplayableItemNode {
 
-        FileRootNode(String NAME, List<AbstractFile> l) {
-            super(Children.create(new FileNodeChildFactory(l), true));
+        FileRootNode(String NAME, List<Long> fileIds) {
+            //super(Children.create(new FileNodeChildFactory(fileIds), true));
+            super(new FileNodeChildFactory(fileIds), Lookups.singleton(fileIds));
             super.setName(NAME);
             super.setDisplayName(NAME);
         }
@@ -887,16 +930,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 prevYear = year;
             }
 
-            // create and add the file
-            AbstractFile file;
-            try {
-                file = skCase.getAbstractFileById(ObjId);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not find a file with ID " + ObjId, ex);
-                continue;
-            }
             if (ye != null) {
-                ye.add(file, month, day);
+                ye.add(ObjId, month, day);
             }
         }
 
@@ -923,11 +958,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
 
         // Run query to get all files
-        String filesAndDirs = "name != '.' "
+        final String filesAndDirs = "name != '.' "
                 + "AND name != '..'";
-        List<AbstractFile> files = null;
+        List<Long> fileIds = null;
         try {
-            files = skCase.findAllFilesWhere(filesAndDirs);
+            fileIds = skCase.findAllFileIdsWhere(filesAndDirs);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
             return null;
@@ -945,7 +980,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         BufferedWriter out = null;
         try {
             out = new BufferedWriter(fileWriter);
-            for (AbstractFile file : files) {
+            for (long fileId : fileIds) {
+                AbstractFile file = skCase.getAbstractFileById(fileId);
                 // try {
                 // MD5|name|inode|mode_as_string|ObjId|GID|size|atime|mtime|ctime|crtime
                 if (file.getMd5Hash() != null) {
@@ -985,6 +1021,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 out.write(Long.toString(file.getCrtime()));
                 out.write("\n");
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error querying file by id", ex);
+            return null;
+
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error while trying to write data to the body file.", ex);
             return null;
@@ -1030,8 +1070,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         } catch (IOException ioe) {
             logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
             return null;
-        }
-        finally {
+        } finally {
             if (writer != null) {
                 try {
                     writer.close();
@@ -1040,7 +1079,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 }
             }
         }
-        
+
         return macfile;
     }
 

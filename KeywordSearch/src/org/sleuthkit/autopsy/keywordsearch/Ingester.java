@@ -41,6 +41,7 @@ import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
@@ -52,10 +53,10 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -184,6 +185,12 @@ public class Ingester {
 
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
+        private SleuthkitCase curCase = null;
+        
+        GetContentFieldsV() {
+            curCase = Case.getCurrentCase().getSleuthkitCase();
+        }
+        
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
             return new HashMap<String, String>();
@@ -217,11 +224,7 @@ public class Ingester {
         
         @Override
         public Map<String, String> visit(LocalFile lf) {
-            final Map<String, String> params = new HashMap<String, String>();
-            params.put(Server.Schema.ID.toString(), Long.toString(lf.getId()));
-            params.put(Server.Schema.FILE_NAME.toString(), lf.getName());
-            params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
-            return params;
+            return getCommonFields(lf);
         }
 
         private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
@@ -235,15 +238,13 @@ public class Ingester {
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
-            long imageId = -1;
+            long dataSourceId = -1;
             try {
-                Image image = af.getImage();
-                if (image != null) {
-                    imageId = image.getId();
-                }
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(imageId));
+                dataSourceId = curCase.getFileDataSource(af);
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get image id to properly index the file " + af.getId());
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId());
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
 
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
