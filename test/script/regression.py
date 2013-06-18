@@ -1501,14 +1501,14 @@ class Test_Runner:
 			   printerror("Error: Configuration file does not exist at:")
 			   printerror(args.config_file)
 			   return
-		   logres = run_config_test(args.config_file)
+		   logres = Test_Runner.run_config_test(args.config_file)
 		# Else if working on a single file
 		elif args.single:
 		   if not Emailer.file_exists(args.single_file):
 			   printerror("Error: Image file does not exist at:")
 			   printerror(args.single_file)
 			   return
-		   logres = run_test(args.single_file, 0)
+		   logres = Test_Runner.run_test(args.single_file, 0)
 		# If user has not selected a single file, and does not want to ignore
 		#  the input directory, continue on to parsing ../input
 		if (not args.single) and (not args.ignore) and (not args.list):
