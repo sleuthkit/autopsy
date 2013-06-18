@@ -3,6 +3,7 @@
 New features:
 - Logical files and folders support
 - New file views in directory tree to view: deleted, executable, archive files and files by size
+- ext4 and yaffs2 support (via TSK 4.1.0)
 
 Improvements:
 - Improvements to tagging of files and keyword search results
