@@ -18,6 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  *
  * Filter to restrict query only specific files, chunks, images
@@ -27,23 +31,23 @@ public class KeywordQueryFilter {
 
     public static enum FilterType {
 
-        FILE, CHUNK, IMAGE
+        FILE, CHUNK, DATA_SOURCE
     };
-    private long[] idFilters;
+    private Set<Long>idFilters;
     private FilterType filterType;
 
     public KeywordQueryFilter(FilterType filterType, long id) {
         this.filterType = filterType;
-        this.idFilters = new long[1];
-        this.idFilters[0] = id;
+        this.idFilters = new HashSet<Long>();
+        this.idFilters.add(id);
     }
 
-    public KeywordQueryFilter(FilterType filterType, long[] ids) {
+    public KeywordQueryFilter(FilterType filterType, Set<Long>ids) {
         this.filterType = filterType;
         this.idFilters = ids;
     }
 
-    public long[] getIdFilters() {
+    public Set<Long> getIdFilters() {
         return idFilters;
     }
 
@@ -55,12 +59,14 @@ public class KeywordQueryFilter {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         String id = null;
-        for (int i = 0; i < idFilters.length; ++i) {
+        
+        Iterator<Long>it = idFilters.iterator();
+        for (int i = 0; it.hasNext(); ++i) {
             if (i > 0) {
                 sb.append(" "); //OR
             }
-            long idVal = idFilters[i];
-            if (filterType == FilterType.IMAGE) {
+            long idVal = it.next();
+            if (filterType == FilterType.DATA_SOURCE) {
                 id = Server.Schema.IMAGE_ID.toString();
             } else {
                 id = Server.Schema.ID.toString();
