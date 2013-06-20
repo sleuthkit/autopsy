@@ -282,7 +282,7 @@ class Database:
 		
 	def generate_autopsy_artifacts(self):
 		if not self.autopsy_artifacts:
-			autopsy_db_file = Emailer.make_path(self.test_img.output_dir, self.test_img.image_name,
+			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
 										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -294,7 +294,7 @@ class Database:
 	
 	def generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
-			autopsy_db_file = Emailer.make_path(self.test_img.output_dir, self.test_img.image_name,
+			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
 										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -304,7 +304,7 @@ class Database:
 
 	def generate_autopsy_objects(self):
 		if self.autopsy_objects == 0:
-			autopsy_db_file = Emailer.make_path(self.test_img.output_dir, self.test_img.image_name,
+			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
 										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
@@ -427,15 +427,15 @@ class Database:
 				errorem += test_img.image_name + ":There were " + str(test_img.artifact_count) + " artifacts and " + str(test_img.artifact_fail) + " threw an exception while loading.\n"
 			
 	def _dbDump(test_img):
-		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
 										  test_img.Img_Test_Folder, test_img.test_db_file)
-		backup_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		backup_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
 										  test_img.Img_Test_Folder, "autopsy_backup.db")
 		copy_file(autopsy_db_file,backup_db_file)
 		autopsy_con = sqlite3.connect(backup_db_file)
 		autopsy_con.execute("DROP TABLE blackboard_artifacts")
 		autopsy_con.execute("DROP TABLE blackboard_attributes")
-		dump_file = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.image_name + "Dump.txt")
+		dump_file = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.image_name + "Dump.txt")
 		database_log = codecs.open(dump_file, "wb", "utf_8")
 		dump_list = autopsy_con.iterdump()
 		try:
@@ -454,7 +454,7 @@ class Database:
 	# from queries while comparing
 	def compare_to_gold_db(test_img, database):
 		# SQLITE needs unix style pathing
-		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
 										  test_img.Img_Test_Folder, test_img.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		autopsy_cur = autopsy_con.cursor()
@@ -484,7 +484,7 @@ class Database:
 		
 		exceptions = []
 		
-		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
 											  test_img.Img_Test_Folder, test_img.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		try:
@@ -509,7 +509,7 @@ class Database:
 		print_report(exceptions[2], "COMPARE ATTRIBUTES", okay)
 			
 	def get_Data(test_img):
-		autopsy_db_file = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
 										  test_img.Img_Test_Folder, test_img.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		autopsy_cur = autopsy_con.cursor()
@@ -522,7 +522,7 @@ class Database:
 # the build.xml file through ant
 def run_ant(test_img):
 	# Set up the directories
-	test_case_path = os.path.join(test_img.output_dir, test_img.image_name)
+	test_case_path = os.path.join(test_case.output_dir, test_img.image_name)
 	if Emailer.dir_exists(test_case_path):
 		shutil.rmtree(test_case_path)
 	os.makedirs(test_case_path)
@@ -539,7 +539,7 @@ def run_ant(test_img):
 	test_case.ant.append("-Dkeyword_path=" + test_case.keyword_path)
 	test_case.ant.append("-Dnsrl_path=" + test_case.nsrl_path)
 	test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_img.gold))
-	test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_img.output_dir, test_img.image_name))
+	test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_img.image_name))
 	test_case.ant.append("-Dignore_unalloc=" + "%s" % args.unallocated)
 	test_case.ant.append("-Dcontin_mode=" + str(args.contin))
 	test_case.ant.append("-Dtest.timeout=" + str(test_case.timeout))
@@ -547,7 +547,7 @@ def run_ant(test_img):
 	printout("Ingesting Image:\n" + test_img.image_file + "\n")
 	printout("CMD: " + " ".join(test_case.ant))
 	printout("Starting test...\n")
-	antoutpth = Emailer.make_local_path(test_img.output_dir, "antRunOutput.txt")
+	antoutpth = Emailer.make_local_path(test_case.output_dir, "antRunOutput.txt")
 	antout = open(antoutpth, "a")
 	if SYS is OS.CYGWIN:
 		subprocess.call(test_case.ant, stdout=antout)
@@ -597,7 +597,7 @@ class TestDiffer:
 		gold_dat = gold_data.read()
 		srtd_dat = srtd_data.read()
 		if (not(gold_dat == srtd_dat)):
-			diff_dir = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.image_name+gld+"-Diff.txt")
+			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+gld+"-Diff.txt")
 			diff_file = codecs.open(diff_dir, "wb", "utf_8") 
 			dffcmdlst = ["diff", test_img.sorted_data_file, gold_dir]
 			subprocess.call(dffcmdlst, stdout = diff_file)
@@ -621,7 +621,7 @@ class TestDiffer:
 		common_dat = common_log.read()
 		patrn = re.compile("\d")
 		if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
-			diff_dir = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.image_name+"AutopsyErrors-Diff.txt")
+			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+"AutopsyErrors-Diff.txt")
 			diff_file = open(diff_dir, "w") 
 			dffcmdlst = ["diff", test_img.sorted_log, gold_dir]
 			subprocess.call(dffcmdlst, stdout = diff_file)
@@ -709,10 +709,10 @@ class TestDiffer:
 		if(not Emailer.file_exists(gold_html_file)):
 			gold_html_file = Emailer.make_path(test_img.img_gold_parse, test_img.image_name, "Report", "index.html")
 		htmlfolder = ""
-		for fs in os.listdir(Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
-			if os.path.isdir(Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
+		for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
+			if os.path.isdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
 				htmlfolder = fs
-		autopsy_html_path = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
+		autopsy_html_path = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
 		
 		
 		try:
@@ -727,9 +727,9 @@ class TestDiffer:
 				return
 			#Find all gold .html files belonging to this test_case
 			ListGoldHTML = []
-			for fs in os.listdir(Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)):
+			for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)):
 				if(fs.endswith(".html")):
-					ListGoldHTML.append(Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, fs))
+					ListGoldHTML.append(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, fs))
 			#Find all new .html files belonging to this test_case
 			ListNewHTML = []
 			if(os.path.exists(Emailer.make_path(test_img.img_gold, test_img.image_name))):
@@ -800,7 +800,7 @@ class TestData:
 def fill_test_case_data(test_img):
 	try:
 		# Open autopsy.log.0
-		log_path = Emailer.make_path(test_img.output_dir, test_img.image_name, "logs", "autopsy.log.0")
+		log_path = Emailer.make_path(test_case.output_dir, test_img.image_name, "logs", "autopsy.log.0")
 		log = open(log_path)
 		
 		# Set the test_case starting time based off the first line of autopsy.log.0
@@ -870,14 +870,14 @@ def fill_test_case_data(test_img):
 # from each log file generated by Autopsy
 def generate_common_log(test_img):
 	try:
-		logs_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs")
+		logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
 		print(logs_path)
 		common_log = codecs.open(test_img.common_log_path, "w", "utf_8")
 		warning_log = codecs.open(test_img.warning_log, "w", "utf_8")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(test_img.image_name + "\n")
 		common_log.write("--------------------------------------------------\n")
-		rep_path = Emailer.make_local_path(test_img.output_dir)
+		rep_path = Emailer.make_local_path(test_case.output_dir)
 		rep_path = rep_path.replace("\\\\", "\\")
 		for file in os.listdir(logs_path):
 			log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
@@ -917,7 +917,7 @@ def generate_csv(csv_path, database, test_img):
 		vars = []
 		vars.append( test_img.image_file )
 		vars.append( test_img.image_name )
-		vars.append( test_img.output_dir )
+		vars.append( test_case.output_dir )
 		vars.append( socket.gethostname() )
 		vars.append( test_case.autopsy_version )
 		vars.append( test_case.heap_space )
@@ -1010,7 +1010,7 @@ def report_all_errors():
 # Search through all the known log files for a specific string.
 # Returns a list of all lines with that string
 def search_logs(string, test_img):
-	logs_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs")
+	logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
 	results = []
 	for file in os.listdir(logs_path):
 		log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
@@ -1033,7 +1033,7 @@ def search_common_log(string, test_img):
 # Searches the given log for the given string
 # Returns a list of all lines with that string
 def search_log(log, string, test_img):
-	logs_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs", log)
+	logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs", log)
 	try:
 		results = []
 		log = codecs.open(logs_path, "r", "utf_8")
@@ -1049,7 +1049,7 @@ def search_log(log, string, test_img):
 # Search through all the the logs of the given type
 # Types include autopsy, tika, and solr
 def search_log_set(type, string, test_img):
-	logs_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs")
+	logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
 	results = []
 	for file in os.listdir(logs_path):
 		if type in file:
@@ -1129,7 +1129,7 @@ def generate_html(database, test_img):
 		logs = "<div id='logs'>\
 				<h2><a name='" + test_img.image_name + "-logs'>Logs</a></h2>\
 				<hr color='#282828'>"
-		logs_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs")
+		logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
 		for file in os.listdir(logs_path):
 			logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
 		logs += "</div>"
@@ -1145,7 +1145,7 @@ def generate_html(database, test_img):
 		info += "<tr><td>Image Name:</td>"
 		info += "<td>" + test_img.image_name + "</td></tr>"
 		info += "<tr><td>test_case Output Directory:</td>"
-		info += "<td>" + test_img.output_dir + "</td></tr>"
+		info += "<td>" + test_case.output_dir + "</td></tr>"
 		info += "<tr><td>Autopsy Version:</td>"
 		info += "<td>" + test_case.autopsy_version + "</td></tr>"
 		info += "<tr><td>Heap Space:</td>"
@@ -1268,7 +1268,7 @@ def html_add_images(full_image_names):
 # Returns a list of all the exceptions listed in all the autopsy logs
 def get_exceptions(test_img):
 	exceptions = []
-	logs_path = Emailer.make_path(test_img.output_dir, test_img.image_name, "logs")
+	logs_path = Emailer.make_path(test_case.output_dir, test_img.image_name, "logs")
 	results = []
 	for file in os.listdir(logs_path):
 		if "autopsy.log" in file:
@@ -1294,7 +1294,7 @@ def get_warnings(test_img):
 def copy_logs(test_img):
 	try:
 		log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
-		shutil.copytree(log_dir, Emailer.make_local_path(test_img.output_dir, test_img.image_name, "logs"))
+		shutil.copytree(log_dir, Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs"))
 	except Exception as e:
 		printerror("Error: Failed to copy the logs.")
 		printerror(str(e) + "\n")
@@ -1453,7 +1453,7 @@ class Test_Runner:
 		test_case.output_dir = Emailer.make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
 		os.makedirs(test_case.output_dir)
 		test_case.csv = Emailer.make_local_path(test_case.output_dir, "CSV.txt")
-		test_case.html_log = Emailer.make_path(test_case.output_dir, "AutopsyTesttest_case.html")
+		test_case.html_log = Emailer.make_path(test_case.output_dir, "AutopsyTestCase.html")
 		test_img = TestData(test_case)
 		log_name = test_case.output_dir + "\\regression.log"
 		logging.basicConfig(filename=log_name, level=logging.DEBUG)
@@ -1597,11 +1597,11 @@ class Test_Runner:
 		# Set the test_case to work for this test
 		test_img.image_file = image_file
 		test_img.image_name = test_case.get_image_name(image_file) + "(" + str(count) + ")"
-		test_img.autopsy_data_file = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.image_name + "Autopsy_data.txt")
-		test_img.sorted_data_file = Emailer.make_path(test_img.output_dir, test_img.image_name, "Sorted_Autopsy_data.txt")
-		test_img.warning_log = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "AutopsyLogs.txt")
-		test_img.antlog_dir = Emailer.make_local_path(test_img.output_dir, test_img.image_name, "antlog.txt")
-		test_img.test_dbdump = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		test_img.autopsy_data_file = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.image_name + "Autopsy_data.txt")
+		test_img.sorted_data_file = Emailer.make_path(test_case.output_dir, test_img.image_name, "Sorted_Autopsy_data.txt")
+		test_img.warning_log = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "AutopsyLogs.txt")
+		test_img.antlog_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "antlog.txt")
+		test_img.test_dbdump = Emailer.make_path(test_case.output_dir, test_img.image_name,
 											  test_img.image_name + "Dump.txt")
 		test_img.image = test_case.get_image_name(image_file)
 		if(args.list):
@@ -1625,10 +1625,10 @@ class Test_Runner:
 		logging.debug("--------------------")
 		run_ant(test_img)
 		time.sleep(2) # Give everything a second to process
-		test_img.common_log_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.image_name+test_img.common_log)
+		test_img.common_log_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+test_img.common_log)
 		# After the java has ran:
 		copy_logs(test_img)
-		test_img.sorted_log = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.image_name + "SortedErrors.txt")
+		test_img.sorted_log = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name + "SortedErrors.txt")
 		generate_common_log(test_img)
 		logres = search_common_log("TskCoreException", test_img)
 		try:
@@ -1639,7 +1639,7 @@ class Test_Runner:
 			logging.critical(traceback.format_exc())
 		# If NOT keeping Solr index (-k)
 		if not args.keep:
-			solr_index = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
+			solr_index = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
 			if clear_dir(solr_index):
 				print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
 		elif args.keep:
@@ -1685,7 +1685,7 @@ class Test_Runner:
 		if args.rebuild or args.gold_creation:
 			Test_Runner.rebuild(test_img)
 		# Reset the test_case and return the tests sucessfully finished
-		clear_dir(Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
+		clear_dir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
 		if(failedbool):
 			attachl.append(test_img.common_log_path)
 		test_case.reset()
@@ -1703,7 +1703,7 @@ class Test_Runner:
 		gold_dir = test_img.img_gold_parse
 		clear_dir(test_img.img_gold_parse)
 		tmpdir = Emailer.make_path(gold_dir, test_img.image_name)
-		dbinpth = Emailer.make_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
+		dbinpth = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
 		dboutpth = Emailer.make_path(tmpdir, test_img.test_db_file)
 		dataoutpth = Emailer.make_path(tmpdir, test_img.image_name + "SortedData.txt")
 		dbdumpinpth = test_img.test_dbdump
@@ -1724,12 +1724,12 @@ class Test_Runner:
 			printerror(str(e))
 		# Rebuild the HTML report
 		htmlfolder = ""
-		for fs in os.listdir(os.path.join(os.getcwd(),test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
-			if os.path.isdir(os.path.join(os.getcwd(), test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
+		for fs in os.listdir(os.path.join(os.getcwd(),test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
+			if os.path.isdir(os.path.join(os.getcwd(), test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
 				htmlfolder = fs
-		autopsy_html_path = Emailer.make_local_path(test_img.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)
+		autopsy_html_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)
 		
-		html_path = Emailer.make_path(test_img.output_dir, test_img.image_name,
+		html_path = Emailer.make_path(test_case.output_dir, test_img.image_name,
 									 test_img.Img_Test_Folder, "Reports")
 		try:
 			if not os.path.exists(Emailer.make_path(tmpdir, htmlfolder)):
