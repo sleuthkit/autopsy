@@ -55,7 +55,7 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-
+        super.restored();
 
         //setupLAF();
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
