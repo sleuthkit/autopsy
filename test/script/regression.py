@@ -139,12 +139,21 @@ class Args:
 		# Return the args were sucessfully parsed
 		return True
 #-----------------------------------------------------#
-# Holds all global variables for each individual test #
+# Holds all global variables for each individual test #W
 #-----------------------------------------------------#
 class TestAutopsy:
-	def __init__(self):
+	def __init__(self, args):
+		self.args = args
 		# Paths:
+		self.output_dir = ""
 		self.input_dir = Emailer.make_local_path("..","input")
+		self.gold = Emailer.make_path("..", "output", "gold")
+		self.img_gold = Emailer.make_path(self.gold, 'tmp')
+		self.gold_parse = ""
+		self.img_gold_parse = ""
+		self.common_log = "AutopsyErrors.txt"
+		self.test_db_file = "autopsy.db"
+		self.Img_Test_Folder = "AutopsyTestCase"
 		# Logs:
 		self.csv = ""
 		self.global_csv = ""
@@ -280,10 +289,10 @@ class Database:
 			list.append(error)
 		return ";".join(list)
 		
-	def generate_autopsy_artifacts(self):
+	def _generate_autopsy_artifacts(self):
 		if not self.autopsy_artifacts:
-			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
-										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
+			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_img.image_name,
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
 			autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -292,31 +301,31 @@ class Database:
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])		
 	
-	def generate_autopsy_attributes(self):
+	def _generate_autopsy_attributes(self):
 		if self.autopsy_attributes == 0:
-			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
-										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
+			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_img.image_name,
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
 			autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
 			autopsy_attributes = autopsy_cur.fetchone()[0]
 			self.autopsy_attributes = autopsy_attributes
 
-	def generate_autopsy_objects(self):
+	def _generate_autopsy_objects(self):
 		if self.autopsy_objects == 0:
-			autopsy_db_file = Emailer.make_path(self.test_case.output_dir, self.test_img.image_name,
-										  self.test_img.Img_Test_Folder, self.test_img.test_db_file)
+			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_img.image_name,
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 			autopsy_con = sqlite3.connect(autopsy_db_file)
 			autopsy_cur = autopsy_con.cursor()
 			autopsy_cur.execute("SELECT COUNT(*) FROM tsk_objects")
 			autopsy_objects = autopsy_cur.fetchone()[0]
 			self.autopsy_objects = autopsy_objects
 		
-	def generate_gold_artifacts(self):
+	def _generate_gold_artifacts(self):
 		if not self.gold_artifacts:
-			gold_db_file = Emailer.make_path(self.test_img.img_gold, self.test_img.image_name, self.test_img.test_db_file)
+			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_img.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
-				gold_db_file = Emailer.make_path(self.test_img.img_gold_parse, self.test_img.image_name, self.test_img.test_db_file)
+				gold_db_file = Emailer.make_path(test_case.img_gold_parse, self.test_img.image_name, test_case.test_db_file)
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -330,21 +339,21 @@ class Database:
 				for item in row:
 					self.gold_artifacts_list.append(item)
 				
-	def generate_gold_attributes(self):
+	def _generate_gold_attributes(self):
 		if self.gold_attributes == 0:
-			gold_db_file = Emailer.make_path(self.test_img.img_gold, self.test_img.image_name, self.test_img.test_db_file)
+			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_img.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
-				gold_db_file = Emailer.make_path(self.test_img.img_gold_parse, self.test_img.image_name, self.test_img.test_db_file)
+				gold_db_file = Emailer.make_path(test_case.img_gold_parse, self.test_img.image_name, test_case.test_db_file)
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
 			self.gold_attributes = gold_cur.fetchone()[0]
 
-	def generate_gold_objects(self):
+	def _generate_gold_objects(self):
 		if self.gold_objects == 0:
-			gold_db_file = Emailer.make_path(self.test_img.img_gold, self.test_img.image_name, self.test_img.test_db_file)
+			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_img.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
-				gold_db_file = Emailer.make_path(self.test_img.img_gold_parse, self.test_img.image_name, self.test_img.test_db_file)
+				gold_db_file = Emailer.make_path(test_case.img_gold_parse, self.test_img.image_name, test_case.test_db_file)
 			gold_con = sqlite3.connect(gold_db_file)
 			gold_cur = gold_con.cursor()
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -428,9 +437,9 @@ class Database:
 			
 	def _dbDump(test_img):
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
-										  test_img.Img_Test_Folder, test_img.test_db_file)
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 		backup_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
-										  test_img.Img_Test_Folder, "autopsy_backup.db")
+										  test_case.Img_Test_Folder, "autopsy_backup.db")
 		copy_file(autopsy_db_file,backup_db_file)
 		autopsy_con = sqlite3.connect(backup_db_file)
 		autopsy_con.execute("DROP TABLE blackboard_artifacts")
@@ -447,7 +456,6 @@ class Database:
 		except Exception as e:
 			printerror("Outer dump Exception:" + str(e))
 			
-
 	# Using the global test_case's variables, compare the database file made by the
 	# regression test to the gold standard database file
 	# Initializes the global database, which stores the information retrieved
@@ -455,16 +463,16 @@ class Database:
 	def compare_to_gold_db(test_img, database):
 		# SQLITE needs unix style pathing
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
-										  test_img.Img_Test_Folder, test_img.test_db_file)
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		autopsy_cur = autopsy_con.cursor()
-		gold_db_file = Emailer.make_path(test_img.img_gold, test_img.image_name, test_img.test_db_file)
+		gold_db_file = Emailer.make_path(test_case.img_gold, test_img.image_name, test_case.test_db_file)
 		if(not Emailer.file_exists(gold_db_file)):
-			gold_db_file = Emailer.make_path(test_img.img_gold_parse, test_img.image_name, test_img.test_db_file)
+			gold_db_file = Emailer.make_path(test_case.img_gold_parse, test_img.image_name, test_case.test_db_file)
 		try:
-			database.generate_gold_objects()
-			database.generate_gold_artifacts()
-			database.generate_gold_attributes()
+			database._generate_gold_objects()
+			database._generate_gold_artifacts()
+			database._generate_gold_attributes()
 		except Exception as e:
 			printerror("Way out:" + str(e))
 		# This is where we return if a file doesn't exist, because we don't want to
@@ -485,20 +493,20 @@ class Database:
 		exceptions = []
 		
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
-											  test_img.Img_Test_Folder, test_img.test_db_file)
+											  test_case.Img_Test_Folder, test_case.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		try:
-			database.generate_autopsy_objects()
-			database.generate_autopsy_artifacts()
-			database.generate_autopsy_attributes()
+			database._generate_autopsy_objects()
+			database._generate_autopsy_artifacts()
+			database._generate_autopsy_attributes()
 		except Exception as e:
 			printerror("Way out:" + str(e))
 		# Testing tsk_objects
-		exceptions.append(TestDiffer.compare_tsk_objects(test_img, database))
+		exceptions.append(Database._compare_tsk_objects(test_img, database))
 		# Testing blackboard_artifacts
-		exceptions.append(TestDiffer.count_bb_artifacts(test_img, database))
+		exceptions.append(Database._count_bb_artifacts(test_img, database))
 		# Testing blackboard_attributes
-		exceptions.append(TestDiffer.compare_bb_attributes(test_img, database))
+		exceptions.append(Database._compare_bb_attributes(test_img, database))
 		
 		database.artifact_comparison = exceptions[1]
 		database.attribute_comparison = exceptions[2]
@@ -510,13 +518,515 @@ class Database:
 			
 	def get_Data(test_img):
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
-										  test_img.Img_Test_Folder, test_img.test_db_file)
+										  test_case.Img_Test_Folder, test_case.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		autopsy_cur = autopsy_con.cursor()
 		# Try to query the databases. Ignore any exceptions, the function will
 		# return an error later on if these do fail
 		Database._retrieve_data(test_img.autopsy_data_file, autopsy_con,autopsy_db_file, test_img)
 		Database._dbDump(test_img)
+		
+	# Compares the blackboard artifact counts of two databases
+	# given the two database cursors
+	def _count_bb_artifacts(test_img, database):
+		exceptions = []
+		try:
+			global failedbool
+			global errorem
+			if database.gold_artifacts != database.autopsy_artifacts:
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += test_img.image + ":There was a TestDifference in the number of artifacts.\n"
+			rner = len(database.gold_artifacts)
+			for type_id in range(1, rner):
+				if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
+					error = str("Artifact counts do not match for type id %d. " % type_id)
+					error += str("Gold: %d, Test: %d" %
+								(database.gold_artifacts[type_id],
+								 database.autopsy_artifacts[type_id]))
+					exceptions.append(error)
+			return exceptions
+		except Exception as e:
+			printerror(str(e))
+			exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
+			return exceptions
+
+	# Compares the blackboard atribute counts of two databases
+	# given the two database cursors
+	def _compare_bb_attributes(test_img, database):
+		exceptions = []
+		try:
+			if database.gold_attributes != database.autopsy_attributes:
+				error = "Attribute counts do not match. "
+				error += str("Gold: %d, Test: %d" % (database.gold_attributes, database.autopsy_attributes))
+				exceptions.append(error)
+				global failedbool
+				global errorem
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += test_img.image + ":There was a TestDifference in the number of attributes.\n"
+				return exceptions
+		except Exception as e:
+			exceptions.append("Error: Unable to compare blackboard_attributes.\n")
+			return exceptions
+
+	# Compares the tsk object counts of two databases
+	# given the two database cursors
+	def _compare_tsk_objects(test_img,database):
+		exceptions = []
+		try:
+			if database.gold_objects != database.autopsy_objects:
+				error = "TSK Object counts do not match. "
+				error += str("Gold: %d, Test: %d" % (database.gold_objects, database.autopsy_objects))
+				exceptions.append(error)
+				global failedbool
+				global errorem
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += test_img.image + ":There was a TestDifference between the tsk object counts.\n"
+				return exceptions
+		except Exception as e:
+			exceptions.append("Error: Unable to compare tsk_objects.\n")
+			return exceptions
+
+#-------------------------------------------------#
+#	  Functions relating to comparing outputs	  #
+#-------------------------------------------------#	  
+class TestDiffer:
+	#
+	def run_diff(test_img):
+		TestDiffer._compare_errors(test_img)
+		gold_nm = "SortedData"
+		TestDiffer._compare_data(test_img.sorted_data_file, gold_nm, test_img)
+		gold_nm = "DBDump"
+		TestDiffer._compare_data(test_img.test_dbdump, gold_nm, test_img)
+		TestDiffer._compare_to_gold_html(test_img)
+		
+	def _compare_data(aut, gld,test_img):
+		gold_dir = Emailer.make_path(test_case.img_gold, test_img.image_name, test_img.image_name + gld + ".txt")
+		if(not Emailer.file_exists(gold_dir)):
+				gold_dir = Emailer.make_path(test_case.img_gold_parse,  test_img.image_name, test_img.image_name + gld + ".txt")
+		if(not Emailer.file_exists(aut)):
+			return
+		srtd_data = codecs.open(aut, "r", "utf_8")
+		gold_data = codecs.open(gold_dir, "r", "utf_8")
+		gold_dat = gold_data.read()
+		srtd_dat = srtd_data.read()
+		if (not(gold_dat == srtd_dat)):
+			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+gld+"-Diff.txt")
+			diff_file = codecs.open(diff_dir, "wb", "utf_8") 
+			dffcmdlst = ["diff", test_img.sorted_data_file, gold_dir]
+			subprocess.call(dffcmdlst, stdout = diff_file)
+			global attachl
+			global errorem
+			global failedbool
+			attachl.append(diff_dir)
+			errorem += test_img.image_name + ":There was a database TestDifference in the file " + gld + ".\n"
+			printerror("There was a TestDifference in the Database data for " + test_img.image_name + " for the file " + gld + ".\n")
+			failedbool = True
+			global imgfail
+			imgfail = True
+
+	def _compare_errors(test_img):
+		gold_dir = Emailer.make_path(test_case.img_gold,  test_img.image_name, test_img.image_name + "SortedErrors.txt")
+		if(not Emailer.file_exists(gold_dir)):
+				gold_dir = Emailer.make_path(test_case.img_gold_parse, test_img.image_name, test_img.image_name + "SortedErrors.txt")
+		common_log = codecs.open(test_img.sorted_log, "r", "utf_8")
+		gold_log = codecs.open(gold_dir, "r", "utf_8")
+		gold_dat = gold_log.read()
+		common_dat = common_log.read()
+		patrn = re.compile("\d")
+		if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
+			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+"AutopsyErrors-Diff.txt")
+			diff_file = open(diff_dir, "w") 
+			dffcmdlst = ["diff", test_img.sorted_log, gold_dir]
+			subprocess.call(dffcmdlst, stdout = diff_file)
+			global attachl
+			global errorem
+			global failedbool
+			attachl.append(test_img.sorted_log)
+			attachl.append(diff_dir)
+			errorem += test_img.image_name + ":There was a TestDifference in the exceptions Log.\n"
+			printerror("Exceptions didn't match.\n")
+			failedbool = True
+			global imgfail
+			imgfail = True
+			
+	# Using the global test_case's variables, compare the html report file made by
+	# the regression test against the gold standard html report
+	def _compare_to_gold_html(test_img):
+		gold_html_file = Emailer.make_path(test_case.img_gold, test_img.image_name, "Report", "index.html")
+		if(not Emailer.file_exists(gold_html_file)):
+			gold_html_file = Emailer.make_path(test_case.img_gold_parse, test_img.image_name, "Report", "index.html")
+		htmlfolder = ""
+		for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports")):
+			if os.path.isdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", fs)):
+				htmlfolder = fs
+		autopsy_html_path = Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
+		
+		
+		try:
+			autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
+			if not Emailer.file_exists(gold_html_file):
+				printerror("Error: No gold html report exists at:")
+				printerror(gold_html_file + "\n")
+				return
+			if not Emailer.file_exists(autopsy_html_file):
+				printerror("Error: No test_case html report exists at:")
+				printerror(autopsy_html_file + "\n")
+				return
+			#Find all gold .html files belonging to this test_case
+			ListGoldHTML = []
+			for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder)):
+				if(fs.endswith(".html")):
+					ListGoldHTML.append(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder, fs))
+			#Find all new .html files belonging to this test_case
+			ListNewHTML = []
+			if(os.path.exists(Emailer.make_path(test_case.img_gold, test_img.image_name))):
+				for fs in os.listdir(Emailer.make_path(test_case.img_gold, test_img.image_name)):
+					if (fs.endswith(".html")):
+						ListNewHTML.append(Emailer.make_path(test_case.img_gold, test_img.image_name, fs))
+			if(not test_case.img_gold_parse == "" or test_case.img_gold == test_case.img_gold_parse):
+				if(Emailer.file_exists(Emailer.make_path(test_case.img_gold_parse, test_img.image_name))):
+					for fs in os.listdir(Emailer.make_path(test_case.img_gold_parse,test_img.image_name)):
+						if (fs.endswith(".html")):
+							ListNewHTML.append(Emailer.make_path(test_case.img_gold_parse, test_img.image_name, fs))
+			#ensure both reports have the same number of files and are in the same order
+			if(len(ListGoldHTML) != len(ListNewHTML)):
+				printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
+			else:
+				ListGoldHTML.sort()
+				ListNewHTML.sort()
+			  
+			total = {"Gold": 0, "New": 0}
+			for x in range(0, len(ListGoldHTML)):
+				count = compare_report_files(ListGoldHTML[x], ListNewHTML[x])
+				total["Gold"]+=count[0]
+				total["New"]+=count[1]
+			okay = "The test report matches the gold report."
+			errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
+			print_report(errors, "REPORT COMPARISON", okay)
+			if total["Gold"] == total["New"]:
+				test_img.report_passed = True
+			else:
+				printerror("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
+		except FileNotFoundException as e:
+			e.print_error()
+		except DirNotFoundException as e:
+			e.print_error()
+		except Exception as e:
+			printerror("Error: Unknown fatal error comparing reports.")
+			printerror(str(e) + "\n")
+			logging.critical(traceback.format_exc())
+		
+class TestData:
+	def __init__(self):
+		self.image = ""
+		self.image_file = ""
+		self.image_name = ""
+		self.sorted_log = ""
+		self.warning_log = ""
+		self.autopsy_data_file = ""
+		self.sorted_data_file = ""
+		self.common_log_path = ""
+		self.antlog_dir = ""
+		self.test_dbdump = ""
+		self.total_test_time = ""
+		self.start_date = ""
+		self.end_date = ""
+		self.total_ingest_time = ""
+		self.artifact_count = 0
+		self.artifact_fail = 0
+	def reset(self):
+		self.image = ""
+		self.image_file = ""
+		self.image_name = ""
+		self.sorted_log = ""
+		self.warning_log = ""
+		self.autopsy_data_file = ""
+		self.sorted_data_file = ""
+		self.common_log_path = ""
+		self.antlog_dir = ""
+		self.test_dbdump = ""
+		self.total_test_time = ""
+		self.start_date = ""
+		self.end_date = ""
+		self.total_ingest_time = ""
+		self.artifact_count = 0
+		self.artifact_fail = 0
+			
+class Reports:
+	def generate_reports(csv_path, database, test_img):
+		Reports.generate_html(database, test_img)
+		Reports.generate_csv(csv_path, database, test_img)
+	# Generates the HTML log file
+	def generate_html(database, test_img):
+		# If the file doesn't exist yet, this is the first test_case to run for
+		# this test, so we need to make the start of the html log
+		global imgfail
+		if not Emailer.file_exists(test_case.html_log):
+			Reports.write_html_head()
+		try:
+			global html
+			html = open(test_case.html_log, "a")
+			# The image title
+			title = "<h1><a name='" + test_img.image_name + "'>" + test_img.image_name + " \
+						<span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
+					 <h2 align='center'>\
+					 <a href='#" + test_img.image_name + "-errors'>Errors and Warnings</a> |\
+					 <a href='#" + test_img.image_name + "-info'>Information</a> |\
+					 <a href='#" + test_img.image_name + "-general'>General Output</a> |\
+					 <a href='#" + test_img.image_name + "-logs'>Logs</a>\
+					 </h2>"
+			# The script errors found
+			if imgfail:
+				ids = 'errors1'
+			else:
+				ids = 'errors'
+			errors = "<div id='" + ids + "'>\
+					  <h2><a name='" + test_img.image_name + "-errors'>Errors and Warnings</a></h2>\
+					  <hr color='#FF0000'>"
+			# For each error we have logged in the test_case
+			for error in test_case.printerror:
+				# Replace < and > to avoid any html display errors
+				errors += "<p>" + error.replace("<", "&lt").replace(">", "&gt") + "</p>"
+				# If there is a \n, we probably want a <br /> in the html
+				if "\n" in error:
+					errors += "<br />"
+			errors += "</div>"
+			
+			# Links to the logs
+			logs = "<div id='logs'>\
+					<h2><a name='" + test_img.image_name + "-logs'>Logs</a></h2>\
+					<hr color='#282828'>"
+			logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
+			for file in os.listdir(logs_path):
+				logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
+			logs += "</div>"
+			
+			# All the testing information
+			info = "<div id='info'>\
+					<h2><a name='" + test_img.image_name + "-info'>Information</a></h2>\
+					<hr color='#282828'>\
+					<table cellspacing='5px'>"
+			# The individual elements
+			info += "<tr><td>Image Path:</td>"
+			info += "<td>" + test_img.image_file + "</td></tr>"
+			info += "<tr><td>Image Name:</td>"
+			info += "<td>" + test_img.image_name + "</td></tr>"
+			info += "<tr><td>test_case Output Directory:</td>"
+			info += "<td>" + test_case.output_dir + "</td></tr>"
+			info += "<tr><td>Autopsy Version:</td>"
+			info += "<td>" + test_case.autopsy_version + "</td></tr>"
+			info += "<tr><td>Heap Space:</td>"
+			info += "<td>" + test_case.heap_space + "</td></tr>"
+			info += "<tr><td>Test Start Date:</td>"
+			info += "<td>" + test_img.start_date + "</td></tr>"
+			info += "<tr><td>Test End Date:</td>"
+			info += "<td>" + test_img.end_date + "</td></tr>"
+			info += "<tr><td>Total Test Time:</td>"
+			info += "<td>" + test_img.total_test_time + "</td></tr>"
+			info += "<tr><td>Total Ingest Time:</td>"
+			info += "<td>" + test_img.total_ingest_time + "</td></tr>"
+			info += "<tr><td>Exceptions Count:</td>"
+			info += "<td>" + str(len(get_exceptions(test_img))) + "</td></tr>"
+			info += "<tr><td>Autopsy OutOfMemoryExceptions:</td>"
+			info += "<td>" + str(len(search_logs("OutOfMemoryException", test_img))) + "</td></tr>"
+			info += "<tr><td>Autopsy OutOfMemoryErrors:</td>"
+			info += "<td>" + str(len(search_logs("OutOfMemoryError", test_img))) + "</td></tr>"
+			info += "<tr><td>Tika OutOfMemoryErrors/Exceptions:</td>"
+			info += "<td>" + str(get_num_memory_errors("tika", test_img)) + "</td></tr>"
+			info += "<tr><td>Solr OutOfMemoryErrors/Exceptions:</td>"
+			info += "<td>" + str(get_num_memory_errors("solr", test_img)) + "</td></tr>"
+			info += "<tr><td>TskCoreExceptions:</td>"
+			info += "<td>" + str(len(search_log_set("autopsy", "TskCoreException", test_img))) + "</td></tr>"
+			info += "<tr><td>TskDataExceptions:</td>"
+			info += "<td>" + str(len(search_log_set("autopsy", "TskDataException", test_img))) + "</td></tr>"
+			info += "<tr><td>Ingest Messages Count:</td>"
+			info += "<td>" + str(test_case.ingest_messages) + "</td></tr>"
+			info += "<tr><td>Indexed Files Count:</td>"
+			info += "<td>" + str(test_case.indexed_files) + "</td></tr>"
+			info += "<tr><td>Indexed File Chunks Count:</td>"
+			info += "<td>" + str(test_case.indexed_chunks) + "</td></tr>"
+			info += "<tr><td>Out Of Disk Space:\
+							 <p style='font-size: 11px;'>(will skew other test results)</p></td>"
+			info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_img))) + "</td></tr>"
+			info += "<tr><td>TSK Objects Count:</td>"
+			info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
+			info += "<tr><td>Artifacts Count:</td>"
+			info += "<td>" + str(database.get_artifacts_count()) + "</td></tr>"
+			info += "<tr><td>Attributes Count:</td>"
+			info += "<td>" + str(database.autopsy_attributes) + "</td></tr>"
+			info += "</table>\
+					 </div>"
+			# For all the general print statements in the test_case
+			output = "<div id='general'>\
+					  <h2><a name='" + test_img.image_name + "-general'>General Output</a></h2>\
+					  <hr color='#282828'>"
+			# For each printout in the test_case's list
+			for out in test_case.printout:
+				output += "<p>" + out + "</p>"
+				# If there was a \n it probably means we want a <br /> in the html
+				if "\n" in out:
+					output += "<br />"
+			output += "</div>"
+			
+			html.write(title)
+			html.write(errors)
+			html.write(info)
+			html.write(logs)
+			html.write(output)
+			html.close()
+		except Exception as e:
+			printerror("Error: Unknown fatal error when creating HTML log at:")
+			printerror(test_case.html_log)
+			printerror(str(e) + "\n")
+			logging.critical(traceback.format_exc())
+
+	# Writed the top of the HTML log file
+	def write_html_head():
+		print(test_case.html_log)
+		html = open(str(test_case.html_log), "a")
+		head = "<html>\
+				<head>\
+				<title>AutopsyTesttest_case Output</title>\
+				</head>\
+				<style type='text/css'>\
+				body { font-family: 'Courier New'; font-size: 12px; }\
+				h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
+				h1 span { font-size: 12px; font-weight: 100; }\
+				h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
+				hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
+				#errors { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+				#errors1 { background: #CC0000; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+				#info { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+				#general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+				#logs { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+				#errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
+				#info table td { color: ##282828; font-size: 12px; min-width: 225px; }\
+				#logs a { color: ##282828; }\
+				</style>\
+				<body>"
+		html.write(head)
+		html.close()
+
+	# Writed the bottom of the HTML log file
+	def write_html_foot():
+		html = open(test_case.html_log, "a")
+		head = "</body></html>"
+		html.write(head)
+		html.close()
+
+	# Adds all the image names to the HTML log for easy access
+	def html_add_images(full_image_names):
+		# If the file doesn't exist yet, this is the first test_case to run for
+		# this test, so we need to make the start of the html log
+		if not Emailer.file_exists(test_case.html_log):
+			Reports.write_html_head()
+		html = open(test_case.html_log, "a")
+		links = []
+		for full_name in full_image_names:
+			name = test_case.get_image_name(full_name)
+			links.append("<a href='#" + name + "(0)'>" + name + "</a>")
+		html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
+	# Generate the CSV log file
+	def generate_csv(csv_path, database, test_img):
+		try:
+			# If the CSV file hasn't already been generated, this is the
+			# first run, and we need to add the column names
+			if not Emailer.file_exists(csv_path):
+				Reports.csv_header(csv_path)
+				
+			# Now add on the fields to a new row
+			csv = open(csv_path, "a")
+			
+			# Variables that need to be written
+			vars = []
+			vars.append( test_img.image_file )
+			vars.append( test_img.image_name )
+			vars.append( test_case.output_dir )
+			vars.append( socket.gethostname() )
+			vars.append( test_case.autopsy_version )
+			vars.append( test_case.heap_space )
+			vars.append( test_img.start_date )
+			vars.append( test_img.end_date )
+			vars.append( test_img.total_test_time )
+			vars.append( test_img.total_ingest_time )
+			vars.append( test_case.service_times )
+			vars.append( str(len(get_exceptions(test_img))) )
+			vars.append( str(get_num_memory_errors("autopsy", test_img)) )
+			vars.append( str(get_num_memory_errors("tika", test_img)) )
+			vars.append( str(get_num_memory_errors("solr", test_img)) )
+			vars.append( str(len(search_log_set("autopsy", "TskCoreException", test_img))) )
+			vars.append( str(len(search_log_set("autopsy", "TskDataException", test_img))) )
+			vars.append( str(test_case.ingest_messages) )
+			vars.append( str(test_case.indexed_files) )
+			vars.append( str(test_case.indexed_chunks) )
+			vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_img))) )
+			vars.append( str(database.autopsy_objects) )
+			vars.append( str(database.get_artifacts_count()) )
+			vars.append( str(database.autopsy_attributes) )
+			vars.append( Emailer.make_local_path("gold", test_img.image_name, test_case.test_db_file) )
+			vars.append( database.get_artifact_comparison() )
+			vars.append( database.get_attribute_comparison() )
+			vars.append( Emailer.make_local_path("gold", test_img.image_name, "standard.html") )
+			vars.append( str(test_case.report_passed) )
+			vars.append( test_case.ant_to_string() )
+			
+			# Join it together with a ", "
+			output = "|".join(vars)
+			output += "\n"
+			# Write to the log!
+			csv.write(output)
+			csv.close()
+		except Exception as e:
+			printerror("Error: Unknown fatal error when creating CSV file at:")
+			printerror(csv_path)
+			printerror(str(e) + "\n")
+			print(traceback.format_exc())
+			logging.critical(traceback.format_exc())
+
+	# Generates the CSV header (column names)
+	def csv_header(csv_path):
+		csv = open(csv_path, "w")
+		titles = []
+		titles.append("Image Path")
+		titles.append("Image Name")
+		titles.append("Output test_case Directory")
+		titles.append("Host Name")
+		titles.append("Autopsy Version")
+		titles.append("Heap Space Setting")
+		titles.append("Test Start Date")
+		titles.append("Test End Date")
+		titles.append("Total Test Time")
+		titles.append("Total Ingest Time")
+		titles.append("Service Times")
+		titles.append("Autopsy Exceptions")
+		titles.append("Autopsy OutOfMemoryErrors/Exceptions")
+		titles.append("Tika OutOfMemoryErrors/Exceptions")
+		titles.append("Solr OutOfMemoryErrors/Exceptions")
+		titles.append("TskCoreExceptions")
+		titles.append("TskDataExceptions")
+		titles.append("Ingest Messages Count")
+		titles.append("Indexed Files Count")
+		titles.append("Indexed File Chunks Count")
+		titles.append("Out Of Disk Space")
+		titles.append("Tsk Objects Count")
+		titles.append("Artifacts Count")
+		titles.append("Attributes Count")
+		titles.append("Gold Database Name")
+		titles.append("Artifacts Comparison")
+		titles.append("Attributes Comparison")
+		titles.append("Gold Report Name")
+		titles.append("Report Comparison")
+		titles.append("Ant Command Line")
+		output = "|".join(titles)
+		output += "\n"
+		csv.write(output)
+		csv.close()
 		
 # Tests Autopsy with RegressionTest.java by by running
 # the build.xml file through ant
@@ -538,10 +1048,10 @@ def run_ant(test_img):
 	test_case.ant.append("-Dknown_bad_path=" + test_case.known_bad_path)
 	test_case.ant.append("-Dkeyword_path=" + test_case.keyword_path)
 	test_case.ant.append("-Dnsrl_path=" + test_case.nsrl_path)
-	test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_img.gold))
+	test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_case.gold))
 	test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_img.image_name))
-	test_case.ant.append("-Dignore_unalloc=" + "%s" % args.unallocated)
-	test_case.ant.append("-Dcontin_mode=" + str(args.contin))
+	test_case.ant.append("-Dignore_unalloc=" + "%s" % test_case.args.unallocated)
+	test_case.ant.append("-Dcontin_mode=" + str(test_case.args.contin))
 	test_case.ant.append("-Dtest.timeout=" + str(test_case.timeout))
 	
 	printout("Ingesting Image:\n" + test_img.image_file + "\n")
@@ -573,228 +1083,6 @@ def image_type(image_file):
 	else:
 		return IMGTYPE.UNKNOWN
 		
-#-------------------------------------------------#
-#	  Functions relating to comparing outputs	  #
-#-------------------------------------------------#	  
-class TestDiffer:
-	#
-	def run_diff(test_img):
-		TestDiffer._compare_errors(test_img)
-		gold_nm = "SortedData"
-		TestDiffer._compare_data(test_img.sorted_data_file, gold_nm, test_img)
-		gold_nm = "DBDump"
-		TestDiffer._compare_data(test_img.test_dbdump, gold_nm, test_img)
-		TestDiffer._compare_to_gold_html(test_img)
-		
-	def _compare_data(aut, gld,test_img):
-		gold_dir = Emailer.make_path(test_img.img_gold, test_img.image_name, test_img.image_name + gld + ".txt")
-		if(not Emailer.file_exists(gold_dir)):
-				gold_dir = Emailer.make_path(test_img.img_gold_parse,  test_img.image_name, test_img.image_name + gld + ".txt")
-		if(not Emailer.file_exists(aut)):
-			return
-		srtd_data = codecs.open(aut, "r", "utf_8")
-		gold_data = codecs.open(gold_dir, "r", "utf_8")
-		gold_dat = gold_data.read()
-		srtd_dat = srtd_data.read()
-		if (not(gold_dat == srtd_dat)):
-			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+gld+"-Diff.txt")
-			diff_file = codecs.open(diff_dir, "wb", "utf_8") 
-			dffcmdlst = ["diff", test_img.sorted_data_file, gold_dir]
-			subprocess.call(dffcmdlst, stdout = diff_file)
-			global attachl
-			global errorem
-			global failedbool
-			attachl.append(diff_dir)
-			errorem += test_img.image_name + ":There was a database TestDifference in the file " + gld + ".\n"
-			printerror("There was a TestDifference in the Database data for " + test_img.image_name + " for the file " + gld + ".\n")
-			failedbool = True
-			global imgfail
-			imgfail = True
-
-	def _compare_errors(test_img):
-		gold_dir = Emailer.make_path(test_img.img_gold,  test_img.image_name, test_img.image_name + "SortedErrors.txt")
-		if(not Emailer.file_exists(gold_dir)):
-				gold_dir = Emailer.make_path(test_img.img_gold_parse, test_img.image_name, test_img.image_name + "SortedErrors.txt")
-		common_log = codecs.open(test_img.sorted_log, "r", "utf_8")
-		gold_log = codecs.open(gold_dir, "r", "utf_8")
-		gold_dat = gold_log.read()
-		common_dat = common_log.read()
-		patrn = re.compile("\d")
-		if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
-			diff_dir = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+"AutopsyErrors-Diff.txt")
-			diff_file = open(diff_dir, "w") 
-			dffcmdlst = ["diff", test_img.sorted_log, gold_dir]
-			subprocess.call(dffcmdlst, stdout = diff_file)
-			global attachl
-			global errorem
-			global failedbool
-			attachl.append(test_img.sorted_log)
-			attachl.append(diff_dir)
-			errorem += test_img.image_name + ":There was a TestDifference in the exceptions Log.\n"
-			printerror("Exceptions didn't match.\n")
-			failedbool = True
-			global imgfail
-			imgfail = True
-		
-	# Compares the blackboard artifact counts of two databases
-	# given the two database cursors
-	def count_bb_artifacts(test_img, database):
-		exceptions = []
-		try:
-			global failedbool
-			global errorem
-			if database.gold_artifacts != database.autopsy_artifacts:
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_img.image + ":There was a TestDifference in the number of artifacts.\n"
-			rner = len(database.gold_artifacts)
-			for type_id in range(1, rner):
-				if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
-					error = str("Artifact counts do not match for type id %d. " % type_id)
-					error += str("Gold: %d, Test: %d" %
-								(database.gold_artifacts[type_id],
-								 database.autopsy_artifacts[type_id]))
-					exceptions.append(error)
-			return exceptions
-		except Exception as e:
-			printerror(str(e))
-			exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
-			return exceptions
-
-	# Compares the blackboard atribute counts of two databases
-	# given the two database cursors
-	def compare_bb_attributes(test_img, database):
-		exceptions = []
-		try:
-			if database.gold_attributes != database.autopsy_attributes:
-				error = "Attribute counts do not match. "
-				error += str("Gold: %d, Test: %d" % (database.gold_attributes, database.autopsy_attributes))
-				exceptions.append(error)
-				global failedbool
-				global errorem
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_img.image + ":There was a TestDifference in the number of attributes.\n"
-				return exceptions
-		except Exception as e:
-			exceptions.append("Error: Unable to compare blackboard_attributes.\n")
-			return exceptions
-
-	# Compares the tsk object counts of two databases
-	# given the two database cursors
-	def compare_tsk_objects(test_img,database):
-		exceptions = []
-		try:
-			if database.gold_objects != database.autopsy_objects:
-				error = "TSK Object counts do not match. "
-				error += str("Gold: %d, Test: %d" % (database.gold_objects, database.autopsy_objects))
-				exceptions.append(error)
-				global failedbool
-				global errorem
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_img.image + ":There was a TestDifference between the tsk object counts.\n"
-				return exceptions
-		except Exception as e:
-			exceptions.append("Error: Unable to compare tsk_objects.\n")
-			return exceptions
-			
-	# Using the global test_case's variables, compare the html report file made by
-	# the regression test against the gold standard html report
-	def _compare_to_gold_html(test_img):
-		gold_html_file = Emailer.make_path(test_img.img_gold, test_img.image_name, "Report", "index.html")
-		if(not Emailer.file_exists(gold_html_file)):
-			gold_html_file = Emailer.make_path(test_img.img_gold_parse, test_img.image_name, "Report", "index.html")
-		htmlfolder = ""
-		for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
-			if os.path.isdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
-				htmlfolder = fs
-		autopsy_html_path = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
-		
-		
-		try:
-			autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
-			if not Emailer.file_exists(gold_html_file):
-				printerror("Error: No gold html report exists at:")
-				printerror(gold_html_file + "\n")
-				return
-			if not Emailer.file_exists(autopsy_html_file):
-				printerror("Error: No test_case html report exists at:")
-				printerror(autopsy_html_file + "\n")
-				return
-			#Find all gold .html files belonging to this test_case
-			ListGoldHTML = []
-			for fs in os.listdir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)):
-				if(fs.endswith(".html")):
-					ListGoldHTML.append(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder, fs))
-			#Find all new .html files belonging to this test_case
-			ListNewHTML = []
-			if(os.path.exists(Emailer.make_path(test_img.img_gold, test_img.image_name))):
-				for fs in os.listdir(Emailer.make_path(test_img.img_gold, test_img.image_name)):
-					if (fs.endswith(".html")):
-						ListNewHTML.append(Emailer.make_path(test_img.img_gold, test_img.image_name, fs))
-			if(not test_img.img_gold_parse == "" or test_img.img_gold == test_img.img_gold_parse):
-				if(Emailer.file_exists(Emailer.make_path(test_img.img_gold_parse, test_img.image_name))):
-					for fs in os.listdir(Emailer.make_path(test_img.img_gold_parse,test_img.image_name)):
-						if (fs.endswith(".html")):
-							ListNewHTML.append(Emailer.make_path(test_img.img_gold_parse, test_img.image_name, fs))
-			#ensure both reports have the same number of files and are in the same order
-			if(len(ListGoldHTML) != len(ListNewHTML)):
-				printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
-			else:
-				ListGoldHTML.sort()
-				ListNewHTML.sort()
-			  
-			total = {"Gold": 0, "New": 0}
-			for x in range(0, len(ListGoldHTML)):
-				count = compare_report_files(ListGoldHTML[x], ListNewHTML[x])
-				total["Gold"]+=count[0]
-				total["New"]+=count[1]
-			okay = "The test report matches the gold report."
-			errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
-			print_report(errors, "REPORT COMPARISON", okay)
-			if total["Gold"] == total["New"]:
-				test_img.report_passed = True
-			else:
-				printerror("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
-		except FileNotFoundException as e:
-			e.print_error()
-		except DirNotFoundException as e:
-			e.print_error()
-		except Exception as e:
-			printerror("Error: Unknown fatal error comparing reports.")
-			printerror(str(e) + "\n")
-			logging.critical(traceback.format_exc())
-		
-class TestData:
-	def __init__(self, test_img_in):
-		self.gold = Emailer.make_path("..", "output", "gold")
-		self.img_gold = Emailer.make_path(self.gold, 'tmp')
-		self.gold_parse = ""
-		self.img_gold_parse = ""
-		self.image = ""
-		self.image_file = ""
-		self.image_name = ""
-		self.output_dir = test_img_in.output_dir
-		self.sorted_log = ""
-		self.warning_log = ""
-		self.test_db_file = "autopsy.db"
-		self.Img_Test_Folder = "AutopsyTestCase"
-		self.autopsy_data_file = ""
-		self.sorted_data_file = ""
-		self.common_log_path = ""
-		self.common_log = "AutopsyErrors.txt"
-		self.antlog_dir = ""
-		self.test_dbdump = ""
-		self.total_test_time = ""
-		self.start_date = ""
-		self.end_date = ""
-		self.total_ingest_time = ""
-		self.artifact_count = 0
-		self.artifact_fail = 0
 
 # Fill in the global test_case's variables that require the log files
 def fill_test_case_data(test_img):
@@ -872,7 +1160,7 @@ def generate_common_log(test_img):
 	try:
 		logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
 		print(logs_path)
-		common_log = codecs.open(test_img.common_log_path, "w", "utf_8")
+		common_log = codecs.open(test_case.common_log_path, "w", "utf_8")
 		warning_log = codecs.open(test_img.warning_log, "w", "utf_8")
 		common_log.write("--------------------------------------------------\n")
 		common_log.write(test_img.image_name + "\n")
@@ -894,7 +1182,7 @@ def generate_common_log(test_img):
 			log.close()
 		common_log.write("\n")
 		common_log.close()
-		srtcmdlst = ["sort", test_img.common_log_path, "-o", test_img.sorted_log]
+		srtcmdlst = ["sort", test_case.common_log_path, "-o", test_img.sorted_log]
 		subprocess.call(srtcmdlst)
 	except Exception as e:
 		printerror("Error: Unable to generate the common log.")
@@ -902,102 +1190,6 @@ def generate_common_log(test_img):
 		printerror(traceback.format_exc())
 		logging.critical(traceback.format_exc())
 
-# Generate the CSV log file
-def generate_csv(csv_path, database, test_img):
-	try:
-		# If the CSV file hasn't already been generated, this is the
-		# first run, and we need to add the column names
-		if not Emailer.file_exists(csv_path):
-			csv_header(csv_path)
-			
-		# Now add on the fields to a new row
-		csv = open(csv_path, "a")
-		
-		# Variables that need to be written
-		vars = []
-		vars.append( test_img.image_file )
-		vars.append( test_img.image_name )
-		vars.append( test_case.output_dir )
-		vars.append( socket.gethostname() )
-		vars.append( test_case.autopsy_version )
-		vars.append( test_case.heap_space )
-		vars.append( test_img.start_date )
-		vars.append( test_img.end_date )
-		vars.append( test_img.total_test_time )
-		vars.append( test_img.total_ingest_time )
-		vars.append( test_case.service_times )
-		vars.append( str(len(get_exceptions(test_img))) )
-		vars.append( str(get_num_memory_errors("autopsy", test_img)) )
-		vars.append( str(get_num_memory_errors("tika", test_img)) )
-		vars.append( str(get_num_memory_errors("solr", test_img)) )
-		vars.append( str(len(search_log_set("autopsy", "TskCoreException", test_img))) )
-		vars.append( str(len(search_log_set("autopsy", "TskDataException", test_img))) )
-		vars.append( str(test_case.ingest_messages) )
-		vars.append( str(test_case.indexed_files) )
-		vars.append( str(test_case.indexed_chunks) )
-		vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_img))) )
-		vars.append( str(database.autopsy_objects) )
-		vars.append( str(database.get_artifacts_count()) )
-		vars.append( str(database.autopsy_attributes) )
-		vars.append( Emailer.make_local_path("gold", test_img.image_name, test_img.test_db_file) )
-		vars.append( database.get_artifact_comparison() )
-		vars.append( database.get_attribute_comparison() )
-		vars.append( Emailer.make_local_path("gold", test_img.image_name, "standard.html") )
-		vars.append( str(test_case.report_passed) )
-		vars.append( test_case.ant_to_string() )
-		
-		# Join it together with a ", "
-		output = "|".join(vars)
-		output += "\n"
-		# Write to the log!
-		csv.write(output)
-		csv.close()
-	except Exception as e:
-		printerror("Error: Unknown fatal error when creating CSV file at:")
-		printerror(csv_path)
-		printerror(str(e) + "\n")
-		print(traceback.format_exc())
-		logging.critical(traceback.format_exc())
-
-# Generates the CSV header (column names)
-def csv_header(csv_path):
-	csv = open(csv_path, "w")
-	titles = []
-	titles.append("Image Path")
-	titles.append("Image Name")
-	titles.append("Output test_case Directory")
-	titles.append("Host Name")
-	titles.append("Autopsy Version")
-	titles.append("Heap Space Setting")
-	titles.append("Test Start Date")
-	titles.append("Test End Date")
-	titles.append("Total Test Time")
-	titles.append("Total Ingest Time")
-	titles.append("Service Times")
-	titles.append("Autopsy Exceptions")
-	titles.append("Autopsy OutOfMemoryErrors/Exceptions")
-	titles.append("Tika OutOfMemoryErrors/Exceptions")
-	titles.append("Solr OutOfMemoryErrors/Exceptions")
-	titles.append("TskCoreExceptions")
-	titles.append("TskDataExceptions")
-	titles.append("Ingest Messages Count")
-	titles.append("Indexed Files Count")
-	titles.append("Indexed File Chunks Count")
-	titles.append("Out Of Disk Space")
-	titles.append("Tsk Objects Count")
-	titles.append("Artifacts Count")
-	titles.append("Attributes Count")
-	titles.append("Gold Database Name")
-	titles.append("Artifacts Comparison")
-	titles.append("Attributes Comparison")
-	titles.append("Gold Report Name")
-	titles.append("Report Comparison")
-	titles.append("Ant Command Line")
-	output = "|".join(titles)
-	output += "\n"
-	csv.write(output)
-	csv.close()
-	
 # Returns all the errors found in the common log in a list
 def report_all_errors():
 	try:
@@ -1023,7 +1215,7 @@ def search_logs(string, test_img):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string, test_img):
 	results = []
-	log = codecs.open(test_img.common_log_path, "r", "utf_8")
+	log = codecs.open(test_case.common_log_path, "r", "utf_8")
 	for line in log:
 		if string in line:
 			results.append(line)
@@ -1088,179 +1280,6 @@ def printerror(string):
 def printout(string):
 	print(string)
 	test_case.printout.append(string)
-
-# Generates the HTML log file
-def generate_html(database, test_img):
-	# If the file doesn't exist yet, this is the first test_case to run for
-	# this test, so we need to make the start of the html log
-	global imgfail
-	if not Emailer.file_exists(test_case.html_log):
-		write_html_head()
-	try:
-		global html
-		html = open(test_case.html_log, "a")
-		# The image title
-		title = "<h1><a name='" + test_img.image_name + "'>" + test_img.image_name + " \
-					<span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
-				 <h2 align='center'>\
-				 <a href='#" + test_img.image_name + "-errors'>Errors and Warnings</a> |\
-				 <a href='#" + test_img.image_name + "-info'>Information</a> |\
-				 <a href='#" + test_img.image_name + "-general'>General Output</a> |\
-				 <a href='#" + test_img.image_name + "-logs'>Logs</a>\
-				 </h2>"
-		# The script errors found
-		if imgfail:
-			ids = 'errors1'
-		else:
-			ids = 'errors'
-		errors = "<div id='" + ids + "'>\
-				  <h2><a name='" + test_img.image_name + "-errors'>Errors and Warnings</a></h2>\
-				  <hr color='#FF0000'>"
-		# For each error we have logged in the test_case
-		for error in test_case.printerror:
-			# Replace < and > to avoid any html display errors
-			errors += "<p>" + error.replace("<", "&lt").replace(">", "&gt") + "</p>"
-			# If there is a \n, we probably want a <br /> in the html
-			if "\n" in error:
-				errors += "<br />"
-		errors += "</div>"
-		
-		# Links to the logs
-		logs = "<div id='logs'>\
-				<h2><a name='" + test_img.image_name + "-logs'>Logs</a></h2>\
-				<hr color='#282828'>"
-		logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
-		for file in os.listdir(logs_path):
-			logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
-		logs += "</div>"
-		
-		# All the testing information
-		info = "<div id='info'>\
-				<h2><a name='" + test_img.image_name + "-info'>Information</a></h2>\
-				<hr color='#282828'>\
-				<table cellspacing='5px'>"
-		# The individual elements
-		info += "<tr><td>Image Path:</td>"
-		info += "<td>" + test_img.image_file + "</td></tr>"
-		info += "<tr><td>Image Name:</td>"
-		info += "<td>" + test_img.image_name + "</td></tr>"
-		info += "<tr><td>test_case Output Directory:</td>"
-		info += "<td>" + test_case.output_dir + "</td></tr>"
-		info += "<tr><td>Autopsy Version:</td>"
-		info += "<td>" + test_case.autopsy_version + "</td></tr>"
-		info += "<tr><td>Heap Space:</td>"
-		info += "<td>" + test_case.heap_space + "</td></tr>"
-		info += "<tr><td>Test Start Date:</td>"
-		info += "<td>" + test_img.start_date + "</td></tr>"
-		info += "<tr><td>Test End Date:</td>"
-		info += "<td>" + test_img.end_date + "</td></tr>"
-		info += "<tr><td>Total Test Time:</td>"
-		info += "<td>" + test_img.total_test_time + "</td></tr>"
-		info += "<tr><td>Total Ingest Time:</td>"
-		info += "<td>" + test_img.total_ingest_time + "</td></tr>"
-		info += "<tr><td>Exceptions Count:</td>"
-		info += "<td>" + str(len(get_exceptions(test_img))) + "</td></tr>"
-		info += "<tr><td>Autopsy OutOfMemoryExceptions:</td>"
-		info += "<td>" + str(len(search_logs("OutOfMemoryException", test_img))) + "</td></tr>"
-		info += "<tr><td>Autopsy OutOfMemoryErrors:</td>"
-		info += "<td>" + str(len(search_logs("OutOfMemoryError", test_img))) + "</td></tr>"
-		info += "<tr><td>Tika OutOfMemoryErrors/Exceptions:</td>"
-		info += "<td>" + str(get_num_memory_errors("tika", test_img)) + "</td></tr>"
-		info += "<tr><td>Solr OutOfMemoryErrors/Exceptions:</td>"
-		info += "<td>" + str(get_num_memory_errors("solr", test_img)) + "</td></tr>"
-		info += "<tr><td>TskCoreExceptions:</td>"
-		info += "<td>" + str(len(search_log_set("autopsy", "TskCoreException", test_img))) + "</td></tr>"
-		info += "<tr><td>TskDataExceptions:</td>"
-		info += "<td>" + str(len(search_log_set("autopsy", "TskDataException", test_img))) + "</td></tr>"
-		info += "<tr><td>Ingest Messages Count:</td>"
-		info += "<td>" + str(test_case.ingest_messages) + "</td></tr>"
-		info += "<tr><td>Indexed Files Count:</td>"
-		info += "<td>" + str(test_case.indexed_files) + "</td></tr>"
-		info += "<tr><td>Indexed File Chunks Count:</td>"
-		info += "<td>" + str(test_case.indexed_chunks) + "</td></tr>"
-		info += "<tr><td>Out Of Disk Space:\
-						 <p style='font-size: 11px;'>(will skew other test results)</p></td>"
-		info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_img))) + "</td></tr>"
-		info += "<tr><td>TSK Objects Count:</td>"
-		info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
-		info += "<tr><td>Artifacts Count:</td>"
-		info += "<td>" + str(database.get_artifacts_count()) + "</td></tr>"
-		info += "<tr><td>Attributes Count:</td>"
-		info += "<td>" + str(database.autopsy_attributes) + "</td></tr>"
-		info += "</table>\
-				 </div>"
-		# For all the general print statements in the test_case
-		output = "<div id='general'>\
-				  <h2><a name='" + test_img.image_name + "-general'>General Output</a></h2>\
-				  <hr color='#282828'>"
-		# For each printout in the test_case's list
-		for out in test_case.printout:
-			output += "<p>" + out + "</p>"
-			# If there was a \n it probably means we want a <br /> in the html
-			if "\n" in out:
-				output += "<br />"
-		output += "</div>"
-		
-		html.write(title)
-		html.write(errors)
-		html.write(info)
-		html.write(logs)
-		html.write(output)
-		html.close()
-	except Exception as e:
-		printerror("Error: Unknown fatal error when creating HTML log at:")
-		printerror(test_case.html_log)
-		printerror(str(e) + "\n")
-		logging.critical(traceback.format_exc())
-
-# Writed the top of the HTML log file
-def write_html_head():
-	print(test_case.html_log)
-	html = open(str(test_case.html_log), "a")
-	head = "<html>\
-			<head>\
-			<title>AutopsyTesttest_case Output</title>\
-			</head>\
-			<style type='text/css'>\
-			body { font-family: 'Courier New'; font-size: 12px; }\
-			h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
-			h1 span { font-size: 12px; font-weight: 100; }\
-			h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
-			hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
-			#errors { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#errors1 { background: #CC0000; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#info { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#logs { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-			#errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
-			#info table td { color: ##282828; font-size: 12px; min-width: 225px; }\
-			#logs a { color: ##282828; }\
-			</style>\
-			<body>"
-	html.write(head)
-	html.close()
-
-# Writed the bottom of the HTML log file
-def write_html_foot():
-	html = open(test_case.html_log, "a")
-	head = "</body></html>"
-	html.write(head)
-	html.close()
-
-# Adds all the image names to the HTML log for easy access
-def html_add_images(full_image_names):
-	# If the file doesn't exist yet, this is the first test_case to run for
-	# this test, so we need to make the start of the html log
-	if not Emailer.file_exists(test_case.html_log):
-		write_html_head()
-	html = open(test_case.html_log, "a")
-	links = []
-	for full_name in full_image_names:
-		name = test_case.get_image_name(full_name)
-		links.append("<a href='#" + name + "(0)'>" + name + "</a>")
-	html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
-
-
 
 #----------------------------------#
 #		 Helper functions		 #
@@ -1400,9 +1419,6 @@ Options:
   -fr			Will not try download gold standard images
 	"""
 
-
-
-
 #------------------------------------------------------------#
 # Exception classes to manage "acceptable" thrown exceptions #
 #		  versus unexpected and fatal exceptions			#
@@ -1454,37 +1470,37 @@ class Test_Runner:
 		os.makedirs(test_case.output_dir)
 		test_case.csv = Emailer.make_local_path(test_case.output_dir, "CSV.txt")
 		test_case.html_log = Emailer.make_path(test_case.output_dir, "AutopsyTestCase.html")
-		test_img = TestData(test_case)
+		test_img = TestData()
 		log_name = test_case.output_dir + "\\regression.log"
 		logging.basicConfig(filename=log_name, level=logging.DEBUG)
 		# If user wants to do a single file and a list (contradictory?)
-		if args.single and args.list:
+		if test_case.args.single and test_case.args.list:
 			printerror("Error: Cannot run both from config file and on a single file.")
 			return
 		# If working from a configuration file
-		if args.list:
-		   if not Emailer.file_exists(args.config_file):
+		if test_case.args.list:
+		   if not Emailer.file_exists(test_case.args.config_file):
 			   printerror("Error: Configuration file does not exist at:")
-			   printerror(args.config_file)
+			   printerror(test_case.args.config_file)
 			   return
-		   logres = Test_Runner.run_config_test(args.config_file,test_img)
+		   logres = Test_Runner.run_config_test(test_case.args.config_file,test_img)
 		# Else if working on a single file
-		elif args.single:
-		   if not Emailer.file_exists(args.single_file):
+		elif test_case.args.single:
+		   if not Emailer.file_exists(test_case.args.single_file):
 			   printerror("Error: Image file does not exist at:")
-			   printerror(args.single_file)
+			   printerror(test_case.args.single_file)
 			   return
-		   logres = Test_Runner.run_test(args.single_file, 0, test_img)
+		   logres = Test_Runner.run_test(test_case.args.single_file, 0, test_img)
 		# If user has not selected a single file, and does not want to ignore
 		#  the input directory, continue on to parsing ../input
-		if (not args.single) and (not args.ignore) and (not args.list):
-		   args.config_file = "config.xml"
-		   if not Emailer.file_exists(args.config_file):
+		if (not test_case.args.single) and (not test_case.args.ignore) and (not test_case.args.list):
+		   test_case.args.config_file = "config.xml"
+		   if not Emailer.file_exists(test_case.args.config_file):
 			   printerror("Error: Configuration file does not exist at:")
-			   printerror(args.config_file)
+			   printerror(test_case.args.config_file)
 			   return
-		   logres = Test_Runner.run_config_test(args.config_file, test_img)
-		write_html_foot()
+		   logres = Test_Runner.run_config_test(test_case.args.config_file, test_img)
+		Reports.write_html_foot()
 		html.close()
 		if (len(logres)>0):
 			failedbool = True
@@ -1503,7 +1519,7 @@ class Test_Runner:
 			errorem += "Autopsy test passed.\n"
 			passFail = True
 			attachl = []
-		if not args.gold_creation:
+		if not test_case.args.gold_creation:
 			Emailer.send_email(parsed, errorem, attachl, passFail)
 			
 	# Iterates through an XML configuration file to find all given elements		
@@ -1523,11 +1539,11 @@ class Test_Runner:
 				test_case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
 				test_case.global_csv = Emailer.make_local_path(test_case.global_csv)
 			if parsed.getElementsByTagName("golddir"):
-				test_img.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-				test_img.img_gold_parse = Emailer.make_path(test_img.gold_parse, 'tmp')
+				test_case.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
 			else:
-				test_img.gold_parse = test_img.gold
-				test_img.img_gold_parse = Emailer.make_path(test_img.gold_parse, 'tmp')
+				test_case.gold_parse = test_case.gold
+				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
 			# Generate the top navbar of the HTML for easy access to all images
 			values = []
 			for element in parsed.getElementsByTagName("image"):
@@ -1537,7 +1553,7 @@ class Test_Runner:
 				else:
 					printout("File: " + value + " doesn't exist")
 			count = len(values)
-			archives = Emailer.make_path(test_img.gold, "..")
+			archives = Emailer.make_path(test_case.gold, "..")
 			arcount = 0
 			for file in os.listdir(archives):
 				if not(file == 'tmp'):
@@ -1546,12 +1562,10 @@ class Test_Runner:
 				printout("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
 			elif not (arcount == count):
 				printout("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-			html_add_images(values)
+			Reports.html_add_images(values)
 			images = []
 			# Run the test for each file in the configuration
-			global args
-			
-			if(args.contin):
+			if(test_case.args.contin):
 				#set all times an image has been processed to 0
 				for element in parsed.getElementsByTagName("image"):
 					value = element.getAttribute("value").encode().decode("utf_8")
@@ -1575,6 +1589,7 @@ class Test_Runner:
 				else:
 					printerror("Warning: Image file listed in configuration does not exist:")
 					printrttot(value + "\n")
+				test_img.reset()
 			return logres   
 		except Exception as e:
 			printerror("Error: There was an error running with the configuration file.")
@@ -1604,7 +1619,7 @@ class Test_Runner:
 		test_img.test_dbdump = Emailer.make_path(test_case.output_dir, test_img.image_name,
 											  test_img.image_name + "Dump.txt")
 		test_img.image = test_case.get_image_name(image_file)
-		if(args.list):
+		if(test_case.args.list):
 			element = parsed.getElementsByTagName("build")
 			if(len(element)<=0):
 				toval = Emailer.make_path("..", "build.xml")
@@ -1625,7 +1640,7 @@ class Test_Runner:
 		logging.debug("--------------------")
 		run_ant(test_img)
 		time.sleep(2) # Give everything a second to process
-		test_img.common_log_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+test_img.common_log)
+		test_case.common_log_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+test_case.common_log)
 		# After the java has ran:
 		copy_logs(test_img)
 		test_img.sorted_log = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name + "SortedErrors.txt")
@@ -1638,33 +1653,33 @@ class Test_Runner:
 			printerror(str(e) + "\n")
 			logging.critical(traceback.format_exc())
 		# If NOT keeping Solr index (-k)
-		if not args.keep:
-			solr_index = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
+		if not test_case.args.keep:
+			solr_index = Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
 			if clear_dir(solr_index):
 				print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
-		elif args.keep:
+		elif test_case.args.keep:
 			print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
 		# If running in verbose mode (-v)
-		if args.verbose:
+		if test_case.args.verbose:
 			errors = report_all_errors()
 			okay = "No warnings or errors in any log files."
 			print_report(errors, "VERBOSE", okay)
 		# If running in exception mode (-e)
-		if args.exception:
-			exceptions = search_logs(args.exception_string, test_img)
-			okay = "No warnings or exceptions found containing text '" + args.exception_string + "'."
+		if test_case.args.exception:
+			exceptions = search_logs(test_case.args.exception_string, test_img)
+			okay = "No warnings or exceptions found containing text '" + test_case.args.exception_string + "'."
 			print_report(exceptions, "EXCEPTION", okay)
 		database = Database(test_img)
 		# Now test in comparison to the gold standards
-		if not args.gold_creation:
+		if not test_case.args.gold_creation:
 			try:
 				Database.get_Data(test_img)
-				gold_path = test_img.gold
-				img_gold = Emailer.make_path(test_img.gold, "tmp", test_img.image_name)
+				gold_path = test_case.gold
+				img_gold = Emailer.make_path(test_case.gold, "tmp", test_img.image_name)
 				img_archive = Emailer.make_path("..", "output", "gold", test_img.image_name+"-archive.zip")
 				if(not Emailer.file_exists(img_archive)):
-					img_archive = Emailer.make_path(test_img.gold_parse, test_img.image_name+"-archive.zip")
-					gold_path = test_img.gold_parse
+					img_archive = Emailer.make_path(test_case.gold_parse, test_img.image_name+"-archive.zip")
+					gold_path = test_case.gold_parse
 					img_gold = Emailer.make_path(gold_path, "tmp", test_img.image_name)
 				extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
 				extrctr.extractall(gold_path)
@@ -1677,17 +1692,16 @@ class Test_Runner:
 				printerror("Tests failed due to an error, try rebuilding or creating gold standards.\n")
 				printerror(str(e) + "\n")
 		# Make the CSV log and the html log viewer
-		generate_csv(test_case.csv, database, test_img)
+		Reports.generate_reports(test_case.csv, database, test_img)
 		if test_case.global_csv:
-			generate_csv(test_case.global_csv, database, test_img)
-		generate_html(database, test_img)
+			Reports.generate_reports(test_case.global_csv, database, test_img)
 		# If running in rebuild mode (-r)
-		if args.rebuild or args.gold_creation:
+		if test_case.args.rebuild or test_case.args.gold_creation:
 			Test_Runner.rebuild(test_img)
 		# Reset the test_case and return the tests sucessfully finished
-		clear_dir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
+		clear_dir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
 		if(failedbool):
-			attachl.append(test_img.common_log_path)
+			attachl.append(test_case.common_log_path)
 		test_case.reset()
 		return logres
 		
@@ -1696,20 +1710,20 @@ class Test_Runner:
 	def rebuild(test_img):
 		# Errors to print
 		errors = []
-		if(test_img.gold_parse == "" ):
-			test_img.gold_parse = test_img.gold
-			test_img.img_gold_parse = test_img.img_gold
+		if(test_case.gold_parse == "" ):
+			test_case.gold_parse = test_case.gold
+			test_case.img_gold_parse = test_case.img_gold
 		# Delete the current gold standards
-		gold_dir = test_img.img_gold_parse
-		clear_dir(test_img.img_gold_parse)
+		gold_dir = test_case.img_gold_parse
+		clear_dir(test_case.img_gold_parse)
 		tmpdir = Emailer.make_path(gold_dir, test_img.image_name)
-		dbinpth = Emailer.make_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, test_img.test_db_file)
-		dboutpth = Emailer.make_path(tmpdir, test_img.test_db_file)
+		dbinpth = Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, test_case.test_db_file)
+		dboutpth = Emailer.make_path(tmpdir, test_case.test_db_file)
 		dataoutpth = Emailer.make_path(tmpdir, test_img.image_name + "SortedData.txt")
 		dbdumpinpth = test_img.test_dbdump
 		dbdumpoutpth = Emailer.make_path(tmpdir, test_img.image_name + "DBDump.txt")
-		if not os.path.exists(test_img.img_gold_parse):
-			os.makedirs(test_img.img_gold_parse)
+		if not os.path.exists(test_case.img_gold_parse):
+			os.makedirs(test_case.img_gold_parse)
 		if not os.path.exists(gold_dir):
 			os.makedirs(gold_dir)
 		if not os.path.exists(tmpdir):
@@ -1724,13 +1738,13 @@ class Test_Runner:
 			printerror(str(e))
 		# Rebuild the HTML report
 		htmlfolder = ""
-		for fs in os.listdir(os.path.join(os.getcwd(),test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports")):
-			if os.path.isdir(os.path.join(os.getcwd(), test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", fs)):
+		for fs in os.listdir(os.path.join(os.getcwd(),test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports")):
+			if os.path.isdir(os.path.join(os.getcwd(), test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", fs)):
 				htmlfolder = fs
-		autopsy_html_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.Img_Test_Folder, "Reports", htmlfolder)
+		autopsy_html_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder)
 		
 		html_path = Emailer.make_path(test_case.output_dir, test_img.image_name,
-									 test_img.Img_Test_Folder, "Reports")
+									 test_case.Img_Test_Folder, "Reports")
 		try:
 			if not os.path.exists(Emailer.make_path(tmpdir, htmlfolder)):
 				os.makedirs(Emailer.make_path(tmpdir, htmlfolder))
@@ -1753,7 +1767,7 @@ class Test_Runner:
 		Test_Runner.zipdir(img_gold, comprssr)
 		comprssr.close()
 		os.chdir(oldcwd)
-		del_dir(test_img.img_gold_parse)
+		del_dir(test_case.img_gold_parse)
 		okay = "Sucessfully rebuilt all gold standards."
 		print_report(errors, "REBUILDING", okay)
 
@@ -1768,7 +1782,6 @@ class Test_Runner:
 #----------------------#
 def main():
 	# Global variables
-	global args
 	global failedbool
 	global inform
 	global fl
@@ -1782,9 +1795,9 @@ def main():
 	failedbool = False
 	redo = False
 	errorem = ""
-	test_case = TestAutopsy()
-	printout("")
 	args = Args()
+	test_case = TestAutopsy(args)
+	printout("")
 	attachl = []
 	passed = False
 	# The arguments were given wrong:
