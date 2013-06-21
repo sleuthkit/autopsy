@@ -169,8 +169,6 @@ class TestAutopsy:
 		self.build_path = ""
 		# test_case info
 		self.autopsy_version = ""
-		self.heap_space = ""
-		self.service_times = ""
 		self.ingest_messages = 0
 		self.indexed_files = 0
 		self.indexed_chunks = 0
@@ -208,20 +206,11 @@ class TestAutopsy:
 			string += (arg + " ")
 		return string	
 
-	 
-		
 	def reset(self):
 		# Error tracking
 		self.printerror = []
 		self.printout = []
 		self.report_passed = False
-		# Ant info:
-		self.known_bad_path = ""
-		self.keyword_path = ""
-		self.nsrl_path = ""
-		# Case info
-		self.heap_space = ""
-		self.service_times = ""
 		
 		# Set the timeout to something huge
 		# The entire tester should not timeout before this number in ms
@@ -738,6 +727,8 @@ class TestData:
 		self.total_ingest_time = ""
 		self.artifact_count = 0
 		self.artifact_fail = 0
+		self.heap_space = ""
+		self.service_times = ""
 	def reset(self):
 		self.image = ""
 		self.image_file = ""
@@ -755,6 +746,8 @@ class TestData:
 		self.total_ingest_time = ""
 		self.artifact_count = 0
 		self.artifact_fail = 0
+		self.heap_space = ""
+		self.service_times = ""
 			
 class Reports:
 	def generate_reports(csv_path, database, test_img):
@@ -820,7 +813,7 @@ class Reports:
 			info += "<tr><td>Autopsy Version:</td>"
 			info += "<td>" + test_case.autopsy_version + "</td></tr>"
 			info += "<tr><td>Heap Space:</td>"
-			info += "<td>" + test_case.heap_space + "</td></tr>"
+			info += "<td>" + test_img.heap_space + "</td></tr>"
 			info += "<tr><td>Test Start Date:</td>"
 			info += "<td>" + test_img.start_date + "</td></tr>"
 			info += "<tr><td>Test End Date:</td>"
@@ -948,12 +941,12 @@ class Reports:
 			vars.append( test_case.output_dir )
 			vars.append( socket.gethostname() )
 			vars.append( test_case.autopsy_version )
-			vars.append( test_case.heap_space )
+			vars.append( test_img.heap_space )
 			vars.append( test_img.start_date )
 			vars.append( test_img.end_date )
 			vars.append( test_img.total_test_time )
 			vars.append( test_img.total_ingest_time )
-			vars.append( test_case.service_times )
+			vars.append( test_img.service_times )
 			vars.append( str(len(get_exceptions(test_img))) )
 			vars.append( str(Reports._get_num_memory_errors("autopsy", test_img)) )
 			vars.append( str(Reports._get_num_memory_errors("tika", test_img)) )
@@ -1034,16 +1027,16 @@ class Reports:
 
 class Logs:
 	def generate_log_data(test_img):
-		Reports._generate_common_log(test_img)
+		Logs._generate_common_log(test_img)
 		try:
-			Reports._fill_test_case_data(test_img)
+			Logs._fill_test_case_data(test_img)
 		except Exception as e:
 			printerror("Error: Unknown fatal error when filling test_case data.")
 			printerror(str(e) + "\n")
 			logging.critical(traceback.format_exc())
 		# If running in verbose mode (-v)
 		if test_case.args.verbose:
-			errors = Reports._report_all_errors()
+			errors = Logs._report_all_errors()
 			okay = "No warnings or errors in any log files."
 			print_report(errors, "VERBOSE", okay)
 	# Generate the "common log": a log of all exceptions and warnings
@@ -1051,7 +1044,6 @@ class Logs:
 	def _generate_common_log(test_img):
 		try:
 			logs_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs")
-			print(logs_path)
 			common_log = codecs.open(test_case.common_log_path, "w", "utf_8")
 			warning_log = codecs.open(test_img.warning_log, "w", "utf_8")
 			common_log.write("--------------------------------------------------\n")
@@ -1113,7 +1105,7 @@ class Logs:
 			version_line = search_logs("INFO: Application name: Autopsy, version:", test_img)[0]
 			test_case.autopsy_version = Emailer.get_word_at(version_line, 5).rstrip(",")
 			
-			test_case.heap_space = search_logs("Heap memory usage:", test_img)[0].rstrip().split(": ")[1]
+			test_img.heap_space = search_logs("Heap memory usage:", test_img)[0].rstrip().split(": ")[1]
 			
 			ingest_line = search_logs("Ingest (including enqueue)", test_img)[0]
 			test_img.total_ingest_time = Emailer.get_word_at(ingest_line, 6).rstrip()
@@ -1145,7 +1137,7 @@ class Logs:
 				times += words[i-1] + " "
 				times += words[i]
 				service_list.append(times)
-			test_case.service_times = "; ".join(service_list)
+			test_img.service_times = "; ".join(service_list)
 		except FileNotFoundException as e:
 			e.print_error()
 		except Exception as e:
@@ -1171,44 +1163,6 @@ class Logs:
 		log.close()
 		return results
 
-# Tests Autopsy with RegressionTest.java by by running
-# the build.xml file through ant
-def run_ant(test_img):
-	# Set up the directories
-	test_case_path = os.path.join(test_case.output_dir, test_img.image_name)
-	if Emailer.dir_exists(test_case_path):
-		shutil.rmtree(test_case_path)
-	os.makedirs(test_case_path)
-	test_case.ant = ["ant"]
-	test_case.ant.append("-v")
-	test_case.ant.append("-f")
-#	case.ant.append(case.build_path)
-	test_case.ant.append(os.path.join("..","..","Testing","build.xml"))
-	test_case.ant.append("regression-test")
-	test_case.ant.append("-l")
-	test_case.ant.append(test_img.antlog_dir)
-	test_case.ant.append("-Dimg_path=" + test_img.image_file)
-	test_case.ant.append("-Dknown_bad_path=" + test_case.known_bad_path)
-	test_case.ant.append("-Dkeyword_path=" + test_case.keyword_path)
-	test_case.ant.append("-Dnsrl_path=" + test_case.nsrl_path)
-	test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_case.gold))
-	test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_img.image_name))
-	test_case.ant.append("-Dignore_unalloc=" + "%s" % test_case.args.unallocated)
-	test_case.ant.append("-Dcontin_mode=" + str(test_case.args.contin))
-	test_case.ant.append("-Dtest.timeout=" + str(test_case.timeout))
-	
-	printout("Ingesting Image:\n" + test_img.image_file + "\n")
-	printout("CMD: " + " ".join(test_case.ant))
-	printout("Starting test...\n")
-	antoutpth = Emailer.make_local_path(test_case.output_dir, "antRunOutput.txt")
-	antout = open(antoutpth, "a")
-	if SYS is OS.CYGWIN:
-		subprocess.call(test_case.ant, stdout=antout)
-	elif SYS is OS.WIN:
-		theproc = subprocess.Popen(test_case.ant, shell = True, stdout=subprocess.PIPE)
-		theproc.communicate()
-	antout.close()
-	
 # Returns the type of image file, based off extension
 class IMGTYPE:
 	RAW, ENCASE, SPLIT, UNKNOWN = range(4)
@@ -1650,13 +1604,14 @@ class Test_Runner:
 		logging.debug("--------------------")
 		logging.debug(test_img.image_name)
 		logging.debug("--------------------")
-		run_ant(test_img)
+		Test_Runner.run_ant(test_img)
 		time.sleep(2) # Give everything a second to process
 		test_case.common_log_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+test_case.common_log)
 		# After the java has ran:
 		copy_logs(test_img)
 		test_img.sorted_log = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name + "SortedErrors.txt")
-		logres = Reports.search_common_log("TskCoreException", test_img)
+		Logs.generate_log_data(test_img)
+		logres = Logs.search_common_log("TskCoreException", test_img)
 		# If NOT keeping Solr index (-k)
 		if not test_case.args.keep:
 			solr_index = Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
@@ -1776,6 +1731,44 @@ class Test_Runner:
 			for file in files:
 				zip.write(os.path.join(root, file))
 
+	# Tests Autopsy with RegressionTest.java by by running
+	# the build.xml file through ant
+	def run_ant(test_img):
+		# Set up the directories
+		test_case_path = os.path.join(test_case.output_dir, test_img.image_name)
+		if Emailer.dir_exists(test_case_path):
+			shutil.rmtree(test_case_path)
+		os.makedirs(test_case_path)
+		test_case.ant = ["ant"]
+		test_case.ant.append("-v")
+		test_case.ant.append("-f")
+	#	case.ant.append(case.build_path)
+		test_case.ant.append(os.path.join("..","..","Testing","build.xml"))
+		test_case.ant.append("regression-test")
+		test_case.ant.append("-l")
+		test_case.ant.append(test_img.antlog_dir)
+		test_case.ant.append("-Dimg_path=" + test_img.image_file)
+		test_case.ant.append("-Dknown_bad_path=" + test_case.known_bad_path)
+		test_case.ant.append("-Dkeyword_path=" + test_case.keyword_path)
+		test_case.ant.append("-Dnsrl_path=" + test_case.nsrl_path)
+		test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_case.gold))
+		test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_img.image_name))
+		test_case.ant.append("-Dignore_unalloc=" + "%s" % test_case.args.unallocated)
+		test_case.ant.append("-Dcontin_mode=" + str(test_case.args.contin))
+		test_case.ant.append("-Dtest.timeout=" + str(test_case.timeout))
+		
+		printout("Ingesting Image:\n" + test_img.image_file + "\n")
+		printout("CMD: " + " ".join(test_case.ant))
+		printout("Starting test...\n")
+		antoutpth = Emailer.make_local_path(test_case.output_dir, "antRunOutput.txt")
+		antout = open(antoutpth, "a")
+		if SYS is OS.CYGWIN:
+			subprocess.call(test_case.ant, stdout=antout)
+		elif SYS is OS.WIN:
+			theproc = subprocess.Popen(test_case.ant, shell = True, stdout=subprocess.PIPE)
+			theproc.communicate()
+		antout.close()
+		
 #----------------------#
 #		 Main		   #
 #----------------------#
