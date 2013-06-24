@@ -20,6 +20,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * In order to update the USB database you must first copy it from a the internet
+ * into a text file named "USB_DATA". Then remove all lines from below the entry
+ * "ee38  Digital Storage Oscilloscope" and put them in another folder, for now 
+ * labeled "OTHER_USB_DATA", this data is currently unused but may be used in the
+ * future.  Then remove the whole line 
+ * "	4004  Minolta Dimage Scan Elite II AF-2920 (2888)" and the line "#typo?"
+ * above it.
+ */
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;

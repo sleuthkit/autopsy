@@ -7105,8 +7105,6 @@
 	0a30  UMAX Astra 6700 Scanner
 	0a41  Avision AM3000/MF3000 Series
 	0f01  fi-4010CU
-# typo?
-	4004  Minolta Dimage Scan Elite II AF-2920 (2888)
 0639  Chrontel, Inc.
 063a  Techwin Corp.
 063b  Taugagreining HF
