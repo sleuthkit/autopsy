@@ -22,12 +22,7 @@
  */
 /**
  * In order to update the USB database you must first copy it from
- * http://www.linux-usb.org/usb.ids into a text file named "USB_DATA". Then
- * remove all lines from below the entry "ee38 Digital Storage Oscilloscope" and
- * put them in another folder, for now labeled "OTHER_USB_DATA", this data is
- * currently unused but may be used in the future. Then remove the whole line "
- * 4004 Minolta Dimage Scan Elite II AF-2920 (2888)" and the line "#typo?" above
- * it. The file is from the date May 24th, 2013.
+ * http://www.linux-usb.org/usb.ids into a text file named "USB_DATA".
  */
 package org.sleuthkit.autopsy.recentactivity;
 
