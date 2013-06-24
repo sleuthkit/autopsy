@@ -751,10 +751,10 @@ class TestData:
 			
 class Reports:
 	def generate_reports(csv_path, database, test_img):
-		Reports.generate_html(database, test_img)
-		Reports.generate_csv(csv_path, database, test_img)
+		Reports._generate_html(database, test_img)
+		Reports._generate_csv(csv_path, database, test_img)
 	# Generates the HTML log file
-	def generate_html(database, test_img):
+	def _generate_html(database, test_img):
 		# If the file doesn't exist yet, this is the first test_case to run for
 		# this test, so we need to make the start of the html log
 		global imgfail
@@ -924,7 +924,7 @@ class Reports:
 			links.append("<a href='#" + name + "(0)'>" + name + "</a>")
 		html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
 	# Generate the CSV log file
-	def generate_csv(csv_path, database, test_img):
+	def _generate_csv(csv_path, database, test_img):
 		try:
 			# If the CSV file hasn't already been generated, this is the
 			# first run, and we need to add the column names

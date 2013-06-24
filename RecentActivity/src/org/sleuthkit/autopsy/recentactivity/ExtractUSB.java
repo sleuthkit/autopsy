@@ -20,15 +20,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
- * In order to update the USB database you must first copy it from a the internet
- * into a text file named "USB_DATA". Then remove all lines from below the entry
- * "ee38  Digital Storage Oscilloscope" and put them in another folder, for now 
- * labeled "OTHER_USB_DATA", this data is currently unused but may be used in the
- * future.  Then remove the whole line 
- * "	4004  Minolta Dimage Scan Elite II AF-2920 (2888)" and the line "#typo?"
- * above it.
+ * In order to update the USB database you must first copy it from
+ * http://www.linux-usb.org/usb.ids into a text file named "USB_DATA". Then
+ * remove all lines from below the entry "ee38 Digital Storage Oscilloscope" and
+ * put them in another folder, for now labeled "OTHER_USB_DATA", this data is
+ * currently unused but may be used in the future. Then remove the whole line "
+ * 4004 Minolta Dimage Scan Elite II AF-2920 (2888)" and the line "#typo?" above
+ * it. The file is from the date May 24th, 2013.
  */
 package org.sleuthkit.autopsy.recentactivity;
 
@@ -41,6 +40,7 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+
 public class ExtractUSB {
 
     private HashMap<String, USBInfo> devices;
@@ -105,6 +105,9 @@ public class ExtractUSB {
                 } else {
                     line = dat.nextLine();
                 }
+                if (line.startsWith("C 00")) {
+                    return;
+                }
             }
         }
     }
@@ -126,7 +129,8 @@ public class ExtractUSB {
         public String getProduct() {
             return product;
         }
-        public String toString(){
+
+        public String toString() {
             return vendor + product;
         }
     }

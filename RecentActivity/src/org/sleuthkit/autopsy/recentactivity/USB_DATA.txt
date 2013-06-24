@@ -1888,7 +1888,7 @@
 	0008  SideWinder Precision Pro
 	0009  IntelliMouse
 	000b  Natural Keyboard Elite
-	000e  SideWinder® Freestyle Pro
+	000e  SideWinderÂ® Freestyle Pro
 	0014  Digital Sound System 80
 	001a  SideWinder Precision Racing Wheel
 	001b  SideWinder Force Feedback 2 Joystick
@@ -2850,7 +2850,7 @@
 	0138  Unicorn II (ST70138B + MTC-20174TQ chipset)
 	1307  Cytronix 6in1 Card Reader
 	163d  Cool Icam Digi-MP3
-	2015  TouchChip® Fingerprint Reader
+	2015  TouchChipÂ® Fingerprint Reader
 	2016  Fingerprint Reader
 	2017  Biometric Smart Card Reader
 	2018  BioSimKey
@@ -4364,18 +4364,18 @@
 04e7  Elo TouchSystems
 	0001  TouchScreen
 	0002  Touchmonitor Interface 2600 Rev 2
-	0004  4000U CarrollTouch® Touchmonitor Interface
-	0007  2500U IntelliTouch® Touchmonitor Interface
-	0008  3000U AccuTouch® Touchmonitor Interface
-	0009  4000U CarrollTouch® Touchmonitor Interface
+	0004  4000U CarrollTouchÂ® Touchmonitor Interface
+	0007  2500U IntelliTouchÂ® Touchmonitor Interface
+	0008  3000U AccuTouchÂ® Touchmonitor Interface
+	0009  4000U CarrollTouchÂ® Touchmonitor Interface
 	0020  Touchscreen Interface (2700)
 	0021  Touchmonitor Interface
-	0030  4500U CarrollTouch® Touchmonitor Interface
+	0030  4500U CarrollTouchÂ® Touchmonitor Interface
 	0032  Touchmonitor Interface
 	0033  Touchmonitor Interface
 	0041  5010 Surface Capacitive Touchmonitor Interface
 	0042  Touchmonitor Interface
-	0050  2216 AccuTouch® Touchmonitor Interface
+	0050  2216 AccuTouchÂ® Touchmonitor Interface
 	0071  Touchmonitor Interface
 	0072  Touchmonitor Interface
 	0081  Touchmonitor Interface
@@ -7105,6 +7105,8 @@
 	0a30  UMAX Astra 6700 Scanner
 	0a41  Avision AM3000/MF3000 Series
 	0f01  fi-4010CU
+# typo?
+	4004  Minolta Dimage Scan Elite II AF-2920 (2888)
 0639  Chrontel, Inc.
 063a  Techwin Corp.
 063b  Taugagreining HF
@@ -9580,9 +9582,9 @@
 	2295  Colorado 300
 	22b6  eTrex Vista HCx (Mass Storage mode)
 	231b  Oregon 400t
-	2353  Nüvi 205T
+	2353  NÃ¼vi 205T
 	2380  Oregon series
-	23cc  nüvi 1350
+	23cc  nÃ¼vi 1350
 	2459  GPSmap 62/78 series
 	2519  eTrex 30
 	2535  Edge 800
@@ -9645,7 +9647,7 @@
 	0509  BT EDR Dongle
 	0706  PocketPC e740
 	0707  Pocket PC e330 Series
-	0708  Pocket PC e350� Series
+	0708  Pocket PC e350Â Series
 	0709  Pocket PC e750 Series
 	070a  Pocket PC e400 Series
 	070b  Pocket PC e800 Series
@@ -11465,7 +11467,7 @@
 	3050  EZ710 Smart Card Reader
 0ca7  Information Systems Laboratories
 0cad  Motorola CGISS
-	9001  PowerPad Pocket PC� Device
+	9001  PowerPad Pocket PCÂ Device
 0cae  Ascom Business Systems, Ltd
 0caf  Buslink
 	2507  Hi-Speed USB-to-IDE Bridge Controller
@@ -11516,7 +11518,7 @@
 	0035  Miditech Play'n Roll
 	0036  Cinergy 250 Audio
 	0037  Cinergy 250 Audio
-	0038  Cinergy T² DVB-T Receiver
+	0038  Cinergy TÂ² DVB-T Receiver
 	0039  Grabster AV 400
 	003b  Cinergy 400
 	003c  Grabster AV 250
@@ -11525,7 +11527,7 @@
 	004e  Cinergy T XS
 	004f  Cinergy Analog XS
 	0055  Cinergy T XE (Version 1, AF9005)
-	005c  Cinergy T²
+	005c  Cinergy TÂ²
 	0069  Cinergy T XE (Version 2, AF9015)
 	006b  Cinergy HT PVR (EU)
 	0072  Cinergy Hybrid T
@@ -13555,7 +13557,7 @@
 	0030  Multimix 8
 13b3  Nippon Dics Co., Ltd.
 13ba  PCPlay
-	0001  König Electronic CMP-KEYPAD12 Numeric Keypad
+	0001  KÃ¶nig Electronic CMP-KEYPAD12 Numeric Keypad
 	0017  PS/2 Keyboard+Mouse Adapter
 	0018  Barcode PCP-BCG4209
 13be  Ricoh Printing Systems, Ltd.
@@ -15215,7 +15217,7 @@
 1c7a  LighTuning Technology Inc.
 	0801  Fingerprint Reader
 1c7b  LUXSHARE PRECISION INDUSTRY (SHENZHEN) CO., LTD.
-1c83  Schomäcker GmbH
+1c83  SchomÃ¤cker GmbH
 	0001  RS150 V2
 1c87  2N TELEKOMUNIKACE a.s.
 1c88  Somagic, Inc.
@@ -15342,7 +15344,7 @@
 	0402  FTDI232 [EasyPort]
 	0403  FTDI232 [EasyPort Mini]
 	0404  FTDI232 [Netzteil-GL]
-	0405  FTDI232 [MotorPrüfstand]
+	0405  FTDI232 [MotorPrÃ¼fstand]
 	0406  STM32F103 [EasyKit]
 	0407  LPC2378 [Robotino]
 	0408  LPC2378 [Robotino-Arm]
@@ -16245,8 +16247,8 @@
 	2448  82801 PCI Bridge
 	3100  PRO/DSL 3220 Modem - WAN
 	3101  PRO/DSL 3220 Modem
-	3240  AnyPoint® 3240 Modem - WAN
-	3241  AnyPoint® 3240 Modem
+	3240  AnyPointÂ® 3240 Modem - WAN
+	3241  AnyPointÂ® 3240 Modem
 	8602  Miniature Card Slot
 	9303  Intel 8x930Hx Hub
 	9500  CE 9500 DVB-T
@@ -16359,3 +16361,1702 @@ f003  Hewlett Packard
 	6002  PhotoSmart C500
 f4ec  Atten Electronics / Siglent Technologies
 	ee38  Digital Storage Oscilloscope
+
+# List of known device classes, subclasses and protocols
+
+# Syntax:
+# C class  class_name
+#	subclass  subclass_name			<-- single tab
+#		protocol  protocol_name		<-- two tabs
+
+C 00  (Defined at Interface level)
+C 01  Audio
+	01  Control Device
+	02  Streaming
+	03  MIDI Streaming
+C 02  Communications
+	01  Direct Line
+	02  Abstract (modem)
+		00  None
+		01  AT-commands (v.25ter)
+		02  AT-commands (PCCA101)
+		03  AT-commands (PCCA101 + wakeup)
+		04  AT-commands (GSM)
+		05  AT-commands (3G)
+		06  AT-commands (CDMA)
+		fe  Defined by command set descriptor
+		ff  Vendor Specific (MSFT RNDIS?)
+	03  Telephone
+	04  Multi-Channel
+	05  CAPI Control
+	06  Ethernet Networking
+	07  ATM Networking
+	08  Wireless Handset Control
+	09  Device Management
+	0a  Mobile Direct Line
+	0b  OBEX
+	0c  Ethernet Emulation
+		07  Ethernet Emulation (EEM)
+C 03  Human Interface Device
+	00  No Subclass
+		00  None
+		01  Keyboard
+		02  Mouse
+	01  Boot Interface Subclass
+		00  None
+		01  Keyboard
+		02  Mouse
+C 05  Physical Interface Device
+C 06  Imaging
+	01  Still Image Capture
+		01  Picture Transfer Protocol (PIMA 15470)
+C 07  Printer
+	01  Printer
+		00  Reserved/Undefined
+		01  Unidirectional
+		02  Bidirectional
+		03  IEEE 1284.4 compatible bidirectional
+		ff  Vendor Specific
+C 08  Mass Storage
+	01  RBC (typically Flash)
+		00  Control/Bulk/Interrupt
+		01  Control/Bulk
+		50  Bulk-Only
+	02  SFF-8020i, MMC-2 (ATAPI)
+	03  QIC-157
+	04  Floppy (UFI)
+		00  Control/Bulk/Interrupt
+		01  Control/Bulk
+		50  Bulk-Only
+	05  SFF-8070i
+	06  SCSI
+		00  Control/Bulk/Interrupt
+		01  Control/Bulk
+		50  Bulk-Only
+C 09  Hub
+	00  Unused
+		00  Full speed (or root) hub
+		01  Single TT
+		02  TT per port
+C 0a  CDC Data
+	00  Unused
+		30  I.430 ISDN BRI
+		31  HDLC
+		32  Transparent
+		50  Q.921M
+		51  Q.921
+		52  Q.921TM
+		90  V.42bis
+		91  Q.932 EuroISDN
+		92  V.120 V.24 rate ISDN
+		93  CAPI 2.0
+		fd  Host Based Driver
+		fe  CDC PUF
+		ff  Vendor specific
+C 0b  Chip/SmartCard
+C 0d  Content Security
+C 0e  Video
+	00  Undefined
+	01  Video Control
+	02  Video Streaming
+	03  Video Interface Collection
+C 58  Xbox
+	42  Controller
+C dc  Diagnostic
+	01  Reprogrammable Diagnostics
+		01  USB2 Compliance
+C e0  Wireless
+	01  Radio Frequency
+		01  Bluetooth
+		02  Ultra WideBand Radio Control
+		03  RNDIS
+	02  Wireless USB Wire Adapter
+		01  Host Wire Adapter Control/Data Streaming
+		02  Device Wire Adapter Control/Data Streaming
+		03  Device Wire Adapter Isochronous Streaming
+C ef  Miscellaneous Device
+	01  ?
+		01  Microsoft ActiveSync
+		02  Palm Sync
+	02  ?
+		01  Interface Association
+		02  Wire Adapter Multifunction Peripheral
+	03  ?
+		01  Cable Based Association
+C fe  Application Specific Interface
+	01  Device Firmware Update
+	02  IRDA Bridge
+	03  Test and Measurement
+		01  TMC
+		02  USB488
+C ff  Vendor Specific Class
+	ff  Vendor Specific Subclass
+		ff  Vendor Specific Protocol
+
+# List of Audio Class Terminal Types
+
+# Syntax:
+# AT terminal_type  terminal_type_name
+
+AT 0100  USB Undefined
+AT 0101  USB Streaming
+AT 01ff  USB Vendor Specific
+AT 0200  Input Undefined
+AT 0201  Microphone
+AT 0202  Desktop Microphone
+AT 0203  Personal Microphone
+AT 0204  Omni-directional Microphone
+AT 0205  Microphone Array
+AT 0206  Processing Microphone Array
+AT 0300  Output Undefined
+AT 0301  Speaker
+AT 0302  Headphones
+AT 0303  Head Mounted Display Audio
+AT 0304  Desktop Speaker
+AT 0305  Room Speaker
+AT 0306  Communication Speaker
+AT 0307  Low Frequency Effects Speaker
+AT 0400  Bidirectional Undefined
+AT 0401  Handset
+AT 0402  Headset
+AT 0403  Speakerphone, no echo reduction
+AT 0404  Echo-suppressing speakerphone
+AT 0405  Echo-canceling speakerphone
+AT 0500  Telephony Undefined
+AT 0501  Phone line
+AT 0502  Telephone
+AT 0503  Down Line Phone
+AT 0600  External Undefined
+AT 0601  Analog Connector
+AT 0602  Digital Audio Interface
+AT 0603  Line Connector
+AT 0604  Legacy Audio Connector
+AT 0605  SPDIF interface
+AT 0606  1394 DA stream
+AT 0607  1394 DV stream soundtrack
+AT 0700  Embedded Undefined
+AT 0701  Level Calibration Noise Source
+AT 0702  Equalization Noise
+AT 0703  CD Player
+AT 0704  DAT
+AT 0705  DCC
+AT 0706  MiniDisc
+AT 0707  Analog Tape
+AT 0708  Phonograph
+AT 0709  VCR Audio
+AT 070a  Video Disc Audio
+AT 070b  DVD Audio
+AT 070c  TV Tuner Audio
+AT 070d  Satellite Receiver Audio
+AT 070e  Cable Tuner Audio
+AT 070f  DSS Audio
+AT 0710  Radio Receiver
+AT 0711  Radio Transmitter
+AT 0712  Multitrack Recorder
+AT 0713  Synthesizer
+
+# List of HID Descriptor Types
+
+# Syntax:
+# HID descriptor_type  descriptor_type_name
+
+HID 21  HID
+HID 22  Report
+HID 23  Physical
+
+# List of HID Descriptor Item Types
+# Note: 2 bits LSB encode data length following
+
+# Syntax:
+# R item_type  item_type_name
+
+R 04  Usage Page
+R 08  Usage
+R 14  Logical Minimum
+R 18  Usage Minimum
+R 24  Logical Maximum
+R 28  Usage Maximum
+R 34  Physical Minimum
+R 38  Designator Index
+R 44  Physical Maximum
+R 48  Designator Minimum
+R 54  Unit Exponent
+R 58  Designator Maximum
+R 64  Unit
+R 74  Report Size
+R 78  String Index
+R 80  Input
+R 84  Report ID
+R 88  String Minimum
+R 90  Output
+R 94  Report Count
+R 98  String Maximum
+R a0  Collection
+R a4  Push
+R a8  Delimiter
+R b0  Feature
+R b4  Pop
+R c0  End Collection
+
+# List of Physical Descriptor Bias Types
+
+# Syntax:
+# BIAS item_type  item_type_name
+
+BIAS 0  Not Applicable
+BIAS 1  Right Hand
+BIAS 2  Left Hand
+BIAS 3  Both Hands
+BIAS 4  Either Hand
+
+# List of Physical Descriptor Item Types
+
+# Syntax:
+# PHY item_type  item_type_name
+
+PHY 00  None
+PHY 01  Hand
+PHY 02  Eyeball
+PHY 03  Eyebrow
+PHY 04  Eyelid
+PHY 05  Ear
+PHY 06  Nose
+PHY 07  Mouth
+PHY 08  Upper Lip
+PHY 09  Lower Lip
+PHY 0a  Jaw
+PHY 0b  Neck
+PHY 0c  Upper Arm
+PHY 0d  Elbow
+PHY 0e  Forearm
+PHY 0f  Wrist
+PHY 10  Palm
+PHY 11  Thumb
+PHY 12  Index Finger
+PHY 13  Middle Finger
+PHY 14  Ring Finger
+PHY 15  Little Finger
+PHY 16  Head
+PHY 17  Shoulder
+PHY 18  Hip
+PHY 19  Waist
+PHY 1a  Thigh
+PHY 1b  Knee
+PHY 1c  calf
+PHY 1d  Ankle
+PHY 1e  Foot
+PHY 1f  Heel
+PHY 20  Ball of Foot
+PHY 21  Big Toe
+PHY 22  Second Toe
+PHY 23  Third Toe
+PHY 24  Fourth Toe
+PHY 25  Fifth Toe
+PHY 26  Brow
+PHY 27  Cheek
+
+# List of HID Usages
+
+# Syntax:
+# HUT hi  _usage_page  hid_usage_page_name
+#	hid_usage  hid_usage_name
+
+HUT 00  Undefined
+HUT 01  Generic Desktop Controls
+	000  Undefined
+	001  Pointer
+	002  Mouse
+	004  Joystick
+	005  Gamepad
+	006  Keyboard
+	007  Keypad
+	008  Multi-Axis Controller
+	030  Direction-X
+	031  Direction-Y
+	032  Direction-Z
+	033  Rotate-X
+	034  Rotate-Y
+	035  Rotate-Z
+	036  Slider
+	037  Dial
+	038  Wheel
+	039  Hat Switch
+	03a  Counted Buffer
+	03b  Byte Count
+	03c  Motion Wakeup
+	03d  Start
+	03e  Select
+	040  Vector-X
+	041  Vector-Y
+	042  Vector-Z
+	043  Vector-X relative Body
+	044  Vector-Y relative Body
+	045  Vector-Z relative Body
+	046  Vector
+	080  System Control
+	081  System Power Down
+	082  System Sleep
+	083  System Wake Up
+	084  System Context Menu
+	085  System Main Menu
+	086  System App Menu
+	087  System Menu Help
+	088  System Menu Exit
+	089  System Menu Select
+	08a  System Menu Right
+	08b  System Menu Left
+	08c  System Menu Up
+	08d  System Menu Down
+	090  Direction Pad Up
+	091  Direction Pad Down
+	092  Direction Pad Right
+	093  Direction Pad Left
+HUT 02  Simulation Controls
+	000  Undefined
+	001  Flight Simulation Device
+	002  Automobile Simulation Device
+	003  Tank Simulation Device
+	004  Spaceship Simulation Device
+	005  Submarine Simulation Device
+	006  Sailing Simulation Device
+	007  Motorcycle Simulation Device
+	008  Sports Simulation Device
+	009  Airplane Simualtion Device
+	00a  Helicopter Simulation Device
+	00b  Magic Carpet Simulation Device
+	00c  Bicycle Simulation Device
+	020  Flight Control Stick
+	021  Flight Stick
+	022  Cyclic Control
+	023  Cyclic Trim
+	024  Flight Yoke
+	025  Track Control
+	0b0  Aileron
+	0b1  Aileron Trim
+	0b2  Anti-Torque Control
+	0b3  Autopilot Enable
+	0b4  Chaff Release
+	0b5  Collective Control
+	0b6  Dive Break
+	0b7  Electronic Countermeasures
+	0b8  Elevator
+	0b9  Elevator Trim
+	0ba  Rudder
+	0bb  Throttle
+	0bc  Flight COmmunications
+	0bd  Flare Release
+	0be  Landing Gear
+	0bf  Toe Break
+	0c0  Trigger
+	0c1  Weapon Arm
+	0c2  Weapons Select
+	0c3  Wing Flaps
+	0c4  Accelerator
+	0c5  Brake
+	0c6  Clutch
+	0c7  Shifter
+	0c8  Steering
+	0c9  Turret Direction
+	0ca  Barrel Elevation
+	0cb  Drive Plane
+	0cc  Ballast
+	0cd  Bicylce Crank
+	0ce  Handle Bars
+	0cf  Front Brake
+	0d0  Rear Brake
+HUT 03  VR Controls
+	000  Unidentified
+	001  Belt
+	002  Body Suit
+	003  Flexor
+	004  Glove
+	005  Head Tracker
+	006  Head Mounted Display
+	007  Hand Tracker
+	008  Oculometer
+	009  Vest
+	00a  Animatronic Device
+	020  Stereo Enable
+	021  Display Enable
+HUT 04  Sport Controls
+	000  Unidentified
+	001  Baseball Bat
+	002  Golf Club
+	003  Rowing Machine
+	004  Treadmill
+	030  Oar
+	031  Slope
+	032  Rate
+	033  Stick Speed
+	034  Stick Face Angle
+	035  Stick Heel/Toe
+	036  Stick Follow Through
+	038  Stick Type
+	039  Stick Height
+	047  Stick Temp
+	050  Putter
+	051  1 Iron
+	052  2 Iron
+	053  3 Iron
+	054  4 Iron
+	055  5 Iron
+	056  6 Iron
+	057  7 Iron
+	058  8 Iron
+	059  9 Iron
+	05a  10 Iron
+	05b  11 Iron
+	05c  Sand Wedge
+	05d  Loft Wedge
+	05e  Power Wedge
+	05f  1 Wood
+	060  3 Wood
+	061  5 Wood
+	062  7 Wood
+	063  9 Wood
+HUT 05  Game Controls
+	000  Undefined
+	001  3D Game Controller
+	002  Pinball Device
+	003  Gun Device
+	020  Point Of View
+	021  Turn Right/Left
+	022  Pitch Right/Left
+	023  Roll Forward/Backward
+	024  Move Right/Left
+	025  Move Forward/Backward
+	026  Move Up/Down
+	027  Lean Right/Left
+	028  Lean Forward/Backward
+	029  Height of POV
+	02a  Flipper
+	02b  Secondary Flipper
+	02c  Bump
+	02d  New Game
+	02e  Shoot Ball
+	02f  Player
+	030  Gun Bolt
+	031  Gun Clip
+	032  Gun Selector
+	033  Gun Single Shot
+	034  Gun Burst
+	035  Gun Automatic
+	036  Gun Safety
+	037  Gamepad Fire/Jump
+	038  Gamepad Fun
+	039  Gamepad Trigger
+HUT 07  Keyboard
+	000  No Event
+	001  Keyboard ErrorRollOver
+	002  Keyboard POSTfail
+	003  Keyboard Error Undefined
+	004  A
+	005  B
+	006  C
+	007  D
+	008  E
+	009  F
+	00a  G
+	00b  H
+	00c  I
+	00d  J
+	00e  K
+	00f  L
+	010  M
+	011  N
+	012  O
+	013  P
+	014  Q
+	015  R
+	016  S
+	017  T
+	018  U
+	019  V
+	01a  W
+	01b  X
+	01c  Y
+	01d  Z
+	01e  1 and ! (One and Exclamation)
+	01f  2 and @ (2 and at)
+	020  3 and # (3 and Hash)
+	021  4 and $ (4 and Dollar Sign)
+	022  5 and % (5 and Percent Sign)
+	023  6 and ^ (6 and circumflex)
+	024  7 and & (Seven and Ampersand)
+	025  8 and * (Eight and asterisk)
+	026  9 and ( (Nine and Parenthesis Left)
+	027  0 and ) (Zero and Parenthesis Right)
+	028  Return (Enter)
+	029  Escape
+	02a  Delete (Backspace)
+	02b  Tab
+	02c  Space Bar
+	02d  - and _ (Minus and underscore)
+	02e  = and + (Equal and Plus)
+	02f  [ and { (Bracket and Braces Left)
+	030  ] and } (Bracket and Braces Right)
+	031  \ and | (Backslash and Bar)
+	032  # and ~ (Hash and Tilde, Non-US Keyboard near right shift)
+	033  ; and : (Semicolon and Colon)
+	034  ´ and " (Accent Acute and Double Quotes)
+	035  ` and ~ (Accent Grace and Tilde)
+	036  , and < (Comma and Less)
+	037  . and > (Period and Greater)
+	038  / and ? (Slash and Question Mark)
+	039  Caps Lock
+	03a  F1
+	03b  F2
+	03c  F3
+	03d  F4
+	03e  F5
+	03f  F6
+	040  F7
+	041  F8
+	042  F9
+	043  F10
+	044  F11
+	045  F12
+	046  Print Screen
+	047  Scroll Lock
+	048  Pause
+	049  Insert
+	04a  Home
+	04b  Page Up
+	04c  Delete Forward (without Changing Position)
+	04d  End
+	04e  Page Down
+	04f  Right Arrow
+	050  Left Arrow
+	051  Down Arrow
+	052  Up Arrow
+	053  Num Lock and Clear
+	054  Keypad / (Division Sign)
+	055  Keypad * (Multiplication Sign)
+	056  Keypad - (Subtraction Sign)
+	057  Keypad + (Addition Sign)
+	058  Keypad Enter
+	059  Keypad 1 and END
+	05a  Keypad 2 and Down Arrow
+	05b  Keypad 3 and Page Down
+	05c  Keypad 4 and Left Arrow
+	05d  Keypad 5 (Tactilei Raised)
+	05f  Keypad 6 and Right Arrow
+	060  Keypad 7 and Home
+	061  Keypad 8 and Up Arrow
+	062  Keypad 8 and Page Up
+	063  Keypad . (decimal delimiter) and Delete
+	064  \ and | (Backslash and Bar, UK and Non-US Keyboard near left shift)
+	065  Keyboard Application (Windows Key for Win95 or Compose)
+	066  Power (not a key)
+	067  Keypad = (Equal Sign)
+	068  F13
+	069  F14
+	06a  F15
+	06b  F16
+	06c  F17
+	06d  F18
+	06e  F19
+	06f  F20
+	070  F21
+	071  F22
+	072  F23
+	073  F24
+	074  Execute
+	075  Help
+	076  Menu
+	077  Select
+	078  Stop
+	079  Again
+	07a  Undo
+	07b  Cut
+	07c  Copy
+	07d  Paste
+	07e  Find
+	07f  Mute
+	080  Volume Up
+	081  Volume Down
+	082  Locking Caps Lock
+	083  Locking Num Lock
+	084  Locking Scroll Lock
+	085  Keypad Comma
+	086  Keypad Equal Sign (AS/400)
+	087  International 1 (PC98)
+	088  International 2 (PC98)
+	089  International 3 (PC98)
+	08a  International 4 (PC98)
+	08b  International 5 (PC98)
+	08c  International 6 (PC98)
+	08d  International 7 (Toggle Single/Double Byte Mode)
+	08e  International 8
+	08f  International 9
+	090  LANG 1 (Hangul/English Toggle, Korea)
+	091  LANG 2 (Hanja Conversion, Korea)
+	092  LANG 3 (Katakana, Japan)
+	093  LANG 4 (Hiragana, Japan)
+	094  LANG 5 (Zenkaku/Hankaku, Japan)
+	095  LANG 6
+	096  LANG 7
+	097  LANG 8
+	098  LANG 9
+	099  Alternate Erase
+	09a  SysReq/Attention
+	09b  Cancel
+	09c  Clear
+	09d  Prior
+	09e  Return
+	09f  Separator
+	0a0  Out
+	0a1  Open
+	0a2  Clear/Again
+	0a3  CrSel/Props
+	0a4  ExSel
+	0e0  Control Left
+	0e1  Shift Left
+	0e2  Alt Left
+	0e3  GUI Left
+	0e4  Control Right
+	0e5  Shift Right
+	0e6  Alt Rigth
+	0e7  GUI Right
+HUT 08  LEDs
+	000  Undefined
+	001  NumLock
+	002  CapsLock
+	003  Scroll Lock
+	004  Compose
+	005  Kana
+	006  Power
+	007  Shift
+	008  Do not disturb
+	009  Mute
+	00a  Tone Enabke
+	00b  High Cut Filter
+	00c  Low Cut Filter
+	00d  Equalizer Enable
+	00e  Sound Field ON
+	00f  Surround On
+	010  Repeat
+	011  Stereo
+	012  Sampling Rate Detect
+	013  Spinning
+	014  CAV
+	015  CLV
+	016  Recording Format Detect
+	017  Off-Hook
+	018  Ring
+	019  Message Waiting
+	01a  Data Mode
+	01b  Battery Operation
+	01c  Battery OK
+	01d  Battery Low
+	01e  Speaker
+	01f  Head Set
+	020  Hold
+	021  Microphone
+	022  Coverage
+	023  Night Mode
+	024  Send Calls
+	025  Call Pickup
+	026  Conference
+	027  Stand-by
+	028  Camera On
+	029  Camera Off
+	02a  On-Line
+	02b  Off-Line
+	02c  Busy
+	02d  Ready
+	02e  Paper-Out
+	02f  Paper-Jam
+	030  Remote
+	031  Forward
+	032  Reverse
+	033  Stop
+	034  Rewind
+	035  Fast Forward
+	036  Play
+	037  Pause
+	038  Record
+	039  Error
+	03a  Usage Selected Indicator
+	03b  Usage In Use Indicator
+	03c  Usage Multi Indicator
+	03d  Indicator On
+	03e  Indicator Flash
+	03f  Indicator Slow Blink
+	040  Indicator Fast Blink
+	041  Indicator Off
+	042  Flash On Time
+	043  Slow Blink On Time
+	044  Slow Blink Off Time
+	045  Fast Blink On Time
+	046  Fast Blink Off Time
+	047  Usage Color Indicator
+	048  Indicator Red
+	049  Indicator Green
+	04a  Indicator Amber
+	04b  Generic Indicator
+	04c  System Suspend
+	04d  External Power Connected
+HUT 09  Buttons
+	000  No Button Pressed
+	001  Button 1 (Primary)
+	002  Button 2 (Secondary)
+	003  Button 3 (Tertiary)
+	004  Button 4
+	005  Button 5
+HUT 0a  Ordinal
+	001  Instance 1
+	002  Instance 2
+	003  Instance 3
+HUT 0b  Telephony
+	000  Unassigned
+	001  Phone
+	002  Answering Machine
+	003  Message Controls
+	004  Handset
+	005  Headset
+	006  Telephony Key Pad
+	007  Programmable Button
+	020  Hook Switch
+	021  Flash
+	022  Feature
+	023  Hold
+	024  Redial
+	025  Transfer
+	026  Drop
+	027  Park
+	028  Forward Calls
+	029  Alternate Function
+	02a  Line
+	02b  Speaker Phone
+	02c  Conference
+	02d  Ring Enable
+	02e  Ring Select
+	02f  Phone Mute
+	030  Caller ID
+	050  Speed Dial
+	051  Store Number
+	052  Recall Number
+	053  Phone Directory
+	070  Voice Mail
+	071  Screen Calls
+	072  Do Not Disturb
+	073  Message
+	074  Answer On/Offf
+	090  Inside Dial Tone
+	091  Outside Dial Tone
+	092  Inside Ring Tone
+	093  Outside Ring Tone
+	094  Priority Ring Tone
+	095  Inside Ringback
+	096  Priority Ringback
+	097  Line Busy Tone
+	098  Recorder Tone
+	099  Call Waiting Tone
+	09a  Confirmation Tone 1
+	09b  Confirmation Tone 2
+	09c  Tones Off
+	09d  Outside Ringback
+	0b0  Key 1
+	0b1  Key 2
+	0b3  Key 3
+	0b4  Key 4
+	0b5  Key 5
+	0b6  Key 6
+	0b7  Key 7
+	0b8  Key 8
+	0b9  Key 9
+	0ba  Key Star
+	0bb  Key Pound
+	0bc  Key A
+	0bd  Key B
+	0be  Key C
+	0bf  Key D
+HUT 0c  Consumer
+	000  Unassigned
+	001  Consumer Control
+	002  Numeric Key Pad
+	003  Programmable Buttons
+	020  +10
+	021  +100
+	022  AM/PM
+	030  Power
+	031  Reset
+	032  Sleep
+	033  Sleep After
+	034  Sleep Mode
+	035  Illumination
+	036  Function Buttons
+	040  Menu
+	041  Menu Pick
+	042  Menu Up
+	043  Menu Down
+	044  Menu Left
+	045  Menu Right
+	046  Menu Escape
+	047  Menu Value Increase
+	048  Menu Value Decrease
+	060  Data on Screen
+	061  Closed Caption
+	062  Closed Caption Select
+	063  VCR/TV
+	064  Broadcast Mode
+	065  Snapshot
+	066  Still
+	080  Selection
+	081  Assign Selection
+	082  Mode Step
+	083  Recall Last
+	084  Enter Channel
+	085  Order Movie
+	086  Channel
+	087  Media Selection
+	088  Media Select Computer
+	089  Media Select TV
+	08a  Media Select WWW
+	08b  Media Select DVD
+	08c  Media Select Telephone
+	08d  Media Select Program Guide
+	08e  Media Select Video Phone
+	08f  Media Select Games
+	090  Media Select Messages
+	091  Media Select CD
+	092  Media Select VCR
+	093  Media Select Tuner
+	094  Quit
+	095  Help
+	096  Media Select Tape
+	097  Media Select Cable
+	098  Media Select Satellite
+	099  Media Select Security
+	09a  Media Select Home
+	09b  Media Select Call
+	09c  Channel Increment
+	09d  Channel Decrement
+	09e  Media Select SAP
+	0a0  VCR Plus
+	0a1  Once
+	0a2  Daily
+	0a3  Weekly
+	0a4  Monthly
+	0b0  Play
+	0b1  Pause
+	0b2  Record
+	0b3  Fast Forward
+	0b4  Rewind
+	0b5  Scan Next Track
+	0b6  Scan Previous Track
+	0b7  Stop
+	0b8  Eject
+	0b9  Random Play
+	0ba  Select Disc
+	0bb  Enter Disc
+	0bc  Repeat
+	0bd  Tracking
+	0be  Track Normal
+	0bf  Slow Tracking
+	0c0  Frame Forward
+	0c1  Frame Back
+	0c2  Mark
+	0c3  Clear Mark
+	0c4  Repeat from Mark
+	0c5  Return to Mark
+	0c6  Search Mark Forward
+	0c7  Search Mark Backward
+	0c8  Counter Reset
+	0c9  Show Counter
+	0ca  Tracking Increment
+	0cb  Tracking Decrement
+	0cc  Stop/Eject
+	0cd  Play/Pause
+	0ce  Play/Skip
+	0e0  Volume
+	0e1  Balance
+	0e2  Mute
+	0e3  Bass
+	0e4  Treble
+	0e5  Bass Boost
+	0e6  Surround Mode
+	0e7  Loudness
+	0e8  MPX
+	0e9  Volume Increment
+	0ea  Volume Decrement
+	0f0  Speed Select
+	0f1  Playback Speed
+	0f2  Standard Play
+	0f3  Long Play
+	0f4  Extended Play
+	0f5  Slow
+	100  Fan Enable
+	101  Fan Speed
+	102  Light Enable
+	103  Light Illumination Level
+	104  Climate Control Enable
+	105  Room Temperature
+	106  Security Enable
+	107  Fire Alarm
+	108  Police Alarm
+	150  Balance Right
+	151  Balance Left
+	152  Bass Increment
+	153  Bass Decrement
+	154  Treble Increment
+	155  Treble Decrement
+	160  Speaker System
+	161  Channel Left
+	162  Channel Right
+	163  Channel Center
+	164  Channel Front
+	165  Channel Center Front
+	166  Channel Side
+	167  Channel Surround
+	168  Channel Low Frequency Enhancement
+	169  Channel Top
+	16a  Channel Unknown
+	170  Sub-Channel
+	171  Sub-Channel Increment
+	172  Sub-Channel Decrement
+	173  Alternative Audio Increment
+	174  Alternative Audio Decrement
+	180  Application Launch Buttons
+	181  AL Launch Button Configuration Tool
+	182  AL Launch Button Configuration
+	183  AL Consumer Control Configuration
+	184  AL Word Processor
+	185  AL Text Editor
+	186  AL Spreadsheet
+	187  AL Graphics Editor
+	188  AL Presentation App
+	189  AL Database App
+	18a  AL Email Reader
+	18b  AL Newsreader
+	18c  AL Voicemail
+	18d  AL Contacts/Address Book
+	18e  AL Calendar/Schedule
+	18f  AL Task/Project Manager
+	190  AL Log/Jounal/Timecard
+	191  AL Checkbook/Finance
+	192  AL Calculator
+	193  AL A/V Capture/Playback
+	194  AL Local Machine Browser
+	195  AL LAN/Wan Browser
+	196  AL Internet Browser
+	197  AL Remote Networking/ISP Connect
+	198  AL Network Conference
+	199  AL Network Chat
+	19a  AL Telephony/Dialer
+	19b  AL Logon
+	19c  AL Logoff
+	19d  AL Logon/Logoff
+	19e  AL Terminal Local/Screensaver
+	19f  AL Control Panel
+	1a0  AL Command Line Processor/Run
+	1a1  AL Process/Task Manager
+	1a2  AL Select Task/Application
+	1a3  AL Next Task/Application
+	1a4  AL Previous Task/Application
+	1a5  AL Preemptive Halt Task/Application
+	200  Generic GUI Application Controls
+	201  AC New
+	202  AC Open
+	203  AC CLose
+	204  AC Exit
+	205  AC Maximize
+	206  AC Minimize
+	207  AC Save
+	208  AC Print
+	209  AC Properties
+	21a  AC Undo
+	21b  AC Copy
+	21c  AC Cut
+	21d  AC Paste
+	21e  AC Select All
+	21f  AC Find
+	220  AC Find and Replace
+	221  AC Search
+	222  AC Go To
+	223  AC Home
+	224  AC Back
+	225  AC Forward
+	226  AC Stop
+	227  AC Refresh
+	228  AC Previous Link
+	229  AC Next Link
+	22b  AC History
+	22c  AC Subscriptions
+	22d  AC Zoom In
+	22e  AC Zoom Out
+	22f  AC Zoom
+	230  AC Full Screen View
+	231  AC Normal View
+	232  AC View Toggle
+	233  AC Scroll Up
+	234  AC Scroll Down
+	235  AC Scroll
+	236  AC Pan Left
+	237  AC Pan Right
+	238  AC Pan
+	239  AC New Window
+	23a  AC Tile Horizontally
+	23b  AC Tile Vertically
+	23c  AC Format
+HUT 0d  Digitizer
+	000  Undefined
+	001  Digitizer
+	002  Pen
+	003  Light Pen
+	004  Touch Screen
+	005  Touch Pad
+	006  White Board
+	007  Coordinate Measuring Machine
+	008  3D Digitizer
+	009  Stereo Plotter
+	00a  Articulated Arm
+	00b  Armature
+	00c  Multiple Point Digitizer
+	00d  Free Space Wand
+	020  Stylus
+	021  Puck
+	022  Finger
+	030  Tip Pressure
+	031  Barrel Pressure
+	032  In Range
+	033  Touch
+	034  Untouch
+	035  Tap
+	036  Quality
+	037  Data Valid
+	038  Transducer Index
+	039  Tablet Function Keys
+	03a  Program Change Keys
+	03b  Battery Strength
+	03c  Invert
+	03d  X Tilt
+	03e  Y Tilt
+	03f  Azimuth
+	040  Altitude
+	041  Twist
+	042  Tip Switch
+	043  Secondary Tip Switch
+	044  Barrel Switch
+	045  Eraser
+	046  Tablet Pick
+	047  Confidence
+	048  Width
+	049  Height
+	051  Contact ID
+	052  Input Mode
+	053  Device Index
+	054  Contact Count
+	055  Maximum Contact Number
+HUT 0f  PID Page
+	000  Undefined
+	001  Physical Interface Device
+	020  Normal
+	021  Set Effect Report
+	022  Effect Block Index
+	023  Parameter Block Offset
+	024  ROM Flag
+	025  Effect Type
+	026  ET Constant Force
+	027  ET Ramp
+	028  ET Custom Force Data
+	030  ET Square
+	031  ET Sine
+	032  ET Triangle
+	033  ET Sawtooth Up
+	034  ET Sawtooth Down
+	040  ET Spring
+	041  ET Damper
+	042  ET Inertia
+	043  ET Friction
+	050  Duration
+	051  Sample Period
+	052  Gain
+	053  Trigger Button
+	054  Trigger Repeat Interval
+	055  Axes Enable
+	056  Direction Enable
+	057  Direction
+	058  Type Specific Block Offset
+	059  Block Type
+	05A  Set Envelope Report
+	05B  Attack Level
+	05C  Attack Time
+	05D  Fade Level
+	05E  Fade Time
+	05F  Set Condition Report
+	060  CP Offset
+	061  Positive Coefficient
+	062  Negative Coefficient
+	063  Positive Saturation
+	064  Negative Saturation
+	065  Dead Band
+	066  Download Force Sample
+	067  Isoch Custom Force Enable
+	068  Custom Force Data Report
+	069  Custom Force Data
+	06A  Custom Force Vendor Defined Data
+	06B  Set Custom Force Report
+	06C  Custom Force Data Offset
+	06D  Sample Count
+	06E  Set Periodic Report
+	06F  Offset
+	070  Magnitude
+	071  Phase
+	072  Period
+	073  Set Constant Force Report
+	074  Set Ramp Force Report
+	075  Ramp Start
+	076  Ramp End
+	077  Effect Operation Report
+	078  Effect Operation
+	079  Op Effect Start
+	07A  Op Effect Start Solo
+	07B  Op Effect Stop
+	07C  Loop Count
+	07D  Device Gain Report
+	07E  Device Gain
+	07F  PID Pool Report
+	080  RAM Pool Size
+	081  ROM Pool Size
+	082  ROM Effect Block Count
+	083  Simultaneous Effects Max
+	084  Pool Alignment
+	085  PID Pool Move Report
+	086  Move Source
+	087  Move Destination
+	088  Move Length
+	089  PID Block Load Report
+	08B  Block Load Status
+	08C  Block Load Success
+	08D  Block Load Full
+	08E  Block Load Error
+	08F  Block Handle
+	090  PID Block Free Report
+	091  Type Specific Block Handle
+	092  PID State Report
+	094  Effect Playing
+	095  PID Device Control Report
+	096  PID Device Control
+	097  DC Enable Actuators
+	098  DC Disable Actuators
+	099  DC Stop All Effects
+	09A  DC Device Reset
+	09B  DC Device Pause
+	09C  DC Device Continue
+	09F  Device Paused
+	0A0  Actuators Enabled
+	0A4  Safety Switch
+	0A5  Actuator Override Switch
+	0A6  Actuator Power
+	0A7  Start Delay
+	0A8  Parameter Block Size
+	0A9  Device Managed Pool
+	0AA  Shared Parameter Blocks
+	0AB  Create New Effect Report
+	0AC  RAM Pool Available
+HUT 10  Unicode
+HUT 14  Alphanumeric Display
+	000  Undefined
+	001  Alphanumeric Display
+	020  Display Attributes Report
+	021  ASCII Character Set
+	022  Data Read Back
+	023  Font Read Back
+	024  Display Control Report
+	025  Clear Display
+	026  Display Enable
+	027  Screen Saver Delay
+	028  Screen Saver Enable
+	029  Vertical Scroll
+	02a  Horizontal Scroll
+	02b  Character Report
+	02c  Display Data
+	02d  Display Status
+	02e  Stat Not Ready
+	02f  Stat Ready
+	030  Err Not a loadable Character
+	031  Err Font Data Cannot Be Read
+	032  Cursur Position Report
+	033  Row
+	034  Column
+	035  Rows
+	036  Columns
+	037  Cursor Pixel Positioning
+	038  Cursor Mode
+	039  Cursor Enable
+	03a  Cursor Blink
+	03b  Font Report
+	03c  Font Data
+	03d  Character Width
+	03e  Character Height
+	03f  Character Spacing Horizontal
+	040  Character Spacing Vertical
+	041  Unicode Character Set
+HUT 80  USB Monitor
+	001  Monitor Control
+	002  EDID Information
+	003  VDIF Information
+	004  VESA Version
+HUT 81  USB Monitor Enumerated Values
+HUT 82  Monitor VESA Virtual Controls
+	001  Degauss
+	010  Brightness
+	012  Contrast
+	016  Red Video Gain
+	018  Green Video Gain
+	01a  Blue Video Gain
+	01c  Focus
+	020  Horizontal Position
+	022  Horizontal Size
+	024  Horizontal Pincushion
+	026  Horizontal Pincushion Balance
+	028  Horizontal Misconvergence
+	02a  Horizontal Linearity
+	02c  Horizontal Linearity Balance
+	030  Vertical Position
+	032  Vertical Size
+	034  Vertical Pincushion
+	036  Vertical Pincushion Balance
+	038  Vertical Misconvergence
+	03a  Vertical Linearity
+	03c  Vertical Linearity Balance
+	040  Parallelogram Balance (Key Distortion)
+	042  Trapezoidal Distortion (Key)
+	044  Tilt (Rotation)
+	046  Top Corner Distortion Control
+	048  Top Corner Distortion Balance
+	04a  Bottom Corner Distortion Control
+	04c  Bottom Corner Distortion Balance
+	056  Horizontal Moire
+	058  Vertical Moire
+	05e  Input Level Select
+	060  Input Source Select
+	06c  Red Video Black Level
+	06e  Green Video Black Level
+	070  Blue Video Black Level
+	0a2  Auto Size Center
+	0a4  Polarity Horizontal Sychronization
+	0a6  Polarity Vertical Synchronization
+	0aa  Screen Orientation
+	0ac  Horizontal Frequency in Hz
+	0ae  Vertical Frequency in 0.1 Hz
+	0b0  Settings
+	0ca  On Screen Display (OSD)
+	0d4  Stereo Mode
+HUT 84  Power Device Page
+	000  Undefined
+	001  iName
+	002  Present Status
+	003  Changed Status
+	004  UPS
+	005  Power Supply
+	010  Battery System
+	011  Battery System ID
+	012  Battery
+	013  Battery ID
+	014  Charger
+	015  Charger ID
+	016  Power Converter
+	017  Power Converter ID
+	018  Outlet System
+	019  Outlet System ID
+	01a  Input
+	01b  Input ID
+	01c  Output
+	01d  Output ID
+	01e  Flow
+	01f  Flow ID
+	020  Outlet
+	021  Outlet ID
+	022  Gang
+	023  Gang ID
+	024  Power Summary
+	025  Power Summary ID
+	030  Voltage
+	031  Current
+	032  Frequency
+	033  Apparent Power
+	034  Active Power
+	035  Percent Load
+	036  Temperature
+	037  Humidity
+	038  Bad Count
+	040  Config Voltage
+	041  Config Current
+	042  Config Frequency
+	043  Config Apparent Power
+	044  Config Active Power
+	045  Config Percent Load
+	046  Config Temperature
+	047  Config Humidity
+	050  Switch On Control
+	051  Switch Off Control
+	052  Toggle Control
+	053  Low Voltage Transfer
+	054  High Voltage Transfer
+	055  Delay Before Reboot
+	056  Delay Before Startup
+	057  Delay Before Shutdown
+	058  Test
+	059  Module Reset
+	05a  Audible Alarm Control
+	060  Present
+	061  Good
+	062  Internal Failure
+	063  Voltage out of range
+	064  Frequency out of range
+	065  Overload
+	066  Over Charged
+	067  Over Temperature
+	068  Shutdown Requested
+	069  Shutdown  Imminent
+	06a  Reserved
+	06b  Switch On/Off
+	06c  Switchable
+	06d  Used
+	06e  Boost
+	06f  Buck
+	070  Initialized
+	071  Tested
+	072  Awaiting Power
+	073  Communication Lost
+	0fd  iManufacturer
+	0fe  iProduct
+	0ff  iSerialNumber
+HUT 85  Battery System Page
+	000  Undefined
+	001  SMB Battery Mode
+	002  SMB Battery Status
+	003  SMB Alarm Warning
+	004  SMB Charger Mode
+	005  SMB Charger Status
+	006  SMB Charger Spec Info
+	007  SMB Selector State
+	008  SMB Selector Presets
+	009  SMB Selector Info
+	010  Optional Mfg. Function 1
+	011  Optional Mfg. Function 2
+	012  Optional Mfg. Function 3
+	013  Optional Mfg. Function 4
+	014  Optional Mfg. Function 5
+	015  Connection to SMBus
+	016  Output Connection
+	017  Charger Connection
+	018  Battery Insertion
+	019  Use Next
+	01a  OK to use
+	01b  Battery  Supported
+	01c  SelectorRevision
+	01d  Charging Indicator
+	028  Manufacturer Access
+	029  Remaining Capacity Limit
+	02a  Remaining Time Limit
+	02b  At Rate
+	02c  Capacity Mode
+	02d  Broadcast To Charger
+	02e  Primary Battery
+	02f  Charge Controller
+	040  Terminate Charge
+	041  Terminate Discharge
+	042  Below Remaining Capacity Limit
+	043  Remaining Time Limit Expired
+	044  Charging
+	045  Discharging
+	046  Fully Charged
+	047  Fully Discharged
+	048  Conditioning Flag
+	049  At Rate OK
+	04a  SMB Error Code
+	04b  Need Replacement
+	060  At Rate Time To Full
+	061  At Rate Time To Empty
+	062  Average Current
+	063  Max Error
+	064  Relative State Of Charge
+	065  Absolute State Of Charge
+	066  Remaining Capacity
+	067  Full Charge Capacity
+	068  Run Time To Empty
+	069  Average Time To Empty
+	06a  Average Time To Full
+	06b  Cycle Count
+	080  Batt. Pack Model Level
+	081  Internal Charge Controller
+	082  Primary Battery Support
+	083  Design Capacity
+	084  Specification Info
+	085  Manufacturer Date
+	086  Serial Number
+	087  iManufacturerName
+	088  iDeviceName
+	089  iDeviceChemistry
+	08a  Manufacturer Data
+	08b  Rechargeable
+	08c  Warning Capacity Limit
+	08d  Capacity Granularity 1
+	08e  Capacity Granularity 2
+	08f  iOEMInformation
+	0c0  Inhibit Charge
+	0c1  Enable Polling
+	0c2  Reset To Zero
+	0d0  AC Present
+	0d1  Battery Present
+	0d2  Power Fail
+	0d3  Alarm Inhibited
+	0d4  Thermistor Under Range
+	0d5  Thermistor Hot
+	0d6  Thermistor Cold
+	0d7  Thermistor Over Range
+	0d8  Voltage Out Of Range
+	0d9  Current Out Of Range
+	0da  Current Not Regulated
+	0db  Voltage Not Regulated
+	0dc  Master Mode
+	0f0  Charger Selector Support
+	0f1  Charger Spec
+	0f2  Level 2
+	0f3  Level 3
+HUT 86  Power Pages
+HUT 87  Power Pages
+HUT 8c  Bar Code Scanner Page (POS)
+HUT 8d  Scale Page (POS)
+HUT 90  Camera Control Page
+HUT 91  Arcade Control Page
+HUT f0  Cash Device
+	0f1  Cash Drawer
+	0f2  Cash Drawer Number
+	0f3  Cash Drawer Set
+	0f4  Cash Drawer Status
+HUT ff  Vendor Specific
+
+# List of Languages
+
+# Syntax:
+# L language_id  language_name
+#	dialect_id  dialect_name
+
+L 0001  Arabic
+	01  Saudi Arabia
+	02  Iraq
+	03  Egypt
+	04  Libya
+	05  Algeria
+	06  Morocco
+	07  Tunesia
+	08  Oman
+	09  Yemen
+	0a  Syria
+	0b  Jordan
+	0c  Lebanon
+	0d  Kuwait
+	0e  U.A.E
+	0f  Bahrain
+	10  Qatar
+L 0002  Bulgarian
+L 0003  Catalan
+L 0004  Chinese
+	01  Traditional
+	02  Simplified
+	03  Hongkong SAR, PRC
+	04  Singapore
+	05  Macau SAR
+L 0005  Czech
+L 0006  Danish
+L 0007  German
+	01  German
+	02  Swiss
+	03  Austrian
+	04  Luxembourg
+	05  Liechtenstein
+L 0008  Greek
+L 0009  English
+	01  US
+	02  UK
+	03  Australian
+	04  Canadian
+	05  New Zealand
+	06  Ireland
+	07  South Africa
+	08  Jamaica
+	09  Carribean
+	0a  Belize
+	0b  Trinidad
+	0c  Zimbabwe
+	0d  Philippines
+L 000a  Spanish
+	01  Castilian
+	02  Mexican
+	03  Modern
+	04  Guatemala
+	05  Costa Rica
+	06  Panama
+	07  Dominican Republic
+	08  Venzuela
+	09  Colombia
+	0a  Peru
+	0b  Argentina
+	0c  Ecuador
+	0d  Chile
+	0e  Uruguay
+	0f  Paraguay
+	10  Bolivia
+	11  El Salvador
+	12  Honduras
+	13  Nicaragua
+	14  Puerto Rico
+L 000b  Finnish
+L 000c  French
+	01  French
+	02  Belgian
+	03  Canadian
+	04  Swiss
+	05  Luxembourg
+	06  Monaco
+L 000d  Hebrew
+L 000e  Hungarian
+L 000f  Idelandic
+L 0010  Italian
+	01  Italian
+	02  Swiss
+L 0011  Japanese
+L 0012  Korean
+	01  Korean
+L 0013  Dutch
+	01  Dutch
+	02  Belgian
+L 0014  Norwegian
+	01  Bokmal
+	02  Nynorsk
+L 0015  Polish
+L 0016  Portuguese
+	01  Portuguese
+	02  Brazilian
+L 0017  forgotten
+L 0018  Romanian
+L 0019  Russian
+L 001a  Serbian
+	01  Croatian
+	02  Latin
+	03  Cyrillic
+L 001b  Slovak
+L 001c  Albanian
+L 001d  Swedish
+	01  Swedish
+	02  Finland
+L 001e  Thai
+L 001f  Turkish
+L 0020  Urdu
+	01  Pakistan
+	02  India
+L 0021  Indonesian
+L 0022  Ukrainian
+L 0023  Belarusian
+L 0024  Slovenian
+L 0025  Estonian
+L 0026  Latvian
+L 0027  Lithuanian
+	01  Lithuanian
+L 0028  forgotten
+L 0029  Farsi
+L 002a  Vietnamese
+L 002b  Armenian
+L 002c  Azeri
+	01  Cyrillic
+	02  Latin
+L 002d  Basque
+L 002e  forgotten
+L 002f  Macedonian
+L 0036  Afrikaans
+L 0037  Georgian
+L 0038  Faeroese
+L 0039  Hindi
+L 003e  Malay
+	01  Malaysia
+	02  Brunei Darassalam
+L 003f  Kazak
+L 0041  Awahili
+L 0043  Uzbek
+	01  Latin
+	02  Cyrillic
+L 0044  Tatar
+L 0045  Bengali
+L 0046  Punjabi
+L 0047  Gujarati
+L 0048  Oriya
+L 0049  Tamil
+L 004a  Telugu
+L 004b  Kannada
+L 004c  Malayalam
+L 004d  Assamese
+L 004e  Marathi
+L 004f  Sanskrit
+L 0057  Konkani
+L 0058  Manipuri
+L 0059  Sindhi
+L 0060  Kashmiri
+	02  India
+L 0061  Nepali
+	02  India
+
+# HID Descriptor bCountryCode
+# HID Specification 1.11 (2001-06-27) page 23
+#
+# Syntax:
+# HCC country_code keymap_type
+
+HCC 00  Not supported
+HCC 01  Arabic
+HCC 02  Belgian
+HCC 03  Canadian-Bilingual
+HCC 04  Canadian-French
+HCC 05  Czech Republic
+HCC 06  Danish
+HCC 07  Finnish
+HCC 08  French
+HCC 09  German
+HCC 10  Greek
+HCC 11  Hebrew
+HCC 12  Hungary
+HCC 13  International (ISO)
+HCC 14  Italian
+HCC 15  Japan (Katakana)
+HCC 16  Korean
+HCC 17  Latin American
+HCC 18  Netherlands/Dutch
+HCC 19  Norwegian
+HCC 20  Persian (Farsi)
+HCC 21  Poland
+HCC 22  Portuguese
+HCC 23  Russia
+HCC 24  Slovakia
+HCC 25  Spanish
+HCC 26  Swedish
+HCC 27  Swiss/French
+HCC 28  Swiss/German
+HCC 29  Switzerland
+HCC 30  Taiwan
+HCC 31  Turkish-Q
+HCC 32  UK
+HCC 33  US
+HCC 34  Yugoslavia
+HCC 35  Turkish-F
+
+# List of Video Class Terminal Types
+
+# Syntax:
+# VT terminal_type  terminal_type_name
+
+VT 0100  USB Vendor Specific
+VT 0101  USB Streaming
+VT 0200  Input Vendor Specific
+VT 0201  Camera Sensor
+VT 0202  Sequential Media
+VT 0300  Output Vendor Specific
+VT 0301  Generic Display
+VT 0302  Sequential Media
+VT 0400  External Vendor Specific
+VT 0401  Composite Video
+VT 0402  S-Video
+VT 0403  Component Video
