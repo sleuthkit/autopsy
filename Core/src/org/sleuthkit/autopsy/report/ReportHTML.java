@@ -583,6 +583,7 @@ public class ReportHTML implements TableReportModule {
             }
             
             final String reportTitle = reportBranding.getReportTitle();
+            final String reportFooter = reportBranding.getReportFooter();
             
             summary.append("<div id=\"wrapper\">\n");
             summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
@@ -621,6 +622,7 @@ public class ReportHTML implements TableReportModule {
                 logger.log(Level.WARNING, "Unable to get image information for the HTML report.");
             }
             summary.append("</div>\n");
+            summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n");
             summary.append("</div>\n");
             summary.append("</body></html>");
             out.write(summary.toString());
