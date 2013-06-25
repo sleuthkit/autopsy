@@ -79,12 +79,14 @@ public class ReportGenerator {
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
+    static final String REPORTS_DIR = "Reports";
+    
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
         // Setup the reporting directory to be [CASE DIRECTORY]/Reports/[Case name] [Timestamp]/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
-        this.reportPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + currentCase.getName() + " " + datenotime + File.separator;
+        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + datenotime + File.separator;
         // Create the reporting directory
         try {
             FileUtil.createFolder(new File(this.reportPath));

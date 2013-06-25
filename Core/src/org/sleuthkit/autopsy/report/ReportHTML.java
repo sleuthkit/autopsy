@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -43,9 +44,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -62,6 +61,8 @@ public class ReportHTML implements TableReportModule {
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
     
+    private ReportBranding reportBranding;
+    
     // Get the default instance of this report
     public static synchronized ReportHTML getDefault() {
         if (instance == null) {
@@ -72,6 +73,7 @@ public class ReportHTML implements TableReportModule {
     
     // Hidden constructor
     private ReportHTML() {
+        reportBranding = new ReportBranding();
     }
     
     // Refesh the member variables
@@ -453,12 +455,15 @@ public class ReportHTML implements TableReportModule {
         InputStream in = null;
         OutputStream output = null;
         try {
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico");
-            output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
+            
+            //pull generator logo from branding, and the remaining resources from the core jar
+            String generatorLogoPath = reportBranding.getGeneratorLogoPath();
+            in = new FileInputStream(generatorLogoPath);
+            output = new FileOutputStream(new File(path + File.separator + "logo.png"));
             FileUtil.copy(in, output);
             
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/logo.png");
-            output = new FileOutputStream(new File(path + File.separator + "logo.png"));
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico");
+            output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
             FileUtil.copy(in, output);
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png");
@@ -577,8 +582,10 @@ public class ReportHTML implements TableReportModule {
                 running = true;
             }
             
+            final String reportTitle = reportBranding.getReportTitle();
+            
             summary.append("<div id=\"wrapper\">\n");
-            summary.append("<h1>Autopsy Forensic Report").append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
+            summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
             summary.append("<p class=\"subheadding\">HTML Report Generated on ").append(datetime).append("</p>\n");
             summary.append("<div class=\"title\">\n");
             summary.append("<div class=\"left\">\n");
