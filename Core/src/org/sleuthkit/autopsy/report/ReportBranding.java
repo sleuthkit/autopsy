@@ -43,9 +43,11 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath";
     private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath";
     private static final String REPORT_TITLE_PROP = "ReportTitle";
+    private static final String REPORT_FOOTER_PROP = "ReportFooter";
     //default settings
     private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png";
     private static final String DEFAULT_REPORT_TITLE = "Autopsy Forensic Report";
+    private static final String DEFAULT_REPORT_FOOTER = "Powered by Autopsy Open Source Digital Forensics Platform - www.sleuthkit.org";
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
@@ -54,8 +56,8 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
         //initialize with extracting of resource files if needed, ensure 1 writer at a time
         synchronized (ReportBranding.class) {
-          
-            reportsBrandingDir =   PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
+
+            reportsBrandingDir = PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
                     + "branding";
             File brandingDir = new File(reportsBrandingDir);
             if (!brandingDir.exists()) {
@@ -133,5 +135,25 @@ public final class ReportBranding implements ReportBrandingProviderI {
     @Override
     public void setReportTitle(String title) {
         ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_TITLE_PROP, title);
+    }
+
+    @Override
+    public String getReportFooter() {
+        String curFooter = null;
+
+        curFooter = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP);
+        if (curFooter == null) {
+            //use default
+            logger.log(Level.INFO, "Using default report branding for report footer");
+            curFooter = DEFAULT_REPORT_FOOTER;
+            ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP, curFooter);
+        }
+
+        return curFooter;
+    }
+
+    @Override
+    public void setReportFooter(String footer) {
+        ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP, footer);
     }
 }

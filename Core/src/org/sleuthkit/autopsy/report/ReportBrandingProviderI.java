@@ -24,29 +24,34 @@ package org.sleuthkit.autopsy.report;
 public interface ReportBrandingProviderI {
 
     /**
-     * Get the generator logo path on the local disk (previously set or default).
-     * The file pointed by the path should exist.
+     * Get the generator logo path on the local disk (previously set or
+     * default). The file pointed by the path should exist.
      *
-     * @return the generator logo path, or null if error occurred and path is not valid
+     * @return the generator logo path, or null if error occurred and path is
+     * not valid
      */
     public String getGeneratorLogoPath();
 
     /**
      * Sets custom generator logo path
+     *
      * @param path path to set
      */
     public void setGeneratorLogoPath(String path);
 
     /**
-     * Get the agency logo path on the local disk (previously set or default), or NULL if unused
-     * (Note, this is optional, as opposed to the generator logo path)
+     * Get the agency logo path on the local disk (previously set or default),
+     * or NULL if unused (Note, this is optional, as opposed to the generator
+     * logo path)
      *
-     * @return the agency logo path, or null if not provided or error occurred and path is not valid
+     * @return the agency logo path, or null if not provided or error occurred
+     * and path is not valid
      */
     public String getAgencyLogoPath();
 
     /**
      * Sets custom agency logo path
+     *
      * @param path path to set
      */
     public void setAgencyLogoPath(String path);
@@ -60,7 +65,22 @@ public interface ReportBrandingProviderI {
 
     /**
      * Sets custom report title
+     *
      * @param title title to set
      */
     public void setReportTitle(String title);
+
+    /**
+     * Get the report footer (previously set or default)
+     *
+     * @return the report footer
+     */
+    public String getReportFooter();
+
+    /**
+     * Sets custom report footer
+     *
+     * @param footer footer to set
+     */
+    public void setReportFooter(String footer);
 }
