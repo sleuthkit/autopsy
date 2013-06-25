@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Manages settings configured report branding and their defaults.
@@ -53,7 +54,8 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
         //initialize with extracting of resource files if needed, ensure 1 writer at a time
         synchronized (ReportBranding.class) {
-            reportsBrandingDir = Case.getCurrentCase().getCaseDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
+          
+            reportsBrandingDir =   PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
                     + "branding";
             File brandingDir = new File(reportsBrandingDir);
             if (!brandingDir.exists()) {
