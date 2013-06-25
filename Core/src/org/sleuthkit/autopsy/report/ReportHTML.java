@@ -61,6 +61,7 @@ public class ReportHTML implements TableReportModule {
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
     
+
     private ReportBranding reportBranding;
     
     // Get the default instance of this report
@@ -456,11 +457,19 @@ public class ReportHTML implements TableReportModule {
         OutputStream output = null;
         try {
             
-            //pull generator logo from branding, and the remaining resources from the core jar
+            //pull generator and agency logo from branding, and the remaining resources from the core jar
             String generatorLogoPath = reportBranding.getGeneratorLogoPath();
-            in = new FileInputStream(generatorLogoPath);
-            output = new FileOutputStream(new File(path + File.separator + "logo.png"));
-            FileUtil.copy(in, output);
+            if (generatorLogoPath != null) {
+                in = new FileInputStream(generatorLogoPath);
+                output = new FileOutputStream(new File(path + File.separator + "generator_logo.png"));
+                FileUtil.copy(in, output);
+            }
+            String agencyLogoPath = reportBranding.getAgencyLogoPath();
+            if (agencyLogoPath != null) {
+                in = new FileInputStream(agencyLogoPath);
+                output = new FileOutputStream(new File(path + File.separator + "agency_logo.png"));
+                FileUtil.copy(in, output);
+            }
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico");
             output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
@@ -522,7 +531,7 @@ public class ReportHTML implements TableReportModule {
             output = new FileOutputStream(new File(path + File.separator + "Hashset Hits.png"));
             FileUtil.copy(in, output);
         } catch (IOException ex) {
-            System.out.println("Failed to extract images for HTML report.");
+            logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
         } finally {
             if (output != null) {
                 try {
@@ -584,15 +593,20 @@ public class ReportHTML implements TableReportModule {
             
             final String reportTitle = reportBranding.getReportTitle();
             final String reportFooter = reportBranding.getReportFooter();
+            final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null;
+            final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null;
             
             summary.append("<div id=\"wrapper\">\n");
             summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
             summary.append("<p class=\"subheadding\">HTML Report Generated on ").append(datetime).append("</p>\n");
             summary.append("<div class=\"title\">\n");
-            summary.append("<div class=\"left\">\n");
-            summary.append("<img src=\"logo.png\" />\n");
-            summary.append("</div>\n");
-            summary.append("<div class=\"right\">\n");
+            if (agencyLogoSet) {
+                summary.append("<div class=\"left\">\n");
+                summary.append("<img src=\"agency_logo.png\" />\n");
+                summary.append("</div>\n");
+            }
+            final String align = agencyLogoSet?"right":"left";
+            summary.append("<div class=\"").append(align).append("\">\n");
             summary.append("<table>\n");
             summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
             summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
@@ -622,7 +636,15 @@ public class ReportHTML implements TableReportModule {
                 logger.log(Level.WARNING, "Unable to get image information for the HTML report.");
             }
             summary.append("</div>\n");
-            summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n");
+            if (generatorLogoSet) {
+                summary.append("<div class=\"left\">\n");
+                summary.append("<img src=\"generator_logo.png\" />\n");
+                summary.append("</div>\n");
+            }
+            summary.append("<div class=\"clear\"></div>\n");
+            if (reportFooter != null) {
+                summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n");
+            }
             summary.append("</div>\n");
             summary.append("</body></html>");
             out.write(summary.toString());
