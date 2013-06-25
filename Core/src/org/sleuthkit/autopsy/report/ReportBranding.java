@@ -43,7 +43,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath";
     private static final String REPORT_TITLE_PROP = "ReportTitle";
     //default settings
-    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/logo.png";
+    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png";
     private static final String DEFAULT_REPORT_TITLE = "Autopsy Forensic Report";
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
@@ -77,7 +77,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
                 //use default
                 logger.log(Level.INFO, "Using default report branding for generator logo");
                 curPath = reportsBrandingDir + File.separator + "logo.png";
-                InputStream in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/logo.png");
+                InputStream in = getClass().getResourceAsStream(DEFAULT_GENERATOR_LOGO);
                 OutputStream output = new FileOutputStream(new File(curPath));
                 FileUtil.copy(in, output);
                 ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, curPath);
