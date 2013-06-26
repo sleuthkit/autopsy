@@ -83,3 +83,58 @@ def wgetcwd():
 		proc = subprocess.Popen(("cygpath", "-m", os.getcwd()), stdout=subprocess.PIPE)
 		out,err = proc.communicate()
 		return out.rstrip()
+# Verifies a file's existance
+def file_exists(file):
+	try:
+		if os.path.exists(file):
+			return os.path.isfile(file)
+	except:
+		return False
+		
+# Verifies a directory's existance
+def dir_exists(dir):
+	try:
+		return os.path.exists(dir)
+	except:
+		return False
+
+# Compares file a to file b and any differences are returned
+# Only works with report html files, as it searches for the first <ul>
+def compare_report_files(a_path, b_path):
+	a_file = open(a_path)
+	b_file = open(b_path)
+	a = a_file.read()
+	b = b_file.read()
+	a = a[a.find("<ul>"):]
+	b = b[b.find("<ul>"):]
+	
+	a_list = split(a, 50)
+	b_list = split(b, 50)
+	if not len(a_list) == len(b_list):
+		ex = (len(a_list), len(b_list))
+		return ex
+	else: 
+		return (0, 0)
+  
+# Split a string into an array of string of the given size
+def split(input, size):
+	return [input[start:start+size] for start in range(0, len(input), size)]
+
+# Returns the nth word in the given string or "" if n is out of bounds
+# n starts at 0 for the first word
+def get_word_at(string, n):
+	words = string.split(" ")
+	if len(words) >= n:
+		return words[n]
+	else:
+		return ""
+
+# Returns true if the given file is one of the required input files
+# for ingest testing
+def required_input_file(name):
+	if ((name == "notablehashes.txt-md5.idx") or
+	   (name == "notablekeywords.xml") or
+	   (name == "nsrl.txt-md5.idx")): 
+	   return True
+	else:
+		return False
