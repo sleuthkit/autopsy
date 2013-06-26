@@ -65,7 +65,6 @@ class Args:
 		self.verbose = False
 		self.exception = False
 		self.exception_string = ""
-		self.gold_creation = False
 		self.fr = False
 	
 	def parse(self):
@@ -1489,8 +1488,7 @@ class Test_Runner:
 			errorem += "Autopsy test passed.\n"
 			passFail = True
 			attachl = []
-		if not test_case.args.gold_creation:
-			Emailer.send_email(parsed, errorem, attachl, passFail)
+		Emailer.send_email(parsed, errorem, attachl, passFail)
 			
 	# Iterates through an XML configuration file to find all given elements		
 	def _fill_case_data(config_file, test_img):
