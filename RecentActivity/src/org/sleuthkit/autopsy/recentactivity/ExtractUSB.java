@@ -37,9 +37,21 @@ import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 public class ExtractUSB {
-
+    private static final Logger logger = Logger.getLogger(ExtractUSB.class.getName());
     private HashMap<String, USBInfo> devices;
+    private static final String DataFile = "USB_DATA.txt";
 
+    public ExtractUSB() {
+        try {
+            devices();
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Could not find file " + DataFile + ".", ex);
+            devices = null;
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unknown IO error occurred in method devices.", ex);
+        }
+    }
+    
     public USBInfo get(String dev) {
         String[] dtokens = dev.split("[_&]");
         String mID = dtokens[1];
@@ -56,20 +68,10 @@ public class ExtractUSB {
         }
     }
 
-    public ExtractUSB() {
-        try {
-            Devices();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(ExtractUSB.class.getName()).log(Level.SEVERE, null, ex);
-            devices = null;
-        } catch (IOException ex) {
-            Logger.getLogger(ExtractUSB.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 
-    private void Devices() throws FileNotFoundException, IOException {
+    private void devices() throws FileNotFoundException, IOException {
         devices = new HashMap<String, USBInfo>();
-        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), "USB_DATA.txt");
+        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
             String line = dat.nextLine();
             while (dat.hasNext()) {
