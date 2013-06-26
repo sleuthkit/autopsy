@@ -72,6 +72,12 @@ public final class ReportBranding implements ReportBrandingProviderI {
         }
     }
 
+    public String getReportsBrandingDir() {
+        return reportsBrandingDir;
+    }
+    
+    
+
     @Override
     public String getGeneratorLogoPath() {
         String curPath = null;
