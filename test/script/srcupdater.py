@@ -65,13 +65,13 @@ def gitPull(TskOrAutopsy):
 	gppth = Emailer.make_local_path("..", "GitPullOutput" + TskOrAutopsy + ".txt")
 	attachl.append(gppth)
 	gpout = open(gppth, 'a')
-	toPull = "http://www.github.com/sleuthkit/" + TskOrAutopsy
+	toPull = "https://www.github.com/sleuthkit/" + TskOrAutopsy
 	call = ["git", "pull", toPull]
 	if TskOrAutopsy == "sleuthkit":
 		ccwd = os.path.join("..", "..", "..", "sleuthkit")
 	else:
 		ccwd = os.path.join("..", "..")
-	subprocess.call(call, stdout=gpout, cwd=ccwd)
+	subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
 	gpout.close()
 	
 

@@ -68,7 +68,6 @@ import org.sleuthkit.autopsy.keywordsearch.*;
  * known_bad_path: Path to a database of known bad hashes
  * keyword_path: Path to a keyword list xml file
  * ignore_unalloc: Boolean whether to ignore unallocated space or not
- * mugen_mode: whether or not this test will run certain keyword settings.
  * 
  * Without these properties set, the test will fail to run correctly.
  * To run this test correctly, you should use the script 'regression.py'
