@@ -65,7 +65,6 @@ class Args:
 		self.verbose = False
 		self.exception = False
 		self.exception_string = ""
-		self.contin = False
 		self.gold_creation = False
 		self.fr = False
 	
@@ -80,61 +79,55 @@ class Args:
 			if(arg == "-f"):
 				try:
 					arg = sys.argv.pop(0)
-					printout("Running on a single file:")
-					printout(path_fix(arg) + "\n")
+					print("Running on a single file:")
+					print(path_fix(arg) + "\n")
 					self.single = True
 					self.single_file = path_fix(arg)
 				except:
-					printerror("Error: No single file given.\n")
+					print("Error: No single file given.\n")
 					return False
 			elif(arg == "-r" or arg == "--rebuild"):
-				printout("Running in rebuild mode.\n")
+				print("Running in rebuild mode.\n")
 				self.rebuild = True
 			elif(arg == "-l" or arg == "--list"):
 				try:
 					arg = sys.argv.pop(0)
 					nxtproc.append(arg)
-					printout("Running from configuration file:")
-					printout(arg + "\n")
+					print("Running from configuration file:")
+					print(arg + "\n")
 					self.list = True
 					self.config_file = arg
 				except:
-					printerror("Error: No configuration file given.\n")
+					print("Error: No configuration file given.\n")
 					return False
 			elif(arg == "-u" or arg == "--unallocated"):
-			   printout("Ignoring unallocated space.\n")
+			   print("Ignoring unallocated space.\n")
 			   self.unallocated = True
 			elif(arg == "-k" or arg == "--keep"):
-				printout("Keeping the Solr index.\n")
+				print("Keeping the Solr index.\n")
 				self.keep = True
 			elif(arg == "-v" or arg == "--verbose"):
-				printout("Running in verbose mode:")
-				printout("Printing all thrown exceptions.\n")
+				print("Running in verbose mode:")
+				print("Printing all thrown exceptions.\n")
 				self.verbose = True
 			elif(arg == "-e" or arg == "--exception"):
 				try:
 					arg = sys.argv.pop(0)
 					nxtproc.append(arg)
-					printout("Running in exception mode: ")
-					printout("Printing all exceptions with the string '" + arg + "'\n")
+					print("Running in exception mode: ")
+					print("Printing all exceptions with the string '" + arg + "'\n")
 					self.exception = True
 					self.exception_string = arg
 				except:
-					printerror("Error: No exception string given.")
+					print("Error: No exception string given.")
 			elif arg == "-h" or arg == "--help":
-				printout(usage())
+				print(usage())
 				return False
-			elif arg == "-c" or arg == "--continuous":
-				printout("Running until interrupted")
-				self.contin = True
-			elif arg == "-g" or arg == "--gold":
-				printout("Creating gold standards")
-				self.gold_creation = True
 			elif arg == "-fr" or arg == "--forcerun":
-				printout("Not downloading new images")
+				print("Not downloading new images")
 				self.fr = True
 			else:
-				printout(usage())
+				print(usage())
 				return False
 		# Return the args were sucessfully parsed
 		return True
@@ -158,10 +151,6 @@ class TestAutopsy:
 		self.csv = ""
 		self.global_csv = ""
 		self.html_log = ""
-		# Error tracking
-		self.printerror = []
-		self.printout = []
-		self.report_passed = False
 		# Ant info:
 		self.known_bad_path = ""
 		self.keyword_path = ""
@@ -174,7 +163,7 @@ class TestAutopsy:
 		self.indexed_chunks = 0
 		# Infinite Testing info
 		timer = 0
-		
+		self.images = []
 		# Set the timeout to something huge
 		# The entire tester should not timeout before this number in ms
 		# However it only seems to take about half this time
@@ -210,7 +199,6 @@ class TestAutopsy:
 		# Error tracking
 		self.printerror = []
 		self.printout = []
-		self.report_passed = False
 		
 		# Set the timeout to something huge
 		# The entire tester should not timeout before this number in ms
@@ -372,8 +360,8 @@ class Database:
 					autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
 					attributes = autopsy_cur1.fetchall()
 				except Exception as e:
-					printerror(str(e))
-					printerror(str(rw[3]))
+					printerror(test_img, str(e))
+					printerror(test_img, str(rw[3]))
 					errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
 					looptry = False
 					test_img.artifact_fail += 1
@@ -387,14 +375,14 @@ class Database:
 								numvals += 1
 						if(numvals > 1):
 							errorem += test_img.image_name + ":There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
-							printerror("There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + test_img.image_name + ".")
+							printerror(test_img, "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + test_img.image_name + ".")
 							failedbool = True
 							if(not appnd):
 								attachl.append(autopsy_db_file)
 								appnd = True
 						if(not attr[0] == src):
 							errorem += test_img.image_name + ":There were inconsistents sources for artifact with id #" + str(rw[3]) + ".\n"
-							printerror("There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + test_img.image_name + ".")
+							printerror(test_img, "There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + test_img.image_name + ".")
 							failedbool = True
 							if(not appnd):
 								attachl.append(autopsy_db_file)
@@ -409,16 +397,16 @@ class Database:
 							try:
 								database_log.write(inpval)
 							except Exception as e:
-								printerror("Inner exception" + outp)
+								printerror(test_img, "Inner exception" + outp)
 						except Exception as e:
-								printerror(str(e))
+								printerror(test_img, str(e))
 						database_log.write('" />')
 				database_log.write(' <artifact/>\n')
 				rw = autopsy_cur2.fetchone()
 			srtcmdlst = ["sort", test_img.autopsy_data_file, "-o", test_img.sorted_data_file]
 			subprocess.call(srtcmdlst)
 		except Exception as e:
-			printerror('outer exception: ' + str(e))
+			printerror(test_img, 'outer exception: ' + str(e))
 			if(test_img.artifact_fail > 0):
 				errorem += test_img.image_name + ":There were " + str(test_img.artifact_count) + " artifacts and " + str(test_img.artifact_fail) + " threw an exception while loading.\n"
 			
@@ -439,9 +427,9 @@ class Database:
 				try:
 					database_log.write(line + "\n")
 				except Exception as e:
-					printerror("Inner dump Exception:" + str(e))
+					printerror(test_img, "Inner dump Exception:" + str(e))
 		except Exception as e:
-			printerror("Outer dump Exception:" + str(e))
+			printerror(test_img, "Outer dump Exception:" + str(e))
 			
 	# Using the global test_case's variables, compare the database file made by the
 	# regression test to the gold standard database file
@@ -461,17 +449,17 @@ class Database:
 			database._generate_gold_artifacts()
 			database._generate_gold_attributes()
 		except Exception as e:
-			printerror("Way out:" + str(e))
+			printerror(test_img, "Way out:" + str(e))
 		# This is where we return if a file doesn't exist, because we don't want to
 		# compare faulty databases, but we do however want to try to run all queries
 		# regardless of the other database
 		if not Emailer.file_exists(autopsy_db_file):
-			printerror("Error: Database file does not exist at:")
-			printerror(autopsy_db_file + "\n")
+			printerror(test_img, "Error: Database file does not exist at:")
+			printerror(test_img, autopsy_db_file + "\n")
 			return
 		if not Emailer.file_exists(gold_db_file):
-			printerror("Error: Gold database file does not exist at:")
-			printerror(gold_db_file + "\n")
+			printerror(test_img, "Error: Gold database file does not exist at:")
+			printerror(test_img, gold_db_file + "\n")
 			return
 		# compare size of bb artifacts, attributes, and tsk objects
 		gold_con = sqlite3.connect(gold_db_file)
@@ -487,7 +475,7 @@ class Database:
 			database._generate_autopsy_artifacts()
 			database._generate_autopsy_attributes()
 		except Exception as e:
-			printerror("Way out:" + str(e))
+			printerror(test_img, "Way out:" + str(e))
 		# Testing tsk_objects
 		exceptions.append(Database._compare_tsk_objects(test_img, database))
 		# Testing blackboard_artifacts
@@ -499,9 +487,9 @@ class Database:
 		database.attribute_comparison = exceptions[2]
 		
 		okay = "All counts match."
-		print_report(exceptions[0], "COMPARE TSK OBJECTS", okay)
-		print_report(exceptions[1], "COMPARE ARTIFACTS", okay)
-		print_report(exceptions[2], "COMPARE ATTRIBUTES", okay)
+		print_report(test_img, exceptions[0], "COMPARE TSK OBJECTS", okay)
+		print_report(test_img, exceptions[1], "COMPARE ARTIFACTS", okay)
+		print_report(test_img, exceptions[2], "COMPARE ATTRIBUTES", okay)
 			
 	def get_Data(test_img):
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
@@ -535,7 +523,7 @@ class Database:
 					exceptions.append(error)
 			return exceptions
 		except Exception as e:
-			printerror(str(e))
+			printerror(test_img, str(e))
 			exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
 			return exceptions
 
@@ -612,7 +600,7 @@ class TestDiffer:
 			global failedbool
 			attachl.append(diff_dir)
 			errorem += test_img.image_name + ":There was a database TestDifference in the file " + gld + ".\n"
-			printerror("There was a TestDifference in the Database data for " + test_img.image_name + " for the file " + gld + ".\n")
+			printerror(test_img, "There was a TestDifference in the Database data for " + test_img.image_name + " for the file " + gld + ".\n")
 			failedbool = True
 			global imgfail
 			imgfail = True
@@ -637,7 +625,7 @@ class TestDiffer:
 			attachl.append(test_img.sorted_log)
 			attachl.append(diff_dir)
 			errorem += test_img.image_name + ":There was a TestDifference in the exceptions Log.\n"
-			printerror("Exceptions didn't match.\n")
+			printerror(test_img, "Exceptions didn't match.\n")
 			failedbool = True
 			global imgfail
 			imgfail = True
@@ -658,12 +646,12 @@ class TestDiffer:
 		try:
 			autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
 			if not Emailer.file_exists(gold_html_file):
-				printerror("Error: No gold html report exists at:")
-				printerror(gold_html_file + "\n")
+				printerror(test_img, "Error: No gold html report exists at:")
+				printerror(test_img, gold_html_file + "\n")
 				return
 			if not Emailer.file_exists(autopsy_html_file):
-				printerror("Error: No test_case html report exists at:")
-				printerror(autopsy_html_file + "\n")
+				printerror(test_img, "Error: No test_case html report exists at:")
+				printerror(test_img, autopsy_html_file + "\n")
 				return
 			#Find all gold .html files belonging to this test_case
 			ListGoldHTML = []
@@ -683,7 +671,7 @@ class TestDiffer:
 							ListNewHTML.append(Emailer.make_path(test_case.img_gold_parse, test_img.image_name, fs))
 			#ensure both reports have the same number of files and are in the same order
 			if(len(ListGoldHTML) != len(ListNewHTML)):
-				printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
+				printerror(test_img, "The reports did not have the same number of files. One of the reports may have been corrupted")
 			else:
 				ListGoldHTML.sort()
 				ListNewHTML.sort()
@@ -695,18 +683,18 @@ class TestDiffer:
 				total["New"]+=count[1]
 			okay = "The test report matches the gold report."
 			errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
-			print_report(errors, "REPORT COMPARISON", okay)
+			print_report(test_img, errors, "REPORT COMPARISON", okay)
 			if total["Gold"] == total["New"]:
 				test_img.report_passed = True
 			else:
-				printerror("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
+				printerror(test_img, "The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
 		except FileNotFoundException as e:
 			e.print_error()
 		except DirNotFoundException as e:
 			e.print_error()
 		except Exception as e:
-			printerror("Error: Unknown fatal error comparing reports.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error comparing reports.")
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 		
 class TestData:
@@ -729,6 +717,10 @@ class TestData:
 		self.artifact_fail = 0
 		self.heap_space = ""
 		self.service_times = ""
+		self.report_passed = False
+		# Error tracking
+		self.printerror = []
+		self.printout = []
 	def reset(self):
 		self.image = ""
 		self.image_file = ""
@@ -748,11 +740,18 @@ class TestData:
 		self.artifact_fail = 0
 		self.heap_space = ""
 		self.service_times = ""
+		# Error tracking
+		self.printerror = []
+		self.printout = []
 			
 class Reports:
 	def generate_reports(csv_path, database, test_img):
 		Reports._generate_html(database, test_img)
-		Reports._generate_csv(csv_path, database, test_img)
+		if test_case.global_csv:
+			Reports._generate_csv(test_case.global_csv, database, test_img)
+		else:
+			Reports._generate_csv(csv_path, database, test_img)
+		
 	# Generates the HTML log file
 	def _generate_html(database, test_img):
 		# If the file doesn't exist yet, this is the first test_case to run for
@@ -781,7 +780,7 @@ class Reports:
 					  <h2><a name='" + test_img.image_name + "-errors'>Errors and Warnings</a></h2>\
 					  <hr color='#FF0000'>"
 			# For each error we have logged in the test_case
-			for error in test_case.printerror:
+			for error in test_img.printerror:
 				# Replace < and > to avoid any html display errors
 				errors += "<p>" + error.replace("<", "&lt").replace(">", "&gt") + "</p>"
 				# If there is a \n, we probably want a <br /> in the html
@@ -858,7 +857,7 @@ class Reports:
 					  <h2><a name='" + test_img.image_name + "-general'>General Output</a></h2>\
 					  <hr color='#282828'>"
 			# For each printout in the test_case's list
-			for out in test_case.printout:
+			for out in test_img.printout:
 				output += "<p>" + out + "</p>"
 				# If there was a \n it probably means we want a <br /> in the html
 				if "\n" in out:
@@ -872,9 +871,9 @@ class Reports:
 			html.write(output)
 			html.close()
 		except Exception as e:
-			printerror("Error: Unknown fatal error when creating HTML log at:")
-			printerror(test_case.html_log)
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error when creating HTML log at:")
+			printerror(test_img, test_case.html_log)
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 
 	# Writed the top of the HTML log file
@@ -923,6 +922,7 @@ class Reports:
 			name = test_case.get_image_name(full_name)
 			links.append("<a href='#" + name + "(0)'>" + name + "</a>")
 		html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
+
 	# Generate the CSV log file
 	def _generate_csv(csv_path, database, test_img):
 		try:
@@ -930,7 +930,6 @@ class Reports:
 			# first run, and we need to add the column names
 			if not Emailer.file_exists(csv_path):
 				Reports.csv_header(csv_path)
-				
 			# Now add on the fields to a new row
 			csv = open(csv_path, "a")
 			
@@ -964,9 +963,8 @@ class Reports:
 			vars.append( database.get_artifact_comparison() )
 			vars.append( database.get_attribute_comparison() )
 			vars.append( Emailer.make_local_path("gold", test_img.image_name, "standard.html") )
-			vars.append( str(test_case.report_passed) )
+			vars.append( str(test_img.report_passed) )
 			vars.append( test_case.ant_to_string() )
-			
 			# Join it together with a ", "
 			output = "|".join(vars)
 			output += "\n"
@@ -974,9 +972,9 @@ class Reports:
 			csv.write(output)
 			csv.close()
 		except Exception as e:
-			printerror("Error: Unknown fatal error when creating CSV file at:")
-			printerror(csv_path)
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error when creating CSV file at:")
+			printerror(test_img, csv_path)
+			printerror(test_img, str(e) + "\n")
 			print(traceback.format_exc())
 			logging.critical(traceback.format_exc())
 
@@ -1031,14 +1029,14 @@ class Logs:
 		try:
 			Logs._fill_test_case_data(test_img)
 		except Exception as e:
-			printerror("Error: Unknown fatal error when filling test_case data.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error when filling test_case data.")
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 		# If running in verbose mode (-v)
 		if test_case.args.verbose:
 			errors = Logs._report_all_errors()
 			okay = "No warnings or errors in any log files."
-			print_report(errors, "VERBOSE", okay)
+			print_report(test_img, errors, "VERBOSE", okay)
 	# Generate the "common log": a log of all exceptions and warnings
 	# from each log file generated by Autopsy
 	def _generate_common_log(test_img):
@@ -1066,12 +1064,13 @@ class Logs:
 				log.close()
 			common_log.write("\n")
 			common_log.close()
+			print(test_img.sorted_log)
 			srtcmdlst = ["sort", test_case.common_log_path, "-o", test_img.sorted_log]
 			subprocess.call(srtcmdlst)
 		except Exception as e:
-			printerror("Error: Unable to generate the common log.")
-			printerror(str(e) + "\n")
-			printerror(traceback.format_exc())
+			printerror(test_img, "Error: Unable to generate the common log.")
+			printerror(test_img, str(e) + "\n")
+			printerror(test_img, traceback.format_exc())
 			logging.critical(traceback.format_exc())
 
 	# Fill in the global test_case's variables that require the log files
@@ -1088,8 +1087,8 @@ class Logs:
 			# Set the test_case ending time based off the "create" time (when the file was copied)
 			test_img.end_date = time.ctime(os.path.getmtime(log_path))
 		except Exception as e:
-			printerror("Error: Unable to open autopsy.log.0.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unable to open autopsy.log.0.")
+			printerror(test_img, str(e) + "\n")
 			logging.warning(traceback.format_exc())
 		# Set the test_case total test time
 		# Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1119,8 +1118,8 @@ class Logs:
 			chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_img)[0]
 			test_case.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
 		except Exception as e:
-			printerror("Error: Unable to find the required information to fill test_case data.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unable to find the required information to fill test_case data.")
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 			print(traceback.format_exc())
 		try:
@@ -1138,11 +1137,9 @@ class Logs:
 				times += words[i]
 				service_list.append(times)
 			test_img.service_times = "; ".join(service_list)
-		except FileNotFoundException as e:
-			e.print_error()
 		except Exception as e:
-			printerror("Error: Unknown fatal error when finding service times.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error when finding service times.")
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 	
 	# Returns all the errors found in the common log in a list
@@ -1150,8 +1147,8 @@ class Logs:
 		try:
 			return get_warnings() + get_exceptions()
 		except Exception as e:
-			printerror("Error: Unknown fatal error when reporting all errors.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: Unknown fatal error when reporting all errors.")
+			printerror(test_img, str(e) + "\n")
 			logging.warning(traceback.format_exc())
 	# Searches the common log for any instances of a specific string.
 	def search_common_log(string, test_img):
@@ -1226,26 +1223,26 @@ def search_log_set(type, string, test_img):
 		
 # Print a report for the given errors with the report name as name
 # and if no errors are found, print the okay message
-def print_report(errors, name, okay):
+def print_report(test_img, errors, name, okay):
 	if errors:
-		printerror("--------< " + name + " >----------")
+		printerror(test_img, "--------< " + name + " >----------")
 		for error in errors:
-			printerror(str(error))
-		printerror("--------< / " + name + " >--------\n")
+			printerror(test_img, str(error))
+		printerror(test_img, "--------< / " + name + " >--------\n")
 	else:
-		printout("-----------------------------------------------------------------")
-		printout("< " + name + " - " + okay + " />")
-		printout("-----------------------------------------------------------------\n")
+		printout(test_img, "-----------------------------------------------------------------")
+		printout(test_img, "< " + name + " - " + okay + " />")
+		printout(test_img, "-----------------------------------------------------------------\n")
 
 # Used instead of the print command when printing out an error
-def printerror(string):
+def printerror(test_img, string):
 	print(string)
-	test_case.printerror.append(string)
+	test_img.printerror.append(string)
 
 # Used instead of the print command when printing out anything besides errors
-def printout(string):
+def printout(test_img, string):
 	print(string)
-	test_case.printout.append(string)
+	test_img.printout.append(string)
 
 #----------------------------------#
 #		 Helper functions		   #
@@ -1281,8 +1278,8 @@ def copy_logs(test_img):
 		log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
 		shutil.copytree(log_dir, Emailer.make_local_path(test_case.output_dir, test_img.image_name, "logs"))
 	except Exception as e:
-		printerror("Error: Failed to copy the logs.")
-		printerror(str(e) + "\n")
+		printerror(test_img,"Error: Failed to copy the logs.")
+		printerror(test_img,str(e) + "\n")
 		logging.warning(traceback.format_exc())
 # Clears all the files from a directory and remakes it
 def clear_dir(dir):
@@ -1292,8 +1289,8 @@ def clear_dir(dir):
 		os.makedirs(dir)
 		return True;
 	except Exception as e:
-		printerror("Error: Cannot clear the given directory:")
-		printerror(dir + "\n")
+		printerror(test_img,"Error: Cannot clear the given directory:")
+		printerror(test_img,dir + "\n")
 		print(str(e))
 		return False;
 
@@ -1303,17 +1300,16 @@ def del_dir(dir):
 			shutil.rmtree(dir)
 		return True;
 	except:
-		printerror("Error: Cannot delete the given directory:")
-		printerror(dir + "\n")
+		printerror(test_img,"Error: Cannot delete the given directory:")
+		printerror(test_img,dir + "\n")
 		return False;
 #Copies a given file from "ffrom" to "to"
 def copy_file(ffrom, to):
 	try :
-		if not Emailer.file_exists(ffrom):
-			raise FileNotFoundException(ffrom)
 		shutil.copy(ffrom, to)
-	except:
-		raise FileNotFoundException(to)
+	except Exception as e:
+		print(str(e))
+		print(traceback.format_exc())
 
 # Copies a directory file from "ffrom" to "to"
 def copy_dir(ffrom, to):
@@ -1399,8 +1395,8 @@ class FileNotFoundException(Exception):
 		self.strerror = "FileNotFoundException: " + file
 		
 	def print_error(self):
-		printerror("Error: File could not be found at:")
-		printerror(self.file + "\n")
+		printerror(test_img,"Error: File could not be found at:")
+		printerror(test_img,self.file + "\n")
 	def error(self):
 		error = "Error: File could not be found at:\n" + self.file + "\n"
 		return error
@@ -1413,8 +1409,8 @@ class DirNotFoundException(Exception):
 		self.strerror = "DirNotFoundException: " + dir
 		
 	def print_error(self):
-		printerror("Error: Directory could not be found at:")
-		printerror(self.dir + "\n")
+		printerror(test_img, "Error: Directory could not be found at:")
+		printerror(test_img, self.dir + "\n")
 	def error(self):
 		error = "Error: Directory could not be found at:\n" + self.dir + "\n"
 		return error
@@ -1441,31 +1437,39 @@ class Test_Runner:
 		logging.basicConfig(filename=log_name, level=logging.DEBUG)
 		# If user wants to do a single file and a list (contradictory?)
 		if test_case.args.single and test_case.args.list:
-			printerror("Error: Cannot run both from config file and on a single file.")
+			printerror(test_img, "Error: Cannot run both from config file and on a single file.")
 			return
 		# If working from a configuration file
 		if test_case.args.list:
 		   if not Emailer.file_exists(test_case.args.config_file):
-			   printerror("Error: Configuration file does not exist at:")
-			   printerror(test_case.args.config_file)
+			   printerror(test_img, "Error: Configuration file does not exist at:")
+			   printerror(test_img, test_case.args.config_file)
 			   return
-		   logres = Test_Runner.run_config_test(test_case.args.config_file,test_img)
+		   Test_Runner._fill_case_data(test_case.args.config_file,test_img)
 		# Else if working on a single file
 		elif test_case.args.single:
 		   if not Emailer.file_exists(test_case.args.single_file):
-			   printerror("Error: Image file does not exist at:")
-			   printerror(test_case.args.single_file)
+			   printerror(test_img, "Error: Image file does not exist at:")
+			   printerror(test_img, test_case.args.single_file)
 			   return
-		   logres = Test_Runner.run_test(test_case.args.single_file, 0, test_img)
+		   Test_case.images.append(test_case.args.single_file,)
 		# If user has not selected a single file, and does not want to ignore
 		#  the input directory, continue on to parsing ../input
 		if (not test_case.args.single) and (not test_case.args.ignore) and (not test_case.args.list):
 		   test_case.args.config_file = "config.xml"
 		   if not Emailer.file_exists(test_case.args.config_file):
-			   printerror("Error: Configuration file does not exist at:")
-			   printerror(test_case.args.config_file)
+			   printerror(test_img, "Error: Configuration file does not exist at:")
+			   printerror(test_img, test_case.args.config_file)
 			   return
-		   logres = Test_Runner.run_config_test(test_case.args.config_file, test_img)
+		   Test_Runner._fill_case_data(test_case.args.config_file, test_img)
+		logres =[]
+		for img in test_case.images:  
+			if Emailer.file_exists(img):
+				logres.append(Test_Runner._run_ingest(str(img), 0, test_img))
+			else:
+				printerror(test_img, "Warning: Image file listed in configuration does not exist:")
+				printrttot(value + "\n")
+			test_img.reset()
 		Reports.write_html_foot()
 		html.close()
 		if (len(logres)>0):
@@ -1489,7 +1493,7 @@ class Test_Runner:
 			Emailer.send_email(parsed, errorem, attachl, passFail)
 			
 	# Iterates through an XML configuration file to find all given elements		
-	def run_config_test(config_file, test_img):
+	def _fill_case_data(config_file, test_img):
 		try:
 			global parsed
 			global errorem
@@ -1515,9 +1519,9 @@ class Test_Runner:
 			for element in parsed.getElementsByTagName("image"):
 				value = element.getAttribute("value").encode().decode("utf_8")
 				if Emailer.file_exists(value):
-					values.append(value)
+					test_case.images.append(value)
 				else:
-					printout("File: " + value + " doesn't exist")
+					printout(test_img, "File: " + value + " doesn't exist")
 			count = len(values)
 			archives = Emailer.make_path(test_case.gold, "..")
 			arcount = 0
@@ -1525,54 +1529,24 @@ class Test_Runner:
 				if not(file == 'tmp'):
 					arcount+=1
 			if (count > arcount):
-				printout("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+				print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
 			elif not (arcount == count):
-				printout("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
+				print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
 			Reports.html_add_images(values)
-			images = []
-			# Run the test for each file in the configuration
-			if(test_case.args.contin):
-				#set all times an image has been processed to 0
-				for element in parsed.getElementsByTagName("image"):
-					value = element.getAttribute("value").encode().decode("utf_8")
-					images.append(str(value))
-				#Begin infiniloop
-				if(newDay()):
-					global daycount
-					setDay()
-					srcupdater.compile(errorem, attachl, parsed)
-					if(daycount > 0):
-						printout("starting process")
-						outputer = open("ScriptLog.txt", "a")
-						pid = subprocess.Popen(nxtproc,
-						stdout = outputer,
-						stderr = outputer)
-						sys.exit()
-					daycount += 1
-			for img in values:  
-				if Emailer.file_exists(img):
-					logres.append(Test_Runner.run_test(str(img), 0, test_img))
-				else:
-					printerror("Warning: Image file listed in configuration does not exist:")
-					printrttot(value + "\n")
-				test_img.reset()
-			return logres   
 		except Exception as e:
-			printerror("Error: There was an error running with the configuration file.")
-			printerror(str(e) + "\n")
+			printerror(test_img, "Error: There was an error running with the configuration file.")
+			printerror(test_img, str(e) + "\n")
 			logging.critical(traceback.format_exc())
 			print(traceback.format_exc())
-			
-	# Runs the test on the single given file.
-	# The path must be guarenteed to be a correct path.
-	def run_test(image_file, count, test_img):
+
+	def _run_ingest(image_file, count, test_img):
 		global parsed
 		global imgfail
 		global failedbool
 		imgfail = False
 		if image_type(image_file) == IMGTYPE.UNKNOWN:
-			printerror("Error: Image type is unrecognized:")
-			printerror(image_file + "\n")
+			printerror(test_img, "Error: Image type is unrecognized:")
+			printerror(test_img, image_file + "\n")
 			return
 			
 		# Set the test_case to work for this test
@@ -1600,14 +1574,14 @@ class Test_Runner:
 		test_case.known_bad_path = Emailer.make_path(test_case.input_dir, "notablehashes.txt-md5.idx")
 		test_case.keyword_path = Emailer.make_path(test_case.input_dir, "notablekeywords.xml")
 		test_case.nsrl_path = Emailer.make_path(test_case.input_dir, "nsrl.txt-md5.idx")
-		
 		logging.debug("--------------------")
 		logging.debug(test_img.image_name)
 		logging.debug("--------------------")
-		Test_Runner.run_ant(test_img)
+		Test_Runner._run_ant(test_img)
 		time.sleep(2) # Give everything a second to process
 		test_case.common_log_path = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name+test_case.common_log)
 		# After the java has ran:
+		Database.get_Data(test_img)
 		copy_logs(test_img)
 		test_img.sorted_log = Emailer.make_local_path(test_case.output_dir, test_img.image_name, test_img.image_name + "SortedErrors.txt")
 		Logs.generate_log_data(test_img)
@@ -1616,49 +1590,52 @@ class Test_Runner:
 		if not test_case.args.keep:
 			solr_index = Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
 			if clear_dir(solr_index):
-				print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
+				print_report(test_img, [], "DELETE SOLR INDEX", "Solr index deleted.")
 		elif test_case.args.keep:
-			print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
+			print_report(test_img, [], "KEEP SOLR INDEX", "Solr index has been kept.")
 		# If running in exception mode (-e)
 		if test_case.args.exception:
 			exceptions = search_logs(test_case.args.exception_string, test_img)
 			okay = "No warnings or exceptions found containing text '" + test_case.args.exception_string + "'."
-			print_report(exceptions, "EXCEPTION", okay)
+			print_report(test_img, exceptions, "EXCEPTION", okay)
 		database = Database(test_img)
 		# Now test in comparison to the gold standards
-		if not test_case.args.gold_creation:
-			try:
-				Database.get_Data(test_img)
-				gold_path = test_case.gold
-				img_gold = Emailer.make_path(test_case.gold, "tmp", test_img.image_name)
-				img_archive = Emailer.make_path("..", "output", "gold", test_img.image_name+"-archive.zip")
-				if(not Emailer.file_exists(img_archive)):
-					img_archive = Emailer.make_path(test_case.gold_parse, test_img.image_name+"-archive.zip")
-					gold_path = test_case.gold_parse
-					img_gold = Emailer.make_path(gold_path, "tmp", test_img.image_name)
-				extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-				extrctr.extractall(gold_path)
-				extrctr.close
-				time.sleep(2)
-				Database.compare_to_gold_db(test_img, database)
-				TestDiffer.run_diff(test_img)
-				del_dir(img_gold)
-			except Exception as e:
-				printerror("Tests failed due to an error, try rebuilding or creating gold standards.\n")
-				printerror(str(e) + "\n")
+		if not test_case.args.rebuild:
+			Test_Runner._run_test(image_file, database, test_img)
+		# If running in rebuild mode (-r)
+		else:
+			Test_Runner.rebuild(test_img)
 		# Make the CSV log and the html log viewer
 		Reports.generate_reports(test_case.csv, database, test_img)
-		if test_case.global_csv:
-			Reports.generate_reports(test_case.global_csv, database, test_img)
-		# If running in rebuild mode (-r)
-		if test_case.args.rebuild or test_case.args.gold_creation:
-			Test_Runner.rebuild(test_img)
 		# Reset the test_case and return the tests sucessfully finished
 		clear_dir(Emailer.make_path(test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
 		if(failedbool):
 			attachl.append(test_case.common_log_path)
 		test_case.reset()
 		return logres
+		
+	# Runs the test on the single given file.
+	# The path must be guarenteed to be a correct path.
+	def _run_test(image_file, database, test_img):
+		try:
+			gold_path = test_case.gold
+			img_gold = Emailer.make_path(test_case.gold, "tmp", test_img.image_name)
+			img_archive = Emailer.make_path("..", "output", "gold", test_img.image_name+"-archive.zip")
+			if(not Emailer.file_exists(img_archive)):
+				img_archive = Emailer.make_path(test_case.gold_parse, test_img.image_name+"-archive.zip")
+				gold_path = test_case.gold_parse
+				img_gold = Emailer.make_path(gold_path, "tmp", test_img.image_name)
+			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+			extrctr.extractall(gold_path)
+			extrctr.close
+			time.sleep(2)
+			Database.compare_to_gold_db(test_img, database)
+			TestDiffer.run_diff(test_img)
+			del_dir(img_gold)
+		except Exception as e:
+			printerror(test_img, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
+			printerror(test_img, str(e) + "\n")
+			print(traceback.format_exc())
 		
 	# Rebuilds the gold standards by copying the test-generated database
 	# and html report files into the gold directory
@@ -1685,12 +1662,15 @@ class Test_Runner:
 			os.makedirs(tmpdir)
 		try:
 			copy_file(dbinpth, dboutpth)
-			copy_file(test_img.sorted_data_file, dataoutpth)
+			if Emailer.file_exists(test_img.sorted_data_file):
+				copy_file(test_img.sorted_data_file, dataoutpth)
 			copy_file(dbdumpinpth, dbdumpoutpth)
 			error_pth = Emailer.make_path(tmpdir, test_img.image_name+"SortedErrors.txt")
 			copy_file(test_img.sorted_log, error_pth)
 		except Exception as e:
-			printerror(str(e))
+			printerror(test_img, str(e))
+			print(str(e))
+			print(traceback.format_exc())
 		# Rebuild the HTML report
 		htmlfolder = ""
 		for fs in os.listdir(os.path.join(os.getcwd(),test_case.output_dir, test_img.image_name, test_case.Img_Test_Folder, "Reports")):
@@ -1711,7 +1691,7 @@ class Test_Runner:
 		except Exception as e:
 			errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
 			errors.append(str(e) + "\n")
-			traceback.print_exc
+			print(traceback.format_exc())
 		oldcwd = os.getcwd()
 		zpdir = gold_dir
 		os.chdir(zpdir)
@@ -1724,7 +1704,7 @@ class Test_Runner:
 		os.chdir(oldcwd)
 		del_dir(test_case.img_gold_parse)
 		okay = "Sucessfully rebuilt all gold standards."
-		print_report(errors, "REBUILDING", okay)
+		print_report(test_img, errors, "REBUILDING", okay)
 
 	def zipdir(path, zip):
 		for root, dirs, files in os.walk(path):
@@ -1733,7 +1713,7 @@ class Test_Runner:
 
 	# Tests Autopsy with RegressionTest.java by by running
 	# the build.xml file through ant
-	def run_ant(test_img):
+	def _run_ant(test_img):
 		# Set up the directories
 		test_case_path = os.path.join(test_case.output_dir, test_img.image_name)
 		if Emailer.dir_exists(test_case_path):
@@ -1754,16 +1734,15 @@ class Test_Runner:
 		test_case.ant.append("-Dgold_path=" + Emailer.make_path(test_case.gold))
 		test_case.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_img.image_name))
 		test_case.ant.append("-Dignore_unalloc=" + "%s" % test_case.args.unallocated)
-		test_case.ant.append("-Dcontin_mode=" + str(test_case.args.contin))
 		test_case.ant.append("-Dtest.timeout=" + str(test_case.timeout))
 		
-		printout("Ingesting Image:\n" + test_img.image_file + "\n")
-		printout("CMD: " + " ".join(test_case.ant))
-		printout("Starting test...\n")
+		printout(test_img, "Ingesting Image:\n" + test_img.image_file + "\n")
+		printout(test_img, "CMD: " + " ".join(test_case.ant))
+		printout(test_img, "Starting test...\n")
 		antoutpth = Emailer.make_local_path(test_case.output_dir, "antRunOutput.txt")
 		antout = open(antoutpth, "a")
 		if SYS is OS.CYGWIN:
-			subprocess.call(test_case.ant, stdout=antout)
+			subprocess.call(test_case.ant, stdout=subprocess.PIPE)
 		elif SYS is OS.WIN:
 			theproc = subprocess.Popen(test_case.ant, shell = True, stdout=subprocess.PIPE)
 			theproc.communicate()
@@ -1789,7 +1768,6 @@ def main():
 	errorem = ""
 	args = Args()
 	test_case = TestAutopsy(args)
-	printout("")
 	attachl = []
 	passed = False
 	# The arguments were given wrong:
@@ -1808,14 +1786,6 @@ def main():
 			theproc.communicate()
 	# Otherwise test away!
 	Test_Runner.execute_test()
-	while args.contin:
-		redo = False
-		attachl = []
-		errorem = "The test standard didn't match the gold standard.\n"
-		failedbool = False
-		passed = False
-		Test_Runner.execute_test()
-		case = TestAutopsy()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)	  
