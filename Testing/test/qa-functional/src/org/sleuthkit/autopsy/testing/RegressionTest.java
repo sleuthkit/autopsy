@@ -60,31 +60,34 @@ import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.*;
+
 /**
- * This test expects the following system properties to be set:
- * img_path: The fully qualified path to the image file (if split, the first file)
- * out_path: The location where the case will be stored
- * nsrl_path: Path to the nsrl database
- * known_bad_path: Path to a database of known bad hashes
- * keyword_path: Path to a keyword list xml file
- * ignore_unalloc: Boolean whether to ignore unallocated space or not
- * 
- * Without these properties set, the test will fail to run correctly.
- * To run this test correctly, you should use the script 'regression.py'
- * located in the 'script' directory of the Testing module.
+ * This test expects the following system properties to be set: img_path: The
+ * fully qualified path to the image file (if split, the first file) out_path:
+ * The location where the case will be stored nsrl_path: Path to the nsrl
+ * database known_bad_path: Path to a database of known bad hashes keyword_path:
+ * Path to a keyword list xml file ignore_unalloc: Boolean whether to ignore
+ * unallocated space or not
+ *
+ * Without these properties set, the test will fail to run correctly. To run
+ * this test correctly, you should use the script 'regression.py' located in the
+ * 'script' directory of the Testing module.
  */
-public class RegressionTest extends TestCase{
-    
+public class RegressionTest extends TestCase {
+
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     long start;
-    
-    /** Constructor required by JUnit */
+
+    /**
+     * Constructor required by JUnit
+     */
     public RegressionTest(String name) {
         super(name);
     }
-    
-    
-    /** Creates suite from particular test cases. */
+
+    /**
+     * Creates suite from particular test cases.
+     */
     public static Test suite() {
         // run tests with specific configuration
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(RegressionTest.class).
@@ -100,33 +103,36 @@ public class RegressionTest extends TestCase{
                 "testAddSourceWizard1",
                 "testIngest",
                 "testGenerateReportToolbar",
-                "testGenerateReportButton"
-                );
-        return  NbModuleSuite.create(conf);
+                "testGenerateReportButton");
+        return NbModuleSuite.create(conf);
 
-               
+
     }
 
-    /** Method called before each test case. */
+    /**
+     * Method called before each test case.
+     */
     @Override
     public void setUp() {
-        
+
         logger.info("########  " + System.getProperty("img_path") + "  #######");
     }
 
-    /** Method called after each test case. */
+    /**
+     * Method called after each test case.
+     */
     @Override
     public void tearDown() {
     }
-    
+
     public void testNewCaseWizardOpen() {
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
         jbo.pushNoBlock();
     }
-    
-    public void testNewCaseWizard(){
+
+    public void testNewCaseWizard() {
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
         JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 1);
@@ -141,25 +147,29 @@ public class RegressionTest extends TestCase{
         start = System.currentTimeMillis();
         wo.btFinish().clickMouse();
     }
-    
+
     public void testStartAddDataSource() {
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data");
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
-        String imageDir = System.getProperty("img_path");
-        ((JTextField)jtfo0.getSource()).setText(imageDir);
+        String img_path = System.getProperty("img_path");
+        if (img_path.startsWith("\\")) {
+            img_path = "\\" + img_path;
+        }
+        String imageDir = img_path;
+        ((JTextField) jtfo0.getSource()).setText(imageDir);
         wo.btNext().clickMouse();
     }
-    
+
     public void testAddSourceWizard1() {
         WizardOperator wo = new WizardOperator("Add Data");
-        while(!wo.btFinish().isEnabled()) {
+        while (!wo.btFinish().isEnabled()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
-        logger.info("Add image took " + (System.currentTimeMillis()-start) + "ms");
+        logger.info("Add image took " + (System.currentTimeMillis() - start) + "ms");
         wo.btFinish().clickMouse();
     }
-    
+
     public void testConfigureIngest1() {
         logger.info("Ingest 1");
         WizardOperator wo = new WizardOperator("Add Data");
@@ -169,7 +179,7 @@ public class RegressionTest extends TestCase{
         JButtonOperator jbo1 = new JButtonOperator(wo, "Advanced");
         jbo1.pushNoBlock();
     }
-    
+
     public void testConfigureHash() {
         logger.info("Hash Configure");
         JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
@@ -199,17 +209,17 @@ public class RegressionTest extends TestCase{
         JButtonOperator jbo4 = new JButtonOperator(hashMainDialogOperator, "OK", 0);
         jbo4.pushNoBlock();
     }
-    
+
     public void testConfigureIngest2() {
         logger.info("Ingest 2");
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 1, 0);
-        jto.clickOnCell(row, 1);        
+        jto.clickOnCell(row, 1);
         JButtonOperator jbo1 = new JButtonOperator(wo, "Advanced");
         jbo1.pushNoBlock();
     }
-    
+
     public void testConfigureSearch() {
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
@@ -221,13 +231,13 @@ public class RegressionTest extends TestCase{
         JFileChooserOperator jfco0 = new JFileChooserOperator();
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
-        jto.clickOnCell(0, 0);    
+        jto.clickOnCell(0, 0);
         JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
-        if(!jcbo.isSelected()) {
+        if (!jcbo.isSelected()) {
             jcbo.doClick();
         }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
-        if(Boolean.parseBoolean(System.getProperty("mugen_mode"))){
+        if (Boolean.parseBoolean(System.getProperty("mugen_mode"))) {
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
             jtpo.selectPage("String Extraction");
             JCheckBoxOperator jcbo0 = new JCheckBoxOperator(jtpo, "Arabic (Arabic)");
@@ -240,22 +250,22 @@ public class RegressionTest extends TestCase{
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Data");
         JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        if(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
+        if (Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
             jbco0.doClick();
         }
         wo.btNext().clickMouse();
     }
-    
+
     public void testIngest() {
         logger.info("Ingest 3");
         long start = System.currentTimeMillis();
         IngestManager man = IngestManager.getDefault();
-        while(man.isEnqueueRunning()) {
+        while (man.isEnqueueRunning()) {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
-        logger.info("Enqueue took " + (System.currentTimeMillis()-start) + "ms");
-        while(man.isIngestRunning()) {
-            
+        logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
+        while (man.isIngestRunning()) {
+
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
@@ -263,16 +273,16 @@ public class RegressionTest extends TestCase{
         while (man.areModulesRunning()) {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
-        logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
+        logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
         //   consistently, making it seem like default behavior
         Random rand = new Random();
         new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
         screenshot("Finished Ingest");
-        
+
     }
-    
+
     public void testGenerateReportToolbar() {
 
         logger.info("Generate Report Toolbars");
@@ -284,7 +294,7 @@ public class RegressionTest extends TestCase{
         jbo.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
     }
-    
+
     public void testGenerateReportButton() throws IOException {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
@@ -308,7 +318,7 @@ public class RegressionTest extends TestCase{
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
     }
-    
+
     public void screenshot(String name) {
         logger.info("Taking screenshot.");
         try {
@@ -321,12 +331,12 @@ public class RegressionTest extends TestCase{
             logger.log(Level.WARNING, "IOException taking screenshot.", ex);
         } catch (AWTException ex) {
             logger.log(Level.WARNING, "AWTException taking screenshot.", ex);
-            
+
         }
     }
-   private void setListForIngest()
-   {
-       KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
-       curr.setUseForIngest("URLs", true);
-   }
+
+    private void setListForIngest() {
+        KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
+        curr.setUseForIngest("URLs", true);
+    }
 }
