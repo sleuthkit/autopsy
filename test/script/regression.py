@@ -361,9 +361,12 @@ class Database:
 				except Exception as e:
 					printerror(test_img, str(e))
 					printerror(test_img, str(rw[3]))
-					errorem += "Artifact with id#" + str(rw[3]) + " encountered an error.\n"
+					print(test_img.image_name)
+					errorem += test_img.image_name + ":Artifact with id#" + str(rw[3]) + " encountered an error.\n"
 					looptry = False
+					print(test_img.artifact_fail)
 					test_img.artifact_fail += 1
+					print(test_img.artifact_fail)
 				if(looptry == True):
 					src = attributes[0][0]
 					for attr in attributes:
@@ -404,10 +407,11 @@ class Database:
 				rw = autopsy_cur2.fetchone()
 			srtcmdlst = ["sort", test_img.autopsy_data_file, "-o", test_img.sorted_data_file]
 			subprocess.call(srtcmdlst)
-		except Exception as e:
-			printerror(test_img, 'outer exception: ' + str(e))
+			print(test_img.artifact_fail)
 			if(test_img.artifact_fail > 0):
 				errorem += test_img.image_name + ":There were " + str(test_img.artifact_count) + " artifacts and " + str(test_img.artifact_fail) + " threw an exception while loading.\n"
+		except Exception as e:
+			printerror(test_img, 'outer exception: ' + str(e))
 			
 	def _dbDump(test_img):
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_img.image_name,
