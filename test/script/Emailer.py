@@ -38,7 +38,11 @@ def send_email(parsed, errorem, attachl, passFail):
 	msg.attach(container)
 	Build_email(msg, attachl)
 	s = smtplib.SMTP(serverval)
-	s.sendmail(msg['From'], msg['To'], msg.as_string())
+	try:
+		print('Sending Email')
+		s.sendmail(msg['From'], msg['To'], msg.as_string())
+	except Exception as e:
+		print(str(e))
 	s.quit()
 	
 def Build_email(msg, attachl):
