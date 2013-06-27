@@ -460,76 +460,107 @@ public class ReportHTML implements TableReportModule {
             //pull generator and agency logo from branding, and the remaining resources from the core jar
             String generatorLogoPath = reportBranding.getGeneratorLogoPath();
             if (generatorLogoPath != null) {
-                in = new FileInputStream(generatorLogoPath);
-                output = new FileOutputStream(new File(path + File.separator + "generator_logo.png"));
-                FileUtil.copy(in, output);
+                File from = new File(generatorLogoPath);
+                File to = new File(path);
+                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo");
             }
+            
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
             if (agencyLogoPath != null) {
-                in = new FileInputStream(agencyLogoPath);
-                output = new FileOutputStream(new File(path + File.separator + "agency_logo.png"));
-                FileUtil.copy(in, output);
+                File from = new File(agencyLogoPath);
+                File to = new File(path);
+                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo");
             }
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico");
             output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png");
             output = new FileOutputStream(new File(path + File.separator + "summary.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png");
             output = new FileOutputStream(new File(path + File.separator + "Bookmarks.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png");
             output = new FileOutputStream(new File(path + File.separator + "Cookies.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png");
             output = new FileOutputStream(new File(path + File.separator + "Web History.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png");
             output = new FileOutputStream(new File(path + File.separator + "Downloads.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png");
             output = new FileOutputStream(new File(path + File.separator + "Web Search Engine Queries.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png");
             output = new FileOutputStream(new File(path + File.separator + "Recent Documents.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png");
             output = new FileOutputStream(new File(path + File.separator + "Installed Programs.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png");
             output = new FileOutputStream(new File(path + File.separator + "Keyword Hits.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png");
             output = new FileOutputStream(new File(path + File.separator + "Devices Attached.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/exif.png");
             output = new FileOutputStream(new File(path + File.separator + "EXIF Metadata.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
             output = new FileOutputStream(new File(path + File.separator + "File Tags.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
             output = new FileOutputStream(new File(path + File.separator + "Result Tags.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png");
             output = new FileOutputStream(new File(path + File.separator + "Hashset Hits.png"));
             FileUtil.copy(in, output);
+            in.close();
+            output.close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
         } finally {
