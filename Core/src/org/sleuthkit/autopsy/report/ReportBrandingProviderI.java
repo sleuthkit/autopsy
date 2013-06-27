@@ -24,11 +24,11 @@ package org.sleuthkit.autopsy.report;
 public interface ReportBrandingProviderI {
 
     /**
-     * Get the generator logo path on the local disk (previously set or
-     * default). The file pointed by the path should exist.
+     * Get the generator logo path on the local disk (previously set or default),
+     * or NULL if unused (Note, this is optional)
      *
-     * @return the generator logo path, or null if error occurred and path is
-     * not valid
+     * @return the generator logo path, or null if not provided or error occurred
+     * and path is not valid
      */
     public String getGeneratorLogoPath();
 
@@ -41,8 +41,7 @@ public interface ReportBrandingProviderI {
 
     /**
      * Get the agency logo path on the local disk (previously set or default),
-     * or NULL if unused (Note, this is optional, as opposed to the generator
-     * logo path)
+     * or NULL if unused (Note, this is optional)
      *
      * @return the agency logo path, or null if not provided or error occurred
      * and path is not valid
