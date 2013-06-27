@@ -3,7 +3,7 @@
 NOTE: This has been moved from a package-level description and needs cleanup.
 
 <h3>Creating a DataResultViewer</h3>
-<p>DataResultTopComponent is the high-level window in the DataResult area.  Each instance of this loads up all instances of DataResultViewers that have been registered with the system. Example viewers include the table and thumbnail views.  If you want to make your own type of viewer, follow the steps below.  
+<p>DataResultTopComponent is the high-level window in the DataResult area.  The DataResult area is in the upper right of Autopsy and shows a set of nodes (i.e. in table form or thumbnail, by default).  Each instance of this loads up all instances of DataResultViewers that have been registered with the system. Example viewers include the table and thumbnail views.  If you want to make your own type of viewer, follow the steps below.  
 
 <ol>
 <li>Create a module from within NetBeans.  It must be dependent on these modules:
@@ -24,7 +24,7 @@ NOTE: This has been moved from a package-level description and needs cleanup.
 
 <li>Make a class that extends org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer and is registered as a service provider for the org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer class by specifying "@ServiceProvider(service = DataResultViewer.class)" or by using layer.xml.  This class will extend JPanel. </li>
 
-<li>See the previous sections on default actions. (note that this refers to the CoreComponentINterfaces package-level description, which I think is now in \ref design_data_flow).</li>
+<li>See the previous sections on default actions. (note that this refers to the CoreComponentINterfaces package-level description).</li>
 
 </ol>
 

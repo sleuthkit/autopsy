@@ -11,17 +11,17 @@ These are the basic concepts that you should be aware of before writing a module
  - Browsing and searching: User can manually browse and search the data using the user interface.
  - Report: A final report is generated at the end of the case.
 - <b>Central Database</b>: All data except for the disk image is stored in a SQLite database.  This includes information about what files exist in the disk image and the output from modules. Access to this database can be found from the SleuthKitCase class, but you'll probably never need to directly interact with it. <!-- @@@ IS THAT CORRECT -->
-- <b>Utilities</b>: There are core utilities that the platform provides to modules. See the \ref mod_dev_utilities section for more details. 
-- <b>Services</b>: There are services provided by the platform. See the \ref mod_dev_services section for more details.
+- <b>Utilities</b>: There are core utilities that the platform provides to modules. See the \ref mod_dev_other_utilities section for more details. 
+- <b>Services</b>: There are services provided by the platform. See the \ref mod_dev_other_services section for more details.
 - <b>Blackboard:</b> The platform uses the blackboard to enable modules to communicate with each other and to display data in the GUI. See the \ref platform_blackboard section for more details. 
 - <b>Single tree:</b> Results from the various modules can generally be found in a single tree. This makes it easy for users to find their results. 
 
 
 \section platform_frameworks Frameworks in the Platform
 There are several places in the platform where plug-in modules can be applied. 
-- <b>Ingest Modules:</b> These modules are run when a new image is added to a case (and can be re-run afterwards too).  See \ref mod_ingest_page for details on building these modules. These modules come in two forms:
+- <b>Ingest Modules:</b> These modules are run when a new data source is added to a case (and can be re-run afterwards too).  See \ref mod_ingest_page for details on building these modules. These modules come in two forms:
  - File Ingest Modules are called for every file in the image.  Use this type of module if you want to examine the contents of all or most of the files.  Examples include hash calculation, hash lookup, file type identification, and entropy calculation. 
- - Image Ingest Modules are called once for every image.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions. 
+ - Data Source Ingest Modules are called once for every image or set of logical files.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions. 
 - <b>Content Viewers:</b> These modules show information about a specific file. These are the modules in the lower right of the interface.  The platform comes with viewers to view the file in hexadecimal, extract the strings from the file, and view images and movies.  See \ref mod_content_page for details on creating these modules. 
 - <b>Result Viewers:</b> These modules show information about a set of files. These modules are in the upper right of the interface. The platform comes with viewers to view the set of files in a table and thumbnails.  See \ref mod_result_page for details on creating these modules. 
 

@@ -120,6 +120,7 @@ Autopsy provides basic services to its modules.  These were created to make it e
 services are provided:
 
 - FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().
+- IngestModules also have a class that provides additional services.  See \ref ingestmodule_services. 
 
 \subsection mod_dev_other_utilities Autopsy Utilities
 
@@ -128,18 +129,10 @@ Autopsy-Core module contains the core Autopsy application and also the framework
 Among the Core APIs there are general utilities available to the Autopsy modules.  The relevant packages include:
 
 - org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data (TSK database) and subscribe to Case change events
-- org.sleuthkit.autopsy.coreutils package has classes providing utilities for getting access to Autopsy loggers, configuration persistance API,
-getting information about the Platform (such as locations of files and folders, info about the runtime environment), 
-extracting default settings files from the jar file to a user settings folder, etc.
-Relevant service classes are org.sleuthkit.autopsy.coreutils.Version, 
-org.sleuthkit.autopsy.coreutils.PlatformUtil, org.sleuthkit.autopsy.coreutils.ModuleSettings, 
-org.sleuthkit.autopsy.coreutils.Logger and org.sleuthkit.autopsy.coreutils.FileUtil.
-
-TODO: Add additional info about utility classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
-
-TODO: Move the log content from the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Logging_and_Error_Checking) to here.
-
-Note: org.sleuthkit.autopsy.ingest.IngestServices provides services specifically for the ingest modules.
+- org.sleuthkit.autopsy.coreutils.Logger - for adding log messages to central logger
+- org.sleuthkit.autopsy.coreutils.PlatformUtil - platform-specific methods to determine available disk space, memory, etc.
+- org.sleuthkit.autopsy.coreutils.ModuleSettings - to persist module configuration and settings
+- org.sleuthkit.autopsy.coreutils.FileUtil - to delete and add folders, etc.
 
 
 \section mod_dev_adv Advanced Concepts
@@ -147,16 +140,7 @@ Note: org.sleuthkit.autopsy.ingest.IngestServices provides services specifically
 These aren't really advanced, but you don't need to know them in detail when you start your first module. You'll want to refer back to them after you get started and wonder, "how do I do X". 
 
 
-\section mod_dev_adv_bb Black Board
-
-@@@ TODO
-
-\section mod_dev_adv_inbox Ingest Inbox Messages
-
-@@@ TODO: Sending messages, etc.
-
 \section mod_dev_adv_options Option Panels
-
 
 
 Some modules may have configuration settings that uses can change.  We recommend that you use the infrastructure provided by Autopsy and NetBeans to do this so that all module condiguration is done in a single place.
@@ -173,9 +157,7 @@ Second, in the source code of the panel, there are two important methods: \c loa
 
 If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
 
-Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. Continue to \ref mod_dev_properties for more details.
-
-
+Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. The next section, \ref mod_dev_adv_properties, has more details on doing this.
 
 
 \subsection mod_dev_adv_properties Saving Settings and Properties
