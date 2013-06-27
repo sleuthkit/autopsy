@@ -115,13 +115,10 @@ You should also make the constructor private to ensure the singleton status.
 As a result of the singleton design, init() will be called multiple times and even for different cases.  Ensure that you update local member variables accordingly each time init() is called.  Again, this design will likely change, but it is what it is for now.
 
 
-\subsection ingestmodule_making_registration Module Registration
+\section ingestmodule_registration Module Registration
 
 Modules are automatically discovered if they implement the proper interface. 
 Currently, a restart of Autopsy is required after a module is installed before it is discovered.
-
-
-\subsubsection ingestmodule_making_registration_order Module Order
 
 By default, modules that do not come with a standard Autopsy installation will run after the standard modules. No order
 is implied. This design will likely change in the future, but currently manual configuration is needed to enforce order.
@@ -138,7 +135,7 @@ and user/developer will be able to reload current view of discovered modules,
 reorder modules in the pipeline and set their arguments using GUI.
 
 
-\subsection ingestmodule_services Ingest Services
+\section ingestmodule_services Ingest Services
 
 Class org.sleuthkit.autopsy.ingest.IngestServices provides services specifically for the ingest modules
 and a module developer should use these utilities to send messages, get current case, etc.  Refer to its documentation for method details. 
@@ -154,14 +151,14 @@ module configurations or state.
 The ModuleSettings API can be used also via org.sleuthkit.autopsy.ingest.IngestServices class.
 
 
-\subsection ingestmodule_making_results Posting Results
+\section ingestmodule_making_results Posting Results
 
 Ingest modules run in the background.  There are three ways to send messages and save results:
 - Blackboard for long-term storage of analysis results and display in the results tree.
 - Ingest Inbox to notify user of high-value analysis results that were also posted to blackboard.
 - Error messages.
 
-\subsubsection ingestmodule_making_results_bb Posting Results to Blackboard
+\subsection ingestmodule_making_results_bb Posting Results to Blackboard
 The blackboard is used to store results so that they are displayed in the results tree.  See \ref platform_blackboard  for details on posting results to it. 
 
 When modules add data to the blackboard, 
@@ -172,7 +169,7 @@ This allows other modules (and the main UI) to know when to query the blackboard
 However, if you are writing a larger number of blackboard artifacts in a loop, it is better to invoke
 IngestServices.fireModuleDataEvent() only once after the bulk write, not to flood the system with events.
 
-\subsubsection ingestmodule_making_results_inbox Posting Results to Message Inbox
+\subsection ingestmodule_making_results_inbox Posting Results to Message Inbox
 
 Modules should post messages to the inbox when interesting data is found that has also been posted to the blackboard.
 The idea behind these messages are that they are presented in chronological order so that users can see what was 
@@ -196,7 +193,7 @@ Messages are created using the org.sleuthkit.autopsy.ingest.IngestMessage class 
 using methods in \ref ingestmodule_services.
 
 
-\subsection ingestmodule_making_configuration Module Configuration
+\section ingestmodule_making_configuration Module Configuration
 
 Ingest modules may require user configuration. In \ref mod_dev_adv_options, you learned about Autopsy-wide settings.  There are some
 settings that are specific to ingest modules as well. 

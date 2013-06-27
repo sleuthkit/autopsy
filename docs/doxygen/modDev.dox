@@ -140,7 +140,7 @@ Among the Core APIs there are general utilities available to the Autopsy modules
 These aren't really advanced, but you don't need to know them in detail when you start your first module. You'll want to refer back to them after you get started and wonder, "how do I do X". 
 
 
-\section mod_dev_adv_options Option Panels
+\subsection mod_dev_adv_options Option Panels
 
 
 Some modules may have configuration settings that uses can change.  We recommend that you use the infrastructure provided by Autopsy and NetBeans to do this so that all module condiguration is done in a single place.
