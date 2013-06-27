@@ -575,6 +575,23 @@ public class IngestManager {
 
 
     }
+    
+     /**
+     * Check if data source scheduler has files in queues
+     * @return true if more sources in queues, false otherwise
+     */
+    public boolean getDataSourceSchedulerHasNext() {
+        return this.scheduler.getDataSourceScheduler().hasNext();
+    }
+    
+    /**
+     * Check if file scheduler has files in queues
+     * @return true if more files in queues, false otherwise
+     */
+    public boolean getFileSchedulerHasNext() {
+        return scheduler.getFileScheduler().hasNext();
+    }
+    
 
     /**
      * returns if manager is currently configured to process unalloc space
@@ -600,6 +617,9 @@ public class IngestManager {
     String getReport() {
         return stats.toString();
     }
+    
+   
+    
 
     /**
      * Module publishes message using InegestManager handle Does not block. The
