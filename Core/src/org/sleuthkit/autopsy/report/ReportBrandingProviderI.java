@@ -35,7 +35,7 @@ public interface ReportBrandingProviderI {
     /**
      * Sets custom generator logo path
      *
-     * @param path path to set
+     * @param path path to set, use empty string to disable
      */
     public void setGeneratorLogoPath(String path);
 
@@ -51,7 +51,7 @@ public interface ReportBrandingProviderI {
     /**
      * Sets custom agency logo path
      *
-     * @param path path to set
+     * @param path path to set, use empty string to disable
      */
     public void setAgencyLogoPath(String path);
 

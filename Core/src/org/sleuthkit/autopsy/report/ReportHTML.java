@@ -459,14 +459,14 @@ public class ReportHTML implements TableReportModule {
             
             //pull generator and agency logo from branding, and the remaining resources from the core jar
             String generatorLogoPath = reportBranding.getGeneratorLogoPath();
-            if (generatorLogoPath != null) {
+            if (generatorLogoPath != null && ! generatorLogoPath.isEmpty()) {
                 File from = new File(generatorLogoPath);
                 File to = new File(path);
                 FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo");
             }
             
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
-            if (agencyLogoPath != null) {
+            if (agencyLogoPath != null && ! agencyLogoPath.isEmpty() ) {
                 File from = new File(agencyLogoPath);
                 File to = new File(path);
                 FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo");
@@ -624,8 +624,8 @@ public class ReportHTML implements TableReportModule {
             
             final String reportTitle = reportBranding.getReportTitle();
             final String reportFooter = reportBranding.getReportFooter();
-            final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null;
-            final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null;
+            final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
+            final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
             
             summary.append("<div id=\"wrapper\">\n");
             summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
