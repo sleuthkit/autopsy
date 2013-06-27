@@ -1,11 +1,11 @@
 /*! \page mod_content_page Developing Content Viewer Modules
 
-
-Note that this needs cleanup and updating.  it has been copied from the CoreComponentInterfaces package description.
+NOTE: This needs cleanup and updating.  it has been copied from the CoreComponentInterfaces package description.
 
 <h3>Creating a DataContentViewer</h3>
 
-DataContentTopComponent is the high-level window in the DataContent area.  Each instance of this loads up all instances of DataContentViewers that have been registered with the system. Example viewers include the strings and hexdump views.  If you want to make your own type of viewer, follow the steps below.  
+DataContentViewer modules exist in the lower-right area of the Autopsy interface.  They allow the user to examine a single file in different ways. For example, the default Autopsy installation comes with a viewer for Hex, strings, and image viewing.  You would make a new DataContentViewer if you have a unique way of displaying a single file. These modules are passed in a reference to a file to display. 
+
 
 <ol>
 <li>Create a module from within NetBeans.  It must be dependent on these modules:

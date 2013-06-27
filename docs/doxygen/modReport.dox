@@ -1,7 +1,11 @@
 /*! \page mod_report_page Developing Report Modules
 
 \section report_summary Summary
-There are two types of reporting modules: table report modules and general report modules.
+Report modules allow you to create different report types.  Autopsy comes with moules to generate HTML and a body file for timeline creation.  You can made additional modules to create custom output formats. 
+
+There are two types of reporting modules that differ in how the data is organized. 
+- General report modules are free form and you are allowed to organize the output however you want.  
+- Table report modules organize the data into tables.  If your output is in table format, this type of module will be easier to make the module because Autopsy does a lot of the organizing work for you. 
 
 Each reporting submodule implements either the org.sleuthkit.autopsy.report.TableReportModule interface or the org.sleuthkit.autopsy.report.GeneralReportModule interface, and registers itself in layer.xml
 

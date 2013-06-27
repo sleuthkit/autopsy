@@ -24,17 +24,20 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Representation of subject posted by ingest modules
- * 
- * Message should have a unique ID within context of originating source
- * 
+ * Message that ingestmodule wants to send to IngetInbox to notify
+ * user about something. 
+ * Submitted to user via IngestServices. 
+ * Create using factory methods.
  */
 public class IngestMessage {
 
+    /**
+     * Level of message. 
+     */
     public enum MessageType {
-
         DATA, INFO, WARNING, ERROR
     };
+    
     private long ID;
     private MessageType messageType;
     private IngestModuleAbstract source;
@@ -46,6 +49,9 @@ public class IngestMessage {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static int managerMessageId = 0;
 
+    /**
+     * Private constructor used by factory methods
+     */
     private IngestMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
         this.source = source;
@@ -160,7 +166,7 @@ public class IngestMessage {
     //factory methods
     
     /**
-     * Create a simple message with a subject only
+     * Create a message of specified type
      * @param ID ID of the message, unique in the context of module that generated it
      * @param messageType message type
      * @param source originating module
@@ -224,8 +230,8 @@ public class IngestMessage {
      * @param source originating module
      * @param subject message subject to be displayed
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. 
-     * @param uniqueKey unique key determining uniqueness of the message, or null. Helps grouping similar messages and determine their importance.  Subsequent messages with the same uniqueKey will be treated with lower priority.
-     * @param data data blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
+     * @param uniqueKey Key used to group similar messages together. Shoudl be unique to the analysis. For example, hits for the same keyword in a keyword search would use the keyword as this unique value so that they can be grouped.
+     * @param data  blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
      * @return 
      */
     public static IngestMessage createDataMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
@@ -238,10 +244,16 @@ public class IngestMessage {
         return im;
     }
 
+    /**
+     * Used by IngestMager to post status messages.
+     */
     static IngestMessage createManagerMessage(String subject, String detailsHtml) {
         return new IngestMessage(++managerMessageId, MessageType.INFO, null, subject, detailsHtml, null);
     }
-    
+
+    /**
+     * Used by IngestMager to post error messages.
+     */
     static IngestMessage createManagerErrorMessage(String subject, String detailsHtml) {
         return new IngestMessage(++managerMessageId, MessageType.ERROR, null, subject, detailsHtml, null);
     }
