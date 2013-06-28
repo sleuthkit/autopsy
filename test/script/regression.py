@@ -592,21 +592,21 @@ class Database:
 #-------------------------------------------------#
 #	  Functions relating to comparing outputs	  #
 #-------------------------------------------------#	  
-class TestDiffer:
+class TestResultsDiffer:
 	#
 	def run_diff(test_data):
-		TestDiffer._compare_errors(test_data)
+		TestResultsDiffer._compare_errors(test_data)
                 
                 # Compare smart blackboard stuff results
 		gold_nm = "SortedData"
-		TestDiffer._compare_data(test_data.sorted_data_file, gold_nm, test_data)
+		TestResultsDiffer._compare_data(test_data.sorted_data_file, gold_nm, test_data)
 
                 # Compare the rest of the database (non-BB)
 		gold_nm = "DBDump"
-		TestDiffer._compare_data(test_data.test_dbdump, gold_nm, test_data)
+		TestResultsDiffer._compare_data(test_data.test_dbdump, gold_nm, test_data)
 
                 # Compare html output
-		TestDiffer._compare_to_gold_html(test_data)
+		TestResultsDiffer._compare_to_gold_html(test_data)
 		
         # Compares database dump files.  
         # aut: output text file
@@ -1705,7 +1705,7 @@ class Test_Runner:
 			Database.compare_to_gold_db(test_data, database)
 
                         # Compare other data to gold
-			TestDiffer.run_diff(test_data)
+			TestResultsDiffer.run_diff(test_data)
 			del_dir(img_gold)
 		except Exception as e:
 			printerror(test_data, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
