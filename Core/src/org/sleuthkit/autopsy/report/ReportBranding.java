@@ -75,15 +75,13 @@ public final class ReportBranding implements ReportBrandingProviderI {
     public String getReportsBrandingDir() {
         return reportsBrandingDir;
     }
-    
-    
 
     @Override
     public String getGeneratorLogoPath() {
         String curPath = null;
         try {
             curPath = ModuleSettings.getConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP);
-            if (curPath == null || curPath.isEmpty() || new File(curPath).canRead() == false) {
+            if (curPath == null || (!curPath.isEmpty() && !new File(curPath).canRead() ) ) {
                 //use default
                 logger.log(Level.INFO, "Using default report branding for generator logo");
                 curPath = reportsBrandingDir + File.separator + "logo.png";
@@ -95,6 +93,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error extracting report branding resources for generator logo", e);
         }
+
         return curPath;
     }
 

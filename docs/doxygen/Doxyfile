@@ -668,6 +668,7 @@ INPUT                  = main.dox \
                          modIngest.dox \
                          modReport.dox \
                          modResult.dox \
+                         modAdvanced.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
                          ../../Core/src \
@@ -1579,7 +1580,7 @@ SKIP_FUNCTION_MACROS   = YES
 # NOT include the path). If a tag file is not located in the directory in which
 # doxygen is run, you must also specify the path to the tagfile here.
 
-TAGFILES               =
+TAGFILES               = ../../../../sleuthkit/sleuthkit/tskjni_doxygen.tag=http://www.sleuthkit.org/sleuthkit/docs/jni-docs/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create
 # a tag file that is based on the input files it reads.
