@@ -10,28 +10,26 @@ This page describes the basic concepts and setup that are needed regardless of t
 
 \section mod_dev_setup Basic Setup
 
-\subsection mod_dev_setup_nb NetBeans 
+\subsection mod_dev_setup_nb NetBeans and Java 
 
 Autopsy is built on top of the NetBeans Rich Client Platform, which makes it easy to make plug-in infrastructures. To do any development, you really need to download NetBeans first. You can in theory develop modules by command line only, but this document assumes that you are using the IDE. Download and install the latest version of the IDE from http://www.netbeans.org. 
 
-\subsection mod_dev_setup_java Java
-
 Autopsy currently requires Java 1.7.  Ensure that it is installed.
 
-\subsection mod_dev_setup_platform Autopsy Platform
+\subsection mod_dev_setup_platform Obtain the Autopsy Platform
 
-Before we can make a module, we must configure NetBeans to know about Autopsy as a platform. This will allow you to access all of the classes and services that Autopsy provides.  Therea are two ways of configuring the NetBeans IDE to know about Autopsy:
+Before we can make a module, we must configure NetBeans to know about Autopsy as a platform. This will allow you to access all of the classes and services that Autopsy provides.  There are two ways of configuring the NetBeans IDE to know about Autopsy:
 
 - Download an official release of Autopsy and build against it.  
 - Download Autopsy source code, build it, and make a platform to build against. 
 
-\subsubsection mod_dev_setup_platform_rel Released Platform
+\subsubsection mod_dev_setup_platform_rel Using a Released Version
 
-The easiest approach is install Autopsy on your computer.  It will have everything that you need. If you installed it in "C:\Program Files\Autopsy", then the platform is in "C:\Program Files\Autopsy\platform". 
+The easiest method for obtaining the platform is to install Autopsy on your computer.  It will have everything that you need. If you installed it in "C:\Program Files\Autopsy", then the platform is in "C:\Program Files\Autopsy\platform".  You can now also download just the ZIP file of the Autopsy release instead of the MSI installer. This maybe more convenient for development situations. 
 
-\subsubsection mod_dev_setup_platform_src Source Code-based Platform
+\subsubsection mod_dev_setup_platform_src Building a Platform from Code
 
-If you want to build against the bleeding edge code and updates that have occured since the last release, then you must download the latest source code and build it.  This involves getting a full development environment setup. Refer to the wiki page at http://wiki.sleuthkit.org/index.php?title=Autopsy_Developer%27s_Guide for details on getting the source code and a development environment setup.
+If you want to build against the bleeding edge code and updates that have occurred since the last release, then you must download the latest source code and build it.  This involves getting a full development environment setup. Refer to the wiki page at http://wiki.sleuthkit.org/index.php?title=Autopsy_Developer%27s_Guide for details on getting the source code and a development environment setup.
 
 To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT in the root source repository to properly build and setup Autopsy in NetBeans. 
 
@@ -46,34 +44,22 @@ The Autopsy modules are encapsulated inside of NetBeans modules. A NetBeans modu
 
 If this is your first module, then  you will need to make a NetBeans module. If you have already made an Autopsy module and are now working on a second one, you can consider adding it to your pevious NetBeans module. 
 
-To make a NetBeans module, open the NetBeans IDE and go to File -> New Project.
+To make a NetBeans module:
+- Open the NetBeans IDE and go to File -> New Project.
+- From the list of categories, choose "NetBeans Modules" and then "Module" from the list of "Projects".  Click Next. 
+- In the next panel of the wizard, give the module a name and directory. Select Standalone Module (the default is typically "Add to Suite") so that you build the module as an external module against Autopsy.  You will need to tell NetBeans about the Autopsy platform, so choose the "Manage" button.  Choose the "Add Platform" button and browse to the location of the platform discussed in the previous sections (as a reminder this will either be the location that you installed Autopsy into or where you opened up the ZIP file you created from source).  Click Next.
+- Finally, enter the code base name.  Press Finish. 
 
-From the list of categories, choose "NetBeans Modules" and then "Module" from the list of "Projects".  Click Next. 
+\subsubsection mod_dev_mod_nb_config Configuring the NetBeans Module
 
-In the next panel of the wizard, give the module a name and directory. Select Standalone Module (the default is typically "Add to Suite") so that you build the module as an external module against Autopsy.  You will need to tell NetBeans about the Autopsy platform, so choose the "Manage" button.  Choose the "Add Platform" button and browse to the location of the platform discussed in the previous sections (as a reminder this will either be the location that you installed Autopsy into or where you opened up the ZIP file you created from source).  Click Next.
+After the module is created, you will need to do some further configuration. 
+- Right click on the newly created module and choose "Properties".
+- You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the "Autopsy-core" library. You now have access to the Autopsy services.
+- If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
+- Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
+- Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
 
-Finally, enter the code base name.  Press Finish. 
-
-You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides. 
-
-
-\subsection mod_dev_mod_config Configuring the NetBeans Module
-
-After the module is created, you will need to do some further configuration. Right click on the newly created module and choose "Properties".
-
-\subsubsection mod_dev_mod_config_library Dependencies
-
-You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the "Autopsy-core" library. You now have access to the Autopsy services.
-
-If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
-
-Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
-
-\subsubsection mod_dev_mod_config_restart Restarting
-
-Autopsy requires that all modules restart Autopsy after they are installed -- otherwise the module might not be fully loaded and functional. 
-Configure your module this way 
-under Build -> Packaging.  Check the box that says Needs Restart on Install.
+You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides (such as \ref platform_details). 
 
 
 \subsubsection mod_dev_mod_config_other Optional Settings
@@ -108,71 +94,6 @@ When you are ready to share your module, create an NBM file by right clicking on
 \subsection mod_dev_aut_install Installing Your Module
 
 To install the module on a non-development environment, launch Autopsy and choose Plugins under the Tools menu. Open the Downloaded tab and click Add Plugins. Navigate to the NBM file and open it. Next, click Install and follow the wizard. 
-
-
-\section mod_dev_other Other Useful Information
-
-This section contains other information that will be useful when developing any type of Autopsy module. 
-
-\subsection mod_dev_other_services Autopsy Services
-
-Autopsy provides basic services to its modules.  These were created to make it easier to write modules. Currently, the following
-services are provided:
-
-- FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().
-- IngestModules also have a class that provides additional services.  See \ref ingestmodule_services. 
-
-\subsection mod_dev_other_utilities Autopsy Utilities
-
-
-Autopsy-Core module contains the core Autopsy application and also the framework the application is built upon that other modules can use.
-Among the Core APIs there are general utilities available to the Autopsy modules.  The relevant packages include:
-
-- org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data (TSK database) and subscribe to Case change events
-- org.sleuthkit.autopsy.coreutils.Logger - for adding log messages to central logger
-- org.sleuthkit.autopsy.coreutils.PlatformUtil - platform-specific methods to determine available disk space, memory, etc.
-- org.sleuthkit.autopsy.coreutils.ModuleSettings - to persist module configuration and settings
-- org.sleuthkit.autopsy.coreutils.FileUtil - to delete and add folders, etc.
-
-
-\section mod_dev_adv Advanced Concepts
-
-These aren't really advanced, but you don't need to know them in detail when you start your first module. You'll want to refer back to them after you get started and wonder, "how do I do X". 
-
-
-\subsection mod_dev_adv_options Option Panels
-
-
-Some modules may have configuration settings that uses can change.  We recommend that you use the infrastructure provided by Autopsy and NetBeans to do this so that all module condiguration is done in a single place.
-
-To add a panel to the options menu, right click the module and choose New > Other. Under the Module Development category, select Options Panel and press Next.
-
-Select Create Primary Panel, name the panel (preferably with the module's name), select an icon, and add keywords, then click Next and Finish. Note that NetBeans will automatically copy the selected icon to the module's directory if not already there.
-
-NetBeans will generate two Java files for you, the panel and the controller. For now, we only need to focus on the panel.
-
-First, use NetBeans' GUI builder to design the panel. Be sure to include all options, settings, preferences, etc for the module, as this is what the user will see. The recommended size of an options panel is about 675 x 500.
-
-Second, in the source code of the panel, there are two important methods: \c load() and \c store(). When the options panel is opened via Tools > Options in Autopsy, the \c load() method will be called. Conversely, when the user presses OK after editing the options, the \c store() method will be called.
-
-If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
-
-Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. The next section, \ref mod_dev_adv_properties, has more details on doing this.
-
-
-\subsection mod_dev_adv_properties Saving Settings and Properties
-
-It is recommended to have the module settings persistent, so that when a change is made and Autopsy is re-opened 
-the user made changes remain effective and not reset back to defaults.
-Use org.sleuthkit.autopsy.coreutils.ModuleSettings class for saving and reading back settings for your module.
-
-
-\subsection mod_dev_adv_events Registering for Events
-
-Autopsy will generate events as the application runs and modules may want to listen for those events so that they can change their state.  There is not an exhaustive list of events, but here are some common ones to listen for:
-
-- Case change events occur when a case is opened, closed, or changed.  The org.sleuthkit.autopsy.casemodule.Case.addPropertyChangeListener() method can be used for this.
-- IngestManager events occur when new results are available. The org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener() method can be used for this.
 
 
 */

@@ -1,0 +1,44 @@
+/*! \page adv_dev_page Advanced Develpment Concepts
+
+\section mod_dev_adv Advanced Concepts
+
+These aren't really advanced, but you don't need to know them in detail when you start your first module. You'll want to refer back to them after you get started and wonder, "how do I do X". 
+
+
+\subsection mod_dev_adv_options Option Panels
+
+
+Some modules may have configuration settings that uses can change.  We recommend that you use the infrastructure provided by Autopsy and NetBeans to do this so that all module condiguration is done in a single place.
+
+To add a panel to the options menu, right click the module and choose New > Other. Under the Module Development category, select Options Panel and press Next.
+
+Select Create Primary Panel, name the panel (preferably with the module's name), select an icon, and add keywords, then click Next and Finish. Note that NetBeans will automatically copy the selected icon to the module's directory if not already there.
+
+NetBeans will generate two Java files for you, the panel and the controller. For now, we only need to focus on the panel.
+
+First, use NetBeans' GUI builder to design the panel. Be sure to include all options, settings, preferences, etc for the module, as this is what the user will see. The recommended size of an options panel is about 675 x 500.
+
+Second, in the source code of the panel, there are two important methods: \c load() and \c store(). When the options panel is opened via Tools > Options in Autopsy, the \c load() method will be called. Conversely, when the user presses OK after editing the options, the \c store() method will be called.
+
+If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
+
+Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. The next section, \ref mod_dev_adv_properties, has more details on doing this.
+
+
+\subsection mod_dev_adv_properties Saving Settings and Properties
+
+It is recommended to have the module settings persistent, so that when a change is made and Autopsy is re-opened 
+the user made changes remain effective and not reset back to defaults.
+Use org.sleuthkit.autopsy.coreutils.ModuleSettings class for saving and reading back settings for your module.
+
+
+\subsection mod_dev_adv_events Registering for Events
+
+Autopsy will generate events as the application runs and modules may want to listen for those events so that they can change their state.  There is not an exhaustive list of events, but here are some common ones to listen for:
+
+- Case change events occur when a case is opened, closed, or changed.  The org.sleuthkit.autopsy.casemodule.Case.addPropertyChangeListener() method can be used for this.
+- IngestManager events occur when new results are available. The org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener() method can be used for this.
+
+
+
+*/
