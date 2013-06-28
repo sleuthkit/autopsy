@@ -141,6 +141,7 @@
     <folder name="Menu">
         <file name="GoTo_hidden"/>
         <file name="Reports_hidden"/>
+        <file name="Edit_hidden"/>
         <folder name="File">
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
