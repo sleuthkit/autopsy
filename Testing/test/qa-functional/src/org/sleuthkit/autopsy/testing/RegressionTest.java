@@ -153,6 +153,7 @@ public class RegressionTest extends TestCase {
         WizardOperator wo = new WizardOperator("Add Data");
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
         String img_path = System.getProperty("img_path");
+        //Fixes paths so they can start with 2 backslashes, however, a single backslash path is now impossible, there is probably a better fix.
         if (img_path.startsWith("\\")) {
             img_path = "\\" + img_path;
         }
