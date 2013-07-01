@@ -102,27 +102,7 @@ def dir_exists(dir):
 	except:
 		return False
 
-# Compares file a to file b and any differences are returned
-# Only works with report html files, as it searches for the first <ul>
-def compare_report_files(a_path, b_path):
-	a_file = open(a_path)
-	b_file = open(b_path)
-	a = a_file.read()
-	b = b_file.read()
-	a = a[a.find("<ul>"):]
-	b = b[b.find("<ul>"):]
-	
-	a_list = split(a, 50)
-	b_list = split(b, 50)
-	if not len(a_list) == len(b_list):
-		ex = (len(a_list), len(b_list))
-		return ex
-	else: 
-		return (0, 0)
-  
-# Split a string into an array of string of the given size
-def split(input, size):
-	return [input[start:start+size] for start in range(0, len(input), size)]
+
 
 # Returns the nth word in the given string or "" if n is out of bounds
 # n starts at 0 for the first word

@@ -1,5 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf_8 -*- 
+
+ # Autopsy Forensic Browser
+ # 
+ # Copyright 2013 Basis Technology Corp.
+ # 
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+ # You may obtain a copy of the License at
+ # 
+ #     http://www.apache.org/licenses/LICENSE-2.0
+ # 
+ # Unless required by applicable law or agreed to in writing, software
+ # distributed under the License is distributed on an "AS IS" BASIS,
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+
 import codecs
 import datetime
 import logging
@@ -43,7 +61,7 @@ import srcupdater
 # in a global class.
 # - Command line arguments are in Args (named args)
 # - Information pertaining to each test is in TestAutopsy (named test_case)
-# - Queried information from the databases is in Database (named database)
+# - Queried information from the databases is in DatabaseDiff (named database)
 # Feel free to add additional global classes or add to the existing ones,
 # but do not overwrite any existing variables as they are used frequently.
 #
@@ -76,15 +94,15 @@ class Args:
 			arg = sys.argv.pop(0)
 			nxtproc.append(arg)
 			if(arg == "-f"):
-				try:
+				#try: @@@ Commented out until a more specific except statement is added
 					arg = sys.argv.pop(0)
 					print("Running on a single file:")
-					print(path_fix(arg) + "\n")
+					print(Emailer.path_fix(arg) + "\n")
 					self.single = True
-					self.single_file = path_fix(arg)
-				except:
-					print("Error: No single file given.\n")
-					return False
+					self.single_file = Emailer.path_fix(arg)
+				#except:
+				#	print("Error: No single file given.\n")
+			#		return False
 			elif(arg == "-r" or arg == "--rebuild"):
 				print("Running in rebuild mode.\n")
 				self.rebuild = True
@@ -207,11 +225,10 @@ class TestAutopsy:
 		self.ant = []
 	   
 #---------------------------------------------------------#
-# Holds all database information from querying autopsy.db #
-#  and standard.db. Initialized when the autopsy.db file  #
-#		  is compared to the gold standard.			      #
+# Contains methods to compare two databases and internally
+# stores some of the results.       			      #
 #---------------------------------------------------------#
-class Database:
+class DatabaseDiff:
 	def __init__(self, case):
 		self.gold_artifacts = []
 		self.autopsy_artifacts = []
@@ -232,6 +249,8 @@ class Database:
 		self.autopsy_objects = 0
 		self.artifact_comparison = []
 		self.attribute_comparison = []
+		
+		
 		
 	def get_artifacts_count(self):
 		total = 0
@@ -263,7 +282,7 @@ class Database:
 			list.append(error)
 		return ";".join(list)
 		
-	def _generate_autopsy_artifacts(self):
+	def _count_output_artifacts(self):
 		if not self.autopsy_artifacts:
 			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_data.image_name,
 										  test_case.Img_Test_Folder, test_case.test_db_file)
@@ -275,7 +294,7 @@ class Database:
 				autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
 				self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])		
 	
-	def _generate_autopsy_attributes(self):
+	def _count_output_attributes(self):
 		if self.autopsy_attributes == 0:
 			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_data.image_name,
 										  test_case.Img_Test_Folder, test_case.test_db_file)
@@ -286,9 +305,9 @@ class Database:
 			self.autopsy_attributes = autopsy_attributes
 
         # Counts number of objects and saves them into database.
-        # @@@ Should have better name (count_output_objects) and does not need to connect again. Should be storing connection in Database
+        # @@@ Does not need to connect again. Should be storing connection in DatabaseDiff
         # See also for _generate_autopsy_attributes
-	def _generate_autopsy_objects(self):
+	def _count_output_objects(self):
 		if self.autopsy_objects == 0:
 			autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_data.image_name,
 										  test_case.Img_Test_Folder, test_case.test_db_file)
@@ -298,9 +317,9 @@ class Database:
 			autopsy_objects = autopsy_cur.fetchone()[0]
 			self.autopsy_objects = autopsy_objects
 		
-        # @@@ see _generate_autopsy_objects comment about better name, saving connections, etc. Or could have design where connection
+        # @@@ see _generate_autopsy_objects comment about saving connections, etc. Or could have design where connection
         # is passed in so that we do not need separate methods for gold and output.
-	def _generate_gold_artifacts(self):
+	def _count_gold_artifacts(self):
 		if not self.gold_artifacts:
 			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_data.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
@@ -318,7 +337,7 @@ class Database:
 				for item in row:
 					self.gold_artifacts_list.append(item)
 				
-	def _generate_gold_attributes(self):
+	def _count_gold_attributes(self):
 		if self.gold_attributes == 0:
 			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_data.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
@@ -328,7 +347,7 @@ class Database:
 			gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
 			self.gold_attributes = gold_cur.fetchone()[0]
 
-	def _generate_gold_objects(self):
+	def _count_gold_objects(self):
 		if self.gold_objects == 0:
 			gold_db_file = Emailer.make_path(test_case.img_gold, self.test_data.image_name, test_case.test_db_file)
 			if(not Emailer.file_exists(gold_db_file)):
@@ -338,25 +357,166 @@ class Database:
 			gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
 			self.gold_objects = gold_cur.fetchone()[0]
 			
-        # smart method that deals with blackboard comparison to avoid issues with different IDs based on when artifacts were created.
-        # Dumps sorted text results to output location stored in test_data. 
-        # autopsy_db_file: Output database file
-	def _retrieve_data(autopsy_con, autopsy_db_file, test_data):
+	# Compares the blackboard artifact counts of two databases
+	def _compare_bb_artifacts(self):
+		exceptions = []
+		try:
+			global failedbool
+			global errorem
+			if self.gold_artifacts != self.autopsy_artifacts:
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += self.test_data.image + ":There was a difference in the number of artifacts.\n"
+			rner = len(self.gold_artifacts)
+			for type_id in range(1, rner):
+				if self.gold_artifacts[type_id] != self.autopsy_artifacts[type_id]:
+					error = str("Artifact counts do not match for type id %d. " % type_id)
+					error += str("Gold: %d, Test: %d" %
+								(self.gold_artifacts[type_id],
+								 self.autopsy_artifacts[type_id]))
+					exceptions.append(error)
+			return exceptions
+		except Exception as e:
+			printerror(self.test_data, str(e))
+			exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
+			return exceptions
+
+	# Compares the blackboard atribute counts of two databases
+	# given the two database cursors
+	def _compare_bb_attributes(self):
+		exceptions = []
+		try:
+			if self.gold_attributes != self.autopsy_attributes:
+				error = "Attribute counts do not match. "
+				error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
+				exceptions.append(error)
+				global failedbool
+				global errorem
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += self.test_data.image + ":There was a difference in the number of attributes.\n"
+				return exceptions
+		except Exception as e:
+			exceptions.append("Error: Unable to compare blackboard_attributes.\n")
+			return exceptions
+
+	# Compares the tsk object counts of two databases
+	# given the two database cursors
+	def _compare_tsk_objects(self):
+		exceptions = []
+		try:
+			if self.gold_objects != self.autopsy_objects:
+				error = "TSK Object counts do not match. "
+				error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
+				exceptions.append(error)
+				global failedbool
+				global errorem
+				failedbool = True
+				global imgfail
+				imgfail = True
+				errorem += self.test_data.image + ":There was a difference between the tsk object counts.\n"
+				return exceptions
+		except Exception as e:
+			exceptions.append("Error: Unable to compare tsk_objects.\n")
+			return exceptions
+			
+			
+	# Basic test between output and gold databases. Compares only counts of objects and blackboard items
+	def compare_basic_counts(self):
+		# SQLITE needs unix style pathing
+
+        # Get connection to output database from current run
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_data.image_name,
+										  test_case.Img_Test_Folder, test_case.test_db_file)
+		autopsy_con = sqlite3.connect(autopsy_db_file)
+		autopsy_cur = autopsy_con.cursor()
+
+                # Get connection to gold DB and count artifacts, etc.
+		gold_db_file = Emailer.make_path(test_case.img_gold, self.test_data.image_name, test_case.test_db_file)
+		if(not Emailer.file_exists(gold_db_file)):
+			gold_db_file = Emailer.make_path(test_case.img_gold_parse, self.test_data.image_name, test_case.test_db_file)
+		try:
+			self._count_gold_objects()
+			self._count_gold_artifacts()
+			self._count_gold_attributes()
+		except Exception as e:
+			printerror(self.test_data, "Way out:" + str(e))
+			
+		# This is where we return if a file doesn't exist, because we don't want to
+		# compare faulty databases, but we do however want to try to run all queries
+		# regardless of the other database
+		if not Emailer.file_exists(autopsy_db_file):
+			printerror(self.test_data, "Error: DatabaseDiff file does not exist at:")
+			printerror(self.test_data, autopsy_db_file + "\n")
+			return
+		if not Emailer.file_exists(gold_db_file):
+			printerror(self.test_data, "Error: Gold database file does not exist at:")
+			printerror(self.test_data, gold_db_file + "\n")
+			return
+
+		# compare size of bb artifacts, attributes, and tsk objects
+		gold_con = sqlite3.connect(gold_db_file)
+		gold_cur = gold_con.cursor()
+		
+		exceptions = []
+		
+		autopsy_db_file = Emailer.make_path(test_case.output_dir, self.test_data.image_name,
+											  test_case.Img_Test_Folder, test_case.test_db_file)
+                # Connect again and count things
+		autopsy_con = sqlite3.connect(autopsy_db_file)
+		try:
+			self._count_output_objects()
+			self._count_output_artifacts()
+			self._count_output_attributes()
+		except Exception as e:
+			printerror(self.test_data, "Way out:" + str(e))
+
+                # Compare counts
+		exceptions.append(self._compare_tsk_objects())
+		exceptions.append(self._compare_bb_artifacts())
+		exceptions.append(self._compare_bb_attributes())
+		
+		self.artifact_comparison = exceptions[1]
+		self.attribute_comparison = exceptions[2]
+		
+		okay = "All counts match."
+		print_report(self.test_data, exceptions[0], "COMPARE TSK OBJECTS", okay)
+		print_report(self.test_data, exceptions[1], "COMPARE ARTIFACTS", okay)
+		print_report(self.test_data, exceptions[2], "COMPARE ATTRIBUTES", okay)
+			
+        
+		
+
+
+			
+			
+    # smart method that deals with blackboard comparison to avoid issues with different IDs based on when artifacts were created.
+    # Dumps sorted text results to output location stored in test_data. 
+    # autopsy_db_file: Output database file
+	def _dump_output_db_bb(autopsy_con, autopsy_db_file, test_data):
 		autopsy_cur2 = autopsy_con.cursor()
 		global errorem
 		global attachl
 		global failedbool
+		# Get the list of all artifacts
+		# @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it. 
 		autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
 		database_log = codecs.open(test_data.autopsy_data_file, "wb", "utf_8")
 		rw = autopsy_cur2.fetchone()
 		appnd = False
 		counter = 0
+		# Cycle through artifacts
 		try:
 			while (rw != None):
+				# File Name and artifact type
 				if(rw[0] != None):
 					database_log.write(rw[0] + rw[1] + ' <artifact type="' + rw[2] + '" > ')
 				else:
 					database_log.write(rw[1] + ' <artifact type="' + rw[2] + '" > ')
+					
+				# Get attributes for this artifact
 				autopsy_cur1 = autopsy_con.cursor()
 				looptry = True
 				test_data.artifact_count += 1
@@ -370,11 +530,14 @@ class Database:
 					printerror(test_data, str(e))
 					printerror(test_data, str(rw[3]))
 					print(test_data.image_name)
-					errorem += test_data.image_name + ":Artifact with id#" + str(rw[3]) + " encountered an error.\n"
+					errorem += test_data.image_name + ":Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
 					looptry = False
 					print(test_data.artifact_fail)
 					test_data.artifact_fail += 1
 					print(test_data.artifact_fail)
+					database_log.write('Error Extracting Attributes');
+					
+				# Print attributes
 				if(looptry == True):
 					src = attributes[0][0]
 					for attr in attributes:
@@ -391,8 +554,8 @@ class Database:
 								attachl.append(autopsy_db_file)
 								appnd = True
 						if(not attr[0] == src):
-							errorem += test_data.image_name + ":There were inconsistents sources for artifact with id #" + str(rw[3]) + ".\n"
-							printerror(test_data, "There were inconsistents sources for artifact with id #" + str(rw[3]) + " for image " + test_data.image_name + ".")
+							errorem += test_data.image_name + ":There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
+							printerror(test_data, "There were inconsistent sources for artifact with id #" + str(rw[3]) + " for image " + test_data.image_name + ".")
 							failedbool = True
 							if(not appnd):
 								attachl.append(autopsy_db_file)
@@ -413,6 +576,8 @@ class Database:
 						database_log.write('" />')
 				database_log.write(' <artifact/>\n')
 				rw = autopsy_cur2.fetchone()
+				
+			# Now sort the file
 			srtcmdlst = ["sort", test_data.autopsy_data_file, "-o", test_data.sorted_data_file]
 			subprocess.call(srtcmdlst)
 			print(test_data.artifact_fail)
@@ -421,15 +586,17 @@ class Database:
 		except Exception as e:
 			printerror(test_data, 'outer exception: ' + str(e))
 			
-        # Dumps a database (minus the artifact and attributes) to a text file. 
-        # 
-	def _dbDump(test_data):
+    # Dumps a database (minus the artifact and attributes) to a text file. 
+	def _dump_output_db_nonbb(test_data):
+		# Make a copy of the DB
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_data.image_name,
 										  test_case.Img_Test_Folder, test_case.test_db_file)
 		backup_db_file = Emailer.make_path(test_case.output_dir, test_data.image_name,
 										  test_case.Img_Test_Folder, "autopsy_backup.db")
 		copy_file(autopsy_db_file,backup_db_file)
 		autopsy_con = sqlite3.connect(backup_db_file)
+		
+		# Delete the blackboard tables
 		autopsy_con.execute("DROP TABLE blackboard_artifacts")
 		autopsy_con.execute("DROP TABLE blackboard_attributes")
 		dump_file = Emailer.make_path(test_case.output_dir, test_data.image_name, test_data.image_name + "Dump.txt")
@@ -440,191 +607,93 @@ class Database:
 				try:
 					database_log.write(line + "\n")
 				except Exception as e:
-					printerror(test_data, "Inner dump Exception:" + str(e))
+					printerror(test_data, "dump_output_db_nonbb: Inner dump Exception:" + str(e))
 		except Exception as e:
-			printerror(test_data, "Outer dump Exception:" + str(e))
+			printerror(test_data, "dump_output_db_nonbb: Outer dump Exception:" + str(e))
 			
-	# Basic test between output and gold databases. Compares only counts of objects and blackboard items
-        # 
-        # test_data: TestData object for current test
-        # database: Database object to use for comparison
-        # @@@ This is currently being called statically with databaes being passed in.  Could be called as database.compare... and not pass database in. 
-        # @@@ Rename
-	def compare_to_gold_db(test_data, database):
-		# SQLITE needs unix style pathing
-
-                # Get connection to output database from current run
-		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_data.image_name,
-										  test_case.Img_Test_Folder, test_case.test_db_file)
-		autopsy_con = sqlite3.connect(autopsy_db_file)
-		autopsy_cur = autopsy_con.cursor()
-
-                # Get connection to gold DB and count artifacts, etc.
-		gold_db_file = Emailer.make_path(test_case.img_gold, test_data.image_name, test_case.test_db_file)
-		if(not Emailer.file_exists(gold_db_file)):
-			gold_db_file = Emailer.make_path(test_case.img_gold_parse, test_data.image_name, test_case.test_db_file)
-		try:
-			database._generate_gold_objects()
-			database._generate_gold_artifacts()
-			database._generate_gold_attributes()
-		except Exception as e:
-			printerror(test_data, "Way out:" + str(e))
-		# This is where we return if a file doesn't exist, because we don't want to
-		# compare faulty databases, but we do however want to try to run all queries
-		# regardless of the other database
-		if not Emailer.file_exists(autopsy_db_file):
-			printerror(test_data, "Error: Database file does not exist at:")
-			printerror(test_data, autopsy_db_file + "\n")
-			return
-		if not Emailer.file_exists(gold_db_file):
-			printerror(test_data, "Error: Gold database file does not exist at:")
-			printerror(test_data, gold_db_file + "\n")
-			return
-
-		# compare size of bb artifacts, attributes, and tsk objects
-		gold_con = sqlite3.connect(gold_db_file)
-		gold_cur = gold_con.cursor()
-		
-		exceptions = []
-		
-		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_data.image_name,
-											  test_case.Img_Test_Folder, test_case.test_db_file)
-                # Connect again and count things
-		autopsy_con = sqlite3.connect(autopsy_db_file)
-		try:
-			database._generate_autopsy_objects()
-			database._generate_autopsy_artifacts()
-			database._generate_autopsy_attributes()
-		except Exception as e:
-			printerror(test_data, "Way out:" + str(e))
-
-                # Compare counts
-		exceptions.append(Database._compare_tsk_objects(test_data, database))
-		exceptions.append(Database._count_bb_artifacts(test_data, database))
-		exceptions.append(Database._compare_bb_attributes(test_data, database))
-		
-		database.artifact_comparison = exceptions[1]
-		database.attribute_comparison = exceptions[2]
-		
-		okay = "All counts match."
-		print_report(test_data, exceptions[0], "COMPARE TSK OBJECTS", okay)
-		print_report(test_data, exceptions[1], "COMPARE ARTIFACTS", okay)
-		print_report(test_data, exceptions[2], "COMPARE ATTRIBUTES", okay)
 			
-        # Dumps the given database to text files for later comparison
-        # @@@ Rename and follow-on methods
-	def get_Data(test_data):
+	# Dumps the given database to text files for later comparison
+	def dump_output_db(test_data):
 		autopsy_db_file = Emailer.make_path(test_case.output_dir, test_data.image_name,
 										  test_case.Img_Test_Folder, test_case.test_db_file)
 		autopsy_con = sqlite3.connect(autopsy_db_file)
 		autopsy_cur = autopsy_con.cursor()
 		# Try to query the databases. Ignore any exceptions, the function will
 		# return an error later on if these do fail
-		Database._retrieve_data(autopsy_con,autopsy_db_file, test_data)
-		Database._dbDump(test_data)
-		
-	# Compares the blackboard artifact counts of two databases
-	# given the two database cursors
-	def _count_bb_artifacts(test_data, database):
-		exceptions = []
-		try:
-			global failedbool
-			global errorem
-			if database.gold_artifacts != database.autopsy_artifacts:
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_data.image + ":There was a TestDifference in the number of artifacts.\n"
-			rner = len(database.gold_artifacts)
-			for type_id in range(1, rner):
-				if database.gold_artifacts[type_id] != database.autopsy_artifacts[type_id]:
-					error = str("Artifact counts do not match for type id %d. " % type_id)
-					error += str("Gold: %d, Test: %d" %
-								(database.gold_artifacts[type_id],
-								 database.autopsy_artifacts[type_id]))
-					exceptions.append(error)
-			return exceptions
-		except Exception as e:
-			printerror(test_data, str(e))
-			exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
-			return exceptions
-
-	# Compares the blackboard atribute counts of two databases
-	# given the two database cursors
-	def _compare_bb_attributes(test_data, database):
-		exceptions = []
-		try:
-			if database.gold_attributes != database.autopsy_attributes:
-				error = "Attribute counts do not match. "
-				error += str("Gold: %d, Test: %d" % (database.gold_attributes, database.autopsy_attributes))
-				exceptions.append(error)
-				global failedbool
-				global errorem
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_data.image + ":There was a TestDifference in the number of attributes.\n"
-				return exceptions
-		except Exception as e:
-			exceptions.append("Error: Unable to compare blackboard_attributes.\n")
-			return exceptions
-
-	# Compares the tsk object counts of two databases
-	# given the two database cursors
-	def _compare_tsk_objects(test_data,database):
-		exceptions = []
-		try:
-			if database.gold_objects != database.autopsy_objects:
-				error = "TSK Object counts do not match. "
-				error += str("Gold: %d, Test: %d" % (database.gold_objects, database.autopsy_objects))
-				exceptions.append(error)
-				global failedbool
-				global errorem
-				failedbool = True
-				global imgfail
-				imgfail = True
-				errorem += test_data.image + ":There was a TestDifference between the tsk object counts.\n"
-				return exceptions
-		except Exception as e:
-			exceptions.append("Error: Unable to compare tsk_objects.\n")
-			return exceptions
-
+		DatabaseDiff._dump_output_db_bb(autopsy_con,autopsy_db_file, test_data)
+		DatabaseDiff._dump_output_db_nonbb(test_data)
+			
+			
+	
 #-------------------------------------------------#
 #	  Functions relating to comparing outputs	  #
 #-------------------------------------------------#	  
 class TestDiffer:
-	#
-	def run_diff(test_data):
-		TestDiffer._compare_errors(test_data)
+	
+	# Compares results for a single test.  Autopsy has already been run.
+	# test_data: TestData object
+	# databaseDiff: DatabaseDiff object created based on test_data 
+	def run_diff(test_data, databaseDiff):
+		try:
+			gold_path = test_case.gold
+            # Tmp location to extract ZIP file into
+			img_gold = Emailer.make_path(test_case.gold, "tmp", test_data.image_name)
+
+			# Open gold archive file
+			img_archive = Emailer.make_path("..", "output", "gold", test_data.image_name+"-archive.zip")
+			if(not Emailer.file_exists(img_archive)):
+				img_archive = Emailer.make_path(test_case.gold_parse, test_data.image_name+"-archive.zip")
+				gold_path = test_case.gold_parse
+				img_gold = Emailer.make_path(gold_path, "tmp", test_data.image_name)
+			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+			extrctr.extractall(gold_path)
+			extrctr.close
+			time.sleep(2)
+
+			# Lists of tests to run 
+			TestDiffer._compare_errors(test_data)
                 
-                # Compare smart blackboard stuff results
-		gold_nm = "SortedData"
-		TestDiffer._compare_data(test_data.sorted_data_file, gold_nm, test_data)
+			# Compare database count to gold
+			databaseDiff.compare_basic_counts()
+			
+			# Compare smart blackboard results
+			TestDiffer._compare_text(test_data.sorted_data_file, "SortedData", test_data)
 
-                # Compare the rest of the database (non-BB)
-		gold_nm = "DBDump"
-		TestDiffer._compare_data(test_data.test_dbdump, gold_nm, test_data)
+			# Compare the rest of the database (non-BB)
+			TestDiffer._compare_text(test_data.test_dbdump, "DBDump", test_data)
 
-                # Compare html output
-		TestDiffer._compare_to_gold_html(test_data)
+			# Compare html output
+			TestDiffer._compare_to_gold_html(test_data)
+			
+			# Clean up tmp folder
+			del_dir(img_gold)
+			
+		except Exception as e:
+			printerror(test_data, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
+			printerror(test_data, str(e) + "\n")
+			print(traceback.format_exc())
+			
 		
-        # Compares database dump files.  
-        # aut: output text file
-        # gld: gold text file
-        # test_data: Test being performed
-        # @@@ Could be renamed to be more generic about testing text files.
-	def _compare_data(aut, gld,test_data):
-		gold_dir = Emailer.make_path(test_case.img_gold, test_data.image_name, test_data.image_name + gld + ".txt")
+
+	# @@@ _compare_text could be made more generic with how it forms the paths (i.e. not add ".txt" in the method) and probably merged with
+	# compare_errors since they both do basic comparison of text files
+		
+	# Compares two text files
+	# output_file: output text file
+	# gold_file: gold text file
+	# test_data: Test being performed
+	def _compare_text(output_file, gold_file, test_data):
+		gold_dir = Emailer.make_path(test_case.img_gold, test_data.image_name, test_data.image_name + gold_file + ".txt")
 		if(not Emailer.file_exists(gold_dir)):
-				gold_dir = Emailer.make_path(test_case.img_gold_parse,  test_data.image_name, test_data.image_name + gld + ".txt")
-		if(not Emailer.file_exists(aut)):
+				gold_dir = Emailer.make_path(test_case.img_gold_parse,  test_data.image_name, test_data.image_name + gold_file + ".txt")
+		if(not Emailer.file_exists(output_file)):
 			return
-		srtd_data = codecs.open(aut, "r", "utf_8")
+		srtd_data = codecs.open(output_file, "r", "utf_8")
 		gold_data = codecs.open(gold_dir, "r", "utf_8")
 		gold_dat = gold_data.read()
 		srtd_dat = srtd_data.read()
 		if (not(gold_dat == srtd_dat)):
-			diff_dir = Emailer.make_local_path(test_case.output_dir, test_data.image_name, test_data.image_name+gld+"-Diff.txt")
+			diff_dir = Emailer.make_local_path(test_case.output_dir, test_data.image_name, test_data.image_name+gold_file+"-Diff.txt")
 			diff_file = codecs.open(diff_dir, "wb", "utf_8") 
 			dffcmdlst = ["diff", test_data.sorted_data_file, gold_dir]
 			subprocess.call(dffcmdlst, stdout = diff_file)
@@ -632,13 +701,13 @@ class TestDiffer:
 			global errorem
 			global failedbool
 			attachl.append(diff_dir)
-			errorem += test_data.image_name + ":There was a database TestDifference in the file " + gld + ".\n"
-			printerror(test_data, "There was a TestDifference in the Database data for " + test_data.image_name + " for the file " + gld + ".\n")
+			errorem += test_data.image_name + ":There was a  difference in the database file " + gold_file + ".\n"
+			printerror(test_data, "There was a database difference for " + test_data.image_name + " versus " + gold_file + ".\n")
 			failedbool = True
 			global imgfail
 			imgfail = True
 
-        # Compare merged error log files
+	# Compare merged error log files
 	def _compare_errors(test_data):
 		gold_dir = Emailer.make_path(test_case.img_gold,  test_data.image_name, test_data.image_name + "SortedErrors.txt")
 		if(not Emailer.file_exists(gold_dir)):
@@ -658,7 +727,7 @@ class TestDiffer:
 			global failedbool
 			attachl.append(test_data.sorted_log)
 			attachl.append(diff_dir)
-			errorem += test_data.image_name + ":There was a TestDifference in the exceptions Log.\n"
+			errorem += test_data.image_name + ":There was a difference in the exceptions Log.\n"
 			printerror(test_data, "Exceptions didn't match.\n")
 			failedbool = True
 			global imgfail
@@ -712,7 +781,7 @@ class TestDiffer:
 			  
 			total = {"Gold": 0, "New": 0}
 			for x in range(0, len(ListGoldHTML)):
-				count = compare_report_files(ListGoldHTML[x], ListNewHTML[x])
+				count = TestDiffer._compare_report_files(ListGoldHTML[x], ListNewHTML[x])
 				total["Gold"]+=count[0]
 				total["New"]+=count[1]
 			okay = "The test report matches the gold report."
@@ -730,6 +799,28 @@ class TestDiffer:
 			printerror(test_data, "Error: Unknown fatal error comparing reports.")
 			printerror(test_data, str(e) + "\n")
 			logging.critical(traceback.format_exc())
+			
+	# Compares file a to file b and any differences are returned
+	# Only works with report html files, as it searches for the first <ul>
+	def _compare_report_files(a_path, b_path):
+		a_file = open(a_path)
+		b_file = open(b_path)
+		a = a_file.read()
+		b = b_file.read()
+		a = a[a.find("<ul>"):]
+		b = b[b.find("<ul>"):]
+		
+		a_list = TestDiffer._split(a, 50)
+		b_list = TestDiffer._split(b, 50)
+		if not len(a_list) == len(b_list):
+			ex = (len(a_list), len(b_list))
+			return ex
+		else: 
+			return (0, 0)
+  
+	# Split a string into an array of string of the given size
+	def _split(input, size):
+		return [input[start:start+size] for start in range(0, len(input), size)]
 		
 class TestData:
 	def __init__(self):
@@ -1456,14 +1547,14 @@ class Test_Runner:
 
 	#Executes the tests, makes continuous testing easier 
         # Identifies the tests to run and runs the tests
-	def execute_test():
+	def run_tests():
 		global parsed
 		global errorem
 		global failedbool
 		global html
 		global attachl
 
-                # Setup TestData object
+		# Setup output folder and reporting infrastructure
 		if(not Emailer.dir_exists(Emailer.make_path("..", "output", "results"))):
 			os.makedirs(Emailer.make_path("..", "output", "results",))
 		test_case.output_dir = Emailer.make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
@@ -1475,7 +1566,7 @@ class Test_Runner:
 		logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
 
-                #Identify tests to run and populate test_case with list
+		#Identify tests to run and populate test_case with list
 		# If user wants to do a single file and a list (contradictory?)
 		if test_case.args.single and test_case.args.list:
 			printerror(test_data, "Error: Cannot run both from config file and on a single file.")
@@ -1486,14 +1577,14 @@ class Test_Runner:
 			   printerror(test_data, "Error: Configuration file does not exist at:")
 			   printerror(test_data, test_case.args.config_file)
 			   return
-		   Test_Runner._fill_case_data(test_case.args.config_file,test_data)
+		   Test_Runner._load_config_file(test_case.args.config_file,test_data)
 		# Else if working on a single file
 		elif test_case.args.single:
 		   if not Emailer.file_exists(test_case.args.single_file):
 			   printerror(test_data, "Error: Image file does not exist at:")
 			   printerror(test_data, test_case.args.single_file)
 			   return
-		   Test_case.images.append(test_case.args.single_file)
+		   test_case.images.append(test_case.args.single_file)
 
 		# If user has not selected a single file, and does not want to ignore
 		#  the input directory, continue on to parsing ../input
@@ -1503,13 +1594,25 @@ class Test_Runner:
 			   printerror(test_data, "Error: Configuration file does not exist at:")
 			   printerror(test_data, test_case.args.config_file)
 			   return
-		   Test_Runner._fill_case_data(test_case.args.config_file, test_data)
+		   Test_Runner._load_config_file(test_case.args.config_file, test_data)
 
-                   # Cycle through images in test_case and run tests
+		# Cycle through images in test_case and run tests
 		logres =[]
 		for img in test_case.images:  
 			if Emailer.file_exists(img):
-				logres.append(Test_Runner._run_ingest(str(img), 0, test_data))
+				# Set the test_case to work for this test
+				test_data.image_file = str(img)
+				# @@@ This 0 should be be refactored out, but it will require rebuilding and changing of outputs. 
+				test_data.image_name = test_case.get_image_name(test_data.image_file) + "(0)"
+				test_data.autopsy_data_file = Emailer.make_path(test_case.output_dir, test_data.image_name, test_data.image_name + "Autopsy_data.txt")
+				test_data.sorted_data_file = Emailer.make_path(test_case.output_dir, test_data.image_name, "Sorted_Autopsy_data.txt")
+				test_data.warning_log = Emailer.make_local_path(test_case.output_dir, test_data.image_name, "AutopsyLogs.txt")
+				test_data.antlog_dir = Emailer.make_local_path(test_case.output_dir, test_data.image_name, "antlog.txt")
+				test_data.test_dbdump = Emailer.make_path(test_case.output_dir, test_data.image_name,
+													  test_data.image_name + "Dump.txt")
+				test_data.image = test_case.get_image_name(test_data.image_file)
+				
+				logres.append(Test_Runner._run_test(test_data))
 			else:
 				printerror(test_data, "Warning: Image file listed in configuration does not exist:")
 				printerror(value + "\n")
@@ -1533,82 +1636,26 @@ class Test_Runner:
 			errorem += "Autopsy test passed.\n"
 			passFail = True
 			attachl = []
-		Emailer.send_email(parsed, errorem, attachl, passFail)
 			
-	# Iterates through an XML configuration file to find all given elements.  Populates global test_case object with tests to run	
-        # config_file: Path to the config file
-        # test_data: TestData object (@@@ Only being passed in for print messages)
-	def _fill_case_data(config_file, test_data):
+		# @@@ This fails here if we didn't parse an XML file
 		try:
-			global parsed
-			global errorem
-			global attachl
-			count = 0
-			parsed = parse(config_file)
-			logres = []
-			test_case
-			counts = {}
-			if parsed.getElementsByTagName("indir"):
-				test_case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
-			if parsed.getElementsByTagName("global_csv"):
-				test_case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-				test_case.global_csv = Emailer.make_local_path(test_case.global_csv)
-			if parsed.getElementsByTagName("golddir"):
-				test_case.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
-			else:
-				test_case.gold_parse = test_case.gold
-				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
-			# Generate the top navbar of the HTML for easy access to all images
-			values = []
-			for element in parsed.getElementsByTagName("image"):
-				value = element.getAttribute("value").encode().decode("utf_8")
-				if Emailer.file_exists(value):
-					test_case.images.append(value)
-				else:
-					printout(test_data, "File: " + value + " doesn't exist")
-			count = len(values)
-			archives = Emailer.make_path(test_case.gold, "..")
-			arcount = 0
-			for file in os.listdir(archives):
-				if not(file == 'tmp'):
-					arcount+=1
-			if (count > arcount):
-				print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
-			elif not (arcount == count):
-				print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-			Reports.html_add_images(values)
-		except Exception as e:
-			printerror(test_data, "Error: There was an error running with the configuration file.")
-			printerror(test_data, str(e) + "\n")
-			logging.critical(traceback.format_exc())
-			print(traceback.format_exc())
+			Emailer.send_email(parsed, errorem, attachl, passFail)
+		except NameError:
+			printerror(test_data, "Could not send e-mail because of no XML file --maybe");
+		
 
-        # Run autopsy to generate output file and do comparision
-        # image_file: Path to image (@@@ We should be able to remove this since TestData should have this)
-        # count: Number of times this image has been tested (@@@ we think we can remove this)
-        # test_data: TestData object
-	def _run_ingest(image_file, count, test_data):
+		# Run autopsy for a single test to generate output file and do comparison
+	# test_data: TestData object populated with locations and such for test
+	def _run_test(test_data):
 		global parsed
 		global imgfail
 		global failedbool
 		imgfail = False
-		if image_type(image_file) == IMGTYPE.UNKNOWN:
+		if image_type(test_data.image_file) == IMGTYPE.UNKNOWN:
 			printerror(test_data, "Error: Image type is unrecognized:")
-			printerror(test_data, image_file + "\n")
+			printerror(test_data, test_data.image_file + "\n")
 			return
-			
-
-		# Set the test_case to work for this test
-		test_data.image_file = image_file
-		test_data.image_name = test_case.get_image_name(image_file) + "(" + str(count) + ")"
-		test_data.autopsy_data_file = Emailer.make_path(test_case.output_dir, test_data.image_name, test_data.image_name + "Autopsy_data.txt")
-		test_data.sorted_data_file = Emailer.make_path(test_case.output_dir, test_data.image_name, "Sorted_Autopsy_data.txt")
-		test_data.warning_log = Emailer.make_local_path(test_case.output_dir, test_data.image_name, "AutopsyLogs.txt")
-		test_data.antlog_dir = Emailer.make_local_path(test_case.output_dir, test_data.image_name, "antlog.txt")
-		test_data.test_dbdump = Emailer.make_path(test_case.output_dir, test_data.image_name,
-											  test_data.image_name + "Dump.txt")
-		test_data.image = test_case.get_image_name(image_file)
+		
 		if(test_case.args.list):
 			element = parsed.getElementsByTagName("build")
 			if(len(element)<=0):
@@ -1631,20 +1678,21 @@ class Test_Runner:
 		time.sleep(2) # Give everything a second to process
 
 
-                # Autopsy has finished running, we will now process the results
+        # Autopsy has finished running, we will now process the results
 		test_case.common_log_path = Emailer.make_local_path(test_case.output_dir, test_data.image_name, test_data.image_name+test_case.common_log)
 		
-                # get data for the follow on db diff
-		Database.get_Data(test_data)
+        # Dump the database before we diff or use it for rebuild
+		DatabaseDiff.dump_output_db(test_data)
 
-                # merges logs into a single log for later diff
+        # merges logs into a single log for later diff / rebuild
 		copy_logs(test_data)
 		test_data.sorted_log = Emailer.make_local_path(test_case.output_dir, test_data.image_name, test_data.image_name + "SortedErrors.txt")
 		Logs.generate_log_data(test_data)
 
-                # Look for existance of core exceptions (@@@ Should be moved to differ class)
+		# Look for core exceptions
+		# @@@ Should be moved to TestDiffer, but it didn't know about logres -- need to look into that
 		logres = Logs.search_common_log("TskCoreException", test_data)
-
+		
 		# Cleanup SOLR: If NOT keeping Solr index (-k)
 		if not test_case.args.keep:
 			solr_index = Emailer.make_path(test_case.output_dir, test_data.image_name, test_case.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
@@ -1659,19 +1707,21 @@ class Test_Runner:
 			okay = "No warnings or exceptions found containing text '" + test_case.args.exception_string + "'."
 			print_report(test_data, exceptions, "EXCEPTION", okay)
 
-                 
-		database = Database(test_data)
+		# @@@ We only need to create this here so that it can be passed into the
+		# Report because it stores results.  Results should be stored somewhere else
+		# and then this can get pushed into only the diffing code. 
+		databaseDiff = DatabaseDiff(test_data)
 
 		# Now either diff or rebuild
 		if not test_case.args.rebuild:
-			Test_Runner._run_test(image_file, database, test_data)
+			TestDiffer.run_diff(test_data, databaseDiff)
 		# If running in rebuild mode (-r)
 		else:
 			Test_Runner.rebuild(test_data)
 
-                # @@@ COnsider if we want to do this for a rebuild. 
+        # @@@ COnsider if we want to do this for a rebuild. 
 		# Make the CSV log and the html log viewer
-		Reports.generate_reports(test_case.csv, database, test_data)
+		Reports.generate_reports(test_case.csv, databaseDiff, test_data)
 		# Reset the test_case and return the tests sucessfully finished
 		clear_dir(Emailer.make_path(test_case.output_dir, test_data.image_name, test_case.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
 		if(failedbool):
@@ -1679,38 +1729,60 @@ class Test_Runner:
 		test_case.reset()
 		return logres
 		
-	# Compares results for a single test.  Autopsy has already been run.
-        # This should all be moved into TestDiffer.run_diff()
-        # image_file: Path to image (@@@ Shoudl go away in favor of test_data)
-        # database: Database object created based on test_data 
-        # test_data: TestData object
-	def _run_test(image_file, database, test_data):
+	# Iterates through an XML configuration file to find all given elements.  Populates global test_case object with tests to run	
+	# config_file: Path to the config file
+	# test_data: TestData object (@@@ Only being passed in for print messages)
+	def _load_config_file(config_file, test_data):
 		try:
-			gold_path = test_case.gold
-                        # Tmp location to extract ZIP file into
-			img_gold = Emailer.make_path(test_case.gold, "tmp", test_data.image_name)
+			global parsed
+			global errorem
+			global attachl
+			count = 0
+			parsed = parse(config_file)
+			logres = []
+			test_case
+			counts = {}
+			if parsed.getElementsByTagName("indir"):
+				test_case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
+			if parsed.getElementsByTagName("global_csv"):
+				test_case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+				test_case.global_csv = Emailer.make_local_path(test_case.global_csv)
+			if parsed.getElementsByTagName("golddir"):
+				test_case.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
+			else:
+				test_case.gold_parse = test_case.gold
+				test_case.img_gold_parse = Emailer.make_path(test_case.gold_parse, 'tmp')
+				
+			# Generate the top navbar of the HTML for easy access to all images
+			images = []
+			for element in parsed.getElementsByTagName("image"):
+				value = element.getAttribute("value").encode().decode("utf_8")
+				print ("Image in Config File: " + value)
+				if Emailer.file_exists(value):
+					test_case.images.append(value)
+				else:
+					printout(test_data, "File: " + value + " doesn't exist")
+			image_count = len(images)
+			Reports.html_add_images(images)
 
-                        # Open gold archive file
-			img_archive = Emailer.make_path("..", "output", "gold", test_data.image_name+"-archive.zip")
-			if(not Emailer.file_exists(img_archive)):
-				img_archive = Emailer.make_path(test_case.gold_parse, test_data.image_name+"-archive.zip")
-				gold_path = test_case.gold_parse
-				img_gold = Emailer.make_path(gold_path, "tmp", test_data.image_name)
-			extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-			extrctr.extractall(gold_path)
-			extrctr.close
-			time.sleep(2)
-
-                        # Compare database count to gold (@@@ This should all be done as part of TestDiffer.run_diff())
-			Database.compare_to_gold_db(test_data, database)
-
-                        # Compare other data to gold
-			TestDiffer.run_diff(test_data)
-			del_dir(img_gold)
+			# Sanity check to see if there are obvious gold images that we are not testing
+			gold_count = 0
+			for file in os.listdir(test_case.gold):
+				if not(file == 'tmp'):
+					gold_count+=1
+					
+			if (image_count > gold_count):
+				print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+			elif (image_count < gold_count):
+				print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
+			
 		except Exception as e:
-			printerror(test_data, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
+			printerror(test_data, "Error: There was an error running with the configuration file.")
 			printerror(test_data, str(e) + "\n")
+			logging.critical(traceback.format_exc())
 			print(traceback.format_exc())
+
 		
 	# Rebuilds the gold standards by copying the test-generated database
 	# and html report files into the gold directory. Autopsy has already been run
@@ -1860,7 +1932,7 @@ def main():
 			theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
 			theproc.communicate()
 	# Otherwise test away!
-	Test_Runner.execute_test()
+	Test_Runner.run_tests()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)	  
