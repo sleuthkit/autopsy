@@ -48,6 +48,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 public class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
@@ -274,6 +276,29 @@ public class ReportHTML implements TableReportModule {
     }
 
     /**
+     * Start a new table with the given column headers.
+     * @param columnHeaders column headers
+     * @param sourceArtifact source blackboard artifact for the table data 
+     */
+    public void startTable(List<String> columnHeaders, ARTIFACT_TYPE artifactType) {
+        StringBuilder htmlOutput = new StringBuilder();        
+        htmlOutput.append("<table>\n<thead>\n\t<tr>\n");
+        for(String columnHeader : columnHeaders) {
+            htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n");
+        }
+        if (artifactType.equals(ARTIFACT_TYPE.TSK_TAG_FILE)) {
+            htmlOutput.append("\t\t<th>Local File</th>\n");        
+        }
+        htmlOutput.append("\t</tr>\n</thead>\n");
+        
+        try {
+            out.write(htmlOutput.toString());
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write table start: {0}", ex);
+        }
+    }
+    
+    /**
      * End the current table.
      */
     @Override
@@ -308,6 +333,29 @@ public class ReportHTML implements TableReportModule {
         }
     }
 
+    /**
+     * Add a row to the current table.
+     * @param row values for each cell in the row
+     * @param sourceArtifact source blackboard artifact for the table data 
+     */
+    public void addRow(List<String> row, BlackboardArtifact sourceArtifact) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("\t<tr>\n");
+        for (String cell : row) {
+            builder.append("\t\t<td>").append(cell).append("</td>\n");
+        }
+        builder.append("\t</tr>\n");
+        rowCount++;
+        
+        try {
+            out.write(builder.toString());
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write row to out.");
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.");
+        }
+    }
+        
     /**
      * Return a String date for the long date given.
      * @param date date as a long
@@ -545,13 +593,13 @@ public class ReportHTML implements TableReportModule {
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "File Tags.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Tagged Files.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Result Tags.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Tagged Results.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();

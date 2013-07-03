@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -564,6 +565,25 @@ public class Tags implements AutopsyVisitableItem {
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             return skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, name);
         } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
+        }
+
+        return Collections.<BlackboardArtifact>emptyList();
+    }
+
+    /**
+     * Get all of the tag artifacts for a specified object.
+     *
+     * @param objId An object id
+     * @return a list of all file tag artifacts for the given object id
+     */
+    public static List<BlackboardArtifact> getTagArtifactsByObjId(long objId) {
+        try {
+            Case currentCase = Case.getCurrentCase();
+            SleuthkitCase skCase = currentCase.getSleuthkitCase();
+            return skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_TAG_FILE, objId);
+        } 
+        catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
         }
 
