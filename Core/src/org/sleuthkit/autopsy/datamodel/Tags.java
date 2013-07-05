@@ -554,43 +554,6 @@ public class Tags implements AutopsyVisitableItem {
     }
 
     /**
-     * Get all the tags with a specified name.
-     *
-     * @param name of the requested tags
-     * @return a list of all tag artifacts with the given name
-     */
-    public static List<BlackboardArtifact> getTagsByName(String name) {
-        try {
-            Case currentCase = Case.getCurrentCase();
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            return skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, name);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
-        }
-
-        return Collections.<BlackboardArtifact>emptyList();
-    }
-
-    /**
-     * Get all of the tag artifacts for a specified object.
-     *
-     * @param objId An object id
-     * @return a list of all file tag artifacts for the given object id
-     */
-    public static List<BlackboardArtifact> getTagArtifactsByObjId(long objId) {
-        try {
-            Case currentCase = Case.getCurrentCase();
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            return skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_TAG_FILE, objId);
-        } 
-        catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
-        }
-
-        return Collections.<BlackboardArtifact>emptyList();
-    }
-
-    /**
      * Get the tag comment for a specified tag.
      *
      * @param tagArtifactId artifact id of the tag
