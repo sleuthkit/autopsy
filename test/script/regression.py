@@ -84,10 +84,13 @@ def enum(*seq, **named):
     return type('Enum', (), enums)
 
 # Enumeration of database types used for the simplification of generating database paths
-DBType = enum('OUTPUT', 'GOLD')
+DBType = enum('OUTPUT', 'GOLD', 'BACKUP')
 
 # Common filename of the output and gold databases (although they are in different directories 
 DB_FILENAME = "autopsy.db"
+
+# Backup database filename
+BACKUP_DB_FILENAME = "autopsy_backup.db"
 
 Day = 0
 #-------------------------------------------------------------#
@@ -399,7 +402,7 @@ class TskDbDiff:
         self.test_data = test_data
         self.autopsy_db_file = self.test_data.getDBPath(DBType.OUTPUT)
         self.gold_db_file = self.test_data.getDBPath(DBType.GOLD)
-        
+    
     def clear(self):
         self.gold_artifacts = []
         self.autopsy_artifacts = []
@@ -694,17 +697,15 @@ class TskDbDiff:
     # Dumps a database (minus the artifact and attributes) to a text file. 
     def _dump_output_db_nonbb(test_data):
         # Make a copy of the DB
-        autopsy_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
-        backup_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                          test_config.Img_Test_Folder, "autopsy_backup.db")
-        copy_file(autopsy_db_file,backup_db_file)
+        autopsy_db_file = test_data.getDBPath(DBType.OUTPUT)
+        backup_db_file = test_data.getDBPath(DBType.BACKUP)
+        copy_file(autopsy_db_file, backup_db_file)
         autopsy_con = sqlite3.connect(backup_db_file)
         
         # Delete the blackboard tables
         autopsy_con.execute("DROP TABLE blackboard_artifacts")
         autopsy_con.execute("DROP TABLE blackboard_attributes")
-        dump_file = Emailer.make_path(test_config.output_dir, test_data.image_name, test_data.image_name + "Dump.txt")
+        dump_file = test_data.test_dbdump
         database_log = codecs.open(dump_file, "wb", "utf_8")
         dump_list = autopsy_con.iterdump()
         try:
@@ -719,15 +720,14 @@ class TskDbDiff:
             
     # Dumps the given database to text files for later comparison
     def dump_output_db(test_data):
-        autopsy_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
+        autopsy_db_file = test_data.getDBPath(DBType.OUTPUT)
         autopsy_con = sqlite3.connect(autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
         # Try to query the databases. Ignore any exceptions, the function will
         # return an error later on if these do fail
-        TskDbDiff._dump_output_db_bb(autopsy_con,autopsy_db_file, test_data)
+        TskDbDiff._dump_output_db_bb(autopsy_con, autopsy_db_file, test_data)
         TskDbDiff._dump_output_db_nonbb(test_data)
-            
+        autopsy_con.close()
             
     
 #-------------------------------------------------#
@@ -972,8 +972,10 @@ class TestData:
         """
         if(db_type == DBType.GOLD):
             db_path = Emailer.make_path(self.main_config.img_gold, self.image_name, DB_FILENAME) 
-        else:
+        elif(db_type == DBType.OUTPUT):
             db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, self.main_config.Img_Test_Folder, DB_FILENAME)
+        else:
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, self.main_config.Img_Test_Folder, BACKUP_DB_FILENAME)
         return db_path 
 
 class Reports:
