@@ -200,9 +200,6 @@ class TestConfiguration:
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.ant = []
         
-        # Temporary fix until error printing can be independent of TestData:
-        self.test_data = TestData()
-        
         # Initialize Attributes
         self._init_logs()
         self._init_imgs()
@@ -232,10 +229,6 @@ class TestConfiguration:
         return string   
 
     def reset(self):
-        # Error tracking
-        self.printerror = []
-        self.printout = []
-        
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -250,20 +243,21 @@ class TestConfiguration:
         #Identify tests to run and populate test_case with list
         # If user wants to do a single file and a list (contradictory?)
         if self.args.single and self.args.list:
-            printerror(self.test_data, "Error: Cannot run both from config file and on a single file.")
+            msg = "Cannot run both from config file and on a single file."
+            self._print_error(msg)
             return
         # If working from a configuration file
         if self.args.list:
            if not Emailer.file_exists(self.args.config_file):
-               printerror(self.test_data, "Error: Configuration file does not exist at:")
-               printerror(self.test_data, self.args.config_file)
+               msg = "Configuration file does not exist at:" + self.args.config_file
+               self._print_error(msg)
                return
            self._load_config_file(self.args.config_file)
         # Else if working on a single file
         elif self.args.single:
            if not Emailer.file_exists(self.args.single_file):
-               printerror(self.test_data, "Error: Image file does not exist at:")
-               printerror(self.test_data, self.args.single_file)
+               msg = "Image file does not exist at: " + self.args.single_file
+               self._print_error(msg)
                return
            test_case.images.append(self.args.single_file)
 
@@ -272,8 +266,8 @@ class TestConfiguration:
         if (not self.args.single) and (not self.args.ignore) and (not self.args.list):
            self.args.config_file = "config.xml"
            if not Emailer.file_exists(self.args.config_file):
-               printerror(self.test_data, "Error: Configuration file does not exist at:")
-               printerror(self.test_data, self.args.config_file)
+               msg = "Configuration file does not exist at: " + self.args.config_file
+               self._print_error(msg)
                return
            self._load_config_file(self.args.config_file)
    
@@ -291,7 +285,7 @@ class TestConfiguration:
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
 
-    # _load_config_file: ConfigFile
+    # ConfigFile -> void
     def _load_config_file(self, config_file):
         """
         Initializes this TestConfiguration by iterating through the XML config file
@@ -325,7 +319,8 @@ class TestConfiguration:
                 if Emailer.file_exists(value):
                     self.images.append(value)
                 else:
-                    printout(self.test_data, "File: " + value + " doesn't exist")
+                    msg = "File: " + value + " doesn't exist"
+                    self._print_error(msg) 
             image_count = len(images)
 
             # Sanity check to see if there are obvious gold images that we are not testing
@@ -340,11 +335,21 @@ class TestConfiguration:
                 print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
             
         except Exception as e:
-            printerror(self.test_data, "Error: There was an error running with the configuration file.")
-            printerror(self.test_data, str(e) + "\n")
+            msg = "There was an error running with the configuration file.\n"
+            msg += "\t" + str(e)
+            self._print_error(msg)
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
 
+    # String -> void
+    def _print_error(self, msg):
+        """
+        Append the given error message to the global error message and print the message to the screen.
+        """
+        global errorem
+        error_msg = "Configuration: " + msg
+        print(error_msg)
+        errorem += error_msg + "\n"
        
 #---------------------------------------------------------#
 # Contains methods to compare two databases and internally
@@ -1676,9 +1681,7 @@ class Test_Runner:
         global html
         global attachl
        
-        # TODO: Get test-data out of TestConfiguration. This is a temporary fix needed
-        # because printing error messages requires an instance of TestData 
-        test_data = test_case.test_data
+        test_data = TestData()
         
         Reports.html_add_images(test_case.images)
         # Cycle through images in test_case and run tests
