@@ -17,7 +17,6 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
  
-
 import codecs
 import datetime
 import logging
@@ -72,8 +71,23 @@ import srcupdater
 # Path:         A path to a file or directory.
 # ConfigFile:   An XML file formatted according to the template in myconfig.xml
 # ParsedConfig: A dom object that represents a ConfigFile
-#
+# SQLCursor:    A cursor recieved from a connection to an SQL database
+# Nat:          A Natural Number
 
+
+#####
+# Enumeration definition (python 3.2 doesn't have enumerations, this is a common solution
+# that allows you to access a named enum in a Java-like style, i.e. Numbers.ONE)
+#####
+def enum(*seq, **named):
+    enums = dict(zip(seq, range(len(seq))), **named)
+    return type('Enum', (), enums)
+
+# Enumeration of database types used for the simplification of generating database paths
+DBType = enum('OUTPUT', 'GOLD')
+
+# Common filename of the output and gold databases (although they are in different directories 
+DB_FILENAME = "autopsy.db"
 
 Day = 0
 #-------------------------------------------------------------#
@@ -367,12 +381,13 @@ class TestConfiguration:
         print(error_msg)
         errorem += error_msg + "\n"
        
-#---------------------------------------------------------#
-# Contains methods to compare two databases and internally
-# stores some of the results.                         #
-#---------------------------------------------------------#
 class TskDbDiff:
-    def __init__(self, case):
+    """
+    Contains methods to compare two databases and internally
+    store some of the results
+    """
+    # TskDbDiff(TestData)
+    def __init__(self, test_data):
         self.gold_artifacts = []
         self.autopsy_artifacts = []
         self.gold_attributes = 0
@@ -381,7 +396,9 @@ class TskDbDiff:
         self.autopsy_objects = 0
         self.artifact_comparison = []
         self.attribute_comparison = []
-        self.test_data = case
+        self.test_data = test_data
+        self.autopsy_db_file = self.test_data.getDBPath(DBType.OUTPUT)
+        self.gold_db_file = self.test_data.getDBPath(DBType.GOLD)
         
     def clear(self):
         self.gold_artifacts = []
@@ -392,7 +409,6 @@ class TskDbDiff:
         self.autopsy_objects = 0
         self.artifact_comparison = []
         self.attribute_comparison = []
-        
         
         
     def get_artifacts_count(self):
@@ -424,76 +440,36 @@ class TskDbDiff:
         for error in self.attribute_comparison:
             list.append(error)
         return ";".join(list)
-        
-    def _count_output_artifacts(self):
-        if not self.autopsy_artifacts:
-            autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
-            autopsy_con = sqlite3.connect(autopsy_db_file)
-            autopsy_cur = autopsy_con.cursor()
-            autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
-            length = autopsy_cur.fetchone()[0] + 1
-            for type_id in range(1, length):
-                autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
-                self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])        
+       
+    # SQLCursor -> listof_Artifact
+    def _count_artifacts(self, cursor):
+        """
+        Get a list of artifacts from the given SQLCursor
+        """
+        cursor.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
+        length = cursor.fetchone()[0] + 1
+        artifacts = []
+        for type_id in range(1, length):
+            cursor.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
+            artifacts.append(cursor.fetchone()[0])
+        return artifacts        
+   
+    # SQLCursor -> Nat 
+    def _count_attributes(self, cursor):
+        """
+        Count the attributes from the given SQLCursor
+        """
+        cursor.execute("SELECT COUNT(*) FROM blackboard_attributes")
+        return cursor.fetchone()[0]
+       
+    # SQLCursor -> Nat
+    def _count_objects(self, cursor):
+        """
+        Count the objects from the given SQLCursor
+        """ 
+        cursor.execute("SELECT COUNT(*) FROM tsk_objects")
+        return cursor.fetchone()[0]
     
-    def _count_output_attributes(self):
-        if self.autopsy_attributes == 0:
-            autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
-            autopsy_con = sqlite3.connect(autopsy_db_file)
-            autopsy_cur = autopsy_con.cursor()
-            autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
-            autopsy_attributes = autopsy_cur.fetchone()[0]
-            self.autopsy_attributes = autopsy_attributes
-
-        # Counts number of objects and saves them into database.
-        # @@@ Does not need to connect again. Should be storing connection in TskDbDiff
-        # See also for _generate_autopsy_attributes
-    def _count_output_objects(self):
-        if self.autopsy_objects == 0:
-            autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
-            autopsy_con = sqlite3.connect(autopsy_db_file)
-            autopsy_cur = autopsy_con.cursor()
-            autopsy_cur.execute("SELECT COUNT(*) FROM tsk_objects")
-            autopsy_objects = autopsy_cur.fetchone()[0]
-            self.autopsy_objects = autopsy_objects
-        
-        # @@@ see _generate_autopsy_objects comment about saving connections, etc. Or could have design where connection
-        # is passed in so that we do not need separate methods for gold and output.
-    def _count_gold_artifacts(self):
-        if not self.gold_artifacts:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            gold_con = sqlite3.connect(gold_db_file)
-            gold_cur = gold_con.cursor()
-            gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
-            length = gold_cur.fetchone()[0] + 1
-            for type_id in range(1, length):
-                gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
-                self.gold_artifacts.append(gold_cur.fetchone()[0])
-            gold_cur.execute("SELECT * FROM blackboard_artifacts")
-            self.gold_artifacts_list = []
-            for row in gold_cur.fetchall():
-                for item in row:
-                    self.gold_artifacts_list.append(item)
-                
-    def _count_gold_attributes(self):
-        if self.gold_attributes == 0:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            gold_con = sqlite3.connect(gold_db_file)
-            gold_cur = gold_con.cursor()
-            gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
-            self.gold_attributes = gold_cur.fetchone()[0]
-
-    def _count_gold_objects(self):
-        if self.gold_objects == 0:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            gold_con = sqlite3.connect(gold_db_file)
-            gold_cur = gold_con.cursor()
-            gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
-            self.gold_objects = gold_cur.fetchone()[0]
-            
     # Compares the blackboard artifact counts of two databases
     def _compare_bb_artifacts(self):
         exceptions = []
@@ -559,56 +535,55 @@ class TskDbDiff:
             exceptions.append("Error: Unable to compare tsk_objects.\n")
             return exceptions
             
-            
-    # Basic test between output and gold databases. Compares only counts of objects and blackboard items
-    def compare_basic_counts(self):
-        # SQLITE needs unix style pathing
-
-        # Get connection to output database from current run
-        autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_config.test_db_file)
-        autopsy_con = sqlite3.connect(autopsy_db_file)
-        autopsy_cur = autopsy_con.cursor()
-
-                # Get connection to gold DB and count artifacts, etc.
-        gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
+    # SQLCursor x SQLCursor -> void           
+    def _get_basic_counts(self, autopsy_cur, gold_cur):
+        """
+        Get the counts of objects, artifacts, and attributes in the Gold and Ouput databases.
+        """
         try:
-            self._count_gold_objects()
-            self._count_gold_artifacts()
-            self._count_gold_attributes()
+            # Objects 
+            self.gold_objects = self._count_objects(gold_cur)
+            self.autopsy_objects = self._count_objects(autopsy_cur)
+            # Artifacts
+            self.gold_artifacts = self._count_artifacts(gold_cur)
+            self.autopsy_artifacts = self._count_artifacts(autopsy_cur)
+            # Attributes
+            self.gold_attributes = self._count_attributes(gold_cur)
+            self.autopsy_attributes = self._count_attributes(autopsy_cur)
         except Exception as e:
             printerror(self.test_data, "Way out:" + str(e))
-            
-        # This is where we return if a file doesn't exist, because we don't want to
-        # compare faulty databases, but we do however want to try to run all queries
-        # regardless of the other database
-        if not Emailer.file_exists(autopsy_db_file):
-            printerror(self.test_data, "Error: TskDbDiff file does not exist at:")
-            printerror(self.test_data, autopsy_db_file + "\n")
-            return
-        if not Emailer.file_exists(gold_db_file):
-            printerror(self.test_data, "Error: Gold database file does not exist at:")
-            printerror(self.test_data, gold_db_file + "\n")
-            return
 
-        # compare size of bb artifacts, attributes, and tsk objects
-        gold_con = sqlite3.connect(gold_db_file)
+    def compare_basic_counts(self):
+        """
+        Basic test between output and gold databases. Compares only counts of objects and blackboard items.
+        Note: SQLITE needs unix style pathing
+        """
+        # Check to make sure both db files exist
+        if not Emailer.file_exists(self.autopsy_db_file):
+            printerror(self.test_data, "Error: TskDbDiff file does not exist at:")
+            printerror(self.test_data, self.autopsy_db_file + "\n")
+            return
+        if not Emailer.file_exists(self.gold_db_file):
+            printerror(self.test_data, "Error: Gold database file does not exist at:")
+            printerror(self.test_data, self.gold_db_file + "\n")
+            return
+        
+        # Get connections and cursors to output / gold databases
+        autopsy_con = sqlite3.connect(self.autopsy_db_file)
+        autopsy_cur = autopsy_con.cursor()
+        gold_con = sqlite3.connect(self.gold_db_file)
         gold_cur = gold_con.cursor()
         
+        # Get Counts of objects, artifacts, and attributes
+        self._get_basic_counts(autopsy_cur, gold_cur)        
+   
+        # We're done with the databases, close up the connections     
+        autopsy_con.close()
+        gold_con.close()
+    
         exceptions = []
         
-        autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                              test_config.Img_Test_Folder, test_config.test_db_file)
-                # Connect again and count things
-        autopsy_con = sqlite3.connect(autopsy_db_file)
-        try:
-            self._count_output_objects()
-            self._count_output_artifacts()
-            self._count_output_attributes()
-        except Exception as e:
-            printerror(self.test_data, "Way out:" + str(e))
-
-                # Compare counts
+        # Compare counts
         exceptions.append(self._compare_tsk_objects())
         exceptions.append(self._compare_bb_artifacts())
         exceptions.append(self._compare_bb_attributes())
@@ -620,11 +595,6 @@ class TskDbDiff:
         print_report(self.test_data, exceptions[0], "COMPARE TSK OBJECTS", okay)
         print_report(self.test_data, exceptions[1], "COMPARE ARTIFACTS", okay)
         print_report(self.test_data, exceptions[2], "COMPARE ATTRIBUTES", okay)
-            
-        
-        
-
-
             
             
     # smart method that deals with blackboard comparison to avoid issues with different IDs based on when artifacts were created.
@@ -943,7 +913,12 @@ class TestResultsDiffer:
         return [input[start:start+size] for start in range(0, len(input), size)]
         
 class TestData:
-    def __init__(self):
+    """
+    Represents data for the test of a single image, including path to the image,
+    database paths, etc.
+    """
+    def __init__(self, main_config):
+        self.main_config = main_config 
         self.image = ""
         self.image_file = ""
         self.image_name = ""
@@ -989,7 +964,18 @@ class TestData:
         # Error tracking
         self.printerror = []
         self.printout = []
-            
+
+    # DBType -> Path
+    def getDBPath(self, db_type):
+        """
+        Return the path to the database file that corresponds to the given DBType for this TestData
+        """
+        if(db_type == DBType.GOLD):
+            db_path = Emailer.make_path(self.main_config.img_gold, self.image_name, DB_FILENAME) 
+        else:
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, self.main_config.Img_Test_Folder, DB_FILENAME)
+        return db_path 
+
 class Reports:
     def generate_reports(csv_path, database, test_data):
         Reports._generate_html(database, test_data)
@@ -1723,7 +1709,7 @@ class TestRunner:
         """
         test_data_list = []
         for img in test_config.images:
-            test_data = TestData()
+            test_data = TestData(test_config)
             test_data.image_file = str(img)
             # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs. 
             test_data.image = test_config.get_image_name(test_data.image_file)
@@ -1972,9 +1958,12 @@ def main():
     TestRunner.run_tests()
 
 class OS:
-  LINUX, MAC, WIN, CYGWIN = range(4)      
+  LINUX, MAC, WIN, CYGWIN = range(4)
+
+      
 if __name__ == "__main__":
     global SYS
+    print(DBType.OUTPUT) 
     if _platform == "linux" or _platform == "linux2":
         SYS = OS.LINUX
     elif _platform == "darwin":
