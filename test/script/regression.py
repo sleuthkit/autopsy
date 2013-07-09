@@ -61,7 +61,7 @@ import srcupdater
 # in a global class.
 # - Command line arguments are in Args (named args)
 # - Global Test Configuration is in TestConfiguration(named test_config)
-# - Queried information from the databases is in DatabaseDiff (named database)
+# - Queried information from the databases is in TskDbDiff (named database)
 # Feel free to add additional global classes or add to the existing ones,
 # but do not overwrite any existing variables as they are used frequently.
 #
@@ -171,8 +171,6 @@ class TestConfiguration:
         self.input_dir = Emailer.make_local_path("..","input")  # Path : the Path to the input directory
         self.gold = Emailer.make_path("..", "output", "gold")   # Path : the Path to the gold directory
         self.img_gold = Emailer.make_path(self.gold, 'tmp')     
-        self.gold_parse = ""
-        self.img_gold_parse = ""
         self.common_log = "AutopsyErrors.txt"                  
         self.test_db_file = "autopsy.db"
         self.Img_Test_Folder = "AutopsyTestCase"
@@ -326,11 +324,8 @@ class TestConfiguration:
                 self.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
                 self.global_csv = Emailer.make_local_path(self.global_csv)
             if parsed.getElementsByTagName("golddir"):
-                self.gold_parse = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-                self.img_gold_parse = Emailer.make_path(self.gold_parse, 'tmp')
-            else:
-                self.gold_parse = self.gold
-                self.img_gold_parse = Emailer.make_path(self.gold_parse, 'tmp')
+                self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+                self.img_gold = Emailer.make_path(self.gold, 'tmp')
                
             # Generate the top navbar of the HTML for easy access to all images
             images = []
@@ -376,7 +371,7 @@ class TestConfiguration:
 # Contains methods to compare two databases and internally
 # stores some of the results.                         #
 #---------------------------------------------------------#
-class DatabaseDiff:
+class TskDbDiff:
     def __init__(self, case):
         self.gold_artifacts = []
         self.autopsy_artifacts = []
@@ -453,7 +448,7 @@ class DatabaseDiff:
             self.autopsy_attributes = autopsy_attributes
 
         # Counts number of objects and saves them into database.
-        # @@@ Does not need to connect again. Should be storing connection in DatabaseDiff
+        # @@@ Does not need to connect again. Should be storing connection in TskDbDiff
         # See also for _generate_autopsy_attributes
     def _count_output_objects(self):
         if self.autopsy_objects == 0:
@@ -470,8 +465,6 @@ class DatabaseDiff:
     def _count_gold_artifacts(self):
         if not self.gold_artifacts:
             gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -488,8 +481,6 @@ class DatabaseDiff:
     def _count_gold_attributes(self):
         if self.gold_attributes == 0:
             gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -498,8 +489,6 @@ class DatabaseDiff:
     def _count_gold_objects(self):
         if self.gold_objects == 0:
             gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-            if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -583,8 +572,6 @@ class DatabaseDiff:
 
                 # Get connection to gold DB and count artifacts, etc.
         gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
-        if(not Emailer.file_exists(gold_db_file)):
-            gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
         try:
             self._count_gold_objects()
             self._count_gold_artifacts()
@@ -596,7 +583,7 @@ class DatabaseDiff:
         # compare faulty databases, but we do however want to try to run all queries
         # regardless of the other database
         if not Emailer.file_exists(autopsy_db_file):
-            printerror(self.test_data, "Error: DatabaseDiff file does not exist at:")
+            printerror(self.test_data, "Error: TskDbDiff file does not exist at:")
             printerror(self.test_data, autopsy_db_file + "\n")
             return
         if not Emailer.file_exists(gold_db_file):
@@ -768,19 +755,19 @@ class DatabaseDiff:
         autopsy_cur = autopsy_con.cursor()
         # Try to query the databases. Ignore any exceptions, the function will
         # return an error later on if these do fail
-        DatabaseDiff._dump_output_db_bb(autopsy_con,autopsy_db_file, test_data)
-        DatabaseDiff._dump_output_db_nonbb(test_data)
+        TskDbDiff._dump_output_db_bb(autopsy_con,autopsy_db_file, test_data)
+        TskDbDiff._dump_output_db_nonbb(test_data)
             
             
     
 #-------------------------------------------------#
 #     Functions relating to comparing outputs     #
 #-------------------------------------------------#   
-class TestDiffer:
+class TestResultsDiffer:
     
     # Compares results for a single test.  Autopsy has already been run.
     # test_data: TestData object
-    # databaseDiff: DatabaseDiff object created based on test_data 
+    # databaseDiff: TskDbDiff object created based on test_data 
     def run_diff(test_data, databaseDiff):
         try:
             gold_path = test_config.gold
@@ -789,29 +776,25 @@ class TestDiffer:
 
             # Open gold archive file
             img_archive = Emailer.make_path("..", "output", "gold", test_data.image_name+"-archive.zip")
-            if(not Emailer.file_exists(img_archive)):
-                img_archive = Emailer.make_path(test_config.gold_parse, test_data.image_name+"-archive.zip")
-                gold_path = test_config.gold_parse
-                img_gold = Emailer.make_path(gold_path, "tmp", test_data.image_name)
             extrctr = zipfile.ZipFile(img_archive, 'r', compression=zipfile.ZIP_DEFLATED)
             extrctr.extractall(gold_path)
             extrctr.close
             time.sleep(2)
 
             # Lists of tests to run 
-            TestDiffer._compare_errors(test_data)
+            TestResultsDiffer._compare_errors(test_data)
                 
             # Compare database count to gold
             databaseDiff.compare_basic_counts()
             
             # Compare smart blackboard results
-            TestDiffer._compare_text(test_data.sorted_data_file, "SortedData", test_data)
+            TestResultsDiffer._compare_text(test_data.sorted_data_file, "SortedData", test_data)
 
             # Compare the rest of the database (non-BB)
-            TestDiffer._compare_text(test_data.test_dbdump, "DBDump", test_data)
+            TestResultsDiffer._compare_text(test_data.test_dbdump, "DBDump", test_data)
 
             # Compare html output
-            TestDiffer._compare_to_gold_html(test_data)
+            TestResultsDiffer._compare_to_gold_html(test_data)
             
             # Clean up tmp folder
             del_dir(img_gold)
@@ -832,8 +815,6 @@ class TestDiffer:
     # test_data: Test being performed
     def _compare_text(output_file, gold_file, test_data):
         gold_dir = Emailer.make_path(test_config.img_gold, test_data.image_name, test_data.image_name + gold_file + ".txt")
-        if(not Emailer.file_exists(gold_dir)):
-                gold_dir = Emailer.make_path(test_config.img_gold_parse,  test_data.image_name, test_data.image_name + gold_file + ".txt")
         if(not Emailer.file_exists(output_file)):
             return
         srtd_data = codecs.open(output_file, "r", "utf_8")
@@ -858,8 +839,6 @@ class TestDiffer:
     # Compare merged error log files
     def _compare_errors(test_data):
         gold_dir = Emailer.make_path(test_config.img_gold,  test_data.image_name, test_data.image_name + "SortedErrors.txt")
-        if(not Emailer.file_exists(gold_dir)):
-                gold_dir = Emailer.make_path(test_config.img_gold_parse, test_data.image_name, test_data.image_name + "SortedErrors.txt")
         common_log = codecs.open(test_data.sorted_log, "r", "utf_8")
         gold_log = codecs.open(gold_dir, "r", "utf_8")
         gold_dat = gold_log.read()
@@ -885,8 +864,6 @@ class TestDiffer:
     # the regression test against the gold standard html report
     def _compare_to_gold_html(test_data):
         gold_html_file = Emailer.make_path(test_config.img_gold, test_data.image_name, "Report", "index.html")
-        if(not Emailer.file_exists(gold_html_file)):
-            gold_html_file = Emailer.make_path(test_config.img_gold_parse, test_data.image_name, "Report", "index.html")
         htmlfolder = ""
         for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports")):
             if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", fs)):
@@ -915,11 +892,6 @@ class TestDiffer:
                 for fs in os.listdir(Emailer.make_path(test_config.img_gold, test_data.image_name)):
                     if (fs.endswith(".html")):
                         ListNewHTML.append(Emailer.make_path(test_config.img_gold, test_data.image_name, fs))
-            if(not test_config.img_gold_parse == "" or test_config.img_gold == test_case.img_gold_parse):
-                if(Emailer.file_exists(Emailer.make_path(test_config.img_gold_parse, test_data.image_name))):
-                    for fs in os.listdir(Emailer.make_path(test_config.img_gold_parse,test_data.image_name)):
-                        if (fs.endswith(".html")):
-                            ListNewHTML.append(Emailer.make_path(test_config.img_gold_parse, test_data.image_name, fs))
             #ensure both reports have the same number of files and are in the same order
             if(len(ListGoldHTML) != len(ListNewHTML)):
                 printerror(test_data, "The reports did not have the same number of files. One of the reports may have been corrupted")
@@ -929,7 +901,7 @@ class TestDiffer:
               
             total = {"Gold": 0, "New": 0}
             for x in range(0, len(ListGoldHTML)):
-                count = TestDiffer._compare_report_files(ListGoldHTML[x], ListNewHTML[x])
+                count = TestResultsDiffer._compare_report_files(ListGoldHTML[x], ListNewHTML[x])
                 total["Gold"]+=count[0]
                 total["New"]+=count[1]
             okay = "The test report matches the gold report."
@@ -958,8 +930,8 @@ class TestDiffer:
         a = a[a.find("<ul>"):]
         b = b[b.find("<ul>"):]
         
-        a_list = TestDiffer._split(a, 50)
-        b_list = TestDiffer._split(b, 50)
+        a_list = TestResultsDiffer._split(a, 50)
+        b_list = TestResultsDiffer._split(b, 50)
         if not len(a_list) == len(b_list):
             ex = (len(a_list), len(b_list))
             return ex
@@ -994,6 +966,7 @@ class TestData:
         # Error tracking
         self.printerror = []
         self.printout = []
+    
     def reset(self):
         self.image = ""
         self.image_file = ""
@@ -1710,7 +1683,12 @@ class TestRunner:
         
         logres =[]
         for test_data in test_data_list:  
-            logres.append(TestRunner._run_test(test_data))
+            TestRunner._run_autopsy_ingest(test_data)
+                
+            if test_config.args.rebuild:
+                TestRunner.rebuild(test_data)
+            else:
+                logres.append(TestRunner._run_test(test_data))
         
         Reports.write_html_foot()
         html.close()
@@ -1760,12 +1738,12 @@ class TestRunner:
             test_data.sorted_log = Emailer.make_local_path(output_path, test_data.image_name + "SortedErrors.txt")
             test_data_list.append(test_data)
         return test_data_list
- 
-    #TODO: figure out return type of _run_test (logres)
-    # TestData -> ???
-    def _run_test(test_data):
+
+    # TestData -> void
+    def _run_autopsy_ingest(test_data):
         """
-        Run Autopsy ingest for the image in test_data and run necessary comparisons
+        Run Autopsy ingest for the image in the given test data and
+        generate the necessary logs for rebuilding or diff.
         """
         global parsed
         global imgfail
@@ -1782,30 +1760,34 @@ class TestRunner:
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
-        # Autopsy has finished running, we will now process the results
-        
         # Dump the database before we diff or use it for rebuild
-        DatabaseDiff.dump_output_db(test_data)
+        TskDbDiff.dump_output_db(test_data)
 
         # merges logs into a single log for later diff / rebuild
         copy_logs(test_data)
         Logs.generate_log_data(test_data)
 
-        # Look for core exceptions
-        # @@@ Should be moved to TestDiffer, but it didn't know about logres -- need to look into that
-        logres = Logs.search_common_log("TskCoreException", test_data)
-        
         TestRunner._handle_solr(test_data)
         TestRunner._handle_exception(test_data)
+    
+    #TODO: figure out return type of _run_test (logres)
+    # TestData -> ???
+    def _run_test(test_data):
+        """
+        Run Autopsy ingest for the image in test_data and run necessary comparisons
+        """
+        # Look for core exceptions
+        # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
+        logres = Logs.search_common_log("TskCoreException", test_data)
 
         # @@@ We only need to create this here so that it can be passed into the
         # Report because it stores results.  Results should be stored somewhere else
         # and then this can get pushed into only the diffing code. 
-        databaseDiff = DatabaseDiff(test_data)
+        databaseDiff = TskDbDiff(test_data)
 
         # Now either diff or rebuild
         if not test_config.args.rebuild:
-            TestDiffer.run_diff(test_data, databaseDiff)
+            TestResultsDiffer.run_diff(test_data, databaseDiff)
         # If running in rebuild mode (-r)
         else:
             TestRunner.rebuild(test_data)
@@ -1817,7 +1799,6 @@ class TestRunner:
         clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
         if(failedbool):
             attachl.append(test_data.common_log_path)
-        test_config.reset()
         return logres
        
     # TestData -> void 
@@ -1847,20 +1828,17 @@ class TestRunner:
     def rebuild(test_data):
         # Errors to print
         errors = []
-        if(test_config.gold_parse == "" ):
-            test_config.gold_parse = test_config.gold
-            test_config.img_gold_parse = test_config.img_gold
         # Delete the current gold standards
-        gold_dir = test_config.img_gold_parse
-        clear_dir(test_config.img_gold_parse)
+        gold_dir = test_config.img_gold
+        clear_dir(test_config.img_gold)
         tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
         dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, test_case.test_db_file)
         dboutpth = Emailer.make_path(tmpdir, test_config.test_db_file)
         dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
         dbdumpinpth = test_data.test_dbdump
         dbdumpoutpth = Emailer.make_path(tmpdir, test_data.image_name + "DBDump.txt")
-        if not os.path.exists(test_config.img_gold_parse):
-            os.makedirs(test_config.img_gold_parse)
+        if not os.path.exists(test_config.img_gold):
+            os.makedirs(test_config.img_gold)
         if not os.path.exists(gold_dir):
             os.makedirs(gold_dir)
         if not os.path.exists(tmpdir):
@@ -1907,7 +1885,7 @@ class TestRunner:
         TestRunner.zipdir(img_gold, comprssr)
         comprssr.close()
         os.chdir(oldcwd)
-        del_dir(test_config.img_gold_parse)
+        del_dir(test_config.img_gold)
         okay = "Sucessfully rebuilt all gold standards."
         print_report(test_data, errors, "REBUILDING", okay)
 
