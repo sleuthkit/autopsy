@@ -1315,7 +1315,7 @@ class Logs:
     def _generate_common_log(test_data):
         try:
             logs_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs")
-            common_log = codecs.open(test_config.common_log_path, "w", "utf_8")
+            common_log = codecs.open(test_data.common_log_path, "w", "utf_8")
             warning_log = codecs.open(test_data.warning_log, "w", "utf_8")
             common_log.write("--------------------------------------------------\n")
             common_log.write(test_data.image_name + "\n")
@@ -1338,7 +1338,7 @@ class Logs:
             common_log.write("\n")
             common_log.close()
             print(test_data.sorted_log)
-            srtcmdlst = ["sort", test_config.common_log_path, "-o", test_data.sorted_log]
+            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.sorted_log]
             subprocess.call(srtcmdlst)
         except Exception as e:
             printerror(test_data, "Error: Unable to generate the common log.")
@@ -1426,7 +1426,7 @@ class Logs:
     # Searches the common log for any instances of a specific string.
     def search_common_log(string, test_data):
         results = []
-        log = codecs.open(test_config.common_log_path, "r", "utf_8")
+        log = codecs.open(test_data.common_log_path, "r", "utf_8")
         for line in log:
             if string in line:
                 results.append(line)
@@ -1756,11 +1756,17 @@ class TestRunner:
             test_data.warning_log = Emailer.make_local_path(output_path, "AutopsyLogs.txt")
             test_data.antlog_dir = Emailer.make_local_path(output_path, "antlog.txt")
             test_data.test_dbdump = Emailer.make_path(output_path, test_data.image_name + "Dump.txt")
-                
-
-        # Run autopsy for a single test to generate output file and do comparison
-    # test_data: TestData object populated with locations and such for test
+            test_data.common_log_path = Emailer.make_local_path(output_path, test_data.image_name + test_case.common_log)
+            test_data.sorted_log = Emailer.make_local_path(output_path, test_data.image_name + "SortedErrors.txt")
+            test_data_list.append(test_data)
+        return test_data_list
+ 
+    #TODO: figure out return type of _run_test (logres)
+    # TestData -> ???
     def _run_test(test_data):
+        """
+        Run Autopsy ingest for the image in test_data and run necessary comparisons
+        """
         global parsed
         global imgfail
         global failedbool
@@ -1776,35 +1782,21 @@ class TestRunner:
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
-
         # Autopsy has finished running, we will now process the results
-        test_config.common_log_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+test_case.common_log)
         
         # Dump the database before we diff or use it for rebuild
         DatabaseDiff.dump_output_db(test_data)
 
         # merges logs into a single log for later diff / rebuild
         copy_logs(test_data)
-        test_data.sorted_log = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name + "SortedErrors.txt")
         Logs.generate_log_data(test_data)
 
         # Look for core exceptions
         # @@@ Should be moved to TestDiffer, but it didn't know about logres -- need to look into that
         logres = Logs.search_common_log("TskCoreException", test_data)
         
-        # Cleanup SOLR: If NOT keeping Solr index (-k)
-        if not test_config.args.keep:
-            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
-            if clear_dir(solr_index):
-                print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
-        elif test_config.args.keep:
-            print_report(test_data, [], "KEEP SOLR INDEX", "Solr index has been kept.")
-
-        # If running in exception mode, print exceptions to log
-        if test_config.args.exception:
-            exceptions = search_logs(test_config.args.exception_string, test_data)
-            okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
-            print_report(test_data, exceptions, "EXCEPTION", okay)
+        TestRunner._handle_solr(test_data)
+        TestRunner._handle_exception(test_data)
 
         # @@@ We only need to create this here so that it can be passed into the
         # Report because it stores results.  Results should be stored somewhere else
@@ -1824,12 +1816,32 @@ class TestRunner:
         # Reset the test_config and return the tests sucessfully finished
         clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
         if(failedbool):
-            attachl.append(test_config.common_log_path)
+            attachl.append(test_data.common_log_path)
         test_config.reset()
         return logres
-        
+       
+    # TestData -> void 
+    def _handle_solr(test_data):
+        """
+        Clean up SOLR index if in keep mode (-k)
+        """
+        if not test_config.args.keep:
+            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
+            if clear_dir(solr_index):
+                print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
+        else:
+            print_report(test_data, [], "KEEP SOLR INDEX", "Solr index has been kept.")
 
-        
+    # TestData -> void
+    def _handle_exception(test_data):
+        """
+        If running in exception mode, print exceptions to log
+        """
+        if test_config.args.exception:
+            exceptions = search_logs(test_config.args.exception_string, test_data)
+            okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
+            print_report(test_data, exceptions, "EXCEPTION", okay)
+    
     # Rebuilds the gold standards by copying the test-generated database
     # and html report files into the gold directory. Autopsy has already been run
     def rebuild(test_data):
