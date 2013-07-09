@@ -71,7 +71,7 @@ import srcupdater
 #
 # Path:         A path to a file or directory.
 # ConfigFile:   An XML file formatted according to the template in myconfig.xml
-#
+# ParsedConfig: A dom object that represents a ConfigFile
 #
 
 
@@ -203,7 +203,8 @@ class TestConfiguration:
         # Initialize Attributes
         self._init_logs()
         self._init_imgs()
-      
+        self._init_build_info()
+
     def get_image_name(self, image_file):
         path_end = image_file.rfind("/")
         path_end2 = image_file.rfind("\\")
@@ -284,7 +285,27 @@ class TestConfiguration:
         log_name = self.output_dir + "\\regression.log"
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
-
+    def _init_build_info(self):
+        """
+        Initializes paths that point to information necessary to run the AutopsyIngest 
+        """
+        global parsed
+        if(test_config.args.list):
+            build_elements = parsed.getElementsByTagName("build")
+            if(len(build_elements) <= 0):
+                build_path = Emailer.make_path("..", "build.xml")
+            else:
+                build_element = build_elements[0]
+                build_path = build_element.getAttribute("value").encode().decode("utf_8")
+                if(build_path == None):
+                    build_path = Emailer.make_path("..", "build.xml")
+        else:
+            build_path = Emailer.make_path("..", "build.xml")
+        test_config.build_path = build_path
+        test_config.known_bad_path = Emailer.make_path(test_config.input_dir, "notablehashes.txt-md5.idx")
+        test_config.keyword_path = Emailer.make_path(test_config.input_dir, "notablekeywords.xml")
+        test_config.nsrl_path = Emailer.make_path(test_config.input_dir, "nsrl.txt-md5.idx")
+    
     # ConfigFile -> void
     def _load_config_file(self, config_file):
         """
@@ -310,7 +331,7 @@ class TestConfiguration:
             else:
                 self.gold_parse = self.gold
                 self.img_gold_parse = Emailer.make_path(self.gold_parse, 'tmp')
-                
+               
             # Generate the top navbar of the HTML for easy access to all images
             images = []
             for element in parsed.getElementsByTagName("image"):
@@ -412,7 +433,7 @@ class DatabaseDiff:
     def _count_output_artifacts(self):
         if not self.autopsy_artifacts:
             autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
             autopsy_con = sqlite3.connect(autopsy_db_file)
             autopsy_cur = autopsy_con.cursor()
             autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -424,7 +445,7 @@ class DatabaseDiff:
     def _count_output_attributes(self):
         if self.autopsy_attributes == 0:
             autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
             autopsy_con = sqlite3.connect(autopsy_db_file)
             autopsy_cur = autopsy_con.cursor()
             autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -437,7 +458,7 @@ class DatabaseDiff:
     def _count_output_objects(self):
         if self.autopsy_objects == 0:
             autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
             autopsy_con = sqlite3.connect(autopsy_db_file)
             autopsy_cur = autopsy_con.cursor()
             autopsy_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -448,9 +469,9 @@ class DatabaseDiff:
         # is passed in so that we do not need separate methods for gold and output.
     def _count_gold_artifacts(self):
         if not self.gold_artifacts:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_case.test_db_file)
+            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
             if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_case.test_db_file)
+                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
@@ -466,9 +487,9 @@ class DatabaseDiff:
                 
     def _count_gold_attributes(self):
         if self.gold_attributes == 0:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_case.test_db_file)
+            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
             if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_case.test_db_file)
+                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
@@ -476,9 +497,9 @@ class DatabaseDiff:
 
     def _count_gold_objects(self):
         if self.gold_objects == 0:
-            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_case.test_db_file)
+            gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
             if(not Emailer.file_exists(gold_db_file)):
-                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_case.test_db_file)
+                gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
@@ -556,14 +577,14 @@ class DatabaseDiff:
 
         # Get connection to output database from current run
         autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
         autopsy_con = sqlite3.connect(autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
 
                 # Get connection to gold DB and count artifacts, etc.
-        gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_case.test_db_file)
+        gold_db_file = Emailer.make_path(test_config.img_gold, self.test_data.image_name, test_config.test_db_file)
         if(not Emailer.file_exists(gold_db_file)):
-            gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_case.test_db_file)
+            gold_db_file = Emailer.make_path(test_config.img_gold_parse, self.test_data.image_name, test_config.test_db_file)
         try:
             self._count_gold_objects()
             self._count_gold_artifacts()
@@ -590,7 +611,7 @@ class DatabaseDiff:
         exceptions = []
         
         autopsy_db_file = Emailer.make_path(test_config.output_dir, self.test_data.image_name,
-                                              test_config.Img_Test_Folder, test_case.test_db_file)
+                                              test_config.Img_Test_Folder, test_config.test_db_file)
                 # Connect again and count things
         autopsy_con = sqlite3.connect(autopsy_db_file)
         try:
@@ -717,7 +738,7 @@ class DatabaseDiff:
     def _dump_output_db_nonbb(test_data):
         # Make a copy of the DB
         autopsy_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
         backup_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
                                           test_config.Img_Test_Folder, "autopsy_backup.db")
         copy_file(autopsy_db_file,backup_db_file)
@@ -742,7 +763,7 @@ class DatabaseDiff:
     # Dumps the given database to text files for later comparison
     def dump_output_db(test_data):
         autopsy_db_file = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                          test_config.Img_Test_Folder, test_case.test_db_file)
+                                          test_config.Img_Test_Folder, test_config.test_db_file)
         autopsy_con = sqlite3.connect(autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
         # Try to query the databases. Ignore any exceptions, the function will
@@ -867,10 +888,10 @@ class TestDiffer:
         if(not Emailer.file_exists(gold_html_file)):
             gold_html_file = Emailer.make_path(test_config.img_gold_parse, test_data.image_name, "Report", "index.html")
         htmlfolder = ""
-        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports")):
-            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", fs)):
+        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports")):
+            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
+        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
         
         
         try:
@@ -885,16 +906,16 @@ class TestDiffer:
                 return
             #Find all gold .html files belonging to this test_config
             ListGoldHTML = []
-            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder)):
+            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder)):
                 if(fs.endswith(".html")):
-                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder, fs))
+                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder, fs))
             #Find all new .html files belonging to this test_config
             ListNewHTML = []
             if(os.path.exists(Emailer.make_path(test_config.img_gold, test_data.image_name))):
                 for fs in os.listdir(Emailer.make_path(test_config.img_gold, test_data.image_name)):
                     if (fs.endswith(".html")):
                         ListNewHTML.append(Emailer.make_path(test_config.img_gold, test_data.image_name, fs))
-            if(not test_config.img_gold_parse == "" or test_case.img_gold == test_case.img_gold_parse):
+            if(not test_config.img_gold_parse == "" or test_config.img_gold == test_case.img_gold_parse):
                 if(Emailer.file_exists(Emailer.make_path(test_config.img_gold_parse, test_data.image_name))):
                     for fs in os.listdir(Emailer.make_path(test_config.img_gold_parse,test_data.image_name)):
                         if (fs.endswith(".html")):
@@ -1749,21 +1770,6 @@ class TestRunner:
             printerror(test_data, test_data.image_file + "\n")
             return
         
-        if(test_config.args.list):
-            element = parsed.getElementsByTagName("build")
-            if(len(element)<=0):
-                toval = Emailer.make_path("..", "build.xml")
-            else:
-                element = element[0]
-                toval = element.getAttribute("value").encode().decode("utf_8")
-                if(toval==None):
-                    toval = Emailer.make_path("..", "build.xml")
-        else:
-            toval = Emailer.make_path("..", "build.xml")
-        test_config.build_path = toval    
-        test_config.known_bad_path = Emailer.make_path(test_case.input_dir, "notablehashes.txt-md5.idx")
-        test_config.keyword_path = Emailer.make_path(test_case.input_dir, "notablekeywords.xml")
-        test_config.nsrl_path = Emailer.make_path(test_case.input_dir, "nsrl.txt-md5.idx")
         logging.debug("--------------------")
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
@@ -1772,7 +1778,7 @@ class TestRunner:
 
 
         # Autopsy has finished running, we will now process the results
-        test_config.common_log_path = Emailer.make_local_path(test_case.output_dir, test_data.image_name, test_data.image_name+test_case.common_log)
+        test_config.common_log_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+test_case.common_log)
         
         # Dump the database before we diff or use it for rebuild
         DatabaseDiff.dump_output_db(test_data)
@@ -1788,7 +1794,7 @@ class TestRunner:
         
         # Cleanup SOLR: If NOT keeping Solr index (-k)
         if not test_config.args.keep:
-            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
+            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
             if clear_dir(solr_index):
                 print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
         elif test_config.args.keep:
@@ -1816,7 +1822,7 @@ class TestRunner:
         # Make the CSV log and the html log viewer
         Reports.generate_reports(test_config.csv, databaseDiff, test_data)
         # Reset the test_config and return the tests sucessfully finished
-        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
+        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
         if(failedbool):
             attachl.append(test_config.common_log_path)
         test_config.reset()
@@ -1830,13 +1836,13 @@ class TestRunner:
         # Errors to print
         errors = []
         if(test_config.gold_parse == "" ):
-            test_config.gold_parse = test_case.gold
-            test_config.img_gold_parse = test_case.img_gold
+            test_config.gold_parse = test_config.gold
+            test_config.img_gold_parse = test_config.img_gold
         # Delete the current gold standards
         gold_dir = test_config.img_gold_parse
         clear_dir(test_config.img_gold_parse)
         tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
-        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, test_case.test_db_file)
+        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, test_case.test_db_file)
         dboutpth = Emailer.make_path(tmpdir, test_config.test_db_file)
         dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
         dbdumpinpth = test_data.test_dbdump
@@ -1860,10 +1866,10 @@ class TestRunner:
             print(traceback.format_exc())
         # Rebuild the HTML report
         htmlfolder = ""
-        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports")):
-            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", fs)):
+        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports")):
+            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_case.Img_Test_Folder, "Reports", htmlfolder)
+        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder)
         
         html_path = Emailer.make_path(test_config.output_dir, test_data.image_name,
                                      test_config.Img_Test_Folder, "Reports")
@@ -1902,7 +1908,7 @@ class TestRunner:
     # the build.xml file through ant
     def _run_ant(test_data):
         # Set up the directories
-        test_config_path = os.path.join(test_case.output_dir, test_data.image_name)
+        test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
         if Emailer.dir_exists(test_config_path):
             shutil.rmtree(test_config_path)
         os.makedirs(test_config_path)
@@ -1915,13 +1921,13 @@ class TestRunner:
         test_config.ant.append("-l")
         test_config.ant.append(test_data.antlog_dir)
         test_config.ant.append("-Dimg_path=" + test_data.image_file)
-        test_config.ant.append("-Dknown_bad_path=" + test_case.known_bad_path)
-        test_config.ant.append("-Dkeyword_path=" + test_case.keyword_path)
-        test_config.ant.append("-Dnsrl_path=" + test_case.nsrl_path)
-        test_config.ant.append("-Dgold_path=" + Emailer.make_path(test_case.gold))
-        test_config.ant.append("-Dout_path=" + Emailer.make_local_path(test_case.output_dir, test_data.image_name))
-        test_config.ant.append("-Dignore_unalloc=" + "%s" % test_case.args.unallocated)
-        test_config.ant.append("-Dtest.timeout=" + str(test_case.timeout))
+        test_config.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
+        test_config.ant.append("-Dkeyword_path=" + test_config.keyword_path)
+        test_config.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
+        test_config.ant.append("-Dgold_path=" + Emailer.make_path(test_config.gold))
+        test_config.ant.append("-Dout_path=" + Emailer.make_local_path(test_config.output_dir, test_data.image_name))
+        test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
+        test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
         
         printout(test_data, "Ingesting Image:\n" + test_data.image_file + "\n")
         printout(test_data, "CMD: " + " ".join(test_config.ant))
