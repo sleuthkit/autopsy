@@ -36,6 +36,7 @@ import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,12 +45,16 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.AbstractFile;
 
 public class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
@@ -286,9 +291,12 @@ public class ReportHTML implements TableReportModule {
         for(String columnHeader : columnHeaders) {
             htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n");
         }
+        
+        // For file tag artifacts, add a column for a hyperlink to a local copy of the tagged file.            
         if (artifactType.equals(ARTIFACT_TYPE.TSK_TAG_FILE)) {
             htmlOutput.append("\t\t<th>Local File</th>\n");        
         }
+        
         htmlOutput.append("\t</tr>\n</thead>\n");
         
         try {
@@ -335,10 +343,64 @@ public class ReportHTML implements TableReportModule {
 
     /**
      * Add a row to the current table.
+     * 
      * @param row values for each cell in the row
      * @param sourceArtifact source blackboard artifact for the table data 
      */
     public void addRow(List<String> row, BlackboardArtifact sourceArtifact) {
+        // For file tag artifacts, save a local copy of the tagged file and include a hyperlink to it in the row.
+        if (sourceArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+            try {
+                // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
+                AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
+                String fileName = file.getName();
+                String objectIdSuffix = "_" + sourceArtifact.getObjectID();
+                int lastDotIndex = fileName.lastIndexOf(".");
+                if (lastDotIndex != -1 && lastDotIndex != 0) {
+                    // The file name has a conventional extension. Insert the object id before the '.' of the extension.
+                    fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+                }
+                else {
+                    // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
+                    // Add the object id to the end of the file name.
+                    fileName += objectIdSuffix;
+                }
+                
+                // Construct a path for the local file that puts it in a folder with the same name as the tag. 
+                HashSet<String> tagNames = Tags.getUniqueTagNames(sourceArtifact);
+                StringBuilder localFilePath = new StringBuilder();
+                localFilePath.append(path);
+                localFilePath.append(File.separator);
+                if (!tagNames.isEmpty()) {
+                    localFilePath.append(tagNames.iterator().next());
+                }
+                else {
+                    localFilePath.append("Misc");
+                }
+                localFilePath.append(fileName);
+                
+                // If the local file doesn't already exist, create it now. 
+                // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
+                File localFile = new File(localFilePath.toString());
+                if (!localFile.exists()) {
+                    ExtractFscContentVisitor.extract(file, localFile, null, null);
+                }
+                
+                // Add the hyperlink to the row. A column header for it was created in startTable().
+                StringBuilder localFileLink = new StringBuilder();
+                localFileLink.append("<a href=\"file:///");
+                localFileLink.append(localFilePath.toString());
+                localFileLink.append("\">");
+                localFileLink.append(localFilePath.toString());
+                localFileLink.append("</a>");
+                row.add(localFileLink.toString());              
+            } 
+            catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to get AbstractFile by ID.", ex);
+                row.add("");
+            }                                    
+        }
+        
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n");
         for (String cell : row) {
@@ -349,10 +411,12 @@ public class ReportHTML implements TableReportModule {
         
         try {
             out.write(builder.toString());
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write row to out.");
-        } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.");
+        } 
+        catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
+        } 
+        catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
         
@@ -593,13 +657,13 @@ public class ReportHTML implements TableReportModule {
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Tagged Files.png"));
+            output = new FileOutputStream(new File(path + File.separator + "File Tags.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Tagged Results.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Result Tags.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -608,6 +609,39 @@ public class Tags implements AutopsyVisitableItem {
 
         return null;
     }
+    
+    /**
+     * Looks up the tag names associated with an artifact.
+     * 
+     * @param artifact The artifact
+     * @return A set of unique tag names
+     */
+    public static HashSet<String> getUniqueTagNames(BlackboardArtifact artifact) {
+        HashSet<String> tagNames = new HashSet<>();
+
+        List<BlackboardArtifact> tags;
+        try {
+            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() ||
+                artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                tags = new ArrayList<>();
+                tags.add(artifact);
+            } else {
+                tags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT, artifact.getArtifactID());
+            }
+
+            for (BlackboardArtifact tag : tags) {
+                String whereClause = "WHERE artifact_id=" + tag.getArtifactID() + " AND attribute_type_id=" + ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID();
+                List<BlackboardAttribute> attributes = Case.getCurrentCase().getSleuthkitCase().getMatchingAttributes(whereClause);
+                for (BlackboardAttribute attr : attributes) {
+                    tagNames.add(attr.getValueString());
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getArtifactID(), ex);
+        }
+
+        return tagNames;
+    }    
     
     public interface Taggable {
         void createTag(String name, String comment);
