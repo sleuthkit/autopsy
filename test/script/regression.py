@@ -290,7 +290,7 @@ class TestConfiguration:
         Initializes paths that point to information necessary to run the AutopsyIngest 
         """
         global parsed
-        if(test_config.args.list):
+        if(self.args.list):
             build_elements = parsed.getElementsByTagName("build")
             if(len(build_elements) <= 0):
                 build_path = Emailer.make_path("..", "build.xml")
@@ -301,10 +301,10 @@ class TestConfiguration:
                     build_path = Emailer.make_path("..", "build.xml")
         else:
             build_path = Emailer.make_path("..", "build.xml")
-        test_config.build_path = build_path
-        test_config.known_bad_path = Emailer.make_path(test_config.input_dir, "notablehashes.txt-md5.idx")
-        test_config.keyword_path = Emailer.make_path(test_config.input_dir, "notablekeywords.xml")
-        test_config.nsrl_path = Emailer.make_path(test_config.input_dir, "nsrl.txt-md5.idx")
+        self.build_path = build_path
+        self.known_bad_path = Emailer.make_path(self.input_dir, "notablehashes.txt-md5.idx")
+        self.keyword_path = Emailer.make_path(self.input_dir, "notablekeywords.xml")
+        self.nsrl_path = Emailer.make_path(self.input_dir, "nsrl.txt-md5.idx")
     
     # ConfigFile -> void
     def _load_config_file(self, config_file):
@@ -1756,7 +1756,7 @@ class TestRunner:
             test_data.warning_log = Emailer.make_local_path(output_path, "AutopsyLogs.txt")
             test_data.antlog_dir = Emailer.make_local_path(output_path, "antlog.txt")
             test_data.test_dbdump = Emailer.make_path(output_path, test_data.image_name + "Dump.txt")
-            test_data.common_log_path = Emailer.make_local_path(output_path, test_data.image_name + test_case.common_log)
+            test_data.common_log_path = Emailer.make_local_path(output_path, test_data.image_name + test_config.common_log)
             test_data.sorted_log = Emailer.make_local_path(output_path, test_data.image_name + "SortedErrors.txt")
             test_data_list.append(test_data)
         return test_data_list
