@@ -1946,12 +1946,13 @@ def main():
     redo = False
     errorem = ""
     args = Args()
+    parse_result = args.parse()
     test_case = TestConfiguration(args)
     attachl = []
     passed = False
     # The arguments were given wrong:
-    if not args.parse():
-        case.reset()
+    if not parse_result:
+        test_case.reset()
         return
     if(not args.fr):
         antin = ["ant"]
