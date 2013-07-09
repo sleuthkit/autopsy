@@ -1670,7 +1670,7 @@ class DirNotFoundException(Exception):
 #############################
 #   Main Testing Functions  #
 #############################
-class Test_Runner:
+class TestRunner:
 
     def run_tests():
         """
@@ -1683,13 +1683,13 @@ class Test_Runner:
         global html
         global attachl
        
-        test_data_list = Test_Runner._generate_test_data()
+        test_data_list = TestRunner._generate_test_data()
  
         Reports.html_add_images(test_config.images)
         
         logres =[]
         for test_data in test_data_list:  
-            logres.append(Test_Runner._run_test(test_data))
+            logres.append(TestRunner._run_test(test_data))
         
         Reports.write_html_foot()
         html.close()
@@ -1767,7 +1767,7 @@ class Test_Runner:
         logging.debug("--------------------")
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
-        Test_Runner._run_ant(test_data)
+        TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
 
@@ -1810,7 +1810,7 @@ class Test_Runner:
             TestDiffer.run_diff(test_data, databaseDiff)
         # If running in rebuild mode (-r)
         else:
-            Test_Runner.rebuild(test_data)
+            TestRunner.rebuild(test_data)
 
         # @@@ COnsider if we want to do this for a rebuild. 
         # Make the CSV log and the html log viewer
@@ -1886,7 +1886,7 @@ class Test_Runner:
         img_gold = "tmp"
         img_archive = Emailer.make_path(test_data.image_name+"-archive.zip")
         comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
-        Test_Runner.zipdir(img_gold, comprssr)
+        TestRunner.zipdir(img_gold, comprssr)
         comprssr.close()
         os.chdir(oldcwd)
         del_dir(test_config.img_gold_parse)
@@ -1973,7 +1973,7 @@ def main():
             theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
     # Otherwise test away!
-    Test_Runner.run_tests()
+    TestRunner.run_tests()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)      
