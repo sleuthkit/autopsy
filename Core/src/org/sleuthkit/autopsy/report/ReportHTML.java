@@ -351,6 +351,16 @@ public class ReportHTML implements TableReportModule {
         // For file tag artifacts, save a local copy of the tagged file and include a hyperlink to it in the row.
         if (sourceArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
             try {
+                // Make a folder for the local file with the same name as the tag.
+                StringBuilder localFilePath = new StringBuilder();
+                localFilePath.append(path);
+                HashSet<String> tagNames = Tags.getUniqueTagNames(sourceArtifact);
+                localFilePath.append(tagNames.iterator().next());
+                File tagFolder = new File(localFilePath.toString());
+                if (!tagFolder.exists()) { 
+                    tagFolder.mkdirs();
+                }
+                                
                 // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
                 AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
                 String fileName = file.getName();
@@ -364,19 +374,8 @@ public class ReportHTML implements TableReportModule {
                     // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
                     // Add the object id to the end of the file name.
                     fileName += objectIdSuffix;
-                }
-                
-                // Construct a path for the local file that puts it in a folder with the same name as the tag. 
-                HashSet<String> tagNames = Tags.getUniqueTagNames(sourceArtifact);
-                StringBuilder localFilePath = new StringBuilder();
-                localFilePath.append(path);
+                }                                
                 localFilePath.append(File.separator);
-                if (!tagNames.isEmpty()) {
-                    localFilePath.append(tagNames.iterator().next());
-                }
-                else {
-                    localFilePath.append("Misc");
-                }
                 localFilePath.append(fileName);
                 
                 // If the local file doesn't already exist, create it now. 
