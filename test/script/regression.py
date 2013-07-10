@@ -92,6 +92,14 @@ DB_FILENAME = "autopsy.db"
 # Backup database filename
 BACKUP_DB_FILENAME = "autopsy_backup.db"
 
+# TODO: Double check this purpose statement
+# Folder name for gold standard database testing
+IMG_TEST_FOLDER = "AutopsyTestCase"
+
+# TODO: Double check this purpose statement
+# The filename of the log to store error messages
+COMMON_LOG = "AutopsyErrors.txt"
+
 Day = 0
 #-------------------------------------------------------------#
 # Parses argv and stores booleans to match command line input #
@@ -188,9 +196,6 @@ class TestConfiguration:
         self.input_dir = Emailer.make_local_path("..","input")  # Path : the Path to the input directory
         self.gold = Emailer.make_path("..", "output", "gold")   # Path : the Path to the gold directory
         self.img_gold = Emailer.make_path(self.gold, 'tmp')     
-        self.common_log = "AutopsyErrors.txt"                  
-        self.test_db_file = "autopsy.db"
-        self.Img_Test_Folder = "AutopsyTestCase"
         # Logs:
         self.csv = ""               
         self.global_csv = ""
@@ -835,10 +840,10 @@ class TestResultsDiffer:
     def _compare_to_gold_html(test_data):
         gold_html_file = Emailer.make_path(test_config.img_gold, test_data.image_name, "Report", "index.html")
         htmlfolder = ""
-        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports")):
-            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", fs)):
+        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports")):
+            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder, "HTML Report")
+        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder, "HTML Report")
         
         
         try:
@@ -853,9 +858,9 @@ class TestResultsDiffer:
                 return
             #Find all gold .html files belonging to this test_config
             ListGoldHTML = []
-            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder)):
+            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder)):
                 if(fs.endswith(".html")):
-                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder, fs))
+                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder, fs))
             #Find all new .html files belonging to this test_config
             ListNewHTML = []
             if(os.path.exists(Emailer.make_path(test_config.img_gold, test_data.image_name))):
@@ -973,9 +978,9 @@ class TestData:
         if(db_type == DBType.GOLD):
             db_path = Emailer.make_path(self.main_config.img_gold, self.image_name, DB_FILENAME) 
         elif(db_type == DBType.OUTPUT):
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, self.main_config.Img_Test_Folder, DB_FILENAME)
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, IMG_TEST_FOLDER, DB_FILENAME)
         else:
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, self.main_config.Img_Test_Folder, BACKUP_DB_FILENAME)
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, IMG_TEST_FOLDER, BACKUP_DB_FILENAME)
         return db_path 
 
 class Reports:
@@ -1193,7 +1198,7 @@ class Reports:
             vars.append( str(database.autopsy_objects) )
             vars.append( str(database.get_artifacts_count()) )
             vars.append( str(database.autopsy_attributes) )
-            vars.append( Emailer.make_local_path("gold", test_data.image_name, test_config.test_db_file) )
+            vars.append( Emailer.make_local_path("gold", test_data.image_name, DB_FILENAME) )
             vars.append( database.get_artifact_comparison() )
             vars.append( database.get_attribute_comparison() )
             vars.append( Emailer.make_local_path("gold", test_data.image_name, "standard.html") )
@@ -1722,7 +1727,7 @@ class TestRunner:
             test_data.warning_log = Emailer.make_local_path(output_path, "AutopsyLogs.txt")
             test_data.antlog_dir = Emailer.make_local_path(output_path, "antlog.txt")
             test_data.test_dbdump = Emailer.make_path(output_path, test_data.image_name + "Dump.txt")
-            test_data.common_log_path = Emailer.make_local_path(output_path, test_data.image_name + test_config.common_log)
+            test_data.common_log_path = Emailer.make_local_path(output_path, test_data.image_name + COMMON_LOG)
             test_data.sorted_log = Emailer.make_local_path(output_path, test_data.image_name + "SortedErrors.txt")
             test_data_list.append(test_data)
         return test_data_list
@@ -1784,7 +1789,7 @@ class TestRunner:
         # Make the CSV log and the html log viewer
         Reports.generate_reports(test_config.csv, databaseDiff, test_data)
         # Reset the test_config and return the tests sucessfully finished
-        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "keywordsearch"))
+        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "ModuleOutput", "keywordsearch"))
         if(failedbool):
             attachl.append(test_data.common_log_path)
         return logres
@@ -1795,7 +1800,7 @@ class TestRunner:
         Clean up SOLR index if in keep mode (-k)
         """
         if not test_config.args.keep:
-            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "ModuleOutput", "KeywordSearch")
+            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "ModuleOutput", "KeywordSearch")
             if clear_dir(solr_index):
                 print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
         else:
@@ -1820,8 +1825,8 @@ class TestRunner:
         gold_dir = test_config.img_gold
         clear_dir(test_config.img_gold)
         tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
-        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, test_case.test_db_file)
-        dboutpth = Emailer.make_path(tmpdir, test_config.test_db_file)
+        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, test_case.test_db_file)
+        dboutpth = Emailer.make_path(tmpdir, DB_FILENAME)
         dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
         dbdumpinpth = test_data.test_dbdump
         dbdumpoutpth = Emailer.make_path(tmpdir, test_data.image_name + "DBDump.txt")
@@ -1844,13 +1849,13 @@ class TestRunner:
             print(traceback.format_exc())
         # Rebuild the HTML report
         htmlfolder = ""
-        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports")):
-            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", fs)):
+        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports")):
+            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_config.Img_Test_Folder, "Reports", htmlfolder)
+        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder)
         
         html_path = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                     test_config.Img_Test_Folder, "Reports")
+                                     IMG_TEST_FOLDER, "Reports")
         try:
             if not os.path.exists(Emailer.make_path(tmpdir, htmlfolder)):
                 os.makedirs(Emailer.make_path(tmpdir, htmlfolder))
@@ -1965,7 +1970,6 @@ class OS:
       
 if __name__ == "__main__":
     global SYS
-    print(DBType.OUTPUT) 
     if _platform == "linux" or _platform == "linux2":
         SYS = OS.LINUX
     elif _platform == "darwin":
