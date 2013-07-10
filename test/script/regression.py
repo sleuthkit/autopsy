@@ -95,7 +95,7 @@ BACKUP_DB_FILENAME = "autopsy_backup.db"
 
 # TODO: Double check this purpose statement
 # Folder name for gold standard database testing
-IMG_TEST_FOLDER = "AutopsyTestCase"
+AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
 # TODO: Double check this purpose statement
 # The filename of the log to store error messages
@@ -450,8 +450,8 @@ class TskDbDiff(object):
         self.artifact_comparison = []
         self.attribute_comparison = []
         self.test_data = test_data
-        self.autopsy_db_file = self.test_data.getDBPath(DBType.OUTPUT)
-        self.gold_db_file = self.test_data.getDBPath(DBType.GOLD)
+        self.autopsy_db_file = self.test_data.get_db_path(DBType.OUTPUT)
+        self.gold_db_file = self.test_data.get_db_path(DBType.GOLD)
     
     def clear(self):
         self.gold_artifacts = []
@@ -760,7 +760,7 @@ class TskDbDiff(object):
                 rw = autopsy_cur2.fetchone()
                 
             # Now sort the file
-            srtcmdlst = ["sort", test_data.autopsy_data_file, "-o", test_data.sorted_data_file]
+            srtcmdlst = ["sort", test_data.autopsy_data_file, "-o", test_data.get_sorted_data_path(DBType.OUTPUT)]
             subprocess.call(srtcmdlst)
             print(test_data.artifact_fail)
             if(test_data.artifact_fail > 0):
@@ -777,8 +777,8 @@ class TskDbDiff(object):
             test_data: the TestData that corresponds with this dump.
         """ 
         # Make a copy of the DB
-        autopsy_db_file = test_data.getDBPath(DBType.OUTPUT)
-        backup_db_file = test_data.getDBPath(DBType.BACKUP)
+        autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
+        backup_db_file = test_data.get_db_path(DBType.BACKUP)
         copy_file(autopsy_db_file, backup_db_file)
         autopsy_con = sqlite3.connect(backup_db_file)
         
@@ -804,7 +804,7 @@ class TskDbDiff(object):
         Args:
             test_data: the TestData that corresponds to this dump. 
         """
-        autopsy_db_file = test_data.getDBPath(DBType.OUTPUT)
+        autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
         autopsy_con = sqlite3.connect(autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
         # Try to query the databases. Ignore any exceptions, the function will
@@ -847,7 +847,7 @@ class TestResultsDiffer(object):
             databaseDiff.compare_basic_counts()
             
             # Compare smart blackboard results
-            TestResultsDiffer._compare_text(test_data.sorted_data_file, "SortedData", test_data)
+            TestResultsDiffer._compare_text(test_data.get_sorted_data_path(DBType.OUTPUT), "SortedData", test_data)
 
             # Compare the rest of the database (non-BB)
             TestResultsDiffer._compare_text(test_data.test_dbdump, "DBDump", test_data)
@@ -886,7 +886,7 @@ class TestResultsDiffer(object):
         if (not(gold_dat == srtd_dat)):
             diff_dir = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+gold_file+"-Diff.txt")
             diff_file = codecs.open(diff_dir, "wb", "utf_8") 
-            dffcmdlst = ["diff", test_data.sorted_data_file, gold_dir]
+            dffcmdlst = ["diff", test_data.get_sorted_data_path(DBType.OUTPUT), gold_dir]
             subprocess.call(dffcmdlst, stdout = diff_file)
             global attachl
             global errorem
@@ -934,10 +934,10 @@ class TestResultsDiffer(object):
         """
         gold_html_file = Emailer.make_path(test_config.img_gold, test_data.image_name, "Report", "index.html")
         htmlfolder = ""
-        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports")):
-            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", fs)):
+        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports")):
+            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder, "HTML Report")
+        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder, "HTML Report")
         
         
         try:
@@ -952,9 +952,9 @@ class TestResultsDiffer(object):
                 return
             #Find all gold .html files belonging to this test_config
             ListGoldHTML = []
-            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder)):
+            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder)):
                 if(fs.endswith(".html")):
-                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder, fs))
+                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder, fs))
             #Find all new .html files belonging to this test_config
             ListNewHTML = []
             if(os.path.exists(Emailer.make_path(test_config.img_gold, test_data.image_name))):
@@ -1033,12 +1033,12 @@ class TestData(object):
         image_name: a String, the image file's name with a trailing (0)
         output_path: pathto_Dir, the output directory for this TestData
         autopsy_data_file: a pathto_File, the IMAGE_NAMEAutopsy_data.txt file
-        sorted_data_file: a pathto_File, the IMAGENAMESorted_Autopsy_data.txt file
         warning_log: a pathto_File, the AutopsyLogs.txt file
         antlog_dir: a pathto_File, the antlog.txt file
         test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
         common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
         sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
+        reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
         end_date: a String representation of the TestData's end date
@@ -1066,12 +1066,13 @@ class TestData(object):
         self.image_name = self.image + "(0)"
         self.output_path = Emailer.make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = Emailer.make_path(self.output_path, self.image_name + "Autopsy_data.txt")
-        self.sorted_data_file = Emailer.make_path(self.output_path, "Sorted_Autopsy_data.txt")
         self.warning_log = Emailer.make_local_path(self.output_path, "AutopsyLogs.txt")
         self.antlog_dir = Emailer.make_local_path(self.output_path, "antlog.txt")
         self.test_dbdump = Emailer.make_path(self.output_path, self.image_name + "Dump.txt")
         self.common_log_path = Emailer.make_local_path(self.output_path, self.image_name + COMMON_LOG)
         self.sorted_log = Emailer.make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
+        self.reports_dir = Emailer.make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
+        self.gold_data_dir = Emailer.make_path(self.main_config.img_gold, self.image_name)
         self.total_test_time = ""
         self.start_date = ""
         self.end_date = ""
@@ -1092,7 +1093,6 @@ class TestData(object):
         self.sorted_log = ""
         self.warning_log = ""
         self.autopsy_data_file = ""
-        self.sorted_data_file = ""
         self.common_log_path = ""
         self.antlog_dir = ""
         self.test_dbdump = ""
@@ -1108,20 +1108,51 @@ class TestData(object):
         self.printerror = []
         self.printout = []
 
-    def getDBPath(self, db_type):
+    def get_db_path(self, db_type):
         """Get the path to the database file that corresponds to the given DBType.
         
         Args:
             DBType: the DBType of the path to be generated.
         """
         if(db_type == DBType.GOLD):
-            db_path = Emailer.make_path(self.main_config.img_gold, self.image_name, DB_FILENAME) 
+            db_path = Emailer.make_path(self.gold_data_dir, DB_FILENAME) 
         elif(db_type == DBType.OUTPUT):
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, IMG_TEST_FOLDER, DB_FILENAME)
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
         else:
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, IMG_TEST_FOLDER, BACKUP_DB_FILENAME)
+            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
         return db_path 
+    
+    def get_html_report_path(self, html_type):
+        """Get the path to the HTML Report folder that corresponds to the given DBType.
 
+        Args:
+            DBType: the DBType of the path to be generated.
+        """
+        if(html_type == DBType.GOLD):
+            return Emailer.make_path(self.gold_data_dir, "Report")
+        else:
+            # Autopsy creates an HTML report folder in the form AutopsyTestCase DATE-TIME
+            # It's impossible to get the exact time the folder was created, but the folder
+            # we are looking for is the only one in the self.reports_dir folder
+            html_path = ""
+            for fs in os.listdir(self.reports_dir):
+                html_path = Emailer.make_path(self.reports_dir, fs)
+                if os.path.isdir(html_path):
+                    break
+            return Emailer.make_path(html_path, "HTML Report")
+
+    def get_sorted_data_path(self, file_type):
+        """Get the path to the SortedData file that corresponds to the given DBType.
+
+        Args:
+            DBType: the DBType of the path to be generated
+        """
+        filename = self.image_name + "SortedData.txt"
+        if(file_type == DBType.GOLD):
+           return Emailer.make_path(self.gold_data_dir, filename) 
+        else:
+            return Emailer.make_path(self.output_path, filename) 
+ 
 class Reports(object):
     def generate_reports(csv_path, database, test_data):
         Reports._generate_html(database, test_data)
@@ -2011,7 +2042,7 @@ class TestRunner(object):
         # Make the CSV log and the html log viewer
         Reports.generate_reports(test_config.csv, databaseDiff, test_data)
         # Reset the test_config and return the tests sucessfully finished
-        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "ModuleOutput", "keywordsearch"))
+        clear_dir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "ModuleOutput", "keywordsearch"))
         if(failedbool):
             attachl.append(test_data.common_log_path)
         return logres
@@ -2023,7 +2054,7 @@ class TestRunner(object):
             test_data: the TestData 
         """
         if not test_config.args.keep:
-            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "ModuleOutput", "KeywordSearch")
+            solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "ModuleOutput", "KeywordSearch")
             if clear_dir(solr_index):
                 print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
         else:
@@ -2051,7 +2082,7 @@ class TestRunner(object):
         gold_dir = test_config.img_gold
         clear_dir(test_config.img_gold)
         tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
-        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, test_config.test_db_file)
+        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, DB_FILENAME) 
         dboutpth = Emailer.make_path(tmpdir, DB_FILENAME)
         dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
         dbdumpinpth = test_data.test_dbdump
@@ -2064,8 +2095,8 @@ class TestRunner(object):
             os.makedirs(tmpdir)
         try:
             copy_file(dbinpth, dboutpth)
-            if Emailer.file_exists(test_data.sorted_data_file):
-                copy_file(test_data.sorted_data_file, dataoutpth)
+            if Emailer.file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
+                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT, dataoutpth))
             copy_file(dbdumpinpth, dbdumpoutpth)
             error_pth = Emailer.make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
             copy_file(test_data.sorted_log, error_pth)
@@ -2075,10 +2106,10 @@ class TestRunner(object):
             print(traceback.format_exc())
         # Rebuild the HTML report
         htmlfolder = ""
-        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports")):
-            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", fs)):
+        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports")):
+            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", fs)):
                 htmlfolder = fs
-        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, IMG_TEST_FOLDER, "Reports", htmlfolder)
+        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder)
         
         html_path = Emailer.make_path(test_config.output_dir, test_data.image_name,
                                      IMG_TEST_FOLDER, "Reports")
