@@ -557,7 +557,6 @@ public class ReportGenerator {
                 
                 Long objId = rs.getLong("obj_id");
                 String set = rs.getString("setname");
-                String name = rs.getString("name");
                 String size = rs.getString("size");
                 String uniquePath = "";
                 
@@ -587,7 +586,7 @@ public class ReportGenerator {
                 
                 // Add a row for this hit to every module
                 for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[] {name, size, uniquePath}));
+                    module.addRow(Arrays.asList(new String[] {uniquePath, size}));
                 }
             }
             
@@ -640,7 +639,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Preview", "Source File"}));
                 break;
             case 10: // TSK_HASHSET_HIT
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File Name", "Size", "File Path"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File", "Size"}));
                 break;
             case 11: // TSK_DEVICE_ATTACHED
                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
