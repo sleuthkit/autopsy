@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Parent of all Blackboard Artifacts to be displayed
+ * Parent of the "extracted content" artifacts to be displayed in the tree.  Other
+ * artifacts are displayed under other more specific parents. 
  */
 public class ExtractedContent implements AutopsyVisitableItem{
 
