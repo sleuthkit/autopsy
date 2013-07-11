@@ -1,22 +1,22 @@
 #!/usr/bin/python
-# -*- coding: utf_8 -*- 
+# -*- coding: utf_8 -*-
 
  # Autopsy Forensic Browser
- # 
+ #
  # Copyright 2013 Basis Technology Corp.
- # 
+ #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
  # You may obtain a copy of the License at
- # 
+ #
  #     http://www.apache.org/licenses/LICENSE-2.0
- # 
+ #
  # Unless required by applicable law or agreed to in writing, software
  # distributed under the License is distributed on an "AS IS" BASIS,
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
- 
+
 import codecs
 import datetime
 import logging
@@ -74,7 +74,7 @@ import srcupdater
 # SQLCursor:    A cursor recieved from a connection to an SQL database
 # Nat:          A Natural Number
 # Image:        An image
-# 
+#
 
 #####
 # Enumeration definition (python 3.2 doesn't have enumerations, this is a common solution
@@ -87,7 +87,7 @@ def enum(*seq, **named):
 # Enumeration of database types used for the simplification of generating database paths
 DBType = enum('OUTPUT', 'GOLD', 'BACKUP')
 
-# Common filename of the output and gold databases (although they are in different directories 
+# Common filename of the output and gold databases (although they are in different directories
 DB_FILENAME = "autopsy.db"
 
 # Backup database filename
@@ -107,7 +107,7 @@ Day = 0
 #-------------------------------------------------------------#
 class Args(object):
     """A container for command line options and arguments.
-    
+
     Attributes:
         single: a boolean indicating whether to run in single file mode
         single_file: an Image to run the test on
@@ -118,8 +118,8 @@ class Args(object):
         keep: a boolean indicating whether to keep the SOLR index
         verbose: a boolean indicating whether verbose output should be printed
         exeception: a boolean indicating whether errors containing exception
-                    exception_string should be printed 
-        exception_sring: a String representing and exception name 
+                    exception_string should be printed
+        exception_sring: a String representing and exception name
         fr: a boolean indicating whether gold standard images will be downloaded
     """
     def __init__(self):
@@ -135,9 +135,9 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
-    
+
     def parse(self):
-        global nxtproc 
+        global nxtproc
         nxtproc = []
         nxtproc.append("python3")
         nxtproc.append(sys.argv.pop(0))
@@ -203,7 +203,7 @@ class Args(object):
 
 class TestConfiguration(object):
     """Container for test configuration data.
-    
+
     The Master Test Configuration. Encapsulates consolidated high level input from
     config XML file and command-line arguments.
 
@@ -215,7 +215,7 @@ class TestConfiguration(object):
         img_gold: a pathto_Dir, the temp directory where gold images are unzipped to
         csv: a pathto_File, the local csv file
         global_csv: a pathto_File, the global csv file
-        html_log: a pathto_File     
+        html_log: a pathto_File
         known_bad_path:
         keyword_path:
         nsrl_path:
@@ -232,13 +232,13 @@ class TestConfiguration(object):
 
     def __init__(self, args):
         """Inits TestConfiguration and loads a config file if available.
-        
+
         Args:
             args: an Args, the command line arguments.
         """
         self.args = args
         # Paths:
-        self.output_dir = "" 
+        self.output_dir = ""
         self.input_dir = Emailer.make_local_path("..","input")
         self.gold = Emailer.make_path("..", "output", "gold")
         self.img_gold = Emailer.make_path(self.gold, 'tmp')
@@ -265,18 +265,18 @@ class TestConfiguration(object):
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.ant = []
-        
+
         # Initialize Attributes
         self._init_logs()
         self._init_imgs()
         self._init_build_info()
 
-        
+
     def ant_to_string(self):
         string = ""
         for arg in self.ant:
             string += (arg + " ")
-        return string   
+        return string
 
     def reset(self):
         # Set the timeout to something huge
@@ -285,7 +285,7 @@ class TestConfiguration(object):
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.ant = []
-    
+
     def _init_imgs(self):
         """Initialize the list of images to run test on."""
         #Identify tests to run and populate test_config with list
@@ -318,7 +318,7 @@ class TestConfiguration(object):
                self._print_error(msg)
                return
            self._load_config_file(self.args.config_file)
-   
+
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
         if(not Emailer.dir_exists(Emailer.make_path("..", "output", "results"))):
@@ -331,7 +331,7 @@ class TestConfiguration(object):
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
     def _init_build_info(self):
-        """Initializes paths that point to information necessary to run the AutopsyIngest.""" 
+        """Initializes paths that point to information necessary to run the AutopsyIngest."""
         global parsed
         if(self.args.list):
             build_elements = parsed.getElementsByTagName("build")
@@ -348,13 +348,13 @@ class TestConfiguration(object):
         self.known_bad_path = Emailer.make_path(self.input_dir, "notablehashes.txt-md5.idx")
         self.keyword_path = Emailer.make_path(self.input_dir, "notablekeywords.xml")
         self.nsrl_path = Emailer.make_path(self.input_dir, "nsrl.txt-md5.idx")
-    
+
     def _load_config_file(self, config_file):
         """Updates this TestConfiguration's attributes from the config file.
-    
+
         Initializes this TestConfiguration by iterating through the XML config file
         command-line argument. Populates self.images and optional email configuration
-        
+
         Args:
             config_file: ConfigFile - the configuration file to load
         """
@@ -374,7 +374,7 @@ class TestConfiguration(object):
             if parsed.getElementsByTagName("golddir"):
                 self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
                 self.img_gold = Emailer.make_path(self.gold, 'tmp')
-               
+
             # Generate the top navbar of the HTML for easy access to all images
             images = []
             for element in parsed.getElementsByTagName("image"):
@@ -384,7 +384,7 @@ class TestConfiguration(object):
                     self.images.append(value)
                 else:
                     msg = "File: " + value + " doesn't exist"
-                    self._print_error(msg) 
+                    self._print_error(msg)
             image_count = len(images)
 
             # Sanity check to see if there are obvious gold images that we are not testing
@@ -392,12 +392,12 @@ class TestConfiguration(object):
             for file in os.listdir(self.gold):
                 if not(file == 'tmp'):
                     gold_count+=1
-                    
+
             if (image_count > gold_count):
                 print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
             elif (image_count < gold_count):
                 print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-            
+
         except Exception as e:
             msg = "There was an error running with the configuration file.\n"
             msg += "\t" + str(e)
@@ -407,15 +407,15 @@ class TestConfiguration(object):
 
     def _print_error(self, msg):
         """Append the given error message to the global error message and print the message to the screen.
-        
+
         Args:
-            msg: String - the error message to print 
+            msg: String - the error message to print
         """
         global errorem
         error_msg = "Configuration: " + msg
         print(error_msg)
         errorem += error_msg + "\n"
-       
+
 class TskDbDiff(object):
     """Represents the differences between the gold and output databases.
 
@@ -437,7 +437,7 @@ class TskDbDiff(object):
     """
     def __init__(self, test_data):
         """Constructor for TskDbDiff.
-        
+
         Args:
             test_data: TestData - the test data to compare
         """
@@ -452,7 +452,7 @@ class TskDbDiff(object):
         self.test_data = test_data
         self.autopsy_db_file = self.test_data.get_db_path(DBType.OUTPUT)
         self.gold_db_file = self.test_data.get_db_path(DBType.GOLD)
-    
+
     def clear(self):
         self.gold_artifacts = []
         self.autopsy_artifacts = []
@@ -462,14 +462,14 @@ class TskDbDiff(object):
         self.autopsy_objects = 0
         self.artifact_comparison = []
         self.attribute_comparison = []
-        
-        
+
+
     def get_artifacts_count(self):
         total = 0
         for nums in self.autopsy_artifacts:
             total += nums
         return total
-        
+
     def get_artifact_comparison(self):
         if not self.artifact_comparison:
             return "All counts matched"
@@ -480,7 +480,7 @@ class TskDbDiff(object):
             global imgfail
             imgfail = True
             return "; ".join(self.artifact_comparison)
-        
+
     def get_attribute_comparison(self):
         if not self.attribute_comparison:
             return "All counts matched"
@@ -493,7 +493,7 @@ class TskDbDiff(object):
         for error in self.attribute_comparison:
             list.append(error)
         return ";".join(list)
-       
+
     def _count_artifacts(self, cursor):
         """Get a list of artifacts from the given SQLCursor.
 
@@ -509,32 +509,32 @@ class TskDbDiff(object):
         for type_id in range(1, length):
             cursor.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
             artifacts.append(cursor.fetchone()[0])
-        return artifacts        
-   
+        return artifacts
+
     def _count_attributes(self, cursor):
         """Count the attributes from the given SQLCursor.
-   
+
         Args:
             cursor: SQLCursor - the cursor to execute on
 
         Returns:
-            Nat - the number of attributes found by the query 
+            Nat - the number of attributes found by the query
         """
         cursor.execute("SELECT COUNT(*) FROM blackboard_attributes")
         return cursor.fetchone()[0]
-       
+
     def _count_objects(self, cursor):
         """Count the objects from the given SQLCursor.
-   
+
         Args:
             cursor: SQLCursor - the cursor to execute on
 
         Returns:
-            Nat - the number of objects found by the query 
-        """ 
+            Nat - the number of objects found by the query
+        """
         cursor.execute("SELECT COUNT(*) FROM tsk_objects")
         return cursor.fetchone()[0]
-    
+
     def _compare_bb_artifacts(self):
         """Compares the blackboard artifact counts of two databases."""
         exceptions = []
@@ -597,20 +597,20 @@ class TskDbDiff(object):
         except Exception as e:
             exceptions.append("Error: Unable to compare tsk_objects.\n")
             return exceptions
-            
+
     def _get_basic_counts(self, autopsy_cur, gold_cur):
         """Count the items necessary to compare the databases.
 
         Gets the counts of objects, artifacts, and attributes in the Gold
         and Ouput databases and updates this TskDbDiff's attributes
         accordingly
-        
+
         Args:
             autopsy_cur: SQLCursor - the cursor for the output database
-            gold_cur:    SQLCursor - the cursor for the gold database 
+            gold_cur:    SQLCursor - the cursor for the gold database
         """
         try:
-            # Objects 
+            # Objects
             self.gold_objects = self._count_objects(gold_cur)
             self.autopsy_objects = self._count_objects(autopsy_cur)
             # Artifacts
@@ -623,8 +623,8 @@ class TskDbDiff(object):
             printerror(self.test_data, "Way out:" + str(e))
 
     def compare_basic_counts(self):
-        """Basic test between output and gold databases. 
-    
+        """Basic test between output and gold databases.
+
         Compares only counts of objects and blackboard items.
         Note: SQLITE needs unix style pathing
         """
@@ -637,36 +637,36 @@ class TskDbDiff(object):
             printerror(self.test_data, "Error: Gold database file does not exist at:")
             printerror(self.test_data, self.gold_db_file + "\n")
             return
-        
+
         # Get connections and cursors to output / gold databases
         autopsy_con = sqlite3.connect(self.autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
         gold_con = sqlite3.connect(self.gold_db_file)
         gold_cur = gold_con.cursor()
-        
+
         # Get Counts of objects, artifacts, and attributes
-        self._get_basic_counts(autopsy_cur, gold_cur)        
-   
-        # We're done with the databases, close up the connections     
+        self._get_basic_counts(autopsy_cur, gold_cur)
+
+        # We're done with the databases, close up the connections
         autopsy_con.close()
         gold_con.close()
-    
+
         exceptions = []
-        
+
         # Compare counts
         exceptions.append(self._compare_tsk_objects())
         exceptions.append(self._compare_bb_artifacts())
         exceptions.append(self._compare_bb_attributes())
-        
+
         self.artifact_comparison = exceptions[1]
         self.attribute_comparison = exceptions[2]
-        
+
         okay = "All counts match."
         print_report(self.test_data, exceptions[0], "COMPARE TSK OBJECTS", okay)
         print_report(self.test_data, exceptions[1], "COMPARE ARTIFACTS", okay)
         print_report(self.test_data, exceptions[2], "COMPARE ATTRIBUTES", okay)
-            
-            
+
+
     def _dump_output_db_bb(autopsy_con, autopsy_db_file, test_data):
         """Dumps sorted text results to the output location stored in test_data.
 
@@ -683,7 +683,7 @@ class TskDbDiff(object):
         global attachl
         global failedbool
         # Get the list of all artifacts
-        # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it. 
+        # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
         autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
         database_log = codecs.open(test_data.autopsy_data_file, "wb", "utf_8")
         rw = autopsy_cur2.fetchone()
@@ -697,7 +697,7 @@ class TskDbDiff(object):
                     database_log.write(rw[0] + rw[1] + ' <artifact type="' + rw[2] + '" > ')
                 else:
                     database_log.write(rw[1] + ' <artifact type="' + rw[2] + '" > ')
-                    
+
                 # Get attributes for this artifact
                 autopsy_cur1 = autopsy_con.cursor()
                 looptry = True
@@ -718,7 +718,7 @@ class TskDbDiff(object):
                     test_data.artifact_fail += 1
                     print(test_data.artifact_fail)
                     database_log.write('Error Extracting Attributes');
-                    
+
                 # Print attributes
                 if(looptry == True):
                     src = attributes[0][0]
@@ -758,7 +758,7 @@ class TskDbDiff(object):
                         database_log.write('" />')
                 database_log.write(' <artifact/>\n')
                 rw = autopsy_cur2.fetchone()
-                
+
             # Now sort the file
             srtcmdlst = ["sort", test_data.autopsy_data_file, "-o", test_data.get_sorted_data_path(DBType.OUTPUT)]
             subprocess.call(srtcmdlst)
@@ -767,7 +767,7 @@ class TskDbDiff(object):
                 errorem += test_data.image_name + ":There were " + str(test_data.artifact_count) + " artifacts and " + str(test_data.artifact_fail) + " threw an exception while loading.\n"
         except Exception as e:
             printerror(test_data, 'outer exception: ' + str(e))
-            
+
     def _dump_output_db_nonbb(test_data):
         """Dumps a database to a text file.
 
@@ -775,13 +775,13 @@ class TskDbDiff(object):
 
         Args:
             test_data: the TestData that corresponds with this dump.
-        """ 
+        """
         # Make a copy of the DB
         autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
         backup_db_file = test_data.get_db_path(DBType.BACKUP)
         copy_file(autopsy_db_file, backup_db_file)
         autopsy_con = sqlite3.connect(backup_db_file)
-        
+
         # Delete the blackboard tables
         autopsy_con.execute("DROP TABLE blackboard_artifacts")
         autopsy_con.execute("DROP TABLE blackboard_attributes")
@@ -796,13 +796,13 @@ class TskDbDiff(object):
                     printerror(test_data, "dump_output_db_nonbb: Inner dump Exception:" + str(e))
         except Exception as e:
             printerror(test_data, "dump_output_db_nonbb: Outer dump Exception:" + str(e))
-            
-            
+
+
     def dump_output_db(test_data):
         """Dumps the given database to text files for later comparison.
 
         Args:
-            test_data: the TestData that corresponds to this dump. 
+            test_data: the TestData that corresponds to this dump.
         """
         autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
         autopsy_con = sqlite3.connect(autopsy_db_file)
@@ -812,15 +812,15 @@ class TskDbDiff(object):
         TskDbDiff._dump_output_db_bb(autopsy_con, autopsy_db_file, test_data)
         TskDbDiff._dump_output_db_nonbb(test_data)
         autopsy_con.close()
-            
-    
+
+
 #-------------------------------------------------#
 #     Functions relating to comparing outputs     #
-#-------------------------------------------------#   
+#-------------------------------------------------#
 class TestResultsDiffer(object):
     """Compares results for a single test.
     """
-    
+
     def run_diff(test_data, databaseDiff):
         """Compares results for a single test.
 
@@ -840,12 +840,12 @@ class TestResultsDiffer(object):
             extrctr.close
             time.sleep(2)
 
-            # Lists of tests to run 
+            # Lists of tests to run
             TestResultsDiffer._compare_errors(test_data)
-                
+
             # Compare database count to gold
             databaseDiff.compare_basic_counts()
-            
+
             # Compare smart blackboard results
             TestResultsDiffer._compare_text(test_data.get_sorted_data_path(DBType.OUTPUT), "SortedData", test_data)
 
@@ -854,27 +854,27 @@ class TestResultsDiffer(object):
 
             # Compare html output
             TestResultsDiffer._compare_to_gold_html(test_data)
-            
+
             # Clean up tmp folder
             del_dir(img_gold)
-            
+
         except Exception as e:
             printerror(test_data, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
             printerror(test_data, str(e) + "\n")
             print(traceback.format_exc())
-            
-        
+
+
 
     # TODO: _compare_text could be made more generic with how it forms the paths (i.e. not add ".txt" in the method) and probably merged with
     # compare_errors since they both do basic comparison of text files
-        
+
     def _compare_text(output_file, gold_file, test_data):
         """Compare two text files.
-        
+
         Args:
             output_file: a pathto_File, the output text file
             gold_file: a pathto_File, the input text file
-            test_data: the TestData of the test being performed 
+            test_data: the TestData of the test being performed
         """
         gold_dir = Emailer.make_path(test_config.img_gold, test_data.image_name, test_data.image_name + gold_file + ".txt")
         if(not Emailer.file_exists(output_file)):
@@ -885,7 +885,7 @@ class TestResultsDiffer(object):
         srtd_dat = srtd_data.read()
         if (not(gold_dat == srtd_dat)):
             diff_dir = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+gold_file+"-Diff.txt")
-            diff_file = codecs.open(diff_dir, "wb", "utf_8") 
+            diff_file = codecs.open(diff_dir, "wb", "utf_8")
             dffcmdlst = ["diff", test_data.get_sorted_data_path(DBType.OUTPUT), gold_dir]
             subprocess.call(dffcmdlst, stdout = diff_file)
             global attachl
@@ -900,11 +900,11 @@ class TestResultsDiffer(object):
 
     def _compare_errors(test_data):
         """Compare merged error log files.
-        
+
         Args:
-            test_data: the TestData of the test being performed 
+            test_data: the TestData of the test being performed
         """
-        gold_dir = Emailer.make_path(test_config.img_gold,  test_data.image_name, test_data.image_name + "SortedErrors.txt")
+        gold_dir = test_data.get_sorted_errors_path(DBType.GOLD)
         common_log = codecs.open(test_data.sorted_log, "r", "utf_8")
         gold_log = codecs.open(gold_dir, "r", "utf_8")
         gold_dat = gold_log.read()
@@ -912,7 +912,7 @@ class TestResultsDiffer(object):
         patrn = re.compile("\d")
         if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
             diff_dir = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+"AutopsyErrors-Diff.txt")
-            diff_file = open(diff_dir, "w") 
+            diff_file = open(diff_dir, "w")
             dffcmdlst = ["diff", test_data.sorted_log, gold_dir]
             subprocess.call(dffcmdlst, stdout = diff_file)
             global attachl
@@ -925,10 +925,10 @@ class TestResultsDiffer(object):
             failedbool = True
             global imgfail
             imgfail = True
-            
+
     def _compare_to_gold_html(test_data):
         """Compare the output and gold html reports.
-        
+
         Args:
             test_data: the TestData of the test being performed.
         """
@@ -938,8 +938,8 @@ class TestResultsDiffer(object):
             if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", fs)):
                 htmlfolder = fs
         autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder, "HTML Report")
-        
-        
+
+
         try:
             autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
             if not Emailer.file_exists(gold_html_file):
@@ -967,7 +967,7 @@ class TestResultsDiffer(object):
             else:
                 ListGoldHTML.sort()
                 ListNewHTML.sort()
-              
+
             total = {"Gold": 0, "New": 0}
             for x in range(0, len(ListGoldHTML)):
                 count = TestResultsDiffer._compare_report_files(ListGoldHTML[x], ListNewHTML[x])
@@ -988,10 +988,10 @@ class TestResultsDiffer(object):
             printerror(test_data, "Error: Unknown fatal error comparing reports.")
             printerror(test_data, str(e) + "\n")
             logging.critical(traceback.format_exc())
-            
+
     def _compare_report_files(a_path, b_path):
         """Compares the two specified report html files.
-        
+
         Args:
             a_path: a pathto_File, the first html report file
             b_path: a pathto_File, the second html report file
@@ -999,7 +999,7 @@ class TestResultsDiffer(object):
         Returns:
             a tuple of (Nat, Nat), which represent the length of each
             unordered list in the html report files, or (0, 0) if the
-            lenghts are the same. 
+            lenghts are the same.
         """
         a_file = open(a_path)
         b_file = open(b_path)
@@ -1007,19 +1007,19 @@ class TestResultsDiffer(object):
         b = b_file.read()
         a = a[a.find("<ul>"):]
         b = b[b.find("<ul>"):]
-        
+
         a_list = TestResultsDiffer._split(a, 50)
         b_list = TestResultsDiffer._split(b, 50)
         if not len(a_list) == len(b_list):
             ex = (len(a_list), len(b_list))
             return ex
-        else: 
+        else:
             return (0, 0)
-  
+
     # Split a string into an array of string of the given size
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
-        
+
 class TestData(object):
     """Container for the input and output of a single image.
 
@@ -1027,7 +1027,7 @@ class TestData(object):
     database paths, etc.
 
     Attributes:
-        main_config: the global TestConfiguration 
+        main_config: the global TestConfiguration
         image_file: a pathto_Image, the image for this TestData
         image: a String, the image file's name
         image_name: a String, the image file's name with a trailing (0)
@@ -1039,6 +1039,8 @@ class TestData(object):
         common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
         sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
         reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
+        gold_data_dir: a pathto_Dir, the gold standard directory
+        logs_dir: a pathto_Dir, the location where autopsy logs are stored
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
         end_date: a String representation of the TestData's end date
@@ -1051,28 +1053,30 @@ class TestData(object):
         printerror: a listof_String, the error messages printed during this TestData's test
         printout: a listof_String, the messages pritned during this TestData's test
     """
-    
+
     def __init__(self, image, main_config):
         """Init this TestData with it's image and the test configuration.
-        
+
         Args:
             image: the Image to be tested.
             main_config: the global TestConfiguration.
         """
-        self.main_config = main_config 
+        self.main_config = main_config
         self.image_file = str(image)
-        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs. 
+        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
         self.image_name = self.image + "(0)"
         self.output_path = Emailer.make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = Emailer.make_path(self.output_path, self.image_name + "Autopsy_data.txt")
         self.warning_log = Emailer.make_local_path(self.output_path, "AutopsyLogs.txt")
         self.antlog_dir = Emailer.make_local_path(self.output_path, "antlog.txt")
-        self.test_dbdump = Emailer.make_path(self.output_path, self.image_name + "Dump.txt")
+        self.test_dbdump = Emailer.make_path(self.output_path, self.image_name +
+        "DBDump.txt")
         self.common_log_path = Emailer.make_local_path(self.output_path, self.image_name + COMMON_LOG)
         self.sorted_log = Emailer.make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
         self.reports_dir = Emailer.make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = Emailer.make_path(self.main_config.img_gold, self.image_name)
+        self.logs_dir = Emailer.make_path(self.output_path, "logs")
         self.total_test_time = ""
         self.start_date = ""
         self.end_date = ""
@@ -1085,7 +1089,7 @@ class TestData(object):
         # Error tracking
         self.printerror = []
         self.printout = []
-    
+
     def reset(self):
         self.image = ""
         self.image_file = ""
@@ -1110,18 +1114,18 @@ class TestData(object):
 
     def get_db_path(self, db_type):
         """Get the path to the database file that corresponds to the given DBType.
-        
+
         Args:
             DBType: the DBType of the path to be generated.
         """
         if(db_type == DBType.GOLD):
-            db_path = Emailer.make_path(self.gold_data_dir, DB_FILENAME) 
+            db_path = Emailer.make_path(self.gold_data_dir, DB_FILENAME)
         elif(db_type == DBType.OUTPUT):
             db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
         else:
             db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
-        return db_path 
-    
+        return db_path
+
     def get_html_report_path(self, html_type):
         """Get the path to the HTML Report folder that corresponds to the given DBType.
 
@@ -1145,14 +1149,40 @@ class TestData(object):
         """Get the path to the SortedData file that corresponds to the given DBType.
 
         Args:
-            DBType: the DBType of the path to be generated
+            file_type: the DBType of the path to be generated
         """
-        filename = self.image_name + "SortedData.txt"
+        return self._get_path_to_file(file_type, "SortedData.txt")
+
+    def get_sorted_errors_path(self, file_type):
+        """Get the path to the SortedErrors file that correspodns to the given
+        DBType.
+
+        Args:
+            file_type: the DBType of the path to be generated
+        """
+        return self._get_path_to_file(file_type, "SortedErrors.txt")
+
+    def get_db_dump_path(self, file_type):
+        """Get the path to the DBDump file that corresponds to the given DBType.
+
+        Args:
+            file_type: the DBType of the path to be generated
+        """
+        return self._get_path_to_file(file_type, "DBDump.txt")
+
+    def _get_path_to_file(self, file_type, file_name):
+        """Get the path to the specified file with the specified type.
+
+        Args:
+            file_type: the DBType of the path to be generated
+            file_name: a String, the filename of the path to be generated
+        """
+        full_filename = self.image_name + file_name
         if(file_type == DBType.GOLD):
-           return Emailer.make_path(self.gold_data_dir, filename) 
+            return Emailer.make_path(self.gold_data_dir, full_filename)
         else:
-            return Emailer.make_path(self.output_path, filename) 
- 
+            return Emailer.make_path(self.output_path, full_filename)
+
 class Reports(object):
     def generate_reports(csv_path, database, test_data):
         Reports._generate_html(database, test_data)
@@ -1160,7 +1190,7 @@ class Reports(object):
             Reports._generate_csv(test_config.global_csv, database, test_data)
         else:
             Reports._generate_csv(csv_path, database, test_data)
-        
+
     def _generate_html(database, test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
@@ -1196,16 +1226,16 @@ class Reports(object):
                 if "\n" in error:
                     errors += "<br />"
             errors += "</div>"
-            
+
             # Links to the logs
             logs = "<div id='logs'>\
                     <h2><a name='" + test_data.image_name + "-logs'>Logs</a></h2>\
                     <hr color='#282828'>"
-            logs_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs")
+            logs_path = test_data.logs_dir
             for file in os.listdir(logs_path):
                 logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
             logs += "</div>"
-            
+
             # All the testing information
             info = "<div id='info'>\
                     <h2><a name='" + test_data.image_name + "-info'>Information</a></h2>\
@@ -1272,7 +1302,7 @@ class Reports(object):
                 if "\n" in out:
                     output += "<br />"
             output += "</div>"
-            
+
             html.write(title)
             html.write(errors)
             html.write(info)
@@ -1323,7 +1353,7 @@ class Reports(object):
         """Add all the image names to the HTML log.
 
         Args:
-            full_image_names: a listof_String, each representing an image name 
+            full_image_names: a listof_String, each representing an image name
         """
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
@@ -1335,6 +1365,7 @@ class Reports(object):
             name = get_image_name(full_name)
             links.append("<a href='#" + name + "(0)'>" + name + "</a>")
         html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
+        html.close()
 
     def _generate_csv(csv_path, database, test_data):
         """Generate the CSV log file"""
@@ -1345,7 +1376,7 @@ class Reports(object):
                 Reports.csv_header(csv_path)
             # Now add on the fields to a new row
             csv = open(csv_path, "a")
-            
+
             # Variables that need to be written
             vars = []
             vars.append( test_data.image_file )
@@ -1437,7 +1468,7 @@ class Reports(object):
             type: a String representing the type of log to check.
             test_data: the TestData to examine.
         """
-        return (len(search_log_set(type, "OutOfMemoryError", test_data)) + 
+        return (len(search_log_set(type, "OutOfMemoryError", test_data)) +
                 len(search_log_set(type, "OutOfMemoryException", test_data)))
 
 class Logs(object):
@@ -1494,13 +1525,13 @@ class Logs(object):
         """Fill the global test config's variables that require the log files."""
         try:
             # Open autopsy.log.0
-            log_path = Emailer.make_path(test_config.output_dir, test_data.image_name, "logs", "autopsy.log.0")
+            log_path = Emailer.make_path(test_data.logs_dir, "autopsy.log.0")
             log = open(log_path)
-            
+
             # Set the test_config starting time based off the first line of autopsy.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
-        
+
             # Set the test_config ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except Exception as e:
@@ -1517,21 +1548,21 @@ class Logs(object):
 
         try:
             # Set Autopsy version, heap space, ingest time, and service times
-            
+
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
             test_config.autopsy_version = Emailer.get_word_at(version_line, 5).rstrip(",")
-            
+
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-            
+
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = Emailer.get_word_at(ingest_line, 6).rstrip()
-            
+
             message_line = search_log_set("autopsy", "Ingest messages count:", test_data)[0]
             test_config.ingest_messages = int(message_line.rstrip().split(": ")[2])
-            
+
             files_line = search_log_set("autopsy", "Indexed files count:", test_data)[0]
             test_config.indexed_files = int(files_line.rstrip().split(": ")[2])
-            
+
             chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
             test_config.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
         except Exception as e:
@@ -1558,10 +1589,10 @@ class Logs(object):
             printerror(test_data, "Error: Unknown fatal error when finding service times.")
             printerror(test_data, str(e) + "\n")
             logging.critical(traceback.format_exc())
-    
+
     def _report_all_errors():
         """Generate a list of all the errors found in the common log.
-        
+
         Returns:
             a listof_String, the errors found in the common log
         """
@@ -1571,16 +1602,16 @@ class Logs(object):
             printerror(test_data, "Error: Unknown fatal error when reporting all errors.")
             printerror(test_data, str(e) + "\n")
             logging.warning(traceback.format_exc())
-    
+
     def search_common_log(string, test_data):
         """Search the common log for any instances of a given string.
 
         Args:
             string: the String to search for.
             test_data: the TestData that holds the log to search.
-        
+
         Returns:
-            a listof_String, all the lines that the string is found on     
+            a listof_String, all the lines that the string is found on
         """
         results = []
         log = codecs.open(test_data.common_log_path, "r", "utf_8")
@@ -1607,18 +1638,18 @@ def image_type(image_file):
         return IMGTYPE.SPLIT
     else:
         return IMGTYPE.UNKNOWN
-        
+
 def search_logs(string, test_data):
     """Search through all the known log files for a given string.
-    
+
     Args:
         string: the String to search for.
         test_data: the TestData that holds the logs to search.
-    
+
     Returns:
         a listof_String, the lines that contained the given String.
     """
-    logs_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs")
+    logs_path = test_data.logs_dir
     results = []
     for file in os.listdir(logs_path):
         log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
@@ -1627,7 +1658,7 @@ def search_logs(string, test_data):
                 results.append(line)
         log.close()
     return results
-    
+
 def search_log(log, string, test_data):
     """Search the given log for any instances of a given string.
 
@@ -1635,11 +1666,11 @@ def search_log(log, string, test_data):
         log: a pathto_File, the log to search in
         string: the String to search for.
         test_data: the TestData that holds the log to search.
-        
+
     Returns:
-        a listof_String, all the lines that the string is found on     
+        a listof_String, all the lines that the string is found on
     """
-    logs_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs", log)
+    logs_path = Emailer.make_path(test_data.logs_dir, log)
     try:
         results = []
         log = codecs.open(logs_path, "r", "utf_8")
@@ -1656,16 +1687,16 @@ def search_log(log, string, test_data):
 # Types include autopsy, tika, and solr
 def search_log_set(type, string, test_data):
     """Search through all logs to the given type for the given string.
-    
+
     Args:
         type: the type of log to search in.
         string: the String to search for.
         test_data: the TestData containing the logs to search.
-    
+
     Returns:
         a listof_String, the lines on which the String was found.
-    """ 
-    logs_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs")
+    """
+    logs_path = test_data.logs_dir
     results = []
     for file in os.listdir(logs_path):
         if type in file:
@@ -1675,10 +1706,10 @@ def search_log_set(type, string, test_data):
                     results.append(line)
             log.close()
     return results
-        
+
 def print_report(test_data, errors, name, okay):
     """Print a report with the specified information.
-    
+
     Args:
         test_data: the TestData to report about.
         errors: a listof_String, the errors to report.
@@ -1729,12 +1760,12 @@ def get_image_name(image_file):
 
 def get_exceptions(test_data):
     """Get a list of the exceptions in the autopsy logs.
-    
+
     Returns:
         a listof_String, the exceptions found in the logs.
     """
     exceptions = []
-    logs_path = Emailer.make_path(test_config.output_dir, test_data.image_name, "logs")
+    logs_path = test_data.logs_dir
     results = []
     for file in os.listdir(logs_path):
         if "autopsy.log" in file:
@@ -1746,7 +1777,7 @@ def get_exceptions(test_data):
                     exceptions.append(line)
             log.close()
     return exceptions
-    
+
 def get_warnings(test_data):
     """Get a list of the warnings listed in the common log.
 
@@ -1764,7 +1795,7 @@ def get_warnings(test_data):
 def copy_logs(test_data):
     try:
         log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
-        shutil.copytree(log_dir, Emailer.make_local_path(test_config.output_dir, test_data.image_name, "logs"))
+        shutil.copytree(log_dir, test_data.logs_dir)
     except Exception as e:
         printerror(test_data,"Error: Failed to copy the logs.")
         printerror(test_data,str(e) + "\n")
@@ -1820,9 +1851,9 @@ def get_file_in_dir(dir, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
-        
+
 def find_file_in_dir(dir, name, ext):
-    try: 
+    try:
         for file in os.listdir(dir):
             if file.startswith(name):
                 if file.endswith(ext):
@@ -1830,17 +1861,17 @@ def find_file_in_dir(dir, name, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
-        
+
 def setDay():
     global Day
     Day = int(strftime("%d", localtime()))
-        
+
 def getLastDay():
     return Day
-        
+
 def getDay():
     return int(strftime("%d", localtime()))
-        
+
 def newDay():
     return getLastDay() != getDay()
 
@@ -1854,12 +1885,12 @@ Usage:  ./regression.py [-f FILE] [OPTIONS]
         When the -f flag is set, this script only tests a single given image.
         When the -l flag is set, the script looks for a configuration file,
         which may outsource to a new input directory and to individual images.
-        
+
         Expected files:
           An NSRL database at:          ../input/nsrl.txt-md5.idx
           A notable hash database at:    ../input/notablehashes.txt-md5.idx
           A notable keyword file at:      ../input/notablekeywords.xml
-        
+
 Options:
   -r            Rebuild the gold standards for the image(s) tested.
   -i            Ignores the ../input directory and all files within it.
@@ -1886,7 +1917,7 @@ class FileNotFoundException(Exception):
     def __init__(self, file):
         self.file = file
         self.strerror = "FileNotFoundException: " + file
-        
+
     def print_error(self):
         printerror(test_data,"Error: File could not be found at:")
         printerror(test_data,self.file + "\n")
@@ -1902,7 +1933,7 @@ class DirNotFoundException(Exception):
     def __init__(self, dir):
         self.dir = dir
         self.strerror = "DirNotFoundException: " + dir
-        
+
     def print_error(self):
         printerror(test_data, "Error: Directory could not be found at:")
         printerror(test_data, self.dir + "\n")
@@ -1919,29 +1950,28 @@ class TestRunner(object):
         """Run the tests specified by the main TestConfiguration.
 
         Executes the AutopsyIngest for each image and dispatches the results based on
-        the mode (rebuild or testing) 
+        the mode (rebuild or testing)
         """
         global parsed
         global errorem
         global failedbool
         global html
         global attachl
-       
+
         test_data_list = TestRunner._generate_test_data()
- 
+
         Reports.html_add_images(test_config.images)
-        
+
         logres =[]
-        for test_data in test_data_list:  
+        for test_data in test_data_list:
             TestRunner._run_autopsy_ingest(test_data)
-                
+
             if test_config.args.rebuild:
                 TestRunner.rebuild(test_data)
             else:
                 logres.append(TestRunner._run_test(test_data))
-        
+
         Reports.write_html_foot()
-        html.close()
         if (len(logres)>0):
             failedbool = True
             imgfail = True
@@ -1949,28 +1979,29 @@ class TestRunner(object):
             for lm in logres:
                 for ln in lm:
                     errorem += ln
-        html.close()
         if failedbool:
             passFail = False
             errorem += "The test output didn't match the gold standard.\n"
             errorem += "Autopsy test failed.\n"
+            html = open(test_config.html_log)
             attachl.insert(0, html.name)
+            html.close()
         else:
             errorem += "Autopsy test passed.\n"
             passFail = True
             attachl = []
-            
+
         # @@@ This fails here if we didn't parse an XML file
         try:
             Emailer.send_email(parsed, errorem, attachl, passFail)
         except NameError:
             printerror(test_data, "Could not send e-mail because of no XML file --maybe");
-   
+
     def _generate_test_data():
         """Create TestData objects for each image in the TestConfiguration object.
-        
+
         Returns:
-            listof_TestData, the TestData object generated. 
+            listof_TestData, the TestData object generated.
         """
         return [ TestData(image, test_config) for image in test_config.images ]
         #test_data_list = []
@@ -1981,7 +2012,7 @@ class TestRunner(object):
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
-        
+
         Also generates the necessary logs for rebuilding or diff.
 
         Args:
@@ -1995,7 +2026,7 @@ class TestRunner(object):
             printerror(test_data, "Error: Image type is unrecognized:")
             printerror(test_data, test_data.image_file + "\n")
             return
-        
+
         logging.debug("--------------------")
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
@@ -2011,14 +2042,14 @@ class TestRunner(object):
 
         TestRunner._handle_solr(test_data)
         TestRunner._handle_exception(test_data)
-    
+
     #TODO: figure out return type of _run_test (logres)
     def _run_test(test_data):
         """Compare the results of the output to the gold standard.
-  
+
         Args:
             test_data: the TestData
-        
+
         Returns:
             logres?
         """
@@ -2028,7 +2059,7 @@ class TestRunner(object):
 
         # @@@ We only need to create this here so that it can be passed into the
         # Report because it stores results.  Results should be stored somewhere else
-        # and then this can get pushed into only the diffing code. 
+        # and then this can get pushed into only the diffing code.
         databaseDiff = TskDbDiff(test_data)
 
         # Now either diff or rebuild
@@ -2038,7 +2069,7 @@ class TestRunner(object):
         else:
             TestRunner.rebuild(test_data)
 
-        # @@@ COnsider if we want to do this for a rebuild. 
+        # @@@ COnsider if we want to do this for a rebuild.
         # Make the CSV log and the html log viewer
         Reports.generate_reports(test_config.csv, databaseDiff, test_data)
         # Reset the test_config and return the tests sucessfully finished
@@ -2046,12 +2077,12 @@ class TestRunner(object):
         if(failedbool):
             attachl.append(test_data.common_log_path)
         return logres
-       
+
     def _handle_solr(test_data):
         """Clean up SOLR index if in keep mode (-k).
-        
+
         Args:
-            test_data: the TestData 
+            test_data: the TestData
         """
         if not test_config.args.keep:
             solr_index = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "ModuleOutput", "KeywordSearch")
@@ -2062,7 +2093,7 @@ class TestRunner(object):
 
     def _handle_exception(test_data):
         """If running in exception mode, print exceptions to log.
-        
+
         Args:
             test_data: the TestData
         """
@@ -2070,7 +2101,7 @@ class TestRunner(object):
             exceptions = search_logs(test_config.args.exception_string, test_data)
             okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
             print_report(test_data, exceptions, "EXCEPTION", okay)
-    
+
     def rebuild(test_data):
         """Rebuild the gold standard with the given TestData.
 
@@ -2082,21 +2113,19 @@ class TestRunner(object):
         gold_dir = test_config.img_gold
         clear_dir(test_config.img_gold)
         tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
-        dbinpth = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, DB_FILENAME) 
+        dbinpth = test_data.get_db_path(DBType.OUTPUT)
         dboutpth = Emailer.make_path(tmpdir, DB_FILENAME)
         dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
-        dbdumpinpth = test_data.test_dbdump
+        dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
         dbdumpoutpth = Emailer.make_path(tmpdir, test_data.image_name + "DBDump.txt")
         if not os.path.exists(test_config.img_gold):
             os.makedirs(test_config.img_gold)
-        if not os.path.exists(gold_dir):
-            os.makedirs(gold_dir)
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         try:
             copy_file(dbinpth, dboutpth)
             if Emailer.file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
-                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT, dataoutpth))
+                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             copy_file(dbdumpinpth, dbdumpoutpth)
             error_pth = Emailer.make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
             copy_file(test_data.sorted_log, error_pth)
@@ -2105,22 +2134,13 @@ class TestRunner(object):
             print(str(e))
             print(traceback.format_exc())
         # Rebuild the HTML report
-        htmlfolder = ""
-        for fs in os.listdir(os.path.join(os.getcwd(),test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports")):
-            if os.path.isdir(os.path.join(os.getcwd(), test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", fs)):
-                htmlfolder = fs
-        autopsy_html_path = Emailer.make_local_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder)
-        
-        html_path = Emailer.make_path(test_config.output_dir, test_data.image_name,
-                                     IMG_TEST_FOLDER, "Reports")
+        output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
+        gold_html_report_dir = Emailer.make_path(tmpdir, "Report")
+
         try:
-            if not os.path.exists(Emailer.make_path(tmpdir, htmlfolder)):
-                os.makedirs(Emailer.make_path(tmpdir, htmlfolder))
-            for file in os.listdir(autopsy_html_path):
-                html_to = Emailer.make_path(tmpdir, file.replace("HTML Report", "Report"))
-                copy_dir(get_file_in_dir(autopsy_html_path, file), html_to)
+            copy_dir(output_html_report_dir, gold_html_report_dir)
         except FileNotFoundException as e:
-            errors.append(e.error)
+            errors.append(e.error())
         except Exception as e:
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
@@ -2146,11 +2166,11 @@ class TestRunner(object):
 
     def _run_ant(test_data):
         """Construct and run the ant build command for the given TestData.
-    
+
         Tests Autopsy by calling RegressionTest.java via the ant build file.
-   
+
         Args:
-            test_data: the TestData 
+            test_data: the TestData
         """
         # Set up the directories
         test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
@@ -2173,7 +2193,7 @@ class TestRunner(object):
         test_config.ant.append("-Dout_path=" + Emailer.make_local_path(test_config.output_dir, test_data.image_name))
         test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
-        
+
         printout(test_data, "Ingesting Image:\n" + test_data.image_file + "\n")
         printout(test_data, "CMD: " + " ".join(test_config.ant))
         printout(test_data, "Starting test...\n")
@@ -2185,7 +2205,7 @@ class TestRunner(object):
             theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
-        
+
 #----------------------#
 #        Main          #
 #----------------------#
@@ -2229,7 +2249,7 @@ def main():
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
 
-      
+
 if __name__ == "__main__":
     global SYS
     if _platform == "linux" or _platform == "linux2":
@@ -2240,7 +2260,7 @@ if __name__ == "__main__":
         SYS = OS.WIN
     elif _platform == "cygwin":
         SYS = OS.CYGWIN
-        
+
     if SYS is OS.WIN or SYS is OS.CYGWIN:
         main()
     else:
