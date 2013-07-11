@@ -609,40 +609,54 @@ public class Tags implements AutopsyVisitableItem {
 
         return null;
     }
-    
+
     /**
-     * Looks up the tag names associated with an artifact.
+     * Looks up the tag names associated with either a tagged artifact or a tag artifact.
      * 
      * @param artifact The artifact
      * @return A set of unique tag names
      */
     public static HashSet<String> getUniqueTagNames(BlackboardArtifact artifact) {
-        HashSet<String> tagNames = new HashSet<>();
+        return getUniqueTagNames(artifact.getArtifactID(), artifact.getArtifactTypeID());
+    }    
 
-        List<BlackboardArtifact> tags;
+    /**
+     * Looks up the tag names associated with either a tagged artifact or a tag artifact.
+     * 
+     * @param artifactID The ID of the artifact
+     * @param artifactTypeID The ID of the artifact type
+     * @return A set of unique tag names
+     */
+    public static HashSet<String> getUniqueTagNames(long artifactID, int artifactTypeID) {
+        HashSet<String> tagNames = new HashSet<>();
+        
         try {
-            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() ||
-                artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                tags = new ArrayList<>();
-                tags.add(artifact);
+            ArrayList<Long> tagArtifactIDs = new ArrayList<>();
+            if (artifactTypeID == ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() ||
+                artifactTypeID == ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+                tagArtifactIDs.add(artifactID);
             } else {
-                tags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT, artifact.getArtifactID());
+                List<BlackboardArtifact> tags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT, artifactID);
+                for (BlackboardArtifact tag : tags) {
+                    tagArtifactIDs.add(tag.getArtifactID());
+                }
             }
 
-            for (BlackboardArtifact tag : tags) {
-                String whereClause = "WHERE artifact_id=" + tag.getArtifactID() + " AND attribute_type_id=" + ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID();
+            for (Long tagArtifactID : tagArtifactIDs) {
+                String whereClause = "WHERE artifact_id = " + tagArtifactID + " AND attribute_type_id = " + ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID();
                 List<BlackboardAttribute> attributes = Case.getCurrentCase().getSleuthkitCase().getMatchingAttributes(whereClause);
                 for (BlackboardAttribute attr : attributes) {
                     tagNames.add(attr.getValueString());
                 }
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getArtifactID(), ex);
+        } 
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifactID, ex);
         }
-
+        
         return tagNames;
     }    
-    
+                        
     public interface Taggable {
         void createTag(String name, String comment);
     }

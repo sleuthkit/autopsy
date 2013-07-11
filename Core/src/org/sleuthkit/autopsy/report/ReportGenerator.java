@@ -82,7 +82,7 @@ public class ReportGenerator {
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
     static final String REPORTS_DIR = "Reports";
-    
+        
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
         // Setup the reporting directory to be [CASE DIRECTORY]/Reports/[Case name] [Timestamp]/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
@@ -97,8 +97,8 @@ public class ReportGenerator {
         }
         
         // Initialize the progress panels
-        generalProgress = new HashMap<GeneralReportModule, ReportProgressPanel>();
-        tableProgress = new HashMap<TableReportModule, ReportProgressPanel>();
+        generalProgress = new HashMap<>();
+        tableProgress = new HashMap<>();
         setupProgressPanels(tableModuleStates, generalModuleStates);
     }
     
@@ -171,7 +171,7 @@ public class ReportGenerator {
      * @param tagSelections the enabled/disabled state of the tags to be included in the report
      */
     public void generateArtifactTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
-        ArtifactTableReportsWorker worker = new ArtifactTableReportsWorker(artifactTypeSelections, tagSelections);
+        ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
         worker.execute();
     }
     
@@ -194,21 +194,21 @@ public class ReportGenerator {
     }
     
     /**
-     * SwingWorker to use TableReportModules to generate reports on blackboard artifacts.
+     * SwingWorker to generate reports on blackboard artifacts.
      */
-    private class ArtifactTableReportsWorker extends SwingWorker<Integer, Integer> {
+    private class ArtifactsReportsWorker extends SwingWorker<Integer, Integer> {
         List<TableReportModule> tableModules;
         List<ARTIFACT_TYPE> artifactTypes;
         HashSet<String> tagNamesFilter;
         
         // Create an ArtifactWorker with the enabled/disabled state of all Artifacts
-        ArtifactTableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
-            tableModules = new ArrayList<TableReportModule>();
+        ArtifactsReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
+            tableModules = new ArrayList<>();
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
                 tableModules.add(entry.getKey());
             }
             
-            artifactTypes = new ArrayList<ARTIFACT_TYPE>();
+            artifactTypes = new ArrayList<>();
             for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactTypeSelections.entrySet()) {
                 if (entry.getValue()) {
                     artifactTypes.add(entry.getKey());
@@ -216,7 +216,7 @@ public class ReportGenerator {
             }
             
             if (tagSelections != null) {
-                tagNamesFilter = new HashSet<String>();
+                tagNamesFilter = new HashSet<>();
                 for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
                     if (entry.getValue() == true) {
                         tagNamesFilter.add(entry.getKey());
@@ -254,10 +254,10 @@ public class ReportGenerator {
                 
                 // If the type is keyword hit or hashset hit, use the helper
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
-                    writeKeywordHits(tableModules);
+                    writeKeywordHits(tableModules, tagNamesFilter);
                     continue;
                 } else if (type.equals(ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
-                    writeHashsetHits(tableModules);
+                    writeHashsetHits(tableModules, tagNamesFilter);
                     continue;
                 }
 
@@ -292,7 +292,6 @@ public class ReportGenerator {
                 
                     module.startDataType(type.getDisplayName());                        
                 
-                    // This is a temporary expedient pending modification of the TableReportModule API.
                     if (module instanceof ReportHTML) {
                         ReportHTML htmlReportModule = (ReportHTML)module;
                         htmlReportModule.startTable(columnHeaders, type);
@@ -306,12 +305,8 @@ public class ReportGenerator {
                 for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
                     // Get any tags associated with the artifact and apply the tags filter, if any.
                     HashSet<String> tags = Tags.getUniqueTagNames(artifactEntry.getKey());
-                    if (tagNamesFilter != null) {
-                        HashSet<String> filteredTags = new HashSet<>(tags);
-                        filteredTags.retainAll(tagNamesFilter);
-                        if (filteredTags.isEmpty()) {
-                            continue;
-                        }
+                    if (failsTagFilter(tags, tagNamesFilter)) {
+                        continue;
                     }                    
                     String tagsList = makeCommaSeparatedList(tags);
                     
@@ -328,7 +323,6 @@ public class ReportGenerator {
                             rowData.add(tagsList);
                         }
 
-                        // This is a temporary expedient pending modification of the TableReportModule API.
                         if (module instanceof ReportHTML) {
                             ReportHTML htmlReportModule = (ReportHTML)module;
                             htmlReportModule.addRow(rowData, artifactEntry.getKey());
@@ -357,12 +351,23 @@ public class ReportGenerator {
         }
     }
     
+    private Boolean failsTagFilter(HashSet<String> tags, HashSet<String> tagsFilter) 
+    {
+        if (tagsFilter == null) {
+            return false;
+        }
+
+        HashSet<String> filteredTags = new HashSet<>(tags);
+        filteredTags.retainAll(tagsFilter);
+        return filteredTags.isEmpty();
+    }
+            
     /**
      * Write the keyword hits to the provided TableReportModules.
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeKeywordHits(List<TableReportModule> tableModules) {
+    private void writeKeywordHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for keyword lists
@@ -403,7 +408,7 @@ public class ReportGenerator {
         ResultSet rs = null;
         try {
             // Query for keywords
-            rs = skCase.runQuery("SELECT art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " +
+            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " +
                                            "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " +
                                            "WHERE (att1.artifact_id = art.artifact_id) " +
                                                  "AND (att2.artifact_id = art.artifact_id) " + 
@@ -428,14 +433,21 @@ public class ReportGenerator {
                         iter.remove();
                     }
                 }
-                
+ 
+               // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+                if (failsTagFilter(tags, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(tags);
+                                                        
                 Long objId = rs.getLong("obj_id");
                 String keyword = rs.getString("keyword");
                 String preview = rs.getString("preview");
                 String list = rs.getString("list");
                 String uniquePath = "";
-                
-                try {
+
+                 try {
                     uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
@@ -470,9 +482,10 @@ public class ReportGenerator {
                         module.startTable(getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()));
                     }
                 }
+                
                 String previewreplace = EscapeUtil.escapeHtml(preview);
                 for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[] {previewreplace.replaceAll("<!", ""), uniquePath}));
+                    module.addRow(Arrays.asList(new String[] {previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
                 }
             }
             
@@ -498,7 +511,7 @@ public class ReportGenerator {
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeHashsetHits(List<TableReportModule> tableModules) {
+    private void writeHashsetHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for hashsets
@@ -534,7 +547,7 @@ public class ReportGenerator {
         ResultSet rs = null;
         try {
             // Query for hashset hits
-            rs = skCase.runQuery("SELECT art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size " +
+            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size " +
                                            "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " +
                                            "WHERE (att.artifact_id = art.artifact_id) " +
                                                  "AND (f.obj_id = art.obj_id) " +
@@ -555,6 +568,13 @@ public class ReportGenerator {
                     }
                 }
                 
+               // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
+                if (failsTagFilter(tags, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(tags);
+                                                                        
                 Long objId = rs.getLong("obj_id");
                 String set = rs.getString("setname");
                 String size = rs.getString("size");
@@ -586,7 +606,7 @@ public class ReportGenerator {
                 
                 // Add a row for this hit to every module
                 for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[] {uniquePath, size}));
+                    module.addRow(Arrays.asList(new String[] {uniquePath, size, tagsList}));
                 }
             }
             
@@ -661,9 +681,7 @@ public class ReportGenerator {
         }
 
         if (artifactTypeId != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() && 
-            artifactTypeId != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
-            artifactTypeId != ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() &&
-            artifactTypeId != ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+            artifactTypeId != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
             columnHeaders.add("Tags");
         }
         
