@@ -167,7 +167,7 @@ public class ReportHTML implements TableReportModule {
         // Like <html>, header, title, any content divs
         try {
             StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(title).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
+            page.append("<html>\n<head>\n\t<title>").append(title).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
             page.append("<div id=\"header\">").append(title).append("</div>\n<div id=\"content\">\n");
             out.write(page.toString());
             currentDataType = title;
