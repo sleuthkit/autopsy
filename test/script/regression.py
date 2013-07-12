@@ -843,26 +843,33 @@ class TestResultsDiffer(object):
             databaseDiff: TskDbDiff object created based off test_data
         """
         try:
-            # Extract gold archive file to output/gold/tmp/
-            extrctr = zipfile.ZipFile(test_data.gold_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-            extrctr.extractall(test_data.main_config.gold)
-            extrctr.close
-            time.sleep(2)
 
-            # Lists of tests to run
-            TestResultsDiffer._compare_errors(test_data)
-
-            # Compare database count to gold
+            # Diff the gold and output databases
             test_data.db_diff_results = TskDbDiff(test_data).run_diff()
 
+            # Compare Exceptions
+            replace = lambda file: re.sub(re.compile("\d"), "d", file)
+            output_errors = test_data.get_sorted_errors_path(DBType.OUTPUT)
+            gold_errors = test_data.get_sorted_errors_path(DBType.GOLD)
+
+            TestResultsDiffer._compare_text(output_errors, gold_errors,
+            test_data, replace)
+
             # Compare smart blackboard results
-            TestResultsDiffer._compare_text(test_data.get_sorted_data_path(DBType.OUTPUT), "SortedData", test_data)
+            output_data = test_data.get_sorted_data_path(DBType.OUTPUT)
+            gold_data = test_data.get_sorted_data_path(DBType.GOLD)
+            TestResultsDiffer._compare_text(output_data, gold_data, test_data)
 
             # Compare the rest of the database (non-BB)
-            TestResultsDiffer._compare_text(test_data.test_dbdump, "DBDump", test_data)
+            output_dump = test_data.get_db_dump_path(DBType.OUTPUT)
+            gold_dump = test_data.get_db_dump_path(DBType.GOLD)
+            TestResultsDiffer._compare_text(output_dump, gold_dump, test_data)
 
             # Compare html output
-            TestResultsDiffer._compare_to_gold_html(test_data)
+            gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+            output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
+            TestResultsDiffer._html_report_diff(test_data, gold_report_path,
+            output_report_path)
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -873,124 +880,84 @@ class TestResultsDiffer(object):
             print(traceback.format_exc())
 
 
-
     # TODO: _compare_text could be made more generic with how it forms the paths (i.e. not add ".txt" in the method) and probably merged with
     # compare_errors since they both do basic comparison of text files
 
-    def _compare_text(output_file, gold_file, test_data):
+    def _compare_text(output_file, gold_file, test_data, process=None):
         """Compare two text files.
 
         Args:
             output_file: a pathto_File, the output text file
             gold_file: a pathto_File, the input text file
             test_data: the TestData of the test being performed
+            pre-process: (optional) a function of String -> String that will be
+            called on each input file before the diff, if specified.
         """
-        gold_dir = Emailer.make_path(test_config.img_gold, test_data.image_name, test_data.image_name + gold_file + ".txt")
         if(not Emailer.file_exists(output_file)):
             return
-        srtd_data = codecs.open(output_file, "r", "utf_8")
-        gold_data = codecs.open(gold_dir, "r", "utf_8")
-        gold_dat = gold_data.read()
-        srtd_dat = srtd_data.read()
-        if (not(gold_dat == srtd_dat)):
-            diff_dir = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+gold_file+"-Diff.txt")
-            diff_file = codecs.open(diff_dir, "wb", "utf_8")
-            dffcmdlst = ["diff", test_data.get_sorted_data_path(DBType.OUTPUT), gold_dir]
+        output_data = codecs.open(output_file, "r", "utf_8").read()
+        gold_data = codecs.open(gold_file, "r", "utf_8").read()
+
+        if process is not None:
+            output_data = process(output_data)
+            gold_data = process(gold_data)
+
+        if (not(gold_data == output_data)):
+            filename = os.path.basename(output_file)
+            diff_path = os.path.join(test_data.output_path, filename +
+            "-Diff.txt")
+            diff_file = codecs.open(diff_path, "wb", "utf_8")
+            dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             global attachl
             global errorem
             global failedbool
             attachl.append(diff_dir)
-            errorem += test_data.image_name + ":There was a  difference in the database file " + gold_file + ".\n"
-            printerror(test_data, "There was a database difference for " + test_data.image_name + " versus " + gold_file + ".\n")
+            msg = test_data.image_name + ":There was a difference in "
+            msg += os.path.basename(output_file) + ".\n"
+            errorem += msg
+            printerror(test_data, msg)
             failedbool = True
             global imgfail
             imgfail = True
 
-    def _compare_errors(test_data):
-        """Compare merged error log files.
-
-        Args:
-            test_data: the TestData of the test being performed
-        """
-        gold_dir = test_data.get_sorted_errors_path(DBType.GOLD)
-        common_log = codecs.open(test_data.sorted_log, "r", "utf_8")
-        gold_log = codecs.open(gold_dir, "r", "utf_8")
-        gold_dat = gold_log.read()
-        common_dat = common_log.read()
-        patrn = re.compile("\d")
-        if (not((re.sub(patrn, 'd', gold_dat)) == (re.sub(patrn, 'd', common_dat)))):
-            diff_dir = Emailer.make_local_path(test_config.output_dir, test_data.image_name, test_data.image_name+"AutopsyErrors-Diff.txt")
-            diff_file = open(diff_dir, "w")
-            dffcmdlst = ["diff", test_data.sorted_log, gold_dir]
-            subprocess.call(dffcmdlst, stdout = diff_file)
-            global attachl
-            global errorem
-            global failedbool
-            attachl.append(test_data.sorted_log)
-            attachl.append(diff_dir)
-            errorem += test_data.image_name + ":There was a difference in the exceptions Log.\n"
-            printerror(test_data, "Exceptions didn't match.\n")
-            failedbool = True
-            global imgfail
-            imgfail = True
-
-    def _compare_to_gold_html(test_data):
+    # TODO: get rid of test_data by changing the error reporting
+    def _html_report_diff(test_data, gold_report_path, output_report_path):
         """Compare the output and gold html reports.
 
         Args:
             test_data: the TestData of the test being performed.
+            gold_report_path: a pathto_Dir, the gold HTML report directory
+            output_report_path: a pathto_Dir, the output HTML report directory
         """
-        gold_html_file = Emailer.make_path(test_config.img_gold, test_data.image_name, "Report", "index.html")
-        htmlfolder = ""
-        for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports")):
-            if os.path.isdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", fs)):
-                htmlfolder = fs
-        autopsy_html_path = Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder, "HTML Report")
-
-
         try:
-            autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
-            if not Emailer.file_exists(gold_html_file):
-                printerror(test_data, "Error: No gold html report exists at:")
-                printerror(test_data, gold_html_file + "\n")
-                return
-            if not Emailer.file_exists(autopsy_html_file):
-                printerror(test_data, "Error: No test_config html report exists at:")
-                printerror(test_data, autopsy_html_file + "\n")
-                return
-            #Find all gold .html files belonging to this test_config
-            ListGoldHTML = []
-            for fs in os.listdir(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder)):
-                if(fs.endswith(".html")):
-                    ListGoldHTML.append(Emailer.make_path(test_config.output_dir, test_data.image_name, AUTOPSY_TEST_CASE, "Reports", htmlfolder, fs))
-            #Find all new .html files belonging to this test_config
-            ListNewHTML = []
-            if(os.path.exists(Emailer.make_path(test_config.img_gold, test_data.image_name))):
-                for fs in os.listdir(Emailer.make_path(test_config.img_gold, test_data.image_name)):
-                    if (fs.endswith(".html")):
-                        ListNewHTML.append(Emailer.make_path(test_config.img_gold, test_data.image_name, fs))
+            gold_html_files = get_files_by_ext(gold_report_path, ".html")
+            output_html_files = get_files_by_ext(output_report_path, ".html")
+
             #ensure both reports have the same number of files and are in the same order
-            if(len(ListGoldHTML) != len(ListNewHTML)):
-                printerror(test_data, "The reports did not have the same number of files. One of the reports may have been corrupted")
+            if(len(gold_html_files) != len(output_html_files)):
+                msg = "The reports did not have the same number or files."
+                msg += "One of the reports may have been corrupted."
+                printerror(test_data, msg)
             else:
-                ListGoldHTML.sort()
-                ListNewHTML.sort()
+                gold_html_files.sort()
+                output_html_files.sort()
 
             total = {"Gold": 0, "New": 0}
-            for x in range(0, len(ListGoldHTML)):
-                count = TestResultsDiffer._compare_report_files(ListGoldHTML[x], ListNewHTML[x])
-                total["Gold"]+=count[0]
-                total["New"]+=count[1]
+            for gold, output in zip(gold_html_files, output_html_files):
+                count = TestResultsDiffer._compare_report_files(gold, output)
+                total["Gold"] += count[0]
+                total["New"] += count[1]
+
             okay = "The test report matches the gold report."
             errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
             print_report(test_data, errors, "REPORT COMPARISON", okay)
+
             if total["Gold"] == total["New"]:
                 test_data.report_passed = True
             else:
                 printerror(test_data, "The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
-        except FileNotFoundException as e:
-            e.print_error()
+
         except DirNotFoundException as e:
             e.print_error()
         except Exception as e:
@@ -1028,6 +995,17 @@ class TestResultsDiffer(object):
     # Split a string into an array of string of the given size
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
+
+
+def get_files_by_ext(dir_path, ext):
+    """Get a list of all the files with a given extenstion in the directory.
+
+    Args:
+        dir: a pathto_Dir, the directory to search.
+        ext: a String, the extension to search for. i.e. ".html"
+    """
+    return [ os.path.join(dir_path, file) for file in os.listdir(dir_path) if
+    file.endswith(ext) ]
 
 class TestData(object):
     """Container for the input and output of a single image.
@@ -1160,7 +1138,7 @@ class TestData(object):
                 html_path = Emailer.make_path(self.reports_dir, fs)
                 if os.path.isdir(html_path):
                     break
-            return Emailer.make_path(html_path, "HTML Report")
+            return Emailer.make_path(html_path, os.listdir(html_path)[0])
 
     def get_sorted_data_path(self, file_type):
         """Get the path to the SortedData file that corresponds to the given DBType.
@@ -1981,12 +1959,18 @@ class TestRunner(object):
         global html
         global attachl
 
-        test_data_list = TestRunner._generate_test_data()
+        test_data_list = [ TestData(image, test_config) for image in test_config.images ]
 
         Reports.html_add_images(test_config.images)
 
         logres =[]
         for test_data in test_data_list:
+            if not (test_config.args.rebuild or
+                os.path.exists(test_data.gold_archive)):
+                msg = "Gold standard doesn't exist, skipping image:"
+                printerror(test_data, msg)
+                printerror(test_data, test_data.gold_archive)
+                continue
             TestRunner._run_autopsy_ingest(test_data)
 
             if test_config.args.rebuild:
@@ -2019,19 +2003,6 @@ class TestRunner(object):
             Emailer.send_email(parsed, errorem, attachl, passFail)
         except NameError:
             printerror(test_data, "Could not send e-mail because of no XML file --maybe");
-
-    def _generate_test_data():
-        """Create TestData objects for each image in the TestConfiguration object.
-
-        Returns:
-            listof_TestData, the TestData object generated.
-        """
-        return [ TestData(image, test_config) for image in test_config.images ]
-        #test_data_list = []
-        #for img in test_config.images:
-        #    test_data = TestData(test_config)
-        #    test_data_list.append(test_data)
-        #return test_data_list
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -2076,6 +2047,8 @@ class TestRunner(object):
         Returns:
             logres?
         """
+        TestRunner._extract_gold(test_data)
+
         # Look for core exceptions
         # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
         logres = Logs.search_common_log("TskCoreException", test_data)
@@ -2089,6 +2062,17 @@ class TestRunner(object):
         if(failedbool):
             attachl.append(test_data.common_log_path)
         return logres
+
+    def _extract_gold(test_data):
+        """Extract gold archive file to output/gold/tmp/
+
+        Args:
+            test_data: the TestData
+        """
+        extrctr = zipfile.ZipFile(test_data.gold_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+        extrctr.extractall(test_data.main_config.gold)
+        extrctr.close
+        time.sleep(2)
 
     def _handle_solr(test_data):
         """Clean up SOLR index if in keep mode (-k).
@@ -2224,23 +2208,15 @@ class TestRunner(object):
 def main():
     # Global variables
     global failedbool
-    global inform
-    global fl
     global test_config
     global errorem
     global attachl
-    global daycount
-    global redo
-    global passed
-    daycount = 0
     failedbool = False
-    redo = False
     errorem = ""
     args = Args()
     parse_result = args.parse()
     test_config = TestConfiguration(args)
     attachl = []
-    passed = False
     # The arguments were given wrong:
     if not parse_result:
         test_config.reset()
