@@ -30,6 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -113,23 +114,23 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
             Object wizProp4 = wiz.getProperty("tagStates");
             Object wizProp5 = wiz.getProperty("artifactStates");
             
-            // Initialize varibales
+            // Initialize variables
             Map<TableReportModule, Boolean> tableModuleStates = (Map<TableReportModule, Boolean>) wizProp1;
             Map<GeneralReportModule, Boolean> generalModuleStates = (Map<GeneralReportModule, Boolean>) wizProp2;
             Boolean isTagsSelected = (Boolean) wizProp3;
-            Map<String, Boolean> tagStates = (Map<String, Boolean>) wizProp4;
-            Map<ARTIFACT_TYPE, Boolean> artifactStates = (Map<ARTIFACT_TYPE, Boolean>) wizProp5;
-
+            Map<String, Boolean> tagSelections = (Map<String, Boolean>) wizProp4;
+            Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections = (Map<ARTIFACT_TYPE, Boolean>) wizProp5;
+            
             // Create the generator and generate reports
             ReportGenerator generator = new ReportGenerator(tableModuleStates, generalModuleStates);
-            if (isTagsSelected != null) {
-                if (isTagsSelected) {
-                    generator.generateTableTagReport(tagStates);
-                } else {
-                    generator.generateTableArtifactReport(artifactStates);
-                }
+            if (isTagsSelected) {
+                generator.generateArtifactTableReports(artifactTypeSelections, tagSelections);
+            }
+            else {
+                generator.generateArtifactTableReports(artifactTypeSelections, null);                
             }
             generator.generateGeneralReports();
+            
             // Open the progress window for the user
             generator.displayProgressPanels();
         }
