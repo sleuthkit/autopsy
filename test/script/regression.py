@@ -42,6 +42,7 @@ import zipfile
 import zlib
 import Emailer
 import srcupdater
+from regression_utils import *
 
 #
 # Please read me...
@@ -75,14 +76,6 @@ import srcupdater
 # Nat:          A Natural Number
 # Image:        An image
 #
-
-#####
-# Enumeration definition (python 3.2 doesn't have enumerations, this is a common solution
-# that allows you to access a named enum in a Java-like style, i.e. Numbers.ONE)
-#####
-def enum(*seq, **named):
-    enums = dict(zip(seq, range(len(seq))), **named)
-    return type('Enum', (), enums)
 
 # Enumeration of database types used for the simplification of generating database paths
 DBType = enum('OUTPUT', 'GOLD', 'BACKUP')
@@ -148,9 +141,9 @@ class Args(object):
                 #try: @@@ Commented out until a more specific except statement is added
                     arg = sys.argv.pop(0)
                     print("Running on a single file:")
-                    print(Emailer.path_fix(arg) + "\n")
+                    print(path_fix(arg) + "\n")
                     self.single = True
-                    self.single_file = Emailer.path_fix(arg)
+                    self.single_file = path_fix(arg)
                 #except:
                 #   print("Error: No single file given.\n")
             #       return False
@@ -239,9 +232,9 @@ class TestConfiguration(object):
         self.args = args
         # Paths:
         self.output_dir = ""
-        self.input_dir = Emailer.make_local_path("..","input")
-        self.gold = Emailer.make_path("..", "output", "gold")
-        self.img_gold = Emailer.make_path(self.gold, 'tmp')
+        self.input_dir = make_local_path("..","input")
+        self.gold = make_path("..", "output", "gold")
+        self.img_gold = make_path(self.gold, 'tmp')
         # Logs:
         self.csv = ""
         self.global_csv = ""
@@ -296,14 +289,14 @@ class TestConfiguration(object):
             return
         # If working from a configuration file
         if self.args.list:
-           if not Emailer.file_exists(self.args.config_file):
+           if not file_exists(self.args.config_file):
                msg = "Configuration file does not exist at:" + self.args.config_file
                self._print_error(msg)
                return
            self._load_config_file(self.args.config_file)
         # Else if working on a single file
         elif self.args.single:
-           if not Emailer.file_exists(self.args.single_file):
+           if not file_exists(self.args.single_file):
                msg = "Image file does not exist at: " + self.args.single_file
                self._print_error(msg)
                return
@@ -313,7 +306,7 @@ class TestConfiguration(object):
         #  the input directory, continue on to parsing ../input
         if (not self.args.single) and (not self.args.ignore) and (not self.args.list):
            self.args.config_file = "config.xml"
-           if not Emailer.file_exists(self.args.config_file):
+           if not file_exists(self.args.config_file):
                msg = "Configuration file does not exist at: " + self.args.config_file
                self._print_error(msg)
                return
@@ -321,12 +314,12 @@ class TestConfiguration(object):
 
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
-        if(not Emailer.dir_exists(Emailer.make_path("..", "output", "results"))):
-            os.makedirs(Emailer.make_path("..", "output", "results",))
-        self.output_dir = Emailer.make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
+        if(not dir_exists(make_path("..", "output", "results"))):
+            os.makedirs(make_path("..", "output", "results",))
+        self.output_dir = make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
-        self.csv = Emailer.make_local_path(self.output_dir, "CSV.txt")
-        self.html_log = Emailer.make_path(self.output_dir, "AutopsyTestCase.html")
+        self.csv = make_local_path(self.output_dir, "CSV.txt")
+        self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
         log_name = self.output_dir + "\\regression.log"
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
@@ -336,18 +329,18 @@ class TestConfiguration(object):
         if(self.args.list):
             build_elements = parsed.getElementsByTagName("build")
             if(len(build_elements) <= 0):
-                build_path = Emailer.make_path("..", "build.xml")
+                build_path = make_path("..", "build.xml")
             else:
                 build_element = build_elements[0]
                 build_path = build_element.getAttribute("value").encode().decode("utf_8")
                 if(build_path == None):
-                    build_path = Emailer.make_path("..", "build.xml")
+                    build_path = make_path("..", "build.xml")
         else:
-            build_path = Emailer.make_path("..", "build.xml")
+            build_path = make_path("..", "build.xml")
         self.build_path = build_path
-        self.known_bad_path = Emailer.make_path(self.input_dir, "notablehashes.txt-md5.idx")
-        self.keyword_path = Emailer.make_path(self.input_dir, "notablekeywords.xml")
-        self.nsrl_path = Emailer.make_path(self.input_dir, "nsrl.txt-md5.idx")
+        self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
+        self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
+        self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
 
     def _load_config_file(self, config_file):
         """Updates this TestConfiguration's attributes from the config file.
@@ -370,17 +363,17 @@ class TestConfiguration(object):
                 self.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed.getElementsByTagName("global_csv"):
                 self.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-                self.global_csv = Emailer.make_local_path(self.global_csv)
+                self.global_csv = make_local_path(self.global_csv)
             if parsed.getElementsByTagName("golddir"):
                 self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-                self.img_gold = Emailer.make_path(self.gold, 'tmp')
+                self.img_gold = make_path(self.gold, 'tmp')
 
             # Generate the top navbar of the HTML for easy access to all images
             images = []
             for element in parsed.getElementsByTagName("image"):
                 value = element.getAttribute("value").encode().decode("utf_8")
                 print ("Image in Config File: " + value)
-                if Emailer.file_exists(value):
+                if file_exists(value):
                     self.images.append(value)
                 else:
                     msg = "File: " + value + " doesn't exist"
@@ -591,11 +584,11 @@ class TskDbDiff(object):
         Note: SQLITE needs unix style pathing
         """
         # Check to make sure both db files exist
-        if not Emailer.file_exists(self.autopsy_db_file):
+        if not file_exists(self.autopsy_db_file):
             printerror(self.test_data, "Error: TskDbDiff file does not exist at:")
             printerror(self.test_data, self.autopsy_db_file + "\n")
             return
-        if not Emailer.file_exists(self.gold_db_file):
+        if not file_exists(self.gold_db_file):
             printerror(self.test_data, "Error: Gold database file does not exist at:")
             printerror(self.test_data, self.gold_db_file + "\n")
             return
@@ -828,6 +821,7 @@ class DiffResults(object):
         for error in self.attribute_comp:
             list.append(error)
         return ";".join(list)
+
 #-------------------------------------------------#
 #     Functions relating to comparing outputs     #
 #-------------------------------------------------#
@@ -893,7 +887,7 @@ class TestResultsDiffer(object):
             pre-process: (optional) a function of String -> String that will be
             called on each input file before the diff, if specified.
         """
-        if(not Emailer.file_exists(output_file)):
+        if(not file_exists(output_file)):
             return
         output_data = codecs.open(output_file, "r", "utf_8").read()
         gold_data = codecs.open(gold_file, "r", "utf_8").read()
@@ -996,17 +990,6 @@ class TestResultsDiffer(object):
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
 
-
-def get_files_by_ext(dir_path, ext):
-    """Get a list of all the files with a given extenstion in the directory.
-
-    Args:
-        dir: a pathto_Dir, the directory to search.
-        ext: a String, the extension to search for. i.e. ".html"
-    """
-    return [ os.path.join(dir_path, file) for file in os.listdir(dir_path) if
-    file.endswith(ext) ]
-
 class TestData(object):
     """Container for the input and output of a single image.
 
@@ -1056,20 +1039,20 @@ class TestData(object):
         # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
         self.image_name = self.image + "(0)"
-        self.output_path = Emailer.make_path(self.main_config.output_dir, self.image_name)
-        self.autopsy_data_file = Emailer.make_path(self.output_path, self.image_name + "Autopsy_data.txt")
-        self.warning_log = Emailer.make_local_path(self.output_path, "AutopsyLogs.txt")
-        self.antlog_dir = Emailer.make_local_path(self.output_path, "antlog.txt")
-        self.test_dbdump = Emailer.make_path(self.output_path, self.image_name +
+        self.output_path = make_path(self.main_config.output_dir, self.image_name)
+        self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
+        self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
+        self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
+        self.test_dbdump = make_path(self.output_path, self.image_name +
         "DBDump.txt")
-        self.common_log_path = Emailer.make_local_path(self.output_path, self.image_name + COMMON_LOG)
-        self.sorted_log = Emailer.make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
-        self.reports_dir = Emailer.make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
-        self.gold_data_dir = Emailer.make_path(self.main_config.img_gold, self.image_name)
-        self.gold_archive = Emailer.make_path(self.main_config.gold,
+        self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
+        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
+        self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
+        self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
+        self.gold_archive = make_path(self.main_config.gold,
         self.image_name + "-archive.zip")
-        self.logs_dir = Emailer.make_path(self.output_path, "logs")
-        self.solr_index = Emailer.make_path(self.output_path, AUTOPSY_TEST_CASE,
+        self.logs_dir = make_path(self.output_path, "logs")
+        self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
         "ModuleOutput", "KeywordSearch")
         self.db_diff_results = None
         self.total_test_time = ""
@@ -1085,28 +1068,6 @@ class TestData(object):
         self.printerror = []
         self.printout = []
 
-    def reset(self):
-        self.image = ""
-        self.image_file = ""
-        self.image_name = ""
-        self.sorted_log = ""
-        self.warning_log = ""
-        self.autopsy_data_file = ""
-        self.common_log_path = ""
-        self.antlog_dir = ""
-        self.test_dbdump = ""
-        self.total_test_time = ""
-        self.start_date = ""
-        self.end_date = ""
-        self.total_ingest_time = ""
-        self.artifact_count = 0
-        self.artifact_fail = 0
-        self.heap_space = ""
-        self.service_times = ""
-        # Error tracking
-        self.printerror = []
-        self.printout = []
-
     def get_db_path(self, db_type):
         """Get the path to the database file that corresponds to the given DBType.
 
@@ -1114,11 +1075,11 @@ class TestData(object):
             DBType: the DBType of the path to be generated.
         """
         if(db_type == DBType.GOLD):
-            db_path = Emailer.make_path(self.gold_data_dir, DB_FILENAME)
+            db_path = make_path(self.gold_data_dir, DB_FILENAME)
         elif(db_type == DBType.OUTPUT):
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
+            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
         else:
-            db_path = Emailer.make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
+            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
         return db_path
 
     def get_html_report_path(self, html_type):
@@ -1128,17 +1089,17 @@ class TestData(object):
             DBType: the DBType of the path to be generated.
         """
         if(html_type == DBType.GOLD):
-            return Emailer.make_path(self.gold_data_dir, "Report")
+            return make_path(self.gold_data_dir, "Report")
         else:
             # Autopsy creates an HTML report folder in the form AutopsyTestCase DATE-TIME
             # It's impossible to get the exact time the folder was created, but the folder
             # we are looking for is the only one in the self.reports_dir folder
             html_path = ""
             for fs in os.listdir(self.reports_dir):
-                html_path = Emailer.make_path(self.reports_dir, fs)
+                html_path = make_path(self.reports_dir, fs)
                 if os.path.isdir(html_path):
                     break
-            return Emailer.make_path(html_path, os.listdir(html_path)[0])
+            return make_path(html_path, os.listdir(html_path)[0])
 
     def get_sorted_data_path(self, file_type):
         """Get the path to the SortedData file that corresponds to the given DBType.
@@ -1174,9 +1135,9 @@ class TestData(object):
         """
         full_filename = self.image_name + file_name
         if(file_type == DBType.GOLD):
-            return Emailer.make_path(self.gold_data_dir, full_filename)
+            return make_path(self.gold_data_dir, full_filename)
         else:
-            return Emailer.make_path(self.output_path, full_filename)
+            return make_path(self.output_path, full_filename)
 
 class Reports(object):
     def generate_reports(csv_path, test_data):
@@ -1197,7 +1158,7 @@ class Reports(object):
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
         global imgfail
-        if not Emailer.file_exists(test_config.html_log):
+        if not file_exists(test_config.html_log):
             Reports.write_html_head()
         try:
             global html
@@ -1234,7 +1195,7 @@ class Reports(object):
                     <hr color='#282828'>"
             logs_path = test_data.logs_dir
             for file in os.listdir(logs_path):
-                logs += "<p><a href='file:\\" + Emailer.make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
+                logs += "<p><a href='file:\\" + make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
             logs += "</div>"
 
             # All the testing information
@@ -1358,7 +1319,7 @@ class Reports(object):
         """
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
-        if not Emailer.file_exists(test_config.html_log):
+        if not file_exists(test_config.html_log):
             Reports.write_html_head()
         html = open(test_config.html_log, "a")
         links = []
@@ -1373,7 +1334,7 @@ class Reports(object):
         try:
             # If the CSV file hasn't already been generated, this is the
             # first run, and we need to add the column names
-            if not Emailer.file_exists(csv_path):
+            if not file_exists(csv_path):
                 Reports.csv_header(csv_path)
             # Now add on the fields to a new row
             csv = open(csv_path, "a")
@@ -1404,10 +1365,10 @@ class Reports(object):
             vars.append( str(test_data.db_diff_results.output_objs) )
             vars.append( str(test_data.db_diff_results.output_artifacts) )
             vars.append( str(test_data.db_diff_results.output_objs) )
-            vars.append( Emailer.make_local_path("gold", test_data.image_name, DB_FILENAME) )
+            vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
             vars.append( test_data.db_diff_results.get_artifact_comparison() )
             vars.append( test_data.db_diff_results.get_attribute_comparison() )
-            vars.append( Emailer.make_local_path("gold", test_data.image_name, "standard.html") )
+            vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
             vars.append( str(test_data.report_passed) )
             vars.append( test_config.ant_to_string() )
             # Join it together with a ", "
@@ -1496,10 +1457,10 @@ class Logs(object):
             common_log.write("--------------------------------------------------\n")
             common_log.write(test_data.image_name + "\n")
             common_log.write("--------------------------------------------------\n")
-            rep_path = Emailer.make_local_path(test_config.output_dir)
+            rep_path = make_local_path(test_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
-                log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
+                log = codecs.open(make_path(logs_path, file), "r", "utf_8")
                 for line in log:
                     line = line.replace(rep_path, "test_data")
                     if line.startswith("Exception"):
@@ -1526,7 +1487,7 @@ class Logs(object):
         """Fill the global test config's variables that require the log files."""
         try:
             # Open autopsy.log.0
-            log_path = Emailer.make_path(test_data.logs_dir, "autopsy.log.0")
+            log_path = make_path(test_data.logs_dir, "autopsy.log.0")
             log = open(log_path)
 
             # Set the test_config starting time based off the first line of autopsy.log.0
@@ -1551,12 +1512,12 @@ class Logs(object):
             # Set Autopsy version, heap space, ingest time, and service times
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
-            test_config.autopsy_version = Emailer.get_word_at(version_line, 5).rstrip(",")
+            test_config.autopsy_version = get_word_at(version_line, 5).rstrip(",")
 
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
 
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
-            test_data.total_ingest_time = Emailer.get_word_at(ingest_line, 6).rstrip()
+            test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
 
             message_line = search_log_set("autopsy", "Ingest messages count:", test_data)[0]
             test_config.ingest_messages = int(message_line.rstrip().split(": ")[2])
@@ -1622,91 +1583,6 @@ class Logs(object):
         log.close()
         return results
 
-# Returns the type of image file, based off extension
-class IMGTYPE:
-    RAW, ENCASE, SPLIT, UNKNOWN = range(4)
-
-def image_type(image_file):
-    ext_start = image_file.rfind(".")
-    if (ext_start == -1):
-        return IMGTYPE.UNKNOWN
-    ext = image_file[ext_start:].lower()
-    if (ext == ".img" or ext == ".dd"):
-        return IMGTYPE.RAW
-    elif (ext == ".e01"):
-        return IMGTYPE.ENCASE
-    elif (ext == ".aa" or ext == ".001"):
-        return IMGTYPE.SPLIT
-    else:
-        return IMGTYPE.UNKNOWN
-
-def search_logs(string, test_data):
-    """Search through all the known log files for a given string.
-
-    Args:
-        string: the String to search for.
-        test_data: the TestData that holds the logs to search.
-
-    Returns:
-        a listof_String, the lines that contained the given String.
-    """
-    logs_path = test_data.logs_dir
-    results = []
-    for file in os.listdir(logs_path):
-        log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
-        for line in log:
-            if string in line:
-                results.append(line)
-        log.close()
-    return results
-
-def search_log(log, string, test_data):
-    """Search the given log for any instances of a given string.
-
-    Args:
-        log: a pathto_File, the log to search in
-        string: the String to search for.
-        test_data: the TestData that holds the log to search.
-
-    Returns:
-        a listof_String, all the lines that the string is found on
-    """
-    logs_path = Emailer.make_path(test_data.logs_dir, log)
-    try:
-        results = []
-        log = codecs.open(logs_path, "r", "utf_8")
-        for line in log:
-            if string in line:
-                results.append(line)
-        log.close()
-        if results:
-            return results
-    except:
-        raise FileNotFoundException(logs_path)
-
-# Search through all the the logs of the given type
-# Types include autopsy, tika, and solr
-def search_log_set(type, string, test_data):
-    """Search through all logs to the given type for the given string.
-
-    Args:
-        type: the type of log to search in.
-        string: the String to search for.
-        test_data: the TestData containing the logs to search.
-
-    Returns:
-        a listof_String, the lines on which the String was found.
-    """
-    logs_path = test_data.logs_dir
-    results = []
-    for file in os.listdir(logs_path):
-        if type in file:
-            log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
-            for line in log:
-                if string in line:
-                    results.append(line)
-            log.close()
-    return results
 
 def print_report(test_data, errors, name, okay):
     """Print a report with the specified information.
@@ -1737,28 +1613,6 @@ def printout(test_data, string):
     print(string)
     test_data.printout.append(string)
 
-#----------------------------------#
-#        Helper functions          #
-#----------------------------------#
-
-def get_image_name(image_file):
-    path_end = image_file.rfind("/")
-    path_end2 = image_file.rfind("\\")
-    ext_start = image_file.rfind(".")
-    if(ext_start == -1):
-        name = image_file
-    if(path_end2 != -1):
-        name = image_file[path_end2+1:ext_start]
-    elif(ext_start == -1):
-        name = image_file[path_end+1:]
-    elif(path_end == -1):
-        name = image_file[:ext_start]
-    elif(path_end!=-1 and ext_start!=-1):
-        name = image_file[path_end+1:ext_start]
-    else:
-        name = image_file[path_end2+1:ext_start]
-    return name
-
 def get_exceptions(test_data):
     """Get a list of the exceptions in the autopsy logs.
 
@@ -1770,7 +1624,7 @@ def get_exceptions(test_data):
     results = []
     for file in os.listdir(logs_path):
         if "autopsy.log" in file:
-            log = codecs.open(Emailer.make_path(logs_path, file), "r", "utf_8")
+            log = codecs.open(make_path(logs_path, file), "r", "utf_8")
             ex = re.compile("\SException")
             er = re.compile("\SError")
             for line in log:
@@ -1802,67 +1656,6 @@ def copy_logs(test_data):
         printerror(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
-def clear_dir(dir):
-    """Clears all files from a directory and remakes it."""
-    try:
-        if Emailer.dir_exists(dir):
-            shutil.rmtree(dir)
-        os.makedirs(dir)
-        return True;
-    except Exception as e:
-        printerror(test_data,"Error: Cannot clear the given directory:")
-        printerror(test_data,dir + "\n")
-        print(str(e))
-        return False;
-
-def del_dir(dir):
-    try:
-        if Emailer.dir_exists(dir):
-            shutil.rmtree(dir)
-        return True;
-    except:
-        printerror(test_data,"Error: Cannot delete the given directory:")
-        printerror(test_data,dir + "\n")
-        return False;
-
-def copy_file(ffrom, to):
-    """Copies a given file from "ffrom" to "to"."""
-    try :
-        shutil.copy(ffrom, to)
-    except Exception as e:
-        print(str(e))
-        print(traceback.format_exc())
-
-def copy_dir(ffrom, to):
-    """Copies a directory file from "ffrom" to "to"."""
-    try :
-        if not os.path.isdir(ffrom):
-            raise FileNotFoundException(ffrom)
-        shutil.copytree(ffrom, to)
-    except:
-        raise FileNotFoundException(to)
-
-def get_file_in_dir(dir, ext):
-    """Returns the first file in the given directory with the given extension."""
-    try:
-        for file in os.listdir(dir):
-            if file.endswith(ext):
-                return Emailer.make_path(dir, file)
-        # If nothing has been found, raise an exception
-        raise FileNotFoundException(dir)
-    except:
-        raise DirNotFoundException(dir)
-
-def find_file_in_dir(dir, name, ext):
-    try:
-        for file in os.listdir(dir):
-            if file.startswith(name):
-                if file.endswith(ext):
-                    return Emailer.make_path(dir, file)
-        raise FileNotFoundException(dir)
-    except:
-        raise DirNotFoundException(dir)
-
 def setDay():
     global Day
     Day = int(strftime("%d", localtime()))
@@ -1875,34 +1668,6 @@ def getDay():
 
 def newDay():
     return getLastDay() != getDay()
-
-def usage():
-    """Return the usage description of the test script."""
-    return """
-Usage:  ./regression.py [-f FILE] [OPTIONS]
-
-        Run RegressionTest.java, and compare the result with a gold standard.
-        By default, the script tests every image in ../input
-        When the -f flag is set, this script only tests a single given image.
-        When the -l flag is set, the script looks for a configuration file,
-        which may outsource to a new input directory and to individual images.
-
-        Expected files:
-          An NSRL database at:          ../input/nsrl.txt-md5.idx
-          A notable hash database at:    ../input/notablehashes.txt-md5.idx
-          A notable keyword file at:      ../input/notablekeywords.xml
-
-Options:
-  -r            Rebuild the gold standards for the image(s) tested.
-  -i            Ignores the ../input directory and all files within it.
-  -u            Tells Autopsy not to ingest unallocated space.
-  -k            Keeps each image's Solr index instead of deleting it.
-  -v            Verbose mode; prints all errors to the screen.
-  -e ex      Prints out all errors containing ex.
-  -l cfg        Runs from configuration file cfg.
-  -c            Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
-  -fr           Will not try download gold standard images
-    """
 
 #------------------------------------------------------------#
 # Exception classes to manage "acceptable" thrown exceptions #
@@ -2107,22 +1872,22 @@ class TestRunner(object):
         # Delete the current gold standards
         gold_dir = test_config.img_gold
         clear_dir(test_config.img_gold)
-        tmpdir = Emailer.make_path(gold_dir, test_data.image_name)
+        tmpdir = make_path(gold_dir, test_data.image_name)
         dbinpth = test_data.get_db_path(DBType.OUTPUT)
-        dboutpth = Emailer.make_path(tmpdir, DB_FILENAME)
-        dataoutpth = Emailer.make_path(tmpdir, test_data.image_name + "SortedData.txt")
+        dboutpth = make_path(tmpdir, DB_FILENAME)
+        dataoutpth = make_path(tmpdir, test_data.image_name + "SortedData.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
-        dbdumpoutpth = Emailer.make_path(tmpdir, test_data.image_name + "DBDump.txt")
+        dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
         if not os.path.exists(test_config.img_gold):
             os.makedirs(test_config.img_gold)
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         try:
             copy_file(dbinpth, dboutpth)
-            if Emailer.file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
+            if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 copy_file(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             copy_file(dbdumpinpth, dbdumpoutpth)
-            error_pth = Emailer.make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
+            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
             copy_file(test_data.sorted_log, error_pth)
         except Exception as e:
             printerror(test_data, str(e))
@@ -2130,7 +1895,7 @@ class TestRunner(object):
             print(traceback.format_exc())
         # Rebuild the HTML report
         output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
-        gold_html_report_dir = Emailer.make_path(tmpdir, "Report")
+        gold_html_report_dir = make_path(tmpdir, "Report")
 
         try:
             copy_dir(output_html_report_dir, gold_html_report_dir)
@@ -2145,7 +1910,7 @@ class TestRunner(object):
         os.chdir(zpdir)
         os.chdir("..")
         img_gold = "tmp"
-        img_archive = Emailer.make_path(test_data.image_name+"-archive.zip")
+        img_archive = make_path(test_data.image_name+"-archive.zip")
         comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
         TestRunner.zipdir(img_gold, comprssr)
         comprssr.close()
@@ -2169,7 +1934,7 @@ class TestRunner(object):
         """
         # Set up the directories
         test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
-        if Emailer.dir_exists(test_config_path):
+        if dir_exists(test_config_path):
             shutil.rmtree(test_config_path)
         os.makedirs(test_config_path)
         test_config.ant = ["ant"]
@@ -2186,14 +1951,14 @@ class TestRunner(object):
         test_config.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_config.ant.append("-Dgold_path=" + test_config.gold)
         test_config.ant.append("-Dout_path=" +
-        Emailer.make_local_path(test_data.output_path))
+        make_local_path(test_data.output_path))
         test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
         printout(test_data, "Ingesting Image:\n" + test_data.image_file + "\n")
         printout(test_data, "CMD: " + " ".join(test_config.ant))
         printout(test_data, "Starting test...\n")
-        antoutpth = Emailer.make_local_path(test_config.output_dir, "antRunOutput.txt")
+        antoutpth = make_local_path(test_config.output_dir, "antRunOutput.txt")
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
             subprocess.call(test_config.ant, stdout=subprocess.PIPE)
@@ -2201,6 +1966,139 @@ class TestRunner(object):
             theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
+
+####
+# Helper Functions
+####
+def search_logs(string, test_data):
+    """Search through all the known log files for a given string.
+
+    Args:
+        string: the String to search for.
+        test_data: the TestData that holds the logs to search.
+
+    Returns:
+        a listof_String, the lines that contained the given String.
+    """
+    logs_path = test_data.logs_dir
+    results = []
+    for file in os.listdir(logs_path):
+        log = codecs.open(make_path(logs_path, file), "r", "utf_8")
+        for line in log:
+            if string in line:
+                results.append(line)
+        log.close()
+    return results
+
+def search_log(log, string, test_data):
+    """Search the given log for any instances of a given string.
+
+    Args:
+        log: a pathto_File, the log to search in
+        string: the String to search for.
+        test_data: the TestData that holds the log to search.
+
+    Returns:
+        a listof_String, all the lines that the string is found on
+    """
+    logs_path = make_path(test_data.logs_dir, log)
+    try:
+        results = []
+        log = codecs.open(logs_path, "r", "utf_8")
+        for line in log:
+            if string in line:
+                results.append(line)
+        log.close()
+        if results:
+            return results
+    except:
+        raise FileNotFoundException(logs_path)
+
+# Search through all the the logs of the given type
+# Types include autopsy, tika, and solr
+def search_log_set(type, string, test_data):
+    """Search through all logs to the given type for the given string.
+
+    Args:
+        type: the type of log to search in.
+        string: the String to search for.
+        test_data: the TestData containing the logs to search.
+
+    Returns:
+        a listof_String, the lines on which the String was found.
+    """
+    logs_path = test_data.logs_dir
+    results = []
+    for file in os.listdir(logs_path):
+        if type in file:
+            log = codecs.open(make_path(logs_path, file), "r", "utf_8")
+            for line in log:
+                if string in line:
+                    results.append(line)
+            log.close()
+    return results
+
+
+def clear_dir(dir):
+    """Clears all files from a directory and remakes it."""
+    try:
+        if dir_exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
+        return True;
+    except Exception as e:
+        printerror(test_data,"Error: Cannot clear the given directory:")
+        printerror(test_data,dir + "\n")
+        print(str(e))
+        return False;
+
+def del_dir(dir):
+    try:
+        if dir_exists(dir):
+            shutil.rmtree(dir)
+        return True;
+    except:
+        printerror(test_data,"Error: Cannot delete the given directory:")
+        printerror(test_data,dir + "\n")
+        return False;
+
+def copy_file(ffrom, to):
+    """Copies a given file from "ffrom" to "to"."""
+    try :
+        shutil.copy(ffrom, to)
+    except Exception as e:
+        print(str(e))
+        print(traceback.format_exc())
+
+def copy_dir(ffrom, to):
+    """Copies a directory file from "ffrom" to "to"."""
+    try :
+        if not os.path.isdir(ffrom):
+            raise FileNotFoundException(ffrom)
+        shutil.copytree(ffrom, to)
+    except:
+        raise FileNotFoundException(to)
+
+def get_file_in_dir(dir, ext):
+    """Returns the first file in the given directory with the given extension."""
+    try:
+        for file in os.listdir(dir):
+            if file.endswith(ext):
+                return make_path(dir, file)
+        # If nothing has been found, raise an exception
+        raise FileNotFoundException(dir)
+    except:
+        raise DirNotFoundException(dir)
+
+def find_file_in_dir(dir, name, ext):
+    try:
+        for file in os.listdir(dir):
+            if file.startswith(name):
+                if file.endswith(ext):
+                    return make_path(dir, file)
+        raise FileNotFoundException(dir)
+    except:
+        raise DirNotFoundException(dir)
 
 #----------------------#
 #        Main          #
