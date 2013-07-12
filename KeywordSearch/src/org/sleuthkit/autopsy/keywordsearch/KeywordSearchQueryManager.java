@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
- * Query manager responsible for running appropriate queries and displaying results
- * for single, multi keyword queries, with detailed or collapsed results
+ * Query manager responsible for running appropriate queries and displaying
+ * results for single, multi keyword queries, with detailed or collapsed results
  */
 public class KeywordSearchQueryManager {
 
@@ -59,7 +59,7 @@ public class KeywordSearchQueryManager {
 
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
         queries = new ArrayList<Keyword>();
-        queries.add(new Keyword(query, qt==QueryType.REGEX?false:true));
+        queries.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
         this.presentation = presentation;
         queryType = qt;
         init();
@@ -69,7 +69,7 @@ public class KeywordSearchQueryManager {
         queries = new ArrayList<Keyword>();
         queries.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
-        queryType = isLiteral?QueryType.WORD:QueryType.REGEX;
+        queryType = isLiteral ? QueryType.WORD : QueryType.REGEX;
         init();
     }
 
@@ -112,15 +112,21 @@ public class KeywordSearchQueryManager {
         //Collapsed view
         Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
         int queryID = 0;
+        StringBuilder queryConcat = new StringBuilder();
         for (KeywordSearchQuery q : queryDelegates) {
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
             final String queryStr = q.getQueryString();
+            queryConcat.append(queryStr).append(" ");
             things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
         }
 
         Node rootNode = null;
 
-        DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search " + (++resultWindowCount));
+        String queryConcatStr = queryConcat.toString();
+        final int queryConcatStrLen = queryConcatStr.length();
+        final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
+        final String windowTitle = "Keyword search " + (++resultWindowCount) + " - " + queryStrShort;
+        DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (things.size() > 0) {
             Children childThingNodes =
                     Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE, searchResultWin), true);
@@ -131,9 +137,9 @@ public class KeywordSearchQueryManager {
         }
 
         final String pathText = "Keyword search";
-        
+
         DataResultTopComponent.initInstance(pathText, rootNode, things.size(), searchResultWin);
-        
+
         searchResultWin.requestActive();
         // }
     }
@@ -152,7 +158,7 @@ public class KeywordSearchQueryManager {
 }
 
 /**
- * custom KeyValue that also stores query object  to execute
+ * custom KeyValue that also stores query object to execute
  */
 class KeyValueQuery extends KeyValue {
 
