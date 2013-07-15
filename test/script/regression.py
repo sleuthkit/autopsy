@@ -285,20 +285,20 @@ class TestConfiguration(object):
         # If user wants to do a single file and a list (contradictory?)
         if self.args.single and self.args.list:
             msg = "Cannot run both from config file and on a single file."
-            self._print_error(msg)
+            Errors.add_email_msg(msg)
             return
         # If working from a configuration file
         if self.args.list:
            if not file_exists(self.args.config_file):
                msg = "Configuration file does not exist at:" + self.args.config_file
-               self._print_error(msg)
+               Errors.add_email_msg(msg)
                return
            self._load_config_file(self.args.config_file)
         # Else if working on a single file
         elif self.args.single:
            if not file_exists(self.args.single_file):
                msg = "Image file does not exist at: " + self.args.single_file
-               self._print_error(msg)
+               Errors.add_email_msg(msg)
                return
            test_config.images.append(self.args.single_file)
 
@@ -308,7 +308,7 @@ class TestConfiguration(object):
            self.args.config_file = "config.xml"
            if not file_exists(self.args.config_file):
                msg = "Configuration file does not exist at: " + self.args.config_file
-               self._print_error(msg)
+               Errors.add_email_msg(msg)
                return
            self._load_config_file(self.args.config_file)
 
@@ -353,7 +353,6 @@ class TestConfiguration(object):
         """
         try:
             global parsed
-            global errorem
             global attachl
             count = 0
             parsed = parse(config_file)
@@ -377,7 +376,7 @@ class TestConfiguration(object):
                     self.images.append(value)
                 else:
                     msg = "File: " + value + " doesn't exist"
-                    self._print_error(msg)
+                    Errors.add_email_msg(msg)
             image_count = len(images)
 
             # Sanity check to see if there are obvious gold images that we are not testing
@@ -394,20 +393,9 @@ class TestConfiguration(object):
         except Exception as e:
             msg = "There was an error running with the configuration file.\n"
             msg += "\t" + str(e)
-            self._print_error(msg)
+            Errors.add_email_msg(msg)
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
-
-    def _print_error(self, msg):
-        """Append the given error message to the global error message and print the message to the screen.
-
-        Args:
-            msg: String - the error message to print
-        """
-        global errorem
-        error_msg = "Configuration: " + msg
-        print(error_msg)
-        errorem += error_msg + "\n"
 
 class TskDbDiff(object):
     """Represents the differences between the gold and output databases.
@@ -492,12 +480,12 @@ class TskDbDiff(object):
         exceptions = []
         try:
             global failedbool
-            global errorem
             if self.gold_artifacts != self.autopsy_artifacts:
                 failedbool = True
                 global imgfail
                 imgfail = True
-                errorem += self.test_data.image + ":There was a difference in the number of artifacts.\n"
+                msg = "There was a difference in the number of artifacts.\n"
+                Errors.add_email_msg(msg)
             rner = len(self.gold_artifacts)
             for type_id in range(1, rner):
                 if self.gold_artifacts[type_id] != self.autopsy_artifacts[type_id]:
@@ -521,11 +509,11 @@ class TskDbDiff(object):
                 error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
                 exceptions.append(error)
                 global failedbool
-                global errorem
                 failedbool = True
                 global imgfail
                 imgfail = True
-                errorem += self.test_data.image + ":There was a difference in the number of attributes.\n"
+                msg = "There was a difference in the number of attributes.\n"
+                Errors.add_email_msg(msg)
                 return exceptions
         except Exception as e:
             exceptions.append("Error: Unable to compare blackboard_attributes.\n")
@@ -540,11 +528,11 @@ class TskDbDiff(object):
                 error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
                 exceptions.append(error)
                 global failedbool
-                global errorem
                 failedbool = True
                 global imgfail
                 imgfail = True
-                errorem += self.test_data.image + ":There was a difference between the tsk object counts.\n"
+                msg ="There was a difference between the tsk object counts.\n"
+                Errors.add_email_msg(msg)
                 return exceptions
         except Exception as e:
             exceptions.append("Error: Unable to compare tsk_objects.\n")
@@ -617,9 +605,9 @@ class TskDbDiff(object):
         self.attribute_comparison = exceptions[2]
 
         okay = "All counts match."
-        print_report(self.test_data, exceptions[0], "COMPARE TSK OBJECTS", okay)
-        print_report(self.test_data, exceptions[1], "COMPARE ARTIFACTS", okay)
-        print_report(self.test_data, exceptions[2], "COMPARE ATTRIBUTES", okay)
+        print_report(exceptions[0], "COMPARE TSK OBJECTS", okay)
+        print_report(exceptions[1], "COMPARE ARTIFACTS", okay)
+        print_report(exceptions[2], "COMPARE ATTRIBUTES", okay)
 
         return DiffResults(self)
 
@@ -635,7 +623,6 @@ class TskDbDiff(object):
             test_data: the TestData that corresponds with this dump.
         """
         autopsy_cur2 = autopsy_con.cursor()
-        global errorem
         global attachl
         global failedbool
         # Get the list of all artifacts
@@ -665,10 +652,11 @@ class TskDbDiff(object):
                     autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
                     attributes = autopsy_cur1.fetchall()
                 except Exception as e:
-                    printerror(test_data, str(e))
-                    printerror(test_data, str(rw[3]))
+                    Errors.print_error(str(e))
+                    Errors.print_error(str(rw[3]))
                     print(test_data.image_name)
-                    errorem += test_data.image_name + ":Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
+                    msg ="Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
+                    Errors.add_email_msg(msg)
                     looptry = False
                     print(test_data.artifact_fail)
                     test_data.artifact_fail += 1
@@ -685,15 +673,17 @@ class TskDbDiff(object):
                             if(attr[x] != None):
                                 numvals += 1
                         if(numvals > 1):
-                            errorem += test_data.image_name + ":There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
-                            printerror(test_data, "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + " for image " + test_data.image_name + ".")
+                            msg = "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
+                            Errors.add_email_msg(msg)
+                            Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
                                 attachl.append(autopsy_db_file)
                                 appnd = True
                         if(not attr[0] == src):
-                            errorem += test_data.image_name + ":There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
-                            printerror(test_data, "There were inconsistent sources for artifact with id #" + str(rw[3]) + " for image " + test_data.image_name + ".")
+                            msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
+                            Errors.add_email_msg(msg)
+                            Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
                                 attachl.append(autopsy_db_file)
@@ -708,9 +698,9 @@ class TskDbDiff(object):
                             try:
                                 database_log.write(inpval)
                             except Exception as e:
-                                printerror(test_data, "Inner exception" + outp)
+                                Errors.print_error("Inner exception" + outp)
                         except Exception as e:
-                                printerror(test_data, str(e))
+                                Errors.print_error(str(e))
                         database_log.write('" />')
                 database_log.write(' <artifact/>\n')
                 rw = autopsy_cur2.fetchone()
@@ -720,9 +710,10 @@ class TskDbDiff(object):
             subprocess.call(srtcmdlst)
             print(test_data.artifact_fail)
             if(test_data.artifact_fail > 0):
-                errorem += test_data.image_name + ":There were " + str(test_data.artifact_count) + " artifacts and " + str(test_data.artifact_fail) + " threw an exception while loading.\n"
+                msg ="There were " + str(test_data.artifact_count) + " artifacts and " + str(test_data.artifact_fail) + " threw an exception while loading.\n"
+                Errors.add_email_msg(msg)
         except Exception as e:
-            printerror(test_data, 'outer exception: ' + str(e))
+            Errors.print_error('outer exception: ' + str(e))
 
     def _dump_output_db_nonbb(test_data):
         """Dumps a database to a text file.
@@ -749,9 +740,9 @@ class TskDbDiff(object):
                 try:
                     database_log.write(line + "\n")
                 except Exception as e:
-                    printerror(test_data, "dump_output_db_nonbb: Inner dump Exception:" + str(e))
+                    Errors.print_error("dump_output_db_nonbb: Inner dump Exception:" + str(e))
         except Exception as e:
-            printerror(test_data, "dump_output_db_nonbb: Outer dump Exception:" + str(e))
+            Errors.print_error("dump_output_db_nonbb: Outer dump Exception:" + str(e))
 
 
     def dump_output_db(test_data):
@@ -803,7 +794,6 @@ class DiffResults(object):
             return "All counts matched"
         else:
             global failedbool
-            global errorem
             failedbool = True
             global imgfail
             imgfail = True
@@ -813,7 +803,6 @@ class DiffResults(object):
         if not self.attribute_comp:
             return "All counts matched"
         global failedbool
-        global errorem
         failedbool = True
         global imgfail
         imgfail = True
@@ -869,8 +858,8 @@ class TestResultsDiffer(object):
             del_dir(test_data.gold_data_dir)
 
         except Exception as e:
-            printerror(test_data, "Tests failed due to an error, try rebuilding or creating gold standards.\n")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Tests failed due to an error, try rebuilding or creating gold standards.\n")
+            Errors.print_error(str(e) + "\n")
             print(traceback.format_exc())
 
 
@@ -897,20 +886,18 @@ class TestResultsDiffer(object):
             gold_data = process(gold_data)
 
         if (not(gold_data == output_data)):
-            filename = os.path.basename(output_file)
-            diff_path = os.path.join(test_data.output_path, filename +
-            "-Diff.txt")
+            diff_path = os.path.splitext(os.path.basename(output_file))[0]
+            diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             global attachl
-            global errorem
             global failedbool
-            attachl.append(diff_dir)
+            attachl.append(diff_path)
             msg = test_data.image_name + ":There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
-            errorem += msg
-            printerror(test_data, msg)
+            Errors.add_email_msg(msg)
+            Errors.print_error(msg)
             failedbool = True
             global imgfail
             imgfail = True
@@ -932,7 +919,7 @@ class TestResultsDiffer(object):
             if(len(gold_html_files) != len(output_html_files)):
                 msg = "The reports did not have the same number or files."
                 msg += "One of the reports may have been corrupted."
-                printerror(test_data, msg)
+                Errors.print_error(msg)
             else:
                 gold_html_files.sort()
                 output_html_files.sort()
@@ -945,18 +932,18 @@ class TestResultsDiffer(object):
 
             okay = "The test report matches the gold report."
             errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
-            print_report(test_data, errors, "REPORT COMPARISON", okay)
+            print_report(errors, "REPORT COMPARISON", okay)
 
             if total["Gold"] == total["New"]:
                 test_data.report_passed = True
             else:
-                printerror(test_data, "The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
+                Errors.print_error("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
 
         except DirNotFoundException as e:
             e.print_error()
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error comparing reports.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error comparing reports.")
+            Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
 
     def _compare_report_files(a_path, b_path):
@@ -1272,9 +1259,9 @@ class Reports(object):
             html.write(output)
             html.close()
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error when creating HTML log at:")
-            printerror(test_data, test_config.html_log)
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error when creating HTML log at:")
+            Errors.print_error(test_config.html_log)
+            Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
 
     def write_html_head():
@@ -1378,9 +1365,9 @@ class Reports(object):
             csv.write(output)
             csv.close()
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error when creating CSV file at:")
-            printerror(test_data, csv_path)
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error when creating CSV file at:")
+            Errors.print_error(csv_path)
+            Errors.print_error(str(e) + "\n")
             print(traceback.format_exc())
             logging.critical(traceback.format_exc())
 
@@ -1439,14 +1426,14 @@ class Logs(object):
         try:
             Logs._fill_test_config_data(test_data)
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error when filling test_config data.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error when filling test_config data.")
+            Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
         # If running in verbose mode (-v)
         if test_config.args.verbose:
             errors = Logs._report_all_errors()
             okay = "No warnings or errors in any log files."
-            print_report(test_data, errors, "VERBOSE", okay)
+            print_report(errors, "VERBOSE", okay)
     # Generate the "common log": a log of all exceptions and warnings
     # from each log file generated by Autopsy
     def _generate_common_log(test_data):
@@ -1478,9 +1465,9 @@ class Logs(object):
             srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.sorted_log]
             subprocess.call(srtcmdlst)
         except Exception as e:
-            printerror(test_data, "Error: Unable to generate the common log.")
-            printerror(test_data, str(e) + "\n")
-            printerror(test_data, traceback.format_exc())
+            Errors.print_error("Error: Unable to generate the common log.")
+            Errors.print_error(str(e) + "\n")
+            Errors.print_error(traceback.format_exc())
             logging.critical(traceback.format_exc())
 
     def _fill_test_config_data(test_data):
@@ -1497,8 +1484,8 @@ class Logs(object):
             # Set the test_config ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except Exception as e:
-            printerror(test_data, "Error: Unable to open autopsy.log.0.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unable to open autopsy.log.0.")
+            Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
         # Set the test_config total test time
         # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1528,8 +1515,8 @@ class Logs(object):
             chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
             test_config.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
         except Exception as e:
-            printerror(test_data, "Error: Unable to find the required information to fill test_config data.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unable to find the required information to fill test_config data.")
+            Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
@@ -1548,8 +1535,8 @@ class Logs(object):
                 service_list.append(times)
             test_data.service_times = "; ".join(service_list)
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error when finding service times.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error when finding service times.")
+            Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
 
     def _report_all_errors():
@@ -1561,8 +1548,8 @@ class Logs(object):
         try:
             return get_warnings() + get_exceptions()
         except Exception as e:
-            printerror(test_data, "Error: Unknown fatal error when reporting all errors.")
-            printerror(test_data, str(e) + "\n")
+            Errors.print_error("Error: Unknown fatal error when reporting all errors.")
+            Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
 
     def search_common_log(string, test_data):
@@ -1584,32 +1571,31 @@ class Logs(object):
         return results
 
 
-def print_report(test_data, errors, name, okay):
+def print_report(errors, name, okay):
     """Print a report with the specified information.
 
     Args:
-        test_data: the TestData to report about.
         errors: a listof_String, the errors to report.
         name: a String, the name of the report.
         okay: the String to print when there are no errors.
     """
     if errors:
-        printerror(test_data, "--------< " + name + " >----------")
+        Errors.print_error("--------< " + name + " >----------")
         for error in errors:
-            printerror(test_data, str(error))
-        printerror(test_data, "--------< / " + name + " >--------\n")
+            Errors.print_error(str(error))
+        Errors.print_error("--------< / " + name + " >--------\n")
     else:
-        printout(test_data, "-----------------------------------------------------------------")
-        printout(test_data, "< " + name + " - " + okay + " />")
-        printout(test_data, "-----------------------------------------------------------------\n")
+        Errors.print_out("-----------------------------------------------------------------")
+        Errors.print_out("< " + name + " - " + okay + " />")
+        Errors.print_out("-----------------------------------------------------------------\n")
 
 # Used instead of the print command when printing out an error
-def printerror(test_data, string):
+def print_error(string):
     print(string)
     test_data.printerror.append(string)
 
 # Used instead of the print command when printing out anything besides errors
-def printout(test_data, string):
+def print_out(string):
     print(string)
     test_data.printout.append(string)
 
@@ -1701,8 +1687,8 @@ class DirNotFoundException(Exception):
         self.strerror = "DirNotFoundException: " + dir
 
     def print_error(self):
-        printerror(test_data, "Error: Directory could not be found at:")
-        printerror(test_data, self.dir + "\n")
+        Errors.print_error("Error: Directory could not be found at:")
+        Errors.print_error(self.dir + "\n")
     def error(self):
         error = "Error: Directory could not be found at:\n" + self.dir + "\n"
         return error
@@ -1719,7 +1705,6 @@ class TestRunner(object):
         the mode (rebuild or testing)
         """
         global parsed
-        global errorem
         global failedbool
         global html
         global attachl
@@ -1730,11 +1715,13 @@ class TestRunner(object):
 
         logres =[]
         for test_data in test_data_list:
+            Errors.clear_print_logs()
+            Errors.set_testing_phase(test_data.image)
             if not (test_config.args.rebuild or
                 os.path.exists(test_data.gold_archive)):
                 msg = "Gold standard doesn't exist, skipping image:"
-                printerror(test_data, msg)
-                printerror(test_data, test_data.gold_archive)
+                Errors.print_error(msg)
+                Errors.print_error(test_data.gold_archive)
                 continue
             TestRunner._run_autopsy_ingest(test_data)
 
@@ -1742,6 +1729,8 @@ class TestRunner(object):
                 TestRunner.rebuild(test_data)
             else:
                 logres.append(TestRunner._run_test(test_data))
+            test_data.printout = Errors.printout
+            test_data.printerror = Errors.printerror
 
         Reports.write_html_foot()
         if (len(logres)>0):
@@ -1750,24 +1739,25 @@ class TestRunner(object):
             passFail = False
             for lm in logres:
                 for ln in lm:
-                    errorem += ln
+                    Errors.add_email_msg(ln)
         if failedbool:
             passFail = False
-            errorem += "The test output didn't match the gold standard.\n"
-            errorem += "Autopsy test failed.\n"
+            msg = "The test output didn't match the gold standard.\n"
+            msg += "autopsy test failed.\n"
+            Errors.add_email_msg(msg)
             html = open(test_config.html_log)
             attachl.insert(0, html.name)
             html.close()
         else:
-            errorem += "Autopsy test passed.\n"
+            Errors.add_email_msg("Autopsy test passed.\n")
             passFail = True
             attachl = []
 
         # @@@ This fails here if we didn't parse an XML file
         try:
-            Emailer.send_email(parsed, errorem, attachl, passFail)
+            Emailer.send_email(parsed, Errors.email_body, attachl, passFail)
         except NameError:
-            printerror(test_data, "Could not send e-mail because of no XML file --maybe");
+            Errors.print_error("Could not send e-mail because of no XML file --maybe");
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -1782,8 +1772,8 @@ class TestRunner(object):
         global failedbool
         imgfail = False
         if image_type(test_data.image_file) == IMGTYPE.UNKNOWN:
-            printerror(test_data, "Error: Image type is unrecognized:")
-            printerror(test_data, test_data.image_file + "\n")
+            Errors.print_error("Error: Image type is unrecognized:")
+            Errors.print_error(test_data.image_file + "\n")
             return
 
         logging.debug("--------------------")
@@ -1847,9 +1837,9 @@ class TestRunner(object):
         """
         if not test_config.args.keep:
             if clear_dir(test_data.solr_index):
-                print_report(test_data, [], "DELETE SOLR INDEX", "Solr index deleted.")
+                print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
         else:
-            print_report(test_data, [], "KEEP SOLR INDEX", "Solr index has been kept.")
+            print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
 
     def _handle_exception(test_data):
         """If running in exception mode, print exceptions to log.
@@ -1860,7 +1850,7 @@ class TestRunner(object):
         if test_config.args.exception:
             exceptions = search_logs(test_config.args.exception_string, test_data)
             okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
-            print_report(test_data, exceptions, "EXCEPTION", okay)
+            print_report(exceptions, "EXCEPTION", okay)
 
     def rebuild(test_data):
         """Rebuild the gold standard with the given TestData.
@@ -1890,7 +1880,7 @@ class TestRunner(object):
             error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
             copy_file(test_data.sorted_log, error_pth)
         except Exception as e:
-            printerror(test_data, str(e))
+            Errors.print_error(str(e))
             print(str(e))
             print(traceback.format_exc())
         # Rebuild the HTML report
@@ -1917,7 +1907,7 @@ class TestRunner(object):
         os.chdir(oldcwd)
         del_dir(test_config.img_gold)
         okay = "Sucessfully rebuilt all gold standards."
-        print_report(test_data, errors, "REBUILDING", okay)
+        print_report(errors, "REBUILDING", okay)
 
     def zipdir(path, zip):
         for root, dirs, files in os.walk(path):
@@ -1955,9 +1945,9 @@ class TestRunner(object):
         test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
-        printout(test_data, "Ingesting Image:\n" + test_data.image_file + "\n")
-        printout(test_data, "CMD: " + " ".join(test_config.ant))
-        printout(test_data, "Starting test...\n")
+        Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
+        Errors.print_out("CMD: " + " ".join(test_config.ant))
+        Errors.print_out("Starting test...\n")
         antoutpth = make_local_path(test_config.output_dir, "antRunOutput.txt")
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
@@ -1966,6 +1956,32 @@ class TestRunner(object):
             theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
+
+class Errors:
+    """
+    """
+    printout = []
+    printerror = []
+    email_body = ""
+    email_msg_prefix = "Configuration"
+
+    def set_testing_phase(image_name):
+        Errors.email_msg_prefix = image_name
+
+    def print_out(msg):
+        print(msg)
+        Errors.printout.append(msg)
+
+    def print_error(msg):
+        print(msg)
+        Errors.printerror.append(msg)
+
+    def clear_print_logs():
+        Errors.printout = []
+        Errors.printerror = []
+
+    def add_email_msg(msg):
+        Errors.email_body += Errors.email_msg_prefix + ":" + msg
 
 ####
 # Helper Functions
@@ -2107,10 +2123,8 @@ def main():
     # Global variables
     global failedbool
     global test_config
-    global errorem
     global attachl
     failedbool = False
-    errorem = ""
     args = Args()
     parse_result = args.parse()
     test_config = TestConfiguration(args)
