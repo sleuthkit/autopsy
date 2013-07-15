@@ -353,7 +353,6 @@ class TestConfiguration(object):
         """
         try:
             global parsed
-            global attachl
             count = 0
             parsed = parse(config_file)
             logres = []
@@ -623,7 +622,6 @@ class TskDbDiff(object):
             test_data: the TestData that corresponds with this dump.
         """
         autopsy_cur2 = autopsy_con.cursor()
-        global attachl
         global failedbool
         # Get the list of all artifacts
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
@@ -678,7 +676,7 @@ class TskDbDiff(object):
                             Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
-                                attachl.append(autopsy_db_file)
+                                Errors.add_email_attachment(autopsy_db_file)
                                 appnd = True
                         if(not attr[0] == src):
                             msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
@@ -686,7 +684,7 @@ class TskDbDiff(object):
                             Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
-                                attachl.append(autopsy_db_file)
+                                Errors.add_email_attachment(autopsy_db_file)
                                 appnd = True
                         try:
                             database_log.write('<attribute source="' + attr[0] + '" type="' + attr[1] + '" value="')
@@ -891,9 +889,8 @@ class TestResultsDiffer(object):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
-            global attachl
             global failedbool
-            attachl.append(diff_path)
+            Errors.add_email_attachment(diff_path)
             msg = test_data.image_name + ":There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
             Errors.add_email_msg(msg)
@@ -1707,7 +1704,6 @@ class TestRunner(object):
         global parsed
         global failedbool
         global html
-        global attachl
 
         test_data_list = [ TestData(image, test_config) for image in test_config.images ]
 
@@ -1746,16 +1742,15 @@ class TestRunner(object):
             msg += "autopsy test failed.\n"
             Errors.add_email_msg(msg)
             html = open(test_config.html_log)
-            attachl.insert(0, html.name)
+            Errors.add_email_attachment(html.name)
             html.close()
         else:
             Errors.add_email_msg("Autopsy test passed.\n")
             passFail = True
-            attachl = []
 
         # @@@ This fails here if we didn't parse an XML file
         try:
-            Emailer.send_email(parsed, Errors.email_body, attachl, passFail)
+            Emailer.send_email(parsed, Errors.email_body, Errors.email_attachs, passFail)
         except NameError:
             Errors.print_error("Could not send e-mail because of no XML file --maybe");
 
@@ -1815,7 +1810,7 @@ class TestRunner(object):
         Reports.generate_reports(test_config.csv, test_data)
         # Reset the test_config and return the tests sucessfully finished
         if(failedbool):
-            attachl.append(test_data.common_log_path)
+            Errors.add_email_attachment(test_data.common_log_path)
         return logres
 
     def _extract_gold(test_data):
@@ -1958,30 +1953,68 @@ class TestRunner(object):
         antout.close()
 
 class Errors:
-    """
+    """A class used to manage error reporting.
+
+    Attributes:
+        printout: a listof_String, the non-error messages that were printed
+        printerror: a listof_String, the error messages that were printed
+        email_body: a String, the body of the report email
+        email_msg_prefix: a String, the prefix for lines added to the email
+        email_attchs: a listof_pathto_File, the files to be attached to the
+        report email
     """
     printout = []
     printerror = []
     email_body = ""
     email_msg_prefix = "Configuration"
+    email_attachs = []
 
     def set_testing_phase(image_name):
+        """Change the email message prefix to be the given testing phase.
+
+        Args:
+            image_name: a String, representing the current image being tested
+        """
         Errors.email_msg_prefix = image_name
 
     def print_out(msg):
+        """Print out an informational message.
+
+        Args:
+            msg: a String, the message to be printed
+        """
         print(msg)
         Errors.printout.append(msg)
 
     def print_error(msg):
+        """Print out an error message.
+
+        Args:
+            msg: a String, the error message to be printed.
+        """
         print(msg)
         Errors.printerror.append(msg)
 
     def clear_print_logs():
+        """Reset the image-specific attributes of the Errors class."""
         Errors.printout = []
         Errors.printerror = []
 
     def add_email_msg(msg):
+        """Add the given message to the body of the report email.
+
+        Args:
+            msg: a String, the message to be added to the email
+        """
         Errors.email_body += Errors.email_msg_prefix + ":" + msg
+
+    def add_email_attachment(path):
+        """Add the given file to be an attachment for the report email
+
+        Args:
+            file: a pathto_File, the file to add
+        """
+        Errors.email_attachs.append(path)
 
 ####
 # Helper Functions
@@ -2123,12 +2156,10 @@ def main():
     # Global variables
     global failedbool
     global test_config
-    global attachl
     failedbool = False
     args = Args()
     parse_result = args.parse()
     test_config = TestConfiguration(args)
-    attachl = []
     # The arguments were given wrong:
     if not parse_result:
         test_config.reset()
