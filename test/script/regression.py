@@ -95,103 +95,442 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 COMMON_LOG = "AutopsyErrors.txt"
 
 Day = 0
-#-------------------------------------------------------------#
-# Parses argv and stores booleans to match command line input #
-#-------------------------------------------------------------#
-class Args(object):
-    """A container for command line options and arguments.
+
+#----------------------#
+#        Main          #
+#----------------------#
+def main():
+    # Global variables
+    global failedbool
+    global test_config
+    failedbool = False
+    args = Args()
+    parse_result = args.parse()
+    test_config = TestConfiguration(args)
+    # The arguments were given wrong:
+    if not parse_result:
+        return
+    if(not args.fr):
+        antin = ["ant"]
+        antin.append("-f")
+        antin.append(os.path.join("..","..","build.xml"))
+        antin.append("test-download-imgs")
+        if SYS is OS.CYGWIN:
+            subprocess.call(antin)
+        elif SYS is OS.WIN:
+            theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+            theproc.communicate()
+    # Otherwise test away!
+    TestRunner.run_tests()
+
+class TestRunner(object):
+
+    def run_tests():
+        """Run the tests specified by the main TestConfiguration.
+
+        Executes the AutopsyIngest for each image and dispatches the results based on
+        the mode (rebuild or testing)
+        """
+        global parsed
+        global failedbool
+        global html
+
+        test_data_list = [ TestData(image, test_config) for image in test_config.images ]
+
+        Reports.html_add_images(test_config.images)
+
+        logres =[]
+        for test_data in test_data_list:
+            Errors.clear_print_logs()
+            Errors.set_testing_phase(test_data.image)
+            if not (test_config.args.rebuild or
+                os.path.exists(test_data.gold_archive)):
+                msg = "Gold standard doesn't exist, skipping image:"
+                Errors.print_error(msg)
+                Errors.print_error(test_data.gold_archive)
+                continue
+            TestRunner._run_autopsy_ingest(test_data)
+
+            if test_config.args.rebuild:
+                TestRunner.rebuild(test_data)
+            else:
+                logres.append(TestRunner._run_test(test_data))
+            test_data.printout = Errors.printout
+            test_data.printerror = Errors.printerror
+
+        Reports.write_html_foot()
+        if (len(logres)>0):
+            failedbool = True
+            imgfail = True
+            passFail = False
+            for lm in logres:
+                for ln in lm:
+                    Errors.add_email_msg(ln)
+        if failedbool:
+            passFail = False
+            msg = "The test output didn't match the gold standard.\n"
+            msg += "autopsy test failed.\n"
+            Errors.add_email_msg(msg)
+            html = open(test_config.html_log)
+            Errors.add_email_attachment(html.name)
+            html.close()
+        else:
+            Errors.add_email_msg("Autopsy test passed.\n")
+            passFail = True
+
+        # @@@ This fails here if we didn't parse an XML file
+        try:
+            Emailer.send_email(parsed, Errors.email_body, Errors.email_attachs, passFail)
+        except NameError:
+            Errors.print_error("Could not send e-mail because of no XML file --maybe");
+
+    def _run_autopsy_ingest(test_data):
+        """Run Autopsy ingest for the image in the given TestData.
+
+        Also generates the necessary logs for rebuilding or diff.
+
+        Args:
+            test_data: the TestData to run the ingest on.
+        """
+        global parsed
+        global imgfail
+        global failedbool
+        imgfail = False
+        if image_type(test_data.image_file) == IMGTYPE.UNKNOWN:
+            Errors.print_error("Error: Image type is unrecognized:")
+            Errors.print_error(test_data.image_file + "\n")
+            return
+
+        logging.debug("--------------------")
+        logging.debug(test_data.image_name)
+        logging.debug("--------------------")
+        TestRunner._run_ant(test_data)
+        time.sleep(2) # Give everything a second to process
+
+        # Dump the database before we diff or use it for rebuild
+        TskDbDiff.dump_output_db(test_data)
+
+        # merges logs into a single log for later diff / rebuild
+        copy_logs(test_data)
+        Logs.generate_log_data(test_data)
+
+        TestRunner._handle_solr(test_data)
+        TestRunner._handle_exception(test_data)
+
+    #TODO: figure out return type of _run_test (logres)
+    def _run_test(test_data):
+        """Compare the results of the output to the gold standard.
+
+        Args:
+            test_data: the TestData
+
+        Returns:
+            logres?
+        """
+        TestRunner._extract_gold(test_data)
+
+        # Look for core exceptions
+        # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
+        logres = Logs.search_common_log("TskCoreException", test_data)
+
+        TestResultsDiffer.run_diff(test_data)
+
+        # @@@ COnsider if we want to do this for a rebuild.
+        # Make the CSV log and the html log viewer
+        Reports.generate_reports(test_config.csv, test_data)
+        # Reset the test_config and return the tests sucessfully finished
+        if(failedbool):
+            Errors.add_email_attachment(test_data.common_log_path)
+        return logres
+
+    def _extract_gold(test_data):
+        """Extract gold archive file to output/gold/tmp/
+
+        Args:
+            test_data: the TestData
+        """
+        extrctr = zipfile.ZipFile(test_data.gold_archive, 'r', compression=zipfile.ZIP_DEFLATED)
+        extrctr.extractall(test_data.main_config.gold)
+        extrctr.close
+        time.sleep(2)
+
+    def _handle_solr(test_data):
+        """Clean up SOLR index if in keep mode (-k).
+
+        Args:
+            test_data: the TestData
+        """
+        if not test_config.args.keep:
+            if clear_dir(test_data.solr_index):
+                print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
+        else:
+            print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
+
+    def _handle_exception(test_data):
+        """If running in exception mode, print exceptions to log.
+
+        Args:
+            test_data: the TestData
+        """
+        if test_config.args.exception:
+            exceptions = search_logs(test_config.args.exception_string, test_data)
+            okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
+            print_report(exceptions, "EXCEPTION", okay)
+
+    def rebuild(test_data):
+        """Rebuild the gold standard with the given TestData.
+
+        Copies the test-generated database and html report files into the gold directory.
+        """
+        # Errors to print
+        errors = []
+        # Delete the current gold standards
+        gold_dir = test_config.img_gold
+        clear_dir(test_config.img_gold)
+        tmpdir = make_path(gold_dir, test_data.image_name)
+        dbinpth = test_data.get_db_path(DBType.OUTPUT)
+        dboutpth = make_path(tmpdir, DB_FILENAME)
+        dataoutpth = make_path(tmpdir, test_data.image_name + "SortedData.txt")
+        dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
+        dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
+        if not os.path.exists(test_config.img_gold):
+            os.makedirs(test_config.img_gold)
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        try:
+            copy_file(dbinpth, dboutpth)
+            if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
+                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
+            copy_file(dbdumpinpth, dbdumpoutpth)
+            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
+            copy_file(test_data.sorted_log, error_pth)
+        except Exception as e:
+            Errors.print_error(str(e))
+            print(str(e))
+            print(traceback.format_exc())
+        # Rebuild the HTML report
+        output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
+        gold_html_report_dir = make_path(tmpdir, "Report")
+
+        try:
+            copy_dir(output_html_report_dir, gold_html_report_dir)
+        except FileNotFoundException as e:
+            errors.append(e.error())
+        except Exception as e:
+            errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
+            errors.append(str(e) + "\n")
+            print(traceback.format_exc())
+        oldcwd = os.getcwd()
+        zpdir = gold_dir
+        os.chdir(zpdir)
+        os.chdir("..")
+        img_gold = "tmp"
+        img_archive = make_path(test_data.image_name+"-archive.zip")
+        comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
+        TestRunner.zipdir(img_gold, comprssr)
+        comprssr.close()
+        os.chdir(oldcwd)
+        del_dir(test_config.img_gold)
+        okay = "Sucessfully rebuilt all gold standards."
+        print_report(errors, "REBUILDING", okay)
+
+    def zipdir(path, zip):
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                zip.write(os.path.join(root, file))
+
+    def _run_ant(test_data):
+        """Construct and run the ant build command for the given TestData.
+
+        Tests Autopsy by calling RegressionTest.java via the ant build file.
+
+        Args:
+            test_data: the TestData
+        """
+        # Set up the directories
+        test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
+        if dir_exists(test_config_path):
+            shutil.rmtree(test_config_path)
+        os.makedirs(test_config_path)
+        test_config.ant = ["ant"]
+        test_config.ant.append("-v")
+        test_config.ant.append("-f")
+    #   case.ant.append(case.build_path)
+        test_config.ant.append(os.path.join("..","..","Testing","build.xml"))
+        test_config.ant.append("regression-test")
+        test_config.ant.append("-l")
+        test_config.ant.append(test_data.antlog_dir)
+        test_config.ant.append("-Dimg_path=" + test_data.image_file)
+        test_config.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
+        test_config.ant.append("-Dkeyword_path=" + test_config.keyword_path)
+        test_config.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
+        test_config.ant.append("-Dgold_path=" + test_config.gold)
+        test_config.ant.append("-Dout_path=" +
+        make_local_path(test_data.output_path))
+        test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
+        test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
+
+        Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
+        Errors.print_out("CMD: " + " ".join(test_config.ant))
+        Errors.print_out("Starting test...\n")
+        antoutpth = make_local_path(test_config.output_dir, "antRunOutput.txt")
+        antout = open(antoutpth, "a")
+        if SYS is OS.CYGWIN:
+            subprocess.call(test_config.ant, stdout=subprocess.PIPE)
+        elif SYS is OS.WIN:
+            theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
+            theproc.communicate()
+        antout.close()
+
+
+class TestData(object):
+    """Container for the input and output of a single image.
+
+    Represents data for the test of a single image, including path to the image,
+    database paths, etc.
 
     Attributes:
-        single: a boolean indicating whether to run in single file mode
-        single_file: an Image to run the test on
-        rebuild: a boolean indicating whether to run in rebuild mode
-        list: a boolean indicating a config file was specified
-        unallocated: a boolean indicating unallocated space should be ignored
-        ignore: a boolean indicating the input directory should be ingnored
-        keep: a boolean indicating whether to keep the SOLR index
-        verbose: a boolean indicating whether verbose output should be printed
-        exeception: a boolean indicating whether errors containing exception
-                    exception_string should be printed
-        exception_sring: a String representing and exception name
-        fr: a boolean indicating whether gold standard images will be downloaded
+        main_config: the global TestConfiguration
+        image_file: a pathto_Image, the image for this TestData
+        image: a String, the image file's name
+        image_name: a String, the image file's name with a trailing (0)
+        output_path: pathto_Dir, the output directory for this TestData
+        autopsy_data_file: a pathto_File, the IMAGE_NAMEAutopsy_data.txt file
+        warning_log: a pathto_File, the AutopsyLogs.txt file
+        antlog_dir: a pathto_File, the antlog.txt file
+        test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
+        common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
+        sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
+        reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
+        gold_data_dir: a pathto_Dir, the gold standard directory
+        gold_archive: a pathto_File, the gold standard archive
+        logs_dir: a pathto_Dir, the location where autopsy logs are stored
+        solr_index: a pathto_Dir, the locatino of the solr index
+        db_diff_results: a DiffResults, the results of the database comparison
+        total_test_time: a String representation of the test duration
+        start_date: a String representation of this TestData's start date
+        end_date: a String representation of the TestData's end date
+        total_ingest_time: a String representation of the total ingest time
+        artifact_count: a Nat, the number of artifacts
+        artifact_fail: a Nat, the number of artifact failures
+        heap_space: a String representation of TODO
+        service_times: a String representation of TODO
+        report_passed: a boolean, indicating if the reports passed
+        printerror: a listof_String, the error messages printed during this TestData's test
+        printout: a listof_String, the messages pritned during this TestData's test
     """
-    def __init__(self):
-        self.single = False
-        self.single_file = ""
-        self.rebuild = False
-        self.list = False
-        self.config_file = ""
-        self.unallocated = False
-        self.ignore = False
-        self.keep = False
-        self.verbose = False
-        self.exception = False
-        self.exception_string = ""
-        self.fr = False
 
-    def parse(self):
-        global nxtproc
-        nxtproc = []
-        nxtproc.append("python3")
-        nxtproc.append(sys.argv.pop(0))
-        while sys.argv:
-            arg = sys.argv.pop(0)
-            nxtproc.append(arg)
-            if(arg == "-f"):
-                #try: @@@ Commented out until a more specific except statement is added
-                    arg = sys.argv.pop(0)
-                    print("Running on a single file:")
-                    print(path_fix(arg) + "\n")
-                    self.single = True
-                    self.single_file = path_fix(arg)
-                #except:
-                #   print("Error: No single file given.\n")
-            #       return False
-            elif(arg == "-r" or arg == "--rebuild"):
-                print("Running in rebuild mode.\n")
-                self.rebuild = True
-            elif(arg == "-l" or arg == "--list"):
-                try:
-                    arg = sys.argv.pop(0)
-                    nxtproc.append(arg)
-                    print("Running from configuration file:")
-                    print(arg + "\n")
-                    self.list = True
-                    self.config_file = arg
-                except:
-                    print("Error: No configuration file given.\n")
-                    return False
-            elif(arg == "-u" or arg == "--unallocated"):
-               print("Ignoring unallocated space.\n")
-               self.unallocated = True
-            elif(arg == "-k" or arg == "--keep"):
-                print("Keeping the Solr index.\n")
-                self.keep = True
-            elif(arg == "-v" or arg == "--verbose"):
-                print("Running in verbose mode:")
-                print("Printing all thrown exceptions.\n")
-                self.verbose = True
-            elif(arg == "-e" or arg == "--exception"):
-                try:
-                    arg = sys.argv.pop(0)
-                    nxtproc.append(arg)
-                    print("Running in exception mode: ")
-                    print("Printing all exceptions with the string '" + arg + "'\n")
-                    self.exception = True
-                    self.exception_string = arg
-                except:
-                    print("Error: No exception string given.")
-            elif arg == "-h" or arg == "--help":
-                print(usage())
-                return False
-            elif arg == "-fr" or arg == "--forcerun":
-                print("Not downloading new images")
-                self.fr = True
-            else:
-                print(usage())
-                return False
-        # Return the args were sucessfully parsed
-        return True
+    def __init__(self, image, main_config):
+        """Init this TestData with it's image and the test configuration.
+
+        Args:
+            image: the Image to be tested.
+            main_config: the global TestConfiguration.
+        """
+        self.main_config = main_config
+        self.image_file = str(image)
+        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
+        self.image = get_image_name(self.image_file)
+        self.image_name = self.image + "(0)"
+        self.output_path = make_path(self.main_config.output_dir, self.image_name)
+        self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
+        self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
+        self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
+        self.test_dbdump = make_path(self.output_path, self.image_name +
+        "DBDump.txt")
+        self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
+        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
+        self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
+        self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
+        self.gold_archive = make_path(self.main_config.gold,
+        self.image_name + "-archive.zip")
+        self.logs_dir = make_path(self.output_path, "logs")
+        self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
+        "ModuleOutput", "KeywordSearch")
+        self.db_diff_results = None
+        self.total_test_time = ""
+        self.start_date = ""
+        self.end_date = ""
+        self.total_ingest_time = ""
+        self.artifact_count = 0
+        self.artifact_fail = 0
+        self.heap_space = ""
+        self.service_times = ""
+        self.report_passed = False
+        # Error tracking
+        self.printerror = []
+        self.printout = []
+
+    def get_db_path(self, db_type):
+        """Get the path to the database file that corresponds to the given DBType.
+
+        Args:
+            DBType: the DBType of the path to be generated.
+        """
+        if(db_type == DBType.GOLD):
+            db_path = make_path(self.gold_data_dir, DB_FILENAME)
+        elif(db_type == DBType.OUTPUT):
+            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
+        else:
+            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
+        return db_path
+
+    def get_html_report_path(self, html_type):
+        """Get the path to the HTML Report folder that corresponds to the given DBType.
+
+        Args:
+            DBType: the DBType of the path to be generated.
+        """
+        if(html_type == DBType.GOLD):
+            return make_path(self.gold_data_dir, "Report")
+        else:
+            # Autopsy creates an HTML report folder in the form AutopsyTestCase DATE-TIME
+            # It's impossible to get the exact time the folder was created, but the folder
+            # we are looking for is the only one in the self.reports_dir folder
+            html_path = ""
+            for fs in os.listdir(self.reports_dir):
+                html_path = make_path(self.reports_dir, fs)
+                if os.path.isdir(html_path):
+                    break
+            return make_path(html_path, os.listdir(html_path)[0])
+
+    def get_sorted_data_path(self, file_type):
+        """Get the path to the SortedData file that corresponds to the given DBType.
+
+        Args:
+            file_type: the DBType of the path to be generated
+        """
+        return self._get_path_to_file(file_type, "SortedData.txt")
+
+    def get_sorted_errors_path(self, file_type):
+        """Get the path to the SortedErrors file that correspodns to the given
+        DBType.
+
+        Args:
+            file_type: the DBType of the path to be generated
+        """
+        return self._get_path_to_file(file_type, "SortedErrors.txt")
+
+    def get_db_dump_path(self, file_type):
+        """Get the path to the DBDump file that corresponds to the given DBType.
+
+        Args:
+            file_type: the DBType of the path to be generated
+        """
+        return self._get_path_to_file(file_type, "DBDump.txt")
+
+    def _get_path_to_file(self, file_type, file_name):
+        """Get the path to the specified file with the specified type.
+
+        Args:
+            file_type: the DBType of the path to be generated
+            file_name: a String, the filename of the path to be generated
+        """
+        full_filename = self.image_name + file_name
+        if(file_type == DBType.GOLD):
+            return make_path(self.gold_data_dir, full_filename)
+        else:
+            return make_path(self.output_path, full_filename)
 
 
 class TestConfiguration(object):
@@ -399,8 +738,7 @@ class TestConfiguration(object):
 class TskDbDiff(object):
     """Represents the differences between the gold and output databases.
 
-    Contains methods to compare two databases and internally
-    store some of the results
+    Contains methods to compare two databases.
 
     Attributes:
         gold_artifacts:
@@ -415,7 +753,7 @@ class TskDbDiff(object):
         autopsy_db_file:
         gold_db_file:
     """
-    def __init__(self, test_data):
+    def __init__(self, output_db_path, gold_db_path):
         """Constructor for TskDbDiff.
 
         Args:
@@ -429,9 +767,8 @@ class TskDbDiff(object):
         self.autopsy_objects = 0
         self.artifact_comparison = []
         self.attribute_comparison = []
-        self.test_data = test_data
-        self.autopsy_db_file = self.test_data.get_db_path(DBType.OUTPUT)
-        self.gold_db_file = self.test_data.get_db_path(DBType.GOLD)
+        self.autopsy_db_file = output_db_path
+        self.gold_db_file = gold_db_path
 
     def _get_artifacts(self, cursor):
         """Get a list of artifacts from the given SQLCursor.
@@ -495,7 +832,7 @@ class TskDbDiff(object):
                     exceptions.append(error)
             return exceptions
         except Exception as e:
-            printerror(self.test_data, str(e))
+            Errors.print_error(str(e))
             exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
             return exceptions
 
@@ -562,7 +899,7 @@ class TskDbDiff(object):
             self.gold_attributes = self._count_attributes(gold_cur)
             self.autopsy_attributes = self._count_attributes(autopsy_cur)
         except Exception as e:
-            printerror(self.test_data, "Way out:" + str(e))
+            Errors.print_error("Way out:" + str(e))
 
     def run_diff(self):
         """Basic test between output and gold databases.
@@ -572,12 +909,12 @@ class TskDbDiff(object):
         """
         # Check to make sure both db files exist
         if not file_exists(self.autopsy_db_file):
-            printerror(self.test_data, "Error: TskDbDiff file does not exist at:")
-            printerror(self.test_data, self.autopsy_db_file + "\n")
+            Errors.print_error("Error: TskDbDiff file does not exist at:")
+            Errors.print_error(self.autopsy_db_file + "\n")
             return
         if not file_exists(self.gold_db_file):
-            printerror(self.test_data, "Error: Gold database file does not exist at:")
-            printerror(self.test_data, self.gold_db_file + "\n")
+            Errors.print_error("Error: Gold database file does not exist at:")
+            Errors.print_error(self.gold_db_file + "\n")
             return
 
         # Get connections and cursors to output / gold databases
@@ -758,63 +1095,11 @@ class TskDbDiff(object):
         TskDbDiff._dump_output_db_nonbb(test_data)
         autopsy_con.close()
 
-class DiffResults(object):
-    """Container for the results of the database diff tests.
-
-    Stores artifact, object, and attribute counts and comparisons generated by
-    TskDbDiff.
-
-    Attributes:
-        gold_attrs: a Nat, the number of gold attributes
-        output_attrs: a Nat, the number of output attributes
-        gold_objs: a Nat, the number of gold objects
-        output_objs: a Nat, the number of output objects
-        artifact_comp: a listof_String, describing the differences
-        attribute_comp: a listof_String, describing the differences
-    """
-    def __init__(self, tsk_diff):
-        """Inits a DiffResults
-
-        Args:
-            tsk_diff: a TskDBDiff
-        """
-        self.gold_attrs = tsk_diff.gold_attributes
-        self.output_attrs = tsk_diff.autopsy_attributes
-        self.gold_objs = tsk_diff.gold_objects
-        self.output_objs = tsk_diff.autopsy_objects
-        self.artifact_comp = tsk_diff.artifact_comparison
-        self.attribute_comp = tsk_diff.attribute_comparison
-        self.gold_artifacts = len(tsk_diff.gold_artifacts)
-        self.output_artifacts = len(tsk_diff.autopsy_artifacts)
-
-    def get_artifact_comparison(self):
-        if not self.artifact_comp:
-            return "All counts matched"
-        else:
-            global failedbool
-            failedbool = True
-            global imgfail
-            imgfail = True
-            return "; ".join(self.artifact_comp)
-
-    def get_attribute_comparison(self):
-        if not self.attribute_comp:
-            return "All counts matched"
-        global failedbool
-        failedbool = True
-        global imgfail
-        imgfail = True
-        list = []
-        for error in self.attribute_comp:
-            list.append(error)
-        return ";".join(list)
-
 #-------------------------------------------------#
 #     Functions relating to comparing outputs     #
 #-------------------------------------------------#
 class TestResultsDiffer(object):
-    """Compares results for a single test.
-    """
+    """Compares results for a single test."""
 
     def run_diff(test_data):
         """Compares results for a single test.
@@ -826,9 +1111,14 @@ class TestResultsDiffer(object):
         try:
 
             # Diff the gold and output databases
-            test_data.db_diff_results = TskDbDiff(test_data).run_diff()
+            output_db_path = test_data.get_db_path(DBType.OUTPUT)
+            gold_db_path = test_data.get_db_path(DBType.GOLD)
+            db_diff = TskDbDiff(output_db_path, gold_db_path)
+            test_data.db_diff_results = db_diff.run_diff()
 
             # Compare Exceptions
+            # replace is a fucntion that replaces strings of digits with 'd'
+            # this is needed so dates and times will not cause the diff to fail
             replace = lambda file: re.sub(re.compile("\d"), "d", file)
             output_errors = test_data.get_sorted_errors_path(DBType.OUTPUT)
             gold_errors = test_data.get_sorted_errors_path(DBType.GOLD)
@@ -974,154 +1264,6 @@ class TestResultsDiffer(object):
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
 
-class TestData(object):
-    """Container for the input and output of a single image.
-
-    Represents data for the test of a single image, including path to the image,
-    database paths, etc.
-
-    Attributes:
-        main_config: the global TestConfiguration
-        image_file: a pathto_Image, the image for this TestData
-        image: a String, the image file's name
-        image_name: a String, the image file's name with a trailing (0)
-        output_path: pathto_Dir, the output directory for this TestData
-        autopsy_data_file: a pathto_File, the IMAGE_NAMEAutopsy_data.txt file
-        warning_log: a pathto_File, the AutopsyLogs.txt file
-        antlog_dir: a pathto_File, the antlog.txt file
-        test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
-        common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
-        sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
-        reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
-        gold_data_dir: a pathto_Dir, the gold standard directory
-        gold_archive: a pathto_File, the gold standard archive
-        logs_dir: a pathto_Dir, the location where autopsy logs are stored
-        solr_index: a pathto_Dir, the locatino of the solr index
-        db_diff_results: a DiffResults, the results of the database comparison
-        total_test_time: a String representation of the test duration
-        start_date: a String representation of this TestData's start date
-        end_date: a String representation of the TestData's end date
-        total_ingest_time: a String representation of the total ingest time
-        artifact_count: a Nat, the number of artifacts
-        artifact_fail: a Nat, the number of artifact failures
-        heap_space: a String representation of TODO
-        service_times: a String representation of TODO
-        report_passed: a boolean, indicating if the reports passed
-        printerror: a listof_String, the error messages printed during this TestData's test
-        printout: a listof_String, the messages pritned during this TestData's test
-    """
-
-    def __init__(self, image, main_config):
-        """Init this TestData with it's image and the test configuration.
-
-        Args:
-            image: the Image to be tested.
-            main_config: the global TestConfiguration.
-        """
-        self.main_config = main_config
-        self.image_file = str(image)
-        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
-        self.image = get_image_name(self.image_file)
-        self.image_name = self.image + "(0)"
-        self.output_path = make_path(self.main_config.output_dir, self.image_name)
-        self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
-        self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
-        self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
-        self.test_dbdump = make_path(self.output_path, self.image_name +
-        "DBDump.txt")
-        self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
-        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
-        self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
-        self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
-        self.gold_archive = make_path(self.main_config.gold,
-        self.image_name + "-archive.zip")
-        self.logs_dir = make_path(self.output_path, "logs")
-        self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
-        "ModuleOutput", "KeywordSearch")
-        self.db_diff_results = None
-        self.total_test_time = ""
-        self.start_date = ""
-        self.end_date = ""
-        self.total_ingest_time = ""
-        self.artifact_count = 0
-        self.artifact_fail = 0
-        self.heap_space = ""
-        self.service_times = ""
-        self.report_passed = False
-        # Error tracking
-        self.printerror = []
-        self.printout = []
-
-    def get_db_path(self, db_type):
-        """Get the path to the database file that corresponds to the given DBType.
-
-        Args:
-            DBType: the DBType of the path to be generated.
-        """
-        if(db_type == DBType.GOLD):
-            db_path = make_path(self.gold_data_dir, DB_FILENAME)
-        elif(db_type == DBType.OUTPUT):
-            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
-        else:
-            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
-        return db_path
-
-    def get_html_report_path(self, html_type):
-        """Get the path to the HTML Report folder that corresponds to the given DBType.
-
-        Args:
-            DBType: the DBType of the path to be generated.
-        """
-        if(html_type == DBType.GOLD):
-            return make_path(self.gold_data_dir, "Report")
-        else:
-            # Autopsy creates an HTML report folder in the form AutopsyTestCase DATE-TIME
-            # It's impossible to get the exact time the folder was created, but the folder
-            # we are looking for is the only one in the self.reports_dir folder
-            html_path = ""
-            for fs in os.listdir(self.reports_dir):
-                html_path = make_path(self.reports_dir, fs)
-                if os.path.isdir(html_path):
-                    break
-            return make_path(html_path, os.listdir(html_path)[0])
-
-    def get_sorted_data_path(self, file_type):
-        """Get the path to the SortedData file that corresponds to the given DBType.
-
-        Args:
-            file_type: the DBType of the path to be generated
-        """
-        return self._get_path_to_file(file_type, "SortedData.txt")
-
-    def get_sorted_errors_path(self, file_type):
-        """Get the path to the SortedErrors file that correspodns to the given
-        DBType.
-
-        Args:
-            file_type: the DBType of the path to be generated
-        """
-        return self._get_path_to_file(file_type, "SortedErrors.txt")
-
-    def get_db_dump_path(self, file_type):
-        """Get the path to the DBDump file that corresponds to the given DBType.
-
-        Args:
-            file_type: the DBType of the path to be generated
-        """
-        return self._get_path_to_file(file_type, "DBDump.txt")
-
-    def _get_path_to_file(self, file_type, file_name):
-        """Get the path to the specified file with the specified type.
-
-        Args:
-            file_type: the DBType of the path to be generated
-            file_name: a String, the filename of the path to be generated
-        """
-        full_filename = self.image_name + file_name
-        if(file_type == DBType.GOLD):
-            return make_path(self.gold_data_dir, full_filename)
-        else:
-            return make_path(self.output_path, full_filename)
 
 class Reports(object):
     def generate_reports(csv_path, test_data):
@@ -1586,15 +1728,6 @@ def print_report(errors, name, okay):
         Errors.print_out("< " + name + " - " + okay + " />")
         Errors.print_out("-----------------------------------------------------------------\n")
 
-# Used instead of the print command when printing out an error
-def print_error(string):
-    print(string)
-    test_data.printerror.append(string)
-
-# Used instead of the print command when printing out anything besides errors
-def print_out(string):
-    print(string)
-    test_data.printout.append(string)
 
 def get_exceptions(test_data):
     """Get a list of the exceptions in the autopsy logs.
@@ -1690,267 +1823,6 @@ class DirNotFoundException(Exception):
         error = "Error: Directory could not be found at:\n" + self.dir + "\n"
         return error
 
-#############################
-#   Main Testing Functions  #
-#############################
-class TestRunner(object):
-
-    def run_tests():
-        """Run the tests specified by the main TestConfiguration.
-
-        Executes the AutopsyIngest for each image and dispatches the results based on
-        the mode (rebuild or testing)
-        """
-        global parsed
-        global failedbool
-        global html
-
-        test_data_list = [ TestData(image, test_config) for image in test_config.images ]
-
-        Reports.html_add_images(test_config.images)
-
-        logres =[]
-        for test_data in test_data_list:
-            Errors.clear_print_logs()
-            Errors.set_testing_phase(test_data.image)
-            if not (test_config.args.rebuild or
-                os.path.exists(test_data.gold_archive)):
-                msg = "Gold standard doesn't exist, skipping image:"
-                Errors.print_error(msg)
-                Errors.print_error(test_data.gold_archive)
-                continue
-            TestRunner._run_autopsy_ingest(test_data)
-
-            if test_config.args.rebuild:
-                TestRunner.rebuild(test_data)
-            else:
-                logres.append(TestRunner._run_test(test_data))
-            test_data.printout = Errors.printout
-            test_data.printerror = Errors.printerror
-
-        Reports.write_html_foot()
-        if (len(logres)>0):
-            failedbool = True
-            imgfail = True
-            passFail = False
-            for lm in logres:
-                for ln in lm:
-                    Errors.add_email_msg(ln)
-        if failedbool:
-            passFail = False
-            msg = "The test output didn't match the gold standard.\n"
-            msg += "autopsy test failed.\n"
-            Errors.add_email_msg(msg)
-            html = open(test_config.html_log)
-            Errors.add_email_attachment(html.name)
-            html.close()
-        else:
-            Errors.add_email_msg("Autopsy test passed.\n")
-            passFail = True
-
-        # @@@ This fails here if we didn't parse an XML file
-        try:
-            Emailer.send_email(parsed, Errors.email_body, Errors.email_attachs, passFail)
-        except NameError:
-            Errors.print_error("Could not send e-mail because of no XML file --maybe");
-
-    def _run_autopsy_ingest(test_data):
-        """Run Autopsy ingest for the image in the given TestData.
-
-        Also generates the necessary logs for rebuilding or diff.
-
-        Args:
-            test_data: the TestData to run the ingest on.
-        """
-        global parsed
-        global imgfail
-        global failedbool
-        imgfail = False
-        if image_type(test_data.image_file) == IMGTYPE.UNKNOWN:
-            Errors.print_error("Error: Image type is unrecognized:")
-            Errors.print_error(test_data.image_file + "\n")
-            return
-
-        logging.debug("--------------------")
-        logging.debug(test_data.image_name)
-        logging.debug("--------------------")
-        TestRunner._run_ant(test_data)
-        time.sleep(2) # Give everything a second to process
-
-        # Dump the database before we diff or use it for rebuild
-        TskDbDiff.dump_output_db(test_data)
-
-        # merges logs into a single log for later diff / rebuild
-        copy_logs(test_data)
-        Logs.generate_log_data(test_data)
-
-        TestRunner._handle_solr(test_data)
-        TestRunner._handle_exception(test_data)
-
-    #TODO: figure out return type of _run_test (logres)
-    def _run_test(test_data):
-        """Compare the results of the output to the gold standard.
-
-        Args:
-            test_data: the TestData
-
-        Returns:
-            logres?
-        """
-        TestRunner._extract_gold(test_data)
-
-        # Look for core exceptions
-        # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
-        logres = Logs.search_common_log("TskCoreException", test_data)
-
-        TestResultsDiffer.run_diff(test_data)
-
-        # @@@ COnsider if we want to do this for a rebuild.
-        # Make the CSV log and the html log viewer
-        Reports.generate_reports(test_config.csv, test_data)
-        # Reset the test_config and return the tests sucessfully finished
-        if(failedbool):
-            Errors.add_email_attachment(test_data.common_log_path)
-        return logres
-
-    def _extract_gold(test_data):
-        """Extract gold archive file to output/gold/tmp/
-
-        Args:
-            test_data: the TestData
-        """
-        extrctr = zipfile.ZipFile(test_data.gold_archive, 'r', compression=zipfile.ZIP_DEFLATED)
-        extrctr.extractall(test_data.main_config.gold)
-        extrctr.close
-        time.sleep(2)
-
-    def _handle_solr(test_data):
-        """Clean up SOLR index if in keep mode (-k).
-
-        Args:
-            test_data: the TestData
-        """
-        if not test_config.args.keep:
-            if clear_dir(test_data.solr_index):
-                print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
-        else:
-            print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
-
-    def _handle_exception(test_data):
-        """If running in exception mode, print exceptions to log.
-
-        Args:
-            test_data: the TestData
-        """
-        if test_config.args.exception:
-            exceptions = search_logs(test_config.args.exception_string, test_data)
-            okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
-            print_report(exceptions, "EXCEPTION", okay)
-
-    def rebuild(test_data):
-        """Rebuild the gold standard with the given TestData.
-
-        Copies the test-generated database and html report files into the gold directory.
-        """
-        # Errors to print
-        errors = []
-        # Delete the current gold standards
-        gold_dir = test_config.img_gold
-        clear_dir(test_config.img_gold)
-        tmpdir = make_path(gold_dir, test_data.image_name)
-        dbinpth = test_data.get_db_path(DBType.OUTPUT)
-        dboutpth = make_path(tmpdir, DB_FILENAME)
-        dataoutpth = make_path(tmpdir, test_data.image_name + "SortedData.txt")
-        dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
-        dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
-        if not os.path.exists(test_config.img_gold):
-            os.makedirs(test_config.img_gold)
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        try:
-            copy_file(dbinpth, dboutpth)
-            if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
-                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
-            copy_file(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
-            copy_file(test_data.sorted_log, error_pth)
-        except Exception as e:
-            Errors.print_error(str(e))
-            print(str(e))
-            print(traceback.format_exc())
-        # Rebuild the HTML report
-        output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
-        gold_html_report_dir = make_path(tmpdir, "Report")
-
-        try:
-            copy_dir(output_html_report_dir, gold_html_report_dir)
-        except FileNotFoundException as e:
-            errors.append(e.error())
-        except Exception as e:
-            errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
-            errors.append(str(e) + "\n")
-            print(traceback.format_exc())
-        oldcwd = os.getcwd()
-        zpdir = gold_dir
-        os.chdir(zpdir)
-        os.chdir("..")
-        img_gold = "tmp"
-        img_archive = make_path(test_data.image_name+"-archive.zip")
-        comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
-        TestRunner.zipdir(img_gold, comprssr)
-        comprssr.close()
-        os.chdir(oldcwd)
-        del_dir(test_config.img_gold)
-        okay = "Sucessfully rebuilt all gold standards."
-        print_report(errors, "REBUILDING", okay)
-
-    def zipdir(path, zip):
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                zip.write(os.path.join(root, file))
-
-    def _run_ant(test_data):
-        """Construct and run the ant build command for the given TestData.
-
-        Tests Autopsy by calling RegressionTest.java via the ant build file.
-
-        Args:
-            test_data: the TestData
-        """
-        # Set up the directories
-        test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
-        if dir_exists(test_config_path):
-            shutil.rmtree(test_config_path)
-        os.makedirs(test_config_path)
-        test_config.ant = ["ant"]
-        test_config.ant.append("-v")
-        test_config.ant.append("-f")
-    #   case.ant.append(case.build_path)
-        test_config.ant.append(os.path.join("..","..","Testing","build.xml"))
-        test_config.ant.append("regression-test")
-        test_config.ant.append("-l")
-        test_config.ant.append(test_data.antlog_dir)
-        test_config.ant.append("-Dimg_path=" + test_data.image_file)
-        test_config.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
-        test_config.ant.append("-Dkeyword_path=" + test_config.keyword_path)
-        test_config.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
-        test_config.ant.append("-Dgold_path=" + test_config.gold)
-        test_config.ant.append("-Dout_path=" +
-        make_local_path(test_data.output_path))
-        test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
-        test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
-
-        Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
-        Errors.print_out("CMD: " + " ".join(test_config.ant))
-        Errors.print_out("Starting test...\n")
-        antoutpth = make_local_path(test_config.output_dir, "antRunOutput.txt")
-        antout = open(antoutpth, "a")
-        if SYS is OS.CYGWIN:
-            subprocess.call(test_config.ant, stdout=subprocess.PIPE)
-        elif SYS is OS.WIN:
-            theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
-            theproc.communicate()
-        antout.close()
 
 class Errors:
     """A class used to manage error reporting.
@@ -2015,6 +1887,157 @@ class Errors:
             file: a pathto_File, the file to add
         """
         Errors.email_attachs.append(path)
+
+
+class DiffResults(object):
+    """Container for the results of the database diff tests.
+
+    Stores artifact, object, and attribute counts and comparisons generated by
+    TskDbDiff.
+
+    Attributes:
+        gold_attrs: a Nat, the number of gold attributes
+        output_attrs: a Nat, the number of output attributes
+        gold_objs: a Nat, the number of gold objects
+        output_objs: a Nat, the number of output objects
+        artifact_comp: a listof_String, describing the differences
+        attribute_comp: a listof_String, describing the differences
+    """
+    def __init__(self, tsk_diff):
+        """Inits a DiffResults
+
+        Args:
+            tsk_diff: a TskDBDiff
+        """
+        self.gold_attrs = tsk_diff.gold_attributes
+        self.output_attrs = tsk_diff.autopsy_attributes
+        self.gold_objs = tsk_diff.gold_objects
+        self.output_objs = tsk_diff.autopsy_objects
+        self.artifact_comp = tsk_diff.artifact_comparison
+        self.attribute_comp = tsk_diff.attribute_comparison
+        self.gold_artifacts = len(tsk_diff.gold_artifacts)
+        self.output_artifacts = len(tsk_diff.autopsy_artifacts)
+
+    def get_artifact_comparison(self):
+        if not self.artifact_comp:
+            return "All counts matched"
+        else:
+            global failedbool
+            failedbool = True
+            global imgfail
+            imgfail = True
+            return "; ".join(self.artifact_comp)
+
+    def get_attribute_comparison(self):
+        if not self.attribute_comp:
+            return "All counts matched"
+        global failedbool
+        failedbool = True
+        global imgfail
+        imgfail = True
+        list = []
+        for error in self.attribute_comp:
+            list.append(error)
+        return ";".join(list)
+
+
+#-------------------------------------------------------------#
+# Parses argv and stores booleans to match command line input #
+#-------------------------------------------------------------#
+class Args(object):
+    """A container for command line options and arguments.
+
+    Attributes:
+        single: a boolean indicating whether to run in single file mode
+        single_file: an Image to run the test on
+        rebuild: a boolean indicating whether to run in rebuild mode
+        list: a boolean indicating a config file was specified
+        unallocated: a boolean indicating unallocated space should be ignored
+        ignore: a boolean indicating the input directory should be ingnored
+        keep: a boolean indicating whether to keep the SOLR index
+        verbose: a boolean indicating whether verbose output should be printed
+        exeception: a boolean indicating whether errors containing exception
+                    exception_string should be printed
+        exception_sring: a String representing and exception name
+        fr: a boolean indicating whether gold standard images will be downloaded
+    """
+    def __init__(self):
+        self.single = False
+        self.single_file = ""
+        self.rebuild = False
+        self.list = False
+        self.config_file = ""
+        self.unallocated = False
+        self.ignore = False
+        self.keep = False
+        self.verbose = False
+        self.exception = False
+        self.exception_string = ""
+        self.fr = False
+
+    def parse(self):
+        global nxtproc
+        nxtproc = []
+        nxtproc.append("python3")
+        nxtproc.append(sys.argv.pop(0))
+        while sys.argv:
+            arg = sys.argv.pop(0)
+            nxtproc.append(arg)
+            if(arg == "-f"):
+                #try: @@@ Commented out until a more specific except statement is added
+                    arg = sys.argv.pop(0)
+                    print("Running on a single file:")
+                    print(path_fix(arg) + "\n")
+                    self.single = True
+                    self.single_file = path_fix(arg)
+                #except:
+                #   print("Error: No single file given.\n")
+            #       return False
+            elif(arg == "-r" or arg == "--rebuild"):
+                print("Running in rebuild mode.\n")
+                self.rebuild = True
+            elif(arg == "-l" or arg == "--list"):
+                try:
+                    arg = sys.argv.pop(0)
+                    nxtproc.append(arg)
+                    print("Running from configuration file:")
+                    print(arg + "\n")
+                    self.list = True
+                    self.config_file = arg
+                except:
+                    print("Error: No configuration file given.\n")
+                    return False
+            elif(arg == "-u" or arg == "--unallocated"):
+               print("Ignoring unallocated space.\n")
+               self.unallocated = True
+            elif(arg == "-k" or arg == "--keep"):
+                print("Keeping the Solr index.\n")
+                self.keep = True
+            elif(arg == "-v" or arg == "--verbose"):
+                print("Running in verbose mode:")
+                print("Printing all thrown exceptions.\n")
+                self.verbose = True
+            elif(arg == "-e" or arg == "--exception"):
+                try:
+                    arg = sys.argv.pop(0)
+                    nxtproc.append(arg)
+                    print("Running in exception mode: ")
+                    print("Printing all exceptions with the string '" + arg + "'\n")
+                    self.exception = True
+                    self.exception_string = arg
+                except:
+                    print("Error: No exception string given.")
+            elif arg == "-h" or arg == "--help":
+                print(usage())
+                return False
+            elif arg == "-fr" or arg == "--forcerun":
+                print("Not downloading new images")
+                self.fr = True
+            else:
+                print(usage())
+                return False
+        # Return the args were sucessfully parsed
+        return True
 
 ####
 # Helper Functions
@@ -2149,33 +2172,6 @@ def find_file_in_dir(dir, name, ext):
     except:
         raise DirNotFoundException(dir)
 
-#----------------------#
-#        Main          #
-#----------------------#
-def main():
-    # Global variables
-    global failedbool
-    global test_config
-    failedbool = False
-    args = Args()
-    parse_result = args.parse()
-    test_config = TestConfiguration(args)
-    # The arguments were given wrong:
-    if not parse_result:
-        test_config.reset()
-        return
-    if(not args.fr):
-        antin = ["ant"]
-        antin.append("-f")
-        antin.append(os.path.join("..","..","build.xml"))
-        antin.append("test-download-imgs")
-        if SYS is OS.CYGWIN:
-            subprocess.call(antin)
-        elif SYS is OS.WIN:
-            theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-            theproc.communicate()
-    # Otherwise test away!
-    TestRunner.run_tests()
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
