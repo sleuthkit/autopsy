@@ -103,6 +103,8 @@ def main():
     # Global variables
     global failedbool
     global test_config
+    global imgfail
+    imgfail = False
     failedbool = False
     args = Args()
     parse_result = args.parse()
