@@ -192,10 +192,6 @@ class TestRunner(object):
         Args:
             test_data: the TestData to run the ingest on.
         """
-        global parsed
-        global imgfail
-        global failedbool
-        imgfail = False
         if image_type(test_data.image_file) == IMGTYPE.UNKNOWN:
             Errors.print_error("Error: Image type is unrecognized:")
             Errors.print_error(test_data.image_file + "\n")
@@ -234,12 +230,14 @@ class TestRunner(object):
         logres = Logs.search_common_log("TskCoreException", test_data)
 
         TestResultsDiffer.run_diff(test_data)
+        test_data.overall_passed = (test_data.html_report_passed and
+        test_data.errors_diff_passed and test_data.sorted_data_passed and
+        test_data.db_dump_passed)
 
         # @@@ COnsider if we want to do this for a rebuild.
         # Make the CSV log and the html log viewer
         Reports.generate_reports(test_config.csv, test_data)
-        # Reset the test_config and return the tests sucessfully finished
-        if(failedbool):
+        if(not test_data.overall_passed):
             Errors.add_email_attachment(test_data.common_log_path)
         return logres
 
@@ -407,6 +405,10 @@ class TestData(object):
         logs_dir: a pathto_Dir, the location where autopsy logs are stored
         solr_index: a pathto_Dir, the locatino of the solr index
         db_diff_results: a DiffResults, the results of the database comparison
+        html_report_passed: a boolean, did the HTML report diff pass?
+        errors_diff_passed: a boolean, did the error diff pass?
+        db_dump_passed: a boolean, did the db dump diff pass?
+        overall_passed: a boolean, did the test pass?
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
         end_date: a String representation of the TestData's end date
@@ -415,7 +417,6 @@ class TestData(object):
         artifact_fail: a Nat, the number of artifact failures
         heap_space: a String representation of TODO
         service_times: a String representation of TODO
-        report_passed: a boolean, indicating if the reports passed
         printerror: a listof_String, the error messages printed during this TestData's test
         printout: a listof_String, the messages pritned during this TestData's test
     """
@@ -427,11 +428,13 @@ class TestData(object):
             image: the Image to be tested.
             main_config: the global TestConfiguration.
         """
+        # Configuration Data
         self.main_config = main_config
         self.image_file = str(image)
         # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
         self.image_name = self.image + "(0)"
+        # Directory structure and files
         self.output_path = make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
         self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
@@ -447,7 +450,13 @@ class TestData(object):
         self.logs_dir = make_path(self.output_path, "logs")
         self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
         "ModuleOutput", "KeywordSearch")
+        # Results and Info
         self.db_diff_results = None
+        self.html_report_passed = False
+        self.errors_diff_passed = False
+        self.sorted_data_passed = False
+        self.db_dump_passed = False
+        self.overall_passed = False
         self.total_test_time = ""
         self.start_date = ""
         self.end_date = ""
@@ -456,7 +465,7 @@ class TestData(object):
         self.artifact_fail = 0
         self.heap_space = ""
         self.service_times = ""
-        self.report_passed = False
+
         # Error tracking
         self.printerror = []
         self.printout = []
@@ -1122,25 +1131,28 @@ class TestResultsDiffer(object):
             replace = lambda file: re.sub(re.compile("\d"), "d", file)
             output_errors = test_data.get_sorted_errors_path(DBType.OUTPUT)
             gold_errors = test_data.get_sorted_errors_path(DBType.GOLD)
-
-            TestResultsDiffer._compare_text(output_errors, gold_errors,
-            test_data, replace)
+            passed = TestResultsDiffer._compare_text(output_errors, gold_errors,
+            replace)
+            test_data.errors_diff_passed = passed
 
             # Compare smart blackboard results
             output_data = test_data.get_sorted_data_path(DBType.OUTPUT)
             gold_data = test_data.get_sorted_data_path(DBType.GOLD)
-            TestResultsDiffer._compare_text(output_data, gold_data, test_data)
+            passed = TestResultsDiffer._compare_text(output_data, gold_data)
+            test_data.sorted_data_passed = passed
 
             # Compare the rest of the database (non-BB)
             output_dump = test_data.get_db_dump_path(DBType.OUTPUT)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            TestResultsDiffer._compare_text(output_dump, gold_dump, test_data)
+            passed = TestResultsDiffer._compare_text(output_dump, gold_dump)
+            test_data.db_dump_passed = passed
 
             # Compare html output
             gold_report_path = test_data.get_html_report_path(DBType.GOLD)
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-            TestResultsDiffer._html_report_diff(test_data, gold_report_path,
+            passed = TestResultsDiffer._html_report_diff(test_data, gold_report_path,
             output_report_path)
+            test_data.html_report_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -1154,18 +1166,17 @@ class TestResultsDiffer(object):
     # TODO: _compare_text could be made more generic with how it forms the paths (i.e. not add ".txt" in the method) and probably merged with
     # compare_errors since they both do basic comparison of text files
 
-    def _compare_text(output_file, gold_file, test_data, process=None):
+    def _compare_text(output_file, gold_file, process=None):
         """Compare two text files.
 
         Args:
             output_file: a pathto_File, the output text file
             gold_file: a pathto_File, the input text file
-            test_data: the TestData of the test being performed
             pre-process: (optional) a function of String -> String that will be
             called on each input file before the diff, if specified.
         """
         if(not file_exists(output_file)):
-            return
+            return False
         output_data = codecs.open(output_file, "r", "utf_8").read()
         gold_data = codecs.open(gold_file, "r", "utf_8").read()
 
@@ -1181,13 +1192,16 @@ class TestResultsDiffer(object):
             subprocess.call(dffcmdlst, stdout = diff_file)
             global failedbool
             Errors.add_email_attachment(diff_path)
-            msg = test_data.image_name + ":There was a difference in "
+            msg = "There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
             Errors.add_email_msg(msg)
             Errors.print_error(msg)
             failedbool = True
             global imgfail
             imgfail = True
+            return False
+        else:
+            return True
 
     # TODO: get rid of test_data by changing the error reporting
     def _html_report_diff(test_data, gold_report_path, output_report_path):
@@ -1197,6 +1211,9 @@ class TestResultsDiffer(object):
             test_data: the TestData of the test being performed.
             gold_report_path: a pathto_Dir, the gold HTML report directory
             output_report_path: a pathto_Dir, the output HTML report directory
+
+        Returns:
+            true, if the reports match, false otherwise.
         """
         try:
             gold_html_files = get_files_by_ext(gold_report_path, ".html")
@@ -1222,16 +1239,18 @@ class TestResultsDiffer(object):
             print_report(errors, "REPORT COMPARISON", okay)
 
             if total["Gold"] == total["New"]:
-                test_data.report_passed = True
+                return True
             else:
                 Errors.print_error("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
-
+                return False
         except DirNotFoundException as e:
             e.print_error()
+            return False
         except Exception as e:
             Errors.print_error("Error: Unknown fatal error comparing reports.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
+            return False
 
     def _compare_report_files(a_path, b_path):
         """Compares the two specified report html files.
@@ -1495,7 +1514,7 @@ class Reports(object):
             vars.append( test_data.db_diff_results.get_artifact_comparison() )
             vars.append( test_data.db_diff_results.get_attribute_comparison() )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
-            vars.append( str(test_data.report_passed) )
+            vars.append( str(test_data.html_report_passed) )
             vars.append( test_config.ant_to_string() )
             # Join it together with a ", "
             output = "|".join(vars)
