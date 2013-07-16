@@ -101,7 +101,6 @@ Day = 0
 #----------------------#
 def main():
     # Global variables
-    global test_config
     args = Args()
     parse_result = args.parse()
     test_config = TestConfiguration(args)
@@ -119,22 +118,20 @@ def main():
             theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
     # Otherwise test away!
-    TestRunner.run_tests()
+    TestRunner.run_tests(test_config)
 
 
 class TestRunner(object):
 
-    def run_tests():
+    def run_tests(test_config):
         """Run the tests specified by the main TestConfiguration.
 
         Executes the AutopsyIngest for each image and dispatches the results based on
         the mode (rebuild or testing)
         """
-        global html
-
         test_data_list = [ TestData(image, test_config) for image in test_config.images ]
 
-        Reports.html_add_images(test_config.images)
+        Reports.html_add_images(test_config.html_log, test_config.images)
 
         logres =[]
         for test_data in test_data_list:
@@ -154,7 +151,7 @@ class TestRunner(object):
             test_data.printout = Errors.printout
             test_data.printerror = Errors.printerror
 
-        Reports.write_html_foot()
+        Reports.write_html_foot(test_config.html_log)
         # TODO: move this elsewhere
         if (len(logres)>0):
             for lm in logres:
@@ -228,9 +225,7 @@ class TestRunner(object):
         test_data.errors_diff_passed and test_data.sorted_data_passed and
         test_data.db_dump_passed and test_data.db_diff_results.passed)
 
-        # @@@ COnsider if we want to do this for a rebuild.
-        # Make the CSV log and the html log viewer
-        Reports.generate_reports(test_config.csv, test_data)
+        Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
             Errors.add_email_attachment(test_data.common_log_path)
         return logres
@@ -252,7 +247,7 @@ class TestRunner(object):
         Args:
             test_data: the TestData
         """
-        if not test_config.args.keep:
+        if not test_data.main_config.args.keep:
             if clear_dir(test_data.solr_index):
                 print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
         else:
@@ -264,9 +259,10 @@ class TestRunner(object):
         Args:
             test_data: the TestData
         """
-        if test_config.args.exception:
-            exceptions = search_logs(test_config.args.exception_string, test_data)
-            okay = "No warnings or exceptions found containing text '" + test_config.args.exception_string + "'."
+        if test_data.main_config.args.exception:
+            exceptions = search_logs(test_data.main_config.args.exception_string, test_data)
+            okay = ("No warnings or exceptions found containing text '" +
+            test_data.main_config.args.exception_string + "'.")
             print_report(exceptions, "EXCEPTION", okay)
 
     def rebuild(test_data):
@@ -274,6 +270,7 @@ class TestRunner(object):
 
         Copies the test-generated database and html report files into the gold directory.
         """
+        test_config = test_data.main_config
         # Errors to print
         errors = []
         # Delete the current gold standards
@@ -339,38 +336,38 @@ class TestRunner(object):
         Args:
             test_data: the TestData
         """
+        test_config = test_data.main_config
         # Set up the directories
-        test_config_path = os.path.join(test_config.output_dir, test_data.image_name)
-        if dir_exists(test_config_path):
-            shutil.rmtree(test_config_path)
-        os.makedirs(test_config_path)
-        test_config.ant = ["ant"]
-        test_config.ant.append("-v")
-        test_config.ant.append("-f")
+        if dir_exists(test_data.output_path):
+            shutil.rmtree(test_data.output_path)
+        os.makedirs(test_data.output_path)
+        test_data.ant = ["ant"]
+        test_data.ant.append("-v")
+        test_data.ant.append("-f")
     #   case.ant.append(case.build_path)
-        test_config.ant.append(os.path.join("..","..","Testing","build.xml"))
-        test_config.ant.append("regression-test")
-        test_config.ant.append("-l")
-        test_config.ant.append(test_data.antlog_dir)
-        test_config.ant.append("-Dimg_path=" + test_data.image_file)
-        test_config.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
-        test_config.ant.append("-Dkeyword_path=" + test_config.keyword_path)
-        test_config.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
-        test_config.ant.append("-Dgold_path=" + test_config.gold)
-        test_config.ant.append("-Dout_path=" +
+        test_data.ant.append(os.path.join("..","..","Testing","build.xml"))
+        test_data.ant.append("regression-test")
+        test_data.ant.append("-l")
+        test_data.ant.append(test_data.antlog_dir)
+        test_data.ant.append("-Dimg_path=" + test_data.image_file)
+        test_data.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
+        test_data.ant.append("-Dkeyword_path=" + test_config.keyword_path)
+        test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
+        test_data.ant.append("-Dgold_path=" + test_config.gold)
+        test_data.ant.append("-Dout_path=" +
         make_local_path(test_data.output_path))
-        test_config.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
-        test_config.ant.append("-Dtest.timeout=" + str(test_config.timeout))
+        test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
+        test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
-        Errors.print_out("CMD: " + " ".join(test_config.ant))
+        Errors.print_out("CMD: " + " ".join(test_data.ant))
         Errors.print_out("Starting test...\n")
-        antoutpth = make_local_path(test_config.output_dir, "antRunOutput.txt")
+        antoutpth = make_local_path(test_data.main_config.output_dir, "antRunOutput.txt")
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
-            subprocess.call(test_config.ant, stdout=subprocess.PIPE)
+            subprocess.call(test_data.ant, stdout=subprocess.PIPE)
         elif SYS is OS.WIN:
-            theproc = subprocess.Popen(test_config.ant, shell = True, stdout=subprocess.PIPE)
+            theproc = subprocess.Popen(test_data.ant, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
 
@@ -383,6 +380,7 @@ class TestData(object):
 
     Attributes:
         main_config: the global TestConfiguration
+        ant: a listof_String, the ant command for this TestData
         image_file: a pathto_Image, the image for this TestData
         image: a String, the image file's name
         image_name: a String, the image file's name with a trailing (0)
@@ -411,6 +409,10 @@ class TestData(object):
         artifact_fail: a Nat, the number of artifact failures
         heap_space: a String representation of TODO
         service_times: a String representation of TODO
+        autopsy_version: a String, the version of autopsy that was run
+        ingest_messages: a Nat, the number of ingest messages
+        indexed_files: a Nat, the number of files indexed during the ingest
+        indexed_chunks: a Nat, the number of chunks indexed during the ingest
         printerror: a listof_String, the error messages printed during this TestData's test
         printout: a listof_String, the messages pritned during this TestData's test
     """
@@ -424,6 +426,7 @@ class TestData(object):
         """
         # Configuration Data
         self.main_config = main_config
+        self.ant = []
         self.image_file = str(image)
         # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
@@ -451,6 +454,7 @@ class TestData(object):
         self.sorted_data_passed = False
         self.db_dump_passed = False
         self.overall_passed = False
+        # Ingest info
         self.total_test_time = ""
         self.start_date = ""
         self.end_date = ""
@@ -459,10 +463,19 @@ class TestData(object):
         self.artifact_fail = 0
         self.heap_space = ""
         self.service_times = ""
-
+        self.autopsy_version = ""
+        self.ingest_messages = 0
+        self.indexed_files = 0
+        self.indexed_chunks = 0
         # Error tracking
         self.printerror = []
         self.printout = []
+
+    def ant_to_string(self):
+        string = ""
+        for arg in self.ant:
+            string += (arg + " ")
+        return string
 
     def get_db_path(self, db_type):
         """Get the path to the database file that corresponds to the given DBType.
@@ -586,11 +599,6 @@ class TestConfiguration(object):
         self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
         self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
         self.build_path = make_path("..", "build.xml")
-        # test_config info
-        self.autopsy_version = ""
-        self.ingest_messages = 0
-        self.indexed_files = 0
-        self.indexed_chunks = 0
         # Infinite Testing info
         timer = 0
         self.images = []
@@ -604,7 +612,6 @@ class TestConfiguration(object):
         # However it only seems to take about half this time
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
-        self.ant = []
 
         if not self.args.single:
             self._load_config_file(self.args.config_file)
@@ -614,11 +621,6 @@ class TestConfiguration(object):
         #self._init_imgs()
         #self._init_build_info()
 
-    def ant_to_string(self):
-        string = ""
-        for arg in self.ant:
-            string += (arg + " ")
-        return string
 
     def _load_config_file(self, config_file):
         """Updates this TestConfiguration's attributes from the config file.
@@ -1268,28 +1270,27 @@ class TestResultsDiffer(object):
 
 
 class Reports(object):
-    def generate_reports(csv_path, test_data):
+    def generate_reports(test_data):
         """Generate the reports for a single test
 
         Args:
-            csv_path: a pathto_File, the csv file
             test_data: the TestData
         """
         Reports._generate_html(test_data)
-        if test_config.global_csv:
-            Reports._generate_csv(test_config.global_csv, test_data)
+        if test_data.main_config.global_csv:
+            Reports._generate_csv(test_data.main_config.global_csv, test_data)
         else:
-            Reports._generate_csv(csv_path, test_data)
+            Reports._generate_csv(test_data.main_config.csv, test_data)
 
     def _generate_html(test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
-        if not file_exists(test_config.html_log):
+        html_log = test_data.main_config.html_log
+        if not file_exists(html_log):
             Reports.write_html_head()
         try:
-            global html
-            html = open(test_config.html_log, "a")
+            html = open(html_log, "a")
             # The image title
             title = "<h1><a name='" + test_data.image_name + "'>" + test_data.image_name + " \
                         <span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
@@ -1336,9 +1337,9 @@ class Reports(object):
             info += "<tr><td>Image Name:</td>"
             info += "<td>" + test_data.image_name + "</td></tr>"
             info += "<tr><td>test_config Output Directory:</td>"
-            info += "<td>" + test_config.output_dir + "</td></tr>"
+            info += "<td>" + test_data.main_config.output_dir + "</td></tr>"
             info += "<tr><td>Autopsy Version:</td>"
-            info += "<td>" + test_config.autopsy_version + "</td></tr>"
+            info += "<td>" + test_data.autopsy_version + "</td></tr>"
             info += "<tr><td>Heap Space:</td>"
             info += "<td>" + test_data.heap_space + "</td></tr>"
             info += "<tr><td>Test Start Date:</td>"
@@ -1364,11 +1365,11 @@ class Reports(object):
             info += "<tr><td>TskDataExceptions:</td>"
             info += "<td>" + str(len(search_log_set("autopsy", "TskDataException", test_data))) + "</td></tr>"
             info += "<tr><td>Ingest Messages Count:</td>"
-            info += "<td>" + str(test_config.ingest_messages) + "</td></tr>"
+            info += "<td>" + str(test_data.ingest_messages) + "</td></tr>"
             info += "<tr><td>Indexed Files Count:</td>"
-            info += "<td>" + str(test_config.indexed_files) + "</td></tr>"
+            info += "<td>" + str(test_data.indexed_files) + "</td></tr>"
             info += "<tr><td>Indexed File Chunks Count:</td>"
-            info += "<td>" + str(test_config.indexed_chunks) + "</td></tr>"
+            info += "<td>" + str(test_data.indexed_chunks) + "</td></tr>"
             info += "<tr><td>Out Of Disk Space:\
                              <p style='font-size: 11px;'>(will skew other test results)</p></td>"
             info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
@@ -1400,14 +1401,18 @@ class Reports(object):
             html.close()
         except Exception as e:
             Errors.print_error("Error: Unknown fatal error when creating HTML log at:")
-            Errors.print_error(test_config.html_log)
+            Errors.print_error(html_log)
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
 
-    def write_html_head():
-        """Write the top of the HTML log file."""
-        print(test_config.html_log)
-        html = open(str(test_config.html_log), "a")
+    def write_html_head(html_log):
+        """Write the top of the HTML log file.
+
+        Args:
+            html_log: a pathto_File, the global HTML log
+        """
+        print(html_log)
+        html = open(str(html_log), "a")
         head = "<html>\
                 <head>\
                 <title>AutopsyTesttest_config Output</title>\
@@ -1431,24 +1436,29 @@ class Reports(object):
         html.write(head)
         html.close()
 
-    def write_html_foot():
-        """Write the bottom of the HTML log file."""
-        html = open(test_config.html_log, "a")
+    def write_html_foot(html_log):
+        """Write the bottom of the HTML log file.
+
+        Args:
+            html_log: a pathto_File, the global HTML log
+        """
+        html = open(html_log, "a")
         head = "</body></html>"
         html.write(head)
         html.close()
 
-    def html_add_images(full_image_names):
+    def html_add_images(html_log, full_image_names):
         """Add all the image names to the HTML log.
 
         Args:
             full_image_names: a listof_String, each representing an image name
+            html_log: a pathto_File, the global HTML log
         """
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
-        if not file_exists(test_config.html_log):
-            Reports.write_html_head()
-        html = open(test_config.html_log, "a")
+        if not file_exists(html_log):
+            Reports.write_html_head(html_log)
+        html = open(html_log, "a")
         links = []
         for full_name in full_image_names:
             name = get_image_name(full_name)
@@ -1470,9 +1480,9 @@ class Reports(object):
             vars = []
             vars.append( test_data.image_file )
             vars.append( test_data.image_name )
-            vars.append( test_config.output_dir )
+            vars.append( test_data.main_config.output_dir )
             vars.append( socket.gethostname() )
-            vars.append( test_config.autopsy_version )
+            vars.append( test_data.autopsy_version )
             vars.append( test_data.heap_space )
             vars.append( test_data.start_date )
             vars.append( test_data.end_date )
@@ -1485,9 +1495,9 @@ class Reports(object):
             vars.append( str(Reports._get_num_memory_errors("solr", test_data)) )
             vars.append( str(len(search_log_set("autopsy", "TskCoreException", test_data))) )
             vars.append( str(len(search_log_set("autopsy", "TskDataException", test_data))) )
-            vars.append( str(test_config.ingest_messages) )
-            vars.append( str(test_config.indexed_files) )
-            vars.append( str(test_config.indexed_chunks) )
+            vars.append( str(test_data.ingest_messages) )
+            vars.append( str(test_data.indexed_files) )
+            vars.append( str(test_data.indexed_chunks) )
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
             vars.append( str(test_data.db_diff_results.output_objs) )
             vars.append( str(test_data.db_diff_results.output_artifacts) )
@@ -1497,7 +1507,7 @@ class Reports(object):
             vars.append( test_data.db_diff_results.get_attribute_comparison() )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
             vars.append( str(test_data.html_report_passed) )
-            vars.append( test_config.ant_to_string() )
+            vars.append( test_data.ant_to_string() )
             # Join it together with a ", "
             output = "|".join(vars)
             output += "\n"
@@ -1564,13 +1574,13 @@ class Logs(object):
     def generate_log_data(test_data):
         Logs._generate_common_log(test_data)
         try:
-            Logs._fill_test_config_data(test_data)
+            Logs._fill_ingest_data(test_data)
         except Exception as e:
             Errors.print_error("Error: Unknown fatal error when filling test_config data.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
         # If running in verbose mode (-v)
-        if test_config.args.verbose:
+        if test_data.main_config.args.verbose:
             errors = Logs._report_all_errors()
             okay = "No warnings or errors in any log files."
             print_report(errors, "VERBOSE", okay)
@@ -1584,7 +1594,7 @@ class Logs(object):
             common_log.write("--------------------------------------------------\n")
             common_log.write(test_data.image_name + "\n")
             common_log.write("--------------------------------------------------\n")
-            rep_path = make_local_path(test_config.output_dir)
+            rep_path = make_local_path(test_data.main_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
                 log = codecs.open(make_path(logs_path, file), "r", "utf_8")
@@ -1610,7 +1620,7 @@ class Logs(object):
             Errors.print_error(traceback.format_exc())
             logging.critical(traceback.format_exc())
 
-    def _fill_test_config_data(test_data):
+    def _fill_ingest_data(test_data):
         """Fill the global test config's variables that require the log files."""
         try:
             # Open autopsy.log.0
@@ -1639,7 +1649,7 @@ class Logs(object):
             # Set Autopsy version, heap space, ingest time, and service times
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
-            test_config.autopsy_version = get_word_at(version_line, 5).rstrip(",")
+            test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
 
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
 
@@ -1647,13 +1657,13 @@ class Logs(object):
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
 
             message_line = search_log_set("autopsy", "Ingest messages count:", test_data)[0]
-            test_config.ingest_messages = int(message_line.rstrip().split(": ")[2])
+            test_data.ingest_messages = int(message_line.rstrip().split(": ")[2])
 
             files_line = search_log_set("autopsy", "Indexed files count:", test_data)[0]
-            test_config.indexed_files = int(files_line.rstrip().split(": ")[2])
+            test_data.indexed_files = int(files_line.rstrip().split(": ")[2])
 
             chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
-            test_config.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
+            test_data.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
         except Exception as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
