@@ -191,7 +191,7 @@ public class ExtractRegistry extends Extract {
                         if (s == null) {
                             break;
                         }
-                        sb.append(s);
+                        sb.append(s).append("\n");
                     } catch (IOException ex) {
                         java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
                         break;
