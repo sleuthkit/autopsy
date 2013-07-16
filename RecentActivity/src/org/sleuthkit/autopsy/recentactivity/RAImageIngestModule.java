@@ -183,8 +183,14 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         return false;
     }
     
-    protected static String getRATempPath(Case a_case) {
-        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator;
+    /**
+     * Get the temp path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * @param a_case Case that directory is for
+     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @return Path to directory
+     */
+    protected static String getRATempPath(Case a_case, String mod) {
+        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod;
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -192,8 +198,14 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         return tmpDir;
     }
     
-    protected static String getRAOutputPath(Case a_case) {
-        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator;
+    /**
+     * Get the output path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * @param a_case Case that directory is for
+     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @return Path to directory
+     */
+    protected static String getRAOutputPath(Case a_case, String mod) {
+        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod;
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();

@@ -113,7 +113,7 @@ public class Chrome extends Extract {
 
         int j = 0;
         while (j < historyFiles.size()) {
-            String temps = currentCase.getTempDirectory() + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
             int errors = 0;
             final AbstractFile historyFile = historyFiles.get(j++);
             if (historyFile.getSize() == 0) {
@@ -124,6 +124,7 @@ public class Chrome extends Extract {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
+                continue;
             }
             File dbFile = new File(temps);
             if (controller.isCancelled()) {
@@ -172,13 +173,14 @@ public class Chrome extends Extract {
         if (bookmarkFiles != null && !bookmarkFiles.isEmpty()) {
             while (j < bookmarkFiles.size()) {
                 AbstractFile bookmarkFile =  bookmarkFiles.get(j++);
-                String temps = currentCase.getTempDirectory() + File.separator + bookmarkFile.getName().toString() + j + ".db";
+                String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + bookmarkFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
                     ContentUtils.writeToFile(bookmarkFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + bookmarkFile.getName());
+                    continue;
                 }
                 logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
                 File dbFile = new File(temps);
@@ -270,13 +272,14 @@ public class Chrome extends Extract {
         if (cookiesFiles != null && !cookiesFiles.isEmpty()) {
             while (j < cookiesFiles.size()) {
                 AbstractFile cookiesFile = cookiesFiles.get(j++);
-                String temps = currentCase.getTempDirectory() + File.separator + cookiesFile.getName().toString() + j + ".db";
+                String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cookiesFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
                     ContentUtils.writeToFile(cookiesFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + cookiesFile.getName());
+                    continue;
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -333,13 +336,14 @@ public class Chrome extends Extract {
                 if (historyFile.getSize() == 0) {
                     continue;
                 }
-                String temps = currentCase.getTempDirectory() + File.separator + historyFile.getName().toString() + j + ".db";
+                String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
                     ContentUtils.writeToFile(historyFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
+                    continue;
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -394,13 +398,14 @@ public class Chrome extends Extract {
         if (signonFiles != null && !signonFiles.isEmpty()) {
             while (j < signonFiles.size()) {
                 AbstractFile signonFile = signonFiles.get(j++);
-                String temps = currentCase.getTempDirectory() + File.separator + signonFile.getName().toString() + j + ".db";
+                String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName().toString() + j + ".db";
                 int errors = 0;
                 try {
                     ContentUtils.writeToFile(signonFile, new File(temps));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + signonFile.getName());
+                    continue;
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {

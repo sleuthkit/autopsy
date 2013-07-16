@@ -282,7 +282,7 @@ public class ExtractIE extends Extract {
         currentCase = Case.getCurrentCase();
         tskCase = currentCase.getSleuthkitCase();
         
-        PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
+        PASCO_RESULTS_PATH = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results";
         JAVA_PATH = PlatformUtil.getJavaPath();
         pascoResults = new ArrayList<String>();
 
@@ -326,7 +326,7 @@ public class ExtractIE extends Extract {
             //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
             indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat";
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
-            temps = currentCase.getTempDirectory() + File.separator + indexFileName;
+            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName;
             File datFile = new File(temps);
             if (controller.isCancelled()) {
                 datFile.delete();
@@ -336,6 +336,8 @@ public class ExtractIE extends Extract {
                 ContentUtils.writeToFile(indexFile, datFile);
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                this.addErrorMessage(this.getName() + ": Error while trying to write file:" + datFile.getAbsolutePath());
+                continue;
             }
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt";

@@ -139,7 +139,7 @@ public class ExtractRegistry extends Extract {
         ExtractUSB extrctr = new ExtractUSB();
         FileWriter logFile = null;
         try {
-            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase) + File.separator + "regripper-info.txt");
+            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt");
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
             logFile = null;
@@ -148,8 +148,8 @@ public class ExtractRegistry extends Extract {
         int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
-            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase) + File.separator + regFileName;
-            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase) + File.separator + regFileName + "-regripper-" + Integer.toString(j++);
+            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++);
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile);
