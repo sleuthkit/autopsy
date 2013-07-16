@@ -101,9 +101,7 @@ Day = 0
 #----------------------#
 def main():
     # Global variables
-    global failedbool
     global test_config
-    failedbool = False
     args = Args()
     parse_result = args.parse()
     test_config = TestConfiguration(args)
@@ -132,7 +130,6 @@ class TestRunner(object):
         Executes the AutopsyIngest for each image and dispatches the results based on
         the mode (rebuild or testing)
         """
-        global failedbool
         global html
 
         test_data_list = [ TestData(image, test_config) for image in test_config.images ]
@@ -143,8 +140,7 @@ class TestRunner(object):
         for test_data in test_data_list:
             Errors.clear_print_logs()
             Errors.set_testing_phase(test_data.image)
-            if not (test_config.args.rebuild or
-                os.path.exists(test_data.gold_archive)):
+            if not (test_config.args.rebuild or os.path.exists(test_data.gold_archive)):
                 msg = "Gold standard doesn't exist, skipping image:"
                 Errors.print_error(msg)
                 Errors.print_error(test_data.gold_archive)
@@ -159,23 +155,25 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
 
         Reports.write_html_foot()
+        # TODO: move this elsewhere
         if (len(logres)>0):
-            failedbool = True
-            print(logres)
             for lm in logres:
                 for ln in lm:
                     Errors.add_email_msg(ln)
-        if failedbool:
-            msg = "The test output didn't match the gold standard.\n"
-            msg += "autopsy test failed.\n"
+
+        # TODO: possibly worth putting this in a sub method
+        if all([ test_data.overall_passed for test_data in test_data_list ]):
+            Errors.add_email_msg("All images passed.\n")
+        else:
+            msg = "The following images failed:\n"
+            for test_data in test_data_list:
+                if not test_data.overall_passed:
+                    msg += "\t" + test_data.image + "\n"
             Errors.add_email_msg(msg)
             html = open(test_config.html_log)
             Errors.add_email_attachment(html.name)
             html.close()
-        else:
-            Errors.add_email_msg("Autopsy test passed.\n")
 
-        # @@@ This fails here if we didn't parse an XML file
         if test_config.email_enabled:
             Emailer.send_email(test_config.mail_to, test_config.mail_server,
             test_config.mail_subject, Errors.email_body, Errors.email_attachs)
@@ -957,7 +955,6 @@ class TskDbDiff(object):
             sorted_data_file: a pathto_File, the sorted dump file to write to
         """
         autopsy_cur2 = autopsy_con.cursor()
-        global failedbool
         # Get the list of all artifacts
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
         autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
@@ -1010,7 +1007,6 @@ class TskDbDiff(object):
                             msg = "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
                             Errors.add_email_msg(msg)
                             Errors.print_error(msg)
-                            failedbool = True
                             if(not appnd):
                                 Errors.add_email_attachment(db_file)
                                 appnd = True
@@ -1018,7 +1014,6 @@ class TskDbDiff(object):
                             msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
                             Errors.add_email_msg(msg)
                             Errors.print_error(msg)
-                            failedbool = True
                             if(not appnd):
                                 Errors.add_email_attachment(db_file)
                                 appnd = True
@@ -1182,13 +1177,11 @@ class TestResultsDiffer(object):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
-            global failedbool
             Errors.add_email_attachment(diff_path)
             msg = "There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
             Errors.add_email_msg(msg)
             Errors.print_error(msg)
-            failedbool = True
             return False
         else:
             return True
