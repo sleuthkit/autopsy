@@ -1,0 +1,51 @@
+
+20130429
+  -created winlogon_tln.pl, applets_tln.pl
+  
+  -added alertMsg() func. to:
+    -brisv.pl, inprocserver.pl, inprocserver_u.pl, iejava.pl,
+     spp_clients.pl
+
+	-retired scanwithav.pl (func. included in attachmgr.pl)
+	-retired taskman.pl (func. included in winlogon.pl)
+	-retired vista_wireless.pl (func. in networklist.pl)
+
+20130425 
+  -RegRipper and rip updated to v2.8; added alertMsg() capability
+  -retired userinit.pl (functionality included in winlogon.pl)
+  -created new plugins
+     -srun_tln.pl, urun_tln.pl,cmdproc_tln.pl
+     -cmd_shell_tln.pl,muicache_tln.pl
+     
+  -added alertMsg() functionality to rip.pl, rr.pl, and plugins
+     -appcompatcache.pl, appcompatcache_tln.pl
+     -appinitdlls.pl
+     -soft_run.pl, user_run.pl
+     -imagefile.pl
+     -winlogon.pl, winlogon_u.pl
+     -muicache.pl (look for values with "[Tt]emp" paths)
+     -attachmgr.pl (look for values per KB 883260)
+     -virut.pl
+     -cmdproc.pl, cmd_shell.pl
+
+20130411
+  -retired specaccts.pl & notify.pl; incorporated functionality into 
+   winlogon.pl
+
+20130410
+  -retired taskman.pl; merged into winlogon.pl
+  -updated winlogon.pl (Wow6432Node support, etc.)
+  -updated winlogon_u.pl (Wow6432Node support)
+  -updated shellexec.pl, imagefile.pl, installedcomp.pl (Wow6432Node support)
+
+20130409
+  -added drivers32.pl (C. Harrell) to the archive
+
+20130408
+  -updated bho.pl to support Wow6432Node
+
+20130405
+  -updated cmd_shell.pl to include Clients subkey in the Software hive
+  -created cmd_shell_u.pl 
+  -fixed issue with rip.exe syntax info containing 'rr'
+  -fixed banner in findexes.pl

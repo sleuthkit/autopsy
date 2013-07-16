@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -60,7 +60,9 @@ public class ExtractRegistry extends Extract {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
+    private String RR_FULL_PATH;
     boolean rrFound = false;
+    boolean rrFullFound = false;
     private int sysid;
     private IngestServices services;
     final public static String MODULE_VERSION = "1.0";
@@ -76,16 +78,7 @@ public class ExtractRegistry extends Extract {
         } else {
             rrFound = true;
         }
-//        try {
-//            Case currentCase = Case.getCurrentCase(); // get the most updated case
-//            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-//            ResultSet artset = tempDb.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-//
-//            while (artset.next()) {
-//                sysid = artset.getInt("artifact_type_id");
-//            }
-//        } catch (Exception e) {
-//        }
+        
         final String rrHome = rrRoot.getAbsolutePath();
         logger.log(Level.INFO, "RegRipper home: " + rrHome);
 
@@ -94,6 +87,23 @@ public class ExtractRegistry extends Extract {
         } else {
             RR_PATH = "perl " + rrHome + File.separator + "rip.pl";
         }
+        
+        final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false);
+        if (rrFullRoot == null) {
+            logger.log(Level.SEVERE, "RegRipper Full not found");
+            rrFullFound = false;
+        } else {
+            rrFullFound = true;
+        }
+        
+        final String rrFullHome = rrFullRoot.getAbsolutePath();
+        logger.log(Level.INFO, "RegRipper Full home: " + rrFullHome);
+
+        if (PlatformUtil.isWindowsOS()) {
+            RR_FULL_PATH = rrFullHome + File.separator + "rip.exe";
+        } else {
+            RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl";
+        }
     }
 
     @Override
@@ -101,9 +111,15 @@ public class ExtractRegistry extends Extract {
         return MODULE_VERSION;
     }
 
+    /**
+     * Identifies registry files in the database by name, runs regripper on them, and parses the output.
+     * 
+     * @param dataSource
+     * @param controller 
+     */
     private void getRegistryFiles(Content dataSource, IngestDataSourceWorkerController controller) {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> allRegistryFiles = new ArrayList<AbstractFile>();
+        List<AbstractFile> allRegistryFiles = new ArrayList<>();
         try {
             allRegistryFiles.addAll(fileManager.findFiles(dataSource, "ntuser.dat"));
         } catch (TskCoreException ex) {
@@ -111,7 +127,6 @@ public class ExtractRegistry extends Extract {
         }
 
         // try to find each of the listed registry files whose parent directory
-
         // is like '/system32/config'
         String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
         for (String regFileName : regFileNames) {
@@ -122,89 +137,195 @@ public class ExtractRegistry extends Extract {
             }
         }
         ExtractUSB extrctr = new ExtractUSB();
+        FileWriter logFile = null;
+        try {
+            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt");
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            logFile = null;
+        }
+        
         int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
-            String temps = currentCase.getTempDirectory() + "\\" + regFileName;
+            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++);
+            File regFileNameLocalFile = new File(regFileNameLocal);
             try {
-                ContentUtils.writeToFile(regFile, new File(currentCase.getTempDirectory() + "\\" + regFileName));
+                ContentUtils.writeToFile(regFile, regFileNameLocalFile);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
+                continue;
             }
-            File aRegFile = new File(temps);
-            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
-            String txtPath = executeRegRip(temps, j++);
-            if (txtPath.length() > 0) {
-                if (parseReg(txtPath, regFile.getId(), extrctr) == false) {
-                    continue;
+           
+            try {
+                if (logFile != null) {
+                    logFile.write(Integer.toString(j-1) + "\t" + regFile.getUniquePath() + "\n");
                 }
+            } catch (TskCoreException ex) {
+                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            catch (IOException ex) {
+                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
+            RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
+            if (parseReg(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                continue;
             }
 
-            //At this point pasco2 proccessed the index files.
-            //Now fetch the results, parse them and the delete the files.
-            aRegFile.delete();
+            try {
+                BlackboardArtifact art = regFile.newArtifact(ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID());
+                BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "RegRipper");
+                art.addAttribute(att);
+            
+                FileReader fread = new FileReader(regOutputFiles.fullPlugins);
+                BufferedReader input = new BufferedReader(fread);
+                
+                StringBuilder sb = new StringBuilder();
+                while (true) {
+                    
+                    try {
+                        String s = input.readLine();
+                        if (s == null) {
+                            break;
+                        }
+                        sb.append(s).append("\n");
+                    } catch (IOException ex) {
+                        java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                        break;
+                    }
+                }
+                
+                att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", sb.toString());
+                art.addAttribute(att);
+            } catch (FileNotFoundException ex) {
+                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (TskCoreException ex) {
+                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            } 
+    
+            regFileNameLocalFile.delete();
         }
+        try {
+            if (logFile != null) {
+                logFile.close();
+            }
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private class RegOutputFiles {
+        public String autopsyPlugins = "";
+        public String fullPlugins = "";
     }
 
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-    private String executeRegRip(String regFilePath, int fileIndex) {
-        String txtPath = regFilePath + Integer.toString(fileIndex) + ".txt";
-        String type = "";
-
+    /**
+     * Execute regripper on the given registry.
+     * @param regFilePath Path to local copy of registry
+     * @param outFilePathBase  Path to location to save output file to.  Base name that will be extended on
+     */
+    private RegOutputFiles executeRegRip(String regFilePath, String outFilePathBase) {
         Writer writer = null;
-        try {
-            if (regFilePath.toLowerCase().contains("system")) {
-                type = "autopsysystem";
-            } else if (regFilePath.toLowerCase().contains("software")) {
-                type = "autopsysoftware";
-            } else if (regFilePath.toLowerCase().contains("ntuser")) {
-                type = "autopsy";
-            } else if (regFilePath.toLowerCase().contains("default")) {
-                type = "1default";
-            } else if (regFilePath.toLowerCase().contains("sam")) {
-                type = "1sam";
-            } else if (regFilePath.toLowerCase().contains("security")) {
-                type = "1security";
-            } else {
-                type = "1default";
-            }
+     
+        String type = "";
+        String fullType = "";
+        RegOutputFiles regOutputFiles = new RegOutputFiles();
 
-            logger.log(Level.INFO, "Writing RegRipper results to: " + txtPath);
-            writer = new FileWriter(txtPath);
-            execRR = new ExecUtil();
-            execRR.execute(writer, RR_PATH,
-                    "-r", regFilePath, "-f", type);
+        if (regFilePath.toLowerCase().contains("system")) {
+            type = "autopsysystem";
+            fullType = "system";
+        } else if (regFilePath.toLowerCase().contains("software")) {
+            type = "autopsysoftware";
+            fullType = "software";
+        } else if (regFilePath.toLowerCase().contains("ntuser")) {
+            type = "autopsy";
+            fullType = "ntuser";
+        } else if (regFilePath.toLowerCase().contains("default")) {
+            //type = "1default";
+        } else if (regFilePath.toLowerCase().contains("sam")) {
+            fullType = "sam";
+        } else if (regFilePath.toLowerCase().contains("security")) {
+            fullType = "security";
+        } else {
+            // @@@ Seems like we should error out or something...
+            type = "1default";
+        }
 
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
-        } catch (InterruptedException ex) {
-            logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex);
+        if ((type.equals("") == false) && (rrFound)) {
+            try {
+                regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt";
+                logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins);
+                writer = new FileWriter(regOutputFiles.autopsyPlugins);
+                execRR = new ExecUtil();
+                execRR.execute(writer, RR_PATH,
+                        "-r", regFilePath, "-f", type);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
+            } catch (InterruptedException ex) {
+                logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
+            } finally {
+                if (writer != null) {
+                    try {
+                        writer.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex);
+                    }
                 }
             }
         }
-
-        return txtPath;
+        else {
+            logger.log(Level.INFO, "Not running Autopsy-only modules on hive");
+        }
+        
+        if ((fullType.equals("") == false) && (rrFullFound)) {
+            try {
+                regOutputFiles.fullPlugins = outFilePathBase + "-full.txt";
+                logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins);
+                writer = new FileWriter(regOutputFiles.fullPlugins);
+                execRR = new ExecUtil();
+                execRR.execute(writer, RR_FULL_PATH,
+                        "-r", regFilePath, "-f", fullType);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex);
+            } catch (InterruptedException ex) {
+                logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex);
+            } finally {
+                if (writer != null) {
+                    try {
+                        writer.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper full", ex);
+                    }
+                }
+            }
+        }
+        else {
+            logger.log(Level.INFO, "Not running original RR modules on hive");
+        }
+        return regOutputFiles;
     }
+    
+    // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
 
     private boolean parseReg(String regRecord, long orgId, ExtractUSB extrctr) {
         FileInputStream fstream = null;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+     
+            // Read the file in and create a Document and elements
             File regfile = new File(regRecord);
             fstream = new FileInputStream(regfile);
             //InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
             //BufferedReader input = new BufferedReader(fstreamReader);
             //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
             String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next();
-            regfile.delete();
+            //regfile.delete();
             String startdoc = "<?xml version=\"1.0\"?><document>";
             String result = regString.replaceAll("----------------------------------------", "");
             result = result.replaceAll("\\n", "");
@@ -215,6 +336,8 @@ public class ExtractRegistry extends Extract {
             String stringdoc = startdoc + result + enddoc;
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
+            
+            // cycle through the elements in the doc
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
             int len = children.getLength();
@@ -242,6 +365,7 @@ public class ExtractRegistry extends Extract {
                     // If there isn't an artifact node, skip this entry
                     continue;
                 }
+                
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
                 String winver = "";
