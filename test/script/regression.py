@@ -970,26 +970,29 @@ class TskDbDiff(object):
 
         return DiffResults(self)
 
-    def _dump_output_db_bb(autopsy_con, autopsy_db_file, test_data):
-        """Dumps sorted text results to the output location stored in test_data.
+    def _dump_output_db_bb(autopsy_con, db_file, data_file, sorted_data_file):
+        """Dumps sorted text results to the given output location.
 
         Smart method that deals with a blackboard comparison to avoid issues
         with different IDs based on when artifacts were created.
 
         Args:
             autopsy_con: a SQLConn to the autopsy database.
-            autopsy_db_file: a pathto_File, the output database.
-            test_data: the TestData that corresponds with this dump.
+            db_file: a pathto_File, the output database.
+            data_file: a pathto_File, the dump file to write to
+            sorted_data_file: a pathto_File, the sorted dump file to write to
         """
         autopsy_cur2 = autopsy_con.cursor()
         global failedbool
         # Get the list of all artifacts
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
         autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
-        database_log = codecs.open(test_data.autopsy_data_file, "wb", "utf_8")
+        database_log = codecs.open(data_file, "wb", "utf_8")
         rw = autopsy_cur2.fetchone()
         appnd = False
         counter = 0
+        artifact_count = 0
+        artifact_fail = 0
         # Cycle through artifacts
         try:
             while (rw != None):
@@ -1002,7 +1005,7 @@ class TskDbDiff(object):
                 # Get attributes for this artifact
                 autopsy_cur1 = autopsy_con.cursor()
                 looptry = True
-                test_data.artifact_count += 1
+                artifact_count += 1
                 try:
                     key = ""
                     key = str(rw[3])
@@ -1012,13 +1015,12 @@ class TskDbDiff(object):
                 except Exception as e:
                     Errors.print_error(str(e))
                     Errors.print_error(str(rw[3]))
-                    print(test_data.image_name)
                     msg ="Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
                     Errors.add_email_msg(msg)
                     looptry = False
-                    print(test_data.artifact_fail)
-                    test_data.artifact_fail += 1
-                    print(test_data.artifact_fail)
+                    print(artifact_fail)
+                    artifact_fail += 1
+                    print(artifact_fail)
                     database_log.write('Error Extracting Attributes');
 
                 # Print attributes
@@ -1036,7 +1038,7 @@ class TskDbDiff(object):
                             Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
-                                Errors.add_email_attachment(autopsy_db_file)
+                                Errors.add_email_attachment(db_file)
                                 appnd = True
                         if(not attr[0] == src):
                             msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
@@ -1044,7 +1046,7 @@ class TskDbDiff(object):
                             Errors.print_error(msg)
                             failedbool = True
                             if(not appnd):
-                                Errors.add_email_attachment(autopsy_db_file)
+                                Errors.add_email_attachment(db_file)
                                 appnd = True
                         try:
                             database_log.write('<attribute source="' + attr[0] + '" type="' + attr[1] + '" value="')
@@ -1064,11 +1066,11 @@ class TskDbDiff(object):
                 rw = autopsy_cur2.fetchone()
 
             # Now sort the file
-            srtcmdlst = ["sort", test_data.autopsy_data_file, "-o", test_data.get_sorted_data_path(DBType.OUTPUT)]
+            srtcmdlst = ["sort", data_file, "-o", sorted_data_file]
             subprocess.call(srtcmdlst)
-            print(test_data.artifact_fail)
-            if(test_data.artifact_fail > 0):
-                msg ="There were " + str(test_data.artifact_count) + " artifacts and " + str(test_data.artifact_fail) + " threw an exception while loading.\n"
+            print(artifact_fail)
+            if(artifact_fail > 0):
+                msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
                 Errors.add_email_msg(msg)
         except Exception as e:
             Errors.print_error('outer exception: ' + str(e))
@@ -1114,7 +1116,9 @@ class TskDbDiff(object):
         autopsy_cur = autopsy_con.cursor()
         # Try to query the databases. Ignore any exceptions, the function will
         # return an error later on if these do fail
-        TskDbDiff._dump_output_db_bb(autopsy_con, autopsy_db_file, test_data)
+        TskDbDiff._dump_output_db_bb(autopsy_con, autopsy_db_file,
+        test_data.autopsy_data_file,
+        test_data.get_sorted_data_path(DBType.OUTPUT))
         TskDbDiff._dump_output_db_nonbb(test_data)
         autopsy_con.close()
 
