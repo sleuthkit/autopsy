@@ -132,7 +132,6 @@ class TestRunner(object):
         Executes the AutopsyIngest for each image and dispatches the results based on
         the mode (rebuild or testing)
         """
-        global parsed
         global failedbool
         global html
 
@@ -162,12 +161,11 @@ class TestRunner(object):
         Reports.write_html_foot()
         if (len(logres)>0):
             failedbool = True
-            passFail = False
+            print(logres)
             for lm in logres:
                 for ln in lm:
                     Errors.add_email_msg(ln)
         if failedbool:
-            passFail = False
             msg = "The test output didn't match the gold standard.\n"
             msg += "autopsy test failed.\n"
             Errors.add_email_msg(msg)
@@ -176,13 +174,11 @@ class TestRunner(object):
             html.close()
         else:
             Errors.add_email_msg("Autopsy test passed.\n")
-            passFail = True
 
         # @@@ This fails here if we didn't parse an XML file
-        try:
-            Emailer.send_email(parsed, Errors.email_body, Errors.email_attachs, passFail)
-        except NameError:
-            Errors.print_error("Could not send e-mail because of no XML file --maybe");
+        if test_config.email_enabled:
+            Emailer.send_email(test_config.mail_to, test_config.mail_server,
+            test_config.mail_subject, Errors.email_body, Errors.email_attachs)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -588,10 +584,10 @@ class TestConfiguration(object):
         self.global_csv = ""
         self.html_log = ""
         # Ant info:
-        self.known_bad_path = ""
-        self.keyword_path = ""
-        self.nsrl_path = ""
-        self.build_path = ""
+        self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
+        self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
+        self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
+        self.build_path = make_path("..", "build.xml")
         # test_config info
         self.autopsy_version = ""
         self.ingest_messages = 0
@@ -600,6 +596,11 @@ class TestConfiguration(object):
         # Infinite Testing info
         timer = 0
         self.images = []
+        # Email info
+        self.email_enabled = False
+        self.mail_server = ""
+        self.mail_to = ""
+        self.mail_subject = ""
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -607,11 +608,13 @@ class TestConfiguration(object):
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.ant = []
 
-        # Initialize Attributes
+        if not self.args.single:
+            self._load_config_file(self.args.config_file)
+        else:
+            self.images.append(self.args.single_file)
         self._init_logs()
-        self._init_imgs()
-        self._init_build_info()
-
+        #self._init_imgs()
+        #self._init_build_info()
 
     def ant_to_string(self):
         string = ""
@@ -619,46 +622,39 @@ class TestConfiguration(object):
             string += (arg + " ")
         return string
 
-    def reset(self):
-        # Set the timeout to something huge
-        # The entire tester should not timeout before this number in ms
-        # However it only seems to take about half this time
-        # And it's very buggy, so we're being careful
-        self.timeout = 24 * 60 * 60 * 1000 * 1000
-        self.ant = []
+    def _load_config_file(self, config_file):
+        """Updates this TestConfiguration's attributes from the config file.
 
-    def _init_imgs(self):
-        """Initialize the list of images to run test on."""
-        #Identify tests to run and populate test_config with list
-        # If user wants to do a single file and a list (contradictory?)
-        if self.args.single and self.args.list:
-            msg = "Cannot run both from config file and on a single file."
+        Initializes this TestConfiguration by iterating through the XML config file
+        command-line argument. Populates self.images and optional email configuration
+
+        Args:
+            config_file: ConfigFile - the configuration file to load
+        """
+        try:
+            count = 0
+            parsed_config = parse(config_file)
+            logres = []
+            counts = {}
+            if parsed_config.getElementsByTagName("indir"):
+                self.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("global_csv"):
+                self.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+                self.global_csv = make_local_path(self.global_csv)
+            if parsed_config.getElementsByTagName("golddir"):
+                self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+                self.img_gold = make_path(self.gold, 'tmp')
+
+            self._init_imgs(parsed_config)
+            self._init_build_info(parsed_config)
+            self._init_email_info(parsed_config)
+
+        except Exception as e:
+            msg = "There was an error running with the configuration file.\n"
+            msg += "\t" + str(e)
             Errors.add_email_msg(msg)
-            return
-        # If working from a configuration file
-        if self.args.list:
-           if not file_exists(self.args.config_file):
-               msg = "Configuration file does not exist at:" + self.args.config_file
-               Errors.add_email_msg(msg)
-               return
-           self._load_config_file(self.args.config_file)
-        # Else if working on a single file
-        elif self.args.single:
-           if not file_exists(self.args.single_file):
-               msg = "Image file does not exist at: " + self.args.single_file
-               Errors.add_email_msg(msg)
-               return
-           test_config.images.append(self.args.single_file)
-
-        # If user has not selected a single file, and does not want to ignore
-        #  the input directory, continue on to parsing ../input
-        if (not self.args.single) and (not self.args.ignore) and (not self.args.list):
-           self.args.config_file = "config.xml"
-           if not file_exists(self.args.config_file):
-               msg = "Configuration file does not exist at: " + self.args.config_file
-               Errors.add_email_msg(msg)
-               return
-           self._load_config_file(self.args.config_file)
+            logging.critical(traceback.format_exc())
+            print(traceback.format_exc())
 
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
@@ -671,78 +667,56 @@ class TestConfiguration(object):
         log_name = self.output_dir + "\\regression.log"
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
-    def _init_build_info(self):
+    def _init_build_info(self, parsed_config):
         """Initializes paths that point to information necessary to run the AutopsyIngest."""
-        global parsed
-        if(self.args.list):
-            build_elements = parsed.getElementsByTagName("build")
-            if(len(build_elements) <= 0):
-                build_path = make_path("..", "build.xml")
+        build_elements = parsed_config.getElementsByTagName("build")
+        if build_elements:
+            build_element = build_elements[0]
+            build_path = build_element.getAttribute("value").encode().decode("utf_8")
+            self.build_path = build_path
+
+    def _init_imgs(self, parsed_config):
+        """Initialize the list of images to run test on."""
+        for element in parsed_config.getElementsByTagName("image"):
+            value = element.getAttribute("value").encode().decode("utf_8")
+            print ("Image in Config File: " + value)
+            if file_exists(value):
+                self.images.append(value)
             else:
-                build_element = build_elements[0]
-                build_path = build_element.getAttribute("value").encode().decode("utf_8")
-                if(build_path == None):
-                    build_path = make_path("..", "build.xml")
-        else:
-            build_path = make_path("..", "build.xml")
-        self.build_path = build_path
-        self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
-        self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
-        self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
+                msg = "File: " + value + " doesn't exist"
+                Errors.print_error(msg)
+                Errors.add_email_msg(msg)
+        image_count = len(self.images)
 
-    def _load_config_file(self, config_file):
-        """Updates this TestConfiguration's attributes from the config file.
+        # Sanity check to see if there are obvious gold images that we are not testing
+        gold_count = 0
+        for file in os.listdir(self.gold):
+            if not(file == 'tmp'):
+                gold_count+=1
 
-        Initializes this TestConfiguration by iterating through the XML config file
-        command-line argument. Populates self.images and optional email configuration
+        if (image_count > gold_count):
+            print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+        elif (image_count < gold_count):
+            print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
 
-        Args:
-            config_file: ConfigFile - the configuration file to load
-        """
-        try:
-            global parsed
-            count = 0
-            parsed = parse(config_file)
-            logres = []
-            counts = {}
-            if parsed.getElementsByTagName("indir"):
-                self.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed.getElementsByTagName("global_csv"):
-                self.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-                self.global_csv = make_local_path(self.global_csv)
-            if parsed.getElementsByTagName("golddir"):
-                self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-                self.img_gold = make_path(self.gold, 'tmp')
+    def _init_email_info(self, parsed_config):
+        """Initializes email information dictionary"""
+        email_elements = parsed_config.getElementsByTagName("email")
+        if email_elements:
+            mail_to = email_elements[0]
+            self.mail_to = mail_to.getAttribute("value").encode().decode("utf_8")
+        mail_server_elements = parsed_config.getElementsByTagName("mail_server")
+        if mail_server_elements:
+            mail_from = mail_server_elements[0]
+            self.mail_server = mail_from.getAttribute("value").encode().decode("utf_8")
+        subject_elements = parsed_config.getElementsByTagName("subject")
+        if subject_elements:
+            subject = subject_elements[0]
+            self.mail_subject = subject.getAttribute("value").encode().decode("utf_8")
+        if self.mail_server and self.mail_to:
+            self.email_enabled = True
 
-            # Generate the top navbar of the HTML for easy access to all images
-            for element in parsed.getElementsByTagName("image"):
-                value = element.getAttribute("value").encode().decode("utf_8")
-                print ("Image in Config File: " + value)
-                if file_exists(value):
-                    self.images.append(value)
-                else:
-                    msg = "File: " + value + " doesn't exist"
-                    Errors.print_error(msg)
-                    Errors.add_email_msg(msg)
-            image_count = len(self.images)
 
-            # Sanity check to see if there are obvious gold images that we are not testing
-            gold_count = 0
-            for file in os.listdir(self.gold):
-                if not(file == 'tmp'):
-                    gold_count+=1
-
-            if (image_count > gold_count):
-                print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
-            elif (image_count < gold_count):
-                print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-
-        except Exception as e:
-            msg = "There was an error running with the configuration file.\n"
-            msg += "\t" + str(e)
-            Errors.add_email_msg(msg)
-            logging.critical(traceback.format_exc())
-            print(traceback.format_exc())
 
 class TskDbDiff(object):
     """Represents the differences between the gold and output databases.
@@ -2065,6 +2039,34 @@ class Args(object):
                 print(usage())
                 return False
         # Return the args were sucessfully parsed
+        return self._sanity_check()
+
+    def _sanity_check(self):
+        """Check to make sure there are no conflicting arguments and the
+        specified files exist.
+
+        Returns:
+            False if there are conflicting arguments or a specified file does
+            not exist, True otherwise
+        """
+        if self.single and self.list:
+            print("Cannot run both from config file and on a single file.")
+            return False
+        if self.list:
+           if not file_exists(self.config_file):
+               print("Configuration file does not exist at:",
+               self.config_file)
+               return False
+        elif self.single:
+           if not file_exists(self.single_file):
+               msg = "Image file does not exist at: " + self.single_file
+               return False
+        if (not self.single) and (not self.ignore) and (not self.list):
+           self.config_file = "config.xml"
+           if not file_exists(self.config_file):
+               msg = "Configuration file does not exist at: " + self.config_file
+               return False
+
         return True
 
 ####
