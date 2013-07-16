@@ -25,14 +25,14 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getExtractActionInstance;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getTagAbstractFileActionInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.TYPE;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.LocalFile;
 
 /**
  * A Node for a LocalFile or DerivedFile content object.
@@ -86,16 +86,14 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actionsList = new ArrayList<Action>();
-
+        List<Action> actionsList = new ArrayList<>();
         actionsList.add(new NewWindowViewAction("View in New Window", this));
         actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new ExtractAction("Extract", content)); //might not need this actions - already local file
+        actionsList.add(getExtractActionInstance());
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new TagAction(content));
-
+        actionsList.add(getTagAbstractFileActionInstance());
         return actionsList.toArray(new Action[0]);
     }
 

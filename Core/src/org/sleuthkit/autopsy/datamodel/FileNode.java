@@ -21,14 +21,13 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getExtractActionInstance;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -37,7 +36,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * files children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
-
+      
     /**
      * @param file underlying Content
      */
@@ -74,7 +73,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actionsList = new ArrayList<Action>();
+        List<Action> actionsList = new ArrayList<>();        
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction("View File in Directory", this));
             actionsList.add(null); // creates a menu separator
@@ -82,10 +81,10 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(new NewWindowViewAction("View in New Window", this));
         actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new ExtractAction("Extract File", this));
+        actionsList.add(getExtractActionInstance());
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new TagAction(this));
+        actionsList.add(null); // creates a menu separator        
+        actionsList.add(getTagAbstractFileActionInstance());
         return actionsList.toArray(new Action[0]);
     }
 
@@ -166,7 +165,6 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
         // Else return the default
         return "org/sleuthkit/autopsy/images/file-icon.png";
-
     }
 
     @Override
