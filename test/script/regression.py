@@ -103,8 +103,6 @@ def main():
     # Global variables
     global failedbool
     global test_config
-    global imgfail
-    imgfail = False
     failedbool = False
     args = Args()
     parse_result = args.parse()
@@ -124,6 +122,7 @@ def main():
             theproc.communicate()
     # Otherwise test away!
     TestRunner.run_tests()
+
 
 class TestRunner(object):
 
@@ -163,7 +162,6 @@ class TestRunner(object):
         Reports.write_html_foot()
         if (len(logres)>0):
             failedbool = True
-            imgfail = True
             passFail = False
             for lm in logres:
                 for ln in lm:
@@ -234,7 +232,7 @@ class TestRunner(object):
         TestResultsDiffer.run_diff(test_data)
         test_data.overall_passed = (test_data.html_report_passed and
         test_data.errors_diff_passed and test_data.sorted_data_passed and
-        test_data.db_dump_passed)
+        test_data.db_dump_passed and test_data.db_diff_results.passed)
 
         # @@@ COnsider if we want to do this for a rebuild.
         # Make the CSV log and the html log viewer
@@ -717,7 +715,6 @@ class TestConfiguration(object):
                 self.img_gold = make_path(self.gold, 'tmp')
 
             # Generate the top navbar of the HTML for easy access to all images
-            images = []
             for element in parsed.getElementsByTagName("image"):
                 value = element.getAttribute("value").encode().decode("utf_8")
                 print ("Image in Config File: " + value)
@@ -725,8 +722,9 @@ class TestConfiguration(object):
                     self.images.append(value)
                 else:
                     msg = "File: " + value + " doesn't exist"
+                    Errors.print_error(msg)
                     Errors.add_email_msg(msg)
-            image_count = len(images)
+            image_count = len(self.images)
 
             # Sanity check to see if there are obvious gold images that we are not testing
             gold_count = 0
@@ -760,7 +758,9 @@ class TskDbDiff(object):
         autopsy_objects:
         artifact_comparison:
         attribute_comparision:
-        test_data:
+        report_errors: a listof_listof_String, the error messages that will be
+        printed to screen in the run_diff method
+        passed: a boolean, did the diff pass?
         autopsy_db_file:
         gold_db_file:
     """
@@ -778,6 +778,7 @@ class TskDbDiff(object):
         self.autopsy_objects = 0
         self.artifact_comparison = []
         self.attribute_comparison = []
+        self.report_errors = []
         self.autopsy_db_file = output_db_path
         self.gold_db_file = gold_db_path
 
@@ -823,14 +824,15 @@ class TskDbDiff(object):
         return cursor.fetchone()[0]
 
     def _compare_bb_artifacts(self):
-        """Compares the blackboard artifact counts of two databases."""
+        """Compares the blackboard artifact counts of two databases.
+
+        Returns:
+            True if the artifacts are the same, false otherwise.
+        """
         exceptions = []
+        passed = True
         try:
-            global failedbool
             if self.gold_artifacts != self.autopsy_artifacts:
-                failedbool = True
-                global imgfail
-                imgfail = True
                 msg = "There was a difference in the number of artifacts.\n"
                 Errors.add_email_msg(msg)
             rner = len(self.gold_artifacts)
@@ -841,49 +843,59 @@ class TskDbDiff(object):
                                 (self.gold_artifacts[type_id],
                                  self.autopsy_artifacts[type_id]))
                     exceptions.append(error)
-            return exceptions
+                    passed = False
+            self.report_errors.append(exceptions)
+            return passed
         except Exception as e:
             Errors.print_error(str(e))
             exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
-            return exceptions
+            self.report_errors.append(exceptions)
+            return False
 
     def _compare_bb_attributes(self):
-        """Compares the blackboard attribute counts of two databases."""
+        """Compares the blackboard attribute counts of two databases.
+
+        Updates this TskDbDiff's report_errors with the error messages from the
+        attribute diff
+
+        Returns:
+            True is the attributes are the same, False otherwise.
+        """
         exceptions = []
+        passed = True
         try:
             if self.gold_attributes != self.autopsy_attributes:
                 error = "Attribute counts do not match. "
                 error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
                 exceptions.append(error)
-                global failedbool
-                failedbool = True
-                global imgfail
-                imgfail = True
                 msg = "There was a difference in the number of attributes.\n"
                 Errors.add_email_msg(msg)
-                return exceptions
+                passed = False
+            self.report_errors.append(exceptions)
+            return passed
         except Exception as e:
             exceptions.append("Error: Unable to compare blackboard_attributes.\n")
-            return exceptions
+            self.report_errors.append(exceptions)
+            return False
 
     def _compare_tsk_objects(self):
         """Compares the TSK object counts of two databases."""
         exceptions = []
+        passed = True
         try:
             if self.gold_objects != self.autopsy_objects:
                 error = "TSK Object counts do not match. "
                 error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
                 exceptions.append(error)
-                global failedbool
-                failedbool = True
-                global imgfail
-                imgfail = True
                 msg ="There was a difference between the tsk object counts.\n"
                 Errors.add_email_msg(msg)
-                return exceptions
+                passed = False
+            self.report_errors.append(exceptions)
+            return passed
         except Exception as e:
             exceptions.append("Error: Unable to compare tsk_objects.\n")
-            return exceptions
+            self.report_errors.append(exceptions)
+            return False
 
     def _get_basic_counts(self, autopsy_cur, gold_cur):
         """Count the items necessary to compare the databases.
@@ -941,20 +953,20 @@ class TskDbDiff(object):
         autopsy_con.close()
         gold_con.close()
 
-        exceptions = []
-
         # Compare counts
-        exceptions.append(self._compare_tsk_objects())
-        exceptions.append(self._compare_bb_artifacts())
-        exceptions.append(self._compare_bb_attributes())
+        objects_passed = self._compare_tsk_objects()
+        artifacts_passed = self._compare_bb_artifacts()
+        attributes_passed = self._compare_bb_attributes()
 
-        self.artifact_comparison = exceptions[1]
-        self.attribute_comparison = exceptions[2]
+        self.passed = objects_passed and artifacts_passed and attributes_passed
+
+        self.artifact_comparison = self.report_errors[1]
+        self.attribute_comparison = self.report_errors[2]
 
         okay = "All counts match."
-        print_report(exceptions[0], "COMPARE TSK OBJECTS", okay)
-        print_report(exceptions[1], "COMPARE ARTIFACTS", okay)
-        print_report(exceptions[2], "COMPARE ATTRIBUTES", okay)
+        print_report(self.report_errors[0], "COMPARE TSK OBJECTS", okay)
+        print_report(self.report_errors[1], "COMPARE ARTIFACTS", okay)
+        print_report(self.report_errors[2], "COMPARE ATTRIBUTES", okay)
 
         return DiffResults(self)
 
@@ -1199,8 +1211,6 @@ class TestResultsDiffer(object):
             Errors.add_email_msg(msg)
             Errors.print_error(msg)
             failedbool = True
-            global imgfail
-            imgfail = True
             return False
         else:
             return True
@@ -1304,7 +1314,6 @@ class Reports(object):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
         # this test, so we need to make the start of the html log
-        global imgfail
         if not file_exists(test_config.html_log):
             Reports.write_html_head()
         try:
@@ -1320,7 +1329,7 @@ class Reports(object):
                      <a href='#" + test_data.image_name + "-logs'>Logs</a>\
                      </h2>"
             # The script errors found
-            if imgfail:
+            if not test_data.overall_passed:
                 ids = 'errors1'
             else:
                 ids = 'errors'
@@ -1923,6 +1932,7 @@ class DiffResults(object):
         output_objs: a Nat, the number of output objects
         artifact_comp: a listof_String, describing the differences
         attribute_comp: a listof_String, describing the differences
+        passed: a boolean, did the diff pass?
     """
     def __init__(self, tsk_diff):
         """Inits a DiffResults
@@ -1938,24 +1948,17 @@ class DiffResults(object):
         self.attribute_comp = tsk_diff.attribute_comparison
         self.gold_artifacts = len(tsk_diff.gold_artifacts)
         self.output_artifacts = len(tsk_diff.autopsy_artifacts)
+        self.passed = tsk_diff.passed
 
     def get_artifact_comparison(self):
         if not self.artifact_comp:
             return "All counts matched"
         else:
-            global failedbool
-            failedbool = True
-            global imgfail
-            imgfail = True
             return "; ".join(self.artifact_comp)
 
     def get_attribute_comparison(self):
         if not self.attribute_comp:
             return "All counts matched"
-        global failedbool
-        failedbool = True
-        global imgfail
-        imgfail = True
         list = []
         for error in self.attribute_comp:
             list.append(error)
