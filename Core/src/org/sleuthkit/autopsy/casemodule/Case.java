@@ -194,9 +194,9 @@ public class Case {
     }
 
     /**
-     * Creates a new case (create the XML config file and the directory)
+     * Creates a new case (create the XML config file and database) 
      *
-     * @param caseDir the base directory where the configuration file is saved
+     * @param caseDir The directory to store case data in.  Will be created if it doesn't already exist. If it exists, it should have all of the needed sub dirs that createCaseDirectory() will create. 
      * @param caseName the name of case
      * @param caseNumber the case number
      * @param examiner the examiner for this case
@@ -204,6 +204,11 @@ public class Case {
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
+        // create case directory if it doesn't already exist.
+        if (new File(caseDir).exists() == false) {
+            Case.createCaseDirectory(caseDir);
+        }
+        
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
@@ -775,12 +780,22 @@ public class Case {
     /**
      * to create the case directory
      *
-     * @param caseDir the case directory path
-     * @param caseName the case name
+     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseName the case name (used only for error messages)
      * @throws CaseActionException throw if could not create the case dir
+     * @Deprecated
      */
     static void createCaseDirectory(String caseDir, String caseName) throws CaseActionException {
-        boolean result = false;
+        createCaseDirectory(caseDir);
+        
+    }
+    /**
+     * Create the case directory and its needed subfolders. 
+     *
+     * @param caseDir Path to the case directory (typically base + case name)
+     * @throws CaseActionException throw if could not create the case dir
+     */
+    static void createCaseDirectory(String caseDir) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
         if (caseDirF.exists()) {
@@ -792,7 +807,7 @@ public class Case {
         }
 
         try {
-            result = (caseDirF).mkdirs(); // create root case Directory
+            boolean result = (caseDirF).mkdirs(); // create root case Directory
             if (result == false) {
                 throw new CaseActionException("Cannot create case dir: " + caseDir);
             }
@@ -804,17 +819,17 @@ public class Case {
                     && (new File(caseDir + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdir();
 
             if (result == false) {
-                throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName);
+                throw new CaseActionException("Could not create case directory: " + caseDir );
             }
 
             final String modulesOutDir = caseDir + File.separator + getModulesOutputDirRelPath();
             result = new File(modulesOutDir).mkdir();
             if (result == false) {
-                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir + " for case: " + caseName);
+                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir );
             }
 
         } catch (Exception e) {
-            throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName, e);
+            throw new CaseActionException("Could not create case directory: " + caseDir , e);
         }
     }
 
