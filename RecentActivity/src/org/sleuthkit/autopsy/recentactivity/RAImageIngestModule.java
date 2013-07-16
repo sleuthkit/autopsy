@@ -22,8 +22,11 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
@@ -178,5 +181,23 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
+    }
+    
+    protected static String getRATempPath(Case a_case) {
+        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator;
+        File dir = new File(tmpDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpDir;
+    }
+    
+    protected static String getRAOutputPath(Case a_case) {
+        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator;
+        File dir = new File(tmpDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpDir;
     }
 }
