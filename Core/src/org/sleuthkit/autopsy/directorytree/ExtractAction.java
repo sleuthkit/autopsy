@@ -32,15 +32,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -51,12 +47,66 @@ import org.sleuthkit.datamodel.Directory;
  */
 public final class ExtractAction extends AbstractAction {
 
+    private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
+    private AbstractFile content;
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
-    public ExtractAction() {
-        super("Export");
+    public ExtractAction(String title, Node contentNode) {
+        super(title);
+        Content tempContent = contentNode.getLookup().lookup(Content.class);
+
+        this.content = tempContent.accept(initializeCV);
+        this.setEnabled(content != null);
     }
     
+     public ExtractAction(String title, Content content) {
+        super(title);
+
+        this.content = content.accept(initializeCV);
+        this.setEnabled(this.content != null);
+    }
+
+    /**
+     * Returns the FsContent if it is supported, otherwise null
+     */
+    private static class InitializeContentVisitor extends ContentVisitor.Default<AbstractFile> {
+
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.File f) {
+            return f;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
+            return lf;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
+            return df;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
+            return lf;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory vd) {
+            return vd;
+        }
+
+        @Override
+        public AbstractFile visit(Directory dir) {
+            return ContentUtils.isDotDirectory(dir) ? null : dir;
+        }
+
+        @Override
+        protected AbstractFile defaultVisit(Content cntnt) {
+            return null;
+        }
+    }
+
     /**
      * Asks user to choose destination, then extracts content/directory to 
      * destination (recursing on directories)
@@ -64,35 +114,10 @@ public final class ExtractAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        DataResultViewerTable resultViewer = (DataResultViewerTable)Lookup.getDefault().lookup(DataResultViewer.class);
-        if (null == resultViewer) {
-            Logger.getLogger(TagAction.class.getName()).log(Level.SEVERE, "Could not get DataResultViewerTable from Lookup");
-            return;
-        }
-        
-        Node[] selectedNodes = resultViewer.getExplorerManager().getSelectedNodes();
-        if (selectedNodes.length <= 0) {
-            Logger.getLogger(TagAction.class.getName()).log(Level.SEVERE, "Tried to perform tagging of Nodes with no Nodes selected");
-            return;
-        }
-        
-        for (Node node : selectedNodes) {
-            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (null != file) {
-                extractFile(e, file);
-            }
-            else {
-                // RJCTODO
-//                    Logger.getLogger(org.sleuthkit.autopsy.directorytree.TagAbstractFileAction.TagAbstractFileMenu.class.getName()).log(Level.SEVERE, "Node not associated with an AbstractFile object");                
-            }
-        }        
-    }
-    
-    private void extractFile(ActionEvent e, AbstractFile file) {
         // Get content and check that it's okay to overwrite existing content
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
-        fc.setSelectedFile(new File(file.getName()));
+        fc.setSelectedFile(new File(this.content.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -119,12 +144,12 @@ public final class ExtractAction extends AbstractAction {
         
             try {
                 ExtractFileThread extract = new ExtractFileThread();    
-                extract.init(file, e, destination);
+                extract.init(this.content, e, destination);
                 extract.execute();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background thread.", ex);
             }
-        }        
+        }
     }
     
     private class ExtractFileThread extends SwingWorker<Object,Void> {
@@ -205,5 +230,6 @@ public final class ExtractAction extends AbstractAction {
                 }
             }
         }
-    } 
+    }
+    
 }

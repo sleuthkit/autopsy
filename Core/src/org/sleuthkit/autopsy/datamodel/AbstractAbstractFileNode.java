@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -36,12 +35,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
     /**
-     * These Actions are class instances to support multi-selection of nodes corresponding to AbstractFiles. 
-     * They must be a class instances because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick 
+     * This Action is a class instance to support multi-selection of nodes corresponding to AbstractFiles. 
+     * It must be a class instances because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick 
      * up an Action if every selected node returns a reference to it from Node.getActions(boolean).
      */
     private static TagAbstractFileAction tagAction = new TagAbstractFileAction();    
-    private static ExtractAction extractAction = new ExtractAction();
     
     /**
      * @param <T> type of the AbstractFile data to encapsulate
@@ -203,11 +201,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      protected static TagAbstractFileAction getTagAbstractFileActionInstance() {
         return tagAction;
     }
-    
-     protected static ExtractAction getExtractActionInstance() {
-        return extractAction;
-    }
-    
+        
     protected static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
         if (name.equals("..")) {

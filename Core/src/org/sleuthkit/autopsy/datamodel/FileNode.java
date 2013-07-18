@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getExtractActionInstance;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -81,7 +80,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(new NewWindowViewAction("View in New Window", this));
         actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(getExtractActionInstance());
+        actionsList.add(new ExtractAction("Extract File", this));        
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(getTagAbstractFileActionInstance());

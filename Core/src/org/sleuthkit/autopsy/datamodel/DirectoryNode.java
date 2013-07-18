@@ -73,7 +73,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         }
         actions.add(new NewWindowViewAction("View in New Window", this));
         actions.add(null); // creates a menu separator
-        actions.add(getExtractActionInstance());
+        actions.add(new ExtractAction("Extract Directory", this));
         actions.add(null); // creates a menu separator
         actions.add(getTagAbstractFileActionInstance());
         return actions.toArray(new Action[0]);

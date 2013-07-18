@@ -86,7 +86,6 @@ public class DataResultFilterNode extends FilterNode {
      * They are required because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every selected 
      * node returns a reference to it from Node.getActions(boolean).
      */    
-    private final static Action extractAction = new ExtractAction();
     private final static Action fileTagAction = new TagAbstractFileAction();
     private final static Action resultTagAction = new TagBlackboardArtifactAction();
     
@@ -206,7 +205,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", fn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", fn));
                 actions.add(null); // creates a menu separator
-                actions.add(extractAction);
+                actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", fn));
 
                 //add file/result tag if itself is not a tag
@@ -223,7 +222,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", dn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", dn));
                 actions.add(null); // creates a menu separator
-                actions.add(extractAction);
+                actions.add(new ExtractAction("Extract Directory", dn));
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
@@ -239,7 +238,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", dn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", dn));
                 actions.add(null); // creates a menu separator
-                actions.add(extractAction);
+                actions.add(new ExtractAction("Extract Directory", dn));
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
@@ -254,7 +253,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", lfn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", lfn));
                 actions.add(null); // creates a menu separator
-                actions.add(extractAction);
+                actions.add(new ExtractAction("Extract File", lfn));
 
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
@@ -270,8 +269,8 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", locfn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", locfn));
                 actions.add(null); // creates a menu separator
-                actions.add(extractAction);
-
+                actions.add(new ExtractAction("Extract File", locfn));
+                
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {

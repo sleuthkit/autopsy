@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
-    private static final Action extractAction = new ExtractAction();
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
@@ -100,7 +99,8 @@ class DirectoryTreeFilterNode extends FilterNode {
             //extract dir action
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
-                actions.add(extractAction);
+                actions.add(new ExtractAction("Extract Directory",
+                        getOriginal()));
             }
             
             // file search action

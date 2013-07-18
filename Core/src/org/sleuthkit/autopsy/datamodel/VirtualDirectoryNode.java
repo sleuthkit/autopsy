@@ -25,7 +25,6 @@ import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getExtractActionInstance;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -79,7 +78,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         List<Action> actions = new ArrayList<>();
         actions.add(new NewWindowViewAction("View in New Window", this));
         actions.add(null); // creates a menu separator
-        actions.add(getExtractActionInstance());
+        actions.add(new ExtractAction("Extract Directory", this));
         actions.add(null); // creates a menu separator
         actions.add(getTagAbstractFileActionInstance());        
         return actions.toArray(new Action[0]);
