@@ -188,8 +188,13 @@ class TestRunner(object):
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
-        # Dump the database before we diff or use it for rebuild
-        TskDbDiff.dump_output_db(test_data)
+        try:
+            # Dump the database before we diff or use it for rebuild
+            TskDbDiff.dump_output_db(test_data)
+        except sqlite3.OperationalError as e:
+            print("Ingest did not run properly.",
+            "Make sure no other instances of Autopsy are open and try again.")
+            sys.exit()
 
         # merges logs into a single log for later diff / rebuild
         copy_logs(test_data)
@@ -281,14 +286,15 @@ class TestRunner(object):
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         try:
-            copy_file(dbinpth, dboutpth)
+            shutil.copy(dbinpth, dboutpth)
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
-                copy_file(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
-            copy_file(dbdumpinpth, dbdumpoutpth)
+                shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
+            shutil.copy(dbdumpinpth, dbdumpoutpth)
             error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
-            copy_file(test_data.sorted_log, error_pth)
-        except Exception as e:
+            shutil.copy(test_data.sorted_log, error_pth)
+        except IOError as e:
             Errors.print_error(str(e))
+            Errors.add_email_message("Not rebuilt properly")
             print(str(e))
             print(traceback.format_exc())
         # Rebuild the HTML report
@@ -296,8 +302,8 @@ class TestRunner(object):
         gold_html_report_dir = make_path(tmpdir, "Report")
 
         try:
-            copy_dir(output_html_report_dir, gold_html_report_dir)
-        except FileNotFoundException as e:
+            shutil.copytree(output_html_report_dir, gold_html_report_dir)
+        except OSError as e:
             errors.append(e.error())
         except Exception as e:
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
@@ -631,20 +637,20 @@ class TestConfiguration(object):
             logres = []
             counts = {}
             if parsed_config.getElementsByTagName("indir"):
-                self.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
+                self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("global_csv"):
-                self.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+                self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
-                self.gold = parsed.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+                self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
                 self.img_gold = make_path(self.gold, 'tmp')
 
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
             self._init_email_info(parsed_config)
 
-        except Exception as e:
-            msg = "There was an error running with the configuration file.\n"
+        except IOError as e:
+            msg = "There was an error loading the configuration file.\n"
             msg += "\t" + str(e)
             Errors.add_email_msg(msg)
             logging.critical(traceback.format_exc())
@@ -800,10 +806,12 @@ class TskDbDiff(object):
         """
         exceptions = []
         passed = True
-        try:
-            if self.gold_artifacts != self.autopsy_artifacts:
-                msg = "There was a difference in the number of artifacts.\n"
-                Errors.add_email_msg(msg)
+        if self.gold_artifacts != self.autopsy_artifacts:
+            msg = "There was a difference in the number of artifacts.\n"
+            exceptions.append(msg)
+            Errors.add_email_msg(msg)
+            passed = False
+        else:
             rner = len(self.gold_artifacts)
             for type_id in range(1, rner):
                 if self.gold_artifacts[type_id] != self.autopsy_artifacts[type_id]:
@@ -813,13 +821,8 @@ class TskDbDiff(object):
                                  self.autopsy_artifacts[type_id]))
                     exceptions.append(error)
                     passed = False
-            self.report_errors.append(exceptions)
-            return passed
-        except Exception as e:
-            Errors.print_error(str(e))
-            exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
-            self.report_errors.append(exceptions)
-            return False
+        self.report_errors.append(exceptions)
+        return passed
 
     def _compare_bb_attributes(self):
         """Compares the blackboard attribute counts of two databases.
@@ -832,39 +835,29 @@ class TskDbDiff(object):
         """
         exceptions = []
         passed = True
-        try:
-            if self.gold_attributes != self.autopsy_attributes:
-                error = "Attribute counts do not match. "
-                error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
-                exceptions.append(error)
-                msg = "There was a difference in the number of attributes.\n"
-                Errors.add_email_msg(msg)
-                passed = False
-            self.report_errors.append(exceptions)
-            return passed
-        except Exception as e:
-            exceptions.append("Error: Unable to compare blackboard_attributes.\n")
-            self.report_errors.append(exceptions)
-            return False
+        if self.gold_attributes != self.autopsy_attributes:
+            error = "Attribute counts do not match. "
+            error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
+            exceptions.append(error)
+            msg = "There was a difference in the number of attributes.\n"
+            Errors.add_email_msg(msg)
+            passed = False
+        self.report_errors.append(exceptions)
+        return passed
 
     def _compare_tsk_objects(self):
         """Compares the TSK object counts of two databases."""
         exceptions = []
         passed = True
-        try:
-            if self.gold_objects != self.autopsy_objects:
-                error = "TSK Object counts do not match. "
-                error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
-                exceptions.append(error)
-                msg ="There was a difference between the tsk object counts.\n"
-                Errors.add_email_msg(msg)
-                passed = False
-            self.report_errors.append(exceptions)
-            return passed
-        except Exception as e:
-            exceptions.append("Error: Unable to compare tsk_objects.\n")
-            self.report_errors.append(exceptions)
-            return False
+        if self.gold_objects != self.autopsy_objects:
+            error = "TSK Object counts do not match. "
+            error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
+            exceptions.append(error)
+            msg ="There was a difference between the tsk object counts.\n"
+            Errors.add_email_msg(msg)
+            passed = False
+        self.report_errors.append(exceptions)
+        return passed
 
     def _get_basic_counts(self, autopsy_cur, gold_cur):
         """Count the items necessary to compare the databases.
@@ -887,25 +880,19 @@ class TskDbDiff(object):
             # Attributes
             self.gold_attributes = self._count_attributes(gold_cur)
             self.autopsy_attributes = self._count_attributes(autopsy_cur)
-        except Exception as e:
-            Errors.print_error("Way out:" + str(e))
+        except sqlite3.Error as e:
+            Errors.print_error("Error while querying the databases:" + str(e))
 
     def run_diff(self):
         """Basic test between output and gold databases.
 
         Compares only counts of objects and blackboard items.
         Note: SQLITE needs unix style pathing
-        """
-        # Check to make sure both db files exist
-        if not file_exists(self.autopsy_db_file):
-            Errors.print_error("Error: TskDbDiff file does not exist at:")
-            Errors.print_error(self.autopsy_db_file + "\n")
-            return
-        if not file_exists(self.gold_db_file):
-            Errors.print_error("Error: Gold database file does not exist at:")
-            Errors.print_error(self.gold_db_file + "\n")
-            return
 
+        Raises:
+            sqlite3.OperationalError, if either of the database files do not
+            exist
+        """
         # Get connections and cursors to output / gold databases
         autopsy_con = sqlite3.connect(self.autopsy_db_file)
         autopsy_cur = autopsy_con.cursor()
@@ -977,7 +964,7 @@ class TskDbDiff(object):
                     key = key,
                     autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
                     attributes = autopsy_cur1.fetchall()
-                except Exception as e:
+                except sqlite3.Error as e:
                     Errors.print_error(str(e))
                     Errors.print_error(str(rw[3]))
                     msg ="Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
@@ -1018,12 +1005,10 @@ class TskDbDiff(object):
                                 inpval = str(inpval)
                             patrn = re.compile("[\n\0\a\b\r\f\e]")
                             inpval = re.sub(patrn, ' ', inpval)
-                            try:
-                                database_log.write(inpval)
-                            except Exception as e:
-                                Errors.print_error("Inner exception" + outp)
-                        except Exception as e:
-                                Errors.print_error(str(e))
+                            database_log.write(inpval)
+                        except IOError as e:
+                            Errors.print_error(str(e))
+
                         database_log.write('" />')
                 database_log.write(' <artifact/>\n')
                 rw = autopsy_cur2.fetchone()
@@ -1049,23 +1034,17 @@ class TskDbDiff(object):
         # Make a copy of the DB
         autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
         backup_db_file = test_data.get_db_path(DBType.BACKUP)
-        copy_file(autopsy_db_file, backup_db_file)
+        shutil.copy(autopsy_db_file, backup_db_file)
         autopsy_con = sqlite3.connect(backup_db_file)
 
         # Delete the blackboard tables
         autopsy_con.execute("DROP TABLE blackboard_artifacts")
         autopsy_con.execute("DROP TABLE blackboard_attributes")
-        dump_file = test_data.test_dbdump
-        database_log = codecs.open(dump_file, "wb", "utf_8")
-        dump_list = autopsy_con.iterdump()
-        try:
-            for line in dump_list:
-                try:
-                    database_log.write(line + "\n")
-                except Exception as e:
-                    Errors.print_error("dump_output_db_nonbb: Inner dump Exception:" + str(e))
-        except Exception as e:
-            Errors.print_error("dump_output_db_nonbb: Outer dump Exception:" + str(e))
+
+        # Write to the database dump
+        with codecs.open(test_data.test_dbdump, "wb", "utf_8") as db_log:
+            for line in autopsy_con.iterdump():
+                db_log.write('%s\n' %line)
 
 
     def dump_output_db(test_data):
@@ -1099,7 +1078,6 @@ class TestResultsDiffer(object):
             databaseDiff: TskDbDiff object created based off test_data
         """
         try:
-
             # Diff the gold and output databases
             output_db_path = test_data.get_db_path(DBType.OUTPUT)
             gold_db_path = test_data.get_db_path(DBType.GOLD)
@@ -1138,6 +1116,9 @@ class TestResultsDiffer(object):
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
 
+        except sqlite3.OperationalError as e:
+            Errors.print_error("Tests failed while running the diff:\n")
+            Errors.print_error(str(e))
         except Exception as e:
             Errors.print_error("Tests failed due to an error, try rebuilding or creating gold standards.\n")
             Errors.print_error(str(e) + "\n")
@@ -1214,7 +1195,7 @@ class TestResultsDiffer(object):
             else:
                 Errors.print_error("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
                 return False
-        except DirNotFoundException as e:
+        except OSError as e:
             e.print_error()
             return False
         except Exception as e:
@@ -1275,8 +1256,7 @@ class Reports(object):
         html_log = test_data.main_config.html_log
         if not file_exists(html_log):
             Reports.write_html_head()
-        try:
-            html = open(html_log, "a")
+        with open(html_log, "a") as html:
             # The image title
             title = "<h1><a name='" + test_data.image_name + "'>" + test_data.image_name + " \
                         <span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
@@ -1384,12 +1364,6 @@ class Reports(object):
             html.write(info)
             html.write(logs)
             html.write(output)
-            html.close()
-        except Exception as e:
-            Errors.print_error("Error: Unknown fatal error when creating HTML log at:")
-            Errors.print_error(html_log)
-            Errors.print_error(str(e) + "\n")
-            logging.critical(traceback.format_exc())
 
     def write_html_head(html_log):
         """Write the top of the HTML log file.
@@ -1397,30 +1371,28 @@ class Reports(object):
         Args:
             html_log: a pathto_File, the global HTML log
         """
-        print(html_log)
-        html = open(str(html_log), "a")
-        head = "<html>\
-                <head>\
-                <title>AutopsyTesttest_config Output</title>\
-                </head>\
-                <style type='text/css'>\
-                body { font-family: 'Courier New'; font-size: 12px; }\
-                h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
-                h1 span { font-size: 12px; font-weight: 100; }\
-                h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
-                hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
-                #errors { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-                #errors1 { background: #CC0000; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-                #info { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-                #general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-                #logs { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-                #errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
-                #info table td { color: ##282828; font-size: 12px; min-width: 225px; }\
-                #logs a { color: ##282828; }\
-                </style>\
-                <body>"
-        html.write(head)
-        html.close()
+        with open(str(html_log), "a") as html:
+            head = "<html>\
+                    <head>\
+                    <title>AutopsyTesttest_config Output</title>\
+                    </head>\
+                    <style type='text/css'>\
+                    body { font-family: 'Courier New'; font-size: 12px; }\
+                    h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
+                    h1 span { font-size: 12px; font-weight: 100; }\
+                    h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
+                    hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
+                    #errors { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+                    #errors1 { background: #CC0000; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+                    #info { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+                    #general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+                    #logs { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
+                    #errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
+                    #info table td { color: ##282828; font-size: 12px; min-width: 225px; }\
+                    #logs a { color: ##282828; }\
+                    </style>\
+                    <body>"
+            html.write(head)
 
     def write_html_foot(html_log):
         """Write the bottom of the HTML log file.
@@ -1428,10 +1400,9 @@ class Reports(object):
         Args:
             html_log: a pathto_File, the global HTML log
         """
-        html = open(html_log, "a")
-        head = "</body></html>"
-        html.write(head)
-        html.close()
+        with open(html_log, "a") as html:
+            head = "</body></html>"
+            html.write(head)
 
     def html_add_images(html_log, full_image_names):
         """Add all the image names to the HTML log.
@@ -1444,24 +1415,21 @@ class Reports(object):
         # this test, so we need to make the start of the html log
         if not file_exists(html_log):
             Reports.write_html_head(html_log)
-        html = open(html_log, "a")
-        links = []
-        for full_name in full_image_names:
-            name = get_image_name(full_name)
-            links.append("<a href='#" + name + "(0)'>" + name + "</a>")
-        html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
-        html.close()
+        with open(html_log, "a") as html:
+            links = []
+            for full_name in full_image_names:
+                name = get_image_name(full_name)
+                links.append("<a href='#" + name + "(0)'>" + name + "</a>")
+            html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
 
     def _generate_csv(csv_path, test_data):
         """Generate the CSV log file"""
-        try:
-            # If the CSV file hasn't already been generated, this is the
-            # first run, and we need to add the column names
-            if not file_exists(csv_path):
-                Reports.csv_header(csv_path)
-            # Now add on the fields to a new row
-            csv = open(csv_path, "a")
-
+        # If the CSV file hasn't already been generated, this is the
+        # first run, and we need to add the column names
+        if not file_exists(csv_path):
+            Reports.csv_header(csv_path)
+        # Now add on the fields to a new row
+        with open(csv_path, "a") as csv:
             # Variables that need to be written
             vars = []
             vars.append( test_data.image_file )
@@ -1499,52 +1467,44 @@ class Reports(object):
             output += "\n"
             # Write to the log!
             csv.write(output)
-            csv.close()
-        except Exception as e:
-            Errors.print_error("Error: Unknown fatal error when creating CSV file at:")
-            Errors.print_error(csv_path)
-            Errors.print_error(str(e) + "\n")
-            print(traceback.format_exc())
-            logging.critical(traceback.format_exc())
 
     def csv_header(csv_path):
         """Generate the CSV column names."""
-        csv = open(csv_path, "w")
-        titles = []
-        titles.append("Image Path")
-        titles.append("Image Name")
-        titles.append("Output test_config Directory")
-        titles.append("Host Name")
-        titles.append("Autopsy Version")
-        titles.append("Heap Space Setting")
-        titles.append("Test Start Date")
-        titles.append("Test End Date")
-        titles.append("Total Test Time")
-        titles.append("Total Ingest Time")
-        titles.append("Service Times")
-        titles.append("Autopsy Exceptions")
-        titles.append("Autopsy OutOfMemoryErrors/Exceptions")
-        titles.append("Tika OutOfMemoryErrors/Exceptions")
-        titles.append("Solr OutOfMemoryErrors/Exceptions")
-        titles.append("TskCoreExceptions")
-        titles.append("TskDataExceptions")
-        titles.append("Ingest Messages Count")
-        titles.append("Indexed Files Count")
-        titles.append("Indexed File Chunks Count")
-        titles.append("Out Of Disk Space")
-        titles.append("Tsk Objects Count")
-        titles.append("Artifacts Count")
-        titles.append("Attributes Count")
-        titles.append("Gold Database Name")
-        titles.append("Artifacts Comparison")
-        titles.append("Attributes Comparison")
-        titles.append("Gold Report Name")
-        titles.append("Report Comparison")
-        titles.append("Ant Command Line")
-        output = "|".join(titles)
-        output += "\n"
-        csv.write(output)
-        csv.close()
+        with open(csv_path, "w") as csv:
+            titles = []
+            titles.append("Image Path")
+            titles.append("Image Name")
+            titles.append("Output test_config Directory")
+            titles.append("Host Name")
+            titles.append("Autopsy Version")
+            titles.append("Heap Space Setting")
+            titles.append("Test Start Date")
+            titles.append("Test End Date")
+            titles.append("Total Test Time")
+            titles.append("Total Ingest Time")
+            titles.append("Service Times")
+            titles.append("Autopsy Exceptions")
+            titles.append("Autopsy OutOfMemoryErrors/Exceptions")
+            titles.append("Tika OutOfMemoryErrors/Exceptions")
+            titles.append("Solr OutOfMemoryErrors/Exceptions")
+            titles.append("TskCoreExceptions")
+            titles.append("TskDataExceptions")
+            titles.append("Ingest Messages Count")
+            titles.append("Indexed Files Count")
+            titles.append("Indexed File Chunks Count")
+            titles.append("Out Of Disk Space")
+            titles.append("Tsk Objects Count")
+            titles.append("Artifacts Count")
+            titles.append("Attributes Count")
+            titles.append("Gold Database Name")
+            titles.append("Artifacts Comparison")
+            titles.append("Attributes Comparison")
+            titles.append("Gold Report Name")
+            titles.append("Report Comparison")
+            titles.append("Ant Command Line")
+            output = "|".join(titles)
+            output += "\n"
+            csv.write(output)
 
     def _get_num_memory_errors(type, test_data):
         """Get the number of OutOfMemory errors and Exceptions.
@@ -1611,7 +1571,7 @@ class Logs(object):
             print(test_data.sorted_log)
             srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.sorted_log]
             subprocess.call(srtcmdlst)
-        except Exception as e:
+        except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to generate the common log.")
             Errors.print_error(str(e) + "\n")
             Errors.print_error(traceback.format_exc())
@@ -1634,7 +1594,7 @@ class Logs(object):
 
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
-        except Exception as e:
+        except IOError as e:
             Errors.print_error("Error: Unable to open autopsy.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
@@ -1664,7 +1624,7 @@ class Logs(object):
 
             chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
             test_data.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
-        except Exception as e:
+        except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
@@ -1684,7 +1644,7 @@ class Logs(object):
                 times += words[i]
                 service_list.append(times)
             test_data.service_times = "; ".join(service_list)
-        except Exception as e:
+        except (OSError, IOError) as e:
             Errors.print_error("Error: Unknown fatal error when finding service times.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
@@ -1697,7 +1657,7 @@ class Logs(object):
         """
         try:
             return get_warnings() + get_exceptions()
-        except Exception as e:
+        except (OSError, IOError) as e:
             Errors.print_error("Error: Unknown fatal error when reporting all errors.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
@@ -1788,7 +1748,7 @@ def copy_logs(test_data):
     try:
         log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
         shutil.copytree(log_dir, test_data.logs_dir)
-    except Exception as e:
+    except OSError as e:
         printerror(test_data,"Error: Failed to copy the logs.")
         printerror(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
@@ -2167,7 +2127,7 @@ def clear_dir(dir):
             shutil.rmtree(dir)
         os.makedirs(dir)
         return True;
-    except Exception as e:
+    except OSError as e:
         printerror(test_data,"Error: Cannot clear the given directory:")
         printerror(test_data,dir + "\n")
         print(str(e))
@@ -2187,33 +2147,6 @@ def del_dir(dir):
         printerror(test_data,"Error: Cannot delete the given directory:")
         printerror(test_data,dir + "\n")
         return False;
-
-def copy_file(ffrom, to):
-    """Copies a given file from "ffrom" to "to".
-
-    Args:
-        ffrom: a pathto_File, the origin path
-        to: a pathto_File, the destination path
-    """
-    try :
-        shutil.copy(ffrom, to)
-    except Exception as e:
-        print(str(e))
-        print(traceback.format_exc())
-
-def copy_dir(ffrom, to):
-    """Copies a directory file from "ffrom" to "to".
-
-    Args:
-        ffrom: a pathto_Dir, the origin path
-        to: a pathto_Dir, the destination path
-    """
-    try :
-        if not os.path.isdir(ffrom):
-            raise FileNotFoundException(ffrom)
-        shutil.copytree(ffrom, to)
-    except:
-        raise FileNotFoundException(to)
 
 def get_file_in_dir(dir, ext):
     """Returns the first file in the given directory with the given extension.
