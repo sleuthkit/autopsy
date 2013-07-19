@@ -14,6 +14,7 @@ import traceback
 import xml
 from xml.dom.minidom import parse, parseString
 import Emailer
+from regression_utils import *
 
 def compile(errore, attachli, parsedin):
 	global redo
@@ -55,14 +56,14 @@ def compile(errore, attachli, parsedin):
 		Emailer.send_email(parsed, errorem, attachl, True)
 		attachl = []
 		passed = True
-		
+
 #Pulls from git
 def gitPull(TskOrAutopsy):
 	global SYS
 	global errorem
 	global attachl
 	ccwd = ""
-	gppth = Emailer.make_local_path("..", "GitPullOutput" + TskOrAutopsy + ".txt")
+	gppth = make_local_path("..", "GitPullOutput" + TskOrAutopsy + ".txt")
 	attachl.append(gppth)
 	gpout = open(gppth, 'a')
 	toPull = "https://www.github.com/sleuthkit/" + TskOrAutopsy
@@ -73,7 +74,7 @@ def gitPull(TskOrAutopsy):
 		ccwd = os.path.join("..", "..")
 	subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
 	gpout.close()
-	
+
 
 #Builds TSK as a win32 applicatiion
 def vsBuild():
@@ -92,7 +93,7 @@ def vsBuild():
 	vs.append("/t:clean")
 	vs.append("/t:rebuild")
 	print(vs)
-	VSpth = Emailer.make_local_path("..", "VSOutput.txt")
+	VSpth = make_local_path("..", "VSOutput.txt")
 	VSout = open(VSpth, 'a')
 	subprocess.call(vs, stdout=VSout)
 	VSout.close()
@@ -106,13 +107,13 @@ def vsBuild():
 		if(not tryredo):
 			errorem += "LIBTSK C++ failed to build.\n"
 			attachl.append(VSpth)
-			Emailer.send_email(parsed, errorem, attachl, False)
+			send_email(parsed, errorem, attachl, False)
 		tryredo = True
 		passed = False
 		redo = True
-		
-	
- 
+
+
+
 #Builds Autopsy or the Datamodel
 def antBuild(which, Build):
 	global redo
@@ -131,7 +132,7 @@ def antBuild(which, Build):
 		ant.append("build")
 	else:
 		ant.append("dist")
-	antpth = Emailer.make_local_path("..", "ant" + which + "Output.txt")
+	antpth = make_local_path("..", "ant" + which + "Output.txt")
 	antout = open(antpth, 'a')
 	succd = subprocess.call(ant, stdout=antout)
 	antout.close()
@@ -166,9 +167,9 @@ def main():
 	config_file = arg
 	parsedin = parse(config_file)
 	compile(errore, attachli, parsedin)
-	
+
 class OS:
-  LINUX, MAC, WIN, CYGWIN = range(4)	  
+  LINUX, MAC, WIN, CYGWIN = range(4)
 if __name__ == "__main__":
 	global SYS
 	if _platform == "linux" or _platform == "linux2":
@@ -179,7 +180,7 @@ if __name__ == "__main__":
 		SYS = OS.WIN
 	elif _platform == "cygwin":
 		SYS = OS.CYGWIN
-		
+
 	if SYS is OS.WIN or SYS is OS.CYGWIN:
 		main()
 	else:
