@@ -228,7 +228,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         if (res2 != null && res2 == DialogDescriptor.YES_OPTION) {
                             // if user say yes
                             try {
-                                createDirectory(caseDirPath, caseName);
+                                createDirectory(caseDirPath);
                             } catch (Exception ex) {
                                 String errorMsg = "Error: Couldn't create case parent directory " + caseParentDir;
                                 logger.log(Level.WARNING, errorMsg, ex);
@@ -241,7 +241,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         }
                     } else {
                         try {
-                            createDirectory(caseDirPath, caseName);
+                            createDirectory(caseDirPath);
                         } catch (Exception ex) {
                             String errorMsg = "Error: Couldn't create directory.";
                             logger.log(Level.WARNING, errorMsg, ex);
@@ -264,11 +264,11 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /*
      * create the directory and create a new case
      */
-    private void createDirectory(final String caseDirPath, final String caseName) throws WizardValidationException {
+    private void createDirectory(final String caseDirPath) throws WizardValidationException {
         // try to create the directory with the case name in the choosen parent directory
         boolean success = false;
         try {
-            Case.createCaseDirectory(caseDirPath, caseName);
+            Case.createCaseDirectory(caseDirPath);
             success = true;
         } catch (CaseActionException ex) {
             logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex);

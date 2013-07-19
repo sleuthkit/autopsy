@@ -442,6 +442,16 @@ public final class IngestModuleLoader {
 
         //user modules
         urls.addAll(getJarPaths(PlatformUtil.getUserModulesPath()));
+        
+        // add other project dirs, such as from external modules
+        for (String projectDir : PlatformUtil.getProjectsDirs()) {
+            File modules = new File(projectDir + File.separator + "modules");
+            if (modules.exists()) {
+                urls.addAll(getJarPaths(modules.getAbsolutePath()));
+            }
+        }
+        
+        
 
         return urls;
     }

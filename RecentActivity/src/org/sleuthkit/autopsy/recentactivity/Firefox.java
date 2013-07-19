@@ -100,13 +100,14 @@ public class Firefox extends Extract {
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             String fileName = historyFile.getName();
-            String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
             int errors = 0;
             try {
-                ContentUtils.writeToFile(historyFile, new File(currentCase.getTempDirectory() + File.separator + fileName + j + ".db"));
+                ContentUtils.writeToFile(historyFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + fileName);
+                continue;
             }
             File dbFile = new File(temps);
             if (controller.isCancelled()) {
@@ -156,13 +157,14 @@ public class Firefox extends Extract {
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             String fileName = bookmarkFile.getName();
-            String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
             int errors = 0;
             try {
-                ContentUtils.writeToFile(bookmarkFile, new File(currentCase.getTempDirectory() + File.separator + fileName + j + ".db"));
+                ContentUtils.writeToFile(bookmarkFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + fileName);
+                continue;
             }
             File dbFile = new File(temps);
             if (controller.isCancelled()) {
@@ -211,13 +213,14 @@ public class Firefox extends Extract {
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
             String fileName = cookiesFile.getName();
-            String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
             int errors = 0;
             try {
-                ContentUtils.writeToFile(cookiesFile, new File(currentCase.getTempDirectory() + File.separator + fileName + j + ".db"));
+                ContentUtils.writeToFile(cookiesFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + fileName);
+                continue;
             }
             File dbFile = new File(temps);
             if (controller.isCancelled()) {
@@ -287,13 +290,14 @@ public class Firefox extends Extract {
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             String fileName = downloadsFile.getName();
-            String temps = currentCase.getTempDirectory() + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
             int errors = 0;
             try {
-                ContentUtils.writeToFile(downloadsFile, new File(currentCase.getTempDirectory() + File.separator + fileName + j + ".db"));
+                ContentUtils.writeToFile(downloadsFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + fileName);
+                continue;
             }
             File dbFile = new File(temps);
             if (controller.isCancelled()) {

@@ -36,7 +36,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node wrapping a blackboard artifact object
+ * Node wrapping a blackboard artifact object.  This represents a single artifact. 
+ * Its parent is typically an ArtifactTypeNode.
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
@@ -259,6 +260,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return null;
     }
 
+    // @@@ TODO: Merge with ArtifactTypeNode.getIcon()
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch (type) {
             case TSK_WEB_BOOKMARK:
