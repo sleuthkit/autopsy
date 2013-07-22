@@ -30,7 +30,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node encapsulating blackboard artifact type
+ * Node encapsulating blackboard artifact type.  This is used on the left-hand navigation side of the Autopsy UI as the
+ * parent node for all of the artifacts of a given type. Its children will be BlackboardArtifactNode objects. 
  */
 public class ArtifactTypeNode extends DisplayableItemNode {
 
@@ -82,6 +83,7 @@ public class ArtifactTypeNode extends DisplayableItemNode {
         return v.visit(this);
     }
 
+    // @@@ TODO: Merge with BlackboartArtifactNode.getIcon()
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch (type) {
             case TSK_WEB_BOOKMARK:

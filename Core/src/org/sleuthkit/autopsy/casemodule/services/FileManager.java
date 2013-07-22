@@ -197,7 +197,8 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Interface for receiving notifications on folders being added via a callback
+     * Interface for receiving notifications on folders being added via a
+     * callback
      */
     public interface FileAddProgressUpdater {
 
@@ -304,12 +305,18 @@ public class FileManager implements Closeable {
         if (isDir) {
             //create virtual folder
             final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), childLocalFile.getName());
-            if (childVd != null && addProgressUpdater != null ) {
+            if (childVd != null && addProgressUpdater != null) {
                 addProgressUpdater.fileAdded(childVd);
             }
             //add children recursively
-            for (java.io.File childChild : childLocalFile.listFiles()) {
-                addLocalDirectoryRecInt(childVd, childChild, addProgressUpdater);
+            final java.io.File[] childrenFiles = childLocalFile.listFiles();
+            if (childrenFiles != null) {
+                for (java.io.File childChild : childrenFiles) {
+                    addLocalDirectoryRecInt(childVd, childChild, addProgressUpdater);
+                }
+            } else {
+                //add leaf file, base case
+                this.addLocalFileSingle(childLocalFile.getAbsolutePath(), parentVd);
             }
         } else {
             //add leaf file, base case
@@ -428,7 +435,7 @@ public class FileManager implements Closeable {
      * closed
      *
      */
-    private synchronized LocalFile addLocalFileSingle(String localAbsPath, AbstractFile parentFile ) throws TskCoreException {
+    private synchronized LocalFile addLocalFileSingle(String localAbsPath, AbstractFile parentFile) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");

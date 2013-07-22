@@ -1,0 +1,60 @@
+RegRipper FAQ
+
+This is the FAQ for the RegRipper. 
+
+1.  What is the RegRipper?
+I should start by saying what the RegRipper is *not*...it's not
+a Registry Viewer.  An examiner would not open a Registry hive file
+in RegRipper to "look around".  
+
+Further, RegRipper is NOT intended for use with live hive files.  Hive
+files need to be extracted from a case (or from a live system using FTK
+Imager...), or accessible via a tool such as Mount Image Pro.
+
+RegRipper is a Windows Registry data extractor.  RegRipper uses plugins
+(similar to Nessus) to access specific Registry hive files in order to 
+access and extract specific keys, values, and data, and does so by 
+bypassing the Win32API.  
+
+2.  How does RegRipper work?
+RegRipper uses James McFarlane's Parse::Win32Registry module to access 
+a Windows Registry hive file in an object-oriented manner, bypassing the
+Win32API.  This module is used to locate and access Registry key nodes
+within the hive file, as well as value nodes and their data.  When 
+accessing a key node, the LastWrite time is retrieved, parsed and 
+translated into something the examiner can understand.  Data is retrieved
+in much the same manner...if necessary, the plugin that retrieves the
+data will also perform translation of that data into something readable.
+
+3.  Who wrote and maintains RegRipper?
+I did/do.  If you have any questions, concerns, comments, or suggestions 
+regarding how RegRipper works, please feel free to contact me.
+
+4.  Who should/can use RegRipper?
+Anyone who wants to perform Windows Registry hive file analysis.  This tool
+is specifically intended for Windows 2000, XP, and 2003 hive files (there
+has been limited testing on Vista/Win2K8 hive files...everything has worked
+fine so far...).
+
+5.  How do I use RegRipper?
+Simply launch rr.exe.  Also, please be sure to read the RegRipper documentation.
+
+6.  Do I have to install anything to use the RegRipper?
+Nope, not a thing.  RegRipper ships as an EXE file, able to run on Windows
+systems.  All you need to do is extract the EXE and DLL in the same directory.
+The source file (rr.pl) is also included, as are the plugins.
+
+Further, RegRipper doesn't make any changes to your analysis system...no 
+Registry entries are made, nor are any files installed in odd, out-of-the-way
+locations.
+
+Links
+Module - http://search.cpan.org/~jmacfarla/Parse-Win32Registry/lib/
+                Parse/Win32Registry.pm
+                
+Email - H. Carvey - keydet89@yahoo.com
+
+RegRipper and rip.exe are released under the GPL license.  Please see license.txt
+for details.
+
+RegRipper and rip.exe are copyrighted to H. Carvey.

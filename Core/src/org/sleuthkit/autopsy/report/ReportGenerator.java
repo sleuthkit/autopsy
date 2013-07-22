@@ -32,6 +32,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -40,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.HashSet;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -80,7 +82,7 @@ public class ReportGenerator {
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
     static final String REPORTS_DIR = "Reports";
-    
+        
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
         // Setup the reporting directory to be [CASE DIRECTORY]/Reports/[Case name] [Timestamp]/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
@@ -95,8 +97,8 @@ public class ReportGenerator {
         }
         
         // Initialize the progress panels
-        generalProgress = new HashMap<GeneralReportModule, ReportProgressPanel>();
-        tableProgress = new HashMap<TableReportModule, ReportProgressPanel>();
+        generalProgress = new HashMap<>();
+        tableProgress = new HashMap<>();
         setupProgressPanels(tableModuleStates, generalModuleStates);
     }
     
@@ -165,20 +167,11 @@ public class ReportGenerator {
     /**
      * Generate the TableReportModule reports on Blackboard Artifacts in a new SwingWorker.
      * 
-     * @param artifactStates the enabled/disabled state of all artifacts
+     * @param artifactTypeSelections the enabled/disabled state of the artifact types to be included in the report
+     * @param tagSelections the enabled/disabled state of the tags to be included in the report
      */
-    public void generateTableArtifactReport(Map<ARTIFACT_TYPE, Boolean> artifactStates) {
-        ArtifactWorker worker = new ArtifactWorker(artifactStates);
-        worker.execute();
-    }
-    
-    /**
-     * Generate the TableReportModule reports on Tags in a new SwingWorker.
-     * 
-     * @param tagStates the enabled/disabled state of all tags
-     */
-    public void generateTableTagReport(Map<String, Boolean> tagStates) {
-        TagWorker worker = new TagWorker(tagStates);
+    public void generateArtifactTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
+        ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
         worker.execute();
     }
     
@@ -201,116 +194,33 @@ public class ReportGenerator {
     }
     
     /**
-     * SwingWorker to generate a report on Tags for all TableReportModules.
+     * SwingWorker to generate reports on blackboard artifacts.
      */
-    private class TagWorker extends SwingWorker<Integer, Integer> {
-        List<TableReportModule> tableModules;
-        List<String> tags;
-        
-        // Create a new TagWorker with the enabled/diabled state of each Tag
-        TagWorker(Map<String, Boolean> tagStates) {
-            tableModules = new ArrayList<TableReportModule>();
-            for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
-                tableModules.add(entry.getKey());
-            }
-            tags = new ArrayList<String>();
-            for (Entry<String, Boolean> entry : tagStates.entrySet()) {
-                if (entry.getValue()) {
-                    tags.add(entry.getKey());
-                }
-            }
-        }
-
-        @Override
-        protected Integer doInBackground() throws Exception {
-            // For each module, start the report
-            for (TableReportModule module : tableModules) {
-                ReportProgressPanel progress = tableProgress.get(module);
-                if (progress.getStatus() != ReportStatus.CANCELED) {
-                    module.startReport(reportPath);
-                    progress.start();
-                    progress.setIndeterminate(false);
-                    progress.setMaximumProgress(tags.size());
-                }
-            }
-            // For every tag in tagStates
-            for (String tag : tags) {
-                // Check to see if all the TableReportModules have been canceled
-                if (tableModules.isEmpty()) {
-                    break;
-                }
-                Iterator<TableReportModule> iter = tableModules.iterator();
-                while (iter.hasNext()) {
-                    TableReportModule module = iter.next();
-                    if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
-                        iter.remove();
-                    }
-                }
-                
-                // Start a datatype for this tag
-                for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + tag + "...");
-                    module.startDataType(tag);
-                    module.startTable(new ArrayList<String>(Arrays.asList(new String[] {"Comment", "File Name", "File Path"})));
-                }
-                
-                // For every artifact with this tag name, add a row
-                for (BlackboardArtifact artifact : Tags.getTagsByName(tag)) {
-                    for (TableReportModule module : tableModules) {
-                        try {
-                            Map<Integer, String> attributes = getMappedAttributes(skCase.getBlackboardAttributes(artifact), module);
-                            List<String> row = new ArrayList<String>();
-                            row.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                            AbstractFile file = getAbstractFile(artifact.getObjectID());
-                            if(file != null) {
-                                row.add(file.getName());
-                                row.add(file.getUniquePath());
-                            } else {
-                                row.add("");
-                                row.add("");
-                            }
-                            module.addRow(row);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to get Tag information from Blackboard.", ex);
-                        }
-                    }
-                }
-                
-                // Finish up this data type
-                for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).increment();
-                    module.endTable();
-                    module.endDataType();
-                }
-            }
-
-            // End the report
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).complete();
-                module.endReport();
-            }
-            
-            return 0;
-        }
-    }
-    
-    /**
-     * SwingWorker to generate a report on Blackboard Artifacts for all TableReportModules.
-     */
-    private class ArtifactWorker extends SwingWorker<Integer, Integer> {
+    private class ArtifactsReportsWorker extends SwingWorker<Integer, Integer> {
         List<TableReportModule> tableModules;
         List<ARTIFACT_TYPE> artifactTypes;
+        HashSet<String> tagNamesFilter;
         
         // Create an ArtifactWorker with the enabled/disabled state of all Artifacts
-        ArtifactWorker(Map<ARTIFACT_TYPE, Boolean> artifactStates) {
-            tableModules = new ArrayList<TableReportModule>();
+        ArtifactsReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
+            tableModules = new ArrayList<>();
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
                 tableModules.add(entry.getKey());
             }
-            artifactTypes = new ArrayList<ARTIFACT_TYPE>();
-            for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactStates.entrySet()) {
+            
+            artifactTypes = new ArrayList<>();
+            for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactTypeSelections.entrySet()) {
                 if (entry.getValue()) {
                     artifactTypes.add(entry.getKey());
+                }
+            }
+            
+            if (tagSelections != null) {
+                tagNamesFilter = new HashSet<>();
+                for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
+                    if (entry.getValue() == true) {
+                        tagNamesFilter.add(entry.getKey());
+                    }
                 }
             }
         }
@@ -344,15 +254,14 @@ public class ReportGenerator {
                 
                 // If the type is keyword hit or hashset hit, use the helper
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
-                    writeKeywordHits(tableModules);
+                    writeKeywordHits(tableModules, tagNamesFilter);
                     continue;
                 } else if (type.equals(ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
-                    writeHashsetHits(tableModules);
+                    writeHashsetHits(tableModules, tagNamesFilter);
                     continue;
                 }
-                
+
                 // Otherwise setup the unsorted list of artifacts, to later be sorted
-                List<String> titles = getArtifactRowTitles(type.getTypeID());
                 ArtifactComparator c = new ArtifactComparator();
                 List<Entry<BlackboardArtifact, List<BlackboardAttribute>>> unsortedArtifacts = new ArrayList<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
                 try {
@@ -364,29 +273,63 @@ public class ReportGenerator {
                             logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex);
                         }
                     }
-                } catch (TskCoreException ex) {
+                } 
+                catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex);
                 }
+                
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Collections.sort(unsortedArtifacts, c);
-                
-                // For every module start a new data type based off this Artifact type
+
+                // Get the column headers appropriate for the artifact type.
+                List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
+                                                                
+                // For every module start a new data type and table for the current artifact type.
                 for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");
-                    module.startDataType(type.getDisplayName());
-                    module.startTable(titles);
+                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
+                
+                    module.startDataType(type.getDisplayName());                        
+                
+                    if (module instanceof ReportHTML) {
+                        ReportHTML htmlReportModule = (ReportHTML)module;
+                        htmlReportModule.startTable(columnHeaders, type);
+                    }
+                    else {
+                        module.startTable(columnHeaders);
+                    }
                 }
                 
-                // Add a row for every artifact
-                for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {
+                // Add a row to the table for every artifact of the current type that satisfies the tags filter, if any.
+                for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
+                    // Get any tags associated with the artifact and apply the tags filter, if any.
+                    HashSet<String> tags = Tags.getUniqueTagNames(artifactEntry.getKey());
+                    if (failsTagFilter(tags, tagNamesFilter)) {
+                        continue;
+                    }                    
+                    String tagsList = makeCommaSeparatedList(tags);
+                    
+                    // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
-                        try {
-                            module.addRow(getArtifactRow(artifactEntry, module));
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed get Blackboard Artifact information to fill row.", ex);
+                        // Get the row data for this type of artifact.
+                        List<String> rowData; 
+                        rowData = getArtifactRow(artifactEntry, module);   
+                        
+                        // Add the list of tag names if the artifact is not itself as tag.
+                        if (artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
+                            artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
+                        {
+                            rowData.add(tagsList);
                         }
+
+                        if (module instanceof ReportHTML) {
+                            ReportHTML htmlReportModule = (ReportHTML)module;
+                            htmlReportModule.addRow(rowData, artifactEntry.getKey());
+                        }
+                        else {      
+                            module.addRow(rowData);
+                        }                        
                     }
                 }
                 
@@ -408,12 +351,23 @@ public class ReportGenerator {
         }
     }
     
+    private Boolean failsTagFilter(HashSet<String> tags, HashSet<String> tagsFilter) 
+    {
+        if (tagsFilter == null) {
+            return false;
+        }
+
+        HashSet<String> filteredTags = new HashSet<>(tags);
+        filteredTags.retainAll(tagsFilter);
+        return filteredTags.isEmpty();
+    }
+            
     /**
      * Write the keyword hits to the provided TableReportModules.
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeKeywordHits(List<TableReportModule> tableModules) {
+    private void writeKeywordHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for keyword lists
@@ -454,7 +408,7 @@ public class ReportGenerator {
         ResultSet rs = null;
         try {
             // Query for keywords
-            rs = skCase.runQuery("SELECT art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " +
+            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " +
                                            "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " +
                                            "WHERE (att1.artifact_id = art.artifact_id) " +
                                                  "AND (att2.artifact_id = art.artifact_id) " + 
@@ -479,15 +433,21 @@ public class ReportGenerator {
                         iter.remove();
                     }
                 }
-                
+ 
+               // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+                if (failsTagFilter(tags, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(tags);
+                                                        
                 Long objId = rs.getLong("obj_id");
                 String keyword = rs.getString("keyword");
                 String preview = rs.getString("preview");
                 String list = rs.getString("list");
-                String name = rs.getString("name");
                 String uniquePath = "";
-                
-                try {
+
+                 try {
                     uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
@@ -519,12 +479,13 @@ public class ReportGenerator {
                     currentKeyword = keyword;
                     for (TableReportModule module : tableModules) {
                         module.addSetElement(currentKeyword);
-                        module.startTable(getArtifactRowTitles(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()));
+                        module.startTable(getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()));
                     }
                 }
+                
                 String previewreplace = EscapeUtil.escapeHtml(preview);
                 for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[] {name, previewreplace.replaceAll("<!", ""), uniquePath}));
+                    module.addRow(Arrays.asList(new String[] {previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
                 }
             }
             
@@ -550,7 +511,7 @@ public class ReportGenerator {
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeHashsetHits(List<TableReportModule> tableModules) {
+    private void writeHashsetHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for hashsets
@@ -586,7 +547,7 @@ public class ReportGenerator {
         ResultSet rs = null;
         try {
             // Query for hashset hits
-            rs = skCase.runQuery("SELECT art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size " +
+            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size " +
                                            "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " +
                                            "WHERE (att.artifact_id = art.artifact_id) " +
                                                  "AND (f.obj_id = art.obj_id) " +
@@ -607,9 +568,15 @@ public class ReportGenerator {
                     }
                 }
                 
+               // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
+                if (failsTagFilter(tags, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(tags);
+                                                                        
                 Long objId = rs.getLong("obj_id");
                 String set = rs.getString("setname");
-                String name = rs.getString("name");
                 String size = rs.getString("size");
                 String uniquePath = "";
                 
@@ -630,7 +597,7 @@ public class ReportGenerator {
                     currentSet = set;
                     for (TableReportModule module : tableModules) {
                         module.startSet(currentSet);
-                        module.startTable(getArtifactRowTitles(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()));
+                        module.startTable(getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()));
                         tableProgress.get(module).updateStatusLabel("Now processing "
                                 + ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()
                                 + " (" + currentSet + ")...");
@@ -639,7 +606,7 @@ public class ReportGenerator {
                 
                 // Add a row for this hit to every module
                 for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[] {name, size, uniquePath}));
+                    module.addRow(Arrays.asList(new String[] {uniquePath, size, tagsList}));
                 }
             }
             
@@ -666,36 +633,59 @@ public class ReportGenerator {
      * @param artifactTypeId artifact type ID
      * @return List<String> row titles
      */
-    private List<String> getArtifactRowTitles(int artifactTypeId) {
+    private List<String> getArtifactTableColumnHeaders(int artifactTypeId) {
+        ArrayList<String> columnHeaders;
+        
         switch (artifactTypeId) {
             case 2: // TSK_WEB_BOOKMARK
-                return new ArrayList<String>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
+                break;
             case 3: // TSK_WEB_COOKIE
-                return new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
+                break;
             case 4: // TSK_WEB_HISTORY
-                return new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
+                break;
             case 5: // TSK_WEB_DOWNLOAD
-                return new ArrayList<String>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
+                break;
             case 6: // TSK_RECENT_OBJECT
-                return new ArrayList<String>(Arrays.asList(new String[] {"Path", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Path", "Source File"}));
+                break;
             case 8: // TSK_INSTALLED_PROG
-                return new ArrayList<String>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
+                break;
             case 9: // TSK_KEYWORD_HIT
-                return new ArrayList<String>(Arrays.asList(new String[] {"File Name", "Preview", "File Path"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Preview", "Source File"}));
+                break;
             case 10: // TSK_HASHSET_HIT
-                return new ArrayList<String>(Arrays.asList(new String[] {"File Name", "Size", "File Path"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File", "Size"}));
+                break;
             case 11: // TSK_DEVICE_ATTACHED
-                return new ArrayList<String>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
+                break;
             case 15: // TSK_WEB_SEARCH_QUERY
-                return new ArrayList<String>(Arrays.asList(new String[] {"Text", "Domain", "Date Accessed", "Program Name", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Text", "Domain", "Date Accessed", "Program Name", "Source File"}));
+                break;
             case 16: // TSK_METADATA_EXIF
-                return new ArrayList<String>(Arrays.asList(new String[] {"File Name", "Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
+                break;
             case 17: // TSK_TAG_FILE
-                return new ArrayList<String>(Arrays.asList(new String[] {"Comment", "File Name", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File", "Tag", "Comment"}));
+                break;
             case 18: // TSK_TAG_ARTIFACT
-                return new ArrayList<String>(Arrays.asList(new String[] {"Comment", "File Name", "Source File"}));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Result Type", "Tag", "Comment", "Source File"}));
+                break;
+            default:
+                return null;
         }
-        return null;
+
+        if (artifactTypeId != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() && 
+            artifactTypeId != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
+            columnHeaders.add("Tags");
+        }
+        
+        return columnHeaders;
     }
     
     /**
@@ -739,6 +729,20 @@ public class ReportGenerator {
     }
     
     /**
+     * Converts a collection of strings into a single string of comma-separated items
+     * 
+     * @param items A collection of strings
+     * @return A string of comma-separated items 
+     */
+    private String makeCommaSeparatedList(Collection<String> items) {
+        String list = "";
+        for (Iterator<String> iterator = items.iterator(); iterator.hasNext(); ) {
+            list += iterator.next() + (iterator.hasNext() ? "," : "");
+        }
+        return list;
+    }
+    
+    /**
      * Get a list of Strings with all the row values for a given BlackboardArtifact and 
      * list of BlackboardAttributes Entry, basing the date/time field on the given TableReportModule.
      * 
@@ -751,7 +755,7 @@ public class ReportGenerator {
         Map<Integer, String> attributes = getMappedAttributes(entry.getValue(), module);
         switch (entry.getKey().getArtifactTypeID()) {
             case 2: // TSK_WEB_BOOKMARK
-                List<String> bookmark = new ArrayList<String>();
+                List<String> bookmark = new ArrayList<>();
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
@@ -759,7 +763,7 @@ public class ReportGenerator {
                 bookmark.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return bookmark;
             case 3: // TSK_WEB_COOKIE
-                List<String> cookie = new ArrayList<String>();
+                List<String> cookie = new ArrayList<>();
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
@@ -768,7 +772,7 @@ public class ReportGenerator {
                 cookie.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return cookie;
             case 4: // TSK_WEB_HISTORY
-                List<String> history = new ArrayList<String>();
+                List<String> history = new ArrayList<>();
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
@@ -777,7 +781,7 @@ public class ReportGenerator {
                 history.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return history;
             case 5: // TSK_WEB_DOWNLOAD
-                List<String> download = new ArrayList<String>();
+                List<String> download = new ArrayList<>();
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
@@ -785,25 +789,25 @@ public class ReportGenerator {
                 download.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return download;
             case 6: // TSK_RECENT_OBJECT
-                List<String> recent = new ArrayList<String>();
+                List<String> recent = new ArrayList<>();
                 recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
                 recent.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return recent;
             case 8: // TSK_INSTALLED_PROG
-                List<String> installed = new ArrayList<String>();
+                List<String> installed = new ArrayList<>();
                 installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 installed.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return installed;
             case 11: // TSK_DEVICE_ATTACHED
-                List<String> devices = new ArrayList<String>();
+                List<String> devices = new ArrayList<>();
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 devices.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return devices;
             case 15: // TSK_WEB_SEARCH_QUERY
-                List<String> search = new ArrayList<String>();
+                List<String> search = new ArrayList<>();
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
@@ -811,7 +815,7 @@ public class ReportGenerator {
                 search.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return search;
             case 16: // TSK_METADATA_EXIF
-                List<String> exif = new ArrayList<String>();
+                List<String> exif = new ArrayList<>();
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
@@ -820,29 +824,38 @@ public class ReportGenerator {
                 exif.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return exif;
             case 17: // TSK_TAG_FILE
-                List<String> tagFile = new ArrayList<String>();
-                tagFile.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                AbstractFile tFile = getAbstractFile(entry.getKey().getObjectID());
-                if(tFile != null) {
-                    tagFile.add(tFile.getName());
-                    tagFile.add(tFile.getUniquePath());
+                List<String> taggedFileRow = new ArrayList<>();
+                AbstractFile taggedFile = getAbstractFile(entry.getKey().getObjectID());
+                if (taggedFile != null) {
+                    taggedFileRow.add(taggedFile.getUniquePath());
                 } else {
-                    tagFile.add("");
-                    tagFile.add("");
+                    taggedFileRow.add("");
                 }
-                return tagFile;
+                taggedFileRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()));
+                taggedFileRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
+                return taggedFileRow;
             case 18: // TSK_TAG_ARTIFACT
-                List<String> tagArtifact = new ArrayList<String>();
-                tagArtifact.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                AbstractFile aFile = getAbstractFile(entry.getKey().getObjectID());
-                if(aFile != null) {
-                    tagArtifact.add(aFile.getName());
-                    tagArtifact.add(aFile.getUniquePath());
-                } else {
-                    tagArtifact.add("");
-                    tagArtifact.add("");
+                List<String> taggedArtifactRow = new ArrayList<>();
+                String taggedArtifactType = "";
+                for (BlackboardAttribute attr : entry.getValue()) {
+                    if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()) {
+                        BlackboardArtifact taggedArtifact = getArtifact(attr.getValueLong());
+                        if (taggedArtifact != null) {
+                            taggedArtifactType = taggedArtifact.getDisplayName();
+                        }
+                        break;
+                    }
                 }
-                return tagArtifact;
+                taggedArtifactRow.add(taggedArtifactType);
+                taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()));
+                taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
+                AbstractFile sourceFile = getAbstractFile(entry.getKey().getObjectID());
+                if (sourceFile != null) {
+                    taggedArtifactRow.add(sourceFile.getUniquePath());
+                } else {
+                    taggedArtifactRow.add("");
+                }
+                return taggedArtifactRow;
         }
         return null;
     }
@@ -876,6 +889,7 @@ public class ReportGenerator {
         }
         return "";
     }
+    
     /**
      * Return the file associated with a tsk_file obj_id.
      * 
@@ -887,6 +901,21 @@ public class ReportGenerator {
             return skCase.getAbstractFileById(objId);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
+        }
+        return null;
+    }
+    
+    /**
+     * Get a BlackboardArtifact.
+     * 
+     * @param long artifactId An artifact id
+     * @return The BlackboardArtifact associated with the artifact id
+     */
+    private BlackboardArtifact getArtifact(long artifactId) {
+        try {
+            return skCase.getBlackboardArtifact(artifactId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to get blackboard artifact by ID.", ex);
         }
         return null;
     }

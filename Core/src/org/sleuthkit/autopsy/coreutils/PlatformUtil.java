@@ -141,6 +141,27 @@ public class PlatformUtil {
     public static File getUserDirectory() {
         return Places.getUserDirectory();
     }
+    
+    /**
+     * Get RCP project dirs 
+     * @return 
+     */
+    public static List<String> getProjectsDirs() {
+        List<String> ret = new ArrayList<String>();
+        String projectDir = System.getProperty("netbeans.dirs");
+        if (projectDir == null) {
+            return ret;
+        }
+        String [] split = projectDir.split(";");
+        if (split == null || split.length == 0) {
+            return ret;
+        }
+        for (String path : split) {
+            ret.add(path);
+        }
+         
+         return ret;
+    }
 
     /**
      * Get user config directory path
