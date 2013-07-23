@@ -5,6 +5,7 @@ import shutil
 import os
 import codecs
 import datetime
+import sys
 
 class TskDbDiff(object):
     """Represents the differences between the gold and output databases.
@@ -59,9 +60,9 @@ class TskDbDiff(object):
         self._init_diff()
         # generate the gold database dumps if necessary
         if self._generate_gold_dump:
-            TskDbDiff._dump_output_db_nonbb(self.gold_db, self.gold_dump)
+            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump)
         if self._generate_gold_bb_dump:
-            TskDbDiff._dump_ouput_db_bb(self.gold_db, self.gold_bb_dump)
+            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump)
 
         # generate the output database dumps
         TskDbDiff.dump_output_db(self.output_db_file, self._dump, self._bb_dump)
@@ -94,9 +95,11 @@ class TskDbDiff(object):
         if self.output_dir is None:
             #cleanup temp files
             os.remove(self._dump)
-            os.remove(self._dump_diff)
             os.remove(self._bb_dump)
-            os.remove(self._bb_dump_diff)
+            if os.path.isfile(self._dump_diff):
+                os.remove(self._dump_diff)
+            if os.path.isfile(self._bb_dump_diff):
+                os.remove(self._bb_dump_diff)
         if self.gold_bb_dump is None:
             os.remove(self.gold_bb_dump)
             os.remove(self.gold_dump)
@@ -251,5 +254,29 @@ class TskDbDiff(object):
 
 
 class TskDbDiffException(Exception):
-   pass
+    pass
+
+
+def main():
+    try:
+        sys.argv.pop(0)
+        output_db = sys.argv.pop(0)
+        gold_db = sys.argv.pop(0)
+    except:
+        print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
+        sys.exit()
+
+    db_diff = TskDbDiff(output_db, gold_db)
+    passed = db_diff.run_diff()
+
+    if passed:
+        print("Database comparison passed.")
+    else:
+        print("Database comparison failed.")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
 
