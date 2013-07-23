@@ -94,7 +94,7 @@ public class ThunderbirdEmailParser {
         return this.tika.detect(firstFewBytes, inDocName);
     }
 
-    public boolean isValidMimeTypeMbox(byte[] buffer) {
+    static public boolean isValidMimeTypeMbox(byte[] buffer) {
         return (new String(buffer)).startsWith("From ");
     }
 
