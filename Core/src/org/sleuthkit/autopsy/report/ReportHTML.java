@@ -561,6 +561,32 @@ public class ReportHTML implements TableReportModule {
             FileUtil.copy(in, output);
             in.close();
             output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png");
+            output = new FileOutputStream(new File(path + File.separator + "Contacts.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png");
+            output = new FileOutputStream(new File(path + File.separator + "Messages.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png");
+            output = new FileOutputStream(new File(path + File.separator + "Call Logs.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png");
+            output = new FileOutputStream(new File(path + File.separator + "Calendar Entries.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
         } finally {

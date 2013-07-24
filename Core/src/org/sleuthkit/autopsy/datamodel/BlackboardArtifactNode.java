@@ -287,6 +287,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "green-tag-icon-16.png";
             case TSK_METADATA_EXIF:
                 return "camera-icon-16.png";
+            case TSK_CONTACT:
+                return "contact.png";
+            case TSK_MESSAGE:
+                return "message.png";
+            case TSK_CALLLOG:
+                return "calllog.png";
+            case TSK_CALENDAR_ENTRY:
+                return "calendar.png";
         }
         return "artifact-icon.png";
     }
