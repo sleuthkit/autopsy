@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -35,9 +36,13 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.ExtractedContentChildren;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public final class ReportVisualPanel2 extends JPanel {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel2.class.getName());
@@ -97,10 +102,22 @@ public final class ReportVisualPanel2 extends JPanel {
     
     // Initialize the list of Artifacts
     private void initArtifactTypes() {
-        artifacts = ArtifactSelectionDialog.getImportantArtifactTypes();
-        artifactStates = new EnumMap<ARTIFACT_TYPE, Boolean>(ARTIFACT_TYPE.class);
-        for (ARTIFACT_TYPE type : artifacts) { 
-            artifactStates.put(type, Boolean.TRUE);
+        
+        try {
+             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+            
+            artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
+            
+            artifacts.removeAll(doNotReport);
+            
+            artifactStates = new EnumMap<ARTIFACT_TYPE, Boolean>(ARTIFACT_TYPE.class);
+            for (ARTIFACT_TYPE type : artifacts) { 
+                artifactStates.put(type, Boolean.TRUE);
+            }
+        } catch (TskCoreException ex) {
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            return;
         }
     }
 

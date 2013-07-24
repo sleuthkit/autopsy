@@ -694,6 +694,16 @@ public class ReportGenerator {
                 return new ArrayList<String>(Arrays.asList(new String[] {"Comment", "File Name", "Source File"}));
             case 18: // TSK_TAG_ARTIFACT
                 return new ArrayList<String>(Arrays.asList(new String[] {"Comment", "File Name", "Source File"}));
+                
+            case 23: // TSK_CONTACT
+                return new ArrayList<String>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Phone Number (Home)", "Phone Number (Office)", "Phone Number (Mobile)", "Email", "Source File"  }));
+            case 24: // TSK_MESSAGE
+                return new ArrayList<String>(Arrays.asList(new String[] {"Message Type", "Direction", "Date/Time",  "From Phone Number", "From Email", "To Phone Number", "To Email", "Subject", "Text", "Source File"  }));
+            case 25: // TSK_CALLLOG
+                return new ArrayList<String>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Date/Time", "Direction", "Source File"  }));
+             case 26: // TSK_CALENDAR_ENTRY
+                return new ArrayList<String>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
+      
         }
         return null;
     }
@@ -715,7 +725,10 @@ public class ReportGenerator {
         for (BlackboardAttribute tempatt : attList) {
             String value = "";
             Integer type = tempatt.getAttributeTypeID();
-            if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())) {
+            if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || 
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID())) {
                 if (module.length > 0) {
                     value = module[0].dateToString(tempatt.getValueLong());
                 } else {
@@ -843,6 +856,47 @@ public class ReportGenerator {
                     tagArtifact.add("");
                 }
                 return tagArtifact;
+             case 23: // TSK_CONTACT
+                List<String> contact = new ArrayList<String>();
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
+                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
+                contact.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return contact;
+             case 24: // TSK_MESSAGE
+                List<String> message = new ArrayList<String>();
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                message.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return message;
+              case 25: // TSK_CALLLOG
+                List<String> call_log = new ArrayList<String>();
+                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                call_log.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return call_log;
+              case 26: // TSK_CALENDAR_ENTRY
+                List<String> calEntry = new ArrayList<String>();
+                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
+                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
+                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
+                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                calEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return calEntry;
+                 
         }
         return null;
     }
