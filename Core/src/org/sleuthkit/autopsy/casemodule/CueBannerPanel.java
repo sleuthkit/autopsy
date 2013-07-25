@@ -195,7 +195,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void newCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCaseButtonActionPerformed
-        Lookup.getDefault().lookup(CaseNewAction.class).actionPerformed(evt);
+        Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
     }//GEN-LAST:event_newCaseButtonActionPerformed
 
     private void openCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCaseButtonActionPerformed
