@@ -71,7 +71,7 @@ class TskDbDiff(object):
         bb_dump_diff_pass = self._diff(self._bb_dump, self.gold_bb_dump, self._bb_dump_diff)
 
         self._cleanup_diff()
-        return dump_diff_pass and bb_dump_diff_pass
+        return dump_diff_pass, bb_dump_diff_pass
 
     def _init_diff(self):
         """Set up the necessary files based on the arguments given at construction"""
@@ -267,12 +267,14 @@ def main():
         sys.exit()
 
     db_diff = TskDbDiff(output_db, gold_db)
-    passed = db_diff.run_diff()
+    dump_passed, bb_dump_passed = db_diff.run_diff()
 
-    if passed:
+    if dump_passed and bb_dump_passed:
         print("Database comparison passed.")
-    else:
-        print("Database comparison failed.")
+    elif not dump_passed:
+        print("Non blackboard database comparison failed.")
+    elif not bb_dump_passed:
+        print("Blackboard database comparison failed.")
 
     return 0
 

@@ -600,7 +600,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         # Email info
-        self.email_enabled = False
+        self.email_enabled = args.email_enabled
         self.mail_server = ""
         self.mail_to = ""
         self.mail_subject = ""
@@ -710,8 +710,11 @@ class TestConfiguration(object):
         if subject_elements:
             subject = subject_elements[0]
             self.mail_subject = subject.getAttribute("value").encode().decode("utf_8")
-        if self.mail_server and self.mail_to:
+        if self.mail_server and self.mail_to and self.args.email_enabled:
             self.email_enabled = True
+            print("Email will be sent to ", self.mail_to)
+        else:
+            print("No email will be sent.")
 
 
 #-------------------------------------------------#
@@ -733,8 +736,8 @@ class TestResultsDiffer(object):
             output_dir = test_data.output_path
             gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            test_data.db_diff_pass = TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
-            gold_dump=gold_dump).run_diff()
+            test_data.db_diff_pass = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
+            gold_dump=gold_dump).run_diff())
 
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
@@ -1593,6 +1596,7 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
+        self.email_enabled = False
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1652,6 +1656,8 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
+            elif arg == "-e" or arg == "-email":
+                self.email_enabled = True
             else:
                 print(usage())
                 return False
