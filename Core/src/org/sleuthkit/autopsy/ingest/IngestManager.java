@@ -902,7 +902,7 @@ public class IngestManager {
                     abstractFileModulesRetValues.clear();
                 }
 
-                logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
+                //logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 progress.progress(fileToProcess.getName(), processedFiles);
                 for (IngestModuleAbstractFile module : fileIngestTask.getModules()) {
                     //process the file with every file module

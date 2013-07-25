@@ -781,7 +781,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     }
                 }
             }
-            logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
+            //logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
