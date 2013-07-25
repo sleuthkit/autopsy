@@ -152,3 +152,4 @@ def get_files_by_ext(dir_path, ext):
     """
     return [ os.path.join(dir_path, file) for file in os.listdir(dir_path) if
     file.endswith(ext) ]
+
