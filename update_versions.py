@@ -1,6 +1,31 @@
-# ============================================================
-#                    update_versions.py
-# ============================================================
+#
+# Autopsy Forensic Browser
+#
+# Copyright 2012-2013 Basis Technology Corp.
+# Contact: carrier <at> sleuthkit <dot> org
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+#######################
+# This script exists to help us determine update the library
+# versions appropriately. See this page for version details.
+#
+#    http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Module_Versions
+#
+# The basic idea is that this script uses javadoc/jdiff to 
+# compare the current state of the source code to the last 
+# tag and identifies if APIs were removed, added, etc. 
 #
 # When run from the Autopsy build script, this script will:
 #  - Clone Autopsy and checkout to the previous release tag
