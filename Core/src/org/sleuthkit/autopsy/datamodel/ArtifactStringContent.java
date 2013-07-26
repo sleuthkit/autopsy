@@ -82,6 +82,10 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("<td>");
                 if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
                         || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID() 
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID() 
                         || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                         || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID() ) {
                     long epoch = attr.getValueLong();

@@ -719,8 +719,13 @@ public class ReportGenerator {
             Integer type = tempatt.getAttributeTypeID();
             if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || 
                 type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()) ||
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()) ||
                 type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()) ||
-                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID())) {
+                type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID())
+                    ) {
                 if (module.length > 0) {
                     value = module[0].dateToString(tempatt.getValueLong());
                 } else {
