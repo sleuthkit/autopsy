@@ -380,8 +380,9 @@ public class ReportHTML implements TableReportModule {
      */
     private void addRowDataForSourceArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
         int artifactTypeID = sourceArtifact.getArtifactTypeID();
-        switch (artifactTypeID) {
-            case 17:
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
+        switch (type) {
+            case TSK_TAG_FILE:
                 addRowDataForFileTagArtifact(row, sourceArtifact);                
                 break;
             default:
