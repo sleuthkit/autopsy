@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,8 +33,7 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * StringContent object for a blackboard artifact, that can be looked up and used
- * to display text for the DataContent viewers
- * @author alawrence
+ * to display text for the DataContent viewers.  Displays values in artifact in HTML.
  */
 public class ArtifactStringContent implements StringContent {
 
@@ -54,21 +53,32 @@ public class ArtifactStringContent implements StringContent {
             buffer.append("<head>");
             buffer.append("<style type='text/css'>");
             buffer.append("table {table-layout:fixed;}");
-            buffer.append("td {font-family:Arial;font-size:10pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
-            buffer.append("th {font-family:Arial;font-size:10pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
-            buffer.append("p {font-family:Arial;font-size:10pt;}");
+            buffer.append("td {font-family:Arial;font-size:12pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
+            buffer.append("th {font-family:Arial;font-size:12pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
+            buffer.append("p {font-family:Arial;font-size:12pt;}");
             buffer.append("</style>");
+            buffer.append("<meta http-equiv=\"Content-Type\" content=\"text/html); charset=utf-8\">");
             buffer.append("</head>");
+            
+            // artifact name header
             buffer.append("<h4>");
             buffer.append(wrapped.getDisplayName());
             buffer.append("</h4>");
+            
+            // start table for attributes
             buffer.append("<table border='0'>");
             buffer.append("<tr>");
             buffer.append("</tr>");
+            
+            // cycle through each attribute and display in a row in the table. 
             for (BlackboardAttribute attr : wrapped.getAttributes()) {
+                
+                // name column
                 buffer.append("<tr><td>");
                 buffer.append(attr.getAttributeTypeDisplayName());
                 buffer.append("</td>");
+                
+                // value column
                 buffer.append("<td>");
                 if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
                         || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
@@ -84,7 +94,12 @@ public class ArtifactStringContent implements StringContent {
                 } else {
                     switch (attr.getValueType()) {
                         case STRING:
-                            buffer.append(attr.getValueString());
+                            String str = attr.getValueString();
+                            str = str.replaceAll(" ", "&nbsp;");
+                            str = str.replaceAll("<", "&lt;");
+                            str = str.replaceAll(">", "&gt;");
+                            str = str.replaceAll("(\r\n|\n)", "<br />");
+                            buffer.append(str);
                             break;
                         case INTEGER:
                             buffer.append(attr.getValueInt());
@@ -115,16 +130,11 @@ public class ArtifactStringContent implements StringContent {
             try {
                 path = content.getUniquePath();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+                logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() on {0} : {1}", new Object[]{content, ex.getLocalizedMessage()});
             }
             
             //add file path
-            buffer.append("<tr>");
-            buffer.append("<td>Source File</td>");
-            buffer.append("<td>");
-            buffer.append(content.getName());
-            buffer.append("</td>");
-            buffer.append("</tr>");
+
             buffer.append("<tr>");
             buffer.append("<td>Source File Path</td>");
             buffer.append("<td>");

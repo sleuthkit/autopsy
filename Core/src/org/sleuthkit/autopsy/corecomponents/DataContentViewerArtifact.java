@@ -348,6 +348,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         outputViewPane.setContentType("text/html");
     }
 
+    /**
+     * Display a single artifact from a list. 
+     * @param artifacts List of artifacts that could be displayed
+     * @param offset Index into the list for the artifact to display
+     */
     private void setDataView(List<BlackboardArtifact> artifacts, int offset) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -377,6 +382,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         this.setCursor(null);
     }
     
+    /**
+     * Set the displayed artifact to the specified one.
+     * @param artifact Artifact to display
+     */
     private void setSelectedArtifact(BlackboardArtifact artifact) {
         if(artifacts.contains(artifact)) {
             int index = artifacts.indexOf(artifact);

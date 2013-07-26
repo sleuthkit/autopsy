@@ -22,8 +22,11 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
@@ -178,5 +181,35 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
+    }
+    
+    /**
+     * Get the temp path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * @param a_case Case that directory is for
+     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @return Path to directory
+     */
+    protected static String getRATempPath(Case a_case, String mod) {
+        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod;
+        File dir = new File(tmpDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpDir;
+    }
+    
+    /**
+     * Get the output path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * @param a_case Case that directory is for
+     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @return Path to directory
+     */
+    protected static String getRAOutputPath(Case a_case, String mod) {
+        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod;
+        File dir = new File(tmpDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpDir;
     }
 }
