@@ -43,6 +43,7 @@ public class IngestMonitor {
     private Timer timer;
     private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
     private MonitorAction monitor;
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
 
     IngestMonitor() {
 
@@ -101,7 +102,7 @@ public class IngestMonitor {
             return monitor.getFreeSpace();
         } catch (SecurityException e) {
             logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e);
-            return -1;
+            return DISK_FREE_SPACE_UNKNOWN;
         }
     }
 
@@ -109,7 +110,7 @@ public class IngestMonitor {
     private class MonitorAction implements ActionListener {
 
         private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024; //100MB
-        private File root = new File(File.separator); //default, roto dir where autopsy runs
+        private File root = new File(File.separator); //default, root dir where autopsy runs
 
         MonitorAction() {
             //find drive where case is located
@@ -170,12 +171,25 @@ public class IngestMonitor {
         }
 
         /**
-         * Get free space in bytes of the drive where case dir resides
+         * Get free space in bytes of the drive where case dir resides, or -1 if
+         * unknown
          *
          * @return free space in bytes
          */
         private long getFreeSpace() throws SecurityException {
-            return root.getFreeSpace();
+            final long freeSpace = root.getFreeSpace();
+
+            if (freeSpace == 0) {
+                //check if network drive, some network filesystems always return 0
+                final String monitoredPath = root.getAbsolutePath();
+                if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
+                    return DISK_FREE_SPACE_UNKNOWN;
+
+                }
+            }
+
+            return freeSpace;
+
         }
 
         /**
@@ -191,8 +205,13 @@ public class IngestMonitor {
                 logger.log(Level.WARNING, "Unable to check for free disk space (permission issue)", e);
                 return true; //OK
             }
-            //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));
-            return freeSpace > MIN_FREE_DISK_SPACE;
+
+            if (freeSpace == DISK_FREE_SPACE_UNKNOWN) {
+                return true;
+            } else {
+                //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));
+                return freeSpace > MIN_FREE_DISK_SPACE;
+            }
         }
 
         /**
