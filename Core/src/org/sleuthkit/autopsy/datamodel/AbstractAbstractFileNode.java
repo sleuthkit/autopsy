@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -34,13 +33,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
-    /**
-     * This Action is a class instance to support multi-selection of nodes corresponding to AbstractFiles. 
-     * It must be a class instances because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick 
-     * up an Action if every selected node returns a reference to it from Node.getActions(boolean).
-     */
-    private static TagAbstractFileAction tagAction = new TagAbstractFileAction();    
-    
     /**
      * @param <T> type of the AbstractFile data to encapsulate
      * @param abstractFile file to encapsulate
@@ -161,7 +153,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
     }
-     
+    
+    
      /**
      * Fill map with AbstractFile properties
      * 
@@ -198,11 +191,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
 
-     protected static TagAbstractFileAction getTagAbstractFileActionInstance() {
-        return tagAction;
-    }
-        
-    protected static String getContentDisplayName(AbstractFile file) {
+
+    static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
         if (name.equals("..")) {
             name = DirectoryNode.DOTDOTDIR;

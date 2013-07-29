@@ -28,11 +28,11 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -44,13 +44,7 @@ import org.sleuthkit.datamodel.File;
  * the full highlighted content as a MarkupSource
  */
 class KeywordSearchFilterNode extends FilterNode {
-    /**
-     * This Action is a class instance to support multi-selection of nodes corresponding to AbstractFiles. 
-     * It must be a class instances because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick 
-     * up an Action if every selected node returns a reference to it from Node.getActions(boolean).
-     */
-    private static TagAbstractFileAction tagAction = new TagAbstractFileAction();    
-    
+
     String solrQuery;
     int previewChunk;
 
@@ -129,7 +123,7 @@ class KeywordSearchFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean popup) {
 
-        List<Action> actions = new ArrayList<>();
+        List<Action> actions = new ArrayList<Action>();
 
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
@@ -143,33 +137,33 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(File f) {
-            List<Action> actions = new ArrayList<>();
+            List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
             actions.add(null);
             actions.add(new ExtractAction("Extract File", getOriginal()));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(tagAction);
+            actions.add(new TagAction(getOriginal()));
             return actions;
         }
         
         @Override
         public List<Action> visit(DerivedFile f) {
-            List<Action> actions = new ArrayList<>();
+            List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
             actions.add(null);
             actions.add(new ExtractAction("Extract File", getOriginal()));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(tagAction);
+            actions.add(new TagAction(getOriginal()));
             return actions;
         }
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return new ArrayList<>();
+            return new ArrayList<Action>();
         }
     }
 }

@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
-import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.getTagAbstractFileActionInstance;
+import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -103,12 +104,14 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<Action>();
+
         actionsList.add(new NewWindowViewAction("View in New Window", this));
         actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new ExtractAction("Extract", content)); //might not need this actions - already local file
+        actionsList.add(new ExtractAction("Extract File", content));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(getTagAbstractFileActionInstance());
+        actionsList.add(new TagAction(content));
+
         return actionsList.toArray(new Action[0]);
     }
 

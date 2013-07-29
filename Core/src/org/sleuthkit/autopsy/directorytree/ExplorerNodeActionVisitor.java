@@ -47,12 +47,6 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
-    /**
-     * This is a class instance to support multi-selection of nodes corresponding to AbstractFiles and BlackboardArtifacts. 
-     * It is required because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every selected 
-     * node returns a reference to it from Node.getActions(boolean).
-     */    
-    private static Action tagAction = new TagAbstractFileAction();    
 
     private static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
 
@@ -84,7 +78,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final Image img) {
-        List<Action> lst = new ArrayList<>();
+        List<Action> lst = new ArrayList<Action>();
         lst.add(new ImageDetails("Image Details", img));
         //TODO lst.add(new ExtractAction("Extract Image", img));
         lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single Files", img));
@@ -98,7 +92,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final Volume vol) {
-        List<AbstractAction> lst = new ArrayList<>();
+        List<AbstractAction> lst = new ArrayList<AbstractAction>();
         lst.add(new VolumeDetails("Volume Details", vol));
         lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single File", vol));
         return lst;
@@ -106,24 +100,24 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final Directory d) {
-        List<Action> actions = new ArrayList<>();
-        actions.add(tagAction);
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new TagAction(d));
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final VirtualDirectory d) {
-        List<Action> actions = new ArrayList<>();
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new TagAction(d));
         actions.add(new ExtractAction("Extract Directory", d));
-        actions.add(tagAction);
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final DerivedFile d) {
-        List<Action> actions = new ArrayList<>();
-        actions.add(new ExtractAction("Extract Directory", d));
-        actions.add(tagAction);
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new ExtractAction("Extract File", d));
+        actions.add(new TagAction(d));
         return actions;
     }
 
@@ -131,7 +125,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final LocalFile d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
-        actions.add(tagAction);
+        actions.add(new TagAction(d));
         return actions;
     }
 
@@ -139,7 +133,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new ExtractAction("Extract File", d));
-        actions.add(tagAction);
+        actions.add(new TagAction(d));
         return actions;
     }
 
