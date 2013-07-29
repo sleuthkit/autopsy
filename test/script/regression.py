@@ -16,7 +16,7 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
-
+from tskdbdiff import TskDbDiff, TskDbDiffException
 import codecs
 import datetime
 import logging
@@ -190,7 +190,8 @@ class TestRunner(object):
 
         try:
             # Dump the database before we diff or use it for rebuild
-            TskDbDiff.dump_output_db(test_data)
+            TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
+            test_data.get_sorted_data_path(DBType.OUTPUT))
         except sqlite3.OperationalError as e:
             print("Ingest did not run properly.",
             "Make sure no other instances of Autopsy are open and try again.")
@@ -221,8 +222,7 @@ class TestRunner(object):
 
         TestResultsDiffer.run_diff(test_data)
         test_data.overall_passed = (test_data.html_report_passed and
-        test_data.errors_diff_passed and test_data.sorted_data_passed and
-        test_data.db_dump_passed and test_data.db_diff_results.passed)
+        test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
@@ -396,10 +396,9 @@ class TestData(object):
         gold_archive: a pathto_File, the gold standard archive
         logs_dir: a pathto_Dir, the location where autopsy logs are stored
         solr_index: a pathto_Dir, the locatino of the solr index
-        db_diff_results: a DiffResults, the results of the database comparison
         html_report_passed: a boolean, did the HTML report diff pass?
         errors_diff_passed: a boolean, did the error diff pass?
-        db_dump_passed: a boolean, did the db dump diff pass?
+        db_diff_passed: a boolean, did the db diff pass?
         overall_passed: a boolean, did the test pass?
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
@@ -448,11 +447,9 @@ class TestData(object):
         self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
         "ModuleOutput", "KeywordSearch")
         # Results and Info
-        self.db_diff_results = None
         self.html_report_passed = False
         self.errors_diff_passed = False
-        self.sorted_data_passed = False
-        self.db_dump_passed = False
+        self.db_diff_passed = False
         self.overall_passed = False
         # Ingest info
         self.total_test_time = ""
@@ -603,7 +600,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         # Email info
-        self.email_enabled = False
+        self.email_enabled = args.email_enabled
         self.mail_server = ""
         self.mail_to = ""
         self.mail_subject = ""
@@ -713,356 +710,12 @@ class TestConfiguration(object):
         if subject_elements:
             subject = subject_elements[0]
             self.mail_subject = subject.getAttribute("value").encode().decode("utf_8")
-        if self.mail_server and self.mail_to:
+        if self.mail_server and self.mail_to and self.args.email_enabled:
             self.email_enabled = True
-
-
-
-class TskDbDiff(object):
-    """Represents the differences between the gold and output databases.
-
-    Contains methods to compare two databases.
-
-    Attributes:
-        gold_artifacts:
-        autopsy_artifacts:
-        gold_attributes:
-        autopsy_attributes:
-        gold_objects:
-        autopsy_objects:
-        artifact_comparison:
-        attribute_comparision:
-        report_errors: a listof_listof_String, the error messages that will be
-        printed to screen in the run_diff method
-        passed: a boolean, did the diff pass?
-        autopsy_db_file:
-        gold_db_file:
-    """
-    def __init__(self, output_db_path, gold_db_path):
-        """Constructor for TskDbDiff.
-
-        Args:
-            output_db_path: a pathto_File, the output database
-            gold_db_path: a pathto_File, the gold database
-        """
-        self.gold_artifacts = []
-        self.autopsy_artifacts = []
-        self.gold_attributes = 0
-        self.autopsy_attributes = 0
-        self.gold_objects = 0
-        self.autopsy_objects = 0
-        self.artifact_comparison = []
-        self.attribute_comparison = []
-        self.report_errors = []
-        self.autopsy_db_file = output_db_path
-        self.gold_db_file = gold_db_path
-
-    def _get_artifacts(self, cursor):
-        """Get a list of artifacts from the given SQLCursor.
-
-        Args:
-            cursor: SQLCursor - the cursor to execute on
-
-        Returns:
-            listof_Artifact - the artifacts found by the query
-        """
-        cursor.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
-        length = cursor.fetchone()[0] + 1
-        artifacts = []
-        for type_id in range(1, length):
-            cursor.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
-            artifacts.append(cursor.fetchone()[0])
-        return artifacts
-
-    def _count_attributes(self, cursor):
-        """Count the attributes from the given SQLCursor.
-
-        Args:
-            cursor: SQLCursor - the cursor to execute on
-
-        Returns:
-            Nat - the number of attributes found by the query
-        """
-        cursor.execute("SELECT COUNT(*) FROM blackboard_attributes")
-        return cursor.fetchone()[0]
-
-    def _count_objects(self, cursor):
-        """Count the objects from the given SQLCursor.
-
-        Args:
-            cursor: SQLCursor - the cursor to execute on
-
-        Returns:
-            Nat - the number of objects found by the query
-        """
-        cursor.execute("SELECT COUNT(*) FROM tsk_objects")
-        return cursor.fetchone()[0]
-
-    def _compare_bb_artifacts(self):
-        """Compares the blackboard artifact counts of two databases.
-
-        Returns:
-            True if the artifacts are the same, false otherwise.
-        """
-        exceptions = []
-        passed = True
-        if self.gold_artifacts != self.autopsy_artifacts:
-            msg = "There was a difference in the number of artifacts.\n"
-            exceptions.append(msg)
-            Errors.add_email_msg(msg)
-            passed = False
+            print("Email will be sent to ", self.mail_to)
         else:
-            rner = len(self.gold_artifacts)
-            for type_id in range(1, rner):
-                if self.gold_artifacts[type_id] != self.autopsy_artifacts[type_id]:
-                    error = str("Artifact counts do not match for type id %d. " % type_id)
-                    error += str("Gold: %d, Test: %d" %
-                                (self.gold_artifacts[type_id],
-                                 self.autopsy_artifacts[type_id]))
-                    exceptions.append(error)
-                    passed = False
-        self.report_errors.append(exceptions)
-        return passed
+            print("No email will be sent.")
 
-    def _compare_bb_attributes(self):
-        """Compares the blackboard attribute counts of two databases.
-
-        Updates this TskDbDiff's report_errors with the error messages from the
-        attribute diff
-
-        Returns:
-            True is the attributes are the same, False otherwise.
-        """
-        exceptions = []
-        passed = True
-        if self.gold_attributes != self.autopsy_attributes:
-            error = "Attribute counts do not match. "
-            error += str("Gold: %d, Test: %d" % (self.gold_attributes, self.autopsy_attributes))
-            exceptions.append(error)
-            msg = "There was a difference in the number of attributes.\n"
-            Errors.add_email_msg(msg)
-            passed = False
-        self.report_errors.append(exceptions)
-        return passed
-
-    def _compare_tsk_objects(self):
-        """Compares the TSK object counts of two databases."""
-        exceptions = []
-        passed = True
-        if self.gold_objects != self.autopsy_objects:
-            error = "TSK Object counts do not match. "
-            error += str("Gold: %d, Test: %d" % (self.gold_objects, self.autopsy_objects))
-            exceptions.append(error)
-            msg ="There was a difference between the tsk object counts.\n"
-            Errors.add_email_msg(msg)
-            passed = False
-        self.report_errors.append(exceptions)
-        return passed
-
-    def _get_basic_counts(self, autopsy_cur, gold_cur):
-        """Count the items necessary to compare the databases.
-
-        Gets the counts of objects, artifacts, and attributes in the Gold
-        and Ouput databases and updates this TskDbDiff's attributes
-        accordingly
-
-        Args:
-            autopsy_cur: SQLCursor - the cursor for the output database
-            gold_cur:    SQLCursor - the cursor for the gold database
-        """
-        try:
-            # Objects
-            self.gold_objects = self._count_objects(gold_cur)
-            self.autopsy_objects = self._count_objects(autopsy_cur)
-            # Artifacts
-            self.gold_artifacts = self._get_artifacts(gold_cur)
-            self.autopsy_artifacts = self._get_artifacts(autopsy_cur)
-            # Attributes
-            self.gold_attributes = self._count_attributes(gold_cur)
-            self.autopsy_attributes = self._count_attributes(autopsy_cur)
-        except sqlite3.Error as e:
-            Errors.print_error("Error while querying the databases:" + str(e))
-
-    def run_diff(self):
-        """Basic test between output and gold databases.
-
-        Compares only counts of objects and blackboard items.
-        Note: SQLITE needs unix style pathing
-
-        Raises:
-            sqlite3.OperationalError, if either of the database files do not
-            exist
-        """
-        # Get connections and cursors to output / gold databases
-        autopsy_con = sqlite3.connect(self.autopsy_db_file)
-        autopsy_cur = autopsy_con.cursor()
-        gold_con = sqlite3.connect(self.gold_db_file)
-        gold_cur = gold_con.cursor()
-
-        # Get Counts of objects, artifacts, and attributes
-        self._get_basic_counts(autopsy_cur, gold_cur)
-
-        # We're done with the databases, close up the connections
-        autopsy_con.close()
-        gold_con.close()
-
-        # Compare counts
-        objects_passed = self._compare_tsk_objects()
-        artifacts_passed = self._compare_bb_artifacts()
-        attributes_passed = self._compare_bb_attributes()
-
-        self.passed = objects_passed and artifacts_passed and attributes_passed
-
-        self.artifact_comparison = self.report_errors[1]
-        self.attribute_comparison = self.report_errors[2]
-
-        okay = "All counts match."
-        print_report(self.report_errors[0], "COMPARE TSK OBJECTS", okay)
-        print_report(self.report_errors[1], "COMPARE ARTIFACTS", okay)
-        print_report(self.report_errors[2], "COMPARE ATTRIBUTES", okay)
-
-        return DiffResults(self)
-
-    def _dump_output_db_bb(autopsy_con, db_file, data_file, sorted_data_file):
-        """Dumps sorted text results to the given output location.
-
-        Smart method that deals with a blackboard comparison to avoid issues
-        with different IDs based on when artifacts were created.
-
-        Args:
-            autopsy_con: a SQLConn to the autopsy database.
-            db_file: a pathto_File, the output database.
-            data_file: a pathto_File, the dump file to write to
-            sorted_data_file: a pathto_File, the sorted dump file to write to
-        """
-        autopsy_cur2 = autopsy_con.cursor()
-        # Get the list of all artifacts
-        # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
-        autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
-        database_log = codecs.open(data_file, "wb", "utf_8")
-        rw = autopsy_cur2.fetchone()
-        appnd = False
-        counter = 0
-        artifact_count = 0
-        artifact_fail = 0
-        # Cycle through artifacts
-        try:
-            while (rw != None):
-                # File Name and artifact type
-                if(rw[0] != None):
-                    database_log.write(rw[0] + rw[1] + ' <artifact type="' + rw[2] + '" > ')
-                else:
-                    database_log.write(rw[1] + ' <artifact type="' + rw[2] + '" > ')
-
-                # Get attributes for this artifact
-                autopsy_cur1 = autopsy_con.cursor()
-                looptry = True
-                artifact_count += 1
-                try:
-                    key = ""
-                    key = str(rw[3])
-                    key = key,
-                    autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
-                    attributes = autopsy_cur1.fetchall()
-                except sqlite3.Error as e:
-                    Errors.print_error(str(e))
-                    Errors.print_error(str(rw[3]))
-                    msg ="Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
-                    Errors.add_email_msg(msg)
-                    looptry = False
-                    print(artifact_fail)
-                    artifact_fail += 1
-                    print(artifact_fail)
-                    database_log.write('Error Extracting Attributes');
-
-                # Print attributes
-                if(looptry == True):
-                    src = attributes[0][0]
-                    for attr in attributes:
-                        val = 3 + attr[2]
-                        numvals = 0
-                        for x in range(3, 6):
-                            if(attr[x] != None):
-                                numvals += 1
-                        if(numvals > 1):
-                            msg = "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
-                            Errors.add_email_msg(msg)
-                            Errors.print_error(msg)
-                            if(not appnd):
-                                Errors.add_email_attachment(db_file)
-                                appnd = True
-                        if(not attr[0] == src):
-                            msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
-                            Errors.add_email_msg(msg)
-                            Errors.print_error(msg)
-                            if(not appnd):
-                                Errors.add_email_attachment(db_file)
-                                appnd = True
-                        try:
-                            database_log.write('<attribute source="' + attr[0] + '" type="' + attr[1] + '" value="')
-                            inpval = attr[val]
-                            if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
-                                inpval = str(inpval)
-                            patrn = re.compile("[\n\0\a\b\r\f\e]")
-                            inpval = re.sub(patrn, ' ', inpval)
-                            database_log.write(inpval)
-                        except IOError as e:
-                            Errors.print_error(str(e))
-
-                        database_log.write('" />')
-                database_log.write(' <artifact/>\n')
-                rw = autopsy_cur2.fetchone()
-
-            # Now sort the file
-            srtcmdlst = ["sort", data_file, "-o", sorted_data_file]
-            subprocess.call(srtcmdlst)
-            print(artifact_fail)
-            if(artifact_fail > 0):
-                msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
-                Errors.add_email_msg(msg)
-        except Exception as e:
-            Errors.print_error('outer exception: ' + str(e))
-
-    def _dump_output_db_nonbb(test_data):
-        """Dumps a database to a text file.
-
-        Does not dump the artifact and attributes.
-
-        Args:
-            test_data: the TestData that corresponds with this dump.
-        """
-        # Make a copy of the DB
-        autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
-        backup_db_file = test_data.get_db_path(DBType.BACKUP)
-        shutil.copy(autopsy_db_file, backup_db_file)
-        autopsy_con = sqlite3.connect(backup_db_file)
-
-        # Delete the blackboard tables
-        autopsy_con.execute("DROP TABLE blackboard_artifacts")
-        autopsy_con.execute("DROP TABLE blackboard_attributes")
-
-        # Write to the database dump
-        with codecs.open(test_data.test_dbdump, "wb", "utf_8") as db_log:
-            for line in autopsy_con.iterdump():
-                db_log.write('%s\n' %line)
-
-
-    def dump_output_db(test_data):
-        """Dumps the given database to text files for later comparison.
-
-        Args:
-            test_data: the TestData that corresponds to this dump.
-        """
-        autopsy_db_file = test_data.get_db_path(DBType.OUTPUT)
-        autopsy_con = sqlite3.connect(autopsy_db_file)
-        autopsy_cur = autopsy_con.cursor()
-        # Try to query the databases. Ignore any exceptions, the function will
-        # return an error later on if these do fail
-        TskDbDiff._dump_output_db_bb(autopsy_con, autopsy_db_file,
-        test_data.autopsy_data_file,
-        test_data.get_sorted_data_path(DBType.OUTPUT))
-        TskDbDiff._dump_output_db_nonbb(test_data)
-        autopsy_con.close()
 
 #-------------------------------------------------#
 #     Functions relating to comparing outputs     #
@@ -1078,11 +731,13 @@ class TestResultsDiffer(object):
             databaseDiff: TskDbDiff object created based off test_data
         """
         try:
-            # Diff the gold and output databases
-            output_db_path = test_data.get_db_path(DBType.OUTPUT)
-            gold_db_path = test_data.get_db_path(DBType.GOLD)
-            db_diff = TskDbDiff(output_db_path, gold_db_path)
-            test_data.db_diff_results = db_diff.run_diff()
+            output_db = test_data.get_db_path(DBType.OUTPUT)
+            gold_db = test_data.get_db_path(DBType.GOLD)
+            output_dir = test_data.output_path
+            gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
+            gold_dump = test_data.get_db_dump_path(DBType.GOLD)
+            test_data.db_diff_pass = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
+            gold_dump=gold_dump).run_diff())
 
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
@@ -1093,18 +748,6 @@ class TestResultsDiffer(object):
             passed = TestResultsDiffer._compare_text(output_errors, gold_errors,
             replace)
             test_data.errors_diff_passed = passed
-
-            # Compare smart blackboard results
-            output_data = test_data.get_sorted_data_path(DBType.OUTPUT)
-            gold_data = test_data.get_sorted_data_path(DBType.GOLD)
-            passed = TestResultsDiffer._compare_text(output_data, gold_data)
-            test_data.sorted_data_passed = passed
-
-            # Compare the rest of the database (non-BB)
-            output_dump = test_data.get_db_dump_path(DBType.OUTPUT)
-            gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            passed = TestResultsDiffer._compare_text(output_dump, gold_dump)
-            test_data.db_dump_passed = passed
 
             # Compare html output
             gold_report_path = test_data.get_html_report_path(DBType.GOLD)
@@ -1118,6 +761,8 @@ class TestResultsDiffer(object):
 
         except sqlite3.OperationalError as e:
             Errors.print_error("Tests failed while running the diff:\n")
+            Errors.print_error(str(e))
+        except TskDbDiffException as e:
             Errors.print_error(str(e))
         except Exception as e:
             Errors.print_error("Tests failed due to an error, try rebuilding or creating gold standards.\n")
@@ -1339,14 +984,14 @@ class Reports(object):
             info += "<tr><td>Out Of Disk Space:\
                              <p style='font-size: 11px;'>(will skew other test results)</p></td>"
             info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
-            info += "<tr><td>TSK Objects Count:</td>"
-            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
-            info += "<tr><td>Artifacts Count:</td>"
-            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
-            info += "<tr><td>Attributes Count:</td>"
-            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
+#            info += "<tr><td>TSK Objects Count:</td>"
+#            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
+#            info += "<tr><td>Artifacts Count:</td>"
+#            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
+#            info += "<tr><td>Attributes Count:</td>"
+#            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
             info += "</table>\
-                     </div>"
+                    </div>"
             # For all the general print statements in the test_config
             output = "<div id='general'>\
                       <h2><a name='" + test_data.image_name + "-general'>General Output</a></h2>\
@@ -1453,12 +1098,12 @@ class Reports(object):
             vars.append( str(test_data.indexed_files) )
             vars.append( str(test_data.indexed_chunks) )
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
-            vars.append( str(test_data.db_diff_results.output_objs) )
-            vars.append( str(test_data.db_diff_results.output_artifacts) )
-            vars.append( str(test_data.db_diff_results.output_objs) )
+#            vars.append( str(test_data.db_diff_results.output_objs) )
+#            vars.append( str(test_data.db_diff_results.output_artifacts) )
+#            vars.append( str(test_data.db_diff_results.output_objs) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
-            vars.append( test_data.db_diff_results.get_artifact_comparison() )
-            vars.append( test_data.db_diff_results.get_attribute_comparison() )
+#            vars.append( test_data.db_diff_results.get_artifact_comparison() )
+#            vars.append( test_data.db_diff_results.get_attribute_comparison() )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
             vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
@@ -1493,12 +1138,12 @@ class Reports(object):
             titles.append("Indexed Files Count")
             titles.append("Indexed File Chunks Count")
             titles.append("Out Of Disk Space")
-            titles.append("Tsk Objects Count")
-            titles.append("Artifacts Count")
-            titles.append("Attributes Count")
+#            titles.append("Tsk Objects Count")
+#            titles.append("Artifacts Count")
+#            titles.append("Attributes Count")
             titles.append("Gold Database Name")
-            titles.append("Artifacts Comparison")
-            titles.append("Attributes Comparison")
+#            titles.append("Artifacts Comparison")
+#            titles.append("Attributes Comparison")
             titles.append("Gold Report Name")
             titles.append("Report Comparison")
             titles.append("Ant Command Line")
@@ -1951,6 +1596,7 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
+        self.email_enabled = False
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -2010,6 +1656,8 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
+            elif arg == "-e" or arg == "-email":
+                self.email_enabled = True
             else:
                 print(usage())
                 return False

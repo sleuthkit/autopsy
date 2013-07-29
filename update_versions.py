@@ -1,7 +1,32 @@
-# ============================================================
-#                    update_versions.py
-# ============================================================
-# 
+#
+# Autopsy Forensic Browser
+#
+# Copyright 2012-2013 Basis Technology Corp.
+# Contact: carrier <at> sleuthkit <dot> org
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+#######################
+# This script exists to help us determine update the library
+# versions appropriately. See this page for version details.
+#
+#    http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Module_Versions
+#
+# The basic idea is that this script uses javadoc/jdiff to 
+# compare the current state of the source code to the last 
+# tag and identifies if APIs were removed, added, etc. 
+#
 # When run from the Autopsy build script, this script will:
 #  - Clone Autopsy and checkout to the previous release tag
 #    as found in the NEWS.txt file
@@ -15,9 +40,9 @@
 #     a) Major version
 #     b) Specification version
 #     c) Implementation version
-#  - Updates the dependencies on each module depending on the 
+#  - Updates the dependencies on each module depending on the
 #    updated version numbers
-# 
+#
 # Optionally, when run from the command line, one can provide the
 # desired tag to compare the current version to, the directory for
 # the current version of Autopsy, and whether to automatically
@@ -80,9 +105,17 @@ class Module:
 class Spec:
     # Initialize specification number, where num is a string like x.y
     def __init__(self, num):
-        l, r = num.split(".")
+        self.third = None
+        spec_nums = num.split(".")
+        if len(spec_nums) == 3:
+            final = spec_nums[2]
+            self.third = int(final)
+
+        l, r = spec_nums[0], spec_nums[1]
+
         self.left = int(l)
         self.right = int(r)
+
     def __str__(self):
         return self.get()
     def __cmp__(self, other):
@@ -114,7 +147,10 @@ class Spec:
     def increment(self):
         return str(self.left) + "." + str(self.right + 1)
     def get(self):
-        return str(self.left) + "." + str(self.right)
+        spec_str = str(self.left) + "." + str(self.right)
+        if self.third is not None:
+            spec_str += "." + str(self.final)
+        return spec_str
     def set(self, num):
         if isinstance(num, str):
             l, r = num.split(".")
@@ -150,7 +186,7 @@ def compare_xml(module, apiname_tag, apiname_cur):
     oldapi = fix_path("build/jdiff-xml/" + apiname_tag + "-" + module.name)
     newapi = fix_path("build/jdiff-xml/" + apiname_cur + "-" + module.name)
     docs = fix_path(docdir + "/" + module.name)
-    # Comments are strange. They look for a file with additional user comments in a 
+    # Comments are strange. They look for a file with additional user comments in a
     # directory like docs/user_comments_for_xyz. The problem being that xyz is the
     # path to the new/old api. So xyz turns into multiple directories for us.
     # i.e. user_comments_for_build/jdiff-xml/[tag name]-[module name]_to_build/jdiff-xml
@@ -158,6 +194,10 @@ def compare_xml(module, apiname_tag, apiname_cur):
     jdiff_com = fix_path(comments + "/jdiff-xml")
     tag_comments = fix_path(jdiff_com + "/" + apiname_tag + "-" + module.name + "_to_build")
     jdiff_tag_com = fix_path(tag_comments + "/jdiff-xml")
+
+    if not os.path.exists(jdiff):
+        print("JDIFF doesn't exist.")
+
     make_dir(docs)
     make_dir(comments)
     make_dir(jdiff_com)
@@ -251,7 +291,7 @@ def get_tag(sourcepath):
             if second_instance:
                 ver = line.split("VERSION ")[1]
                 ver = ver.split(" -")[0]
-                return "autopsy-" + ver
+                return ("autopsy-" + ver).strip()
             else:
                 second_instance = True
                 continue
@@ -395,9 +435,10 @@ def get_specification(project, manifest):
         for line in f:
             if "OpenIDE-Module-Specification-Version:" in line:
                 return Spec(line.split(": ")[1].strip())
-    except:
+    except Exception as e:
         print("Error parsing Specification version for")
         print(project)
+        print(e)
 
 # Set the specification version in the given project properties file
 # but if it can't be found there, set it in the manifest file
@@ -473,8 +514,9 @@ def get_release(manifest):
                 return int(line.split("/")[1].strip())
         f.close()
     except:
-        print("Error parsing Release version for")
-        print(manifest)
+        #print("Error parsing Release version for")
+        #print(manifest)
+        return 0
 
 # Set the release version in the given manifest file
 def set_release(manifest, num):
@@ -545,7 +587,7 @@ def update_versions(modules, source):
             module.set_versions(versions)
         sys.stdout.flush()
 
-# Given a list of the added modules, remove the modules 
+# Given a list of the added modules, remove the modules
 # which have the correct 'new module default' version number
 def remove_correct_added(modules):
     correct = [x for x in modules]
@@ -591,6 +633,7 @@ def print_version_updates(modules):
             output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
             output += ("\n")
             print(output)
+            sys.stdout.flush()
             f.write(output)
         elif module.ret == 102:
             output = (module.name + ":\n")
@@ -604,6 +647,7 @@ def print_version_updates(modules):
             output += ("  Updated Release version:\t\t" + str(versions[2] + 1) + "\n")
             output += ("\n")
             print(output)
+            sys.stdout.flush()
             f.write(output)
         elif module.ret == 1:
             output = (module.name + ":\n")
@@ -614,12 +658,17 @@ def print_version_updates(modules):
             output += ("\n")
             print(output)
             f.write(output)
+            sys.stdout.flush()
         elif module.ret == 100:
             output = (module.name + ":\n")
-            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
-            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
-            output += ("\n")
+            if versions[1] is None:
+                output += ("  No Implementation version.\n")
+            else:
+                output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
+                output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
+                output += ("\n")
             print(output)
+            sys.stdout.flush()
             f.write(output)
         elif module.ret is None:
             output = ("Added " + module.name + ":\n")
@@ -636,6 +685,7 @@ def print_version_updates(modules):
                 output += ("  Updated Release version:\t\t1\n")
                 output += ("\n")
             print(output)
+            sys.stdout.flush()
             f.write(output)
         sys.stdout.flush()
     f.close()
@@ -721,7 +771,7 @@ def do_git(tag, tag_dir):
         return True
     except Exception as ex:
         print("Error cloning and checking out Autopsy: ",  sys.exc_info()[0])
-        print ex
+        print(str(ex))
         print("The terminal you are using most likely does not recognize git commands.")
         return False
 
@@ -780,7 +830,7 @@ def usage():
    by the given tag. Then, compare the XML files to see which modules
    need updated version numbers. If the dry run tag is not given, the
    module numbers will be automatically updated.
-        
+
  OPTIONAL FLAGS:
    -t --tag      The tag name in git. Otherwise the NEWS file in source
                  will be used to determine the previous tag.
