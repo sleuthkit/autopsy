@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -426,7 +427,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
-                if (freeDiskSpace != -1 && size > 0) { //if known free space and file not empty
+                if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && size > 0) { //if known free space and file not empty
                     long newDiskSpace = freeDiskSpace - size;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = "Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName;
