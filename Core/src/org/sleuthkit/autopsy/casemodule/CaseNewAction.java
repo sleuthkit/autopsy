@@ -30,8 +30,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
-@ServiceProvider(service = CaseNewAction.class)
-public final class CaseNewAction implements ActionListener {
+@ServiceProvider(service = CaseNewActionInterface.class)
+public final class CaseNewAction implements CaseNewActionInterface {
 
     private NewCaseWizardAction wizard = SystemAction.get(NewCaseWizardAction.class);
 
