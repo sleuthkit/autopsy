@@ -248,6 +248,15 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Sets the Close button label (default is "Close").
+     *
+     * @param text The new label for the button.
+     */
+    public void setCloseButtonText(String text) {
+        closeButton.setText(text);
+    }    
+    
+    /**
      * Close the open recent cases window.
      */
     public static void closeOpenRecentCasesWindow(){
