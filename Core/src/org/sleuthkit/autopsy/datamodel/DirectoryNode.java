@@ -20,10 +20,11 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
@@ -34,7 +35,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * are more directories.
  */
 public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
-
+    
     public static final String DOTDOTDIR = "[parent folder]";
     public static final String DOTDIR = "[current folder]";
 
@@ -67,7 +68,14 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
+
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        if (file == null) {
+            Logger.getLogger(DirectoryNode.class.getName()).log(Level.SEVERE, "Node not associated with an AbstractFile object");                
+            return actions.toArray(new Action[0]);
+        }   
+        
         if (!getDirectoryBrowseMode()) {
             actions.add(new ViewContextAction("View File in Directory", this));
             actions.add(null); // creates a menu separator
@@ -75,8 +83,13 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actions.add(new NewWindowViewAction("View in New Window", this));
         actions.add(null); // creates a menu separator
         actions.add(new ExtractAction("Extract Directory", this));
-        actions.add(null); // creates a menu separator
-        actions.add(new TagAction(this));
+        
+        String name = getDisplayName();
+        if (!name.equals(DirectoryNode.DOTDIR) && !name.equals(DirectoryNode.DOTDOTDIR)) {
+            actions.add(null); // creates a menu separator
+            actions.add(getTagAbstractFileActionInstance());
+        }
+        
         return actions.toArray(new Action[0]);
     }
 
