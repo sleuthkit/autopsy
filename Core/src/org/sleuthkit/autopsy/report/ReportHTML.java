@@ -399,10 +399,10 @@ public class ReportHTML implements TableReportModule {
         try {
             AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
 
-            // Don't make a local copy of the file if it is unallocated space or a virtual directory.
-            if (file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR) {
+            // Don't make a local copy of the file if it is a directory or unallocated space.
+            if (file.isDir() ||
+                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
                 row.add("");
                 return;
             }
