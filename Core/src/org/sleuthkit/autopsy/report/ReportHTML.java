@@ -380,8 +380,9 @@ public class ReportHTML implements TableReportModule {
      */
     private void addRowDataForSourceArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
         int artifactTypeID = sourceArtifact.getArtifactTypeID();
-        switch (artifactTypeID) {
-            case 17:
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
+        switch (type) {
+            case TSK_TAG_FILE:
                 addRowDataForFileTagArtifact(row, sourceArtifact);                
                 break;
             default:
@@ -399,10 +400,10 @@ public class ReportHTML implements TableReportModule {
         try {
             AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
 
-            // Don't make a local copy of the file if it is unallocated space or a virtual directory.
-            if (file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR) {
+            // Don't make a local copy of the file if it is a directory or unallocated space.
+            if (file.isDir() ||
+                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
                 row.add("");
                 return;
             }
@@ -708,6 +709,32 @@ public class ReportHTML implements TableReportModule {
             FileUtil.copy(in, output);
             in.close();
             output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png");
+            output = new FileOutputStream(new File(path + File.separator + "Contacts.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png");
+            output = new FileOutputStream(new File(path + File.separator + "Messages.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png");
+            output = new FileOutputStream(new File(path + File.separator + "Call Logs.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png");
+            output = new FileOutputStream(new File(path + File.separator + "Calendar Entries.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
         } finally {

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -30,7 +30,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -59,47 +58,12 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
 
-    public ReportWizardAction() {
-        setEnabled(false);
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
-                    Case newCase = (Case) evt.getNewValue();
-                    setEnabled(newCase != null);
-
-                    // Make the cases' Reoports folder, if it doesn't exist
-                    if (newCase != null) {
-                        boolean exists = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).exists();
-                        if (!exists) {
-                            boolean reportCreate = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).mkdirs();
-                            if (!reportCreate) {
-                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Initialize the Generate Report button
-        toolbarButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ReportWizardAction.this.actionPerformed(e);
-            }
-        });
-
-    }
-
     /**
      * When the Generate Report button or menu item is selected, open the reporting wizard.
      * When the wizard is finished, create a ReportGenerator with the wizard information,
      * and start all necessary reports.
      */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void actionPerformed(ActionEvent e) {
+    public static void doReportWizard() {
         // Create the wizard
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
@@ -133,7 +97,45 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
             
             // Open the progress window for the user
             generator.displayProgressPanels();
-        }
+        }        
+    }
+
+    public ReportWizardAction() {
+        setEnabled(false);
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                    Case newCase = (Case) evt.getNewValue();
+                    setEnabled(newCase != null);
+
+                    // Make the cases' Reoports folder, if it doesn't exist
+                    if (newCase != null) {
+                        boolean exists = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).exists();
+                        if (!exists) {
+                            boolean reportCreate = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).mkdirs();
+                            if (!reportCreate) {
+                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize the Generate Report button
+        toolbarButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ReportWizardAction.this.actionPerformed(e);
+            }
+        });
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void actionPerformed(ActionEvent e) {
+        doReportWizard();
     }
 
     @Override

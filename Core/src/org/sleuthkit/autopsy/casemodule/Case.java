@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-public class Case {
+public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String appName = Version.getName() + " " + autopsyVer;
@@ -130,6 +130,7 @@ public class Case {
         this.xmlcm = xmlcm;
         this.db = db;
         this.services = new Services(db);
+        db.addErrorObserver(this);
     }
 
     /**
@@ -982,5 +983,10 @@ public class Case {
             // close all top components
             CoreComponentControl.closeCoreWindows();
         }
+    }
+    
+    @Override
+    public void receiveError(String context, String errorMessage) {
+        MessageNotifyUtil.Notify.error(context, errorMessage);        
     }
 }

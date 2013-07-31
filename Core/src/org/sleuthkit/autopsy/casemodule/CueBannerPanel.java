@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.netbeans.api.options.OptionsDisplayer;
 
 /**
  *
@@ -61,11 +62,11 @@ public class CueBannerPanel extends javax.swing.JPanel {
         closeButton = new javax.swing.JButton();
         editorPanel = new javax.swing.JPanel();
         newCaseButton = new javax.swing.JButton();
-        openCaseButton = new javax.swing.JButton();
         openRecentButton = new javax.swing.JButton();
         createNewLabel = new javax.swing.JLabel();
-        openLabel = new javax.swing.JLabel();
         openRecentLabel = new javax.swing.JLabel();
+        openCaseButton = new javax.swing.JButton();
+        openLabel = new javax.swing.JLabel();
         autopsyLogo = new javax.swing.JLabel();
         this.autopsyLogo.setText("");
 
@@ -83,6 +84,24 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
+        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N
+        openRecentButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentButton.text")); // NOI18N
+        openRecentButton.setBorder(null);
+        openRecentButton.setBorderPainted(false);
+        openRecentButton.setContentAreaFilled(false);
+        openRecentButton.setPreferredSize(new java.awt.Dimension(70, 70));
+        openRecentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openRecentButtonActionPerformed(evt);
+            }
+        });
+
+        createNewLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
+
+        openRecentLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        openRecentLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentLabel.text")); // NOI18N
+
         openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
         openCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseButton.text")); // NOI18N
         openCaseButton.setBorder(null);
@@ -96,26 +115,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N
-        openRecentButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentButton.text")); // NOI18N
-        openRecentButton.setBorder(null);
-        openRecentButton.setBorderPainted(false);
-        openRecentButton.setContentAreaFilled(false);
-        openRecentButton.setPreferredSize(new java.awt.Dimension(70, 70));
-        openRecentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openRecentButtonActionPerformed(evt);
-            }
-        });
-
-        createNewLabel.setFont(new java.awt.Font("Tahoma", 0, 13));
-        createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
-
-        openLabel.setFont(new java.awt.Font("Tahoma", 0, 13));
+        openLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
         openLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openLabel.text")); // NOI18N
-
-        openRecentLabel.setFont(new java.awt.Font("Tahoma", 0, 13));
-        openRecentLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentLabel.text")); // NOI18N
 
         javax.swing.GroupLayout editorPanelLayout = new javax.swing.GroupLayout(editorPanel);
         editorPanel.setLayout(editorPanelLayout);
@@ -128,40 +129,31 @@ public class CueBannerPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(createNewLabel))
                     .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openLabel))
-                    .addGroup(editorPanelLayout.createSequentialGroup()
                         .addComponent(openRecentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openRecentLabel)))
+                        .addComponent(openRecentLabel))
+                    .addGroup(editorPanelLayout.createSequentialGroup()
+                        .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(openLabel)))
                 .addContainerGap(60, Short.MAX_VALUE))
         );
         editorPanelLayout.setVerticalGroup(
             editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(editorPanelLayout.createSequentialGroup()
-                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addGap(32, 32, 32)
-                        .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addGap(50, 50, 50)
-                        .addComponent(createNewLabel)))
-                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addGap(31, 31, 31)
-                        .addComponent(openLabel)))
-                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openRecentButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(editorPanelLayout.createSequentialGroup()
-                        .addGap(32, 32, 32)
-                        .addComponent(openRecentLabel)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(32, 32, 32)
+                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(createNewLabel)
+                    .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(openRecentLabel)
+                    .addComponent(openRecentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addGroup(editorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(openLabel)
+                    .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
 
         autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
@@ -188,14 +180,14 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     .addComponent(autopsyLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(editorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(closeButton)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void newCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCaseButtonActionPerformed
-        Lookup.getDefault().lookup(CaseNewAction.class).actionPerformed(evt);
+        Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
     }//GEN-LAST:event_newCaseButtonActionPerformed
 
     private void openCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCaseButtonActionPerformed
@@ -255,6 +247,15 @@ public class CueBannerPanel extends javax.swing.JPanel {
         closeButton.addActionListener(e);
     }
 
+    /**
+     * Sets the Close button label (default is "Close").
+     *
+     * @param text The new label for the button.
+     */
+    public void setCloseButtonText(String text) {
+        closeButton.setText(text);
+    }    
+    
     /**
      * Close the open recent cases window.
      */

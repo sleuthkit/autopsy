@@ -27,15 +27,18 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public class ArtifactSelectionDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(ArtifactSelectionDialog.class.getName());
@@ -60,10 +63,21 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
      * Populate the list of artifacts with all important artifacts.
      */
     private void populateList() {
-        artifacts = getImportantArtifactTypes();
-        artifactStates = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
-        for (BlackboardArtifact.ARTIFACT_TYPE type : artifacts) {
-            artifactStates.put(type, Boolean.TRUE);
+        try {
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+            
+            artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
+            
+            artifacts.removeAll(doNotReport);
+            
+            artifactStates = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
+            for (BlackboardArtifact.ARTIFACT_TYPE type : artifacts) {
+                artifactStates.put(type, Boolean.TRUE);
+            }
+        } catch (TskCoreException ex) {
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            return;
         }
     }
     
