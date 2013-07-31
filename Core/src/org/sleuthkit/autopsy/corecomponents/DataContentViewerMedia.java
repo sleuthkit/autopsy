@@ -110,35 +110,38 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
-        
-        if (selectedNode == null) {
+        try {
+            if (selectedNode == null) {
+                videoPanel.reset();
+                return;
+            }
+
+            AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
+            if (file == null) {
+                return;
+            }
+
+            if (file.equals(lastFile)) {
+                return; //prevent from loading twice if setNode() called mult. times
+            } else {
+                lastFile = file;
+            }
+
             videoPanel.reset();
-            return;
-        }
 
-        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return;
-        }
+            final Dimension dims = DataContentViewerMedia.this.getSize();
 
-        if (file.equals(lastFile)) {
-            return; //prevent from loading twice if setNode() called mult. times
-        } else {
-            lastFile = file;
-        }
-        
-        videoPanel.reset();
-        
-        final Dimension dims = DataContentViewerMedia.this.getSize();
-        
-        if (imagePanelInited && containsExt(file.getName(), IMAGES)) {
-            imagePanel.showImageFx(file, dims);
-                        this.switchPanels(false);
-        } else if (videoPanelInited
-                && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
-            videoPanel.setupVideo(file, dims);
-            switchPanels(true);
-        }
+            if (imagePanelInited && containsExt(file.getName(), IMAGES)) {
+                imagePanel.showImageFx(file, dims);
+                            this.switchPanels(false);
+            } else if (videoPanelInited
+                    && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
+                videoPanel.setupVideo(file, dims);
+                switchPanels(true);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Exception while setting node", e);
+        } 
     }
 
     /**
