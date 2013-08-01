@@ -81,14 +81,6 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  */
 public class DataResultFilterNode extends FilterNode {
 
-    /**
-     * These are class instances to support multi-selection of nodes corresponding to AbstractFiles and BlackboardArtifacts. 
-     * They are required because org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every selected 
-     * node returns a reference to it from Node.getActions(boolean).
-     */    
-    private final static Action fileTagAction = new TagAbstractFileAction();
-    private final static Action resultTagAction = new TagBlackboardArtifactAction();
-    
     private ExplorerManager sourceEm;
     private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV;
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV;
@@ -113,7 +105,7 @@ public class DataResultFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean popup) {
 
-        List<Action> actions = new ArrayList<>();
+        List<Action> actions = new ArrayList<Action>();
 
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         actions.addAll(originalNode.accept(getActionsDIV));
@@ -175,7 +167,7 @@ public class DataResultFilterNode extends FilterNode {
             //TODO all actions need to be consolidated in single place!
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
 
-            List<Action> actions = new ArrayList<>();
+            List<Action> actions = new ArrayList<Action>();
 
             //merge predefined specific node actions if bban subclasses have their own
             for (Action a : ban.getActions(true)) {
@@ -212,8 +204,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(fileTagAction);
-                    actions.add(resultTagAction);
+                    actions.add(new TagAction(f));
+                    actions.add(new TagAction(ba));
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -228,8 +220,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(fileTagAction);
-                    actions.add(resultTagAction);
+                    actions.add(new TagAction(d));
+                    actions.add(new TagAction(ba));
                 }
             }
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -244,8 +236,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(fileTagAction);
-                    actions.add(resultTagAction);
+                    actions.add(new TagAction(d));
+                    actions.add(new TagAction(ba));
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
@@ -259,8 +251,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(fileTagAction);
-                    actions.add(resultTagAction);
+                    actions.add(new TagAction(lf));
+                    actions.add(new TagAction(ba));
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
@@ -270,13 +262,13 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ExternalViewerAction("Open in External Viewer", locfn));
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", locfn));
-                
+
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(fileTagAction);
-                    actions.add(resultTagAction);
+                    actions.add(new TagAction(lf));
+                    actions.add(new TagAction(ba));
                 }
             }
 
@@ -286,7 +278,7 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
-            List<Action> actions = new ArrayList<>();
+            List<Action> actions = new ArrayList<Action>();
 
             for (Action action : ditem.getActions(true)) {
                 actions.add(action);

@@ -177,7 +177,13 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                             break;
                         case LONG:
                             if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID() 
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID() 
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID() ) {
                                 map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                             } else {
                                 map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
@@ -285,6 +291,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "green-tag-icon-16.png";
             case TSK_METADATA_EXIF:
                 return "camera-icon-16.png";
+            case TSK_CONTACT:
+                return "contact.png";
+            case TSK_MESSAGE:
+                return "message.png";
+            case TSK_CALLLOG:
+                return "calllog.png";
+            case TSK_CALENDAR_ENTRY:
+                return "calendar.png";
         }
         return "artifact-icon.png";
     }

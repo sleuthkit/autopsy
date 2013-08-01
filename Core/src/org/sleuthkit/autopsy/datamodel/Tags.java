@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -655,4 +656,36 @@ public class Tags implements AutopsyVisitableItem {
         
         return tagNames;
     }    
+                        
+    public interface Taggable {
+        void createTag(String name, String comment);
+    }
+    
+    public static class TaggableFile implements Taggable {
+
+        private AbstractFile file;
+
+        public TaggableFile(AbstractFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public void createTag(String name, String comment) {
+            Tags.createTag(file, name, comment);
+        }
+    }
+
+    public static class TaggableBlackboardArtifact implements Taggable {
+
+        private BlackboardArtifact bba;
+
+        public TaggableBlackboardArtifact(BlackboardArtifact bba) {
+            this.bba = bba;
+        }
+
+        @Override
+        public void createTag(String name, String comment) {
+            Tags.createTag(bba, name, comment);
+        }
+    }
 }

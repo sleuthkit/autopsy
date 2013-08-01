@@ -52,11 +52,11 @@ public class KeywordSearchSettings {
      */ 
     static UpdateFrequency getUpdateFrequency(){
         if(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null){
-         return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
+            return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
         }
         //if it failed, return the default/last known value
         logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value.");
-        return UpdateFreq;
+        return UpdateFrequency.DEFAULT;
     }
     
     

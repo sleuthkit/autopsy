@@ -85,7 +85,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
         FAST(20),
         AVG(10),
-        SLOW(5);
+        SLOW(5),
+        SLOWEST(1),
+        DEFAULT(5);
         private final int time;
 
         UpdateFrequency(int time) {
