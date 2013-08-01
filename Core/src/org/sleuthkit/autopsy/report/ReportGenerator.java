@@ -60,7 +60,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Generates all TableReportModules and GeneralReportModules, given whether each module for both
  * types is enabled or disabled, and the base report path to save them at.
@@ -197,26 +196,26 @@ public class ReportGenerator {
      * SwingWorker to generate reports on blackboard artifacts.
      */
     private class ArtifactsReportsWorker extends SwingWorker<Integer, Integer> {
-        List<TableReportModule> tableModules;
-        List<ARTIFACT_TYPE> artifactTypes;
-        HashSet<String> tagNamesFilter;
+        private List<TableReportModule> tableModules  = new ArrayList<>();
+        private List<ARTIFACT_TYPE> artifactTypes  = new ArrayList<>();
+        private HashSet<String> tagNamesFilter = new HashSet<>();
         
         // Create an ArtifactWorker with the enabled/disabled state of all Artifacts
         ArtifactsReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
-            tableModules = new ArrayList<>();
+            // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
                 tableModules.add(entry.getKey());
             }
             
-            artifactTypes = new ArrayList<>();
+            // Get the artifact types selected by the user.
             for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactTypeSelections.entrySet()) {
                 if (entry.getValue()) {
                     artifactTypes.add(entry.getKey());
                 }
             }
             
+            // Get the tags selected by the user.
             if (tagSelections != null) {
-                tagNamesFilter = new HashSet<>();
                 for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
                     if (entry.getValue() == true) {
                         tagNamesFilter.add(entry.getKey());
@@ -238,6 +237,13 @@ public class ReportGenerator {
                 }
             }
             
+            // Make a comment on the tags filter.
+            StringBuilder comment = new StringBuilder();
+            if (!tagNamesFilter.isEmpty()) {
+                comment.append("This report only includes files and artifacts tagged with: ");
+                comment.append(makeCommaSeparatedList(tagNamesFilter));
+            }            
+            
             // For every enabled artifact type
             for (ARTIFACT_TYPE type : artifactTypes) {
                 // Check to see if all the TableReportModules have been canceled
@@ -254,16 +260,16 @@ public class ReportGenerator {
                 
                 // If the type is keyword hit or hashset hit, use the helper
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
-                    writeKeywordHits(tableModules, tagNamesFilter);
+                    writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
                 } else if (type.equals(ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
-                    writeHashsetHits(tableModules, tagNamesFilter);
+                    writeHashsetHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
                 }
 
                 // Otherwise setup the unsorted list of artifacts, to later be sorted
                 ArtifactComparator c = new ArtifactComparator();
-                List<Entry<BlackboardArtifact, List<BlackboardAttribute>>> unsortedArtifacts = new ArrayList<Entry<BlackboardArtifact, List<BlackboardAttribute>>>();
+                List<Entry<BlackboardArtifact, List<BlackboardAttribute>>> unsortedArtifacts = new ArrayList<>();
                 try {
                     // For every artifact of the current type, add it and it's attributes to a list
                     for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
@@ -289,14 +295,20 @@ public class ReportGenerator {
                 // For every module start a new data type and table for the current artifact type.
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
-                
-                    module.startDataType(type.getDisplayName());                        
-                
+                                
+                    // This is a temporary workaround to avoid modifying the TableReportModule interface.
                     if (module instanceof ReportHTML) {
                         ReportHTML htmlReportModule = (ReportHTML)module;
+                        htmlReportModule.startDataType(type.getDisplayName(), comment.toString());                        
                         htmlReportModule.startTable(columnHeaders, type);
                     }
+                    else if (module instanceof ReportExcel) {
+                        ReportExcel excelReportModule = (ReportExcel)module;
+                        excelReportModule.startDataType(type.getDisplayName(), comment.toString());                        
+                        excelReportModule.startTable(columnHeaders);                    
+                    }
                     else {
+                        module.startDataType(type.getDisplayName());                        
                         module.startTable(columnHeaders);
                     }
                 }
@@ -323,6 +335,7 @@ public class ReportGenerator {
                             rowData.add(tagsList);
                         }
 
+                        // This is a temporary workaround to avoid modifying the TableReportModule interface.
                         if (module instanceof ReportHTML) {
                             ReportHTML htmlReportModule = (ReportHTML)module;
                             htmlReportModule.addRow(rowData, artifactEntry.getKey());
@@ -353,7 +366,7 @@ public class ReportGenerator {
     
     private Boolean failsTagFilter(HashSet<String> tags, HashSet<String> tagsFilter) 
     {
-        if (tagsFilter == null) {
+        if (tagsFilter == null || tagsFilter.isEmpty()) {
             return false;
         }
 
@@ -367,7 +380,7 @@ public class ReportGenerator {
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeKeywordHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
+    private void writeKeywordHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for keyword lists
@@ -377,7 +390,7 @@ public class ReportGenerator {
                                                     "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " +
                                                     "AND att.artifact_id = art.artifact_id " + 
                                                 "GROUP BY list");
-            List<String> lists = new ArrayList<String>();
+            List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
                 String list = listsRs.getString("list");
                 if(list.isEmpty()) {
@@ -388,7 +401,18 @@ public class ReportGenerator {
             
             // Make keyword data type and give them set index
             for (TableReportModule module : tableModules) {
-                module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName());
+                // This is a temporary workaround to avoid modifying the TableReportModule interface.
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlReportModule = (ReportHTML)module;
+                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);                        
+                }
+                else if (module instanceof ReportExcel) {
+                    ReportExcel excelReportModule = (ReportExcel)module;
+                    excelReportModule.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);                                            
+                }
+                else {
+                   module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName());
+                }            
                 module.addSetIndex(lists);
                 tableProgress.get(module).updateStatusLabel("Now processing "
                         + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName() + "...");
@@ -507,11 +531,11 @@ public class ReportGenerator {
     }
     
     /**
-     * Write the hashset hits to the provided TableReportModules.
+     * Write the hash set hits to the provided TableReportModules.
      * @param tableModules modules to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeHashsetHits(List<TableReportModule> tableModules, HashSet<String> tagNamesFilter) {
+    private void writeHashsetHits(List<TableReportModule> tableModules,  String comment, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
             // Query for hashsets
@@ -521,14 +545,24 @@ public class ReportGenerator {
                                                     "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " +
                                                     "AND att.artifact_id = art.artifact_id " + 
                                                 "GROUP BY list");
-            List<String> lists = new ArrayList<String>();
+            List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
                 lists.add(listsRs.getString("list"));
             }
             
-            // Make hashset data type and give them set index
             for (TableReportModule module : tableModules) {
-                module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName());
+                // This is a temporary workaround to avoid modifying the TableReportModule interface.
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlReportModule = (ReportHTML)module;
+                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);                        
+                }
+                else if (module instanceof ReportExcel) {
+                    ReportExcel excelReportModule = (ReportExcel)module;
+                    excelReportModule.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);                                            
+                }
+                else {
+                   module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName());
+                }            
                 module.addSetIndex(lists);
                 tableProgress.get(module).updateStatusLabel("Now processing "
                         + ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName() + "...");
@@ -640,55 +674,55 @@ public class ReportGenerator {
         
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
                 break;
             case TSK_WEB_COOKIE: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
                 break;
             case TSK_WEB_HISTORY: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
                 break;
             case TSK_WEB_DOWNLOAD: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
                 break;
             case TSK_RECENT_OBJECT: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Path", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Source File"}));
                 break;
             case TSK_INSTALLED_PROG: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
                 break;
             case TSK_KEYWORD_HIT: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Preview", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Preview", "Source File"}));
                 break;
             case TSK_HASHSET_HIT: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File", "Size"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"File", "Size"}));
                 break;
             case TSK_DEVICE_ATTACHED: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
                 break;
             case TSK_WEB_SEARCH_QUERY: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Text", "Domain", "Date Accessed", "Program Name", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Text", "Domain", "Date Accessed", "Program Name", "Source File"}));
                 break;
             case TSK_METADATA_EXIF: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
                 break;
             case TSK_TAG_FILE: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"File", "Tag", "Comment"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"File", "Tag", "Comment"}));
                 break;
             case TSK_TAG_ARTIFACT: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Result Type", "Tag", "Comment", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Result Type", "Tag", "Comment", "Source File"}));
                 break;
             case TSK_CONTACT: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Phone Number (Home)", "Phone Number (Office)", "Phone Number (Mobile)", "Email", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Phone Number (Home)", "Phone Number (Office)", "Phone Number (Mobile)", "Email", "Source File"  }));
                 break;
             case TSK_MESSAGE: 
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Message Type", "Direction", "Date/Time",  "From Phone Number", "From Email", "To Phone Number", "To Email", "Subject", "Text", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Message Type", "Direction", "Date/Time",  "From Phone Number", "From Email", "To Phone Number", "To Email", "Subject", "Text", "Source File"  }));
                 break;
             case TSK_CALLLOG:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Date/Time", "Direction", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Date/Time", "Direction", "Source File"  }));
                 break;
             case TSK_CALENDAR_ENTRY:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
                 break;
             default:
                 return null;
@@ -711,7 +745,7 @@ public class ReportGenerator {
      * @return Map<Integer, String> of the BlackboardAttributes mapped to their attribute type ID
      */
     public Map<Integer, String> getMappedAttributes(List<BlackboardAttribute> attList, TableReportModule... module) {
-        Map<Integer, String> attributes = new HashMap<Integer, String>();
+        Map<Integer, String> attributes = new HashMap<>();
         int size = ATTRIBUTE_TYPE.values().length;
         for (int n = 0; n <= size; n++) {
             attributes.put(n, "");
@@ -759,11 +793,11 @@ public class ReportGenerator {
     private String makeCommaSeparatedList(Collection<String> items) {
         String list = "";
         for (Iterator<String> iterator = items.iterator(); iterator.hasNext(); ) {
-            list += iterator.next() + (iterator.hasNext() ? "," : "");
+            list += iterator.next() + (iterator.hasNext() ? ", " : "");
         }
         return list;
     }
-    
+        
     /**
      * Get a list of Strings with all the row values for a given BlackboardArtifact and 
      * list of BlackboardAttributes Entry, basing the date/time field on the given TableReportModule.
@@ -882,7 +916,7 @@ public class ReportGenerator {
                 }
                 return taggedArtifactRow;
              case TSK_CONTACT:
-                List<String> contact = new ArrayList<String>();
+                List<String> contact = new ArrayList<>();
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
@@ -892,7 +926,7 @@ public class ReportGenerator {
                 contact.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return contact;
              case TSK_MESSAGE:
-                List<String> message = new ArrayList<String>();
+                List<String> message = new ArrayList<>();
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
@@ -905,7 +939,7 @@ public class ReportGenerator {
                 message.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return message;
               case TSK_CALLLOG:
-                List<String> call_log = new ArrayList<String>();
+                List<String> call_log = new ArrayList<>();
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
@@ -913,7 +947,7 @@ public class ReportGenerator {
                 call_log.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return call_log;
               case TSK_CALENDAR_ENTRY:
-                List<String> calEntry = new ArrayList<String>();
+                List<String> calEntry = new ArrayList<>();
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
