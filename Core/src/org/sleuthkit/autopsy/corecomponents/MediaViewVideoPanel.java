@@ -20,13 +20,10 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import com.sun.jna.Native;
 import java.awt.Dimension;
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
@@ -58,7 +55,7 @@ import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
 /**
- * Video viewer part of the Media View layered pane
+ * Video viewer part of the Media View layered pane.
  */
 @ServiceProviders(value = {
     @ServiceProvider(service = FrameCapture.class)
@@ -66,23 +63,37 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapture {
 
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
-    private boolean vlcInited;
+    private boolean vlcInited; // Has the vlc library been initalized properly?
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
-    private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 1000;
+    private static final long INTER_FRAME_PERIOD_MS = 20; // Time between frames.
     private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
-    private static final int POS_FACTOR = 10000;
-    //playback
+    private static final int POS_FACTOR = 10000; // The number of ticks on the video progress bar
+    // Frame Capture Media Player Args
+    private static final String[] VLC_FRAME_CAPTURE_ARGS = {
+            "--intf", "dummy",          // no interface
+            "--vout", "dummy",          // we don't want video (output)
+            "--no-audio",               // we don't want audio (decoding)
+            "--no-video-title-show",    // nor the filename displayed
+            "--no-stats",               // no stats
+            "--no-sub-autodetect-file", // we don't want subtitles
+            "--no-disable-screensaver", // we don't want interfaces
+            "--no-snapshot-preview"    // no blending in dummy vout
+        };
+    // Playback state information
     private long durationMillis = 0;
-    private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
+    private boolean autoTracking = false; // true if the slider is moving automatically
+    private boolean replay;
+    // VLC Components
     private MediaPlayer vlcMediaPlayer;
     private EmbeddedMediaPlayerComponent vlcVideoComponent;
-    private boolean autoTracking = false; // true if the slider is moving automatically
+    // Worker threads
+    private VideoProgressWorker videoProgressWorker;
+    private MediaPlayerThread mediaPlayerThread;
+    // Current media content representations
     private AbstractFile currentFile;
     private java.io.File currentVideoFile;
-    private boolean replay;
-    private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
-
+    
     /**
      * Creates new form MediaViewVideoPanel
      */
@@ -124,11 +135,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         progressSlider.setValue(0);
 
         progressSlider.addChangeListener(new ChangeListener() {
-            /**
-             * Should always try to synchronize any call to
-             * progressSlider.setValue() to avoid a different thread changing
-             * playbin while stateChanged() is processing
-             */
             @Override
             public void stateChanged(ChangeEvent e) {
                 if (vlcMediaPlayer != null && !autoTracking) {
@@ -167,8 +173,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             videoProgressWorker.cancel(true);
             videoProgressWorker = null;
         }
-        
-        logger.log(Level.INFO, "Resetting media");
+        mediaPlayerThread = new MediaPlayerThread();
         replay = true;
     }
 
@@ -221,20 +226,27 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         pauseButton.setEnabled(true);
         progressSlider.setEnabled(true);
         
+        // Create and Configure MediaPlayer
         vlcVideoComponent = new EmbeddedMediaPlayerComponent();
         vlcMediaPlayer = vlcVideoComponent.getMediaPlayer();
         vlcMediaPlayer.setPlaySubItems(true);
         vlcMediaPlayer.addMediaPlayerEventListener(new VlcMediaPlayerEventListener());
+        
+        // Configure VideoPanel
         videoPanel.removeAll();
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
         videoPanel.add(vlcVideoComponent);
         videoPanel.setVisible(true);
-        logger.log(Level.INFO, "Created media player.");
         
+        // Create Extraction and Playback Threads
+        mediaPlayerThread = new MediaPlayerThread();
         ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
         em.execute();
     }
 
+    /**
+     * Cleanup all threads and VLC components and reset UI.
+     */
     void reset() {
         // reset the progress label text on the event dispatch thread
         SwingUtilities.invokeLater(new Runnable() {
@@ -248,28 +260,38 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             return;
         }
         
+        if (mediaPlayerThread != null) {
+            mediaPlayerThread.cancel();
+            mediaPlayerThread = null;
+        }
+
         // get rid of any existing videoProgressWorker thread
         if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
             videoProgressWorker = null;
         }
-        
+
         if (vlcMediaPlayer != null) {
             if (vlcMediaPlayer.isPlaying()) {
                 vlcMediaPlayer.stop();
             }
             vlcMediaPlayer.release();
             vlcMediaPlayer = null;
-            logger.log(Level.INFO, "Released media player");
         }
         if (vlcVideoComponent != null) {
             vlcVideoComponent.release(true);
             vlcVideoComponent = null;
-            logger.log(Level.INFO, "Released video component");
         }
 
         currentFile = null;
         currentVideoFile = null;
+    }
+    
+    /**
+     * Start the media player.
+     */
+    void playMedia() {
+        SwingUtilities.invokeLater(mediaPlayerThread);
     }
 
     private java.io.File getJFile(AbstractFile file) {
@@ -285,45 +307,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
         java.io.File tempFile = new java.io.File(tempPath);
         return tempFile;
-    }
-    
-    void playMedia() {
-        logger.log(Level.INFO, "In play media");
-        if (currentVideoFile == null || !currentVideoFile.exists()) {
-            progressLabel.setText("Error buffering file");
-            return;
-        }
-
-        boolean mediaPrepared = vlcMediaPlayer.prepareMedia(currentVideoFile.getAbsolutePath());
-        if (mediaPrepared) {
-            vlcMediaPlayer.parseMedia();
-            durationMillis = vlcMediaPlayer.getMediaMeta().getLength();
-            logger.log(Level.INFO, "Media loaded correctly");
-        } else {
-            progressLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-        }
-
-        // pick out the total hours, minutes, seconds
-        long durationSeconds = (int) durationMillis / 1000;
-        totalHours = (int) durationSeconds / 3600;
-        durationSeconds -= totalHours * 3600;
-        totalMinutes = (int) durationSeconds / 60;
-        durationSeconds -= totalMinutes * 60;
-        totalSeconds = (int) durationSeconds;
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressSlider.setMaximum(POS_FACTOR);
-                progressSlider.setMinimum(0);
-
-                logger.log(Level.INFO, "Starting the media...");
-                vlcMediaPlayer.start();
-                pauseButton.setText("||");
-                videoProgressWorker = new VideoProgressWorker();
-                videoProgressWorker.execute();
-            }
-        });
     }
 
     /**
@@ -343,42 +326,52 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             return frames;
         }
 
-        // throw exception if this file is known to be problematic
-        if (badVideoFiles.contains(file.getName())) {
-            throw new Exception("Cannot capture frames from this file (" + file.getName() + ").");
-        }
-
-        MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
+        // Create Media Player with no video output
+        MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory(VLC_FRAME_CAPTURE_ARGS);
         MediaPlayer mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
         boolean mediaPrepared = mediaPlayer.prepareMedia(file.getAbsolutePath());
         if (!mediaPrepared) {
+            logger.log(Level.WARNING, "Video file was not loaded properly.");
             return frames;
         }
+        
         // get the duration of the video
-        long myDurationMillis = mediaPlayer.getLength();
+        mediaPlayer.parseMedia();
+        long myDurationMillis = mediaPlayer.getMediaMeta().getLength();
         if (myDurationMillis <= 0) {
             return frames;
         }
 
         // calculate the number of frames to capture
         int numFramesToGet = numFrames;
-        long frameInterval = myDurationMillis / numFrames;
+        long frameInterval = (myDurationMillis - INTER_FRAME_PERIOD_MS) / numFrames;
         if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
             numFramesToGet = 1;
         }
 
+        mediaPlayer.start();
+        mediaPlayer.setPause(true);
+        
+        BufferedImage snapShot;
         // for each timeStamp, grap a frame
         for (int i = 0; i < numFramesToGet; ++i) {
-            long timeStamp = i * frameInterval;
+            logger.log(Level.INFO, "Grabbing a frame...");
+            long timeStamp = i * frameInterval + INTER_FRAME_PERIOD_MS;
 
             mediaPlayer.setTime(timeStamp);
-            mediaPlayer.pause();
+            mediaPlayer.setPause(true);
 
-            Image snapShot = mediaPlayer.getSnapshot();
+            snapShot = mediaPlayer.getSnapshot();
 
+            if (snapShot == null) {
+                continue;
+            }
             frames.add(new VideoFrame(snapShot, timeStamp));
         }
 
+        // cleanup media player
+        mediaPlayer.release();
+        mediaPlayerFactory.release();
         return frames;
     }
 
@@ -467,15 +460,12 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
     private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
         if (replay) {
-            // File has completed playing. Play button now replays
-            logger.log(Level.INFO, "Replaying video.");
+            // File has completed playing. Play button now replays media.
             replay = false;
             playMedia();
         } else if (vlcMediaPlayer.isPlaying()) {
-            logger.log(Level.INFO, "Pausing.");
             this.pause();
         } else {
-            logger.log(Level.INFO, "Playing");
             this.unPause();
         }
     }//GEN-LAST:event_pauseButtonActionPerformed
@@ -488,31 +478,21 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
-    void releaseVlcComponents() {
-        if (vlcMediaPlayer != null) {
-            vlcMediaPlayer.release();
-            vlcMediaPlayer = null;
-        }
-        
-        if (vlcVideoComponent != null) {
-            vlcVideoComponent.release();
-            vlcVideoComponent = null;
-        }
-    }
-
+    /**
+     * Thread that updates the video progress bar and current time with information
+     * queried from the MediaPlayer.
+     */
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
 
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
         private long millisElapsed = 0;
         private float currentPosition = 0.0f;
-        private final long INTER_FRAME_PERIOD_MS = 20;
-        private final long END_TIME_MARGIN_MS = 50;
-        private boolean hadError = false;
 
         private boolean isMediaPlayerReady() {
             return vlcMediaPlayer != null;
         }
 
+        // TODO: Could be moved to finished()
         private void resetVideo() throws Exception {
             pauseButton.setText("►");
 
@@ -520,17 +500,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
                     totalHours, totalMinutes, totalSeconds);
             progressLabel.setText(durationStr);
         }
-
-//        /**
-//         * @return true while millisElapsed is greater than END_TIME_MARGIN_MS
-//         * from durationMillis. This is used to indicate when the video has
-//         * ended because for some videos the time elapsed never becomes equal to
-//         * the reported duration of the video.
-//         */
-//        private boolean hasNotEnded() {
-//            boolean ended = (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
-//            return ended;
-//        }
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -540,7 +509,6 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
 
             int elapsedHours = -1, elapsedMinutes = -1, elapsedSeconds = -1;
             while (isMediaPlayerReady() && !isCancelled()) {
-                
                 millisElapsed = vlcMediaPlayer.getTime();
                 currentPosition = vlcMediaPlayer.getPosition();
                 
@@ -577,15 +545,16 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         }
     } //end class progress worker
 
-    /* Thread that extracts and plays a file */
+    /**
+     * Thread that extracts Media from a Sleuthkit file representation to a
+     * Java file representation that the Media Player can take as input.
+     */
     private class ExtractMedia extends SwingWorker<Object, Void> {
 
         private ProgressHandle progress;
         boolean success = false;
         private AbstractFile sFile;
         private java.io.File jFile;
-        private String duration;
-        private String position;
         private long extractedBytes;
 
         ExtractMedia(org.sleuthkit.datamodel.AbstractFile sFile, java.io.File jFile) {
@@ -614,6 +583,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error buffering file", ex);
             }
+            logger.log(Level.INFO, "Done buffering: " + jFile.getName());
             success = true;
             return null;
         }
@@ -632,7 +602,7 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
             } finally {
                 progress.finish();
                 if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "Loaded media file");
+                    logger.log(Level.INFO, "ExtractMedia in done: " + jFile.getName());
                     currentVideoFile = jFile;
                     playMedia();
                 }
@@ -640,6 +610,63 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         }
     }
     
+    /**
+     * Thread that is responsible for running the Media Player.
+     */
+    private class MediaPlayerThread implements Runnable, Cancellable {
+
+        private volatile boolean cancelled = false;
+        
+        /* Prepare and run the current media. */
+        @Override
+        public void run() {
+            if (currentVideoFile == null || !currentVideoFile.exists()) {
+                progressLabel.setText("Error buffering file");
+                return;
+            } 
+            boolean mediaPrepared = vlcMediaPlayer.prepareMedia(currentVideoFile.getAbsolutePath());
+            if (mediaPrepared) {
+                vlcMediaPlayer.parseMedia();
+                durationMillis = vlcMediaPlayer.getMediaMeta().getLength();
+            } else {
+                progressLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+            }
+
+            // pick out the total hours, minutes, seconds
+            long durationSeconds = (int) durationMillis / 1000;
+            totalHours = (int) durationSeconds / 3600;
+            durationSeconds -= totalHours * 3600;
+            totalMinutes = (int) durationSeconds / 60;
+            durationSeconds -= totalMinutes * 60;
+            totalSeconds = (int) durationSeconds;
+
+            progressSlider.setMaximum(POS_FACTOR);
+            progressSlider.setMinimum(0);
+            if (!isCancelled()) {
+                vlcMediaPlayer.start();
+                pauseButton.setText("||");
+                videoProgressWorker = new VideoProgressWorker();
+                videoProgressWorker.execute();
+            } else {
+                logger.log(Level.INFO, "Media Playing cancelled.");
+            }
+        }
+
+        @Override
+        public boolean cancel() {
+            cancelled = true;
+            return cancelled;
+        }
+        
+        private boolean isCancelled() {
+            return cancelled;
+        }
+        
+    }
+    
+    /**
+     * An Object that listens and handles events thrown by the VLC Media Player.
+     */
     private class VlcMediaPlayerEventListener extends MediaPlayerEventAdapter {
         
         @Override
@@ -650,22 +677,8 @@ public class MediaViewVideoPanel extends javax.swing.JPanel implements FrameCapt
         
         @Override
         public void error(MediaPlayer mediaPlayer) {
-            logger.log(Level.INFO, "an Error occured.");
-        }
-        
-        @Override
-        public void mediaDurationChanged(MediaPlayer mediaPlayer, long newDuration) {
-            logger.log(Level.INFO, "DURATION CHANGED: " + newDuration);
-        }
-        
-        @Override
-        public void mediaFreed(MediaPlayer mediaPlayer) {
-            logger.log(Level.INFO, "Media was freed");
-        }
-        
-        @Override
-        public void lengthChanged(MediaPlayer mediaPlayer, long newLength) {
-            logger.log(Level.INFO, "LENGTH CHANGED: " + newLength);
+            logger.log(Level.WARNING, "A VLC error occured. Resetting the video panel.");
+            reset();
         }
     }
 }
