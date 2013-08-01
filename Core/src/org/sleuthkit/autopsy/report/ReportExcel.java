@@ -132,10 +132,10 @@ public class ReportExcel implements TableReportModule {
         name = escapeForExcel(name);
         sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
+        rowIndex = 0;
         artifactsCount = 0;
         
         // Add a title row to the worksheet.
-        rowIndex = 0;
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(name);
@@ -167,10 +167,10 @@ public class ReportExcel implements TableReportModule {
         name = escapeForExcel(name);
         sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
+        rowIndex = 0;
         artifactsCount = 0;
         
         // Add a title row to the worksheet.
-        rowIndex = 0;
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(name);
@@ -224,7 +224,7 @@ public class ReportExcel implements TableReportModule {
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(setName);
-        rowIndex++;
+        ++rowIndex;
     }
 
     /**
@@ -234,7 +234,7 @@ public class ReportExcel implements TableReportModule {
     public void endSet() {
         // Add an empty row as a separator.
         sheet.createRow(rowIndex);
-        rowIndex++;
+        ++rowIndex;
     }
 
     @Override
@@ -252,7 +252,7 @@ public class ReportExcel implements TableReportModule {
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(elementStyle);
         row.createCell(0).setCellValue(elementName);
-        rowIndex++;
+        ++rowIndex;
     }
 
     /**
@@ -268,8 +268,9 @@ public class ReportExcel implements TableReportModule {
             row.createCell(i).setCellValue(titles.get(i));
             ++tableColCount;
         }
-        rowIndex++;
+        ++rowIndex;
         
+        // Keep track of the number of columns with data in them for later column auto-sizing.
         if (tableColCount > sheetColCount) {
             sheetColCount = tableColCount;
         }
@@ -287,13 +288,13 @@ public class ReportExcel implements TableReportModule {
      * @param row cells to add
      */
     @Override
-    public void addRow(List<String> row) {
-        Row temp = sheet.createRow(rowIndex);
-        for (int i = 0; i < row.size(); ++i) {
-            temp.createCell(i).setCellValue(row.get(i));
+    public void addRow(List<String> rowData) {
+        Row row = sheet.createRow(rowIndex);
+        for (int i = 0; i < rowData.size(); ++i) {
+            row.createCell(i).setCellValue(rowData.get(i));
         }
-        ++artifactsCount;
         ++rowIndex;
+        ++artifactsCount;
     }
 
     /**
@@ -339,13 +340,16 @@ public class ReportExcel implements TableReportModule {
     
     private void writeSummaryWorksheet() {
         sheet = wb.createSheet("Summary");
-
         rowIndex = 0;
+        
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue("Summary");
         ++rowIndex;
 
+        sheet.createRow(rowIndex);
+        ++rowIndex;
+                                
         Case currentCase = Case.getCurrentCase();        
                
         row = sheet.createRow(rowIndex);

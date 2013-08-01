@@ -366,7 +366,7 @@ public class ReportGenerator {
     
     private Boolean failsTagFilter(HashSet<String> tags, HashSet<String> tagsFilter) 
     {
-        if (tagsFilter == null || tagsFilter.isEmpty()) {
+        if (null == tagsFilter || tagsFilter.isEmpty()) {
             return false;
         }
 

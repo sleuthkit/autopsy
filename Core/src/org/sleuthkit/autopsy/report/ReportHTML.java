@@ -852,7 +852,7 @@ public class ReportHTML implements TableReportModule {
             summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
             summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
             summary.append("<tr><td>Examiner:</td><td>").append(!examiner.isEmpty() ? examiner : "<i>No examiner</i>").append("</td></tr>\n");
-            summary.append("<tr><td># of Images:</td><td>").append(imagecount).append("</td></tr>\n");
+            summary.append("<tr><td>Number of Images:</td><td>").append(imagecount).append("</td></tr>\n");
             summary.append("</table>\n");
             summary.append("</div>\n");
             summary.append("<div class=\"clear\"></div>\n");
