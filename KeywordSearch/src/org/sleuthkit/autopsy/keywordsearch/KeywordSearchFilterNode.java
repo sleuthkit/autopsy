@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,9 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.autopsy.directorytree.TagAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Content;
@@ -128,8 +128,6 @@ class KeywordSearchFilterNode extends FilterNode {
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
 
-        //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
-
         return actions.toArray(new Action[actions.size()]);
     }
 
@@ -137,33 +135,29 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(File f) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
-            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
-            actions.add(null);
-            actions.add(new ExtractAction("Extract File", getOriginal()));
-            actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
-            actions.add(null); // creates a menu separator
-            actions.add(new TagAction(getOriginal()));
-            return actions;
+            return getFileActions();
         }
         
         @Override
         public List<Action> visit(DerivedFile f) {
-            List<Action> actions = new ArrayList<Action>();
+            return getFileActions();
+        }
+        
+        private List<Action> getFileActions() {
+            List<Action> actions = new ArrayList<>();
             actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
             actions.add(null);
-            actions.add(new ExtractAction("Extract File", getOriginal()));
+            actions.add(ExtractAction.getInstance());
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(new TagAction(getOriginal()));
-            return actions;
+            actions.add(TagAbstractFileAction.getInstance());
+            return actions;            
         }
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return new ArrayList<Action>();
+            return new ArrayList<>();
         }
     }
 }

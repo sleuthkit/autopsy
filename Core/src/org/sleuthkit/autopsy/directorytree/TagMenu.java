@@ -23,39 +23,26 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.Tags.Taggable;
-import org.sleuthkit.autopsy.datamodel.Tags.TaggableBlackboardArtifact;
-import org.sleuthkit.autopsy.datamodel.Tags.TaggableFile;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * The menu that results when one right-clicks on a file or artifact.
  */
-public class TagMenu extends JMenu {
+public abstract class TagMenu extends JMenu {
     
-    private Taggable tagCreator;
-    
-    public TagMenu(AbstractFile file) {
-        super("Tag File");
-        tagCreator = new TaggableFile(file);
-        init();
-    }
-    
-    public TagMenu(BlackboardArtifact bba) {
-        super("Tag Result");
-        tagCreator = new TaggableBlackboardArtifact(bba);
-        init();
-    }
+    private Node[] nodes;
 
-    private void init() {
-        
-        // create the 'Quick Tag' menu and add it to the 'Tag File' menu
+    public TagMenu(String menuItemText, Node[] selectedNodes) {
+        super(menuItemText);
+        this.nodes = selectedNodes;
+
+        // Create the 'Quick Tag' sub-menu and add it to the tag menu.
         JMenu quickTagMenu = new JMenu("Quick Tag");
-        add(quickTagMenu);
-        
-        // create the 'Quick Tag' sub-menu items and add them to the 'Quick Tag' menu
+        add(quickTagMenu);    
+
+        // Get the existing tag names.
         List<String> tagNames = Tags.getTagNames();
         if (tagNames.isEmpty()) {
             JMenuItem empty = new JMenuItem("No tags");
@@ -63,45 +50,55 @@ public class TagMenu extends JMenu {
             quickTagMenu.add(empty);
         }
             
+        // Add a menu item for each existing tag name to the 'Quick Tag' menu.
         for (final String tagName : tagNames) {
-            JMenuItem tagItem = new JMenuItem(tagName);
-            tagItem.addActionListener(new ActionListener() {
+            JMenuItem tagNameItem = new JMenuItem(tagName);
+            tagNameItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    tagCreator.createTag(tagName, "");
+                    tagNodes(tagName, "");
                     refreshDirectoryTree();
                 }
             });
-            quickTagMenu.add(tagItem);
+            quickTagMenu.add(tagNameItem);
         }
         
         quickTagMenu.addSeparator();
             
-        // create the 'New Tag' menu item
+        // Create the 'New Tag' menu item and add it to the 'Quick Tag' menu.
         JMenuItem newTagMenuItem = new JMenuItem("New Tag");
         newTagMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String newTagName = CreateTagDialog.getNewTagNameDialog(null);
-                if (newTagName != null) {
-                    tagCreator.createTag(newTagName, "");
+                String tagName = CreateTagDialog.getNewTagNameDialog(null);
+                if (tagName != null) {
+                    tagNodes(tagName, "");
                     refreshDirectoryTree();
                 }
             }
         });
-
-        // add the 'New Tag' menu item to the 'Quick Tag' menu
         quickTagMenu.add(newTagMenuItem);
 
-        JMenuItem newTagItem = new JMenuItem("Tag and Comment");
-        newTagItem.addActionListener(new ActionListener() {
+        // Create the 'Tag and Comment' menu item and add it to the tag menu.
+        JMenuItem tagAndCommentItem = new JMenuItem("Tag and Comment");
+        tagAndCommentItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                    new TagAndCommentDialog(tagCreator);
+                TagAndCommentDialog.CommentedTag commentedTag = TagAndCommentDialog.doDialog();
+                if (null != commentedTag) {
+                    tagNodes(commentedTag.getName(), commentedTag.getComment());
+                    refreshDirectoryTree();
+                }
             }
         });
-        add(newTagItem);
+        add(tagAndCommentItem);        
     }
+    
+    protected Node[] getNodes() {
+        return nodes;
+    }
+    
+    protected abstract void tagNodes(String tagName, String comment);
     
     private void refreshDirectoryTree() {
         //TODO instead should send event to node children, which will call its refresh() / refreshKeys()

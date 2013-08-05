@@ -19,107 +19,82 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.actions.Presenter;
+import org.openide.util.Lookup;
+import org.openide.util.Utilities;
+import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 
 /**
- * Action on a file or artifact that adds a tag and
- * reloads the directory tree. Supports tagging of AbstractFiles and
- * BlackboardArtifacts.
- *
- * TODO add use enters description and hierarchy (TSK_TAG_NAME with slashes)
+ * Action on a file or artifact that adds a tag and reloads the directory tree. 
+ * Supports tagging of AbstractFiles and BlackboardArtifacts.
  */
-public class TagAction extends AbstractAction implements Presenter.Popup {
-
-    private static final Logger logger = Logger.getLogger(TagAction.class.getName());
-    private JMenu tagMenu;
-    private final InitializeBookmarkFileV initializer = new InitializeBookmarkFileV();
-
-    public TagAction(Node contentNode) {
-        AbstractFile file = contentNode.getLookup().lookup(AbstractFile.class);
-        if (file != null) {
-            tagMenu = new TagMenu(file);
-            return;
-        }
-        
-        BlackboardArtifact bba = contentNode.getLookup().lookup(BlackboardArtifact.class);
-        if (bba != null) {
-            tagMenu = new TagMenu(bba);
-            return;
-        }
-        
-        logger.log(Level.SEVERE, "Tried to create a " + TagAction.class.getName()
-                + " using a Node whose lookup did not contain an AbstractFile or a BlackboardArtifact.");
-    }
-
-    public TagAction(AbstractFile file) {
-        tagMenu = new TagMenu(file);
-    }
-    
-    public TagAction(BlackboardArtifact bba) {
-        tagMenu = new TagMenu(bba);
-    }
-
+public abstract class TagAction extends AbstractAction implements Presenter.Popup {
     @Override
-    public JMenuItem getPopupPresenter() {
-        return tagMenu;
-    }
-
-    /**
-     * Returns the FsContent if it is supported, otherwise null
-     */
-    private static class InitializeBookmarkFileV extends ContentVisitor.Default<AbstractFile> {
-
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.File f) {
-            return f;
-        }
-
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
-            return lf;
+    public JMenuItem getPopupPresenter() {    
+        Lookup.Result<ExplorerManager.Provider> res = Utilities.actionsGlobalContext().lookupResult(ExplorerManager.Provider.class);
+        for (ExplorerManager.Provider dude : res.allInstances()) {
+            ExplorerManager ex = dude.getExplorerManager();
+            Node[] selectedNodes = ex.getSelectedNodes();
+            for (Node node : selectedNodes) {
+                String name = node.getDisplayName();
+            }            
         }
         
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile lf) {
-            return lf;
+        Collection<? extends TopComponent> tops = Lookup.getDefault().lookupAll(TopComponent.class);
+        for (TopComponent top : tops) {
+            int x = 0;
         }
         
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
-            return lf;
-        }
-
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory ld) {
-            return ld;
-        }
-
-        @Override
-        public AbstractFile visit(Directory dir) {
-            return ContentUtils.isDotDirectory(dir) ? null : dir;
-        }
-
-        @Override
-        protected AbstractFile defaultVisit(Content cntnt) {
+        DirectoryTreeTopComponent directoryTree = Lookup.getDefault().lookup(DirectoryTreeTopComponent.class);
+        if (null == directoryTree) {
+            Logger.getLogger(TagAction.class.getName()).log(Level.SEVERE, "Could not get DataResultViewerTable from Lookup");
             return null;
         }
-    }
 
+        Node[] activatedNodes = directoryTree.getActivatedNodes();
+        for (Node node : activatedNodes) {
+            String name = node.getDisplayName();
+        }
+                
+        Lookup.Result<DataResultViewer> resultViewers = Lookup.getDefault().lookupResult(DataResultViewer.class);
+        for (DataResultViewer resultViewer : resultViewers.allInstances()) {
+            if (resultViewer instanceof DataResultViewerTable) {
+                Node[] selectedNodes = ((DataResultViewerTable)resultViewer).getExplorerManager().getSelectedNodes();
+                for (Node node : selectedNodes) {
+                    String name = node.getDisplayName();
+                }            
+            }
+        }
+        
+        DataResultViewerTable resultViewer = (DataResultViewerTable)Lookup.getDefault().lookup(DataResultViewer.class);
+        if (null == resultViewer) {
+            Logger.getLogger(TagAction.class.getName()).log(Level.SEVERE, "Could not get DataResultViewerTable from Lookup");
+            return null;
+        }
+                
+        Node[] selectedNodes = resultViewer.getExplorerManager().getSelectedNodes();
+        if (selectedNodes.length <= 0) {
+            Logger.getLogger(TagAction.class.getName()).log(Level.SEVERE, "Tried to perform tagging of Nodes with no Nodes selected");
+            return null;
+        }
+        
+        return getTagMenu(selectedNodes);
+    }
+    
+    protected abstract TagMenu getTagMenu(Node[] selectedNodes);
+            
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Do nothing - this action should never be performed
-        // Submenu actions are invoked instead
+        // Do nothing - this action should never be performed.
+        // Submenu actions are invoked instead.
     }
 }
