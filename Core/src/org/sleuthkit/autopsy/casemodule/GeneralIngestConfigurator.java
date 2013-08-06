@@ -62,13 +62,13 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         
         //pick the modules
         List<IngestModuleAbstract> modulesToStart = ingestDialogPanel.getModulesToStart();
+        
+        //update ingest proc. unalloc space
+        manager.setProcessUnallocSpace(ingestDialogPanel.processUnallocSpaceEnabled());
 
         if (!modulesToStart.isEmpty()) {
             manager.execute(modulesToStart, contentToIngest);
         }
-
-        //update ingest proc. unalloc space
-        manager.setProcessUnallocSpace(ingestDialogPanel.processUnallocSpaceEnabled());
     }
 
     @Override
