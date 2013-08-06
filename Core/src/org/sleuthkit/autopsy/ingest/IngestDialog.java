@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,35 +26,34 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.casemodule.GeneralIngestConfigurator;
+import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 
 /**
  * IngestDialog shown on Case.CASE_ADD_IMAGE property change
  */
 public class IngestDialog extends JDialog {
     
+    private static final String MODULE_CONTEXT = "MainIngest";
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private IngestDialogPanel panel = null;
+    private IngestConfigurator ingestConfigurator;
     
-    private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
-
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        panel = new IngestDialogPanel();
+        ingestConfigurator = new GeneralIngestConfigurator(MODULE_CONTEXT);
+        ingestConfigurator.reload();
     }
     
     public IngestDialog(){
         this(new JFrame(TITLE), TITLE, true);
     }
-
-
 
     /**
      * Shows the Ingest dialog.
@@ -71,17 +70,14 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        panel.reload(); // reload the simple panel
-        add(panel, BorderLayout.PAGE_START);
+        add(ingestConfigurator.getIngestConfigPanel(), BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");
         startButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
-                panel.save();
-                panel.start();
+                ingestConfigurator.start();
                 close();
             }
         });
@@ -89,7 +85,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                panel.save();
+                ingestConfigurator.save();
                 close();
             }
         });
@@ -97,7 +93,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                panel.save();
+                ingestConfigurator.save();
                 close();
             }
         });
@@ -113,11 +109,10 @@ public class IngestDialog extends JDialog {
         setResizable(false);
         setVisible(true);
     }
-    
+   
     public void setContent(List<Content> inputContent) {
-         panel.setContent(inputContent);
-    }
-    
+        ingestConfigurator.setContent(inputContent);
+    }    
     
     /**
      * Closes the Ingest dialog
@@ -126,6 +121,4 @@ public class IngestDialog extends JDialog {
         setVisible(false);
         dispose();
     }
-
-   
 }
