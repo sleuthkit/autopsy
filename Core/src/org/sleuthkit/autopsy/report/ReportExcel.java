@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
@@ -34,17 +32,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
-    private Case currentCase;
     
     private Workbook wb;
     private Sheet sheet;
     private CellStyle titleStyle;
     private CellStyle setStyle;
     private CellStyle elementStyle;
-    private int rowCount = 2;
-    
-    private Map<String, Integer> dataTypes;
-    private String currentDataType;
+    private int rowIndex = 0;
+    private int sheetColCount = 0;
+    private int artifactsCount = 0;
     private String reportPath;
     
     // Get the default instance of this report
@@ -65,42 +61,43 @@ public class ReportExcel implements TableReportModule {
      * @param path path to save the report
      */
     @Override
-    public void startReport(String path) {
-        currentCase = Case.getCurrentCase();
-        
+    public void startReport(String path) {        
+        // Set the path and save it for when the report is written to disk.
+        this.reportPath = path + getFilePath();
+                
+        // Make a workbook.
         wb = new XSSFWorkbook();
         
+        // Create some cell styles.
+        // TODO: The commented out cell style settings below do not work as desired when
+        // the output file is loaded by MS Excel or OfficeLibre. The font height and weight
+        // settings only work as expected when the output file is loaded by OfficeLibre.
+        // The alignment and text wrap settings appear to have no effect.
         titleStyle = wb.createCellStyle();
-        titleStyle.setBorderBottom((short) 1);
+//        titleStyle.setBorderBottom((short) 1);
         Font titleFont = wb.createFont();
         titleFont.setFontHeightInPoints((short) 12);
         titleStyle.setFont(titleFont);
+        titleStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        titleStyle.setWrapText(true);
         
         setStyle = wb.createCellStyle();
         Font setFont = wb.createFont();
         setFont.setFontHeightInPoints((short) 14);
         setFont.setBoldweight((short) 10);
         setStyle.setFont(setFont);
+        setStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        setStyle.setWrapText(true);
         
         elementStyle = wb.createCellStyle();
-        elementStyle.setFillBackgroundColor(HSSFColor.LIGHT_YELLOW.index);
+//        elementStyle.setF illBackgroundColor(HSSFColor.LIGHT_YELLOW.index);
         Font elementFont = wb.createFont();
         elementFont.setFontHeightInPoints((short) 14);
         elementStyle.setFont(elementFont);
-        
-        dataTypes = new TreeMap<String, Integer>();
-        this.reportPath = path + getFilePath();
-        
-        // Write the summary
-        sheet = wb.createSheet("Summary");
-        sheet.createRow(0).createCell(0).setCellValue("Case Name:");
-        sheet.getRow(0).createCell(1).setCellValue(currentCase.getName());
-        sheet.createRow(1).createCell(0).setCellValue("Case Number:");
-        sheet.getRow(1).createCell(1).setCellValue(currentCase.getNumber());
-        sheet.createRow(2).createCell(0).setCellValue("Examiner:");
-        sheet.getRow(2).createCell(1).setCellValue(currentCase.getExaminer());
-        sheet.createRow(3).createCell(0).setCellValue("# of Images:");
-        sheet.getRow(3).createCell(1).setCellValue(currentCase.getImageIDs().length);
+        elementStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        elementStyle.setWrapText(true);
+                
+        writeSummaryWorksheet();
     }
 
     /**
@@ -126,28 +123,95 @@ public class ReportExcel implements TableReportModule {
     
 
     /**
-     * Start a new sheet for the given data type.
-     * @param title data type name
+     * Start a new worksheet for the given data type.
+     * @param name data type name
      */
     @Override
-    public void startDataType(String title) {
-        title = escapeForExcel(title);
-        sheet = wb.createSheet(title);
+    public void startDataType(String name) {
+        // Create a worksheet for the data type (assumed to be an artifact type).
+        name = escapeForExcel(name);
+        sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
-        currentDataType = title;
+        rowIndex = 0;
+        artifactsCount = 0;
+        
+        // Add a title row to the worksheet.
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue(name);
+        ++rowIndex;
+        
+        // Add an artifacts count row. The actual count will be filled in later.
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Number of artifacts:");
+        ++rowIndex;
+
+        // Add an empty row as a separator.
+        sheet.createRow(rowIndex);
+        ++rowIndex;
+                        
+        // There will be at least two columns, one each for the artifacts count and its label.
+        sheetColCount = 2;
     }
 
+    /**
+     * Start a new worksheet for the given data type.
+     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.     
+     * 
+     * @param name Name of the data type
+     * @param comment Comment on the data type, may be the empty string
+     */
+    public void startDataType(String name, String comment) {
+        // Create a worksheet for the data type (assumed to be an artifact type).
+        name = escapeForExcel(name);
+        sheet = wb.createSheet(name);
+        sheet.setAutobreaks(true);
+        rowIndex = 0;
+        artifactsCount = 0;
+        
+        // Add a title row to the worksheet.
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue(name);
+        ++rowIndex;
+        
+        // Add an artifacts count row. The actual count will be filled in later.
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Number of artifacts:");
+        ++rowIndex;
+
+        // Add a comment row, if a comment was supplied.
+        if (!comment.isEmpty()) {
+            row = sheet.createRow(rowIndex);
+            row.setRowStyle(setStyle);
+            row.createCell(0).setCellValue(comment);
+            ++rowIndex;
+        }
+        
+        // Add an empty row as a separator.
+        sheet.createRow(rowIndex);
+        ++rowIndex;
+                
+        // There will be at least two columns, one each for the artifacts count and its label.
+        sheetColCount = 2;
+    }    
+    
     /**
      * End the current data type and sheet.
      */
     @Override
     public void endDataType() {
-        Row temp = sheet.createRow(0);
-        temp.createCell(0).setCellValue("Number of " + currentDataType + " artifacts:");
-        temp.createCell(1).setCellValue(rowCount);
-        
-        dataTypes.put(currentDataType, rowCount);
-        rowCount = 2;
+        // Fill in the artifact count cell in row 0.
+        Row row = sheet.getRow(1);
+        row.setRowStyle(setStyle);
+        row.createCell(1).setCellValue(artifactsCount);
+    
+        // Now that the sheet is complete, size the columns to the content.
+        for (int i = 0; i < sheetColCount; ++i) {
+            sheet.autoSizeColumn(i);
+        }
     }
 
     /**
@@ -157,10 +221,10 @@ public class ReportExcel implements TableReportModule {
     @Override
     public void startSet(String setName) {
         setName = escapeForExcel(setName);
-        Row temp = sheet.createRow(rowCount);
-        temp.setRowStyle(setStyle);
-        temp.createCell(0).setCellValue(setName);
-        rowCount++;
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue(setName);
+        ++rowIndex;
     }
 
     /**
@@ -168,12 +232,14 @@ public class ReportExcel implements TableReportModule {
      */
     @Override
     public void endSet() {
-        rowCount++; // Put a space between the sets
+        // Add an empty row as a separator.
+        sheet.createRow(rowIndex);
+        ++rowIndex;
     }
 
-    // Ignored in Excel Report
     @Override
     public void addSetIndex(List<String> sets) {
+        // Ignored in Excel Report
     }
 
     /**
@@ -183,10 +249,10 @@ public class ReportExcel implements TableReportModule {
     @Override
     public void addSetElement(String elementName) {
         elementName = escapeForExcel(elementName);
-        Row temp = sheet.createRow(rowCount);
-        temp.setRowStyle(elementStyle);
-        temp.createCell(0).setCellValue(elementName);
-        rowCount++;
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(elementStyle);
+        row.createCell(0).setCellValue(elementName);
+        ++rowIndex;
     }
 
     /**
@@ -195,17 +261,26 @@ public class ReportExcel implements TableReportModule {
      */
     @Override
     public void startTable(List<String> titles) {
-        Row temp = sheet.createRow(rowCount);
-        temp.setRowStyle(titleStyle);
+        int tableColCount = 0;
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(titleStyle);
         for (int i=0; i<titles.size(); i++) {
-            temp.createCell(i).setCellValue(titles.get(i));
+            row.createCell(i).setCellValue(titles.get(i));
+            ++tableColCount;
         }
-        rowCount++;
+        ++rowIndex;
+        
+        // Keep track of the number of columns with data in them for later column auto-sizing.
+        if (tableColCount > sheetColCount) {
+            sheetColCount = tableColCount;
+        }
     }
 
-    // Do nothing on end table
     @Override
     public void endTable() {
+        // Add an empty row as a separator.
+        sheet.createRow(rowIndex);
+        ++rowIndex;
     }
 
     /**
@@ -213,12 +288,13 @@ public class ReportExcel implements TableReportModule {
      * @param row cells to add
      */
     @Override
-    public void addRow(List<String> row) {
-        Row temp = sheet.createRow(rowCount);
-        for (int i=0; i<row.size(); i++) {
-            temp.createCell(i).setCellValue(row.get(i));
+    public void addRow(List<String> rowData) {
+        Row row = sheet.createRow(rowIndex);
+        for (int i = 0; i < rowData.size(); ++i) {
+            row.createCell(i).setCellValue(rowData.get(i));
         }
-        rowCount++;
+        ++rowIndex;
+        ++artifactsCount;
     }
 
     /**
@@ -260,5 +336,47 @@ public class ReportExcel implements TableReportModule {
      */
     private static String escapeForExcel(String text) {
          return text.replaceAll("[\\/\\:\\?\\*\\\\]", "_");
+    }
+    
+    private void writeSummaryWorksheet() {
+        sheet = wb.createSheet("Summary");
+        rowIndex = 0;
+        
+        Row row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Summary");
+        ++rowIndex;
+
+        sheet.createRow(rowIndex);
+        ++rowIndex;
+                                
+        Case currentCase = Case.getCurrentCase();        
+               
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Case Name:");
+        row.createCell(1).setCellValue(currentCase.getName());
+        ++rowIndex;
+
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Case Number:");
+        row.createCell(1).setCellValue(currentCase.getNumber());
+        ++rowIndex;
+
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Examiner:");
+        row.createCell(1).setCellValue(currentCase.getExaminer());
+        ++rowIndex;
+
+        row = sheet.createRow(rowIndex);
+        row.setRowStyle(setStyle);
+        row.createCell(0).setCellValue("Number of Images:");
+        row.createCell(1).setCellValue(currentCase.getImageIDs().length);
+        ++rowIndex;
+        
+        sheet.autoSizeColumn(0);
+        sheet.autoSizeColumn(1);        
     }
 }
