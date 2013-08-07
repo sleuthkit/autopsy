@@ -1,0 +1,3 @@
+Changes to make to API when we are ready to make backward incompatible changes:
+
+- HTMLReport has special API for more context on columns and special handling in REportGenerator. Change all reports to the new API.
