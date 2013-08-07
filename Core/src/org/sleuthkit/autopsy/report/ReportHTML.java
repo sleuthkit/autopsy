@@ -178,6 +178,41 @@ public class ReportHTML implements TableReportModule {
     }
     
     /**
+     * Start a new HTML page for the given data type. Update the output stream to this page,
+     * and setup the web page header.
+     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.     
+     * 
+     * @param name Name of the data type
+     * @param comment Comment on the data type, may be the empty string
+     */
+    public void startDataType(String name, String comment) {
+        String title = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(name);
+        try {
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "File not found: {0}", ex);
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Unrecognized encoding");
+        }
+        
+        try {
+            StringBuilder page = new StringBuilder();
+            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
+            page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n");
+            if (!comment.isEmpty()) {
+                page.append("<p><strong>");
+                page.append(comment);
+                page.append("</string></p>\n");
+            }
+            out.write(page.toString());
+            currentDataType = name;
+            rowCount = 0;
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write page head: {0}", ex);
+        }
+    }
+              
+    /**
      * End the current data type. Write the end of the web page and close the
      * output stream.
      */
@@ -284,6 +319,7 @@ public class ReportHTML implements TableReportModule {
 
     /**
      * Start a new table with the given column headers.
+     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.
      * 
      * @param columnHeaders column headers
      * @param sourceArtifact source blackboard artifact for the table data 
@@ -853,7 +889,7 @@ public class ReportHTML implements TableReportModule {
             summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
             summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
             summary.append("<tr><td>Examiner:</td><td>").append(!examiner.isEmpty() ? examiner : "<i>No examiner</i>").append("</td></tr>\n");
-            summary.append("<tr><td># of Images:</td><td>").append(imagecount).append("</td></tr>\n");
+            summary.append("<tr><td>Number of Images:</td><td>").append(imagecount).append("</td></tr>\n");
             summary.append("</table>\n");
             summary.append("</div>\n");
             summary.append("<div class=\"clear\"></div>\n");
