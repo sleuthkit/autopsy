@@ -690,6 +690,27 @@ public class ReportGenerator {
             case TSK_CALENDAR_ENTRY:
                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
                 break;
+            case TSK_SPEED_DIAL_ENTRY:
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Dial String", "Person Name", "Phone Number",  "Source File"  }));
+                break;
+            case TSK_BLUETOOTH_PAIRING:
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
+                break;
+            case TSK_GPS_TRACKPOINT:
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                break;
+            case TSK_GPS_BOOKMARK:
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                break;
+            case TSK_GPS_LAST_KNOWN_LOCATION:
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                break;
+            case TSK_GPS_SEARCH:
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                break;
+            case TSK_SERVICE_ACCOUNT:
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Mailbox Name", "ReplyTo Address", "Mail Server", "Source File" }));
+                break;
             default:
                 return null;
         }
@@ -921,6 +942,75 @@ public class ReportGenerator {
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                 calEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return calEntry;
+              case TSK_SPEED_DIAL_ENTRY:
+                List<String> speedDialEntry = new ArrayList<String>();
+                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIAL_STRING.getTypeID()));
+                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                speedDialEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return speedDialEntry;
+              case TSK_BLUETOOTH_PAIRING:
+                List<String> bluetoothEntry = new ArrayList<String>();
+                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
+                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
+                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                bluetoothEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return bluetoothEntry;
+              case TSK_GPS_TRACKPOINT:
+                List<String> gpsTrackpoint = new ArrayList<String>();
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                gpsTrackpoint.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return gpsTrackpoint;
+              case TSK_GPS_BOOKMARK:
+                List<String> gpsBookmarkEntry = new ArrayList<String>();
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                gpsBookmarkEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return gpsBookmarkEntry;
+              case TSK_GPS_LAST_KNOWN_LOCATION:
+                List<String> gpsLastLocation = new ArrayList<String>();
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                gpsLastLocation.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return gpsLastLocation;
+              case TSK_GPS_SEARCH:
+                List<String> gpsSearch = new ArrayList<String>();
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                gpsSearch.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return gpsSearch;
+              case TSK_SERVICE_ACCOUNT:
+                List<String> appAccount = new ArrayList<String>();
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_MAILBOX_NAME.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
+                appAccount.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return appAccount;
+                  
                  
         }
         return null;

@@ -112,6 +112,18 @@ public class ArtifactTypeNode extends DisplayableItemNode {
                 return "calllog.png";
             case TSK_CALENDAR_ENTRY:
                 return "calendar.png";
+            case TSK_SPEED_DIAL_ENTRY:
+                return "speeddialentry.png";
+            case TSK_BLUETOOTH_PAIRING:
+                return "bluetooth.png";
+            case TSK_GPS_BOOKMARK:
+                return "gpsfav.png";
+            case TSK_GPS_LAST_KNOWN_LOCATION:
+                return "gps-lastlocation.png";
+            case TSK_GPS_SEARCH:
+                return "gps-search.png";
+            case TSK_SERVICE_ACCOUNT:
+                return "account-icon-16.png";
         }
         return "artifact-icon.png";
     }
