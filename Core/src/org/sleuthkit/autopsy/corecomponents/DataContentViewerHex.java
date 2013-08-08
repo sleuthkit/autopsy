@@ -382,18 +382,18 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public void setNode(Node selectedNode) {
-        if (!isSupported(selectedNode)) {
+        if ((selectedNode == null) || (!isSupported(selectedNode))) {
             setDataView(null, 0, true);
             return;
         }
-        if (selectedNode != null) {
-            Content content = (selectedNode).getLookup().lookup(Content.class);
-            if (content != null) {
-                this.setDataView(content, 0, false);
-                return;
-            }
+        
+        Content content = (selectedNode).getLookup().lookup(Content.class);
+        if (content == null) {
+            this.setDataView(null, 0, true);
+            return;
         }
-        this.setDataView(null, 0, true);
+            
+        this.setDataView(content, 0, false);
     }
 
     @Override
