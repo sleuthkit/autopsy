@@ -770,6 +770,43 @@ public class ReportHTML implements TableReportModule {
             in.close();
             output.close();
             
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png");
+            output = new FileOutputStream(new File(path + File.separator + "Speed Dial Entries.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png");
+            output = new FileOutputStream(new File(path + File.separator + "BlueTooth.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png");
+            output = new FileOutputStream(new File(path + File.separator + "GPS Bookmarks.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+             
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png");
+            output = new FileOutputStream(new File(path + File.separator + "GPS Last Location.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png");
+            output = new FileOutputStream(new File(path + File.separator + "GPS Search.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png");
+            output = new FileOutputStream(new File(path + File.separator + "Accounts.png"));
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+            
+            
             
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
