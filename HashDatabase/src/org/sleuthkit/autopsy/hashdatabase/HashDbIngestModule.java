@@ -130,25 +130,19 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             //details
             detailsSb.append("<table border='0' cellpadding='4' width='280'>");
 
-            detailsSb.append("<tr>");
-            detailsSb.append("<th>Number of notable files found:</th>");
-            detailsSb.append("<td>").append(knownBadCount).append("</td>");
-            detailsSb.append("</tr>");
+            detailsSb.append("<tr><td>Known bads found:</td>");
+            detailsSb.append("<td>").append(knownBadCount).append("</td></tr>");
 
-            detailsSb.append("<tr>");
-            detailsSb.append("<th>Notable databases used:</th>");
-            detailsSb.append("<td>Calc Time: ").append(calctime).append(" Lookup Time: ").append(lookuptime).append("</td>");
-            detailsSb.append("</tr>");
+            detailsSb.append("<tr><td>Total Calculation Time</td><td>").append(calctime).append("</td></tr>\n");
+            detailsSb.append("<tr><td>Total Lookup Time</td><td>").append(lookuptime).append("</td></tr>\n");
+            detailsSb.append("</table>");
 
+            detailsSb.append("<p>Databases Used:</p>\n<ul>");
             for (HashDb db : knownBadSets.values()) {
-                detailsSb.append("<tr><th>");
-                detailsSb.append(db.getName());
-                detailsSb.append("</th><td>");
-                detailsSb.append(db.getDatabasePaths().get(0)); // TODO: support multiple database paths
-                detailsSb.append("</td></tr>");
+                detailsSb.append("<li>").append(db.getName()).append("</li>\n");
             }
 
-            detailsSb.append("</table>");
+            detailsSb.append("</ul>");
             services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Lookup Results", detailsSb.toString()));
             clearHashDatabaseHandles();
         }

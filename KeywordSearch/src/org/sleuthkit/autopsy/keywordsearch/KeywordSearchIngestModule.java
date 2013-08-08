@@ -135,8 +135,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     
 
     private enum IngestStatus {
-
-        INGESTED, EXTRACTED_INGESTED, SKIPPED, INGESTED_META
+        TEXT_INGESTED,   /// Text was extracted by knowing file type and text_ingested
+        STRINGS_INGESTED, ///< Strings were extracted from file 
+        SKIPPED,    ///< File was skipped for whatever reason
+        METADATA_INGESTED   ///< No content, so we just text_ingested metadata
     };
     private Map<Long, IngestStatus> ingestStatus;
 
@@ -238,7 +240,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         }
 
         //log number of files / chunks in index
-        //signal a potential change in number of indexed files
+        //signal a potential change in number of text_ingested files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
@@ -350,7 +352,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             if (!server.isRunning()) {
                 String msg = "Keyword search server was not properly initialized, cannot run keyword search ingest. ";
                 logger.log(Level.SEVERE, msg);
-                String details = msg + "Please try stopping old java Solr process (if it exists) and restart the application.";
+                String details = msg + "<br />Please try stopping old java Solr process (if it exists) and restart the application.";
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                 return;
 
@@ -359,7 +361,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
             //this means Solr is not properly initialized
             String msg = "Keyword search server was not properly initialized, cannot run keyword search ingest. ";
-            String details = msg + "Please try stopping old java Solr process (if it exists) and restart the application.";
+            String details = msg + "<br />Please try stopping old java Solr process (if it exists) and restart the application.";
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
             return;
         }
@@ -485,29 +487,29 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.INFO, "Commiting index");
             ingester.commit();
             logger.log(Level.INFO, "Index comitted");
-            //signal a potential change in number of indexed files
+            //signal a potential change in number of text_ingested files
             indexChangeNotify();
         }
     }
 
     /**
-     * Posts inbox message with summary of indexed files
+     * Posts inbox message with summary of text_ingested files
      */
     private void postIndexSummary() {
-        int indexed = 0;
-        int indexed_meta = 0;
-        int indexed_extr = 0;
+        int text_ingested = 0;
+        int metadata_ingested = 0;
+        int strings_ingested = 0;
         int skipped = 0;
         for (IngestStatus s : ingestStatus.values()) {
             switch (s) {
-                case INGESTED:
-                    ++indexed;
+                case TEXT_INGESTED:
+                    ++text_ingested;
                     break;
-                case INGESTED_META:
-                    ++indexed_meta;
+                case METADATA_INGESTED:
+                    ++metadata_ingested;
                     break;
-                case EXTRACTED_INGESTED:
-                    ++indexed_extr;
+                case STRINGS_INGESTED:
+                    ++strings_ingested;
                     break;
                 case SKIPPED:
                     ++skipped;
@@ -518,20 +520,21 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         }
 
         StringBuilder msg = new StringBuilder();
-        msg.append("Indexed files: ").append(indexed).append("<br />Indexed strings: ").append(indexed_extr);
-        msg.append("<br />Indexed meta-data only: ").append(indexed_meta).append("<br />");
-        msg.append("<br />Skipped files: ").append(skipped).append("<br />");
+        msg.append("<table border=0><tr><td>Files with known types</td><td>").append(text_ingested).append("</td></tr>");
+        msg.append("<tr><td>Files with general strings extracted</td><td>").append(strings_ingested).append("</td></tr>");
+        msg.append("<tr><td>Metadata only was indexed</td><td>").append(metadata_ingested).append("</td></tr>");
+        msg.append("<tr><td>Skipped files</td><td>").append(skipped).append("</td></tr>");
+        msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
         services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Results", indexStats));
-
     }
 
     /**
      * Helper method to notify listeners on index update
      */
     private void indexChangeNotify() {
-        //signal a potential change in number of indexed files
+        //signal a potential change in number of text_ingested files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
@@ -662,7 +665,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          * @param aFile file to extract strings from, divide into chunks and
          * index
          * @param detectedFormat mime-type detected, or null if none detected
-         * @return true if the file was indexed, false otherwise
+         * @return true if the file was text_ingested, false otherwise
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
@@ -693,12 +696,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          *
          * @param aFile file to extract strings from, divide into chunks and
          * index
-         * @return true if the file was indexed, false otherwise
+         * @return true if the file was text_ingested, false otherwise
          */
         private boolean extractStringsAndIndex(AbstractFile aFile) {
             try {
                 if (stringExtractor.index(aFile)) {
-                    ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
+                    ingestStatus.put(aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
                     logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
@@ -735,7 +738,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
          * @param aFile File to analyze
-         * @param indexContent False if only metadata should be indexed. True if
+         * @param indexContent False if only metadata should be text_ingested. True if
          * content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
@@ -756,7 +759,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             if ((indexContent == false || aFile.isDir() || size == 0)) {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
-                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
+                    ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
@@ -802,7 +805,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         logger.log(Level.WARNING, "Failed to extract text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
                         ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                     } else {
-                        ingestStatus.put(aFile.getId(), IngestStatus.INGESTED);
+                        ingestStatus.put(aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
                     }
 

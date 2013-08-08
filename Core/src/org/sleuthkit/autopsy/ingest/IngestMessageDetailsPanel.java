@@ -24,6 +24,8 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JMenuItem;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
@@ -51,6 +53,18 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setContentType("text/html");
         viewArtifactButton.setEnabled(false);
         viewContentButton.setEnabled(false);
+        HTMLEditorKit kit = new HTMLEditorKit();
+        messageDetailsPane.setEditorKit(kit);
+        StyleSheet styleSheet = kit.getStyleSheet();
+        /* I tried to define the font-size only on body to have it inherit, 
+         * it didn't work in all cases. */
+        styleSheet.addRule("body {font-family:Arial;font-size:10pt;}");
+        styleSheet.addRule("p {font-family:Arial;font-size:10pt;}");
+        styleSheet.addRule("li {font-family:Arial;font-size:10pt;}");
+        styleSheet.addRule("table {table-layout:fixed;}");
+        styleSheet.addRule("td {white-space:pre-wrap;overflow:hidden;}");
+        styleSheet.addRule("th {font-weight:bold;}");
+        
         BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
         v.addOnFinishedListener(new PropertyChangeListener() {
 
@@ -236,22 +250,24 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setCursor(null);
     }
 
+    /**
+     * Display the details of a given message
+     * @param rowNumber index to the message to display
+     */
     void showDetails(int rowNumber) {
         final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getMessageGroup(rowNumber);
         if (messageGroup != null) {
             String details = messageGroup.getDetails();
             if (details != null) {
                 StringBuilder b = new StringBuilder();
-                b.append("<html>");
-                b.append("<head>");
-                b.append("<style type='text/css'>");
-                b.append("table {table-layout:fixed;}");
-                b.append("td {font-family:Arial;font-size:10pt;white-space:pre-wrap;overflow:hidden;}");
-                b.append("th {font-family:Arial;font-size:10pt;font-weight:bold;}");
-                b.append("p {font-family:Arial;font-size:10pt;}");
-                b.append("</style>");
-                b.append("</head>");
-                b.append(details).append("</html>");
+                if (details.startsWith("<html><body>") == false) {
+                    b.append("<html><body>");
+                    b.append(details);
+                    b.append("</body></html>");
+                }
+                else { 
+                    b.append(details);
+                }
                 this.messageDetailsPane.setText(b.toString());
             } else {
                 this.messageDetailsPane.setText("");

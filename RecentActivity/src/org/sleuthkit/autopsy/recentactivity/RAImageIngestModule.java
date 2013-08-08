@@ -85,7 +85,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         StringBuilder errorMessage = new StringBuilder();
         String errorMsgSubject;
         if (!errors.isEmpty()) {
-            errorMessage.append("Errors encountered during analysis: <ul>\n");
+            errorMessage.append("<p>Errors encountered during analysis: <ul>\n");
             for (String msg : errors) {
                 errorMessage.append("<li>").append(msg).append("</li>\n");
             }
@@ -97,7 +97,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
                 errorMsgSubject = errors.size() + " errors found";
             }
         } else {
-            errorMessage.append("No errors encountered.");
+            errorMessage.append("<p>No errors encountered.</p>");
             errorMsgSubject = "No errors reported";
         }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
