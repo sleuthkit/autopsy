@@ -19,12 +19,17 @@
 
 package org.sleuthkit.autopsy.coreutils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
+
 /**
  * This class contains the framework to read, add, update, and remove
  * from the property files located at %USERDIR%/Config/x.properties
@@ -33,15 +38,11 @@ public class ModuleSettings {
 
     // The directory where the properties file is lcoated
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
-    public static final String MAIN_SETTINGS="Case";
+    public static final String MAIN_SETTINGS = "Case";
 
-    
     /** the constructor */
-    private ModuleSettings() {
-      
-    }
-    
-    
+    private ModuleSettings() {}
+
     /**
      * Makes a new config file of the specified name. Do not include the extension.
      * @param moduleName - The name of the config file to make
@@ -161,9 +162,7 @@ public class ModuleSettings {
             return null;
         }
     }
-    
-  
-    
+
     /**
      * Sets the given properties file to the given setting map.
      * @param moduleName - The name of the module to be written to.
@@ -215,14 +214,12 @@ public class ModuleSettings {
             Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
         }
     }
-    
 
     /**
      * Removes the given key from the given properties file.
      * @param moduleName - The name of the properties file to be modified.
      * @param key - the name of the key to remove.
      */
-    
     public static synchronized void removeProperty(String moduleName, String key){
         try{
             if(getConfigSetting(moduleName, key) != null){
@@ -268,5 +265,4 @@ public class ModuleSettings {
         return new File(getPropertyPath(moduleName));
         }
     }
-    
 }
