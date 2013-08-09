@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -30,14 +31,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
-import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
@@ -73,37 +69,10 @@ public final class ExtractAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Lookup.Result<ExplorerManager.Provider> res = Utilities.actionsGlobalContext().lookupResult(ExplorerManager.Provider.class);
-        for (ExplorerManager.Provider dude : res.allInstances()) {
-            ExplorerManager ex = dude.getExplorerManager();
-            Node[] selectedNodes = ex.getSelectedNodes();
-            for (Node node : selectedNodes) {
-                String name = node.getDisplayName();
-            }            
+        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        for (AbstractFile file : selectedFiles) {
+            extractFile(e, file);
         } 
-        
-        DataResultViewerTable resultViewer = (DataResultViewerTable)Lookup.getDefault().lookup(DataResultViewer.class);
-        if (null == resultViewer) {
-            Logger.getLogger(ExtractAction.class.getName()).log(Level.SEVERE, "Could not get DataResultViewerTable from Lookup");
-            return;
-        }
-        
-        Node[] selectedNodes = resultViewer.getExplorerManager().getSelectedNodes();
-        if (selectedNodes.length <= 0) {
-            Logger.getLogger(ExtractAction.class.getName()).log(Level.SEVERE, "Tried to perform tagging of Nodes with no Nodes selected");
-            return;
-        }
-        
-        for (Node node : selectedNodes) {
-            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (null != file) {
-                extractFile(e, file);
-            }
-            else {
-                // RJCTODO
-//                    Logger.getLogger(org.sleuthkit.autopsy.directorytree.TagAbstractFileAction.TagAbstractFileMenu.class.getName()).log(Level.SEVERE, "Node not associated with an AbstractFile object");                
-            }
-        }        
     }
     
     private void extractFile(ActionEvent e, AbstractFile file) {

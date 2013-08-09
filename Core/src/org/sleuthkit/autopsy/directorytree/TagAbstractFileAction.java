@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.util.logging.Level;
-import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.JMenuItem;
+import org.openide.util.Utilities;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class TagAbstractFileAction extends TagAction { 
+public class TagAbstractFileAction extends AbstractAction implements Presenter.Popup { 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -34,7 +37,6 @@ public class TagAbstractFileAction extends TagAction {
         if (null == instance) {
             instance = new TagAbstractFileAction();
         }
-
         return instance;
     }
 
@@ -42,26 +44,27 @@ public class TagAbstractFileAction extends TagAction {
     }
     
     @Override
-    protected TagMenu getTagMenu(Node[] selectedNodes) {
-        return new TagAbstractFileMenu(selectedNodes);        
+    public JMenuItem getPopupPresenter() {            
+        return new TagAbstractFileMenu();        
     }
-    
+                
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // Do nothing - this action should never be performed.
+        // Submenu actions are invoked instead.
+    }
+            
     private static class TagAbstractFileMenu extends TagMenu {
-        public TagAbstractFileMenu(Node[] nodes) {
-            super((nodes.length > 1 ? "Tag Files" : "Tag File"), nodes);
+        public TagAbstractFileMenu() {
+            super(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File");
         }
 
         @Override
-        protected void tagNodes(String tagName, String comment) {
-            for (Node node : getNodes()) {
-                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-                if (null != file) {
-                    Tags.createTag(file, tagName, comment);
-                }
-                else {
-                    Logger.getLogger(org.sleuthkit.autopsy.directorytree.TagAbstractFileAction.TagAbstractFileMenu.class.getName()).log(Level.SEVERE, "Node not associated with an AbstractFile object");                
-                }
-            }
+        protected void applyTag(String tagName, String comment) {
+            Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+            for (AbstractFile file : selectedFiles) {
+                Tags.createTag(file, tagName, comment);
+            } 
         }
     }        
 }

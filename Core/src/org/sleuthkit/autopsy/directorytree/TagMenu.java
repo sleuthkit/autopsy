@@ -23,7 +23,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -31,12 +30,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * The menu that results when one right-clicks on a file or artifact.
  */
 public abstract class TagMenu extends JMenu {
-    
-    private Node[] nodes;
-
-    public TagMenu(String menuItemText, Node[] selectedNodes) {
+    public TagMenu(String menuItemText) {
         super(menuItemText);
-        this.nodes = selectedNodes;
 
         // Create the 'Quick Tag' sub-menu and add it to the tag menu.
         JMenu quickTagMenu = new JMenu("Quick Tag");
@@ -56,7 +51,7 @@ public abstract class TagMenu extends JMenu {
             tagNameItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    tagNodes(tagName, "");
+                    applyTag(tagName, "");
                     refreshDirectoryTree();
                 }
             });
@@ -72,7 +67,7 @@ public abstract class TagMenu extends JMenu {
             public void actionPerformed(ActionEvent e) {
                 String tagName = CreateTagDialog.getNewTagNameDialog(null);
                 if (tagName != null) {
-                    tagNodes(tagName, "");
+                    applyTag(tagName, "");
                     refreshDirectoryTree();
                 }
             }
@@ -86,24 +81,20 @@ public abstract class TagMenu extends JMenu {
             public void actionPerformed(ActionEvent e) {
                 TagAndCommentDialog.CommentedTag commentedTag = TagAndCommentDialog.doDialog();
                 if (null != commentedTag) {
-                    tagNodes(commentedTag.getName(), commentedTag.getComment());
+                    applyTag(commentedTag.getName(), commentedTag.getComment());
                     refreshDirectoryTree();
                 }
             }
         });
         add(tagAndCommentItem);        
     }
-    
-    protected Node[] getNodes() {
-        return nodes;
-    }
-    
-    protected abstract void tagNodes(String tagName, String comment);
-    
+        
     private void refreshDirectoryTree() {
         //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
         DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
     }
+    
+    protected abstract void applyTag(String tagName, String comment);    
 }
