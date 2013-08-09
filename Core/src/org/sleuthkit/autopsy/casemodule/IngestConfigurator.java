@@ -26,6 +26,18 @@ import org.sleuthkit.datamodel.Content;
  * Lookup interface for ingest configuration dialog
  */
 public interface IngestConfigurator {
+    /** 
+     * Get the default context for running the ingest modules.
+     * @return The default context.
+     */
+    String getDefaultModuleContext();
+    
+    /**
+     * Set the context for running the ingest modules.
+     * @param moduleContext 
+     */
+    void setModuleContext(String moduleContext);   
+        
     /**
      * get JPanel container with the configurator
      * @return 

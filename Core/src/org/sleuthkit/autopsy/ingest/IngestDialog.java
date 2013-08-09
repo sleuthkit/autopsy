@@ -31,8 +31,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.casemodule.GeneralIngestConfigurator;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 
 /**
@@ -40,14 +40,13 @@ import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
  */
 public class IngestDialog extends JDialog {
     
-    private static final String MODULE_CONTEXT = "MainIngest";
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private IngestConfigurator ingestConfigurator;
     
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestConfigurator = new GeneralIngestConfigurator(MODULE_CONTEXT);
+        ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
         ingestConfigurator.reload();
     }
     
