@@ -1,6 +1,5 @@
 /*! \page mod_content_page Developing Content Viewer Modules
 
-
 \section content_overview Overview
 
 DataContentViewer modules exist in the lower-right area of the default Autopsy interface.  
@@ -32,6 +31,7 @@ If you get errors about not knowing about ServiceProviders and such, ensure that
 
 \section content_examples Example Modules
 The org.sleuthkit.autopsy.examples.SampleContentViewer class is a very simple module that you can use as a starting point.  There are also modules, such as org.sleuthkit.autopsy.corecomponents.DataContentViewerHex and org.sleuthkit.autopsy.corecomponents.DataContentViewerMedia that are real modules, but they are more complex to follow since they have paging and other UI widgets in them. 
+
 \section content_hints Hints
  
 \subsection content_hints_objects Getting Content
