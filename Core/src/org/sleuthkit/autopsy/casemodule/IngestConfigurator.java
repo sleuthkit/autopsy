@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,6 @@ import org.sleuthkit.datamodel.Content;
  * Lookup interface for ingest configuration dialog
  */
 public interface IngestConfigurator {
-    /** 
-     * Get the default context for running the ingest modules.
-     * @return The default context.
-     */
-    String getDefaultModuleContext();
-    
-    /**
-     * Set the context for running the ingest modules.
-     * @param moduleContext 
-     */
-    void setModuleContext(String moduleContext);   
-        
     /**
      * get JPanel container with the configurator
      * @return 
@@ -71,5 +59,5 @@ public interface IngestConfigurator {
      * @return  true if ingest process is running, false otherwise
      */
     boolean isIngestRunning();
-    
+ 
 }

@@ -33,27 +33,16 @@ import org.sleuthkit.datamodel.Content;
 
 @ServiceProvider(service = IngestConfigurator.class)
 public class GeneralIngestConfigurator implements IngestConfigurator {    
-    private static final String DEFAULT_MODULE_CONTEXT = IngestManager.MODULE_PROPERTIES;
     private List<Content> contentToIngest;
     private IngestManager manager;
     private IngestDialogPanel ingestDialogPanel;
     private String moduleContext;
     
     public GeneralIngestConfigurator() {
-        this.moduleContext = DEFAULT_MODULE_CONTEXT;
+        this.moduleContext = IngestManager.MODULE_PROPERTIES; // Hard-code this for now.
         ingestDialogPanel = new IngestDialogPanel();
         manager = IngestManager.getDefault();
         loadSettings();
-    }
-
-    @Override
-    public String getDefaultModuleContext() {
-        return DEFAULT_MODULE_CONTEXT;
-    }
-                
-    @Override
-    public void setModuleContext(String moduleContext) {
-        this.moduleContext = moduleContext;        
     }
     
     @Override
