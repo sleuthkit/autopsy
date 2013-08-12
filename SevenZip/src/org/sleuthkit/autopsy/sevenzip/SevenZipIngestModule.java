@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * 7Zip ingest module Extracts supported archives, adds extracted DerivedFiles,
@@ -163,6 +164,16 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
             return ProcessResult.OK;
+        }
+        
+        //skip unalloc
+        if(abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+        
+        // skip known
+        if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
         }
 
         if (abstractFile.isFile() == false || !isSupported(abstractFile)) {
