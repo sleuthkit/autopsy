@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,24 +18,15 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -43,80 +34,47 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.ModuleType;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * main configuration panel for all ingest modules, reusable JPanel component
  */
-@ServiceProvider(service = IngestConfigurator.class)
-public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfigurator {
+public class IngestDialogPanel extends javax.swing.JPanel {
 
-    private IngestManager manager = null;
-    private List<IngestModuleAbstract> modules;
     private IngestModuleAbstract currentModule;
-    private Map<String, Boolean> moduleStates;
     private ModulesTableModel tableModel;
-    private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
     public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
-    // The input content that's just been added to the database
-    private List<Content> inputContent;
-   // private static IngestDialogPanel instance = null;
 
     /**
      * Creates new form IngestDialogPanel
      */
     public IngestDialogPanel() {
         tableModel = new ModulesTableModel();
-        modules = new ArrayList<IngestModuleAbstract>();
-        moduleStates = new HashMap<String, Boolean>();
         initComponents();
         customizeComponents();
     }
 
-    private void loadModules() {
-        this.modules.clear();
-        //this.moduleStates.clear(); maintain the state
-        Collection<IngestModuleDataSource> imageModules = manager.enumerateDataSourceModules();
-        for (final IngestModuleDataSource module : imageModules) {
-            addModule(module);
-        }
-        Collection<IngestModuleAbstractFile> fsModules = manager.enumerateAbstractFileModules();
-        for (final IngestModuleAbstractFile module : fsModules) {
-            addModule(module);
-        }
+    public IngestModuleAbstract getCurrentIngestModule() {
+        return currentModule;
+    }
+    
+    public List<IngestModuleAbstract> getModulesToStart() {
+        return tableModel.getSelectedModules();
+    }
+    
+    public boolean processUnallocSpaceEnabled() {
+        return processUnallocCheckbox.isSelected();
     }
 
     private void customizeComponents() {
         modulesTable.setModel(tableModel);
-        this.manager = IngestManager.getDefault();
-
-        loadModules();
-        try {
-            IngestModuleLoader.getDefault().addModulesReloadedListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
-                        loadModules();
-                    }
-                }
-            });
-        } catch (IngestModuleLoaderException ex) {
-            logger.log(Level.SEVERE, "Could not initialize ingest module loader to listen for module config changes", ex);
-        }
-
         modulesTable.setTableHeader(null);
         modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         //custom renderer for tooltips
-
         ModulesTableRenderer renderer = new ModulesTableRenderer();
+        
         //customize column witdhs
         final int width = modulesScrollPane.getPreferredSize().width;
         TableColumn column = null;
@@ -135,40 +93,30 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             public void valueChanged(ListSelectionEvent e) {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
-                    save();
                     int index = listSelectionModel.getMinSelectionIndex();
-                    currentModule = modules.get(index);
-                    reload();
+                    currentModule = tableModel.getModule(index);
+                    
+                    // add the module-specific configuration panel, if there is one
+                    simplePanel.removeAll();
+                    if (currentModule.hasSimpleConfiguration()) {
+                        simplePanel.add(currentModule.getSimpleConfiguration());
+                    }
+                    simplePanel.revalidate();
+                    simplePanel.repaint();
                     advancedButton.setEnabled(currentModule.hasAdvancedConfiguration());
                 } else {
                     currentModule = null;
                 }
             }
         });
-
-        processUnallocCheckbox.setSelected(manager.getProcessUnallocSpace());
-
     }
 
-    private void setProcessUnallocSpaceEnabled(boolean enabled) {
-        processUnallocCheckbox.setEnabled(enabled);
+    public void setProcessUnallocSpaceEnabled(final boolean enabled) {
+        processUnallocCheckbox.setSelected(enabled);
     }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        if (manager.isIngestRunning()) {
-            setProcessUnallocSpaceEnabled(false);
-
-        } else {
-            setProcessUnallocSpaceEnabled(true);
-        }
-    }
-
-    private void addModule(IngestModuleAbstract module) {
-        final String moduleName = module.getName();
-        modules.add(module);
-        moduleStates.put(moduleName, true);
+    
+    public void setDisabledModules(List<IngestModuleAbstract> disabledModules) {
+        tableModel.setUnselectedModules(disabledModules);
     }
 
     /**
@@ -311,22 +259,19 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             public void actionPerformed(ActionEvent e) {
                 dialog.close();
                 currentModule.saveAdvancedConfiguration();
-                reload();
             }
         });
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 dialog.close();
-                reload();
             }
         });
-        save(); // save the simple panel
-        dialog.display(currentModule.getAdvancedConfiguration(null));
+        dialog.display(currentModule.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
-        // TODO add your handling code here:
+        // nothing to do here
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
@@ -342,10 +287,19 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     // End of variables declaration//GEN-END:variables
 
     private class ModulesTableModel extends AbstractTableModel {
+        
+        private List<Map.Entry<IngestModuleAbstract, Boolean>>moduleData = new ArrayList<>();
+
+        public ModulesTableModel() {
+            List<IngestModuleAbstract> modules = IngestManager.getDefault().enumerateAllModules();
+            for (IngestModuleAbstract ingestModuleAbstract : modules) {
+                moduleData.add(new AbstractMap.SimpleEntry<>(ingestModuleAbstract, Boolean.TRUE));
+            }
+        }
 
         @Override
         public int getRowCount() {
-            return modules.size();
+            return moduleData.size();
         }
 
         @Override
@@ -355,11 +309,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            String name = modules.get(rowIndex).getName();
+            Map.Entry<IngestModuleAbstract, Boolean> entry = moduleData.get(rowIndex);
             if (columnIndex == 0) {
-                return moduleStates.get(name);
+                return entry.getValue();
             } else {
-                return name;
+                return entry.getKey().getName();
             }
         }
 
@@ -371,8 +325,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
-                moduleStates.put((String) getValueAt(rowIndex, 1), (Boolean) aValue);
-
+                moduleData.get(rowIndex).setValue((Boolean)aValue);
             }
         }
 
@@ -380,183 +333,96 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-    }
-
-    List<IngestModuleAbstract> getModulesToStart() {
-        List<IngestModuleAbstract> modulesToStart = new ArrayList<IngestModuleAbstract>();
-        for (IngestModuleAbstract module : modules) {
-            boolean moduleEnabled = moduleStates.get(module.getName());
-            if (moduleEnabled) {
-                modulesToStart.add(module);
-            }
-        }
-        return modulesToStart;
-    }
-
-    private boolean processUnallocSpaceEnabled() {
-        return processUnallocCheckbox.isEnabled();
-    }
-
-    /**
-     * To be called whenever the next, close, or start buttons are pressed.
-     *
-     */
-    @Override
-    public void save() {
-        // Save the current module
-        if (currentModule != null && currentModule.hasSimpleConfiguration()) {
-            currentModule.saveSimpleConfiguration();
-        }
-        // Save this panel
-        List<String> modulesDisabled = new ArrayList<String>();
-        for (int i = 0; i < modulesTable.getRowCount(); i++) {
-            // Column 0 is always the module's checkbox (which is retreived as a boolean)
-            Boolean enabled = (Boolean) modulesTable.getValueAt(i, 0);
-            if (!enabled) {
-                // Column 1 is always the module name
-                String moduleName = (String) modulesTable.getValueAt(i, 1);
-                modulesDisabled.add(moduleName);
-            }
-        }
-        // Add all the enabled modules to the properties separated by a coma
-        String list = "";
-        for (int i = 0; i < modulesDisabled.size(); i++) {
-            list += modulesDisabled.get(i);
-            if (i + 1 < modulesDisabled.size()) {
-                list += ", ";
-            }
-        }
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, DISABLED_MOD, list);
-        String processUnalloc = Boolean.toString(processUnallocCheckbox.isSelected());
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC, processUnalloc);
-
-    }
-
-    /**
-     * Called when the dialog needs to be reloaded. Most commonly used to
-     * refresh the simple panel.
-     *
-     * Called every time this panel is displayed.
-     */
-    @Override
-    public void reload() {
-        // Reload the simple panel
-        if (this.modulesTable.getSelectedRow() != -1) {
-            simplePanel.removeAll();
-            if (currentModule.hasSimpleConfiguration()) {
-                simplePanel.add(currentModule.getSimpleConfiguration(null));
-            }
-            simplePanel.revalidate();
-            simplePanel.repaint();
-        }
-        // Reload this panel
-        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, DISABLED_MOD);
-        if (list != null) { // if no property is found, list will be null
-            List<String> modulesDisabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
-            // For every row, see if that module name is in the ArrayList
-            for (int i = 0; i < modulesTable.getRowCount(); i++) {
-                String moduleName = (String) modulesTable.getValueAt(i, 1);
-                if (modulesDisabled.contains(moduleName)) {
-                    modulesTable.setValueAt(false, i, 0); // we found it, disable the module
-                } else {
-                    modulesTable.setValueAt(true, i, 0); // not on disabled list, or a new module, enable it
+        
+        public List<IngestModuleAbstract> getSelectedModules() {
+            List<IngestModuleAbstract> selectedModules = new ArrayList<>();
+            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
+                if (entry.getValue().booleanValue()) {
+                    selectedModules.add(entry.getKey());
                 }
             }
+            return selectedModules;
         }
-        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC);
-        if (processUnalloc != null) {
-            processUnallocCheckbox.setSelected(Boolean.parseBoolean(processUnalloc));
+        
+        /**
+         * Sets the given modules as selected in the modules table
+         * @param selectedModules 
+         */
+        public void setSelectedModules(List<IngestModuleAbstract> selectedModules) {
+            // unselect all modules
+            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
+                entry.setValue(Boolean.FALSE);
+            }
+            
+            // select only the given modules
+            for (IngestModuleAbstract selectedModule : selectedModules) {
+                getEntryForModule(selectedModule).setValue(Boolean.TRUE);
+            }
+            
+            // tell everyone about it
+            fireTableDataChanged();
         }
-    }
-
-    @Override
-    public JPanel getIngestConfigPanel() {
-        this.reload();
-        return this;
-    }
-
-    @Override
-    public void setContent(List<Content> inputContent) {
-        this.inputContent = inputContent;
-    }
-
-    @Override
-    public void start() {
-        //pick the modules
-        List<IngestModuleAbstract> modulesToStart = getModulesToStart();
-
-        //update ingest proc. unalloc space
-        if (processUnallocSpaceEnabled()) {
-            manager.setProcessUnallocSpace(processUnallocCheckbox.isSelected());
+        
+        /**
+         * Sets the given modules as NOT selected in the modules table
+         * @param selectedModules 
+         */
+        public void setUnselectedModules(List<IngestModuleAbstract> unselectedModules) {
+            // select all modules
+            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
+                entry.setValue(Boolean.TRUE);
+            }
+            
+            // unselect only the given modules
+            for (IngestModuleAbstract unselectedModule : unselectedModules) {
+                getEntryForModule(unselectedModule).setValue(Boolean.FALSE);
+            }
+            
+            // tell everyone about it
+            fireTableDataChanged();
         }
-
-        if (!modulesToStart.isEmpty()) {
-            manager.execute(modulesToStart, inputContent);
+        
+        public IngestModuleAbstract getModule(int row) {
+            return moduleData.get(row).getKey();
         }
-
-    }
-
-    @Override
-    public boolean isIngestRunning() {
-        return manager.isIngestRunning();
+        
+        private Map.Entry<IngestModuleAbstract, Boolean> getEntryForModule(IngestModuleAbstract module) {
+            Map.Entry<IngestModuleAbstract, Boolean> entry = null;
+            for (Map.Entry<IngestModuleAbstract, Boolean> anEntry : moduleData) {
+                if (anEntry.getKey().equals(module)) {
+                    entry = anEntry;
+                    break;
+                }
+            }
+            return entry;
+        }
     }
 
     /**
      * Custom cell renderer for tooltips with module description
      */
     private class ModulesTableRenderer extends DefaultTableCellRenderer {
+        
+        List<String> tooltips = new ArrayList<>();
+
+        public ModulesTableRenderer() {
+            List<IngestModuleAbstract> modules = IngestManager.getDefault().enumerateAllModules();
+            for (IngestModuleAbstract ingestModuleAbstract : modules) {
+                tooltips.add(ingestModuleAbstract.getDescription());
+            }
+        }
 
         @Override
         public Component getTableCellRendererComponent(
                 JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
-                int row, int column) {
-
-            final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                int row, int column) {                
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
             if (column == 1) {
-                //String moduleName = (String) table.getModel().getValueAt(row, column);
-                IngestModuleAbstract module = modules.get(row);
-                String moduleDescr = module.getDescription();
-                String toolTip = moduleDescr;
-
-                if (inputContent != null && module.getType().equals(ModuleType.DataSource)) {
-
-                    //DataSource module accepts only data source, does not work on any child
-                    //show warning to user and set fg red for that module
-                    boolean isDataSource = true;
-                    for (Content content : inputContent) {
-                        try {
-                            if (content.getParent() != null) {
-                                isDataSource = false;
-                                break;
-                            }
-                        } catch (TskCoreException e) {
-                            logger.log(Level.SEVERE, "Error checking if module input content is parentless data source", e);
-                        }
-
-                    }
-                    
-                    if (! isDataSource ) {
-                        cell.setForeground(Color.red);
-                        toolTip = toolTip + "<br />WARNING: this module will not run on current selection because it operates only on root-level data-source (such as Image, Filesets).";
-                    }
-                    else {
-                        cell.setForeground(Color.black);
-                    }
-
-
-
-                } //end data source
-                else {
-                     cell.setForeground(Color.black);
-                }
-                //
-
-                setToolTipText("<html>" + toolTip+ "</html>");
+                setToolTipText(tooltips.get(row));
             }
-
-            return cell;
+            return this;
         }
     }
 }

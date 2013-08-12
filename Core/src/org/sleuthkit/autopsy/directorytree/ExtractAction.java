@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -30,83 +31,37 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
 
 /**
  * Exports files and folders
  */
 public final class ExtractAction extends AbstractAction {
-
-    private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
-    private AbstractFile content;
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
-    public ExtractAction(String title, Node contentNode) {
-        super(title);
-        Content tempContent = contentNode.getLookup().lookup(Content.class);
+    // This class is a singleton to support multi-selection of nodes, since 
+    // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
+    // node in the array returns a reference to the same action object from Node.getActions(boolean).    
+    private static ExtractAction instance;
 
-        this.content = tempContent.accept(initializeCV);
-        this.setEnabled(content != null);
-    }
-    
-     public ExtractAction(String title, Content content) {
-        super(title);
+    public static synchronized ExtractAction getInstance() {
+        if (null == instance) {
+            instance = new ExtractAction();
+        }
 
-        this.content = content.accept(initializeCV);
-        this.setEnabled(this.content != null);
+        return instance;
     }
 
-    /**
-     * Returns the FsContent if it is supported, otherwise null
-     */
-    private static class InitializeContentVisitor extends ContentVisitor.Default<AbstractFile> {
-
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.File f) {
-            return f;
-        }
-        
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
-            return lf;
-        }
-        
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.DerivedFile df) {
-            return df;
-        }
-        
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
-            return lf;
-        }
-        
-        @Override
-        public AbstractFile visit(org.sleuthkit.datamodel.VirtualDirectory vd) {
-            return vd;
-        }
-
-        @Override
-        public AbstractFile visit(Directory dir) {
-            return ContentUtils.isDotDirectory(dir) ? null : dir;
-        }
-
-        @Override
-        protected AbstractFile defaultVisit(Content cntnt) {
-            return null;
-        }
+    private ExtractAction() {
+        super("Extract");
     }
-
+        
     /**
      * Asks user to choose destination, then extracts content/directory to 
      * destination (recursing on directories)
@@ -114,10 +69,17 @@ public final class ExtractAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        for (AbstractFile file : selectedFiles) {
+            extractFile(e, file);
+        } 
+    }
+    
+    private void extractFile(ActionEvent e, AbstractFile file) {
         // Get content and check that it's okay to overwrite existing content
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
-        fc.setSelectedFile(new File(this.content.getName()));
+        fc.setSelectedFile(new File(file.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -144,12 +106,12 @@ public final class ExtractAction extends AbstractAction {
         
             try {
                 ExtractFileThread extract = new ExtractFileThread();    
-                extract.init(this.content, e, destination);
+                extract.init(file, e, destination);
                 extract.execute();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background thread.", ex);
             }
-        }
+        }        
     }
     
     private class ExtractFileThread extends SwingWorker<Object,Void> {
@@ -230,6 +192,5 @@ public final class ExtractAction extends AbstractAction {
                 }
             }
         }
-    }
-    
+    } 
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,5 +59,5 @@ public interface IngestConfigurator {
      * @return  true if ingest process is running, false otherwise
      */
     boolean isIngestRunning();
-    
+ 
 }

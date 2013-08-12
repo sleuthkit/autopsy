@@ -23,7 +23,7 @@ import java.util.List;
 import javax.swing.Action;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAction;
+import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
@@ -67,16 +67,16 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         if (!getDirectoryBrowseMode()) {
             actions.add(new ViewContextAction("View File in Directory", this));
             actions.add(null); // creates a menu separator
         }
         actions.add(new NewWindowViewAction("View in New Window", this));
         actions.add(null); // creates a menu separator
-        actions.add(new ExtractAction("Extract Directory", this));
+        actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(new TagAction(this));
+        actions.add(TagAbstractFileAction.getInstance());
         return actions.toArray(new Action[0]);
     }
 

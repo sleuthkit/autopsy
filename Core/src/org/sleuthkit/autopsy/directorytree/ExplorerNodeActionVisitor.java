@@ -101,39 +101,39 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new TagAction(d));
+        actions.add(TagAbstractFileAction.getInstance());
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new TagAction(d));
-        actions.add(new ExtractAction("Extract Directory", d));
+        actions.add(ExtractAction.getInstance());
+        actions.add(TagAbstractFileAction.getInstance());
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new ExtractAction("Extract File", d));
-        actions.add(new TagAction(d));
+        actions.add(ExtractAction.getInstance());
+        actions.add(TagAbstractFileAction.getInstance());
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final LocalFile d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new ExtractAction("Extract File", d));
-        actions.add(new TagAction(d));
+        actions.add(ExtractAction.getInstance());
+        actions.add(TagAbstractFileAction.getInstance());
         return actions;
     }
 
     @Override
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new ExtractAction("Extract File", d));
-        actions.add(new TagAction(d));
+        actions.add(ExtractAction.getInstance());
+        actions.add(TagAbstractFileAction.getInstance());
         return actions;
     }
 
