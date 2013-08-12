@@ -32,11 +32,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.GeneralIngestConfigurator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 
 /**
- * IngestDialog shown on Case.CASE_ADD_IMAGE property change
+ * Dialog box that allows ingest modules to be run on an image. 
+ * Used outside of the wizards.
  */
 public class IngestDialog extends JDialog {
     
@@ -46,7 +48,8 @@ public class IngestDialog extends JDialog {
     
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
+        ingestConfigurator = new GeneralIngestConfigurator();
+        ingestConfigurator.setContext(IngestDialog.class.getCanonicalName());
         ingestConfigurator.reload();
     }
     
@@ -76,6 +79,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                ingestConfigurator.save();
                 ingestConfigurator.start();
                 close();
             }

@@ -145,28 +145,38 @@ public abstract class IngestModuleAbstract {
      */
     public void saveAdvancedConfiguration() {}
 
-     /**
-      * Returns a panel that displays the simple (run-time) configuration.
-      * This is presented to the user before ingest starts and only basic
-      * settings should be given here.  use the advanced (general) configuration
-      * panel for more in-depth interfaces.
-      * The module is responsible for preserving / saving its configuration state
-      * In addition, saveSimpleConfiguration() can be used
-      *
-      * @return JPanel containing basic configuration widgets or null if simple configuration is not available
-      */
-     public javax.swing.JPanel getSimpleConfiguration() {
-         return null;
-     }
+     
+    /**
+     * Returns a panel that displays the simple (run-time) configuration for the
+     * given configuration context (such as pipeline instance). This is
+     * presented to the user before ingest starts and only basic settings should
+     * be given here. Use the advanced (general) configuration panel for more
+     * in-depth interfaces. The module (or its configuration controller object)
+     * is responsible for preserving / saving its configuration state In
+     * addition, saveSimpleConfiguration() can be used as the trigger.
+     *     
+     * @param context the configuration context to use in the panel
+     * @return JPanel containing basic configuration widgets or null if simple
+     * configuration is not available
+     */
+    public javax.swing.JPanel getSimpleConfiguration(String context) {
+        return null;
+    }
 
-      /**
-       * Implements advanced module configuration exposed to the user before ingest starts
-       * The module is responsible for preserving / saving its configuration state
-       * In addition, saveAdvancedConfiguration() can be used
-       *
-       * @return JPanel containing basic configuration widgets or null if advanced configuration is not available
-       */
-     public javax.swing.JPanel getAdvancedConfiguration() {
-         return null;
-     };
+    /**
+     * Returns a panel that displays the advanced (run-time) configuration for
+     * the given configuration context (such as pipeline instance). Implements
+     * advanced module configuration exposed to the user before ingest starts.
+     *     
+     * The module (or its configuration controller object) is responsible for
+     * preserving / saving its configuration state In addition,
+     * saveAdvancedConfiguration() can be used as the trigger.
+     *     
+     * @param context the configuration context to use in the panel
+     * @return JPanel containing advanced configuration widgets or null if
+     * advanced configuration is not available
+     */
+    public javax.swing.JPanel getAdvancedConfiguration(String context) {
+        return null;
+    }
  }    

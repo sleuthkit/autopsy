@@ -38,6 +38,7 @@ public class ModuleSettings {
 
     // The directory where the properties file is lcoated
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
+    public static final String DEFAULT_CONTEXT = "GeneralContext";
     public static final String MAIN_SETTINGS = "Case";
 
     /** the constructor */

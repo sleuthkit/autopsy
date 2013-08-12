@@ -347,11 +347,11 @@ public class IngestManager {
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
         if (fileScheduler.hasNext()) {
-            if (abstractFileIngester
-                    == null) {
+            if (abstractFileIngester == null) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Starting initial AbstractFile ingester");
-            } //if worker had completed, restart it in case data is still enqueued
+            } 
+            //if worker had completed, restart it in case data is still enqueued
             else if (abstractFileIngester.isDone()) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Restarting AbstractFile ingester");
@@ -364,6 +364,9 @@ public class IngestManager {
             stats = new IngestManagerStats();
             abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
+            /* @@@ I don't understand why we do an init on each module.  Should do only modules
+             * that we are going to be using in the pipeline
+             */
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
@@ -1066,10 +1069,7 @@ public class IngestManager {
         }
 
         private void queueAll(List<IngestModuleAbstract> modules, final List<Content> inputs) {
-
-            final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
-            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
+            
             int processed = 0;
             for (Content input : inputs) {
                 final String inputName = input.getName();
@@ -1096,16 +1096,16 @@ public class IngestManager {
                                 logger.log(Level.INFO, "Error loading module and adding input " + inputName 
                                         + " with module " + module.getName());
                             }
-
                             break;
 
                         case AbstractFile:
                             //enqueue the same singleton AbstractFile module
                             logger.log(Level.INFO, "Adding input " + inputName
-                                    + " number of AbstractFile to module " + module.getName());
+                                    + " for AbstractFileModule " + module.getName());
 
                             fileMods.add((IngestModuleAbstractFile) module);
                             break;
+                            
                         default:
                             logger.log(Level.SEVERE, "Unexpected module type: " + module.getType().name());
                     }
@@ -1122,6 +1122,7 @@ public class IngestManager {
                         new PipelineContext<IngestModuleDataSource>(dataSourceTask, processUnalloc);
                 logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
+                final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
                 dataSourceScheduler.schedule(dataSourcePipelineContext);
                 progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
@@ -1132,6 +1133,7 @@ public class IngestManager {
                         = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + inputName, processed);
+                final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
                 fileScheduler.schedule(filepipelineContext);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
 

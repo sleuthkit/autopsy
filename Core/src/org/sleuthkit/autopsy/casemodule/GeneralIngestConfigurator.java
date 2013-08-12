@@ -41,8 +41,16 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
     public GeneralIngestConfigurator() {
         this.moduleContext = IngestManager.MODULE_PROPERTIES; // Hard-code this for now.
         ingestDialogPanel = new IngestDialogPanel();
+        ingestDialogPanel.setContext(moduleContext);
         manager = IngestManager.getDefault();
         loadSettings();
+    }
+    
+    @Override
+    public void setContext(String context) {
+        moduleContext = context;
+        ingestDialogPanel.setContext(moduleContext);
+        reload();
     }
     
     @Override
