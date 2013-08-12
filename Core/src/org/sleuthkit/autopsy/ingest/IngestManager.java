@@ -774,7 +774,7 @@ public class IngestManager {
 
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("<html>");
+            sb.append("<html><body>");
 
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
@@ -788,7 +788,7 @@ public class IngestManager {
              }
              * */
 
-            sb.append("</html>");
+            sb.append("</body></html>");
             return sb.toString();
         }
 

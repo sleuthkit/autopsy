@@ -23,18 +23,22 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 
 /**
- * Responsible for a tab in the {@link DataContent} component. Displays the
- * contents of the node passed to {@link setNode(Node)}.
+ * Interface that DataContentViewer modules must implement.  
+ * These modules analyze an individual file that the user has selected and display
+ * results in some form of JPanel.  We find it easiest to use the NetBeans IDE to first
+ * make a "JPanel Form" class and then have it implement DataContentViewer.  This allows
+ * you to easily use the UI builder for the layout.
  */
 public interface DataContentViewer {
     /**
-     * Sets the node to display in the viewer. When called with null, must
+     * Autopsy will call this when this panel is focused with the file that 
+     * should be analyzed. When called with null, must
      * clear all references to previous nodes.
      */
     public void setNode(Node selectedNode);
     
     /**
-     * Returns the title of this viewer. 
+     * Returns the title of this viewer to display in the tab. 
      */
     public String getTitle();
     
@@ -45,41 +49,50 @@ public interface DataContentViewer {
     public String getToolTip();
 
     /**
-     * Create and get new DataContentViewer instance. (This method is weird. We use the
-     * instance returned by the Lookup as a factory for the instances that
-     * are actually used.)
+     * Create and return a new instance of your viewer. 
+     * The reason that this is needed is because the specific
+     * viewer modules will be found via NetBeans Lookup and 
+     * the type will only be DataContentViewer.  This method is
+     * used to get an instance of your specific type.
+     * @returns A new instance of the viewer
      */
-    // TODO: extract the factory method out into a seperate interface that is used for the Lookup.
     public DataContentViewer createInstance();
     
     /**
-     * Get Component to display this DataContentViewer
+     * Return the Swing Component to display. 
+     * Implementations of this method that  extend JPanel
+     * and do a 'return this;'.  Otherwise return an internal
+     * instance of the JPanel.
      */
     public Component getComponent();
 
     /**
-     * Resets the component in this viewer.
+     * Resets the contents of the viewer / component.
      */
     public void resetComponent();
 
     /**
-     * Checks whether the given node is supported by the viewer
+     * Checks whether the given node is supported by the viewer.  
+     * This will be used to enable or disable the tab for the viewer. 
      * @param node Node to check for support
-     * @return True if supported, else false
+     * @return True if the node can be displayed / processed, else false
      */
     public boolean isSupported(Node node);
     
      /**
-     * Checks whether the given viewer is preferred for the Node
+     * Checks whether the given viewer is preferred for the Node. 
+     * This is a bit subjective, but the idea is that Autopsy wants to display
+     * the most relevant tab.  The more generic the viewer, the lower 
+     * the return value should be. 
      * 
      * @param node Node to check for preference
      * @param isSupported true if the viewer is supported by the node, false otherwise
      * as determined by a previous check
      * @return an int (0-10) higher return means the viewer has higher priority
      * 0 means not supported
-     * 1/2 means will display all supported
-     * 3-10 are prioritized by Content viewer developer
+     * 1 to 2 means the module will display all file types (such as the hex viewer)
+     * 3-10 are prioritized by Content viewer developer.  Modules that operate on very
+     * few file types should be towards 10.
      */
     public int isPreferred(Node node, boolean isSupported);
-
 }

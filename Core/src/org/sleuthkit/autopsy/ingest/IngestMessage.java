@@ -171,14 +171,14 @@ public class IngestMessage {
      * @param messageType message type
      * @param source originating module
      * @param subject message subject to be displayed
-     * @param details message details to be displayed, or null
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String details) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
-        return new IngestMessage(ID, messageType, source, subject, details, null);
+        return new IngestMessage(ID, messageType, source, subject, detailsHtml, null);
     }
 
     /**
@@ -199,14 +199,14 @@ public class IngestMessage {
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating module
      * @param subject message subject to be displayed
-     * @param details message details to be displayed, or null
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null
      * @return 
      */
-    public static IngestMessage createErrorMessage(long ID, IngestModuleAbstract source, String subject, String details) {
+    public static IngestMessage createErrorMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.ERROR, source, subject, details, null);
+        return new IngestMessage(ID, MessageType.ERROR, source, subject, detailsHtml, null);
     }
     
     /**
@@ -214,14 +214,14 @@ public class IngestMessage {
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating module
      * @param subject message subject to be displayed
-     * @param details message details to be displayed, or null
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null 
      * @return 
      */
-    public static IngestMessage createWarningMessage(long ID, IngestModuleAbstract source, String subject, String details) {
+    public static IngestMessage createWarningMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.WARNING, source, subject, details, null);
+        return new IngestMessage(ID, MessageType.WARNING, source, subject, detailsHtml, null);
     }
 
     /**
@@ -229,7 +229,7 @@ public class IngestMessage {
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating module
      * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. 
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
      * @param uniqueKey Key used to group similar messages together. Shoudl be unique to the analysis. For example, hits for the same keyword in a keyword search would use the keyword as this unique value so that they can be grouped.
      * @param data  blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
      * @return 
@@ -246,6 +246,9 @@ public class IngestMessage {
 
     /**
      * Used by IngestMager to post status messages.
+     * @param subject message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null.
+
      */
     static IngestMessage createManagerMessage(String subject, String detailsHtml) {
         return new IngestMessage(++managerMessageId, MessageType.INFO, null, subject, detailsHtml, null);

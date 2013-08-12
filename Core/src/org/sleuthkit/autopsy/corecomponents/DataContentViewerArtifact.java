@@ -34,6 +34,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
@@ -227,22 +230,25 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public void setNode(Node selectedNode) {
-        if (selectedNode != null) {
-            Lookup lookup = selectedNode.getLookup();
-            Content content = lookup.lookup(Content.class);
-            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
-            if (content != null) {
-                try {
-                    this.setDataView(content.getAllArtifacts(), 1);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
-                }
-            }
-            if (artifact != null) {
-                this.setSelectedArtifact(artifact);
-            }
-        } else {
+        if (selectedNode == null) {
             this.setDataView(new ArrayList<BlackboardArtifact>(), 1);
+            return;
+        }
+        
+        Lookup lookup = selectedNode.getLookup();
+        Content content = lookup.lookup(Content.class);
+        if (content != null) {
+            try {
+                this.setDataView(content.getAllArtifacts(), 1);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
+            }
+        }
+        
+        // focus on a specific artifact if it is in the node
+        BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
+        if (artifact != null) {
+            this.setSelectedArtifact(artifact);
         }
     }
 
@@ -345,7 +351,23 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         };
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
-        outputViewPane.setContentType("text/html");
+        
+        outputViewPane.setContentType("text/html;charset=UTF-8");
+        HTMLEditorKit kit = new HTMLEditorKit();
+        outputViewPane.setEditorKit(kit);
+        StyleSheet styleSheet = kit.getStyleSheet();
+        /* I tried to play around with inheritence on font-size and it didn't 
+         * always work.  Defined all of the basics just in case. 
+         * @@@ IngestInboxViewer also defines styles similar to this.  Consider
+         * a method that sets consistent styles for all viewers and takes font
+         * size as an argument. 
+         */
+        styleSheet.addRule("body {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("li {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("td {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
+        styleSheet.addRule("th {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
+        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
     }
 
     /**
@@ -376,6 +398,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         
         totalPageLabel.setText(Integer.toString(pages));
         currentPageLabel.setText(Integer.toString(currentPage));
+        
         outputViewPane.setText(text);
         setComponentsVisibility(true);
         outputViewPane.moveCaretPosition(0);
