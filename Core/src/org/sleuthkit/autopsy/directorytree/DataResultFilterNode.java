@@ -105,7 +105,7 @@ public class DataResultFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean popup) {
 
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         actions.addAll(originalNode.accept(getActionsDIV));
@@ -167,7 +167,7 @@ public class DataResultFilterNode extends FilterNode {
             //TODO all actions need to be consolidated in single place!
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
 
-            List<Action> actions = new ArrayList<Action>();
+            List<Action> actions = new ArrayList<>();
 
             //merge predefined specific node actions if bban subclasses have their own
             for (Action a : ban.getActions(true)) {
@@ -197,15 +197,15 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", fn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", fn));
                 actions.add(null); // creates a menu separator
-                actions.add(new ExtractAction("Extract File", new FileNode(f)));
+                actions.add(ExtractAction.getInstance());
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", fn));
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagAction(f));
-                    actions.add(new TagAction(ba));
+                    actions.add(TagAbstractFileAction.getInstance());
+                    actions.add(TagBlackboardArtifactAction.getInstance());
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -214,14 +214,14 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", dn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", dn));
                 actions.add(null); // creates a menu separator
-                actions.add(new ExtractAction("Extract Directory", dn));
+                actions.add(ExtractAction.getInstance());
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagAction(d));
-                    actions.add(new TagAction(ba));
+                    actions.add(TagAbstractFileAction.getInstance());
+                    actions.add(TagBlackboardArtifactAction.getInstance());
                 }
             }
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -230,14 +230,14 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", dn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", dn));
                 actions.add(null); // creates a menu separator
-                actions.add(new ExtractAction("Extract Directory", dn));
+                actions.add(ExtractAction.getInstance());
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagAction(d));
-                    actions.add(new TagAction(ba));
+                    actions.add(TagAbstractFileAction.getInstance());
+                    actions.add(TagBlackboardArtifactAction.getInstance());
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
@@ -245,14 +245,14 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", lfn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", lfn));
                 actions.add(null); // creates a menu separator
-                actions.add(new ExtractAction("Extract File", lfn));
+                actions.add(ExtractAction.getInstance());
 
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagAction(lf));
-                    actions.add(new TagAction(ba));
+                    actions.add(TagAbstractFileAction.getInstance());
+                    actions.add(TagBlackboardArtifactAction.getInstance());
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
@@ -261,14 +261,14 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new NewWindowViewAction("View in New Window", locfn));
                 actions.add(new ExternalViewerAction("Open in External Viewer", locfn));
                 actions.add(null); // creates a menu separator
-                actions.add(new ExtractAction("Extract File", locfn));
+                actions.add(ExtractAction.getInstance());
 
                 //add tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(new TagAction(lf));
-                    actions.add(new TagAction(ba));
+                    actions.add(TagAbstractFileAction.getInstance());
+                    actions.add(TagBlackboardArtifactAction.getInstance());
                 }
             }
 
@@ -278,7 +278,7 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
-            List<Action> actions = new ArrayList<Action>();
+            List<Action> actions = new ArrayList<>();
 
             for (Action action : ditem.getActions(true)) {
                 actions.add(action);

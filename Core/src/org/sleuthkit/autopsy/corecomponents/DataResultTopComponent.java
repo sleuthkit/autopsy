@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import java.util.logging.Level;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
@@ -96,9 +97,9 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
 
         initComponents();
         customizeComponent(isMain, name);;
-
+        
     }
-
+    
     private void customizeComponent(boolean isMain, String title) {
         this.isMain = isMain;
         this.customModeName = null;
@@ -260,6 +261,14 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         super.componentOpened();
         
         this.dataResultPanel.open();
+        
+        List <DataResultViewer> resultViewers = this.dataResultPanel.getViewers();
+        for (DataResultViewer viewer : resultViewers) {
+            if (viewer instanceof DataResultViewerTable) {
+                associateLookup(ExplorerUtils.createLookup(((DataResultViewerTable)viewer).getExplorerManager(), getActionMap()));
+                break;
+            }
+        }                
     }
     
     

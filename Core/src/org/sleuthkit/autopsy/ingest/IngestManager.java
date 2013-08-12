@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,8 +154,6 @@ public class IngestManager {
         } catch (IngestModuleLoaderException ex) {
             logger.log(Level.SEVERE, "Error getting module loader");
         }
-
-
     }
 
     /**
@@ -243,7 +241,6 @@ public class IngestManager {
         if (ui != null) {
             ui.restoreMessages();
         }
-
     }
 
     /**
@@ -346,8 +343,6 @@ public class IngestManager {
                 }
             }
         }
-        //}
-
 
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
@@ -421,7 +416,6 @@ public class IngestManager {
         List<IngestDataSourceThread> toStop = new ArrayList<IngestDataSourceThread>();
         toStop.addAll(dataSourceIngesters);
 
-
         for (IngestDataSourceThread dataSourceWorker : toStop) {
             IngestModuleDataSource s = dataSourceWorker.getModule();
 
@@ -440,7 +434,6 @@ public class IngestManager {
                     logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
                 }
             }
-
         }
 
         logger.log(Level.INFO, "stopped all");
@@ -545,7 +538,6 @@ public class IngestManager {
                 return module.hasBackgroundJobsRunning();
             }
 
-
         } else {
             //data source module
             synchronized (this) {
@@ -570,10 +562,7 @@ public class IngestManager {
                     return false;
                 }
             }
-
         }
-
-
     }
     
      /**
@@ -607,7 +596,7 @@ public class IngestManager {
      *
      * @param processUnallocSpace
      */
-    void setProcessUnallocSpace(boolean processUnallocSpace) {
+    public void setProcessUnallocSpace(boolean processUnallocSpace) {
         this.processUnallocSpace = processUnallocSpace;
     }
 
@@ -671,6 +660,13 @@ public class IngestManager {
     public List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
         return moduleLoader.getAbstractFileIngestModules();
     }
+    
+    public List<IngestModuleAbstract> enumerateAllModules() {
+        List<IngestModuleAbstract> modules = new ArrayList<>();
+        modules.addAll(enumerateDataSourceModules());
+        modules.addAll(enumerateAbstractFileModules());
+        return modules;
+    }
 
     //data source worker to remove itself when complete or interrupted
     void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
@@ -697,7 +693,6 @@ public class IngestManager {
 
         IngestManagerStats() {
             errors = new HashMap<IngestModuleAbstract, Integer>();
-
         }
 
         /**
@@ -775,19 +770,8 @@ public class IngestManager {
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
             sb.append("<html><body>");
-
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
-            /*
-             if (errorsTotal > 0) {
-             sb.append("Errors per module:");
-             for (IngestModuleAbstract module : errors.keySet()) {
-             final int errorsModule = errors.get(module);
-             sb.append("\t").append(module.getName()).append(": ").append(errorsModule).append("<br />");
-             }
-             }
-             * */
-
             sb.append("</body></html>");
             return sb.toString();
         }
