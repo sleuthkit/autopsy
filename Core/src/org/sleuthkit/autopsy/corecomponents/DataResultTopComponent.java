@@ -262,6 +262,9 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         
         this.dataResultPanel.open();
         
+        /* @@@ Short-term hack to associate lookup with the table view so that we can do multi-select.
+         * Longer-term solution is to use same explorer Manager for all viewers.
+         */
         List <DataResultViewer> resultViewers = this.dataResultPanel.getViewers();
         for (DataResultViewer viewer : resultViewers) {
             if (viewer instanceof DataResultViewerTable) {
