@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,8 +154,6 @@ public class IngestManager {
         } catch (IngestModuleLoaderException ex) {
             logger.log(Level.SEVERE, "Error getting module loader");
         }
-
-
     }
 
     /**
@@ -243,7 +241,6 @@ public class IngestManager {
         if (ui != null) {
             ui.restoreMessages();
         }
-
     }
 
     /**
@@ -346,17 +343,15 @@ public class IngestManager {
                 }
             }
         }
-        //}
-
 
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
         if (fileScheduler.hasNext()) {
-            if (abstractFileIngester
-                    == null) {
+            if (abstractFileIngester == null) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Starting initial AbstractFile ingester");
-            } //if worker had completed, restart it in case data is still enqueued
+            } 
+            //if worker had completed, restart it in case data is still enqueued
             else if (abstractFileIngester.isDone()) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Restarting AbstractFile ingester");
@@ -369,6 +364,9 @@ public class IngestManager {
             stats = new IngestManagerStats();
             abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
+            /* @@@ I don't understand why we do an init on each module.  Should do only modules
+             * that we are going to be using in the pipeline
+             */
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
@@ -421,7 +419,6 @@ public class IngestManager {
         List<IngestDataSourceThread> toStop = new ArrayList<IngestDataSourceThread>();
         toStop.addAll(dataSourceIngesters);
 
-
         for (IngestDataSourceThread dataSourceWorker : toStop) {
             IngestModuleDataSource s = dataSourceWorker.getModule();
 
@@ -440,7 +437,6 @@ public class IngestManager {
                     logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
                 }
             }
-
         }
 
         logger.log(Level.INFO, "stopped all");
@@ -545,7 +541,6 @@ public class IngestManager {
                 return module.hasBackgroundJobsRunning();
             }
 
-
         } else {
             //data source module
             synchronized (this) {
@@ -570,10 +565,7 @@ public class IngestManager {
                     return false;
                 }
             }
-
         }
-
-
     }
     
      /**
@@ -607,7 +599,7 @@ public class IngestManager {
      *
      * @param processUnallocSpace
      */
-    void setProcessUnallocSpace(boolean processUnallocSpace) {
+    public void setProcessUnallocSpace(boolean processUnallocSpace) {
         this.processUnallocSpace = processUnallocSpace;
     }
 
@@ -671,6 +663,13 @@ public class IngestManager {
     public List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
         return moduleLoader.getAbstractFileIngestModules();
     }
+    
+    public List<IngestModuleAbstract> enumerateAllModules() {
+        List<IngestModuleAbstract> modules = new ArrayList<>();
+        modules.addAll(enumerateDataSourceModules());
+        modules.addAll(enumerateAbstractFileModules());
+        return modules;
+    }
 
     //data source worker to remove itself when complete or interrupted
     void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
@@ -697,7 +696,6 @@ public class IngestManager {
 
         IngestManagerStats() {
             errors = new HashMap<IngestModuleAbstract, Integer>();
-
         }
 
         /**
@@ -775,19 +773,8 @@ public class IngestManager {
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
             sb.append("<html><body>");
-
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
-            /*
-             if (errorsTotal > 0) {
-             sb.append("Errors per module:");
-             for (IngestModuleAbstract module : errors.keySet()) {
-             final int errorsModule = errors.get(module);
-             sb.append("\t").append(module.getName()).append(": ").append(errorsModule).append("<br />");
-             }
-             }
-             * */
-
             sb.append("</body></html>");
             return sb.toString();
         }
@@ -1082,10 +1069,7 @@ public class IngestManager {
         }
 
         private void queueAll(List<IngestModuleAbstract> modules, final List<Content> inputs) {
-
-            final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
-            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
+            
             int processed = 0;
             for (Content input : inputs) {
                 final String inputName = input.getName();
@@ -1112,16 +1096,16 @@ public class IngestManager {
                                 logger.log(Level.INFO, "Error loading module and adding input " + inputName 
                                         + " with module " + module.getName());
                             }
-
                             break;
 
                         case AbstractFile:
                             //enqueue the same singleton AbstractFile module
                             logger.log(Level.INFO, "Adding input " + inputName
-                                    + " number of AbstractFile to module " + module.getName());
+                                    + " for AbstractFileModule " + module.getName());
 
                             fileMods.add((IngestModuleAbstractFile) module);
                             break;
+                            
                         default:
                             logger.log(Level.SEVERE, "Unexpected module type: " + module.getType().name());
                     }
@@ -1138,6 +1122,7 @@ public class IngestManager {
                         new PipelineContext<IngestModuleDataSource>(dataSourceTask, processUnalloc);
                 logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
+                final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
                 dataSourceScheduler.schedule(dataSourcePipelineContext);
                 progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
@@ -1148,6 +1133,7 @@ public class IngestManager {
                         = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + inputName, processed);
+                final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
                 fileScheduler.schedule(filepipelineContext);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
 
