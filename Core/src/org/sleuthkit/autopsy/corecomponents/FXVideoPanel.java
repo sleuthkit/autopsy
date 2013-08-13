@@ -378,7 +378,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             mediaTools.getChildren().add(progressLabel);
             
             controlPanel.getChildren().add(mediaTools);
-            
+            controlPanel.setStyle("-fx-background-color: white");
             infoLabel = new Label("");
             controlPanel.getChildren().add(infoLabel);
             setBottom(controlPanel);
