@@ -42,11 +42,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
+/**
+ * Performs a normal string (i.e. non-regexp) query to SOLR/Lucene.
+ * By default, matches in all fields. 
+ */
 public class LuceneQuery implements KeywordSearchQuery {
 
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
-    private String query; //original unescaped query
-    private String queryEscaped;
+    private String keywordString; //original unescaped query
+    private String keywordStringEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
     private final List <KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
@@ -61,14 +65,22 @@ public class LuceneQuery implements KeywordSearchQuery {
     
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
+    /**
+     * Constructor with query to process.
+     * @param keywordQuery 
+     */
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
         this.keywordQuery = keywordQuery;
     }
 
+    /**
+     * Constructor with keyword string to process
+     * @param queryStr Keyword to search for
+     */
     public LuceneQuery(String queryStr) {
-        this.query = queryStr;
-        this.queryEscaped = queryStr;
+        this.keywordString = queryStr;
+        this.keywordStringEscaped = queryStr;
         isEscaped = false;
     }
 
@@ -84,7 +96,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
+        keywordStringEscaped = KeywordSearchUtil.escapeLuceneQuery(keywordString);
         isEscaped = true;
     }
 
@@ -100,12 +112,12 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public String getEscapedQueryString() {
-        return this.queryEscaped;
+        return this.keywordStringEscaped;
     }
 
     @Override
     public String getQueryString() {
-        return this.query;
+        return this.keywordString;
     }
 
     @Override
@@ -117,7 +129,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
         //in case of single term literal query there is only 1 term
-        results.put(query, performLuceneQuery());
+        results.put(keywordString, performLuceneQuery());
 
         return results;
     }
@@ -125,7 +137,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public boolean validate() {
-        return query != null && !query.equals("");
+        return keywordString != null && !keywordString.equals("");
     }
 
     @Override
@@ -192,7 +204,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setShowDebugInfo(DEBUG); //debug
 
         //set query, force quotes/grouping around all literal queries
-        final String groupedQuery = KeywordSearchUtil.quoteQuery(queryEscaped);
+        final String groupedQuery = KeywordSearchUtil.quoteQuery(keywordStringEscaped);
         String theQueryStr = groupedQuery;
         if (field != null) {
             //use the optional field
@@ -262,10 +274,10 @@ public class LuceneQuery implements KeywordSearchQuery {
 
 
             } catch (NoOpenCoreException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
                 throw ex;
             } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
             }
 
         }

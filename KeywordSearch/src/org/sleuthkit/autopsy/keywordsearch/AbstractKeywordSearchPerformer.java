@@ -29,7 +29,8 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 
 /**
- * Common functionality among keyword search performers / widgets
+ * Common functionality among keyword search performers / widgets.
+ * This is extended by the various panels and interfaces that perform the keyword searches.
  */
 abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
@@ -105,7 +106,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                 return;
             }
             man = new KeywordSearchQueryManager(keywords, Presentation.COLLAPSE);
-        } else {
+        } 
+        else {
             QueryType queryType = null;
             if (isLuceneQuerySelected()) {
                 queryType = QueryType.WORD;
