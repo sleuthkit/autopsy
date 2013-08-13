@@ -178,7 +178,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                 jTabbedPane1.setEnabledAt(i, true);
                 
                 // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode, false);
+                int currentPreferred = dcv.isPreferred(selectedNode, true);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
                     maxPreferred = currentPreferred;
