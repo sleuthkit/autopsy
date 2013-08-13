@@ -65,7 +65,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         initComponents();
         
-        videoPanel = new MediaViewVideoPanel();
+        videoPanel = MediaViewVideoPanel.createVideoPanel();
         imagePanel = new MediaViewImagePanel();
         videoPanelInited = videoPanel.isInited();
         imagePanelInited = imagePanel.isInited();
