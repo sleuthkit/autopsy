@@ -49,8 +49,9 @@ import org.sleuthkit.datamodel.TskData;
  * It does a stupid calculation of the number of null bytes in the beginning of the
  * file in order to show the basic flow. 
  * 
- * Autopsy has been hard coded to ignore this module based on the name returned in 
- * getName().  Ensure that you change the module name when you use this as a template. 
+ * Autopsy has been hard coded to ignore this module based on the it's package name.
+ * IngestModuleLoader will not load things from the org.sleuthkit.autopsy.examples package.
+ * Either change the package or the loading code to make this module actually run. 
  */
 public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private int attrId = -1;
@@ -69,12 +70,6 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
         return defaultInstance;
     }
 
-    
-    @Override
-    public String getName() {
-        // @@@ CHANGE THIS IN A REAL MODULE -- AUTOPSY IGNORES MODULES WITH THIS NAME
-        return "SampleFileIngestIgnore";
-    }
     
     @Override
     public void init(IngestModuleInit initContext) {
@@ -163,6 +158,11 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     @Override
     public String getVersion() {
         return "1.0";
+    }
+    
+    @Override
+    public String getName() {
+        return "SampleFileIngestModule";
     }
 
     @Override
