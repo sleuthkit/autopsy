@@ -554,7 +554,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //            e.printStackTrace();
 //            return null;
 //        }
-        throw new UnsupportedOperationException("Frame Capture not implemented with JavaFx");
+        return null;
     }
 
 //    private class FrameCapturer {
