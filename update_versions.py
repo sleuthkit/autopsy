@@ -825,18 +825,16 @@ def usage():
     return \
  """
  USAGE:
-   Run this script to generate a jdiff XML summary for every module
-   in the current Autopsy source and in a previous source specified
-   by the given tag. Then, compare the XML files to see which modules
-   need updated version numbers. If the dry run tag is not given, the
-   module numbers will be automatically updated.
+   Compares the API of the current Autopsy source code with a previous
+   tagged version. By default, it will detect the previous tag from
+   the NEWS file and will not update the versions in the source code.
 
  OPTIONAL FLAGS:
-   -t --tag      The tag name in git. Otherwise the NEWS file in source
-                 will be used to determine the previous tag.
+   -t --tag      Specify a previous tag to compare to. 
+                 Otherwise the NEWS file will be used. 
 
    -d --dir      The output directory for the jdiff JavaDocs. If no
-                 directory is given, the default is /javadocs/{module}.
+                 directory is given, the default is jdiff-javadocs/{module}.
 
    -s --source   The directory containing Autopsy's source code.
 
@@ -909,6 +907,7 @@ def main():
     printt("Comparing jdiff outputs...")
     for module in similar_modules:
         module.set_ret(compare_xml(module, apiname_tag, apiname_cur))
+    print("Refer to the jdiff-javadocs folder for more details")
 
     # ------------------------------------------------------------
     # 1) Do versioning
