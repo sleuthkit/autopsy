@@ -3,18 +3,6 @@
     <!-- Need a way to specify TSK Debug versus Release -->
     <property name="TSK_BUILD_TYPE">Release</property>
     
-    <target name="copyTSKLibsToRelease">
-        <property environment="env"/>
-        <condition property="ewfFound">
-            <isset property="env.LIBEWF_HOME"/>
-        </condition>
-        <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
-
-        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/Core/release/modules/lib/libtsk_jni.dll"/>
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/Core/release/modules/lib/libewf.dll"/> 
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/Core/release/modules/lib/zlib.dll"/>
-    </target>
-    
     <target name="copyExternalLibsToZip">
         
         <!-- Find CRT version we linked against from libtsk_jni manifest -->
@@ -50,7 +38,7 @@
         <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
         
         <!-- delete 64 bit exe for now -->
-        <delete file="${zip-tmp}/${app.name}/bin/${app.name}64.exe" />
+        <!--<delete file="${zip-tmp}/${app.name}/bin/${app.name}64.exe" />-->
     </target>
     
     <target name="autoAIPath" >

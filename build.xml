@@ -54,10 +54,6 @@
         </condition>
         <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
     </target>
-
-    <target name="getExternals" depends="findTSK">
-        <antcall target="copyTSKLibsToRelease" />
-    </target>
     
      <target name="getJunit">
         <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
@@ -100,6 +96,16 @@
         <!-- workaround for ant escaping : and = when setting properties -->
         <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
         
+        <!-- We want to remove the dlls in autopsy/modules/lib because they will
+             shadow the files in the autopsy/modules/lib/ARCHITECTURE folder -->
+        <delete failonerror="false">
+            <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
+                <include name="libtsk_jni.dll" />
+                <include name="libewf.dll" />
+                <include name="zlib.dll" />
+            </fileset>
+        </delete>
+        
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
             <zipfileset dir="${zip-tmp}/${app.name}"/>
@@ -132,7 +138,7 @@
         <property name="app.version" value="${DSTAMP}"/>
     </target>
     
-    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps,getJunit">
+    <target name="-init" depends="-taskdefs,-convert-old-project,getProps,getJunit">
         <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>
