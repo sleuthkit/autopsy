@@ -77,9 +77,11 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * @param dataSource data source Content (Image, parent-less
-     * VirtualDirectory) where to find files
-     * @param fileName the name of the file or directory to match
+     * Finds a set of files that meets the name criteria. 
+     * @param dataSource Root data source to limit search results to (Image, 
+     * VirtualDirectory, etc.).
+     * @param fileName Pattern of the name of the file or directory to match (case
+     * insensitive, used in LIKE SQL statement). 
      * @return a list of AbstractFile for files/directories whose name matches
      * the given fileName
      */
@@ -90,11 +92,15 @@ public class FileManager implements Closeable {
         return tskCase.findFiles(dataSource, fileName);
     }
 
+    
     /**
-     * @param dataSource data source Content (Image, parent-less
-     * VirtualDirectory) where to find files
-     * @param fileName the name of the file or directory to match
-     * @param dirName the name of a parent directory of fileName
+     * Finds a set of files that meets the name criteria. 
+     * @param dataSource Root data source to limit search results to (Image, 
+     * VirtualDirectory, etc.).
+     * @param fileName Pattern of the name of the file or directory to match (case
+     * insensitive, used in LIKE SQL statement).
+     * @param dirName Pattern of the name of the parent directory to use as the root
+     * of the search (case insensitive, used in LIKE SQL statement). 
      * @return a list of AbstractFile for files/directories whose name matches
      * fileName and whose parent directory contains dirName.
      */
@@ -106,10 +112,12 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * @param dataSource data source Content (Image, parent-less
-     * VirtualDirectory) where to find files
-     * @param fileName the name of the file or directory to match
-     * @param parentFile parent file/dir of the file to find
+     * Finds a set of files that meets the name criteria. 
+     * @param dataSource Root data source to limit search results to (Image, 
+     * VirtualDirectory, etc.).
+     * @param fileName Pattern of the name of the file or directory to match (case
+     * insensitive, used in LIKE SQL statement).
+     * @param parentFile Object of root/parent directory to restrict search to. 
      * @return a list of AbstractFile for files/directories whose name matches
      * fileName and that were inside a directory described by parentFsContent.
      */
