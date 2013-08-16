@@ -3,44 +3,6 @@
     <!-- Need a way to specify TSK Debug versus Release -->
     <property name="TSK_BUILD_TYPE">Release</property>
     
-    <target name="copyExternalLibsToZip">
-        
-        <!-- Find CRT version we linked against from libtsk_jni manifest -->
-        <!-- disable auto-detection for CRT100
-        <property name="libtsk.manifest.path">${env.TSK_HOME}/win32/tsk_jni/${TSK_BUILD_TYPE}/libtsk_jni.dll.intermediate.manifest</property>
-        <loadfile property="libtsk.manifest" srcFile="${libtsk.manifest.path}" />
-        <propertyregex property="CRT.version"
-             input="${libtsk.manifest}"
-             regexp=".*Microsoft\.VC90.*?version\s*?=\s*?'(.*?)'"
-             select="\1"
-             casesensitive="false" />      
-        <echo>Found CRT.version linked against: ${CRT.version}</echo>
-        -->
-        <!-- <property name="CRT.version">10.0.40219.1</property> -->
-        <!-- <property name="CRT.version">10.0.40219.325</property> -->
-        <property name="CRT.version">10.0.30319.1</property>
-        
-        
-        <!-- Get C++ Runtime dlls -->
-        <property environment="env"/>
-        <condition property="crtDetected">
-            <isset property="CRT.version"/>
-        </condition>
-        <fail unless="crtDetected" message="CRT version not detected, check libtsk_jni manifest."/> 
-        
-        <property name="CRT.path">${thirdparty.dir}/crt/x86-32/${CRT.version}/crt.zip</property>
-        <available file="${CRT.path}"  property="crtFound"/>
-        
-        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo in path: ${CRT.path}"/>
-
-        <!-- unzip from thirdparty repo to modules/lib in staged dir -->
-        <!-- <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/bin"/> -->
-        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
-        
-        <!-- delete 64 bit exe for now -->
-        <!--<delete file="${zip-tmp}/${app.name}/bin/${app.name}64.exe" />-->
-    </target>
-    
     <target name="autoAIPath" >
         <property name="AI.path">C:\Program Files (x86)\Caphyon\Advanced Installer 10.2\bin\x86\AdvancedInstaller.com</property>
         <available file="${AI.path}"
