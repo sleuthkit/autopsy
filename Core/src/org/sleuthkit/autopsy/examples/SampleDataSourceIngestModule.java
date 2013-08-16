@@ -83,7 +83,7 @@ public class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.I
             
         } catch (TskCoreException ex) {
             Logger log = Logger.getLogger(SampleDataSourceIngestModule.class);
-            log.fatal("Error retrieving files from database:  " + ex1.getLocalizedMessage());
+            log.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
             return;
         }    
     }
