@@ -84,7 +84,6 @@
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
-        <antcall target="copyExternalLibsToZip"></antcall>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none&quot;" />
