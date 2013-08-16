@@ -416,14 +416,16 @@ public class ExtractedContentViewer implements DataContentViewer {
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
             String name = contentObj.getName();
-            String msg = "<p style='font-style:italic'>No extracted text present in the index for file: " + name + " </p>";
+            String msg = null;
             if (contentObj instanceof AbstractFile) { 
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile)contentObj).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg += "<p style='font-style:italic'>It is a 'known' file and the current settings opt to skip indexing 'known' files during ingest. </p>";
+                    msg = "<p style='font-style:italic'>" + name + " is a known file (based on MD5 hash) and does not have text in the index.</p>";
                 }
-                
+            }
+            if (msg == null) {
+                 msg = "<p style='font-style:italic'>" + name + "does not have text in the index.<br/>It may have no text, not been analyzed yet, or keyword search was not enabled during ingest.</p>";
             }
             String htmlMsg = "<span style='font-style:italic'>" + msg + "</span>";
             return htmlMsg;

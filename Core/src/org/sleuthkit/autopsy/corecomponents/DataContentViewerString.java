@@ -265,7 +265,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         currentOffset -= pageLength;
         currentPage = currentPage - 1;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
@@ -273,7 +273,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         currentOffset += pageLength;
         currentPage = currentPage + 1;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
@@ -293,13 +293,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         currentOffset = (pageNumber - 1) * pageLength;
         currentPage = pageNumber;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
     private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
 
         if (dataSource != null) {
-            setDataView(dataSource, currentOffset, false);
+            setDataView(dataSource, currentOffset);
         }
     }//GEN-LAST:event_languageComboActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -322,14 +322,22 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
+    @Deprecated
+    public void setDataView(Content dataSource, long offset, boolean reset) {
+        if (reset) {
+            resetComponent();
+            return;
+        }
+        setDataView(dataSource, offset);
+    }
+    
     /**
      * Sets the DataView (The tabbed panel)
      *
      * @param dataSource the content that want to be shown
      * @param offset the starting offset
-     * @param reset whether to reset the dataView or not
      */
-    public void setDataView(Content dataSource, long offset, boolean reset) {
+    private void setDataView(Content dataSource, long offset) {
         if (dataSource == null) {
             return;
         }
@@ -342,14 +350,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         int bytesRead = 0;
         // set the data on the bottom and show it
         String text = "";
-        Boolean setVisible = false;
-        if (!reset && dataSource.getSize() > 0) {
+        if (dataSource.getSize() > 0) {
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
                 text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                         + " could not be read)";
-                setVisible = true;
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex);
             }
         }
@@ -364,16 +370,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                         + " contains no text)";
             }
-
-            setVisible = true;
         } else {
             text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                     + " could not be read)";
-            setVisible = true;
         }
 
         // disable or enable the next button
-        if (!reset && offset + pageLength < dataSource.getSize()) {
+        if (offset + pageLength < dataSource.getSize()) {
             nextPageButton.setEnabled(true);
         } else {
             nextPageButton.setEnabled(false);
@@ -386,23 +389,15 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             prevPageButton.setEnabled(true);
         }
 
-        if (setVisible) {
-            int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
-            totalPageLabel.setText(Integer.toString(totalPage));
-            currentPageLabel.setText(Integer.toString(currentPage));
-            outputViewPane.setText(text); // set the output view
-            setComponentsVisibility(true); // shows the components that not needed
-        } else {
-            // reset or hide the labels
-            totalPageLabel.setText("");
-            currentPageLabel.setText("");
-            outputViewPane.setText(""); // reset the output view
-            setComponentsVisibility(false); // hides the components that not needed
-        }
+        
+        int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        totalPageLabel.setText(Integer.toString(totalPage));
+        currentPageLabel.setText(Integer.toString(currentPage));
+        outputViewPane.setText(text); // set the output view
+        setComponentsVisibility(true); // shows the components that not needed
         outputViewPane.moveCaretPosition(0);
 
         this.setCursor(null);
-
     }
 
     /**
@@ -422,31 +417,28 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         goToPageLabel.setVisible(isVisible);
         languageCombo.setVisible(isVisible);
         languageLabel.setVisible(isVisible);
-
     }
 
     @Override
     public void setNode(Node selectedNode) {
-        if (!isSupported(selectedNode)) {
-            setDataView(null, 0, true);
+        if ((selectedNode == null) || (!isSupported(selectedNode))) {
+            resetComponent();
             return;
         }
-        if (selectedNode != null) {
-            Lookup lookup = selectedNode.getLookup();
-            Content content = lookup.lookup(Content.class);
-            if (content
-                    != null) {
-                this.setDataView(content, 0, false);
+
+        Lookup lookup = selectedNode.getLookup();
+        Content content = lookup.lookup(Content.class);
+        if (content != null) {
+            this.setDataView(content, 0);
+            return;
+        } else {
+            StringContent scontent = selectedNode.getLookup().lookup(StringContent.class);
+            if (scontent != null) {
+                this.setDataView(scontent);
                 return;
-            } else {
-                StringContent scontent = selectedNode.getLookup().lookup(StringContent.class);
-                if (scontent != null) {
-                    this.setDataView(scontent);
-                    return;
-                }
             }
         }
-        this.setDataView(null, 0, true);
+        resetComponent();
     }
 
     @Override
@@ -474,6 +466,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         totalPageLabel.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
+        outputViewPane.setText(""); // reset the output view
         setComponentsVisibility(false); // hides the components that not needed
     }
 
@@ -481,14 +474,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     public boolean isSupported(Node node) {
         if (node == null) {
             return false;
-
-
         }
         Content content = node.getLookup().lookup(Content.class);
-
-        if (content
-                != null && content.getSize()
-                != 0) {
+        if (content != null && content.getSize() > 0) {
             return true;
         }
 

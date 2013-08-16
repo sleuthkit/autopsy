@@ -231,18 +231,21 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     @Override
     public void setNode(Node selectedNode) {
         if (selectedNode == null) {
-            this.setDataView(new ArrayList<BlackboardArtifact>(), 1);
+            resetComponent();
             return;
         }
         
         Lookup lookup = selectedNode.getLookup();
         Content content = lookup.lookup(Content.class);
-        if (content != null) {
-            try {
-                this.setDataView(content.getAllArtifacts(), 1);
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
-            }
+        if (content == null) {
+            resetComponent();
+            return;
+        }
+        
+        try {
+            this.setDataView(content.getAllArtifacts(), 1);
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
         }
         
         // focus on a specific artifact if it is in the node
@@ -279,9 +282,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         this.artifacts = new ArrayList<BlackboardArtifact>();
         currentPageLabel.setText("");
         totalPageLabel.setText("");
+        outputViewPane.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         setComponentsVisibility(false); // hides the components that not needed
+        this.setCursor(null);
     }
     
     /**
@@ -380,9 +385,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
         if(artifacts.isEmpty()){
-            setComponentsVisibility(false);
-            this.setCursor(null);
-            outputViewPane.setText("");
+            resetComponent();
             return;
         }
         this.artifacts = artifacts;

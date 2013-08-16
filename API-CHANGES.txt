@@ -1,4 +1,5 @@
 Changes to make to API when we are ready to make backward incompatible changes:
 
 - HTMLReport has special API for more context on columns and special handling in REportGenerator. Change all reports to the new API.
-- DataaContentViewer.isPreferred does not need isSupported to be passed in
+- DataContentViewer.isPreferred does not need isSupported to be passed in
+- DataContentViewerHex and STrings can have the public setDataView methods removed in favor of the new private ones

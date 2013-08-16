@@ -191,7 +191,14 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         // set the tab to the one the user wants, then set that viewer's node.
         jTabbedPane1.setSelectedIndex(tabIndex);
-        viewers.get(tabIndex).setNode(selectedNode);
+        UpdateWrapper dcv = viewers.get(tabIndex);
+        // this is really only needed if no tabs were enabled 
+        if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
+            dcv.resetComponent();
+        }
+        else {
+            dcv.setNode(selectedNode);
+        }
     }
 
     @Override
