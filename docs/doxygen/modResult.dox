@@ -1,31 +1,43 @@
 /*! \page mod_result_page Developing Result Viewer Modules
 
-NOTE: This has been moved from a package-level description and needs cleanup and updating.  
+\section result_overview Overview
+DataResultViewer modules exist in the upper-right area of the default Autopsy interface, as shown below.  
 
-<h3>Creating a DataResultViewer</h3>
-<p>DataResultTopComponent is the high-level window in the DataResult area.  The DataResult area is in the upper right of Autopsy and shows a set of nodes (i.e. in table form or thumbnail, by default).  You will want to create a new module in this area if you have a new way to display a set of files or nodes.  For example, in a graph form or different layout beyond the simple table. 
+\image html viewer_image.jpg "Module Viewer Areas" 
 
-<ol>
-<li>Create a module from within NetBeans.  It must be dependent on these modules:
-<ul>
-<li>Case
-<li>CoreComponentInterfaces
-<li>CoreComponents
-<li>DataModel
-<li>DialogsAPI (if pop-ups and such are going to be used)
-<li>Explorer & Property Sheet API
-<li>Lookup
-<li>Nodes API
-<li>Setting API
-<li>UI Utilities API
-<li>Utilities API
-<li>Window System API
-</ul>
+They display a set of files that are passed into the viewer from the tree on the left, keyword searching, or other searches. The main idea is that the same set of files can be viewed in table form, thumbnail form, or any other form that you can think of.  Once a file is selected from the DataResult area, it is passed to the DataContent area for display. 
 
-<li>Make a class that extends org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer and is registered as a service provider for the org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer class by specifying "@ServiceProvider(service = DataResultViewer.class)" or by using layer.xml.  This class will extend JPanel. </li>
+\section result_dataflow Data Flow
+This section provides some basics on DataResult viewers.  DataResult viewers are created as needed.  The directory tree on the left creates one when it loads and uses it for the life of the application.  The keyword search module creates on each time it performs a keyword search. Data is explicitly passed into it. 
 
-<li>See the previous sections on default actions. (note that this refers to the CoreComponentINterfaces package-level description).</li>
+By default, when a node is selected, it is then passed to the default DataContent viewer. There can be many data content viewers, but only one default one exists. 
 
-</ol>
+
+\section result_nb NetBeans Module Configuration
+The rest of the document assumes that you have already created your NetBeans module, as outlined in \ref mod_dev_module. 
+
+DataResultViewer modules will have additional NetBeans dependencies. Right click on the module, choose "Properties" -> "Libraries" -> "Module Dependencies".  Add "Lookup API" and "Nodes API".
+
+\section result_mod Module Development
+
+You will need a class that extends org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer. You can use NetBeans to make a class, manually extend it, and then let NetBeans complain about missing methods.  It will provide default implementations for them if you click on the error messages in the UI.
+Refer to the documentation in org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer on what each method should do. Note that AbstractDataResultViewer extends JPanel.
+
+Autopsy will find your module using the NetBeans Lookup infrastructure. To be found, you will need to register as a service provider for DataResultViewer.class by annotating your class as follows:
+
+\code
+@ServiceProvider(service = DataResultViewer.class)
+public class DataResultViewerTable extends AbstractDataResultViewer {
+\endcode
+
+If you get errors about not knowing about ServiceProviders and such, ensure that you configured your NetBeans module to depend on the Nodes and Lookup APIs as outlined in the previous section. 
+
+\section result_examples Example Modules
+You can refer to the org.sleuthkit.autopsy.corecomponents.DataResultViewerTable and  org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail modules to follow as examples. 
+
+\section result_hint Hints
+Note that these modules are currently the most challenging to develop because they require the most NetBeans knowledge about Nodes and ExplorerManagers. Make sure you read some of the tutorials (or books) first:
+- NetBeans Nodes API Tutorial (https://platform.netbeans.org/tutorials/nbm-nodesapi2.html)
+- NetBeans Nodes, Explorer Manager, and Component Palette Tutorial (https://platform.netbeans.org/tutorials/nbm-nodesapi3.html)
 
 */

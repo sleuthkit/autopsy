@@ -36,7 +36,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Holds commonalities between all DataResultViewers
+ * Holds commonalities between all DataResultViewers, such as:
+ * - Pushes selection to DataContentViewers
  */
 public abstract class AbstractDataResultViewer extends JPanel implements
         DataResultViewer, Provider {
