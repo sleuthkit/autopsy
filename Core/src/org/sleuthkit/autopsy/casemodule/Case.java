@@ -372,7 +372,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
-    void closeCase() throws CaseActionException {
+    public void closeCase() throws CaseActionException {
         changeCase(null);
 
         try {
