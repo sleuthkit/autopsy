@@ -669,13 +669,13 @@ public class ReportHTML implements TableReportModule {
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Bookmarks.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Web Bookmarks.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png");
-            output = new FileOutputStream(new File(path + File.separator + "Cookies.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Web Cookies.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
@@ -687,13 +687,13 @@ public class ReportHTML implements TableReportModule {
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png");
-            output = new FileOutputStream(new File(path + File.separator + "Downloads.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Web Downloads.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
             
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web Search Engine Queries.png"));
+            output = new FileOutputStream(new File(path + File.separator + "Web Search.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
