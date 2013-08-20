@@ -87,6 +87,7 @@
         <copy todir="${zip-tmp}/${app.name}/jre">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
+
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         <antcall target="copyExternalLibsToZip"></antcall>
         
@@ -230,8 +231,9 @@
         </exec>
     </target>
     
-    <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
+    <target name="versioning-script" depends="check-release"/> <!--, versioning-script-if-release, versioning-script-if-not-release"/>-->
      
+    <!-- opens the zip file into a folder in dist -->
     <target name="build-installer-dir" depends="getProps, versioning-script, build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
@@ -239,6 +241,7 @@
     <target name="build-installer" depends="build-installer-dir" description="Builds Autopsy installer.">
         <antcall target="build-installer-${os.family}" />
     </target>
+    
     <target name="test-download-imgs" description="Get test images and store them in the path represented by the test-input variable.">
          <available file="${test-input}/nps-2008-jean.E01" property="img-present-1"/>
          <available file="${test-input}/nps-2008-jean.E02" property="img-present-2"/>
