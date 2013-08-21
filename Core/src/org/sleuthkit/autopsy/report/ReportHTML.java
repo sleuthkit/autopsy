@@ -105,7 +105,160 @@ public class ReportHTML implements TableReportModule {
         }
         out = null;
     }
+    
+    /**
+     * Generate a file name for the given datatype, by replacing any 
+     * undesirable chars, like /, or spaces
+     * @param dataType data type for which to generate a file name
+     */
+    private String dataTypeToFileName(String dataType) {
+        
+        String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dataType);
+        // replace all ' ' with '_'
+        fileName = fileName.replaceAll(" ", "_");
+            
+        return fileName; 
+    }
 
+    
+    /**
+     * Copies a suitable icon for the given data type in the output directory and 
+     * returns the icon file name to use for the given data type.
+     */
+    private String useDataTypeIcon(String dataType)
+    {
+        String iconFilePath;
+        String iconFileName;
+        InputStream in = null;
+        OutputStream output = null;
+        
+        logger.log(Level.INFO, "useDataTypeIcon: dataType = " + dataType);
+        
+        // find the artifact with matching display name
+        BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
+        for (ARTIFACT_TYPE v : ARTIFACT_TYPE.values()) {
+            if (v.getDisplayName().equals(dataType)) {
+                artifactType = v;
+            }
+        }
+        
+        if (null != artifactType)
+        {        
+            // set the icon file name
+            iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png";
+            iconFilePath = path + File.separator + iconFileName;
+
+            // determine the source image to use
+             switch (artifactType) {
+                case TSK_WEB_BOOKMARK:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png");
+                    break;   
+                case TSK_WEB_COOKIE:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png");
+                     break;
+                case TSK_WEB_HISTORY:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png");
+                    break;
+                case TSK_WEB_DOWNLOAD:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png");
+                    break;     
+                case TSK_RECENT_OBJECT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png");
+                    break;
+                case TSK_INSTALLED_PROG:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png");
+                    break;
+                case TSK_KEYWORD_HIT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png");
+                    break;
+                case TSK_HASHSET_HIT:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png");
+                    break;
+                case TSK_DEVICE_ATTACHED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png");
+                    break;
+                case TSK_WEB_SEARCH_QUERY:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png");
+                    break;
+                case TSK_METADATA_EXIF:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/exif.png");
+                    break;
+                case TSK_TAG_FILE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
+                    break;
+                case TSK_TAG_ARTIFACT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
+                    break;        
+                case TSK_SERVICE_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png");
+                    break;
+                case TSK_CONTACT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png");
+                    break;
+                case TSK_MESSAGE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png");
+                    break;
+                case TSK_CALLLOG:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png");
+                    break;
+                case TSK_CALENDAR_ENTRY:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png");
+                    break;
+                case TSK_SPEED_DIAL_ENTRY:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png");
+                    break;
+                case TSK_BLUETOOTH_PAIRING:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png");
+                     break;
+                case TSK_GPS_BOOKMARK:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png");
+                     break;
+                case TSK_GPS_LAST_KNOWN_LOCATION:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png");
+                     break;
+                case TSK_GPS_SEARCH:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png");
+                     break;
+
+                default:
+                    logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType);
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png");
+                    iconFileName = "star.png";
+                    iconFilePath = path + File.separator +  iconFileName;
+                    break;
+             }
+        } 
+        else {  // no defined artifact found for this dataType 
+            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType);
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png");
+            iconFileName = "star.png";
+            iconFilePath = path + File.separator +  iconFileName;   
+        }
+        
+        try {
+             output = new FileOutputStream(iconFilePath);
+             FileUtil.copy(in, output);
+             in.close();
+             output.close();
+          } catch (IOException ex) {
+             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
+        } finally {
+             if (output != null) {
+                 try {
+                     output.flush();
+                     output.close();
+                 } catch (IOException ex) {
+                 }
+             } if (in != null) {
+                 try {
+                     in.close();
+                 } catch (IOException ex) {
+                 }
+             }
+         }
+        
+        return iconFileName; 
+    }
     /**
      * Start this report by setting the path, refreshing member variables,
      * and writing the skeleton for the HTML report.
@@ -151,7 +304,7 @@ public class ReportHTML implements TableReportModule {
      */
     @Override
     public void startDataType(String title) {        
-        String fTitle = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(title);
+        String fTitle = dataTypeToFileName(title);
         // Make a new out for this page
         try {
             //escape out slashes tha that appear in title
@@ -186,7 +339,7 @@ public class ReportHTML implements TableReportModule {
      * @param comment Comment on the data type, may be the empty string
      */
     public void startDataType(String name, String comment) {
-        String title = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(name);
+        String title = dataTypeToFileName(name);
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
         } catch (FileNotFoundException ex) {
@@ -614,9 +767,10 @@ public class ReportHTML implements TableReportModule {
             nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
             
             for (String dataType : dataTypes.keySet()) {
-                String dataTypeEsc = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dataType);
-                nav.append("<li style=\"background: url('").append(dataType)
-                        .append(".png') left center no-repeat;\"><a href=\"")
+                String dataTypeEsc = dataTypeToFileName(dataType);
+                String iconFileName = useDataTypeIcon(dataType);
+                nav.append("<li style=\"background: url('").append(iconFileName)
+                        .append("') left center no-repeat;\"><a href=\"")
                         .append(dataTypeEsc).append(".html\" target=\"content\">")
                         .append(dataType).append(" (").append(dataTypes.get(dataType))
                         .append(")</a></li>\n");
@@ -668,146 +822,7 @@ public class ReportHTML implements TableReportModule {
             in.close();
             output.close();
             
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web Bookmarks.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web Cookies.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web History.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web Downloads.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png");
-            output = new FileOutputStream(new File(path + File.separator + "Web Search.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png");
-            output = new FileOutputStream(new File(path + File.separator + "Recent Documents.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png");
-            output = new FileOutputStream(new File(path + File.separator + "Installed Programs.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png");
-            output = new FileOutputStream(new File(path + File.separator + "Keyword Hits.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png");
-            output = new FileOutputStream(new File(path + File.separator + "Devices Attached.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/exif.png");
-            output = new FileOutputStream(new File(path + File.separator + "EXIF Metadata.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "File Tags.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
-            output = new FileOutputStream(new File(path + File.separator + "Result Tags.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png");
-            output = new FileOutputStream(new File(path + File.separator + "Hashset Hits.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png");
-            output = new FileOutputStream(new File(path + File.separator + "Contacts.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png");
-            output = new FileOutputStream(new File(path + File.separator + "Messages.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png");
-            output = new FileOutputStream(new File(path + File.separator + "Call Logs.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png");
-            output = new FileOutputStream(new File(path + File.separator + "Calendar Entries.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png");
-            output = new FileOutputStream(new File(path + File.separator + "Speed Dial Entries.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png");
-            output = new FileOutputStream(new File(path + File.separator + "BlueTooth.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png");
-            output = new FileOutputStream(new File(path + File.separator + "GPS Bookmarks.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-             
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png");
-            output = new FileOutputStream(new File(path + File.separator + "GPS Last Location.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png");
-            output = new FileOutputStream(new File(path + File.separator + "GPS Search.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png");
-            output = new FileOutputStream(new File(path + File.separator + "Accounts.png"));
-            FileUtil.copy(in, output);
-            in.close();
-            output.close();
-            
-            
-            
+           
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
         } finally {
