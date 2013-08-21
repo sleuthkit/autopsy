@@ -67,8 +67,8 @@
 
     <target name="run-advanced-installer" depends="autoAIPath,inputAIPath">
         <fail unless="ai-exe-path" message="Could not locate Advanced Installer."/>
-        <!-- BC: Why do we need to make this copy -->
-        <copy file="${basedir}/installer_${app.name}/installer_${app.name}.aip" tofile="${nbdist.dir}/installer_${app.name}.aip"/>
+        <!-- Copy the template file to add details to -->
+        <copy file="${basedir}/installer_${app.name}/installer_${app.name}.aip" tofile="${nbdist.dir}/installer_${app.name}.aip" overwrite="true"/>
         <scriptdef name="generateguid" language="javascript">
             <attribute name="property" />
             <![CDATA[
@@ -84,7 +84,7 @@
         <echo>Product Code: ${guid1}</echo>
         <echo>Product Version: ${app.version}</echo>
         
-        <!-- Edit the API file to update versions -->
+        <!-- Edit the API file to update versions: manual approach allows us to use non-X.Y.Z versions -->
         <replaceregexp  file="${aip-path}"
                         match="ProductCode&quot; Value=&quot;(\d{4}+:.)\w{8}+-\w{4}+-\w{4}+-\w{4}+-\w{12}+"
                         replace="ProductCode&quot; Value=&quot;\1${guid1}" />
