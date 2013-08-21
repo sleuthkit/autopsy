@@ -55,6 +55,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
+    private boolean lookupSet = false;
     private String customModeName;
     
     //keep track of tcs openeded for menu presenters
@@ -265,13 +266,17 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         /* @@@ Short-term hack to associate lookup with the table view so that we can do multi-select.
          * Longer-term solution is to use same explorer Manager for all viewers.
          */
-        List <DataResultViewer> resultViewers = this.dataResultPanel.getViewers();
-        for (DataResultViewer viewer : resultViewers) {
-            if (viewer instanceof DataResultViewerTable) {
-                associateLookup(ExplorerUtils.createLookup(((DataResultViewerTable)viewer).getExplorerManager(), getActionMap()));
-                break;
+        if (!lookupSet) {
+            List <DataResultViewer> resultViewers = this.dataResultPanel.getViewers();
+            for (DataResultViewer viewer : resultViewers) {
+                if (viewer instanceof DataResultViewerTable) {
+                    associateLookup(ExplorerUtils.createLookup(((DataResultViewerTable)viewer).getExplorerManager(), getActionMap()));
+                    break;
+                }
             }
-        }                
+            
+            lookupSet = true;
+        }
     }
     
     
