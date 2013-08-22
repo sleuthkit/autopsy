@@ -88,8 +88,8 @@ public class Tags implements AutopsyVisitableItem {
             if (!setting.isEmpty()) {                
                 // Make a speedy lookup for the tag names in the setting to aid in the
                 // detection of new tag names.
-                List<String> tagNamesFromFromAppSettings = Arrays.asList(setting.split(","));
-                for (String tagName : tagNamesFromFromAppSettings) {
+                List<String> tagNamesFromAppSettings = Arrays.asList(setting.split(","));
+                for (String tagName : tagNamesFromAppSettings) {
                     appSettingTagNames.add(tagName);
                 }
                 
