@@ -328,7 +328,7 @@ public class ReportGenerator {
                 // Add a row to the table for every artifact of the current type that satisfies the tags filter, if any.
                 for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
                     // Get any tags associated with the artifact and apply the tags filter, if any.
-                    HashSet<String> tags = Tags.getUniqueTagNames(artifactEntry.getKey());
+                    HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(artifactEntry.getKey());
                     if (failsTagFilter(tags, tagNamesFilter)) {
                         continue;
                     }                    
@@ -477,7 +477,7 @@ public class ReportGenerator {
                 }
  
                // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
                 if (failsTagFilter(tags, tagNamesFilter)) {
                     continue;
                 }                    
@@ -621,7 +621,7 @@ public class ReportGenerator {
                 }
                 
                // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
+                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
                 if (failsTagFilter(tags, tagNamesFilter)) {
                     continue;
                 }                    

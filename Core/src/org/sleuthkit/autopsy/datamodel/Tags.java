@@ -22,11 +22,13 @@ import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -39,6 +41,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -52,7 +55,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Support for tags in the directory tree. Tag nodes representing file and
  * result tags, encapsulate TSK_TAG_FILE and TSK_TAG_ARTIFACT typed artifacts.
  *
- * The class implements querying of datamodel and populating node hierarchy
+ * The class implements querying of data model and populating node hierarchy
  * using child factories.
  *
  */
@@ -69,7 +72,35 @@ public class Tags implements AutopsyVisitableItem {
     private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private Map<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>> tags;
     private static final String EMPTY_COMMENT = "";
+    private static final String APP_SETTINGS_FILE_NAME = "app"; // @@@ TODO: Need a general app settings or user preferences file, this will do for now.
+    private static final String TAG_NAMES_SETTING_KEY = "tag_names";    
+    private static final HashSet<String> appSettingTagNames = new HashSet<>();
+    private static final StringBuilder tagNamesAppSetting = new StringBuilder();
 
+    // When this class is loaded, either create an new app settings file or 
+    // get the tag names setting from the existing app settings file.
+    static {
+        if (!ModuleSettings.configExists(APP_SETTINGS_FILE_NAME)) {
+            ModuleSettings.makeConfigFile(APP_SETTINGS_FILE_NAME);
+        }
+        else {
+            String setting = ModuleSettings.getConfigSetting(APP_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY);
+            if (!setting.isEmpty()) {                
+                // Make a speedy lookup for the tag names in the setting to aid in the
+                // detection of new tag names.
+                List<String> tagNamesFromFromAppSettings = Arrays.asList(setting.split(","));
+                for (String tagName : tagNamesFromFromAppSettings) {
+                    appSettingTagNames.add(tagName);
+                }
+                
+                // Load the raw comma separated values list from the setting into a 
+                // string builder to facilitate adding new tag names to the list and writing
+                // it back to the app settings file.
+                tagNamesAppSetting.append(setting);                
+            }                    
+        }
+    }
+    
     Tags(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
@@ -98,7 +129,7 @@ public class Tags implements AutopsyVisitableItem {
                 // Get all file and artifact tags
 
                 //init data
-                tags = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Map<String, List<BlackboardArtifact>>>(BlackboardArtifact.ARTIFACT_TYPE.class);
+                tags = new EnumMap<>(BlackboardArtifact.ARTIFACT_TYPE.class);
                 tags.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, new HashMap<String, List<BlackboardArtifact>>());
                 tags.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, new HashMap<String, List<BlackboardArtifact>>());
 
@@ -113,7 +144,7 @@ public class Tags implements AutopsyVisitableItem {
                                     List<BlackboardArtifact> artifacts = artTags.get(tagName);
                                     artifacts.add(artifact);
                                 } else {
-                                    List<BlackboardArtifact> artifacts = new ArrayList<BlackboardArtifact>();
+                                    List<BlackboardArtifact> artifacts = new ArrayList<>();
                                     artifacts.add(artifact);
                                     artTags.put(tagName, artifacts);
                                 }
@@ -125,7 +156,7 @@ public class Tags implements AutopsyVisitableItem {
 
 
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Count not initialize tag nodes, ", ex);
+                logger.log(Level.WARNING, "Count not initialize tag nodes", ex);
             }
         }
 
@@ -420,7 +451,7 @@ public class Tags implements AutopsyVisitableItem {
     public static void createTag(AbstractFile file, String tagName, String comment) {
         try {
             final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-            List<BlackboardAttribute> attrs = new ArrayList<BlackboardAttribute>();
+            List<BlackboardAttribute> attrs = new ArrayList<>();
 
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
@@ -433,8 +464,11 @@ public class Tags implements AutopsyVisitableItem {
                 attrs.add(attr2);
             }
             bookArt.addAttributes(attrs);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to create tag for " + file.getName());
+            
+            updateTagNamesAppSetting(tagName);            
+        } 
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to create tag for " + file.getName(), ex);
         }
     }
 
@@ -452,7 +486,7 @@ public class Tags implements AutopsyVisitableItem {
 
             AbstractFile file = skCase.getAbstractFileById(artifact.getObjectID());
             final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-            List<BlackboardAttribute> attrs = new ArrayList<BlackboardAttribute>();
+            List<BlackboardAttribute> attrs = new ArrayList<>();
 
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
@@ -469,12 +503,30 @@ public class Tags implements AutopsyVisitableItem {
             attrs.add(attr1);
 
             attrs.add(attr3);
-            bookArt.addAttributes(attrs);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to create tag for artifact " + artifact.getArtifactID());
+            bookArt.addAttributes(attrs);     
+            
+            updateTagNamesAppSetting(tagName);
+        } 
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to create tag for artifact " + artifact.getArtifactID(), ex);
         }
     }
 
+    private static void updateTagNamesAppSetting(String tagName) {
+        // If this tag name is not in the current tag names app setting...
+        if (!appSettingTagNames.contains(tagName)) {
+            // Add it to the lookup.
+            appSettingTagNames.add(tagName);
+            
+            // Add it to the setting and write the setting back to the app settings file.
+            if (tagNamesAppSetting.length() != 0) {
+                tagNamesAppSetting.append(",");
+            }
+            tagNamesAppSetting.append(tagName);
+            ModuleSettings.setConfigSetting(APP_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY, tagNamesAppSetting.toString());
+        }        
+    }
+    
     /**
      * Create a bookmark tag for a file.
      *
@@ -506,51 +558,71 @@ public class Tags implements AutopsyVisitableItem {
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             return skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, Tags.BOOKMARK_TAG_NAME);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case.");
+            logger.log(Level.SEVERE, "Failed to get list of artifacts from the case", ex);
         }
-        return new ArrayList<BlackboardArtifact>();
+        return new ArrayList<>();
     }
 
     /**
-     * Get a list of all the tag names. Uses a custom query for speed when
-     * dealing with thousands of Tags.
+     * Get a list of all the unique tag names associated with the current case plus any
+     * tag names stored in the application settings file.
      *
-     * @return a list of all tag names.
+     * @return A collection of tag names.
+     */
+    public static TreeSet<String> getAllTagNames() {
+        // Use a TreeSet<> so the union of the tag names from the two sources will be sorted.
+        TreeSet<String> tagNames = getTagNamesFromCurrentCase();
+        tagNames.addAll(appSettingTagNames);
+        
+        // Make sure the book mark tag is always included.
+        tagNames.add(BOOKMARK_TAG_NAME);
+                        
+        return tagNames;
+    }
+        
+    /**
+     * Get a list of all the unique tag names associated with the current case. 
+     * Uses a custom query for speed when dealing with thousands of tags.
+     *
+     * @return A collection of tag names.
      */
     @SuppressWarnings("deprecation")
-    public static List<String> getTagNames() {
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
-        List<String> names = new ArrayList<>();
-
+    public static TreeSet<String> getTagNamesFromCurrentCase() {
+        TreeSet<String> tagNames = new TreeSet<>();
+        
         ResultSet rs = null;
+        SleuthkitCase skCase = null;
         try {
+            skCase = Case.getCurrentCase().getSleuthkitCase();
             rs = skCase.runQuery("SELECT value_text"
                     + " FROM blackboard_attributes"
-                    + " WHERE attribute_type_id = " + ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()
+                    + " WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()
                     + " GROUP BY value_text"
                     + " ORDER BY value_text");
             while (rs.next()) {
-                names.add(rs.getString("value_text"));
+                tagNames.add(rs.getString("value_text"));
             }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to query the blackboard for tag names.");
-        } finally {
-            if (rs != null) {
+        } 
+        catch (IllegalStateException ex) {
+            // Case.getCurrentCase() throws IllegalStateException if there is no current autopsy case.
+        }
+        catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to query the blackboard for tag names", ex);
+        } 
+        finally {
+            if (null != skCase && null != rs) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Failed to close the query for blackboard for tag names.");
+                    logger.log(Level.SEVERE, "Failed to close the query for blackboard for tag names", ex);
                 }
             }
         }
         
-        // add the 'Bookmark' tag, if it's not already in the list
-        if (!names.contains(BOOKMARK_TAG_NAME)) {
-            names.add(BOOKMARK_TAG_NAME);
-        }
-
-        return names;
+        // Make sure the book mark tag is always included.
+        tagNames.add(BOOKMARK_TAG_NAME);
+                
+        return tagNames;
     }
 
     /**
@@ -575,7 +647,7 @@ public class Tags implements AutopsyVisitableItem {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get artifact " + tagArtifactId + " from case.");
+            logger.log(Level.SEVERE, "Failed to get artifact " + tagArtifactId + " from case", ex);
         }
 
         return EMPTY_COMMENT;
@@ -615,8 +687,8 @@ public class Tags implements AutopsyVisitableItem {
      * @param artifact The artifact
      * @return A set of unique tag names
      */
-    public static HashSet<String> getUniqueTagNames(BlackboardArtifact artifact) {
-        return getUniqueTagNames(artifact.getArtifactID(), artifact.getArtifactTypeID());
+    public static HashSet<String> getUniqueTagNamesForArtifact(BlackboardArtifact artifact) {
+        return getUniqueTagNamesForArtifact(artifact.getArtifactID(), artifact.getArtifactTypeID());
     }    
 
     /**
@@ -626,7 +698,7 @@ public class Tags implements AutopsyVisitableItem {
      * @param artifactTypeID The ID of the artifact type
      * @return A set of unique tag names
      */
-    public static HashSet<String> getUniqueTagNames(long artifactID, int artifactTypeID) {
+    public static HashSet<String> getUniqueTagNamesForArtifact(long artifactID, int artifactTypeID) {
         HashSet<String> tagNames = new HashSet<>();
         
         try {

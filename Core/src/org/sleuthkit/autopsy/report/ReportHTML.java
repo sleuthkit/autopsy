@@ -600,7 +600,7 @@ public class ReportHTML implements TableReportModule {
             // Make a folder for the local file with the same name as the tag.
             StringBuilder localFilePath = new StringBuilder();
             localFilePath.append(path);
-            HashSet<String> tagNames = Tags.getUniqueTagNames(sourceArtifact);
+            HashSet<String> tagNames = Tags.getUniqueTagNamesForArtifact(sourceArtifact);
             if (!tagNames.isEmpty()) {
                 localFilePath.append(tagNames.iterator().next());
             }
