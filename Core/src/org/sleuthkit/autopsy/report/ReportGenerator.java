@@ -50,6 +50,7 @@ import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -290,7 +291,17 @@ public class ReportGenerator {
                 Collections.sort(unsortedArtifacts, c);
 
                 // Get the column headers appropriate for the artifact type.
+                /* @@@ BC: Seems like a better design here woudl be to have a method that 
+                 * takes in teh artifact as an argument andreturns the attributes. We then use that
+                 * to make the headers and to make each row afterwards so that we don't ahve artifact-specific
+                 * logic in both getArtifactTableCoumnHeaders and getArtifactRow()
+                 */
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
+                if (columnHeaders == null) {
+                    // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
+                    MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                    continue;
+                }
                                                                 
                 // For every module start a new data type and table for the current artifact type.
                 for (TableReportModule module : tableModules) {
@@ -313,6 +324,7 @@ public class ReportGenerator {
                     }
                 }
                 
+                boolean msgSent = false;
                 // Add a row to the table for every artifact of the current type that satisfies the tags filter, if any.
                 for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
                     // Get any tags associated with the artifact and apply the tags filter, if any.
@@ -327,7 +339,13 @@ public class ReportGenerator {
                         // Get the row data for this type of artifact.
                         List<String> rowData; 
                         rowData = getArtifactRow(artifactEntry, module);   
-                        
+                        if (rowData == null) {
+                            if (msgSent == false) {
+                                MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                                msgSent = true;
+                            }
+                            continue;
+                        }
                         // Add the list of tag names if the artifact is not itself as tag.
                         if (artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
                             artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
@@ -745,6 +763,9 @@ public class ReportGenerator {
             case TSK_SERVICE_ACCOUNT:
                  columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Mailbox Name", "ReplyTo Address", "Mail Server", "Source File" }));
                 break;
+            case TSK_TOOL_OUTPUT: 
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
+                break;
             default:
                 return null;
         }
@@ -1044,8 +1065,12 @@ public class ReportGenerator {
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
                 appAccount.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return appAccount;
-                  
-                 
+             case TSK_TOOL_OUTPUT: 
+                List<String> row = new ArrayList<>();
+                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                row.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return row; 
         }
         return null;
     }
