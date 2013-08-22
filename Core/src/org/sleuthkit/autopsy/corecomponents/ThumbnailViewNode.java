@@ -86,6 +86,9 @@ class ThumbnailViewNode extends FilterNode {
                 if (getFile(content.getId()).exists()) {
                     try {
                         icon = ImageIO.read(getFile(content.getId()));
+                        if (icon == null) {
+                            icon = ThumbnailViewNode.defaultIcon;
+                        }
                     } catch (IOException ex) {
                         icon = ThumbnailViewNode.defaultIcon;
                     }
@@ -120,6 +123,10 @@ class ThumbnailViewNode extends FilterNode {
         try {
             inputStream = new ReadContentInputStream(content);
             BufferedImage bi = ImageIO.read(inputStream);
+            if (bi == null) {
+                logger.log(Level.WARNING, "No image reader for file: " + content.getName());
+                return null;
+            }
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, 100, 100);
             return biScaled;
         }catch (OutOfMemoryError e) {

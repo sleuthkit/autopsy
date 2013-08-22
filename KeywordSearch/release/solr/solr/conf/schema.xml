@@ -504,37 +504,42 @@
        when adding a document.
    -->
 
+   <!-- object id of the file -->
    <field name="id" type="string" indexed="true" stored="true" required="true" /> 
+   
    <!-- use image_id to easily search a specific image only -->
-   <field name="image_id" type="string" indexed="true" stored="true" required="true" /> 
-    <!-- The content field holds the text extracted by SolrCell -->
+   <field name="image_id" type="string" indexed="true" stored="false" required="true" /> 
+   
+    <!-- Autopsy pushes text to the content field and gets the text to display from it.  It is copied to other places -->
    <field name="content" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" />
+   
    <!-- The strings field holds strings extracted from files that SolrCell doesn't support -->
-   <field name="strings" type="text_general" indexed="true" stored="true"/>
-   <field name="file_name" type="text_general" indexed="true" stored="true"/>
-   <field name="ctime" type="tdate" indexed="true" stored="true"/>
-   <field name="atime" type="tdate" indexed="true" stored="true"/>
-   <field name="mtime" type="tdate" indexed="true" stored="true"/>
-   <field name="crtime" type="tdate" indexed="true" stored="true"/>
-	<!-- file chunk-specific fields (optional for others) -->
-	<!-- for a parent file with no content, number of chunks are specified -->
-	<field name="num_chunks" type="int" indexed="true" stored="true" required="false" />
+   <!--<field name="strings" type="text_general" indexed="true" stored="true"/>-->
+   
+   <field name="file_name" type="text_general" indexed="false" stored="true"/>
+   <field name="ctime" type="tdate" indexed="false" stored="false"/>
+   <field name="atime" type="tdate" indexed="false" stored="false"/>
+   <field name="mtime" type="tdate" indexed="false" stored="false"/>
+   <field name="crtime" type="tdate" indexed="false" stored="false"/>
+   <!-- file chunk-specific fields (optional for others) -->
+   <!-- for a parent file with no content, number of chunks are specified -->
+   <field name="num_chunks" type="int" indexed="true" stored="true" required="false" />
    
    <!-- Common metadata fields, named specifically to match up with
      SolrCell metadata when parsing rich documents such as Word, PDF.
      Some fields are multiValued only because Tika currently may return
      multiple values for them.
    -->
-   <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-   <field name="subject" type="text_general" indexed="true" stored="true"/>
-   <field name="description" type="text_general" indexed="true" stored="true"/>
-   <field name="comments" type="text_general" indexed="true" stored="true"/>
-   <field name="author" type="text_general" indexed="true" stored="true"/>
-   <field name="keywords" type="text_general" indexed="true" stored="true"/>
-   <field name="category" type="text_general" indexed="true" stored="true"/>
-   <field name="content_type" type="string" indexed="true" stored="true" multiValued="true"/>
-   <field name="last_modified" type="date" indexed="true" stored="true"/>
-   <field name="links" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="title" type="text_general" indexed="false" stored="false" multiValued="true"/>
+   <field name="subject" type="text_general" indexed="false" stored="false"/>
+   <field name="description" type="text_general" indexed="false" stored="false"/>
+   <field name="comments" type="text_general" indexed="false" stored="false"/>
+   <field name="author" type="text_general" indexed="false" stored="false"/>
+   <field name="keywords" type="text_general" indexed="false" stored="false"/>
+   <field name="category" type="text_general" indexed="false" stored="false"/>
+   <field name="content_type" type="string" indexed="false" stored="false" multiValued="true"/>
+   <field name="last_modified" type="date" indexed="false" stored="false"/>
+   <field name="links" type="string" indexed="false" stored="false" multiValued="true"/>
 
    <!-- Tika places all metadata into a multivalued field named "meta" -->
    <field name="meta" type="text_general" indexed="true" stored="true" multiValued="true"/>
@@ -545,10 +550,11 @@
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
-   <field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>
+   <!--<field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>-->
    
    <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
 		also be useful for Lucene based queries containing special characters-->
+   <!-- populated via copyField -->
    <field name="content_ws" type="text_ws" indexed="true" stored="false" /> 
 	
    <!-- Uncommenting the following will create a "timestamp" field using
@@ -621,7 +627,7 @@
    <copyField source="content" dest="text"/>
    <copyField source="file_name" dest="text"/>
    <copyField source="meta" dest="text"/>
-   <copyField source="strings" dest="text"/>
+   <!--<copyField source="strings" dest="text"/>-->
    <copyField source="content" dest="content_ws"/>
 	
    <!-- Above, multiple source fields are copied to the [text] field. 

@@ -48,6 +48,7 @@ blackboard and with inbox messages to the user.
 \section ingest_datasrc Data Source-level Modules
 
 To make a data source-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleDataSource". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleDataSource class for details on what each needs to do. 
+You can also refer to org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule as an example module. 
 
 Example snippet of an ingest-level module process() method:
 
@@ -87,6 +88,7 @@ public void process(Content dataSource, IngestDataSourceWorkerController control
 \section ingest_file File-level Modules
 
 To make a File-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the method documentation in the org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile class to fill in the details.
+You can also refer to org.sleuthkit.autopsy.examples.SampleFileIngestModule as an example module. 
 
 Unlike Data Source-level modules, file-level modules are singletons.  Only a single instance is created for all files. 
 The same file-level module instance will be used for files in different images and even different cases if new cases are opened. 

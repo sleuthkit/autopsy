@@ -99,8 +99,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             //extract dir action
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
-                actions.add(new ExtractAction("Extract Directory",
-                        getOriginal()));
+                actions.add(ExtractAction.getInstance());
             }
             
             // file search action

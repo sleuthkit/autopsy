@@ -4,8 +4,6 @@
 any type of module. Information about specific types of modules should
 go into the page for that module type. -->
 
-<!-- @@@ Update -->
-
 This page describes the basic concepts and setup that are needed regardless of the module type that you are building. 
 
 \section mod_dev_setup Basic Setup
@@ -66,11 +64,7 @@ You now have a NetBeans module that is using Autopsy as its build platform.  Tha
 There are several optional things in the Properties section.  You can add a description and specify the version.  You can do all of this later though and it does not need to be done before you start development. 
 
 A link about the NetBeans versioning scheme can be found here http://wiki.netbeans.org/VersioningPolicy. 
-Autopsy follows this scheme and we will make a wiki page about it.
-
-TODO: @@@ Add link to our wiki with Autopsy's versioning scheme
-
-
+Autopsy follows this scheme and a link to the details can be found at http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Module_Versions.
 
 \subsection mod_dev_mod_other Other Links
 

@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
@@ -89,6 +90,11 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         
         //skip unalloc
         if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+        
+        // skip known
+        if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return IngestModuleAbstractFile.ProcessResult.OK;
         }
         

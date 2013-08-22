@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.TskException;
 class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardPanel3.class.getName());
-    private IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
+    private IngestConfigurator ingestConfig;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -85,6 +85,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     AddImageWizardPanel3(AddImageAction action, AddImageWizardPanel2 wizPanel) {
         this.action = action;
         this.wizPanel = wizPanel;
+        ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
+        ingestConfig.setContext(AddImageWizardPanel3.class.getCanonicalName());
     }
 
     /**

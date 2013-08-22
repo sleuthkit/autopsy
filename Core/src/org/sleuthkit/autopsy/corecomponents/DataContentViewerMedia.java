@@ -112,12 +112,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public void setNode(Node selectedNode) {
         try {
             if (selectedNode == null) {
-                videoPanel.reset();
+                resetComponent(); 
                 return;
             }
 
             AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
             if (file == null) {
+                resetComponent();
                 return;
             }
 
@@ -180,15 +181,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void resetComponent() {
-        // we don't want this to do anything
-        // because we already reset on each selected node
+        videoPanel.reset(); 
     }
 
   
 
     @Override
     public boolean isSupported(Node node) {
-
         if (node == null) {
             return false;
         }
@@ -198,13 +197,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-
         if (file.getSize() == 0) {
             return false;
         }
 
         String name = file.getName().toLowerCase();
-
         if (imagePanelInited && containsExt(name, IMAGES)) {
             return true;
         } //for gstreamer formats, check if initialized first, then

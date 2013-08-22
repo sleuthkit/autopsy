@@ -52,6 +52,7 @@ services are provided:
 - FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().  Data Source-level Ingest modules and Report modules typically use this service because the other modules are passed in a reference to a specific file to do something with. 
 - org.sleuthkit.autopsy.coreutils.Logger - for adding log messages to central logger
 - IngestModules also have a class that provides additional services.  See \ref ingestmodule_services. 
+- MessageNotifyUtil.Notify.show() can be used to send messages to the user in the lower right-hand area.
 
 
 \subsection mod_dev_other_utilities Framework Utilities

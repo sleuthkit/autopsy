@@ -326,7 +326,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param imgId the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      */
-    Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
+    public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
 
         try {
@@ -372,7 +372,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
-    void closeCase() throws CaseActionException {
+    public void closeCase() throws CaseActionException {
         changeCase(null);
 
         try {

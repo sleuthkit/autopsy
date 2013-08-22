@@ -144,6 +144,10 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 try {
                     //original input stream
                     BufferedImage bi = ImageIO.read(inputStream);
+                    if (bi == null) {
+                        logger.log(Level.WARNING, "Could image reader not found for file: " + fileName);
+                        return;
+                    }
                     //scale image using Scalr
                     BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int) dims.getWidth(), (int) dims.getHeight());
                     //convert from awt imageto fx image

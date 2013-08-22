@@ -17,24 +17,34 @@
  * limitations under the License.
  */
 
-/**
- * Representation of keyword query as input by user
- */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
+/**
+ * Representation of single keyword to search for
+ */
 public class Keyword {
-
-    private String query;
-    private boolean isLiteral;
+    private String keywordString;   // keyword to search for
+    private boolean isLiteral;  // false if reg exp
     private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
 
+    /**
+     * 
+     * @param query Keyword to search for
+     * @param isLiteral false if reg exp
+     */
     Keyword(String query, boolean isLiteral) {
-        this.query = query;
+        this.keywordString = query;
         this.isLiteral = isLiteral;
     }
     
+    /**
+     * 
+     * @param query Keyword to search for
+     * @param isLiteral false if reg exp
+     * @param keywordType 
+     */
     Keyword(String query, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
         this(query, isLiteral);
         this.keywordType = keywordType;
@@ -48,8 +58,12 @@ public class Keyword {
         return this.keywordType;
     }
 
+    /**
+     * 
+     * @return Keyword to search for
+     */
     String getQuery() {
-        return query;
+        return keywordString;
     }
 
     boolean isLiteral() {
@@ -58,7 +72,7 @@ public class Keyword {
 
     @Override
     public String toString() {
-        return "Keyword{" + "query=" + query + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
+        return "Keyword{" + "query=" + keywordString + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
     }
     
     
@@ -72,7 +86,7 @@ public class Keyword {
             return false;
         }
         final Keyword other = (Keyword) obj;
-        if ((this.query == null) ? (other.query != null) : !this.query.equals(other.query)) {
+        if ((this.keywordString == null) ? (other.keywordString != null) : !this.keywordString.equals(other.keywordString)) {
             return false;
         }
         if (this.isLiteral != other.isLiteral) {
@@ -84,7 +98,7 @@ public class Keyword {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 17 * hash + (this.query != null ? this.query.hashCode() : 0);
+        hash = 17 * hash + (this.keywordString != null ? this.keywordString.hashCode() : 0);
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
         return hash;
     }
