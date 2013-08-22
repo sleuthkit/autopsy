@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
+import java.util.TreeSet;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -89,7 +89,7 @@ public class TagAndCommentDialog extends JDialog {
         });
         
         // get the current list of tag names
-        List<String> tags = Tags.getTagNames();
+        TreeSet<String> tags = Tags.getAllTagNames();
         
         // if there are no tags, add the NO_TAG_MESSAGE
         if (tags.isEmpty()) {

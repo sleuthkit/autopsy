@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,6 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ExtractedContentChildren;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -48,12 +47,12 @@ public final class ReportVisualPanel2 extends JPanel {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel2.class.getName());
     private ReportWizardPanel2 wizPanel;
     
-    private Map<String, Boolean> tagStates = new LinkedHashMap<String, Boolean>();
-    private List<String> tags = new ArrayList<String>();
+    private Map<String, Boolean> tagStates = new LinkedHashMap<>();
+    private List<String> tags = new ArrayList<>();
     
     ArtifactSelectionDialog dialog = new ArtifactSelectionDialog(new JFrame(), true);
-    private Map<ARTIFACT_TYPE, Boolean> artifactStates = new EnumMap<ARTIFACT_TYPE, Boolean>(ARTIFACT_TYPE.class);
-    private List<ARTIFACT_TYPE> artifacts = new ArrayList<ARTIFACT_TYPE>();
+    private Map<ARTIFACT_TYPE, Boolean> artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
+    private List<ARTIFACT_TYPE> artifacts = new ArrayList<>();
     
     private TagsListModel tagsModel;
     private TagsListRenderer tagsRenderer;
@@ -74,7 +73,7 @@ public final class ReportVisualPanel2 extends JPanel {
     
     // Initialize the list of Tags
     private void initTags() {
-        for(String tag : Tags.getTagNames()) {
+        for(String tag : Tags.getTagNamesFromCurrentCase()) {
             tagStates.put(tag, Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
@@ -111,12 +110,12 @@ public final class ReportVisualPanel2 extends JPanel {
             
             artifacts.removeAll(doNotReport);
             
-            artifactStates = new EnumMap<ARTIFACT_TYPE, Boolean>(ARTIFACT_TYPE.class);
+            artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
             for (ARTIFACT_TYPE type : artifacts) { 
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex);
             return;
         }
     }
