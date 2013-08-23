@@ -60,6 +60,7 @@ public class Installer extends ModuleInstall {
     
     private void initJavaFx() {
         //initialize java fx if exists
+        System.setProperty("javafx.macosx.embedded", "true");
         try {
             Platform.setImplicitExit(false);
             PlatformImpl.startup(new Runnable() {
