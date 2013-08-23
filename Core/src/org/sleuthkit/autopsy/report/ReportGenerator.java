@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,12 +84,13 @@ public class ReportGenerator {
     static final String REPORTS_DIR = "Reports";
         
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
-        // Setup the reporting directory to be [CASE DIRECTORY]/Reports/[Case name] [Timestamp]/
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
-        String datenotime = dateFormat.format(date);
-        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + datenotime + File.separator;
-        // Create the reporting directory
+        String dateNoTime = dateFormat.format(date);
+        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
+        
+        // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(this.reportPath));
         } catch (IOException ex) {
@@ -109,16 +110,21 @@ public class ReportGenerator {
      * @param generalModuleStates the enabled/disabled state of each GeneralReportModule
      */
     private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
-        for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
-            if (entry.getValue()) {
-                TableReportModule module = entry.getKey();
-                tableProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+        if (null != tableModuleStates) {
+            for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    TableReportModule module = entry.getKey();
+                    tableProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
             }
         }
-        for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
-            if (entry.getValue()) {
-                GeneralReportModule module = entry.getKey();
-                generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+        
+        if (null != generalModuleStates) {
+            for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    GeneralReportModule module = entry.getKey();
+                    generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
             }
         }
     }
@@ -171,8 +177,10 @@ public class ReportGenerator {
      * @param tagSelections the enabled/disabled state of the tags to be included in the report
      */
     public void generateArtifactTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
-        ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
-        worker.execute();
+        if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
+            ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
+            worker.execute();
+        }
     }
     
     /**
@@ -216,7 +224,7 @@ public class ReportGenerator {
             }
             
             // Get the tags selected by the user.
-            if (tagSelections != null) {
+            if (null != tagSelections) {
                 for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
                     if (entry.getValue() == true) {
                         tagNamesFilter.add(entry.getKey());
