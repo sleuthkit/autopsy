@@ -24,6 +24,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -45,9 +46,18 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private static JPanel caller = new JPanel();
     private String className = this.getClass().toString();
 
-    /** Creates new form CueBannerPanel */
-    public CueBannerPanel() {
+    /** Creates new form CueBannerPanel
+     * 
+     * @param welcomeLogo Java-centric path to an image file, e.g. "/org/sleuthkit/autopsy/casemodule/welcome_logo.png".
+     */
+    public CueBannerPanel(String welcomeLogo) {
         initComponents();
+        ImageIcon icon = null;
+        ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
+        if (cl != null) {
+            icon = new ImageIcon(cl.getResource(welcomeLogo));
+        }
+        autopsyLogo.setIcon(icon);  //if null then no icon will be shown
     }
 
     /** This method is called from within the constructor to
@@ -254,7 +264,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
      */
     public void setCloseButtonText(String text) {
         closeButton.setText(text);
-    }    
+    }       
     
     /**
      * Close the open recent cases window.
