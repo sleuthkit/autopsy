@@ -687,7 +687,7 @@ public class IngestManager {
         private Date startTime;
         private Date endTime;
         private int errorsTotal;
-        private Map<IngestModuleAbstract, Integer> errors;
+        private Map<String, Integer> errors;
         private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         private final StopWatch timer = new StopWatch();
         private IngestModuleAbstract currentModuleForTimer;
@@ -695,7 +695,7 @@ public class IngestManager {
         private final Map<String, Long> fileModuleTimers = new HashMap<String, Long>();
 
         IngestManagerStats() {
-            errors = new HashMap<IngestModuleAbstract, Integer>();
+            errors = new HashMap<String, Integer>();
         }
 
         /**
@@ -754,17 +754,8 @@ public class IngestManager {
             sb.append("Total errors: ").append(errorsTotal).append(EOL);
             if (errorsTotal > 0) {
                 sb.append("Errors per module:");
-                for (IngestModuleAbstract module : errors.keySet()) {
-                    final int errorsModule = errors.get(module);
-                    String moduleName;
-                    if (module != null) {
-                        moduleName = module.getName();
-                    } else {
-                        //manager message
-                        moduleName = "System";
-                    }
-
-                    sb.append("\t").append(moduleName).append(": ").append(errorsModule).append(EOL);
+                for (String moduleName : errors.keySet()) {
+                    sb.append("\t").append(moduleName).append(": ").append(errors.get(moduleName)).append(EOL);
                 }
             }
             return sb.toString();
@@ -775,6 +766,19 @@ public class IngestManager {
             sb.append("<html><body>");
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
+            sb.append("<table><tr><th>Module</th><th>Time</th><th>Errors</th></tr>\n");
+            
+            for (final String moduleName : fileModuleTimers.keySet()) {
+                sb.append("<tr><td>").append(moduleName).append("</td><td>");
+                sb.append(msToString(fileModuleTimers.get(moduleName))).append("</td><td>");
+                if (errors.get(moduleName) == null) {
+                    sb.append("0");
+                } else {
+                    sb.append(errors.get(moduleName));
+                }
+                sb.append("</td></tr>\n");
+            }
+            sb.append("</table>");
             sb.append("</body></html>");
             return sb.toString();
         }
@@ -806,8 +810,12 @@ public class IngestManager {
             return dateFormatter.format(endTime);
         }
 
-        String getTotalTimeString() {
-            long ms = getTotalTime();
+        /**
+         * convert time in miliseconds to printable string in XX:YY:ZZ format. 
+         * @param ms
+         * @return 
+         */
+        private String msToString(long ms) {
             long hours = TimeUnit.MILLISECONDS.toHours(ms);
             ms -= TimeUnit.HOURS.toMillis(hours);
             long minutes = TimeUnit.MILLISECONDS.toMinutes(ms);
@@ -817,14 +825,20 @@ public class IngestManager {
             sb.append(hours < 10 ? "0" : "").append(hours).append(':').append(minutes < 10 ? "0" : "").append(minutes).append(':').append(seconds < 10 ? "0" : "").append(seconds);
             return sb.toString();
         }
+        
+        String getTotalTimeString() {
+            long ms = getTotalTime();
+            return msToString(ms);
+        }
 
         synchronized void addError(IngestModuleAbstract source) {
             ++errorsTotal;
-            Integer curModuleErrorI = errors.get(source);
+            String moduleName = source.getName();
+            Integer curModuleErrorI = errors.get(moduleName);
             if (curModuleErrorI == null) {
-                errors.put(source, 1);
+                errors.put(moduleName, 1);
             } else {
-                errors.put(source, curModuleErrorI + 1);
+                errors.put(moduleName, curModuleErrorI + 1);
             }
         }
     }
@@ -890,13 +904,14 @@ public class IngestManager {
                 }
 
                 //logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
-                progress.progress(fileToProcess.getName(), processedFiles);
+                
                 for (IngestModuleAbstractFile module : fileIngestTask.getModules()) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
                     }
+                    progress.progress(fileToProcess.getName() + " (" + module.getName() + ")", processedFiles);
 
                     try {
                         stats.logFileModuleStartProcess(module);
