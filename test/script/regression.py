@@ -221,6 +221,9 @@ class TestRunner(object):
         logres = Logs.search_common_log("TskCoreException", test_data)
 
         TestResultsDiffer.run_diff(test_data)
+        print("Html report passed: ", test_data.html_report_passed)
+        print("Errors diff passed: ", test_data.errors_diff_passed)
+        print("DB diff passed: ", test_data.db_diff_passed)
         test_data.overall_passed = (test_data.html_report_passed and
         test_data.errors_diff_passed and test_data.db_diff_passed)
 
@@ -1656,7 +1659,7 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
-            elif arg == "-e" or arg == "-email":
+            elif arg == "--email":
                 self.email_enabled = True
             else:
                 print(usage())

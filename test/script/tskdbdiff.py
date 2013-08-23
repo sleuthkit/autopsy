@@ -136,6 +136,7 @@ class TskDbDiff(object):
         """
         unsorted_dump = TskDbDiff._get_tmp_file("dump_data", ".txt")
         conn = sqlite3.connect(db_file)
+        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         autopsy_cur2 = conn.cursor()
         # Get the list of all artifacts
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
@@ -224,7 +225,7 @@ class TskDbDiff(object):
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         conn = sqlite3.connect(backup_db_file)
-
+        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         # Delete the blackboard tables
         conn.execute("DROP TABLE blackboard_artifacts")
         conn.execute("DROP TABLE blackboard_attributes")
