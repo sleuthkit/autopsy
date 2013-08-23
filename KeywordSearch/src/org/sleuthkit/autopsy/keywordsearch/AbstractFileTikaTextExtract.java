@@ -234,12 +234,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         } catch (IOException ex) {
             final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
             final String msg = "Exception: Unexpected error, can't read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } finally {
             try {
