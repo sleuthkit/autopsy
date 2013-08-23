@@ -64,38 +64,13 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
      * and start all necessary reports.
      */
     public static void doReportWizard() {
-        // Create the wizard
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
-        wiz.setTitle("Generate Report");
-        
-        // When the user presses the finish button
+        wiz.setTitle("Generate Report");        
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            // Get the wizard information
-            Object wizProp1 = wiz.getProperty("tableModuleStates");
-            Object wizProp2 = wiz.getProperty("generalModuleStates");
-            Object wizProp3 = wiz.getProperty("isTagsSelected");
-            Object wizProp4 = wiz.getProperty("tagStates");
-            Object wizProp5 = wiz.getProperty("artifactStates");
-            
-            // Initialize variables
-            Map<TableReportModule, Boolean> tableModuleStates = (Map<TableReportModule, Boolean>) wizProp1;
-            Map<GeneralReportModule, Boolean> generalModuleStates = (Map<GeneralReportModule, Boolean>) wizProp2;
-            Boolean isTagsSelected = (Boolean) wizProp3;
-            Map<String, Boolean> tagSelections = (Map<String, Boolean>) wizProp4;
-            Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections = (Map<ARTIFACT_TYPE, Boolean>) wizProp5;
-            
-            // Create the generator and generate reports
-            ReportGenerator generator = new ReportGenerator(tableModuleStates, generalModuleStates);
-            if (isTagsSelected) {
-                generator.generateArtifactTableReports(artifactTypeSelections, tagSelections);
-            }
-            else {
-                generator.generateArtifactTableReports(artifactTypeSelections, null);                
-            }
+            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"));
+            generator.generateArtifactTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
             generator.generateGeneralReports();
-            
-            // Open the progress window for the user
             generator.displayProgressPanels();
         }        
     }
