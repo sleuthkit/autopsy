@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.util.TreeSet;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.sleuthkit.autopsy.datamodel.Tags;
@@ -38,7 +38,7 @@ public abstract class TagMenu extends JMenu {
         add(quickTagMenu);    
 
         // Get the existing tag names.
-        List<String> tagNames = Tags.getTagNames();
+        TreeSet<String> tagNames = Tags.getAllTagNames();
         if (tagNames.isEmpty()) {
             JMenuItem empty = new JMenuItem("No tags");
             empty.setEnabled(false);
