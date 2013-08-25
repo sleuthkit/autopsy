@@ -29,12 +29,9 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.Version;
-import org.netbeans.api.options.OptionsDisplayer;
 
 /**
  *
- * @author jantonius
  */
 public class CueBannerPanel extends javax.swing.JPanel {
 
@@ -46,18 +43,17 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private static JPanel caller = new JPanel();
     private String className = this.getClass().toString();
 
-    /** Creates new form CueBannerPanel
-     * 
-     * @param welcomeLogo Java-centric path to an image file, e.g. "/org/sleuthkit/autopsy/casemodule/welcome_logo.png".
-     */
+    public CueBannerPanel() {
+        initComponents();
+    }
+
     public CueBannerPanel(String welcomeLogo) {
         initComponents();
-        ImageIcon icon = null;
         ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
         if (cl != null) {
-            icon = new ImageIcon(cl.getResource(welcomeLogo));
+            ImageIcon icon = new ImageIcon(cl.getResource(welcomeLogo));
+            autopsyLogo.setIcon(icon);
         }
-        autopsyLogo.setIcon(icon);  //if null then no icon will be shown
     }
 
     /** This method is called from within the constructor to
