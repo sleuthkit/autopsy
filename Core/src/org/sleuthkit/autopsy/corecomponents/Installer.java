@@ -91,9 +91,12 @@ public class Installer extends ModuleInstall {
         
     }
 
+    /**
+     * Set the look and feel to be the Cross Platform 'Metal', but keep Aqua 
+     * dependent elements that set the Menu Bar to be in the correct place on 
+     * Mac OS X.
+     */
     private void setupMacOsXLAF() {
-        Logger logger = Logger.getLogger(Installer.class.getName());
-        
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException 
@@ -101,21 +104,22 @@ public class Installer extends ModuleInstall {
             logger.log(Level.WARNING, "Unable to set theme. ", ex);
         }
         
-        final String[] UI_KEYS = new String[]{"MenuBarUI",
-                                              "MenuUI",
-                                              "MenuItemUI",
-                                              "CheckBoxMenuItemUI",
-                                              "RadioButtonMenuItemUI",
-                                              "PopupMenuUI"};
+        final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",
+                                                        "MenuUI",
+                                                        "MenuItemUI",
+                                                        "CheckBoxMenuItemUI",
+                                                        "RadioButtonMenuItemUI",
+                                                        "PopupMenuUI"};
                 
         Map<Object, Object> uiEntries = new TreeMap<Object, Object>();
         
-        for(String key : UI_KEYS) {
+        // Store the keys that deal with menu items
+        for(String key : UI_MENU_ITEM_KEYS) {
             uiEntries.put(key, UIManager.get(key));
         }
         
         
-        //use Nimbus if available
+        //use Metal if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Metal".equals(info.getName())) {
                 try {
@@ -128,6 +132,7 @@ public class Installer extends ModuleInstall {
             }
         }
         
+        // Overwrite the Metal menu item keys to use the Aqua versions
         for(Map.Entry entry : uiEntries.entrySet()) {
             UIManager.put(entry.getKey(), entry.getValue());
         }
