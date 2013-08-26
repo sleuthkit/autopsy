@@ -1044,18 +1044,23 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     }
 
     private String makeMacTime(String pathToBodyFile) {
+        String cmdpath = "";
         String macpath = "";
+        String[] mactimeArgs;
         final String machome = macRoot.getAbsolutePath();
         pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
-            macpath = PlatformUtil.getOSFilePath(macpath);
+            cmdpath = PlatformUtil.getOSFilePath(cmdpath);
+            mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
         } else {
-            macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
+            cmdpath = "perl";
+            macpath = machome + java.io.File.separator + "mactime.pl";
+            mactimeArgs = new String[]{macpath, "-b", pathToBodyFile, "-d", "-y"};
         }
 
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
-        String[] mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
+        
 
         String output = "";
         ExecUtil execUtil = new ExecUtil();
@@ -1063,7 +1068,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         try {
             //JavaSystemCaller.Exec.execute("\"" + command + "\"");
             writer = new FileWriter(macfile);
-            execUtil.execute(writer, macpath, mactimeArgs);
+            execUtil.execute(writer, cmdpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;
