@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.sun.javafx.application.PlatformImpl;
 import java.awt.Insets;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
-import javafx.application.Platform;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.UIManager;
@@ -29,9 +29,9 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Manages this module's lifecycle. Opens the startup dialog during startup.
@@ -57,7 +57,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
         super.restored();
 
-        //setupLAF();
+        setupLAF();
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
@@ -84,25 +84,53 @@ public class Installer extends ModuleInstall {
         //UIManager.put("nimbusBase", new Color());
         //UIManager.put("nimbusBlueGrey", new Color());
         //UIManager.put("control", new Color());
+        
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            setupMacOsXLAF();
+        }
+        
+    }
 
-
+    private void setupMacOsXLAF() {
         Logger logger = Logger.getLogger(Installer.class.getName());
+        
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException 
+                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            logger.log(Level.WARNING, "Unable to set theme. ", ex);
+        }
+        
+        final String[] UI_KEYS = new String[]{"MenuBarUI",
+                                              "MenuUI",
+                                              "MenuItemUI",
+                                              "CheckBoxMenuItemUI",
+                                              "RadioButtonMenuItemUI",
+                                              "PopupMenuUI"};
+                
+        Map<Object, Object> uiEntries = new TreeMap<Object, Object>();
+        
+        for(String key : UI_KEYS) {
+            uiEntries.put(key, UIManager.get(key));
+        }
+        
+        
         //use Nimbus if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-            if ("Nimbus".equals(info.getName())) {
+            if ("Metal".equals(info.getName())) {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
-                } catch (ClassNotFoundException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
-                } catch (InstantiationException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
-                } catch (IllegalAccessException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
-                } catch (UnsupportedLookAndFeelException ex) {
+                } catch (ClassNotFoundException | InstantiationException | 
+                        IllegalAccessException | UnsupportedLookAndFeelException ex) {
                     logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 }
                 break;
             }
         }
+        
+        for(Map.Entry entry : uiEntries.entrySet()) {
+            UIManager.put(entry.getKey(), entry.getValue());
+        }
+        
     }
 }
