@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -37,7 +38,6 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -50,7 +50,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * are being lazy loaded or not.
  *
  */
-@ServiceProvider(service = DataResultViewer.class)
+// @@@ Restore implementation of DataResultViewerThumbnail as a DataResultViewer 
+// service provider when DataResultViewers can be made compatible with node 
+// multi-selection actions.
+//@ServiceProvider(service = DataResultViewer.class)
 public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
@@ -61,22 +64,43 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
-     * Creates new form DataResultViewerThumbnail
+     * Creates a DataResultViewerThumbnail object that is compatible with node 
+     * multiple selection actions.
+     */
+    public DataResultViewerThumbnail(ExplorerManager explorerManager) {
+        // @@@ This is a temporary hack until DataResultViewers can be made 
+        // compatible with node multiple selection actions. The ExplorerManager
+        // constructed in the base class is being replaced with the one passed
+        // in. Note that this assignment must be done before calling 
+        // initComponents() so that the child IconView component can obtain 
+        // the ExplorerManager via its call to ExplorerManager.find(). 
+        // ExplorerManager.find() searches the ancestors of a Swing component 
+        // for an implementer of the ExplorerManager.Provider interface; the 
+        // base class of this class, AbstractDataResultViewer, is an implementer
+        // of that interface. 
+        em = explorerManager;
+        initialize();
+    }
+
+    /**
+     * Creates a DataResultViewerThumbnail object that is NOT compatible with 
+     * node multiple selection actions.
      */
     public DataResultViewerThumbnail() {
-        super();
-
+        initialize();
+    }    
+    
+    private void initialize() {
         initComponents();
 
         // only allow one item to be selected at a time
-        ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         curPage = -1;
         totalPages = 0;
         curPageImages = 0;
-
-    }
-
+    }    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -315,7 +339,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         this.thumbnailScrollPanel.removeAll();
         this.thumbnailScrollPanel = null;
 
-        //this destroyes em
         super.clearComponent();
     }
 
