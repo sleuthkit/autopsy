@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Holds commonalities between all DataResultViewers, such as:
  * - Pushes selection to DataContentViewers
  */
-public abstract class AbstractDataResultViewer extends JPanel implements
-        DataResultViewer, Provider {
+public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em = new ExplorerManager();
@@ -120,12 +119,12 @@ public abstract class AbstractDataResultViewer extends JPanel implements
     public void clearComponent() {
         em.removePropertyChangeListener(nodeSelListener);
 
-        try {
-            this.em.getRootContext().destroy();
-            em = null;
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Can't clear the component of the Thumbnail Result Viewer.", ex);
-        }
+//        try {
+//            this.em.getRootContext().destroy();
+//            em = null;
+//        } catch (IOException ex) {
+//            logger.log(Level.WARNING, "Can't clear the component of the Thumbnail Result Viewer.", ex);
+//        }
     }
 
     @Deprecated    
