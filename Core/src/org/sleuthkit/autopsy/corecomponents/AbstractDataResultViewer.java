@@ -118,13 +118,6 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     @Override
     public void clearComponent() {
         em.removePropertyChangeListener(nodeSelListener);
-
-//        try {
-//            this.em.getRootContext().destroy();
-//            em = null;
-//        } catch (IOException ex) {
-//            logger.log(Level.WARNING, "Can't clear the component of the Thumbnail Result Viewer.", ex);
-//        }
     }
 
     @Deprecated    
