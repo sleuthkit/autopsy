@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -224,30 +225,34 @@ public class FileSize implements AutopsyVisitableItem {
 
             @Override
             protected boolean createKeys(List<AbstractFile> list) {
-                list.addAll(runFsQuery());
+                List<AbstractFile> l = runFsQuery();
+                if (l == null) {
+                    return false;
+                }
+                list.addAll(l);
                 return true;
             }
 
             private String makeQuery() {
-                String query = "";
+                String query;
                 switch (filter) {
                     case SIZE_50_200:
-                        query = "size >= 50000000 AND size < 200000000";
-
+                        query = "(size >= 50000000 AND size < 200000000)";
                         break;
                     case SIZE_200_1000:
-                        query = "size >= 200000000 AND size < 1000000000";
-
+                        query = "(size >= 200000000 AND size < 1000000000)";
                         break;
 
                     case SIZE_1000_:
-                        query = "size >= 1000000000";
+                        query = "(size >= 1000000000)";
                         break;
 
                     default:
                         logger.log(Level.SEVERE, "Unsupported filter type to get files by size: " + filter);
-
+                        return null;
                 }
+                // ignore unalloc block files
+                query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")";
 
                 return query;
             }
@@ -256,6 +261,10 @@ public class FileSize implements AutopsyVisitableItem {
                 List<AbstractFile> ret = new ArrayList<AbstractFile>();
 
                 String query = makeQuery();
+                if (query == null) {
+                    return null;
+                }
+                
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
