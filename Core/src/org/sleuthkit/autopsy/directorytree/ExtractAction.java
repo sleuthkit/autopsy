@@ -90,7 +90,7 @@ public final class ExtractAction extends AbstractAction {
     
     private void extractFile(ActionEvent e, AbstractFile source) {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
+        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         fileChooser.setSelectedFile(new File(source.getName()));
         if (fileChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
@@ -102,7 +102,7 @@ public final class ExtractAction extends AbstractAction {
     private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
+        folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         if (folderChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
@@ -118,22 +118,29 @@ public final class ExtractAction extends AbstractAction {
 
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             for (AbstractFile source : selectedFiles) {
-                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getName())));
+                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName())));
             }            
             doFileExtraction(e, fileExtractionTasks);            
         }
     }
         
     private void doFileExtraction(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
+        
+        // verify all of the sources and destinations are OK
         for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext(); ) {
             FileExtractionTask task = it.next();
             
             if (ContentUtils.isDotDirectory(task.source)) {
-                JOptionPane.showMessageDialog((Component) e.getSource(), "Cannot extract virtual " + task.source.getName() + " directory.", "File is Virtual Directory", JOptionPane.WARNING_MESSAGE);
+                //JOptionPane.showMessageDialog((Component) e.getSource(), "Cannot extract virtual " + task.source.getName() + " directory.", "File is Virtual Directory", JOptionPane.WARNING_MESSAGE);
                 it.remove();
                 continue;
             }
             
+            /*
+             * @@@ Problems with this code:
+             * - does not prevent us from having multiple files with the same target name in the task list (in which case, the first ones are overwritten)
+             * Unique Id was added to set of names before calling this method to deal with that.
+             */
             if (task.destination.exists()) {
                 if (JOptionPane.showConfirmDialog((Component) e.getSource(), "Destination file " + task.destination.getAbsolutePath() + " already exists, overwrite?", "File Exists", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     if (!FileUtil.deleteFileDir(task.destination)) {
@@ -143,7 +150,7 @@ public final class ExtractAction extends AbstractAction {
                 }
                 else {
                     it.remove();
-                }            
+                }
             }
         }
 
