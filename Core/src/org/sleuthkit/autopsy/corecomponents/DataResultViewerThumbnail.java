@@ -148,6 +148,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         });
 
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
+        thumbnailSizeComboBox.setSelectedIndex(1);
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -234,14 +235,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         ThumbnailViewNode.setIconSize(newSize);
         
-        Node root = em.getRootContext();     
-        for (Node page : root.getChildren().getNodes()) {
-            for (Node node : page.getChildren().getNodes()) {
-                ThumbnailViewNode tn = (ThumbnailViewNode) node;                
-                tn.setRefresh(true);                
-            }
-        }              
-
+        Node root = em.getRootContext();            
+        
         // Temporarily set the explored context to the root, instead of a child node.
         // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
         // update even though the new and old Node values are identical. This in turn
