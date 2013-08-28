@@ -528,8 +528,17 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex);
             //inbox message
-            String msg = "Error unpacking file: " + archiveFile.getName();
-            String details = msg + ". " + ex.getMessage();
+            String fullName;
+            try {
+                fullName = archiveFile.getUniquePath();
+            } catch (TskCoreException ex1) {
+                fullName = archiveFile.getName();
+            }
+
+            String msg = "Error unpacking " + archiveFile.getName();
+            String details = "Error unpacking (" +
+                    (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "allocated" : "deleted") + ") " + fullName
+                    + ". " + ex.getMessage();
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
         } finally {
             if (inArchive != null) {
