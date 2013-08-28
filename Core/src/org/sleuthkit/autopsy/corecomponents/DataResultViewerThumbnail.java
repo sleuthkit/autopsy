@@ -68,17 +68,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
      * multiple selection actions.
      */
     public DataResultViewerThumbnail(ExplorerManager explorerManager) {
-        // @@@ This is a temporary hack until DataResultViewers can be made 
-        // compatible with node multiple selection actions. The ExplorerManager
-        // constructed in the base class is being replaced with the one passed
-        // in. Note that this assignment must be done before calling 
-        // initComponents() so that the child IconView component can obtain 
-        // the ExplorerManager via its call to ExplorerManager.find(). 
-        // ExplorerManager.find() searches the ancestors of a Swing component 
-        // for an implementer of the ExplorerManager.Provider interface; the 
-        // base class of this class, AbstractDataResultViewer, is an implementer
-        // of that interface. 
-        em = explorerManager;
+        super(explorerManager);
         initialize();
     }
 
