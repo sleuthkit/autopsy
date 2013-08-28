@@ -205,15 +205,19 @@ public final class ExtractAction extends AbstractAction {
             });
             progress.start();
             progress.switchToIndeterminate();
+            
+            /* @@@ Add back in -> Causes exceptions
             int workUnits = 0;
             for (FileExtractionTask task : extractionTasks) {
                 workUnits += calculateProgressBarWorkUnits(task.source);
             }
             progress.switchToDeterminate(workUnits);
+            */
         
             // Do the extraction tasks.
             for (FileExtractionTask task : this.extractionTasks) {
-                ExtractFscContentVisitor.extract(task.source, task.destination, progress, this);            
+                // @@@ Note, we are no longer passing in progress
+                ExtractFscContentVisitor.extract(task.source, task.destination, null, this);            
             }
             
             return null;
