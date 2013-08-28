@@ -333,7 +333,7 @@ public final class IngestModuleLoader {
 
                 try {
                     urls.add(new URL(urlPath));
-                    logger.log(Level.INFO, "JAR: " + urlPath);
+                    //logger.log(Level.INFO, "JAR: " + urlPath);
                 } catch (MalformedURLException ex) {
                     logger.log(Level.WARNING, "Invalid URL: " + urlPath, ex);
                 }
@@ -476,13 +476,14 @@ public final class IngestModuleLoader {
         for (final ModuleInfo moduleInfo : moduleInfos) {
             if (moduleInfo.isEnabled()) {
                 String basePackageName = moduleInfo.getCodeNameBase();
+                
+                // skip the standard ones
                 if (basePackageName.startsWith("org.netbeans")
                         || basePackageName.startsWith("org.openide")) {
-                    //skip
                     continue;
                 }
 
-                logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName
+                logger.log(Level.INFO, "Found module: " + moduleInfo.getDisplayName() + " " + basePackageName
                         + " Build version: " + moduleInfo.getBuildVersion()
                         + " Spec version: " + moduleInfo.getSpecificationVersion()
                         + " Impl version: " + moduleInfo.getImplementationVersion());
@@ -492,6 +493,12 @@ public final class IngestModuleLoader {
                 cb.setUrls(urls);
                 cb.setScanners(new SubTypesScanner(), new ResourcesScanner());
                 reflectionsSet.add(new Reflections(cb));
+            }
+            else {
+                // log if we have our own modules disabled
+                if (moduleInfo.getCodeNameBase().startsWith("org.sleuthkit")) {
+                    logger.log(Level.WARNING, "Sleuth Kit Module not enabled: " + moduleInfo.getDisplayName());
+                }
             }
         }
         
@@ -519,6 +526,11 @@ public final class IngestModuleLoader {
             it = dataSourceModules.iterator();
             while (it.hasNext()) {
                 logger.log(Level.INFO, "Found DataSource ingest module in: " + reflections.getClass().getSimpleName() + ": " + it.next().toString());
+            }
+            
+            if ((fileModules.isEmpty()) && (dataSourceModules.isEmpty())) {
+                logger.log(Level.INFO, "Module has no ingest modules: " + reflections.getClass().getSimpleName());
+                continue;
             }
 
             //find out which modules to add
