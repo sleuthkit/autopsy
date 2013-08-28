@@ -52,6 +52,12 @@ class ThumbnailViewNode extends FilterNode {
     private SoftReference<Image> iconCache;
     private static final Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
     private static final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
+    static final int ICON_SIZE_SMALL = 50;
+    static final int ICON_SIZE_MEDIUM = 100;
+    static final int ICON_SIZE_LARGE = 200;
+    private static int iconWidth = ICON_SIZE_MEDIUM;
+    private static int iconHeight = ICON_SIZE_MEDIUM;
+    private boolean refresh = false;
     //private final BufferedImage defaultIconBI;
 
     /**
@@ -74,6 +80,10 @@ class ThumbnailViewNode extends FilterNode {
     public Image getIcon(int type) {
         Image icon = null;
 
+        if (refresh) {
+            iconCache = null;
+        }
+        
         if (iconCache != null) {
             icon = iconCache.get();
         }
@@ -83,7 +93,7 @@ class ThumbnailViewNode extends FilterNode {
             Content content = this.getLookup().lookup(Content.class);
 
             if (content != null) {
-                if (getFile(content.getId()).exists()) {
+                if (getFile(content.getId()).exists() && !refresh) {
                     try {
                         icon = ImageIO.read(getFile(content.getId()));
                         if (icon == null) {
@@ -109,6 +119,7 @@ class ThumbnailViewNode extends FilterNode {
             }
 
             iconCache = new SoftReference<Image>(icon);
+            refresh = false;
         }
 
         return icon;
@@ -127,7 +138,7 @@ class ThumbnailViewNode extends FilterNode {
                 logger.log(Level.WARNING, "No image reader for file: " + content.getName());
                 return null;
             }
-            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, 100, 100);
+            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconWidth, iconHeight);
             return biScaled;
         }catch (OutOfMemoryError e) {
             logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e);
@@ -151,4 +162,15 @@ class ThumbnailViewNode extends FilterNode {
     private static File getFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
     }
+    
+    public static void setIconSize(int pixelSize) {
+        iconWidth = pixelSize;
+        iconHeight = pixelSize;
+        //setRefresh(true);
+    }
+    
+    public void setRefresh(boolean flag) {
+        refresh = flag;        
+    }
+    
 }

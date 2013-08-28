@@ -97,6 +97,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         filePathLabel = new javax.swing.JLabel();
         goToPageLabel = new javax.swing.JLabel();
         goToPageField = new javax.swing.JTextField();
+        thumbnailSizeComboBox = new javax.swing.JComboBox();
 
         thumbnailScrollPanel.setPreferredSize(new java.awt.Dimension(582, 348));
 
@@ -146,6 +147,14 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Small", "Medium", "Large" }));
+        thumbnailSizeComboBox.setSelectedIndex(1);
+        thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                thumbnailSizeComboBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -172,8 +181,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addGap(12, 12, 12)
                         .addComponent(imagesLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -189,7 +200,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(imagesLabel)
                         .addComponent(imagesRangeLabel)
                         .addComponent(goToPageLabel)
-                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(0, 0, 0)
                 .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -209,6 +221,30 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         goToPage(goToPageField.getText());
     }//GEN-LAST:event_goToPageFieldActionPerformed
 
+    private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
+        
+        int newSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        switch(thumbnailSizeComboBox.getSelectedIndex()) {
+            case 0:
+                newSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                break;
+            case 2:
+                newSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                break;
+        }                    
+
+        ThumbnailViewNode.setIconSize(newSize);
+        
+        Node root = em.getRootContext();     
+        for (Node page : root.getChildren().getNodes()) {
+            for (Node node : page.getChildren().getNodes()) {
+                ThumbnailViewNode tn = (ThumbnailViewNode) node;                
+                tn.setRefresh(true);                
+            }
+        }       
+        
+    }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
     private javax.swing.JTextField goToPageField;
@@ -221,6 +257,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JScrollPane thumbnailScrollPanel;
+    private javax.swing.JComboBox thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -247,7 +284,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         try {
             if (givenNode != null) {
                 ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode);
-
+                
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
@@ -377,7 +414,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
-                Node pageNode = root.getChildren().getNodeAt(curPage - 1);
+                Node pageNode = root.getChildren().getNodeAt(curPage - 1);    
                 em.setExploredContext(pageNode);
                 curPageImages = pageNode.getChildren().getNodesCount();
                 return null;
@@ -387,8 +424,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();
-
+                updateControls();        
             }
         }.execute();
 
