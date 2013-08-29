@@ -49,23 +49,21 @@ import org.sleuthkit.datamodel.TskException;
  */
 class ThumbnailViewNode extends FilterNode {
 
-    private SoftReference<Image> iconCache;
+    private SoftReference<Image> iconCache = null;
     private static final Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
     private static final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
     static final int ICON_SIZE_SMALL = 50;
     static final int ICON_SIZE_MEDIUM = 100;
     static final int ICON_SIZE_LARGE = 200;
-    private static int iconWidth = ICON_SIZE_MEDIUM;
-    private static int iconHeight = ICON_SIZE_MEDIUM;
-    private int curWidth = -1;
-    private int curHeight = -1;
+    private int iconSize = ICON_SIZE_MEDIUM;
     //private final BufferedImage defaultIconBI;
 
     /**
      * the constructor
      */
-    ThumbnailViewNode(Node arg) {
+    ThumbnailViewNode(Node arg, int iconSize) {
         super(arg, Children.LEAF);
+        this.iconSize = iconSize;
     }
 
     @Override
@@ -80,41 +78,37 @@ class ThumbnailViewNode extends FilterNode {
     @Override
     public Image getIcon(int type) {
         Image icon = null;
-       
-        // If not the correct size, then make a new icon
-        if (curWidth != iconWidth) {     
+                  
+        if (iconCache != null) {
+            icon = iconCache.get();
+        }
+
+        if (icon == null) {
             Content content = this.getLookup().lookup(Content.class);
-            icon = generateAndSaveIcon(content);            
-            iconCache = new SoftReference<Image>(icon);
-        } else {
-            
-            if (iconCache != null) {
-                icon = iconCache.get();
-            }
 
-            if (icon == null) {
-                Content content = this.getLookup().lookup(Content.class);
-                
-                if (content != null) {
-                    // If a thumbnail file is already saved locally
-                    if (getFile(content.getId()).exists()) {
-                        try {
-                            icon = ImageIO.read(getFile(content.getId()));
-                            if (icon == null) {
-                                icon = ThumbnailViewNode.defaultIcon;
-                            }
-                        } catch (IOException ex) {
+            if (content != null) {
+                // If a thumbnail file is already saved locally
+                if (getFile(content.getId()).exists()) {
+                    try {
+                        BufferedImage bicon = ImageIO.read(getFile(content.getId()));
+                        if (bicon == null) {
                             icon = ThumbnailViewNode.defaultIcon;
+                        } else if (bicon.getWidth() != iconSize) {
+                            icon = generateAndSaveIcon(content);    
+                        } else {
+                            icon = bicon;    
                         }
-                    } else { // Make a new icon
-                        icon = generateAndSaveIcon(content);
+                    } catch (IOException ex) {
+                        icon = ThumbnailViewNode.defaultIcon;
                     }
-                } else {
-                    icon = ThumbnailViewNode.defaultIcon;
+                } else { // Make a new icon
+                    icon = generateAndSaveIcon(content);
                 }
-
-                iconCache = new SoftReference<Image>(icon);
+            } else {
+                icon = ThumbnailViewNode.defaultIcon;
             }
+
+            iconCache = new SoftReference<Image>(icon);
         }
         
         return icon;
@@ -132,8 +126,6 @@ class ThumbnailViewNode extends FilterNode {
                     f.delete();
                 }
                 ImageIO.write((BufferedImage) icon, "jpg", getFile(content.getId()));
-                curWidth = iconWidth;
-                curHeight = iconHeight;
             }         
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
@@ -144,7 +136,7 @@ class ThumbnailViewNode extends FilterNode {
     /*
      * Generate a scaled image
      */
-    static private BufferedImage generateIcon(Content content) {
+    private BufferedImage generateIcon(Content content) {
 
         InputStream inputStream = null;
         try {
@@ -154,7 +146,7 @@ class ThumbnailViewNode extends FilterNode {
                 logger.log(Level.WARNING, "No image reader for file: " + content.getName());
                 return null;
             }
-            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconWidth, iconHeight);
+            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
 
             return biScaled;
         }catch (OutOfMemoryError e) {
@@ -180,9 +172,9 @@ class ThumbnailViewNode extends FilterNode {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
     }
     
-    public static void setIconSize(int pixelSize) {
-        iconWidth = pixelSize;
-        iconHeight = pixelSize;
+    public void setIconSize(int iconSize) {
+        this.iconSize = iconSize;
+        iconCache = null;
     }
 
 }

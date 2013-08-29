@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -58,6 +59,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
+    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;    
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
@@ -223,19 +225,26 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
         
-        int newSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
         switch(thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
-                newSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                iconSize = ThumbnailViewNode.ICON_SIZE_SMALL;
                 break;
             case 2:
-                newSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                iconSize = ThumbnailViewNode.ICON_SIZE_LARGE;
                 break;
         }                    
 
-        ThumbnailViewNode.setIconSize(newSize);
+        Node root = em.getRootContext();
+        for (Children c : Arrays.asList(root.getChildren()) ) {
+            ((ThumbnailViewChildren)c).setIconSize(iconSize);
+        }
         
-        Node root = em.getRootContext();            
+        for (Node page : root.getChildren().getNodes()) {
+            for (Node node : page.getChildren().getNodes()) {
+                ((ThumbnailViewNode)node).setIconSize(iconSize);
+            }
+        }            
         
         // Temporarily set the explored context to the root, instead of a child node.
         // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
@@ -284,7 +293,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
-                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode);
+                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
                 
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
