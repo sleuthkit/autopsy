@@ -121,7 +121,7 @@ public class Installer extends ModuleInstall {
         
         //use Metal if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-            if ("Metal".equals(info.getName())) {
+            if ("Nimbus".equals(info.getName())) {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException | InstantiationException | 
