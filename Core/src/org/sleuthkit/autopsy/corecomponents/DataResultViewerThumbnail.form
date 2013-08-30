@@ -39,6 +39,8 @@
                       <Component id="imagesLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="imagesRangeLabel" min="-2" pref="91" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="thumbnailSizeComboBox" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
@@ -61,6 +63,7 @@
                       <Component id="imagesRangeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="goToPageLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="goToPageField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="thumbnailSizeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
@@ -194,6 +197,21 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="goToPageFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="thumbnailSizeComboBox">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="3">
+            <StringItem index="0" value="Small Thumbnails"/>
+            <StringItem index="1" value="Medium Thumbnails"/>
+            <StringItem index="2" value="Large Thumbnails"/>
+          </StringArray>
+        </Property>
+        <Property name="selectedIndex" type="int" value="1"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="thumbnailSizeComboBoxActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
