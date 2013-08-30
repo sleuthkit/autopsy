@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -86,6 +85,7 @@ import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -98,7 +98,6 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -147,11 +146,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public Timeline() {
         super();
 
-        org.sleuthkit.autopsy.core.Installer coreInstaller =
-                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
-        if (coreInstaller != null) {
-            fxInited = coreInstaller.isJavaFxInited();
-        }
+        fxInited = Installer.isJavaFxInited();
 
     }
 
@@ -211,7 +206,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
-        PlatformImpl.runLater(new Runnable() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 try {
