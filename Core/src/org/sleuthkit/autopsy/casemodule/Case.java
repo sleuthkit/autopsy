@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
-    private static final String appName = Version.getName() + " " + autopsyVer;
+    private static String appName = null;
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
@@ -507,6 +507,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return appName
      */
     public static String getAppName() {
+        if ((appName == null ) || appName.equals("")) {
+            appName = WindowManager.getDefault().getMainWindow().getTitle();
+        }        
         return appName;
     }
 
