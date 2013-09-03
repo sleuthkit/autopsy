@@ -609,14 +609,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             //and legacy selection events are pumped
             return;
         }
-        //this looks redundant?
-//        if (getSelectedNode() == null && oldNodes != null) {         
-//            try {
-//                em.setSelectedNodes(oldNodes);
-//            } catch (PropertyVetoException ex) {
-//                logger.log(Level.WARNING, "Error resetting node", ex);
-//            }
-//        }
+
 
         // Some lock that prevents certain Node operations is set during the
         // ExplorerManager selection-change, so we must handle changes after the
@@ -640,26 +633,24 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             return;
                         }
                         Node originNode = origin.getNode();
-
-                        DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        DirectoryTreeTopComponent.this.dataResult.setNode(new TableFilterNode(drfn, true));
+                        dataResult.setNode(new TableFilterNode(drfn, true));
 
                         String displayName = "";
-                        if (originNode.getLookup().lookup(Content.class) != null) {
-                            Content content = originNode.getLookup().lookup(Content.class);
-                            if (content != null) {
-                                try {
-                                    displayName = content.getUniquePath();
-                                } catch (TskCoreException ex) {
-                                    logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode);
-                                }
-                            }
-                        } else if (originNode.getLookup().lookup(String.class) != null) {
+                        Content content = originNode.getLookup().lookup(Content.class);
+                        if (content != null) {
+                            try {
+                                displayName = content.getUniquePath();
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode);
+                            }    
+                        } 
+                        else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);
                         }
-                        DirectoryTreeTopComponent.this.dataResult.setPath(displayName);
+                        dataResult.setPath(displayName);
                     }
 
                     // set the directory listing to be active
@@ -674,7 +665,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
                     }
                 } finally {
-                    DirectoryTreeTopComponent.this.setCursor(null);
+                    setCursor(null);
                 }
             }
         });
