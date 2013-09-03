@@ -108,11 +108,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                videoComponent = new JFXPanel();
-                
                 videoPanel.removeAll();
                 videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-                videoPanel.add(videoComponent);
                 videoPanel.setVisible(true);
                 
                 Platform.runLater(new Runnable() {
@@ -154,9 +151,18 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         if(!fxInited) {
             return;
         }
+        
+        videoComponent = new JFXPanel();
         mediaPane = new MediaPane();
         Scene fxScene = new Scene(mediaPane);
         videoComponent.setScene(fxScene);
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                videoPanel.add(videoComponent);
+            }
+        });
     }
     
     
@@ -454,6 +460,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                         case STOPPED:
                             pauseButton.setText("||");
                             mediaPlayer.play();
+                            if(mediaPlayer.getStatus() == Status.PAUSED) {
+                                mediaPlayer.stop();
+                                setInfoLabelText("Playback error. File may be corrupted.");
+                            }
                             break;
                         default:
                             logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString());
