@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * 7Zip ingest module Extracts supported archives, adds extracted DerivedFiles,
@@ -163,6 +164,16 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         if (initialized == false) { //error initializing the module
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
             return ProcessResult.OK;
+        }
+        
+        //skip unalloc
+        if(abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+        
+        // skip known
+        if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
         }
 
         if (abstractFile.isFile() == false || !isSupported(abstractFile)) {
@@ -517,8 +528,17 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex);
             //inbox message
-            String msg = "Error unpacking file: " + archiveFile.getName();
-            String details = msg + ". " + ex.getMessage();
+            String fullName;
+            try {
+                fullName = archiveFile.getUniquePath();
+            } catch (TskCoreException ex1) {
+                fullName = archiveFile.getName();
+            }
+
+            String msg = "Error unpacking " + archiveFile.getName();
+            String details = "Error unpacking (" +
+                    (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "allocated" : "deleted") + ") " + fullName
+                    + ". " + ex.getMessage();
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
         } finally {
             if (inArchive != null) {

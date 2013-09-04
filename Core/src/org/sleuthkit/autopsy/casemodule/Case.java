@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
-    private static final String appName = Version.getName() + " " + autopsyVer;
+    private static String appName = null;
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
@@ -372,7 +372,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
-    void closeCase() throws CaseActionException {
+    public void closeCase() throws CaseActionException {
         changeCase(null);
 
         try {
@@ -507,6 +507,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return appName
      */
     public static String getAppName() {
+        if ((appName == null ) || appName.equals("")) {
+            appName = WindowManager.getDefault().getMainWindow().getTitle();
+        }        
         return appName;
     }
 
@@ -573,6 +576,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return "";
         } else {
             return xmlcm.getCacheDir();
+        }
+    }
+    
+    /**
+     * Gets the full path to the export directory of this case
+     *
+     * @return export DirectoryPath
+     */
+    public String getExportDirectory() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getExportDir();
         }
     }
 

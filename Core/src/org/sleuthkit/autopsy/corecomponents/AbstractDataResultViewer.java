@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,13 +36,13 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Holds commonalities between all DataResultViewers
+ * Holds commonalities between all DataResultViewers, such as:
+ * - Pushes selection to DataContentViewers
  */
-public abstract class AbstractDataResultViewer extends JPanel implements
-        DataResultViewer, Provider {
+public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
-    protected transient ExplorerManager em = new ExplorerManager();
+    protected transient ExplorerManager em;
     private PropertyChangeListener nodeSelListener;
     /**
      * Content viewer to respond to selection events Either the main one, or
@@ -50,8 +50,17 @@ public abstract class AbstractDataResultViewer extends JPanel implements
      */
     protected DataContent contentViewer;
 
+    public AbstractDataResultViewer(ExplorerManager explorerManager) {
+        this.em = explorerManager;
+        initialize();
+    }
+    
     public AbstractDataResultViewer() {
+        em = new ExplorerManager();
+        initialize();
+    }
 
+    private void initialize() {
         //DataContent is designed to return only the default viewer from lookup
         //use the default one unless set otherwise
         contentViewer = Lookup.getDefault().lookup(DataContent.class);
@@ -81,21 +90,17 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                     // change the cursor to "waiting cursor" for this operation
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     try {
-                        Node selectedNode = getSelectedNode();
-
-                        nodeSelected(selectedNode);
-
-
-
-                        if (selectedNode != null) {
+                        Node[] selectedNodes = getExplorerManager().getSelectedNodes();
+                        if (selectedNodes.length == 1) {
+                            nodeSelected(selectedNodes[0]);
+                            
                             // there's a new/changed node to display
-                            Node newSelectedNode = selectedNode; // get the selected Node on the table
                             // push the node to default "DataContent"
                             //TODO only the active viewer should be calling setNode
                             //not all of them, otherwise it results in multiple setNode() invocations
                             //alternative is to use a single instance of the event listener
                             //, per top component and not the tab perhaps
-                            contentViewer.setNode(newSelectedNode);
+                            contentViewer.setNode(selectedNodes[0]);
                         } else {
                             // clear the node viewer
                             contentViewer.setNode(null);
@@ -116,21 +121,15 @@ public abstract class AbstractDataResultViewer extends JPanel implements
             }
         };
 
-        em.addPropertyChangeListener(nodeSelListener);
+        em.addPropertyChangeListener(nodeSelListener);        
     }
-
+    
     @Override
     public void clearComponent() {
         em.removePropertyChangeListener(nodeSelListener);
-
-        try {
-            this.em.getRootContext().destroy();
-            em = null;
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Can't clear the component of the Thumbnail Result Viewer.", ex);
-        }
     }
 
+    @Deprecated    
     public Node getSelectedNode() {
         Node result = null;
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();

@@ -43,13 +43,13 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 /**
  * Custom "About" window panel.
  */
-class ProductInformationPanel extends JPanel implements HyperlinkListener {
+public class ProductInformationPanel extends JPanel implements HyperlinkListener {
 
     private URL url = null;
     private Icon about;
     private boolean verboseLogging;
 
-    ProductInformationPanel() {
+    public ProductInformationPanel() {
         about = new ImageIcon(org.netbeans.core.startup.Splash.loadContent(true));
         initComponents();
         jLabel1.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -67,16 +67,15 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
-        jButton2 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         copyright = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         description = new javax.swing.JTextPane();
         verboseLoggingButton = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
 
@@ -92,22 +91,10 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        jButton2.setBackground(new java.awt.Color(255, 255, 255));
-        jButton2.setText(NbBundle.getMessage(ProductInformationPanel.class, "LBL_Close")); // NOI18N
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        jPanel1.add(jButton2, gridBagConstraints);
-
         jScrollPane3.setBorder(null);
 
         copyright.setBorder(null);
-        copyright.setContentType("text/html");
+        copyright.setContentType("text/html"); // NOI18N
         copyright.setEditable(false);
         copyright.setText(org.openide.util.NbBundle.getBundle(ProductInformationPanel.class).getString("LBL_Copyright")); // NOI18N
         copyright.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -117,7 +104,7 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         });
         jScrollPane3.setViewportView(copyright);
 
-        description.setContentType("text/html");
+        description.setContentType("text/html"); // NOI18N
         description.setEditable(false);
         jScrollPane2.setViewportView(description);
 
@@ -129,6 +116,14 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
             }
         });
 
+        jButton2.setBackground(new java.awt.Color(255, 255, 255));
+        jButton2.setText(NbBundle.getMessage(ProductInformationPanel.class, "LBL_Close")); // NOI18N
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -136,13 +131,15 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(verboseLoggingButton)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(verboseLoggingButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jButton2, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -151,15 +148,15 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
                 .addGap(32, 32, 32)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(verboseLoggingButton))
+                .addComponent(verboseLoggingButton)
+                .addGap(0, 0, 0)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jButton2)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -253,7 +250,11 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     private static String getEncodingValue() {
         return System.getProperty("file.encoding", "unknown");
     }
-
+    
+    public void setCopyright(String text) {
+        copyright.setText(text);
+    }
+    
     @Override
     public void hyperlinkUpdate(HyperlinkEvent event) {
         if (HyperlinkEvent.EventType.ENTERED == event.getEventType()) {

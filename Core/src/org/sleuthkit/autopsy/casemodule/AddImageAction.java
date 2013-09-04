@@ -109,7 +109,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         Logger.noteAction(AddImageAction.class);
         
         final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        if (ingestConfig.isIngestRunning()) {
+        if (null != ingestConfig && ingestConfig.isIngestRunning()) {
             final String msg = "<html>Ingest is ongoing on another data source. Adding a new source now might slow down the current ingest.<br />Do you want to proceed and add a new data source now?</html>";
             if (JOptionPane.showConfirmDialog(null, msg, "Ingest in progress", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
@@ -128,7 +128,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog.setVisible(true);
         dialog.toFront();
         
-    
         // Do any cleanup that needs to happen (potentially: stopping the
         //add-image process, reverting an image)
         runCleanupTasks();

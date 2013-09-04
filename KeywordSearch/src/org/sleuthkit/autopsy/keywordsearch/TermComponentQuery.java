@@ -41,6 +41,10 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskException;
 
+
+/**
+ * Performs a regular expression query to the SOLR/Lucene instance. 
+ */
 public class TermComponentQuery implements KeywordSearchQuery {
 
     private static final int TERMS_UNLIMITED = -1;

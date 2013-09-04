@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import java.util.logging.Level;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
@@ -49,14 +51,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * 
  * Implements DataResult interface by delegating to the encapsulated DataResultPanel.
  */
-public class DataResultTopComponent extends TopComponent implements DataResult {
+public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
+    private ExplorerManager explorerManager = new ExplorerManager();
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
     
-    //keep track of tcs openeded for menu presenters
+    //keep track of tcs opened for menu presenters
     private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
 
     /**
@@ -67,14 +70,10 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * @param title title of the data result window
      */
     public DataResultTopComponent(boolean isMain, String title) {
-        super();
-
-        //dataResultPanel is added to this tc using UI builder
+        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         this.dataResultPanel = new DataResultPanel(isMain, title);
-
         initComponents();
         customizeComponent(isMain, title);
-
     }
 
     /**
@@ -87,18 +86,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
      * to
      */
     DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
-        super();
+        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         this.customModeName = mode;
-
-        //custom content viewer to link to this result viewer
-        //dataResultPanel is added to this tc using UI builder
         dataResultPanel = new DataResultPanel(name, customContentViewer);
-
         initComponents();
-        customizeComponent(isMain, name);;
-
+        customizeComponent(isMain, name);  
     }
-
+        
     private void customizeComponent(boolean isMain, String title) {
         this.isMain = isMain;
         this.customModeName = null;
@@ -183,16 +177,19 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         return newDataResult;
     }
 
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
+    }
+    
     /**
      * Get a list with names of active windows ids, e.g. for the menus
      * @return 
      */
     public static List<String> getActiveComponentIds() {
-        return new ArrayList<String>(activeComponentIds);
+        return new ArrayList<>(activeComponentIds);
     }
     
-    
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -224,7 +221,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         } else {
             return TopComponent.PERSISTENCE_ALWAYS;
         }
-
     }
 
     @Override
@@ -238,39 +234,36 @@ public class DataResultTopComponent extends TopComponent implements DataResult {
         return dataResultPanel.getViewers();
     }
     
-    
-
     private void setCustomMode() {
         if (customModeName != null) {
             //putClientProperty("TopComponentAllowDockAnywhere", Boolean.TRUE);
             Mode mode = WindowManager.getDefault().findMode(customModeName);
             if (mode != null) {
-                logger.log(Level.INFO, "Found custom mode, setting: " + customModeName);
+                StringBuilder message = new StringBuilder("Found custom mode, setting: ");
+                message.append(customModeName);
+                logger.log(Level.INFO, message.toString());
                 mode.dockInto(this);
 
             } else {
-                logger.log(Level.WARNING, "Could not find mode: " + customModeName + ", will dock into the default one");
+                StringBuilder message = new StringBuilder("Could not find mode: ");
+                message.append(customModeName);
+                message.append(", will dock into the default one");
+                logger.log(Level.WARNING, message.toString());
             }
         }
-
     }
 
     @Override
     public void componentOpened() {
         super.componentOpened();
-        
-        this.dataResultPanel.open();
+        this.dataResultPanel.open();        
     }
     
-    
-
     @Override
     public void componentClosed() {
         super.componentClosed();
-        
         activeComponentIds.remove(this.getName());
-        dataResultPanel.close();
-        
+        dataResultPanel.close();        
     }
 
     @Override

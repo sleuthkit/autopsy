@@ -23,9 +23,9 @@
 #
 #    http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Module_Versions
 #
-# The basic idea is that this script uses javadoc/jdiff to 
-# compare the current state of the source code to the last 
-# tag and identifies if APIs were removed, added, etc. 
+# The basic idea is that this script uses javadoc/jdiff to
+# compare the current state of the source code to the last
+# tag and identifies if APIs were removed, added, etc.
 #
 # When run from the Autopsy build script, this script will:
 #  - Clone Autopsy and checkout to the previous release tag
@@ -60,6 +60,12 @@ from os import remove, close
 from shutil import move
 from tempfile import mkstemp
 from xml.dom.minidom import parse, parseString
+
+# Jdiff return codes. Described in more detail further on
+NO_CHANGES = 100
+COMPATIBLE = 101
+NON_COMPATIBLE = 102
+ERROR = 1
 
 # An Autopsy module object
 class Module:
@@ -218,11 +224,11 @@ def compare_xml(module, apiname_tag, apiname_cur):
     log.close()
     code = jdiff.returncode
     print("Compared XML for " + module.name)
-    if code == 100:
+    if code == NO_CHANGES:
         print("  No API changes")
-    elif code == 101:
+    elif code == COMPATIBLE:
         print("  API Changes are backwards compatible")
-    elif code == 102:
+    elif code == NON_COMPATIBLE:
         print("  API Changes are not backwards compatible")
     else:
         print("  *Error in XML, most likely an empty module")
@@ -564,18 +570,18 @@ def update_versions(modules, source):
         if manifest == None or project == None:
             print("  Error finding manifeset and project properties files")
             return
-        if module.ret == 101:
+        if module.ret == COMPATIBLE:
             versions = [versions[0].set(versions[0].increment()), versions[1] + 1, versions[2]]
             set_specification(project, manifest, versions[0])
             set_implementation(manifest, versions[1])
             module.set_versions(versions)
-        elif module.ret == 102:
+        elif module.ret == NON_COMPATIBLE:
             versions = [versions[0].set(versions[0].overflow()), versions[1] + 1, versions[2] + 1]
             set_specification(project, manifest, versions[0])
             set_implementation(manifest, versions[1])
             set_release(manifest, versions[2])
             module.set_versions(versions)
-        elif module.ret == 100:
+        elif module.ret == NO_CHANGES:
             versions = [versions[0], versions[1] + 1, versions[2]]
             set_implementation(manifest, versions[1])
             module.set_versions(versions)
@@ -624,48 +630,40 @@ def print_version_updates(modules):
     f = open("gen_version.txt", "a")
     for module in modules:
         versions = module.versions
-        if module.ret == 101:
+        if module.ret == COMPATIBLE:
             output = (module.name + ":\n")
-            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
-            output += ("  Updated Specification version:\t" + str(versions[0].increment()) + "\n")
-            output += ("\n")
-            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
-            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
+            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].increment()) + "\n")
+            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
+            output += ("\tRelease:\tNo Change.\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
             f.write(output)
-        elif module.ret == 102:
+        elif module.ret == NON_COMPATIBLE:
             output = (module.name + ":\n")
-            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
-            output += ("  Updated Specification version:\t" + str(versions[0].overflow()) + "\n")
-            output += ("\n")
-            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
-            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
-            output += ("\n")
-            output += ("  Current Release version:\t\t" + str(versions[2]) + "\n")
-            output += ("  Updated Release version:\t\t" + str(versions[2] + 1) + "\n")
+            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].overflow()) + "\n")
+            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
+            output += ("\tRelease:\t" + str(versions[2]) + "\t->\t" + str(versions[2] + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
             f.write(output)
-        elif module.ret == 1:
+        elif module.ret == ERROR:
             output = (module.name + ":\n")
-            output += ("  *Unable to detect necessary changes\n")
-            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
-            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
-            output += ("  Current Release version:\t\t" + str(versions[2]) + "\n")
+            output += ("\t*Unable to detect necessary changes\n")
+            output += ("\tSpecification:\t" + str(versions[0]) + "\n")
+            output += ("\tImplementation:\t" + str(versions[1]) + "\n")
+            output += ("\tRelease:\t\t" + str(versions[2]) + "\n")
             output += ("\n")
             print(output)
             f.write(output)
             sys.stdout.flush()
-        elif module.ret == 100:
+        elif module.ret == NO_CHANGES:
             output = (module.name + ":\n")
             if versions[1] is None:
-                output += ("  No Implementation version.\n")
+                output += ("\tImplementation: None\n")
             else:
-                output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
-                output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
+                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
                 output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -673,16 +671,13 @@ def print_version_updates(modules):
         elif module.ret is None:
             output = ("Added " + module.name + ":\n")
             if module.spec() != "1.0" and module.spec() != "0.0":
-                output += ("  Current Specification version:\t" + str(module.spec()) + "\n")
-                output += ("  Updated Specification version:\t1.0\n")
+                output += ("\tSpecification:\t" + str(module.spec()) + "\t->\t" + "1.0\n")
                 output += ("\n")
             if module.impl() != 1:
-                output += ("  Current Implementation version:\t" + str(module.impl()) + "\n")
-                output += ("  Updated Implementation version:\t1\n")
+                output += ("\tImplementation:\t" + str(module.impl()) + "\t->\t" + "1\n")
                 output += ("\n")
             if module.release() != 1 and module.release() != 0:
-                output += ("  Current Release version:\t\t" + str(module.release()) + "\n")
-                output += ("  Updated Release version:\t\t1\n")
+                output += ("Release:\t\t" + str(module.release()) + "\t->\t" + "1\n")
                 output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -825,18 +820,16 @@ def usage():
     return \
  """
  USAGE:
-   Run this script to generate a jdiff XML summary for every module
-   in the current Autopsy source and in a previous source specified
-   by the given tag. Then, compare the XML files to see which modules
-   need updated version numbers. If the dry run tag is not given, the
-   module numbers will be automatically updated.
+   Compares the API of the current Autopsy source code with a previous
+   tagged version. By default, it will detect the previous tag from
+   the NEWS file and will not update the versions in the source code.
 
  OPTIONAL FLAGS:
-   -t --tag      The tag name in git. Otherwise the NEWS file in source
-                 will be used to determine the previous tag.
+   -t --tag      Specify a previous tag to compare to. 
+                 Otherwise the NEWS file will be used. 
 
    -d --dir      The output directory for the jdiff JavaDocs. If no
-                 directory is given, the default is /javadocs/{module}.
+                 directory is given, the default is jdiff-javadocs/{module}.
 
    -s --source   The directory containing Autopsy's source code.
 
@@ -909,6 +902,7 @@ def main():
     printt("Comparing jdiff outputs...")
     for module in similar_modules:
         module.set_ret(compare_xml(module, apiname_tag, apiname_cur))
+    print("Refer to the jdiff-javadocs folder for more details")
 
     # ------------------------------------------------------------
     # 1) Do versioning

@@ -120,12 +120,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
         boolean success = false;
         Reader reader = null;
-
-
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
-            //Tika parse request with timeout
+            
+            //Parse the file in a task
             Tika tika = new Tika(); //new tika instance for every file, to workaround tika memory issues
             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
             final Future<?> future = tikaParseExecutor.submit(parseTask);
@@ -145,14 +144,16 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 throw new IngesterException(msg);
             }
 
+            // get the reader with the results
             reader = parseTask.getReader();
-
             if (reader == null) {
                 //likely due to exception in parse()
                 logger.log(Level.WARNING, "No reader available from Tika parse");
                 return false;
             }
 
+            
+            // break the results into chunks and index
             success = true;
             long readSize;
             long totalRead = 0;
@@ -180,8 +181,6 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                         //this is the last chunk
                         eof = true;
                     }
-
-
                 }
 
                 //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
@@ -214,7 +213,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 }
 
                 extracted = sb.toString();
-
+                
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
@@ -235,12 +234,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         } catch (IOException ex) {
             final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
             final String msg = "Exception: Unexpected error, can't read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } finally {
             try {
@@ -293,8 +292,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     /**
-     * Runnable and timeable task that calls tika to parse the content using
-     * streaming
+     * Runnable task that calls tika to parse the content using
+     * the input stream.  Provides reader for results. 
      */
     private static class ParseRequestTask implements Runnable {
 

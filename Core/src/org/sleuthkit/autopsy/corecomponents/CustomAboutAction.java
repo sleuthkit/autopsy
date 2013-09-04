@@ -34,8 +34,9 @@ public class CustomAboutAction extends AboutAction {
     public void performAction() {
         Logger.noteAction(this.getClass());
 
+        ProductInformationPanel pip = new ProductInformationPanel();
         DialogDescriptor descriptor = new DialogDescriptor(
-                new ProductInformationPanel(),
+                pip,
                 NbBundle.getMessage(AboutAction.class, "About_title"),
                 true,
                 new Object[0],
@@ -46,7 +47,7 @@ public class CustomAboutAction extends AboutAction {
         Dialog dlg = null;
         try {
             dlg = DialogDisplayer.getDefault().createDialog(descriptor);
-            dlg.setResizable(false);
+            dlg.setResizable(true);
             dlg.setVisible(true);
         } finally {
             if (dlg != null) {

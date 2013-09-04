@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import org.openide.nodes.Node;
  * Interface for the different viewers that show a set of nodes in the DataResult area. 
  * AbstractDataResultViewer has default implementations for the action handlers. 
  * 
- * @author jantonius
  */
 public interface DataResultViewer {
     /**
@@ -47,7 +46,7 @@ public interface DataResultViewer {
     public DataResultViewer createInstance();
     
     /**
-     * Get Component to display this DataResultViewer
+     * Get the Swing component (i.e. JPanel) for this viewer
      */
     public Component getComponent();
 
@@ -74,7 +73,7 @@ public interface DataResultViewer {
     public void setSelectedNodes(Node[] selected);
     
     /**
-     * Checks whether the currently selected node
+     * Checks whether the currently selected root node
      * is supported by this viewer
      * @param selectedNode the selected node
      * @return True if supported, else false

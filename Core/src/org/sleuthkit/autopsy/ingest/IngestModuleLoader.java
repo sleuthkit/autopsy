@@ -333,7 +333,7 @@ public final class IngestModuleLoader {
 
                 try {
                     urls.add(new URL(urlPath));
-                    logger.log(Level.INFO, "JAR: " + urlPath);
+                    //logger.log(Level.INFO, "JAR: " + urlPath);
                 } catch (MalformedURLException ex) {
                     logger.log(Level.WARNING, "Invalid URL: " + urlPath, ex);
                 }
@@ -466,21 +466,24 @@ public final class IngestModuleLoader {
     @SuppressWarnings("unchecked")
     private void autodiscover() throws IngestModuleLoaderException {
 
+        // Use Lookup to find the other NBM modules. We'll later search them for ingest modules
         Collection<? extends ModuleInfo> moduleInfos = Lookup.getDefault().lookupAll(ModuleInfo.class);
         logger.log(Level.INFO, "Autodiscovery, found #platform modules: " + moduleInfos.size());
 
         Set<URL> urls = getJarPaths(moduleInfos);
-
+        ArrayList<Reflections> reflectionsSet = new ArrayList<>();
+        
         for (final ModuleInfo moduleInfo : moduleInfos) {
             if (moduleInfo.isEnabled()) {
                 String basePackageName = moduleInfo.getCodeNameBase();
+                
+                // skip the standard ones
                 if (basePackageName.startsWith("org.netbeans")
                         || basePackageName.startsWith("org.openide")) {
-                    //skip
                     continue;
                 }
 
-                logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName
+                logger.log(Level.INFO, "Found module: " + moduleInfo.getDisplayName() + " " + basePackageName
                         + " Build version: " + moduleInfo.getBuildVersion()
                         + " Spec version: " + moduleInfo.getSpecificationVersion()
                         + " Impl version: " + moduleInfo.getImplementationVersion());
@@ -489,104 +492,126 @@ public final class IngestModuleLoader {
                 cb.filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix(basePackageName)));
                 cb.setUrls(urls);
                 cb.setScanners(new SubTypesScanner(), new ResourcesScanner());
-                Reflections reflections = new Reflections(cb);
-
-                Set<?> fileModules = reflections.getSubTypesOf(IngestModuleAbstractFile.class);
-                Iterator<?> it = fileModules.iterator();
-                while (it.hasNext()) {
-                    logger.log(Level.INFO, "Found file ingest module in: " + basePackageName + ": " + it.next().toString());
+                reflectionsSet.add(new Reflections(cb));
+            }
+            else {
+                // log if we have our own modules disabled
+                if (moduleInfo.getCodeNameBase().startsWith("org.sleuthkit")) {
+                    logger.log(Level.WARNING, "Sleuth Kit Module not enabled: " + moduleInfo.getDisplayName());
                 }
-
-                Set<?> dataSourceModules = reflections.getSubTypesOf(IngestModuleDataSource.class);
-                it = dataSourceModules.iterator();
-                while (it.hasNext()) {
-                    logger.log(Level.INFO, "Found DataSource ingest module in: " + basePackageName + ": " + it.next().toString());
-                }
-
-                //find out which modules to add
-                //TODO check which modules to remove (which modules were uninstalled)
-                boolean modulesChanged = false;
-
-                it = fileModules.iterator();
-                while (it.hasNext()) {
-                    boolean exists = false;
-                    Class<IngestModuleAbstractFile> foundClass = (Class<IngestModuleAbstractFile>) it.next();
-
-                    for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
-                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS.toString())) {
-                            continue; //skip
-                        }
-
-                        for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
-                            //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
-                            if (foundClass.getName().equals(rawM.location)) {
-                                exists = true;
-                                break;
-                            }
-                        }
-                        if (exists == true) {
-                            break;
-                        }
-                    }
-
-                    if (exists == false) {
-                        logger.log(Level.INFO, "Discovered a new file module to load: " + foundClass.getName());
-                        //ADD MODULE
-                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS);
-                        modulesChanged = true;
-                    }
-
-                }
-
-                it = dataSourceModules.iterator();
-                while (it.hasNext()) {
-                    boolean exists = false;
-                    Class<IngestModuleDataSource> foundClass = (Class<IngestModuleDataSource>) it.next();
-
-                    for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
-                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS.toString())) {
-                            continue; //skip
-                        }
-
-
-                        for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
-                            //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
-                            if (foundClass.getName().equals(rawM.location)) {
-                                exists = true;
-                                break;
-                            }
-                        }
-                        if (exists == true) {
-                            break;
-                        }
-                    }
-
-                    if (exists == false) {
-                        logger.log(Level.INFO, "Discovered a new DataSource module to load: " + foundClass.getName());
-                        //ADD MODULE 
-                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS);
-                        modulesChanged = true;
-                    }
-
-                }
-
-                if (modulesChanged) {
-                    save();
-                    pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
-                }
-
-                /*
-                 //Enumeration<URL> resources = moduleClassLoader.getResources(basePackageName);
-                 Enumeration<URL> resources = classLoader.getResources(basePackageName);
-                 while (resources.hasMoreElements()) {
-                 System.out.println(resources.nextElement());
-                 } */
-
-            } else {
-                //logger.log(Level.INFO, "Module disabled: " + moduleInfo.getDisplayName() );
             }
         }
+        
+        /* This area is used to load the example modules.  They are not found via lookup since they 
+         * are in this NBM module. 
+         * Uncomment this section to rum the examples. 
+         */
+        /*
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix("org.sleuthkit.autopsy.examples")));
+        cb.setUrls(urls);
+        cb.setScanners(new SubTypesScanner(), new ResourcesScanner());
+        reflectionsSet.add(new Reflections(cb));
+        */
+        
+        for (Reflections reflections : reflectionsSet) {
 
+            Set<?> fileModules = reflections.getSubTypesOf(IngestModuleAbstractFile.class);
+            Iterator<?> it = fileModules.iterator();
+            while (it.hasNext()) {
+                logger.log(Level.INFO, "Found file ingest module in: " + reflections.getClass().getSimpleName() + ": " + it.next().toString());
+            }
+
+            Set<?> dataSourceModules = reflections.getSubTypesOf(IngestModuleDataSource.class);
+            it = dataSourceModules.iterator();
+            while (it.hasNext()) {
+                logger.log(Level.INFO, "Found DataSource ingest module in: " + reflections.getClass().getSimpleName() + ": " + it.next().toString());
+            }
+            
+            if ((fileModules.isEmpty()) && (dataSourceModules.isEmpty())) {
+                logger.log(Level.INFO, "Module has no ingest modules: " + reflections.getClass().getSimpleName());
+                continue;
+            }
+
+            //find out which modules to add
+            //TODO check which modules to remove (which modules were uninstalled)
+            boolean modulesChanged = false;
+
+            it = fileModules.iterator();
+            while (it.hasNext()) {
+                boolean exists = false;
+                Class<IngestModuleAbstractFile> foundClass = (Class<IngestModuleAbstractFile>) it.next();
+
+                for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
+                    if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS.toString())) {
+                        continue; //skip
+                    }
+
+                    for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
+                        //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
+                        if (foundClass.getName().equals(rawM.location)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists == true) {
+                        break;
+                    }
+                }
+
+                if (exists == false) {
+                    logger.log(Level.INFO, "Discovered a new file module to load: " + foundClass.getName());
+                    //ADD MODULE
+                    addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS);
+                    modulesChanged = true;
+                }
+
+            }
+
+            it = dataSourceModules.iterator();
+            while (it.hasNext()) {
+                boolean exists = false;
+                Class<IngestModuleDataSource> foundClass = (Class<IngestModuleDataSource>) it.next();
+
+                for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
+                    if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS.toString())) {
+                        continue; //skip
+                    }
+
+
+                    for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
+                        //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
+                        if (foundClass.getName().equals(rawM.location)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists == true) {
+                        break;
+                    }
+                }
+
+                if (exists == false) {
+                    logger.log(Level.INFO, "Discovered a new DataSource module to load: " + foundClass.getName());
+                    //ADD MODULE 
+                    addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.DATA_SOURCE_ANALYSIS);
+                    modulesChanged = true;
+                }
+
+            }
+
+            if (modulesChanged) {
+                save();
+                pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
+            }
+
+            /*
+             //Enumeration<URL> resources = moduleClassLoader.getResources(basePackageName);
+             Enumeration<URL> resources = classLoader.getResources(basePackageName);
+             while (resources.hasMoreElements()) {
+             System.out.println(resources.nextElement());
+             } */
+        }
     }
 
     /**

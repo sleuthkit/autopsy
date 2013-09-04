@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
 /**
- * Viewer panel widget for keyword lists
+ * Viewer panel widget for keyword lists that is used in the ingest config and options area.
  */
 class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 

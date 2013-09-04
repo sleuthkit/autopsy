@@ -34,6 +34,8 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * StringContent object for a blackboard artifact, that can be looked up and used
  * to display text for the DataContent viewers.  Displays values in artifact in HTML.
+ * Note that it has no style associated with it and assumes that the pane showing the 
+ * HTML has styles set (such as with HTMLEditorKit).
  */
 public class ArtifactStringContent implements StringContent {
 
@@ -49,26 +51,18 @@ public class ArtifactStringContent implements StringContent {
     public String getString() {
         try {
             StringBuilder buffer = new StringBuilder();
-            buffer.append("<html>");
-            buffer.append("<head>");
-            buffer.append("<style type='text/css'>");
-            buffer.append("table {table-layout:fixed;}");
-            buffer.append("td {font-family:Arial;font-size:12pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
-            buffer.append("th {font-family:Arial;font-size:12pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
-            buffer.append("p {font-family:Arial;font-size:12pt;}");
-            buffer.append("</style>");
-            buffer.append("<meta http-equiv=\"Content-Type\" content=\"text/html); charset=utf-8\">");
-            buffer.append("</head>");
+            buffer.append("<html>\n");
+            buffer.append("<body>\n");
             
             // artifact name header
             buffer.append("<h4>");
             buffer.append(wrapped.getDisplayName());
-            buffer.append("</h4>");
+            buffer.append("</h4>\n");
             
             // start table for attributes
             buffer.append("<table border='0'>");
             buffer.append("<tr>");
-            buffer.append("</tr>");
+            buffer.append("</tr>\n");
             
             // cycle through each attribute and display in a row in the table. 
             for (BlackboardAttribute attr : wrapped.getAttributes()) {
@@ -125,7 +119,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append(")");
                 }
                 buffer.append("</td>");
-                buffer.append("</tr>");
+                buffer.append("</tr>\n");
             }
             
             final Content content = getAssociatedContent(wrapped);
@@ -144,10 +138,10 @@ public class ArtifactStringContent implements StringContent {
             buffer.append("<td>");
             buffer.append(path);
             buffer.append("</td>");
-            buffer.append("</tr>");
+            buffer.append("</tr>\n");
             
             buffer.append("</table>");
-            buffer.append("</html>");
+            buffer.append("</html>\n");
             return buffer.toString();
         } catch (TskException ex) {
             return "Error getting content";

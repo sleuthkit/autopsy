@@ -24,6 +24,11 @@ import java.util.Map;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.datamodel.AbstractFile;
 
+/**
+ * Interface for a search query.  Implemented by various
+ * engines or methods of using the same engine.   One of these
+ * is created for each query. 
+ */
 public interface KeywordSearchQuery {
 
     /**
@@ -51,7 +56,7 @@ public interface KeywordSearchQuery {
     public void addFilter(KeywordQueryFilter filter);
     
     /**
-     * Set an optional field to narrow down the search
+     * Set an optional SOLR field to narrow down the search
      * @param field field to set on the query
      */
     public void setField(String field);
@@ -75,13 +80,13 @@ public interface KeywordSearchQuery {
     public boolean isLiteral();
     
     /**
-     * return original query string
+     * return original keyword/query string
      * @return the query String supplied originally
      */
     public String getQueryString();
     
     /**
-     * return escaped query string if escaping was done
+     * return escaped keyword/query string if escaping was done
      * @return the escaped query string, or original string if no escaping done
      */
     public String getEscapedQueryString();

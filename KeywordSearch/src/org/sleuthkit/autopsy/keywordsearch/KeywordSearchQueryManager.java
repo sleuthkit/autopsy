@@ -34,73 +34,99 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
- * Query manager responsible for running appropriate queries and displaying
- * results for single, multi keyword queries, with detailed or collapsed results
+ * Responsible for running a keyword search query and displaying
+ * the results. 
  */
 public class KeywordSearchQueryManager {
 
+    // how to display the results
     public enum Presentation {
-
         COLLAPSE, DETAIL
     };
-    private List<Keyword> queries;
+    
+    private List<Keyword> keywords;
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
     private QueryType queryType;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
     private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
 
+    /**
+     * 
+     * @param queries Keywords to search for
+     * @param presentation Presentation layout
+     */
     public KeywordSearchQueryManager(List<Keyword> queries, Presentation presentation) {
-        this.queries = queries;
+        this.keywords = queries;
         this.presentation = presentation;
         queryType = QueryType.REGEX;
         init();
     }
 
+    /**
+     * 
+     * @param query Keyword to search for
+     * @param qt Query type
+     * @param presentation Presentation Layout
+     */
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
-        queries = new ArrayList<Keyword>();
-        queries.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
+        keywords = new ArrayList<Keyword>();
+        keywords.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
         this.presentation = presentation;
         queryType = qt;
         init();
     }
 
+    /**
+     * 
+     * @param query Keyword to search for
+     * @param isLiteral false if reg-exp
+     * @param presentation Presentation layout
+     */
     public KeywordSearchQueryManager(String query, boolean isLiteral, Presentation presentation) {
-        queries = new ArrayList<Keyword>();
-        queries.add(new Keyword(query, isLiteral));
+        keywords = new ArrayList<Keyword>();
+        keywords.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
         queryType = isLiteral ? QueryType.WORD : QueryType.REGEX;
         init();
     }
 
+    /**
+     * Initialize internal settings based on constructor arguments.
+     * Create a list of queries to later run
+     */
     private void init() {
         queryDelegates = new ArrayList<KeywordSearchQuery>();
-        for (Keyword query : queries) {
-            KeywordSearchQuery del = null;
+        for (Keyword keyword : keywords) {
+            KeywordSearchQuery query = null;
             switch (queryType) {
                 case WORD:
-                    del = new LuceneQuery(query);
+                    query = new LuceneQuery(keyword);
                     break;
                 case REGEX:
-                    if (query.isLiteral()) {
-                        del = new LuceneQuery(query);
+                    if (keyword.isLiteral()) {
+                        query = new LuceneQuery(keyword);
                     } else {
-                        del = new TermComponentQuery(query);
+                        query = new TermComponentQuery(keyword);
                     }
                     break;
                 default:
                     ;
             }
-            if (query.isLiteral()) {
-                del.escape();
+            if (query != null) {
+                if (keyword.isLiteral()) {
+                    query.escape();
+                }
+                queryDelegates.add(query);
             }
-            queryDelegates.add(del);
 
         }
-        //escape();
-
     }
 
+    /**
+     * Execute the keyword search based on keywords passed into constructor.
+     * Post results into a new DataResultViewer.
+     */
     public void execute() {
         //execute and present the query
         //delegate query to query objects and presentation child factories
@@ -109,10 +135,11 @@ public class KeywordSearchQueryManager {
         //       q.execute();
         //  }
         // } else {
+        
         //Collapsed view
         Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
         int queryID = 0;
-        StringBuilder queryConcat = new StringBuilder();
+        StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
         for (KeywordSearchQuery q : queryDelegates) {
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
             final String queryStr = q.getQueryString();
@@ -129,7 +156,7 @@ public class KeywordSearchQueryManager {
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(keywords, things, Presentation.COLLAPSE, searchResultWin), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -144,6 +171,10 @@ public class KeywordSearchQueryManager {
         // }
     }
 
+    /**
+     * validate the queries before they are run
+     * @return false if any are invalid
+     */
     public boolean validate() {
         boolean allValid = true;
         for (KeywordSearchQuery tcq : queryDelegates) {

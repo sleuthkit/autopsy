@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
@@ -53,7 +56,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private static int currentPage = 1;
     private List<BlackboardArtifact> artifacts;
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-
+    private final static String WAIT_TEXT = "Preparing display...";
+    
     /** Creates new form DataContentViewerArtifact */
     public DataContentViewerArtifact() {
         initComponents();
@@ -201,12 +205,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         currentPage = currentPage+1;
-        setDataView(artifacts, currentPage);
+        new DisplayTask(currentPage).execute();        
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         currentPage = currentPage-1;
-        setDataView(artifacts, currentPage);
+        new DisplayTask(currentPage).execute();        
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -227,23 +231,39 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public void setNode(Node selectedNode) {
-        if (selectedNode != null) {
-            Lookup lookup = selectedNode.getLookup();
-            Content content = lookup.lookup(Content.class);
-            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
-            if (content != null) {
-                try {
-                    this.setDataView(content.getAllArtifacts(), 1);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
-                }
-            }
-            if (artifact != null) {
-                this.setSelectedArtifact(artifact);
-            }
-        } else {
-            this.setDataView(new ArrayList<BlackboardArtifact>(), 1);
+        if (selectedNode == null) {
+            resetComponent();
+            return;
         }
+        
+        Lookup lookup = selectedNode.getLookup();
+        Content content = lookup.lookup(Content.class);
+        if (content == null) {
+            resetComponent();
+            return; 
+        }
+
+        try {
+            artifacts = content.getAllArtifacts();
+        } 
+        catch (TskException ex) {
+            logger.log(Level.WARNING, "Couldn't get artifacts", ex);
+            resetComponent();
+            return; 
+        }
+
+        // focus on a specific artifact if it is in the node
+        int index = 0;
+        BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
+        if (artifact != null) {
+            index = artifacts.indexOf(artifact);
+            if (index == -1) {
+                index = 0;
+            }
+        }        
+        
+        // A little bit of cleverness here - add one since setDataView() is also passed page numbers.
+        new DisplayTask(index + 1).execute();
     }
 
     @Override
@@ -270,12 +290,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     public void resetComponent() {
         // clear / reset the fields
         currentPage = 1;
-        this.artifacts = new ArrayList<BlackboardArtifact>();
+        this.artifacts = new ArrayList<>();
         currentPageLabel.setText("");
         totalPageLabel.setText("");
+        outputViewPane.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         setComponentsVisibility(false); // hides the components that not needed
+        this.setCursor(null);
     }
     
     /**
@@ -300,12 +322,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return false;
         }
 
-        ArtifactStringContent artifact = node.getLookup().lookup(ArtifactStringContent.class);
-        Content content = node.getLookup().lookup(Content.class);
-        
-        if(artifact != null) {
-            return true;
-        }
+        Content content = node.getLookup().lookup(Content.class);        
         if(content != null) {
             try {
                 long size = content.getAllArtifactsCount();
@@ -345,7 +362,23 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         };
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
-        outputViewPane.setContentType("text/html");
+        
+        outputViewPane.setContentType("text/html;charset=UTF-8");
+        HTMLEditorKit kit = new HTMLEditorKit();
+        outputViewPane.setEditorKit(kit);
+        StyleSheet styleSheet = kit.getStyleSheet();
+        /* I tried to play around with inheritence on font-size and it didn't 
+         * always work.  Defined all of the basics just in case. 
+         * @@@ IngestInboxViewer also defines styles similar to this.  Consider
+         * a method that sets consistent styles for all viewers and takes font
+         * size as an argument. 
+         */
+        styleSheet.addRule("body {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("li {font-family:Arial;font-size:14pt;}");
+        styleSheet.addRule("td {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
+        styleSheet.addRule("th {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
+        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
     }
 
     /**
@@ -353,17 +386,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param artifacts List of artifacts that could be displayed
      * @param offset Index into the list for the artifact to display
      */
-    private void setDataView(List<BlackboardArtifact> artifacts, int offset) {
-        // change the cursor to "waiting cursor" for this operation
+    private void setDataView(int offset) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        
+        outputViewPane.setText(WAIT_TEXT);
+
         if(artifacts.isEmpty()){
-            setComponentsVisibility(false);
-            this.setCursor(null);
-            outputViewPane.setText("");
+            resetComponent();
             return;
         }
-        this.artifacts = artifacts;
         StringContent artifactString = new ArtifactStringContent(artifacts.get(offset-1));
         String text = artifactString.getString();
         
@@ -376,20 +406,24 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         
         totalPageLabel.setText(Integer.toString(pages));
         currentPageLabel.setText(Integer.toString(currentPage));
+        
         outputViewPane.setText(text);
         setComponentsVisibility(true);
         outputViewPane.moveCaretPosition(0);
         this.setCursor(null);
-    }
+    }    
     
-    /**
-     * Set the displayed artifact to the specified one.
-     * @param artifact Artifact to display
-     */
-    private void setSelectedArtifact(BlackboardArtifact artifact) {
-        if(artifacts.contains(artifact)) {
-            int index = artifacts.indexOf(artifact);
-            setDataView(artifacts, index+1);
+    private class DisplayTask extends SwingWorker<Integer, Void> {
+        final int pageIndex;
+        
+        DisplayTask(final int pageIndex) {
+            this.pageIndex = pageIndex;
         }
-    }
+        
+        @Override
+        public Integer doInBackground() {
+            setDataView(pageIndex);
+            return 0;
+        }
+    }            
 }

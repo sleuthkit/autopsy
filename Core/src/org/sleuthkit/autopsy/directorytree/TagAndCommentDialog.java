@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
+import java.util.TreeSet;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -30,28 +30,50 @@ import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.Tags.Taggable;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Tag dialog for tagging files and results. User enters an optional comment.
  */
 public class TagAndCommentDialog extends JDialog {
 
-    private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
-    private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
-    private static final String NO_TAG_MESSAGE = "No Tags";
-    
-    private Taggable taggable;
+    private static final String NO_TAG_MESSAGE = "No Tags";    
+    private String tagName = "";
+    private String comment = "";
 
+    public static class CommentedTag {
+        private String name;
+        private String comment;
+
+        CommentedTag(String name, String comment) {
+            this.name = name;
+            this.comment = comment;
+        }
+        
+        public String getName() {
+            return name;
+        }
+
+        public String getComment() {
+            return comment;
+        }
+    }
+    
+    public static CommentedTag doDialog() {
+        TagAndCommentDialog dialog = new TagAndCommentDialog();
+        if (!dialog.tagName.isEmpty()) {
+            return new CommentedTag(dialog.tagName, dialog.comment);
+        }
+        else {
+            return null;
+        }
+    }
+    
     /**
      * Creates new form TagDialog
      */
-    public TagAndCommentDialog(Taggable taggable) {
+    private TagAndCommentDialog() {
         super((JFrame)WindowManager.getDefault().getMainWindow(), "Tag and Comment", true);
         
-        this.taggable = taggable;
-
         initComponents();
 
         // Close the dialog when Esc is pressed
@@ -60,14 +82,14 @@ public class TagAndCommentDialog extends JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                //doClose(RET_CANCEL);
                 dispose();
             }
         });
         
         // get the current list of tag names
-        List<String> tags = Tags.getTagNames();
+        TreeSet<String> tags = Tags.getAllTagNames();
         
         // if there are no tags, add the NO_TAG_MESSAGE
         if (tags.isEmpty()) {
@@ -81,15 +103,10 @@ public class TagAndCommentDialog extends JDialog {
       
         //center it
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-
-        customizeComponent();
         
         setVisible(true); // blocks
     }
-
-    private void customizeComponent() {
-    }
-
+        
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -195,22 +212,12 @@ public class TagAndCommentDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        //doClose(RET_OK);
-        
-        // get the selected tag and comment
-        String selectedTag = (String)tagCombo.getSelectedItem();
-        String comment = commentText.getText();
-        
-        // create the tag
-        taggable.createTag(selectedTag, comment);
-        
-        refreshDirectoryTree();
-        
+        tagName = (String)tagCombo.getSelectedItem();
+        comment = commentText.getText();        
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        //doClose(RET_CANCEL);
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
@@ -218,14 +225,12 @@ public class TagAndCommentDialog extends JDialog {
      * Closes the dialog
      */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-        //doClose(RET_CANCEL);
         dispose();
     }//GEN-LAST:event_closeDialog
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
         String newTagName = CreateTagDialog.getNewTagNameDialog(null);
         if (newTagName != null) {
-            //tagsModel.addElement(newTagName);
             tagCombo.addItem(newTagName);
             tagCombo.setSelectedItem(newTagName);
         }
@@ -240,12 +245,4 @@ public class TagAndCommentDialog extends JDialog {
     private javax.swing.JComboBox tagCombo;
     private javax.swing.JLabel tagLabel;
     // End of variables declaration//GEN-END:variables
-    //private int returnStatus = RET_CANCEL;
-    
-    private void refreshDirectoryTree() {
-        //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
-        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-    }
 }

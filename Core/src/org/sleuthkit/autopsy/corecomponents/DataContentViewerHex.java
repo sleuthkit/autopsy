@@ -247,7 +247,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentOffset -= pageLength;
         currentPage = currentPage - 1;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
@@ -255,7 +255,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentOffset += pageLength;
         currentPage = currentPage + 1;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
@@ -275,7 +275,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentOffset = (pageNumber - 1) * pageLength;
         currentPage = pageNumber;
         currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset, false);
+        setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
@@ -295,14 +295,23 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
+    
+    @Deprecated
+    public void setDataView(Content dataSource, long offset, boolean reset) {        
+        if (reset) {
+            resetComponent();
+            return;
+        }
+        setDataView(dataSource, offset);
+    }
+    
     /**
      * Sets the DataView (The tabbed panel)
      *
      * @param dataSource the content that want to be shown
      * @param offset the starting offset
-     * @param reset whether to reset the dataView or not
      */
-    public void setDataView(Content dataSource, long offset, boolean reset) {
+    private void setDataView(Content dataSource, long offset) {
         if (dataSource == null) {
             return;
         }
@@ -312,14 +321,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         this.dataSource = dataSource;
         String errorText = null;     
-        Boolean setVisible = false;
 
         int bytesRead = 0;
-        if (!reset && dataSource.getSize() > 0) {
+        if (dataSource.getSize() > 0) {
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
-                setVisible = true;
                 errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                     + " could not be read)";
                 logger.log(Level.WARNING, "Error while trying to show the hex content.", ex);
@@ -327,73 +334,58 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         }
 
         // set the data on the bottom and show it
-        if (bytesRead > 0) {
-            setVisible = true;
-        }
-        else {
+        if (bytesRead <= 0) {
             errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
                     + " could not be read)";
-            setVisible = true;
         }
         
 
         // disable or enable the next button
-        if (!reset && offset + pageLength < dataSource.getSize()) {
+        if ((errorText != null) && (offset + pageLength < dataSource.getSize())) {
             nextPageButton.setEnabled(true);
         } else {
             nextPageButton.setEnabled(false);
         }
 
-        if (offset == 0) {
+        if ((offset == 0) || (errorText == null)) {
             prevPageButton.setEnabled(false);
             currentPage = 1; // reset the page number
         } else {
             prevPageButton.setEnabled(true);
         }
 
-        if (setVisible) {
-            int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
-            totalPageLabel.setText(Integer.toString(totalPage));
-            currentPageLabel.setText(Integer.toString(currentPage));
-            setComponentsVisibility(true); // shows the components that not needed
+        int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        totalPageLabel.setText(Integer.toString(totalPage));
+        currentPageLabel.setText(Integer.toString(currentPage));
+        setComponentsVisibility(true); // shows the components that not needed
 
-            // set the output view
+        // set the output view
+        if (errorText == null) {
             int showLength = bytesRead < pageLength ? bytesRead : (int) pageLength;
-            if (errorText == null) {
-                outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset, outputViewPane.getFont()));
-            }
-            else {
-                outputViewPane.setText(errorText);
-            }
-
-        } else {
-            // reset or hide the labels
-            totalPageLabel.setText("");
-            currentPageLabel.setText("");
-            outputViewPane.setText(""); // reset the output view
-            setComponentsVisibility(false); // hides the components that not needed
+            outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset, outputViewPane.getFont()));
+        }
+        else {
+            outputViewPane.setText(errorText);
         }
 
         outputViewPane.moveCaretPosition(0);
-
         this.setCursor(null);
-
     }
 
     @Override
     public void setNode(Node selectedNode) {
-        if (!isSupported(selectedNode)) {
-            setDataView(null, 0, true);
+        if ((selectedNode == null) || (!isSupported(selectedNode))) {
+            resetComponent();
             return;
         }
-        if (selectedNode != null) {
-            Content content = (selectedNode).getLookup().lookup(Content.class);
-            if (content != null) {
-                this.setDataView(content, 0, false);
-                return;
-            }
+        
+        Content content = (selectedNode).getLookup().lookup(Content.class);
+        if (content == null) {
+            resetComponent();
+            return;
         }
-        this.setDataView(null, 0, true);
+            
+        this.setDataView(content, 0);
     }
 
     @Override
@@ -420,8 +412,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
-        prevPageButton.setEnabled(false);
-        nextPageButton.setEnabled(false);
+        outputViewPane.setText("");
         setComponentsVisibility(false); // hides the components that not needed
     }
 
@@ -448,8 +439,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             return false;
         }
         Content content = node.getLookup().lookup(Content.class);
-       
-        if (content != null && content.getSize() != 0) {
+        if (content != null && content.getSize() > 0) {
             return true;
         }
   

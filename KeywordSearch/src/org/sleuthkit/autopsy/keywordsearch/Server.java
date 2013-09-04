@@ -67,8 +67,8 @@ import org.apache.solr.client.solrj.impl.XMLResponseParser;
  */
 public class Server {
 
+    // field names that are used in SOLR schema
     public static enum Schema {
-
         ID {
             @Override
             public String toString() {
@@ -99,24 +99,28 @@ public class Server {
                 return "file_name";
             }
         },
+        // note that we no longer index this field
         CTIME {
             @Override
             public String toString() {
                 return "ctime";
             }
         },
+        // note that we no longer index this field
         ATIME {
             @Override
             public String toString() {
                 return "atime";
             }
         },
+        // note that we no longer index this field
         MTIME {
             @Override
             public String toString() {
                 return "mtime";
             }
         },
+        // note that we no longer index this field
         CRTIME {
             @Override
             public String toString() {
@@ -151,7 +155,7 @@ public class Server {
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
-    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
+    private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public enum CORE_EVT_STATES {
 
@@ -802,7 +806,7 @@ public class Server {
     }
 
     /**
-     * Execute Solr query to get content text
+     * Get the text contents of the given file as stored in SOLR.
      *
      * @param content to get the text for
      * @return content text string or null on error
@@ -816,7 +820,7 @@ public class Server {
     }
 
     /**
-     * Execute Solr query to get content text from content chunk
+     * Get the text contents of a single chunk for the given file as stored in SOLR.
      *
      * @param content to get the text for
      * @param chunkID chunk number to query (starting at 1), or 0 if there is no
@@ -962,6 +966,12 @@ public class Server {
             }
         }
 
+        /**
+         * get the text from the content field for the given file
+         * @param contentID
+         * @param chunkID
+         * @return 
+         */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");

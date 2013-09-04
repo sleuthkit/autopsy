@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -254,7 +255,7 @@ public class CreateTagDialog extends JDialog {
         List<String> tagNames;
         
         TagsTableModel() {
-            tagNames = Tags.getTagNames();
+            tagNames = new ArrayList<>(Tags.getAllTagNames());
         }
 
         @Override

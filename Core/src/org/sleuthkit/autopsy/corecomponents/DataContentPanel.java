@@ -172,14 +172,13 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             dcv.resetComponent();
 
             // disable an unsupported tab (ex: picture viewer)
-            boolean dcvSupported = dcv.isSupported(selectedNode);
-            if (!dcvSupported) {
+            if ((selectedNode == null) || (dcv.isSupported(selectedNode) == false)) {
                 jTabbedPane1.setEnabledAt(i, false);
             } else {
                 jTabbedPane1.setEnabledAt(i, true);
                 
                 // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode, dcvSupported);
+                int currentPreferred = dcv.isPreferred(selectedNode, true);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
                     maxPreferred = currentPreferred;
@@ -192,7 +191,14 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         // set the tab to the one the user wants, then set that viewer's node.
         jTabbedPane1.setSelectedIndex(tabIndex);
-        viewers.get(tabIndex).setNode(selectedNode);
+        UpdateWrapper dcv = viewers.get(tabIndex);
+        // this is really only needed if no tabs were enabled 
+        if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
+            dcv.resetComponent();
+        }
+        else {
+            dcv.setNode(selectedNode);
+        }
     }
 
     @Override

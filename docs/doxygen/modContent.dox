@@ -1,33 +1,57 @@
 /*! \page mod_content_page Developing Content Viewer Modules
 
-NOTE: This needs cleanup and updating.  it has been copied from the CoreComponentInterfaces package description.
+\section content_overview Overview
 
-<h3>Creating a DataContentViewer</h3>
+DataContentViewer modules exist in the lower-right area of the default Autopsy interface, as shown below.  
 
-DataContentViewer modules exist in the lower-right area of the Autopsy interface.  They allow the user to examine a single file in different ways. For example, the default Autopsy installation comes with a viewer for Hex, strings, and image viewing.  You would make a new DataContentViewer if you have a unique way of displaying a single file. These modules are passed in a reference to a file to display. 
+\image html viewer_image.jpg "Module Viewer Areas" 
 
+They can analyze a single file that the user has identified from either browsing directories, keyword search, etc. It doesn't matter to these modules how the user found the file. 
+These modules allow the user to view the file in various ways. The default program comes with a hex and strings view and other modules exist to display pictures and videos as images instead of just a series of bytes.
+You would make a new DataContentViewer if you have a unique way of displaying a single file. These modules are passed in a reference to a specific file to display. 
 
-<ol>
-<li>Create a module from within NetBeans.  It must be dependent on these modules:
-<ul>
-<li>Case
-<li>CoreComponentInterfaces
-<li>CoreComponents
-<li>DataModel
-<li>DialogsAPI (if pop-ups and such are going to be used)
-<li>Explorer & Property Sheet API
-<li>Lookup
-<li>Nodes API
-<li>Setting API
-<li>UI Utilities API
-<li>Utilities API
-<li>Window System API
-</ul>
-<li>Make a class that implements org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer and is registered as a service provider for DataContentViewer.class by specifying "@ServiceProvider(service = DataContentViewer.class)" or by using layer.xml.  This class must extend JPanel. </li>
-</ol>
+\section content_nb NetBeans Module Configuration
+The rest of the document assumes that you have already created your NetBeans module, as outlined in \ref mod_dev_module. 
 
-Find a home for this:
+DataContentViewer modules will have additional NetBeans dependencies. Right click on the module, choose "Properties" -> "Libraries" -> "Module Dependencies".  Add "Lookup API" and "Nodes API".
 
-If multiple content viewers are supported, a preferred (default) content viewer is chosen.
+\section content_mod Module Development
+ 
+You will need a class that implements org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer and you will need a JPanel to display.  
+We have found the best way to do this is to make a class in the NetBeans IDE that is a "JPanel Form".  This will then allow you to use the UI builder within the NetBeans IDE.
+After NetBeans makes the class for you, then have it implement DataContentViewer.  NetBeans will of course complain about missing methods and will provide default implementations for them if you click on the error messages in the UI.
+Refer to the documentation in org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer on what each method should do. 
+
+Autopsy will find your module using the NetBeans Lookup infrastructure. To be found, you will need to register as a service provider for DataContentViewer.class by annotating your class as follows:
+
+\code
+@ServiceProvider(service = DataContentViewer.class)
+public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
+...
+\endcode
+
+If you get errors about not knowing about ServiceProviders and such, ensure that you configured your NetBeans module to depend on the Nodes and Lookup APIs as outlined in the previous section. 
+
+\section content_examples Example Modules
+The org.sleuthkit.autopsy.examples.SampleContentViewer class is a very simple module that you can use as a starting point.  There are also modules, such as org.sleuthkit.autopsy.corecomponents.DataContentViewerHex and org.sleuthkit.autopsy.corecomponents.DataContentViewerMedia that are real modules, but they are more complex to follow since they have paging and other UI widgets in them. 
+
+\section content_hints Hints
+ 
+\subsection content_hints_objects Getting Content
+Many of the methods get passed in a Node object as argument. What you really want is one of the Autopsy data model objects from org.sleuthkit.autopsy.datamodel. 
+You get access to these objects from the NetBeans Lookup. 
+
+If you only want to analyze files, then you want to get the AbstractFile object from it using:
+\code
+    AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+\endcode
+If file is null, then it means that the node isn't for a AbstractFile (perhaps its of a full volume). 
+Once you have the AbstractFile object, you can get the file's name, content, and metadata. 
+
+If you want to get whatever is passed in, then you can use the more generic lookup: 
+\code
+    Content content = node.getLookup().lookup(Content.class);
+\endcode
+This will get you all types of data model types, but you will not have access to the more specific getter methods.
 
 */

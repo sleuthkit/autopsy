@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -38,23 +39,39 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
  * DataResult sortable table viewer
  */
-@ServiceProvider(service = DataResultViewer.class)
+// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer 
+// service provider when DataResultViewers can be made compatible with node 
+// multiple selection actions.
+//@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = "Name";
-    private Set<Property> propertiesAcc = new LinkedHashSet<Property>();
+    private Set<Property> propertiesAcc = new LinkedHashSet<>();
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
 
     /**
-     * Creates new form DataResultViewerTable
+     * Creates a DataResultViewerTable object that is compatible with node 
+     * multiple selection actions.
+     */
+    public DataResultViewerTable(ExplorerManager explorerManager) {
+        super(explorerManager);
+        initialize();
+    }
+    
+    /**
+     * Creates a DataResultViewerTable object that is NOT compatible with node 
+     * multiple selection actions.
      */
     public DataResultViewerTable() {
+        initialize();        
+    }
+
+    private void initialize() {
         initComponents();
 
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
@@ -62,13 +79,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.setAllowedDropActions(DnDConstants.ACTION_NONE);
 
         // only allow one item to be selected at a time
-        ov.getOutline().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // don't show the root node
         ov.getOutline().setRootVisible(false);
-        ov.getOutline().setDragEnabled(false);
+        ov.getOutline().setDragEnabled(false);        
     }
-
+    
     /**
      * Expand node
      *
@@ -435,8 +452,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         this.tableScrollPanel.removeAll();
         this.tableScrollPanel = null;
 
-        //this destroys em
         super.clearComponent();
-
     }
 }
