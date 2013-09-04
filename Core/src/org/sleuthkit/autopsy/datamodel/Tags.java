@@ -80,25 +80,20 @@ public class Tags implements AutopsyVisitableItem {
     // When this class is loaded, either create an new app settings file or 
     // get the tag names setting from the existing app settings file.
     static {
-        if (!ModuleSettings.configExists(APP_SETTINGS_FILE_NAME)) {
-            ModuleSettings.makeConfigFile(APP_SETTINGS_FILE_NAME);
-        }
-        else {
-            String setting = ModuleSettings.getConfigSetting(APP_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY);
-            if (!setting.isEmpty()) {                
-                // Make a speedy lookup for the tag names in the setting to aid in the
-                // detection of new tag names.
-                List<String> tagNamesFromAppSettings = Arrays.asList(setting.split(","));
-                for (String tagName : tagNamesFromAppSettings) {
-                    appSettingTagNames.add(tagName);
-                }
-                
-                // Load the raw comma separated values list from the setting into a 
-                // string builder to facilitate adding new tag names to the list and writing
-                // it back to the app settings file.
-                tagNamesAppSetting.append(setting);                
-            }                    
-        }
+        String setting = ModuleSettings.getConfigSetting(APP_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY);
+        if (null != setting && !setting.isEmpty()) {                
+            // Make a speedy lookup for the tag names in the setting to aid in the
+            // detection of new tag names.
+            List<String> tagNamesFromAppSettings = Arrays.asList(setting.split(","));
+            for (String tagName : tagNamesFromAppSettings) {
+                appSettingTagNames.add(tagName);
+            }
+
+            // Load the raw comma separated values list from the setting into a 
+            // string builder to facilitate adding new tag names to the list and writing
+            // it back to the app settings file.
+            tagNamesAppSetting.append(setting);                
+        }                    
     }
     
     Tags(SleuthkitCase skCase) {

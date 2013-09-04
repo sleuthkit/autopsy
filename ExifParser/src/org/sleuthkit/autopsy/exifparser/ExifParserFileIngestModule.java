@@ -214,7 +214,10 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         if (bytesRead != 2) {
             return false;
         }
-        if ((fileHeaderBuffer[0] == 0xff) && (fileHeaderBuffer[1] == 0xd8)) {
+        /* Check for the JPEG header. 
+         * Since Java bytes are signed, we cast them to an int first. 
+         */
+        if (((int)(fileHeaderBuffer[0] & 0xff) == 0xff) && ((int)(fileHeaderBuffer[1] & 0xff) == 0xd8)) {
             return true;
         }
         return false;

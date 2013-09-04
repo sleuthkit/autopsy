@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -29,6 +30,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -37,7 +39,6 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -50,7 +51,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * are being lazy loaded or not.
  *
  */
-@ServiceProvider(service = DataResultViewer.class)
+// @@@ Restore implementation of DataResultViewerThumbnail as a DataResultViewer 
+// service provider when DataResultViewers can be made compatible with node 
+// multi-selection actions.
+//@ServiceProvider(service = DataResultViewer.class)
 public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
@@ -58,25 +62,37 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
+    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;    
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
-     * Creates new form DataResultViewerThumbnail
+     * Creates a DataResultViewerThumbnail object that is compatible with node 
+     * multiple selection actions.
+     */
+    public DataResultViewerThumbnail(ExplorerManager explorerManager) {
+        super(explorerManager);
+        initialize();
+    }
+
+    /**
+     * Creates a DataResultViewerThumbnail object that is NOT compatible with 
+     * node multiple selection actions.
      */
     public DataResultViewerThumbnail() {
-        super();
-
+        initialize();
+    }    
+    
+    private void initialize() {
         initComponents();
 
         // only allow one item to be selected at a time
-        ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         curPage = -1;
         totalPages = 0;
         curPageImages = 0;
-
-    }
-
+    }    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -97,6 +113,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         filePathLabel = new javax.swing.JLabel();
         goToPageLabel = new javax.swing.JLabel();
         goToPageField = new javax.swing.JTextField();
+        thumbnailSizeComboBox = new javax.swing.JComboBox();
 
         thumbnailScrollPanel.setPreferredSize(new java.awt.Dimension(582, 348));
 
@@ -146,6 +163,14 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
+        thumbnailSizeComboBox.setSelectedIndex(1);
+        thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                thumbnailSizeComboBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -172,8 +197,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addGap(12, 12, 12)
                         .addComponent(imagesLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -189,7 +216,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(imagesLabel)
                         .addComponent(imagesRangeLabel)
                         .addComponent(goToPageLabel)
-                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(0, 0, 0)
                 .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -209,6 +237,38 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         goToPage(goToPageField.getText());
     }//GEN-LAST:event_goToPageFieldActionPerformed
 
+    private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
+        
+        iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        switch(thumbnailSizeComboBox.getSelectedIndex()) {
+            case 0:
+                iconSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                break;
+            case 2:
+                iconSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                break;
+        }                    
+
+        Node root = em.getRootContext();
+        for (Children c : Arrays.asList(root.getChildren()) ) {
+            ((ThumbnailViewChildren)c).setIconSize(iconSize);
+        }
+        
+        for (Node page : root.getChildren().getNodes()) {
+            for (Node node : page.getChildren().getNodes()) {
+                ((ThumbnailViewNode)node).setIconSize(iconSize);
+            }
+        }            
+        
+        // Temporarily set the explored context to the root, instead of a child node.
+        // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
+        // update even though the new and old Node values are identical. This in turn
+        // will cause the entire view to update completely. After this we 
+        // immediately set the node back to the current child by calling switchPage().        
+        em.setExploredContext(root);
+        switchPage();
+    }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
     private javax.swing.JTextField goToPageField;
@@ -221,6 +281,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JScrollPane thumbnailScrollPanel;
+    private javax.swing.JComboBox thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -246,8 +307,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
-                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode);
-
+                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
+                
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
@@ -315,7 +376,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         this.thumbnailScrollPanel.removeAll();
         this.thumbnailScrollPanel = null;
 
-        //this destroyes em
         super.clearComponent();
     }
 
@@ -377,7 +437,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
-                Node pageNode = root.getChildren().getNodeAt(curPage - 1);
+                Node pageNode = root.getChildren().getNodeAt(curPage - 1);    
                 em.setExploredContext(pageNode);
                 curPageImages = pageNode.getChildren().getNodesCount();
                 return null;
@@ -387,8 +447,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();
-
+                updateControls();        
             }
         }.execute();
 
