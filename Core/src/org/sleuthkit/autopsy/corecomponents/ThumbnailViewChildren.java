@@ -52,15 +52,17 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
     private int totalImages = 0;
     private int totalPages = 0;
+    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     /**
      * the constructor
      */
-    ThumbnailViewChildren(Node arg) {
+    ThumbnailViewChildren(Node arg, int iconSize) {
         super(true); //support lazy loading
 
         this.parent = arg;
+        this.iconSize = iconSize;
         //
     }
 
@@ -153,6 +155,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return false;
     }
 
+    public void setIconSize(int iconSize) {
+        this.iconSize = iconSize;
+    }    
+    
     private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
 
         private final List<String> SUPP_EXTENSIONS;
@@ -255,7 +261,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         @Override
         protected Node[] createNodes(Node wrapped) {
             if (wrapped != null) {
-                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped);
+                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, iconSize);
                 return new Node[]{thumb};
             } else {
                 return new Node[]{};

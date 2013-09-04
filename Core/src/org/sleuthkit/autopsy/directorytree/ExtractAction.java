@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,13 +36,16 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Exports files and folders
+ * Extracts AbstractFiles to a location selected by the user.
  */
 public final class ExtractAction extends AbstractAction {
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
@@ -54,143 +59,206 @@ public final class ExtractAction extends AbstractAction {
         if (null == instance) {
             instance = new ExtractAction();
         }
-
         return instance;
     }
 
     private ExtractAction() {
-        super("Extract");
+        super("Extract File(s)");
     }
         
     /**
-     * Asks user to choose destination, then extracts content/directory to 
-     * destination (recursing on directories)
-     * @param e  the action event
+     * Asks user to choose destination, then extracts content to destination
+     * (recursing on directories).
+     * @param e  The action event.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        for (AbstractFile file : selectedFiles) {
-            extractFile(e, file);
-        } 
+        if (selectedFiles.size() > 1) {
+            extractFiles(e, selectedFiles);
+        }
+        else if (selectedFiles.size() == 1) {
+            AbstractFile source = selectedFiles.iterator().next();
+            if (source.isDir()) {
+                extractFiles(e, selectedFiles);                
+            }
+            else {
+                extractFile(e, selectedFiles.iterator().next());
+            }
+        }
     }
     
-    private void extractFile(ActionEvent e, AbstractFile file) {
-        // Get content and check that it's okay to overwrite existing content
-        JFileChooser fc = new JFileChooser();
-        fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
-        fc.setSelectedFile(new File(file.getName()));
-        int returnValue = fc.showSaveDialog((Component) e.getSource());
-
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File destination = fc.getSelectedFile();
-
-            // do the check
-            if (destination.exists()) {
-                int choice = JOptionPane.showConfirmDialog(
-                        (Component) e.getSource(),
-                        "Destination file already exists, it will be overwritten.",
-                        "Destination already exists!",
-                        JOptionPane.OK_CANCEL_OPTION);
-
-                if (choice != JOptionPane.OK_OPTION) {
-                    return; // Just exit the function
-                }
-
-                if (!destination.delete()) {
-                    JOptionPane.showMessageDialog(
-                            (Component) e.getSource(),
-                            "Couldn't delete existing file.");
-                }
-            }
-        
-            try {
-                ExtractFileThread extract = new ExtractFileThread();    
-                extract.init(file, e, destination);
-                extract.execute();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Unable to start background thread.", ex);
-            }
+    private void extractFile(ActionEvent e, AbstractFile source) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        fileChooser.setSelectedFile(new File(source.getName()));
+        if (fileChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
+            fileExtractionTasks.add(new FileExtractionTask(source, fileChooser.getSelectedFile()));
+            doFileExtraction(e, fileExtractionTasks);            
         }        
     }
-    
-    private class ExtractFileThread extends SwingWorker<Object,Void> {
-        private Logger logger = Logger.getLogger(ExtractFileThread.class.getName());
-        private ProgressHandle progress;
-        private AbstractFile fsContent;
-        private ActionEvent e;
-        private File destination;
         
-        private void init(AbstractFile fsContent, ActionEvent e, File destination) {
-            this.fsContent = fsContent;
-            this.e = e;
-            this.destination = destination;
+    private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
+        JFileChooser folderChooser = new JFileChooser();
+        folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        if (folderChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            File destinationFolder = folderChooser.getSelectedFile();
+            if (!destinationFolder.exists()) {
+                try {
+                    destinationFolder.mkdirs();
+                }
+                catch (Exception ex) {
+                    JOptionPane.showMessageDialog((Component) e.getSource(), "Couldn't create selected folder.");                    
+                    logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex);
+                    return;
+                }
+            }
+
+            ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
+            for (AbstractFile source : selectedFiles) {
+                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName())));
+            }            
+            doFileExtraction(e, fileExtractionTasks);            
+        }
+    }
+        
+    private void doFileExtraction(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
+        
+        // verify all of the sources and destinations are OK
+        for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext(); ) {
+            FileExtractionTask task = it.next();
+            
+            if (ContentUtils.isDotDirectory(task.source)) {
+                //JOptionPane.showMessageDialog((Component) e.getSource(), "Cannot extract virtual " + task.source.getName() + " directory.", "File is Virtual Directory", JOptionPane.WARNING_MESSAGE);
+                it.remove();
+                continue;
+            }
+            
+            /*
+             * @@@ Problems with this code:
+             * - does not prevent us from having multiple files with the same target name in the task list (in which case, the first ones are overwritten)
+             * Unique Id was added to set of names before calling this method to deal with that.
+             */
+            if (task.destination.exists()) {
+                if (JOptionPane.showConfirmDialog((Component) e.getSource(), "Destination file " + task.destination.getAbsolutePath() + " already exists, overwrite?", "File Exists", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    if (!FileUtil.deleteFileDir(task.destination)) {
+                        JOptionPane.showMessageDialog((Component) e.getSource(), "Couldn't overwrite existing file " + task.destination.getAbsolutePath());
+                        it.remove();
+                    }
+                }
+                else {
+                    it.remove();
+                }
+            }
         }
 
+        if (!fileExtractionTasks.isEmpty()) {
+            try {
+                FileExtracter extracter = new FileExtracter(fileExtractionTasks);    
+                extracter.execute();
+            } 
+            catch (Exception ex) {
+                logger.log(Level.WARNING, "Unable to start background file extraction thread", ex);
+            }                                    
+        }
+        else {
+            MessageNotifyUtil.Message.info("No file(s) to extract.");
+        }
+    }
+        
+    private class FileExtractionTask {
+        AbstractFile source;
+        File destination;
+
+        FileExtractionTask(AbstractFile source, File destination) {
+            this.source = source;
+            this.destination = destination;
+        }        
+    }
+        
+    private class FileExtracter extends SwingWorker<Object,Void> {
+        private Logger logger = Logger.getLogger(FileExtracter.class.getName());
+        private ProgressHandle progress;
+        private ArrayList<FileExtractionTask> extractionTasks;
+        
+        FileExtracter(ArrayList<FileExtractionTask> extractionTasks) {
+            this.extractionTasks = extractionTasks;            
+        }
+        
         @Override
         protected Object doInBackground() throws Exception {
-            logger.log(Level.INFO, "Starting background processing for file extraction.");
+            if (extractionTasks.isEmpty()) {
+                return null;
+            }
             
-            // Setup progress bar
+            // Setup progress bar.
             final String displayName = "Extracting";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     if (progress != null)
                         progress.setDisplayName(displayName + " (Cancelling...)");
-                    return ExtractAction.ExtractFileThread.this.cancel(true);
+                    return ExtractAction.FileExtracter.this.cancel(true);
                 }
             });
-
-            // Start the progress bar as indeterminate
             progress.start();
             progress.switchToIndeterminate();
-            if(fsContent.isFile()) {
-                // Max content size of 200GB
-                //long filesize = fsContent.getSize();
-                //int unit = (int) (filesize / 100);
-                progress.switchToDeterminate(100);
-            } else if(fsContent.isDir()) {
-                // If dir base progress off number of children
-                int toProcess = fsContent.getChildren().size();
-                progress.switchToDeterminate(toProcess);
+            
+            /* @@@ Add back in -> Causes exceptions
+            int workUnits = 0;
+            for (FileExtractionTask task : extractionTasks) {
+                workUnits += calculateProgressBarWorkUnits(task.source);
             }
-
-            // Start extracting the content/directory
-            ExtractFscContentVisitor.extract(fsContent, destination, progress, this);
-            logger.log(Level.INFO, "Done background processing");
+            progress.switchToDeterminate(workUnits);
+            */
+        
+            // Do the extraction tasks.
+            for (FileExtractionTask task : this.extractionTasks) {
+                // @@@ Note, we are no longer passing in progress
+                ExtractFscContentVisitor.extract(task.source, task.destination, null, this);            
+            }
+            
             return null;
         }
         
         @Override
         protected void done() {
             try {
-                super.get(); //block and get all exceptions thrown while doInBackground()
-            } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Extraction was canceled.");
-            } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Extraction was interrupted.");
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during file extraction.", ex);
-            } finally {
+                super.get();
+            } 
+            catch (CancellationException | InterruptedException ex) {
+            } 
+            catch (Exception ex) {
+                logger.log(Level.SEVERE, "Fatal error during file extraction", ex);
+            } 
+            finally {
                 progress.finish();
                 if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "Extracting completed without cancellation.");
-                    // Alert the user extraction is over
-                    if(fsContent.isDir()) {
-                        MessageNotifyUtil.Message.info("Directory extracted.");
-                    } else if(fsContent.isFile()){
-                        MessageNotifyUtil.Message.info("File extracted.");
-                    }
-                } else {
-                    logger.log(Level.INFO, "Attempting to delete file(s).");
-                    if(FileUtil.deleteFileDir(destination)) {
-                        logger.log(Level.INFO, "Finished deletion sucessfully.");
-                    } else {
-                        logger.log(Level.WARNING, "Deletion attempt complete; not all files were sucessfully deleted.");
+                    MessageNotifyUtil.Message.info("File(s) extracted.");
+                } 
+            }
+        }
+        
+        private int calculateProgressBarWorkUnits(AbstractFile file) {
+            int workUnits = 0;
+            if (file.isFile()) {
+                workUnits += file.getSize();
+            }
+            else {
+                try {
+                    for (Content child : file.getChildren()) {
+                       if (child instanceof AbstractFile) {
+                        workUnits += calculateProgressBarWorkUnits((AbstractFile)child);
+                       }
                     }
                 }
+                catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Could not get children of content", ex);                
+                }
             }
+            return workUnits;            
         }
     } 
 }

@@ -186,8 +186,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoPanel.reset(); 
     }
 
-  
-
     @Override
     public boolean isSupported(Node node) {
         if (node == null) {
