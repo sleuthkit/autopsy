@@ -124,33 +124,33 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.setValue(0);
 
-            progressSlider.addChangeListener(new ChangeListener() {
-                /**
-                 * Should always try to synchronize any call to
-                 * progressSlider.setValue() to avoid a different thread
-                 * changing playbin while stateChanged() is processing
-                 */
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    int time = progressSlider.getValue();
-                    synchronized (playbinLock) {
-                        if (gstPlaybin2 != null && !autoTracking) {
-                            State orig = gstPlaybin2.getState();
-                            if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
-                                logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
-                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                                return;
-                            }
-                            if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
-                                logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
-                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                                return;
-                            }
-                            gstPlaybin2.setState(orig);
+        progressSlider.addChangeListener(new ChangeListener() {
+            /**
+             * Should always try to synchronize any call to
+             * progressSlider.setValue() to avoid a different thread
+             * changing playbin while stateChanged() is processing
+             */
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int time = progressSlider.getValue();
+                synchronized (playbinLock) {
+                    if (gstPlaybin2 != null && !autoTracking) {
+                        State orig = gstPlaybin2.getState();
+                        if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                            return;
                         }
+                        if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                            return;
+                        }
+                        gstPlaybin2.setState(orig);
                     }
                 }
-            });
+            }
+        });
     }
 
     private boolean initGst() {

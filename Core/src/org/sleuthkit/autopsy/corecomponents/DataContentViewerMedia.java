@@ -65,7 +65,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         initComponents();
         
+        // get the right panel for our platform
         videoPanel = MediaViewVideoPanel.createVideoPanel();
+        
         imagePanel = new MediaViewImagePanel();
         videoPanelInited = videoPanel.isInited();
         imagePanelInited = imagePanel.isInited();
@@ -75,14 +77,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void customizeComponents() {
-        logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
         //initialize supported image types
         //TODO use mime-types instead once we have support
         String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
         IMAGES = new String[fxSupportedImagesSuffixes.length];
+        //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
         for (int i = 0; i < fxSupportedImagesSuffixes.length; ++i) {
             String suffix = fxSupportedImagesSuffixes[i];
-            logger.log(Level.INFO, "suffix: " + suffix);
+            //logger.log(Level.INFO, "suffix: " + suffix);
             IMAGES[i] = "." + suffix;
         }
 

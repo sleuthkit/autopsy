@@ -1,12 +1,22 @@
 ---------------- VERSION Current (development)  --------------
 
 New features:
+- 64-bit support (JavaFX for video)
+- Multi-select
+- different sized thumbnails
+- Custom tags persist accross runs of the app
+- RegRipper is run on each hive and raw output is available. 
 
 
 Improvements:
+- EXIF module uses only signatures
+- File size view does not show unalloc files
+- Tagged files in report show more data
+- Updated test scripts
 
 
 Bugfixes:
+- Several -> Didn't keep good track in this file. 
 
 
 
