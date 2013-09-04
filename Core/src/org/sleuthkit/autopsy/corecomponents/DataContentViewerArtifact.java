@@ -390,7 +390,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param artifacts List of artifacts that could be displayed
      * @param offset Index into the list for the artifact to display
      */
-    private void setDataView(int offset) {
+    private synchronized void setDataView(int offset) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         outputViewPane.setText(WAIT_TEXT);
 
