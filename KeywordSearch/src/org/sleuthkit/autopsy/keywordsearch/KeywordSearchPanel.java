@@ -43,7 +43,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Keyword search toolbar which allows to search for single terms or phrases
+ * Keyword search toolbar (in upper right, by default) which allows to search for single terms or phrases
  * 
  * The toolbar uses a different font from the rest of the application, Monospaced 14, 
  * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
