@@ -48,27 +48,18 @@
             Next, supply it with the location of the source to add. 
         </p>
         <ul>
-            <li>For image, point to location of disk image on your system.  Autopsy currently supports E01 and raw (dd) files.  
-            For multi-part/split images, you will need to specify only the first file in an image set (i.e. the E01 file) and Autopsy will find the rest of the files.
+            <li>For a disk image, browse to the first file in the set (Autopsy will find the rest of the files). Autopsy currently supports E01 and raw (dd) files.  
             </li>
             <li>
             For local disk, select one of the detected disks.  
             Autopsy will add the current view of the disk to the case (i.e. snapshot of the meta-data). 
             However, the individual file content (not meta-data) does get updated with the changes made to the disk.
-            
-            
             Note, you may need run Autopsy as an Administrator to detect all disks.
             </li>
-            <li>For logical files, add one or more local files or folders on your system.</li>
+            <li>For logical files (a single file or folder of files), use the "Add" button to add one or more files or folders on your system to the case.  Folders will be recursively added to the case.</li>
         </ul>
             
      
-
-        <p>
-            It may take a few minutes to add the data source to the case.
-            During this time, an internal database is being created of the file system contents.
-        </p>
-
         <p>
             There are a couple of options in the wizard that will allow you to make the ingest process faster.
             These typically deal with deleted files.
@@ -76,6 +67,10 @@
             In some scenarios, these recovery steps must be performed and in other scenarios these steps are not needed and instead fast results on the allocated files are needed.
             Use these options to control how long the analysis will take.
         </p>
+
+        <p>
+          Autopsy will start to analyze these data sources and add them to the case and internal database.  While it is doing that, it will prompt you to configure the Ingest Modules. </p>
+
 
         <h2>Ingest Modules</h2>
         <p>
@@ -86,12 +81,14 @@
         </p>
         <ul>
             <li><strong>Recent Activity</strong>
-                extracts user activity as saved by web browsers and the OS.
+                extracts user activity as saved by web browsers and the OS.  Also runs regripper on the registry hive. 
             </li>
             <li><strong>Hash Lookup</strong>
                 uses hash databases to ignore known files from the NIST NSRL and flag known bad files.
-                Use the "Advanced" button to configure the hash databases to use during this process.
-                You will get updates on known bad file hits as the ingest occurs.
+                Use the "Advanced" button to add and configure the hash databases to use during this process.
+                You will get updates on known bad file hits as the ingest occurs.  You can later add hash databases
+                via the Tools -&gt; Options menu in the main UI.  You can download an index of the NIST NSRL from 
+                <a href="http://sourceforge.net/projects/autopsy/files/NSRL/">here</a>. 
             </li>
             <li><strong>Keyword Search</strong>
                 uses keyword lists to identify files with specific words in them.
@@ -100,16 +97,15 @@
                 The keyword lists that you select during ingest will be searched for at periodic intervals and you will get the results in real-time.
                 You do not need to wait for all files to be indexed.
             </li>
+            <li><strong>Archive Extractor</strong> opens ZIP, RAR, and other archive formats and sends the files from those archive files back
+            through the pipelines for analysis.</li>
+            <li><strong>Exif Image Parser</strong> extracts EXIF information from JPEG files and posts the results into the tree in the main UI.</li>
+            <li><strong>Thunderbird Parser</strong> Identifies Thunderbird MBOX files and extracts the e-mails from them.</li>
         </ul>
         <p>
             When you select a module, you will have the option to change its settings.  
             For example, you can configure which keyword search lists to use during ingest and which hash databases to use.
             Refer to the help system inside of Autopsy for details on configuring each module.
-        </p>
-        <p>
-            When selecting the ingest modules, you will also need to choose the update frequency.
-            This setting configures how often you will get updates from the ingest modules when they are running in the background.
-            The more frequent the updates, the longer the overall process will take.
         </p>
         <p>
             While ingest modules are running in the background, you will see a progress bar in the lower right.
@@ -122,8 +118,10 @@
         <p>You will start all of your analysis techniques from the tree on the left.</p>
         <ul>
             <li>The Data Sources root node shows all data in the case.</li>
-            <li>The individual image nodes show the file system structure of the disk images or local disks in the case.</li>
-            <li>The LogicalFileSet nodes show the logical files in the case.</li>
+            <ul>
+              <li>The individual image nodes show the file system structure of the disk images or local disks in the case.</li>
+              <li>The LogicalFileSet nodes show the logical files in the case.</li>
+            </ul>
             <li>The Views node shows the same data from a file type or timeline perspective.</li>
             <li>The Results node shows the output from the ingest modules.</li>
         </ul>
@@ -145,6 +143,8 @@
             The results will be shown in a table in the upper right.
         </p>
 
+        <p> You can tag (or bookmark) arbitrary files so that you can more quickly find them later or so that you can include them specifically in a report.</p>
+
         <h2>Ingest Inbox</h2>
         <p>
             As you are going through the results in the tree, the ingest modules are running in the background.
@@ -161,6 +161,9 @@
             You may learn that a known bad file was found or that a file was found with a relevant keyword and then decide to focus on that for a while.
         </p>
         <p> When you select a message, you can then jump to the Results tree where more details can be found or jump to the file's location in the filesystem.</p>
+
+        <h2>Timeline (Beta)</h2>
+        <p>There is a basic timeline view that you can access via the Tools -&gt; Make Timeline feature. This will take a few minutes to create the timeline for analysis.  Its features are still in development.</p>
 
 
         <h1>Example Use Cases</h1>
@@ -209,7 +212,7 @@
         </p>
 
         <hr>
-        <p><i>Copyright &#169; 2012 Basis Technology.</i></p>
+        <p><i>Copyright &#169; 2012-2013 Basis Technology.</i></p>
         <p><i>
             This work is licensed under a
             <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/us/">Creative Commons Attribution-Share Alike 3.0 United States License</a>.
