@@ -514,6 +514,10 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
     private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {                                            
         synchronized (playbinLock) {
+            if (gstPlaybin2 == null) {
+                infoLabel.setText("Error: Playbin is null");
+                return;
+            }
             State state = gstPlaybin2.getState();
             if (state.equals(State.PLAYING)) {
                 if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
