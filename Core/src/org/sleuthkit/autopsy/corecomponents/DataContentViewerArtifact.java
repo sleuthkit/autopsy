@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.openide.nodes.Node;
@@ -55,7 +56,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private static int currentPage = 1;
     private List<BlackboardArtifact> artifacts;
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-
+    private final static String WAIT_TEXT = "Preparing display...";
+    
     /** Creates new form DataContentViewerArtifact */
     public DataContentViewerArtifact() {
         initComponents();
@@ -203,12 +205,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         currentPage = currentPage+1;
-        setDataView(currentPage);
+        new DisplayTask(currentPage).execute();        
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         currentPage = currentPage-1;
-        setDataView(currentPage);
+        new DisplayTask(currentPage).execute();        
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -261,7 +263,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }        
         
         // A little bit of cleverness here - add one since setDataView() is also passed page numbers.
-        setDataView(index + 1);
+        new DisplayTask(index + 1).execute();
     }
 
     @Override
@@ -385,9 +387,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param offset Index into the list for the artifact to display
      */
     private void setDataView(int offset) {
-        // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        
+        outputViewPane.setText(WAIT_TEXT);
+
         if(artifacts.isEmpty()){
             resetComponent();
             return;
@@ -410,4 +412,18 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         outputViewPane.moveCaretPosition(0);
         this.setCursor(null);
     }    
+    
+    private class DisplayTask extends SwingWorker<Integer, Void> {
+        final int pageIndex;
+        
+        DisplayTask(final int pageIndex) {
+            this.pageIndex = pageIndex;
+        }
+        
+        @Override
+        public Integer doInBackground() {
+            setDataView(pageIndex);
+            return 0;
+        }
+    }            
 }
