@@ -62,9 +62,22 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     public DataContentViewerArtifact() {
         initComponents();
         customizeComponents();
-        resetComponent();
+        resetSubComponents();
     }
 
+    private void resetSubComponents() {
+        // clear / reset the fields
+        currentPage = 1;
+        this.artifacts = new ArrayList<>();
+        currentPageLabel.setText("");
+        totalPageLabel.setText("");
+        outputViewPane.setText("");
+        prevPageButton.setEnabled(false);
+        nextPageButton.setEnabled(false);
+        setComponentsVisibility(false); // hides the components that not needed
+        this.setCursor(null);        
+    }
+        
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -232,14 +245,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     @Override
     public void setNode(Node selectedNode) {
         if (selectedNode == null) {
-            resetComponent();
+            resetSubComponents();
             return;
         }
         
         Lookup lookup = selectedNode.getLookup();
         Content content = lookup.lookup(Content.class);
         if (content == null) {
-            resetComponent();
+            resetSubComponents();
             return; 
         }
 
@@ -248,7 +261,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         } 
         catch (TskException ex) {
             logger.log(Level.WARNING, "Couldn't get artifacts", ex);
-            resetComponent();
+            resetSubComponents();
             return; 
         }
 
@@ -288,16 +301,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public void resetComponent() {
-        // clear / reset the fields
-        currentPage = 1;
-        this.artifacts = new ArrayList<>();
-        currentPageLabel.setText("");
-        totalPageLabel.setText("");
-        outputViewPane.setText("");
-        prevPageButton.setEnabled(false);
-        nextPageButton.setEnabled(false);
-        setComponentsVisibility(false); // hides the components that not needed
-        this.setCursor(null);
+        resetSubComponents();
     }
     
     /**
@@ -391,7 +395,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         outputViewPane.setText(WAIT_TEXT);
 
         if(artifacts.isEmpty()){
-            resetComponent();
+            resetSubComponents();
             return;
         }
         StringContent artifactString = new ArtifactStringContent(artifacts.get(offset-1));
