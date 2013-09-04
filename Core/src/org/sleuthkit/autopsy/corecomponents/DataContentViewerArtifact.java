@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
-import javax.swing.text.Document;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.openide.nodes.Node;
@@ -204,12 +203,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         currentPage = currentPage+1;
-        setDataView(artifacts, currentPage);
+        setDataView(currentPage);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         currentPage = currentPage-1;
-        setDataView(artifacts, currentPage);
+        setDataView(currentPage);
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -239,20 +238,30 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Content content = lookup.lookup(Content.class);
         if (content == null) {
             resetComponent();
-            return;
+            return; 
         }
-        
+
         try {
-            this.setDataView(content.getAllArtifacts(), 1);
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
+            artifacts = content.getAllArtifacts();
+        } 
+        catch (TskException ex) {
+            logger.log(Level.WARNING, "Couldn't get artifacts", ex);
+            resetComponent();
+            return; 
         }
-        
+
         // focus on a specific artifact if it is in the node
+        int index = 0;
         BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
         if (artifact != null) {
-            this.setSelectedArtifact(artifact);
-        }
+            index = artifacts.indexOf(artifact);
+            if (index == -1) {
+                index = 0;
+            }
+        }        
+        
+        // A little bit of cleverness here - add one since setDataView() is also passed page numbers.
+        setDataView(index + 1);
     }
 
     @Override
@@ -279,7 +288,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     public void resetComponent() {
         // clear / reset the fields
         currentPage = 1;
-        this.artifacts = new ArrayList<BlackboardArtifact>();
+        this.artifacts = new ArrayList<>();
         currentPageLabel.setText("");
         totalPageLabel.setText("");
         outputViewPane.setText("");
@@ -311,12 +320,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return false;
         }
 
-        ArtifactStringContent artifact = node.getLookup().lookup(ArtifactStringContent.class);
-        Content content = node.getLookup().lookup(Content.class);
-        
-        if(artifact != null) {
-            return true;
-        }
+        Content content = node.getLookup().lookup(Content.class);        
         if(content != null) {
             try {
                 long size = content.getAllArtifactsCount();
@@ -380,7 +384,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param artifacts List of artifacts that could be displayed
      * @param offset Index into the list for the artifact to display
      */
-    private void setDataView(List<BlackboardArtifact> artifacts, int offset) {
+    private void setDataView(int offset) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
@@ -388,7 +392,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             resetComponent();
             return;
         }
-        this.artifacts = artifacts;
         StringContent artifactString = new ArtifactStringContent(artifacts.get(offset-1));
         String text = artifactString.getString();
         
@@ -406,16 +409,5 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         setComponentsVisibility(true);
         outputViewPane.moveCaretPosition(0);
         this.setCursor(null);
-    }
-    
-    /**
-     * Set the displayed artifact to the specified one.
-     * @param artifact Artifact to display
-     */
-    private void setSelectedArtifact(BlackboardArtifact artifact) {
-        if(artifacts.contains(artifact)) {
-            int index = artifacts.indexOf(artifact);
-            setDataView(artifacts, index+1);
-        }
-    }
+    }    
 }
