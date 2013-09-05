@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -86,6 +85,7 @@ import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -98,7 +98,6 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -147,11 +146,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public Timeline() {
         super();
 
-        org.sleuthkit.autopsy.core.Installer coreInstaller =
-                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
-        if (coreInstaller != null) {
-            fxInited = coreInstaller.isJavaFxInited();
-        }
+        fxInited = Installer.isJavaFxInited();
 
     }
 
@@ -211,7 +206,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         //JavaFX thread
         //JavaFX components MUST be run in the JavaFX thread, otherwise massive amounts of exceptions will be thrown and caught. Liable to freeze up and crash.
         //Components can be declared whenever, but initialization and manipulation must take place here.
-        PlatformImpl.runLater(new Runnable() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -1044,18 +1039,23 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     }
 
     private String makeMacTime(String pathToBodyFile) {
+        String cmdpath = "";
         String macpath = "";
+        String[] mactimeArgs;
         final String machome = macRoot.getAbsolutePath();
         pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
-            macpath = PlatformUtil.getOSFilePath(macpath);
+            cmdpath = PlatformUtil.getOSFilePath(cmdpath);
+            mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
         } else {
-            macpath = "perl " + machome + java.io.File.separator + "mactime.pl";
+            cmdpath = "perl";
+            macpath = machome + java.io.File.separator + "mactime.pl";
+            mactimeArgs = new String[]{macpath, "-b", pathToBodyFile, "-d", "-y"};
         }
 
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
-        String[] mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
+        
 
         String output = "";
         ExecUtil execUtil = new ExecUtil();
@@ -1063,7 +1063,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         try {
             //JavaSystemCaller.Exec.execute("\"" + command + "\"");
             writer = new FileWriter(macfile);
-            execUtil.execute(writer, macpath, mactimeArgs);
+            execUtil.execute(writer, cmdpath, mactimeArgs);
         } catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
             return null;

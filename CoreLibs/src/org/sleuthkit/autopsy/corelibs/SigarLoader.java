@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.corelibs;
 
-import java.io.File;
+import com.sun.javafx.PlatformUtil;
 import org.hyperic.sigar.Sigar;
 
 /**
@@ -42,7 +42,11 @@ public class SigarLoader {
                 if (sigar == null) {
                     try {
                         //rely on netbeans / jna to locate the lib variation for architecture/OS
-                        System.loadLibrary("libsigar");
+                        if (PlatformUtil.isWindows()) {
+                            System.loadLibrary("libsigar");
+                        } else {
+                            System.loadLibrary("sigar");
+                        }
                         sigar = new Sigar();
                         sigar.enableLogging(false); //forces a test
 
