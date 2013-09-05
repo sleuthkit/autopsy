@@ -85,7 +85,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
-    private FXVideoPanel.MediaPane mediaPane;
+    private MediaPane mediaPane;
     // Current media content representations
     private AbstractFile currentFile;
     // FX UI Components
@@ -147,7 +147,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
         
-        FXVideoPanel.ExtractMedia em = new FXVideoPanel.ExtractMedia(currentFile, getJFile(currentFile));
+        ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
         em.execute();
     }
     
@@ -157,7 +157,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
         
         videoComponent = new JFXPanel();
-        mediaPane = new FXVideoPanel.MediaPane();
+        mediaPane = new MediaPane();
         Scene fxScene = new Scene(mediaPane);
         videoComponent.setScene(fxScene);
         
@@ -181,8 +181,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 }
             }
         });
-        
-
         currentFile = null;
     }
 
@@ -212,26 +210,26 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         videoPanel = new javax.swing.JPanel();
 
-        org.jdesktop.layout.GroupLayout videoPanelLayout = new org.jdesktop.layout.GroupLayout(videoPanel);
+        javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
         videoPanel.setLayout(videoPanelLayout);
         videoPanelLayout.setHorizontalGroup(
-            videoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 400, Short.MAX_VALUE)
+            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
         );
         videoPanelLayout.setVerticalGroup(
-            videoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 300, Short.MAX_VALUE)
+            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
         );
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, videoPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, videoPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -279,7 +277,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             progress = ProgressHandleFactory.createHandle("Buffering " + sFile.getName(), new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    return FXVideoPanel.ExtractMedia.this.cancel(true);
+                    return ExtractMedia.this.cancel(true);
                 }
             });
             mediaPane.setProgressLabelText("Buffering...  ");
@@ -368,9 +366,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             mediaViewPane.setStyle("-fx-background-color: black");
             mediaViewPane.setAlignment(Pos.CENTER);
             mediaView = new MediaView();
-            mediaView.setPreserveRatio(true);
             mediaViewPane.getChildren().add(mediaView);
-            setAlignment(mediaViewPane, Pos.CENTER);
             setCenter(mediaViewPane);
             
             // Media Controls
