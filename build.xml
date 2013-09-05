@@ -54,10 +54,6 @@
         </condition>
         <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
     </target>
-
-    <target name="getExternals" depends="findTSK">
-        <antcall target="copyTSKLibsToRelease" />
-    </target>
     
      <target name="getJunit">
         <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
@@ -87,9 +83,7 @@
         <copy todir="${zip-tmp}/${app.name}/jre">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
-
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
-        <antcall target="copyExternalLibsToZip"></antcall>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none&quot;" />
@@ -100,6 +94,18 @@
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
         <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
+        
+        <!-- We want to remove the dlls in autopsy/modules/lib because they will
+             shadow the files in the autopsy/modules/lib/ARCHITECTURE folder in the JAR.
+             These files are legacy from when we used to copy the dlls to this location. 
+             This check should do away in the future. Added Sept '13-->
+        <delete failonerror="false">
+            <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
+                <include name="libtsk_jni.dll" />
+                <include name="libewf.dll" />
+                <include name="zlib.dll" />
+            </fileset>
+        </delete>
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
@@ -133,7 +139,7 @@
         <property name="app.version" value="${DSTAMP}"/>
     </target>
     
-    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps,getJunit">
+    <target name="-init" depends="-taskdefs,-convert-old-project,getProps,getJunit">
         <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>
@@ -231,9 +237,8 @@
         </exec>
     </target>
     
-    <target name="versioning-script" depends="check-release"/> <!--, versioning-script-if-release, versioning-script-if-not-release"/>-->
+    <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <!-- opens the zip file into a folder in dist -->
     <target name="build-installer-dir" depends="getProps, versioning-script, build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
@@ -241,7 +246,6 @@
     <target name="build-installer" depends="build-installer-dir" description="Builds Autopsy installer.">
         <antcall target="build-installer-${os.family}" />
     </target>
-    
     <target name="test-download-imgs" description="Get test images and store them in the path represented by the test-input variable.">
          <available file="${test-input}/nps-2008-jean.E01" property="img-present-1"/>
          <available file="${test-input}/nps-2008-jean.E02" property="img-present-2"/>
