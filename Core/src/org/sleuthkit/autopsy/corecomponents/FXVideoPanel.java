@@ -101,7 +101,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     }
 
     public JPanel getVideoPanel() {
-        return videoPanel;
+        return this;
     }
 
     public Component getVideoComponent() {
@@ -109,22 +109,28 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     }
 
     private void customizeComponents() {
-        SwingUtilities.invokeLater(new Runnable() {
+        if (fxInited) {
+            setupFx();
+        }
+    }
+    
+    void setupFx() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                videoPanel.removeAll();
-                videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-                videoPanel.setVisible(true);
-                
-                Platform.runLater(new Runnable() {
+                videoComponent = new JFXPanel();
+                mediaPane = new MediaPane();
+                Scene fxScene = new Scene(mediaPane);
+                videoComponent.setScene(fxScene);
+
+                SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        setupFx();
+                        add(videoComponent);
                     }
                 });
             }
         });
-        
     }
     
 
@@ -134,7 +140,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
             mediaPane.setInfoLabelText("Playback of deleted videos is not supported, use an external player.");
-            videoPanel.removeAll();
+            removeAll();
             return;
         }
 
@@ -151,23 +157,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         em.execute();
     }
     
-    synchronized void setupFx() {
-        if(!fxInited) {
-            return;
-        }
-        
-        videoComponent = new JFXPanel();
-        mediaPane = new MediaPane();
-        Scene fxScene = new Scene(mediaPane);
-        videoComponent.setScene(fxScene);
-        
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                videoPanel.add(videoComponent);
-            }
-        });
-    }
+    
     
     
     @Override
@@ -208,32 +198,18 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        videoPanel = new javax.swing.JPanel();
-
-        javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
-        videoPanel.setLayout(videoPanelLayout);
-        videoPanelLayout.setHorizontalGroup(
-            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        videoPanelLayout.setVerticalGroup(
-            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(0, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
         @Override
