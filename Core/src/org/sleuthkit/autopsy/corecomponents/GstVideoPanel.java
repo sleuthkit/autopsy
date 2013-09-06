@@ -151,7 +151,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 }
             }
         });
->>>>>>> 70b0d7121cbb6d5fa7a9aacf337ffadcef1a6350
     }
 
     private boolean initGst() {
