@@ -36,6 +36,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
+/**
+ * Loads a file that maps USB IDs to names of makes and models. Uses Linux USB info. 
+ * This should be renamed because it isn't extracting.  It's just mapping IDs to names. 
+ */
 public class ExtractUSB {
     private static final Logger logger = Logger.getLogger(ExtractUSB.class.getName());
     private HashMap<String, USBInfo> devices;
@@ -43,7 +47,7 @@ public class ExtractUSB {
 
     public ExtractUSB() {
         try {
-            devices();
+            loadDeviceMap();
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find file " + DataFile + ".", ex);
             devices = null;
@@ -52,24 +56,39 @@ public class ExtractUSB {
         }
     }
     
+    /**
+     * Example inputs:
+     * Vid_XXXX&Pid_XXXX
+     * @param dev
+     * @return 
+     */
     public USBInfo get(String dev) {
         String[] dtokens = dev.split("[_&]");
-        String mID = dtokens[1];
+        String vID = dtokens[1];
         String pID;
         if (dtokens.length < 4 || dtokens[3].length() < 4) {
-            pID = mID + "0000";
+            pID = "0000";
         } else {
-            pID = mID + dtokens[3];
+            pID = dtokens[3];
         }
-        if (!devices.containsKey(pID)) {
+        String key = vID + pID;
+        if (!devices.containsKey(key)) {
             return new USBInfo(null, null);
         } else {
-            return devices.get(pID);
+            return devices.get(key);
         }
     }
 
-
-    private void devices() throws FileNotFoundException, IOException {
+    /**
+     * Reads the USB file.  Syntax of file: 
+     *
+     * # vendor  vendor_name
+     * #	device  device_name				<-- single tab
+     * #		interface  interface_name		<-- two tabs
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    private void loadDeviceMap() throws FileNotFoundException, IOException {
         devices = new HashMap<String, USBInfo>();
         PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
@@ -84,7 +103,11 @@ public class ExtractUSB {
                     }
                     String pID = vID + "0000";
                     USBInfo info = new USBInfo(dvc, null);
+                    
+                    // make an entry with just the vendor ID
                     devices.put(pID, info);
+                    
+                    // get the later lines that have specific products
                     line = dat.nextLine();
                     if (line.startsWith("\t")) {
                         while (dat.hasNext() && line.startsWith("\t")) {
@@ -95,7 +118,9 @@ public class ExtractUSB {
                             for (int n = 2; n < tokens.length; n++) {
                                 device += tokens[n] + " ";
                             }
+                            
                             info = new USBInfo(dvc, device);
+                            //make an entry where the key is both the vendor and product IDs concatenated
                             devices.put(pID, info);
                         }
                     }
