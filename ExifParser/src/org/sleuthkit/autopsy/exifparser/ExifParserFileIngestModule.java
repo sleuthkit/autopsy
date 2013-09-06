@@ -29,7 +29,6 @@ import com.drew.metadata.exif.GpsDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -60,14 +59,9 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     
     final public static String MODULE_NAME = "Exif Parser";
     final public static String MODULE_VERSION = "1.0";
-    
-    private static final int readHeaderSize = 2;
-    private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
-    private static final char JPEG_SIGNATURE_BE = 0xFFD8;
-    
+        
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
-    private static int messageId = 0;
     
     private int filesProcessed = 0;
 
@@ -172,9 +166,9 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata (" + ex.getLocalizedMessage() + ").");
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: " + f.getName() + "(" + ex.getLocalizedMessage() + ")");
+            logger.log(Level.WARNING, "Failed to process the image file: " + f.getParentPath() + "/" + f.getName() + "(" + ex.getLocalizedMessage() + ")");
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file: " +  f.getName(), ex);
+            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
         } finally {
             try {
                 if(in!=null) { in.close(); }
@@ -190,22 +184,11 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     
     /**
      * Checks if should try to attempt to extract exif.
-     * Currently checks if JPEG image, first by extension, then by signature (if extension fails)
+     * Currently checks if JPEG image (by signature)
      * @param f file to be checked 
      * @return true if to be processed 
      */
     private boolean parsableFormat(AbstractFile f) {
-        // Get the name, extension
-        String name = f.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex == -1) {
-            return false;
-        }
-        String ext = name.substring(dotIndex).toLowerCase();
-        if(ext.equals(".jpeg") || ext.equals(".jpg")) {
-            return true;
-        }
-        
         return isJpegFileHeader(f);
         
     }
@@ -216,26 +199,28 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
      * @return true if jpeg file, false otherwise
      */
     private boolean isJpegFileHeader(AbstractFile file) {
-        if (file.getSize() < readHeaderSize) {
+        if (file.getSize() < 100) {
             return false;
         }
         
-        int bytesRead = 0;
+        byte[] fileHeaderBuffer = new byte[2];
+        int bytesRead;
         try {
-            bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
+            bytesRead = file.read(fileHeaderBuffer, 0, 2);
         } catch (TskCoreException ex) {
             //ignore if can't read the first few bytes, not a JPEG
             return false;
         }
-        if (bytesRead != readHeaderSize) {
+        if (bytesRead != 2) {
             return false;
         }
-        
-        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
-        char signature = bytes.getChar();
-        
-        return signature == JPEG_SIGNATURE_BE;
-        
+        /* Check for the JPEG header. 
+         * Since Java bytes are signed, we cast them to an int first. 
+         */
+        if (((int)(fileHeaderBuffer[0] & 0xff) == 0xff) && ((int)(fileHeaderBuffer[1] & 0xff) == 0xd8)) {
+            return true;
+        }
+        return false;
     }
     
 

@@ -159,10 +159,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     
     
     
-    
     @Override
     void reset() {
-
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
@@ -197,7 +195,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -739,5 +736,4 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //            return frames;
 //        }
 //    }
-
 }

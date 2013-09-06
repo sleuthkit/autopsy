@@ -74,7 +74,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
     //playback
     private long durationMillis = 0;
-    private GstVideoPanel.VideoProgressWorker videoProgressWorker;
+    private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
     private volatile PlayBin2 gstPlaybin2;
     private VideoComponent gstVideoComponent;
@@ -124,33 +124,34 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
         progressSlider.setValue(0);
 
-            progressSlider.addChangeListener(new ChangeListener() {
-                /**
-                 * Should always try to synchronize any call to
-                 * progressSlider.setValue() to avoid a different thread
-                 * changing playbin while stateChanged() is processing
-                 */
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    int time = progressSlider.getValue();
-                    synchronized (playbinLock) {
-                        if (gstPlaybin2 != null && !autoTracking) {
-                            State orig = gstPlaybin2.getState();
-                            if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
-                                logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
-                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                                return;
-                            }
-                            if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
-                                logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
-                                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                                return;
-                            }
-                            gstPlaybin2.setState(orig);
+        progressSlider.addChangeListener(new ChangeListener() {
+            /**
+             * Should always try to synchronize any call to
+             * progressSlider.setValue() to avoid a different thread
+             * changing playbin while stateChanged() is processing
+             */
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int time = progressSlider.getValue();
+                synchronized (playbinLock) {
+                    if (gstPlaybin2 != null && !autoTracking) {
+                        State orig = gstPlaybin2.getState();
+                        if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                            return;
                         }
+                        if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                            return;
+                        }
+                        gstPlaybin2.setState(orig);
                     }
                 }
-            });
+            }
+        });
+>>>>>>> 70b0d7121cbb6d5fa7a9aacf337ffadcef1a6350
     }
 
     private boolean initGst() {
@@ -304,7 +305,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         List<VideoFrame> frames = new ArrayList<>();
         
         Object lock = new Object();
-        GstVideoPanel.FrameCaptureRGBListener rgbListener = new GstVideoPanel.FrameCaptureRGBListener(lock);
+        FrameCaptureRGBListener rgbListener = new FrameCaptureRGBListener(lock);
         
         if (!isInited()) {
             return frames;
@@ -562,6 +563,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private javax.swing.JSlider progressSlider;
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
+    
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
 
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
@@ -769,4 +771,3 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         }
     }
 }
-

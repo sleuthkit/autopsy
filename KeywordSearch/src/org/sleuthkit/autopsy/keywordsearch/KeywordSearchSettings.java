@@ -40,7 +40,7 @@ public class KeywordSearchSettings {
     static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
-    private static UpdateFrequency UpdateFreq = UpdateFrequency.AVG;
+    private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
     private static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<StringExtract.StringExtractUnicodeTable.SCRIPT>();
     private static Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
@@ -190,7 +190,7 @@ public class KeywordSearchSettings {
      //setting default Update Frequency
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")){
          logger.log(Level.INFO, "No configuration for Update Frequency found, generating default...");
-         KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.AVG);
+         KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
       }
      //setting default Extract UTF8
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())){

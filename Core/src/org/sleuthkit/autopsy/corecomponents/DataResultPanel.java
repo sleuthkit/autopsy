@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -47,11 +48,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
+    private ExplorerManager explorerManager;
     private Node rootNode;
     private PropertyChangeSupport pcs;
     
     // Different DataResultsViewers
-    private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();
+    private final List<UpdateWrapper> viewers = new ArrayList<>();
     //custom content viewer to send selections to, or null if the main one
     private DataContent customContentViewer;
     private boolean isMain;
@@ -90,7 +92,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.isMain = isMain;
         this.title = title;
-
     }
 
     /**
@@ -110,7 +111,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.customContentViewer = customContentViewer; 
     }
     
-
     /**
      * Factory method to create, customize and open a new custom data result panel.
      *
@@ -170,20 +170,32 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.customContentViewer = customContentViewer;
     }
     
-    
-
     /**
      * Initializes the panel internals and activates it.
      * Call it within your top component when it is opened.
      * Do not use if used one of the factory methods to create and open the component.
      */
     public void open() {
+        if (null == this.explorerManager) {
+            this.explorerManager = ExplorerManager.find(this);
+        }
+        
         // Add all the DataContentViewer to the tabbed pannel.
         // (Only when the it's opened at the first time: tabCount = 0)
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
         if (totalTabs == 0) {
-            // find all dataContentViewer and add them to the tabbed pane
+            // @@@ Restore the implementation of DataResultViewerTable and DataResultViewerThumbnail
+            // as DataResultViewer service providers when DataResultViewers are updated
+            // to better handle the ExplorerManager sharing implemented to support actions that operate on 
+            // multiple selected nodes.
+            addDataResultViewer(new DataResultViewerTable(this.explorerManager));
+            addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
+                                    
+            // Find all DataResultViewer service providers and add them to the tabbed pane.
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
+                // @@@ Revist this isMain condition, it may be obsolete. If not, 
+                // document the intent of DataResultViewer.createInstance() in the
+                // DataResultViewer interface defintion.
                 DataResultViewer drv;
                 if (isMain) {
                     //for main window, use the instance in the lookup
@@ -193,14 +205,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     //create a new instance of the viewer for non-main window
                     drv = factory.createInstance();
                 }
-                UpdateWrapper resultViewer = new UpdateWrapper(drv);
-                if (customContentViewer != null) {
-                    //set custom content viewer to respond to events from this result viewer
-                    resultViewer.setContentViewer(customContentViewer);
-                }
-                this.viewers.add(resultViewer);
-                this.dataResultTabbedPanel.addTab(drv.getTitle(), drv.getComponent());
-
+                addDataResultViewer(drv);
             }
         }
 
@@ -211,12 +216,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
 
-
         this.setVisible(true);
-
-
     }
 
+    private void addDataResultViewer(DataResultViewer dataResultViewer) {
+        UpdateWrapper viewerWrapper = new UpdateWrapper(dataResultViewer);
+        if (null != this.customContentViewer) {
+            viewerWrapper.setContentViewer(this.customContentViewer);
+        }
+        this.viewers.add(viewerWrapper);
+        this.dataResultTabbedPanel.addTab(dataResultViewer.getTitle(), dataResultViewer.getComponent());        
+    }
+    
     /**
      * Tears down the component.
      * Use within your outer container (such as a top component) when it goes away to tear
@@ -249,11 +260,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.removeAll();
             this.setVisible(false);
         }
-        
-        
-
     }
-
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -335,8 +342,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return ret;
     }
     
-    
-
     public boolean canClose() {
         return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
     }
@@ -349,7 +354,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         int currentTab = pane.getSelectedIndex();
         if (currentTab != -1) {
             UpdateWrapper drv = this.viewers.get(currentTab);
-            if (drv.isOutdated()) {
+            // @@@ Restore commented out isOutDated() check after DataResultViewers are updated
+            // to better handle the ExplorerManager sharing implemented to support actions that operate on 
+            // multiple selected nodes.
+            //if (drv.isOutdated()) {
                 // change the cursor to "waiting cursor" for this operation
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
@@ -357,7 +365,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 } finally {
                     this.setCursor(null);
                 }
-            }
+            //}
         }
     }
 

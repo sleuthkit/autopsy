@@ -1,0 +1,13 @@
+This is my cheat sheet for the confusing set of files that make up JavaHelp.
+
+- Each module has its own helpset in a docs folder under the src folder.  You can create a new helpset in NetBeans UI. 
+- module-hs.xml is the help set file.  I don't think this needs updating. 
+- module-map.xml maps a target name to the path where it can be found.
+- module-toc.xml organizes the files to how they are displayed in the navigation tree on the left. It will merge helpsets together that have the same "text" fields in the 'tocitem' element. 
+- module-idx.xml allows you to map keywords to a specific file in the helpset. (NOTE: I think many existing help sets are not properly using this feature).
+
+Steps to add a help file: 
+- Create the HTML file in the docs directory (copy an existing one).
+- Create an entry in module-map.xml and create a unique target name for the file. We've been using the package name to make it unique. 
+- Add an entry to the module-toc.xml file to place it in the right place in the structure. 
+

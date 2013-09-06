@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Video viewer part of the Media View layered pane.
+ * Uses different engines depending on platform.
  */
 public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
     
@@ -42,7 +43,7 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
     private static GstVideoPanel gstVideoPanel = null;
     
     // A JavaFX implmentation of MediaViewVideoPanel
-     private static FXVideoPanel fxVideoPanel = null;
+    private static FXVideoPanel fxVideoPanel = null;
     
     /**
      * Factory Method to create a MediaViewVideoPanel. 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,7 @@ import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -83,12 +84,13 @@ public class ReportGenerator {
     static final String REPORTS_DIR = "Reports";
         
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
-        // Setup the reporting directory to be [CASE DIRECTORY]/Reports/[Case name] [Timestamp]/
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
-        String datenotime = dateFormat.format(date);
-        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + datenotime + File.separator;
-        // Create the reporting directory
+        String dateNoTime = dateFormat.format(date);
+        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
+        
+        // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(this.reportPath));
         } catch (IOException ex) {
@@ -108,16 +110,21 @@ public class ReportGenerator {
      * @param generalModuleStates the enabled/disabled state of each GeneralReportModule
      */
     private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
-        for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
-            if (entry.getValue()) {
-                TableReportModule module = entry.getKey();
-                tableProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+        if (null != tableModuleStates) {
+            for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    TableReportModule module = entry.getKey();
+                    tableProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
             }
         }
-        for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
-            if (entry.getValue()) {
-                GeneralReportModule module = entry.getKey();
-                generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+        
+        if (null != generalModuleStates) {
+            for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    GeneralReportModule module = entry.getKey();
+                    generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
             }
         }
     }
@@ -170,8 +177,10 @@ public class ReportGenerator {
      * @param tagSelections the enabled/disabled state of the tags to be included in the report
      */
     public void generateArtifactTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
-        ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
-        worker.execute();
+        if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
+            ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
+            worker.execute();
+        }
     }
     
     /**
@@ -215,7 +224,7 @@ public class ReportGenerator {
             }
             
             // Get the tags selected by the user.
-            if (tagSelections != null) {
+            if (null != tagSelections) {
                 for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
                     if (entry.getValue() == true) {
                         tagNamesFilter.add(entry.getKey());
@@ -290,7 +299,17 @@ public class ReportGenerator {
                 Collections.sort(unsortedArtifacts, c);
 
                 // Get the column headers appropriate for the artifact type.
+                /* @@@ BC: Seems like a better design here woudl be to have a method that 
+                 * takes in teh artifact as an argument andreturns the attributes. We then use that
+                 * to make the headers and to make each row afterwards so that we don't ahve artifact-specific
+                 * logic in both getArtifactTableCoumnHeaders and getArtifactRow()
+                 */
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
+                if (columnHeaders == null) {
+                    // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
+                    MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                    continue;
+                }
                                                                 
                 // For every module start a new data type and table for the current artifact type.
                 for (TableReportModule module : tableModules) {
@@ -313,10 +332,11 @@ public class ReportGenerator {
                     }
                 }
                 
+                boolean msgSent = false;
                 // Add a row to the table for every artifact of the current type that satisfies the tags filter, if any.
                 for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
                     // Get any tags associated with the artifact and apply the tags filter, if any.
-                    HashSet<String> tags = Tags.getUniqueTagNames(artifactEntry.getKey());
+                    HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(artifactEntry.getKey());
                     if (failsTagFilter(tags, tagNamesFilter)) {
                         continue;
                     }                    
@@ -327,7 +347,13 @@ public class ReportGenerator {
                         // Get the row data for this type of artifact.
                         List<String> rowData; 
                         rowData = getArtifactRow(artifactEntry, module);   
-                        
+                        if (rowData == null) {
+                            if (msgSent == false) {
+                                MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                                msgSent = true;
+                            }
+                            continue;
+                        }
                         // Add the list of tag names if the artifact is not itself as tag.
                         if (artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
                             artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
@@ -459,7 +485,7 @@ public class ReportGenerator {
                 }
  
                // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
                 if (failsTagFilter(tags, tagNamesFilter)) {
                     continue;
                 }                    
@@ -603,7 +629,7 @@ public class ReportGenerator {
                 }
                 
                // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNames(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
+                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
                 if (failsTagFilter(tags, tagNamesFilter)) {
                     continue;
                 }                    
@@ -725,7 +751,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
                 break;
             case TSK_SPEED_DIAL_ENTRY:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Dial String", "Person Name", "Phone Number",  "Source File"  }));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Short Cut", "Person Name", "Phone Number",  "Source File"  }));
                 break;
             case TSK_BLUETOOTH_PAIRING:
                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
@@ -743,7 +769,10 @@ public class ReportGenerator {
                  columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_SERVICE_ACCOUNT:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Mailbox Name", "ReplyTo Address", "Mail Server", "Source File" }));
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Description", "ReplyTo Address", "Mail Server", "Source File" }));
+                break;
+            case TSK_TOOL_OUTPUT: 
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
                 break;
             default:
                 return null;
@@ -978,7 +1007,7 @@ public class ReportGenerator {
                 return calEntry;
               case TSK_SPEED_DIAL_ENTRY:
                 List<String> speedDialEntry = new ArrayList<String>();
-                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIAL_STRING.getTypeID()));
+                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                 speedDialEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
@@ -1039,13 +1068,17 @@ public class ReportGenerator {
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_MAILBOX_NAME.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
                 appAccount.add(getFileUniquePath(entry.getKey().getObjectID()));
                 return appAccount;
-                  
-                 
+             case TSK_TOOL_OUTPUT: 
+                List<String> row = new ArrayList<>();
+                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                row.add(getFileUniquePath(entry.getKey().getObjectID()));
+                return row; 
         }
         return null;
     }
