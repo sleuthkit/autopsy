@@ -751,7 +751,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
                 break;
             case TSK_SPEED_DIAL_ENTRY:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Dial String", "Person Name", "Phone Number",  "Source File"  }));
+                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Short Cut", "Person Name", "Phone Number",  "Source File"  }));
                 break;
             case TSK_BLUETOOTH_PAIRING:
                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
@@ -769,7 +769,7 @@ public class ReportGenerator {
                  columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_SERVICE_ACCOUNT:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Mailbox Name", "ReplyTo Address", "Mail Server", "Source File" }));
+                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Description", "ReplyTo Address", "Mail Server", "Source File" }));
                 break;
             case TSK_TOOL_OUTPUT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
@@ -1007,7 +1007,7 @@ public class ReportGenerator {
                 return calEntry;
               case TSK_SPEED_DIAL_ENTRY:
                 List<String> speedDialEntry = new ArrayList<String>();
-                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIAL_STRING.getTypeID()));
+                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                 speedDialEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
@@ -1068,7 +1068,7 @@ public class ReportGenerator {
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_MAILBOX_NAME.getTypeID()));
+                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
                 appAccount.add(getFileUniquePath(entry.getKey().getObjectID()));
