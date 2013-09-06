@@ -96,7 +96,9 @@
         <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
         
         <!-- We want to remove the dlls in autopsy/modules/lib because they will
-             shadow the files in the autopsy/modules/lib/ARCHITECTURE folder -->
+             shadow the files in the autopsy/modules/lib/ARCHITECTURE folder in the JAR.
+             These files are legacy from when we used to copy the dlls to this location. 
+             This check should do away in the future. Added Sept '13-->
         <delete failonerror="false">
             <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
                 <include name="libtsk_jni.dll" />

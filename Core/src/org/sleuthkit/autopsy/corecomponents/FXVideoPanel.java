@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.corecomponents;
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
@@ -44,7 +42,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
@@ -62,7 +59,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -180,14 +176,12 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                     }
                     fxMediaPlayer = null;
                 }
-                
-                
+                        
                 if (videoComponent != null) {
                     videoComponent = null;
                 }
             }
-        });
-        
+        });  
 
         currentFile = null;
     }
