@@ -17,11 +17,6 @@
  * limitations under the License.
  */
 
-/*
- * DataContentViewerArtifact.java
- *
- * Created on Feb 9, 2012, 1:40:11 PM
- */
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
@@ -30,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
@@ -42,27 +38,30 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
-import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Viewer displays Artifacts associated with Contents
+ * Instances of this class display the BlackboardArtifacts associated with the Content represented by a Node.
+ * Each BlackboardArtifact is rendered as an HTML representation of its BlackboardAttributes.
  */
 @ServiceProvider(service = DataContentViewer.class, position=3)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer{
     
-    private static int currentPage = 1;
-    private List<BlackboardArtifact> artifacts;
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-    private final static String WAIT_TEXT = "Preparing display...";
+    private final static String WAIT_TEXT = "Preparing display, please wait...";
+    private final static String ERROR_TEXT = "Error retrieving result";
+    private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
+    private int currentPage = 1;
+    private final Object lock = new Object();
+    private List<ArtifactStringContent> artifactContentStrings; // Accessed by multiple threads, use getArtifactContentStrings() and setArtifactContentStrings()
+    SwingWorker<ViewUpdate, Void> currentTask; // Accessed by multiple threads, use startNewTask()
     
-    /** Creates new form DataContentViewerArtifact */
     public DataContentViewerArtifact() {
         initComponents();
         customizeComponents();
-        resetComponent();
+        resetComponents();
     }
 
     /** This method is called from within the constructor to
@@ -204,13 +203,15 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }// </editor-fold>//GEN-END:initComponents
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
-        currentPage = currentPage+1;
-        new DisplayTask(currentPage).execute();        
+        currentPage = currentPage + 1;
+        currentPageLabel.setText(Integer.toString(currentPage));  
+        startNewTask(new SelectedArtifactChangedTask(currentPage));
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
-        currentPage = currentPage-1;
-        new DisplayTask(currentPage).execute();        
+        currentPage = currentPage - 1;
+        currentPageLabel.setText(Integer.toString(currentPage));  
+        startNewTask(new SelectedArtifactChangedTask(currentPage));
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -228,125 +229,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
-
-    @Override
-    public void setNode(Node selectedNode) {
-        if (selectedNode == null) {
-            resetComponent();
-            return;
-        }
-        
-        Lookup lookup = selectedNode.getLookup();
-        Content content = lookup.lookup(Content.class);
-        if (content == null) {
-            resetComponent();
-            return; 
-        }
-
-        try {
-            artifacts = content.getAllArtifacts();
-        } 
-        catch (TskException ex) {
-            logger.log(Level.WARNING, "Couldn't get artifacts", ex);
-            resetComponent();
-            return; 
-        }
-
-        // focus on a specific artifact if it is in the node
-        int index = 0;
-        BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
-        if (artifact != null) {
-            index = artifacts.indexOf(artifact);
-            if (index == -1) {
-                index = 0;
-            }
-        }        
-        
-        // A little bit of cleverness here - add one since setDataView() is also passed page numbers.
-        new DisplayTask(index + 1).execute();
-    }
-
-    @Override
-    public String getTitle() {
-        return "Result View";
-    }
-
-    @Override
-    public String getToolTip() {
-        return "Displays Results associated with the file";
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new DataContentViewerArtifact();
-    }
-
-    @Override
-    public Component getComponent() {
-        return this;
-    }
-
-    @Override
-    public void resetComponent() {
-        // clear / reset the fields
-        currentPage = 1;
-        this.artifacts = new ArrayList<>();
-        currentPageLabel.setText("");
-        totalPageLabel.setText("");
-        outputViewPane.setText("");
-        prevPageButton.setEnabled(false);
-        nextPageButton.setEnabled(false);
-        setComponentsVisibility(false); // hides the components that not needed
-        this.setCursor(null);
-    }
-    
-    /**
-     * To set the visibility of specific components in this class.
-     *
-     * @param isVisible  whether to show or hide the specific components
-     */
-    private void setComponentsVisibility(boolean isVisible) {
-        currentPageLabel.setVisible(isVisible);
-        totalPageLabel.setVisible(isVisible);
-        ofLabel.setVisible(isVisible);
-        prevPageButton.setVisible(isVisible);
-        nextPageButton.setVisible(isVisible);
-        pageLabel.setVisible(isVisible);
-        pageLabel2.setVisible(isVisible);
-        outputViewPane.setVisible(isVisible);
-    }
-
-    @Override
-    public boolean isSupported(Node node) {
-        if (node == null) {
-            return false;
-        }
-
-        Content content = node.getLookup().lookup(Content.class);        
-        if(content != null) {
-            try {
-                long size = content.getAllArtifactsCount();
-                return size > 0;
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get All Blackboard Artifacts Count", ex);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        if(isSupported) {
-            if(art == null) {
-                return 3;
-            } else {
-                return 5;
-            }
-        } else {
-            return 0;
-        }
-    }
 
     private void customizeComponents(){
         outputViewPane.setComponentPopupMenu(rightClickMenu);
@@ -382,48 +264,318 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     /**
-     * Display a single artifact from a list. 
-     * @param artifacts List of artifacts that could be displayed
-     * @param offset Index into the list for the artifact to display
+     * Resets the components to an empty view state.
      */
-    private void setDataView(int offset) {
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        outputViewPane.setText(WAIT_TEXT);
-
-        if(artifacts.isEmpty()){
-            resetComponent();
+    private void resetComponents() {
+        currentPage = 1;
+        currentPageLabel.setText("");
+        totalPageLabel.setText("");
+        outputViewPane.setText("");
+        prevPageButton.setEnabled(false);
+        nextPageButton.setEnabled(false);
+    }
+            
+    @Override
+    public void setNode(Node selectedNode) {
+        // @@@ Remove this when the redundant setNode() calls problem is fixed.
+        if (currentNode == selectedNode) {
             return;
         }
-        StringContent artifactString = new ArtifactStringContent(artifacts.get(offset-1));
-        String text = artifactString.getString();
+        currentNode = selectedNode;
+
+        // @@@ resetComponent() is currently a no-op due to the redundant setNode() calls problem.
+        // For now, do the reset here. Remove this when the redundant setNode() calls problem is fixed.
+        resetComponents();
+                
+        // Make sure there is a node. Null might be passed to reset the viewer.
+        if (selectedNode == null) {
+            return;
+        }
+                
+        // Make sure the node is of the correct type.
+        Lookup lookup = selectedNode.getLookup();
+        Content content = lookup.lookup(Content.class);
+        if (content == null) {
+            return; 
+        }
         
-        int pages = artifacts.size();
+        startNewTask(new SelectedNodeChangedTask(selectedNode));
+    }
+
+    @Override
+    public String getTitle() {
+        return "Result View";
+    }
+
+    @Override
+    public String getToolTip() {
+        return "Displays Results associated with the file";
+    }
+
+    @Override
+    public DataContentViewer createInstance() {
+        return new DataContentViewerArtifact();
+    }
+
+    @Override
+    public Component getComponent() {
+        return this;
+    }
+
+    @Override
+    public void resetComponent() {
+        // @@@ Restore this when the redundant setNode() calls problem is fixed.
+        // resetComponents();
+    }
+    
+    @Override
+    public boolean isSupported(Node node) {
+        if (node == null) {
+            return false;
+        }
+
+        Content content = node.getLookup().lookup(Content.class);        
+        if(content != null) {
+            try {
+                return content.getAllArtifactsCount() > 0;
+            } 
+            catch (TskException ex) {
+                logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int isPreferred(Node node, boolean isSupported) {
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        if(isSupported) {
+            if(artifact == null) {
+                return 3;
+            } 
+            else {
+                return 5;
+            }
+        } 
+        else {
+            return 0;
+        }
+    }
+
+    /**
+     * Instances of this class are simple containers for view update information generated by a background thread.
+     */
+    private class ViewUpdate {
+        int numberOfPages;
+        int currentPage;
+        String text;
         
-        nextPageButton.setEnabled(offset < pages);
-        prevPageButton.setEnabled(offset > 1);
+        ViewUpdate(int numberOfPages, int currentPage, String text) {
+            this.currentPage = currentPage;
+            this.numberOfPages = numberOfPages;
+            this.text = text;
+        }
+    }
+       
+    /**
+     * Called from queued SwingWorker done() methods on the EDT thread, so doesn't need to be synchronized.
+     * @param viewUpdate A simple container for display update information from a background thread.
+     */
+    private void updateView(ViewUpdate viewUpdate) {  
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
-        currentPage = offset;
+        nextPageButton.setEnabled(viewUpdate.currentPage < viewUpdate.numberOfPages);
+        prevPageButton.setEnabled(viewUpdate.currentPage > 1);
+        currentPage = viewUpdate.currentPage;
+        totalPageLabel.setText(Integer.toString(viewUpdate.numberOfPages));
+        currentPageLabel.setText(Integer.toString(currentPage));  
         
-        totalPageLabel.setText(Integer.toString(pages));
-        currentPageLabel.setText(Integer.toString(currentPage));
-        
-        outputViewPane.setText(text);
-        setComponentsVisibility(true);
+        // @@@ This can take a long time. Perhaps a faster HTML renderer can be found.
+        // Note that the rendering appears to be done on a background thread, since the
+        // wait cursor reset below happens before the new text hits the JTextPane. On the
+        // other hand, the UI is unresponsive...
+        outputViewPane.setText(viewUpdate.text); 
         outputViewPane.moveCaretPosition(0);
+        
         this.setCursor(null);
     }    
     
-    private class DisplayTask extends SwingWorker<Integer, Void> {
-        final int pageIndex;
+    /**
+     * Start a new task on its own background thread, canceling the previous task.
+     * @param task A new SwingWorker object to execute as a background thread. 
+     */
+    private synchronized void startNewTask(SwingWorker<ViewUpdate, Void> task) {   
+        outputViewPane.setText(WAIT_TEXT);        
+        outputViewPane.moveCaretPosition(0);
+                
+        // The output of the previous task is no longer relevant.
+        if (currentTask != null) {
+            // This call sets a cancellation flag. It does not terminate the background thread running the task. 
+            // The task must check the cancellation flag and react appropriately.
+            currentTask.cancel(false);
+        }
+                        
+        // Start the new task.
+        currentTask = task;
+        currentTask.execute();
+    }
+
+    /**
+     * Populate the cache of artifact represented as strings.
+     * @param artifactStrings A list of string representations of artifacts.
+     */
+    private void setArtifactContentStrings(List<ArtifactStringContent> artifactStrings) {
+        synchronized (lock) {
+            this.artifactContentStrings = artifactStrings;
+        }
+    }
+    
+    /**
+     * Retrieve the cache of artifact represented as strings.
+     * @return A list of string representations of artifacts.
+     */
+    private List<ArtifactStringContent> getArtifactContentStrings() {
+        synchronized (lock) {
+            return artifactContentStrings;
+        }
+    }
+    
+    /**
+     * Instances of this class use a background thread to generate a ViewUpdate when a node is selected,
+     * changing the set of blackboard artifacts ("results") to be displayed.
+     */
+    private class SelectedNodeChangedTask extends SwingWorker<ViewUpdate, Void> {
+        private final Node selectedNode;
         
-        DisplayTask(final int pageIndex) {
+        SelectedNodeChangedTask(Node selectedNode) {
+            this.selectedNode = selectedNode;
+        }
+        
+        @Override
+        protected ViewUpdate doInBackground() {   
+            // Get the lookup for the node for access to its underlying content and
+            // blackboard artifact, if any.
+            Lookup lookup = selectedNode.getLookup();
+            
+            // Get the content.
+            Content content = lookup.lookup(Content.class);
+            if (content == null) {
+                return new ViewUpdate(getArtifactContentStrings().size(), currentPage, ERROR_TEXT); 
+            }
+            
+            // Get all of the blackboard artifacts associated with the content. These are what this
+            // viewer displays.
+            ArrayList<BlackboardArtifact> artifacts;
+            try {
+                artifacts = content.getAllArtifacts();
+            } 
+            catch (TskException ex) {
+                logger.log(Level.WARNING, "Couldn't get artifacts", ex);
+                return new ViewUpdate(getArtifactContentStrings().size(), currentPage, ERROR_TEXT); 
+            }
+            
+            if (isCancelled()) {
+                return null;
+            }
+            
+            // Build the new artifact strings cache.
+            ArrayList<ArtifactStringContent> artifactStrings = new ArrayList<>();
+            for (BlackboardArtifact artifact : artifacts) {
+                artifactStrings.add(new ArtifactStringContent(artifact));
+            }
+
+            // If the node has an underlying blackboard artifact, show it. If not,
+            // show the first artifact.
+            int index = 0;
+            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
+            if (artifact != null) {
+                index = artifacts.indexOf(artifact);
+                if (index == -1) {
+                    index = 0;
+                }
+            }        
+
+            if (isCancelled()) {
+                return null;
+            }
+                        
+            // Add one to the index of the artifact string for the corresponding page index. Note that the getString() method
+            // of ArtifactStringContent does a lazy fetch of the attributes of the correspoding artifact and represents them as
+            // HTML.
+            ViewUpdate viewUpdate = new ViewUpdate(artifactStrings.size(), index + 1, artifactStrings.get(index).getString()); 
+
+            // It may take a considerable amount of time to fetch the attributes of the selected artifact and render them
+            // as HTML, so check for cancellation.
+            if (isCancelled()) {
+                return null;
+            }
+
+            // Update the artifact strings cache.
+            setArtifactContentStrings(artifactStrings);
+            
+            return viewUpdate;
+        }
+        
+        @Override
+        protected void done() {
+            if (!isCancelled()) {
+                try {
+                    ViewUpdate viewUpdate = get();
+                    if (viewUpdate != null) {
+                        updateView(viewUpdate);
+                    }
+                }
+                catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                
+                }                
+            }
+        }        
+    }
+    
+    /**
+     * Instances of this class use a background thread to generate a ViewUpdate when the user pages the view
+     * to look at another blackboard artifact ("result").
+     */
+    private class SelectedArtifactChangedTask extends SwingWorker<ViewUpdate, Void> {
+        private final int pageIndex;
+        
+        SelectedArtifactChangedTask(final int pageIndex) {
             this.pageIndex = pageIndex;
         }
         
         @Override
-        public Integer doInBackground() {
-            setDataView(pageIndex);
-            return 0;
+        protected ViewUpdate doInBackground() {
+            // Get the artifact string to display from the cache. Note that one must be subtracted from the
+            // page index to get the corresponding artifact string index.
+            List<ArtifactStringContent> artifactStrings = getArtifactContentStrings();
+            ArtifactStringContent artifactStringContent = artifactStrings.get(pageIndex - 1);
+
+            // The getString() method of ArtifactStringContent does a lazy fetch of the attributes of the 
+            // correspoding artifact and represents them as HTML.
+            String artifactString = artifactStringContent.getString();
+            
+            // It may take a considerable amount of time to fetch the attributes of the selected artifact and render them
+            // as HTML, so check for cancellation.
+            if (isCancelled()) {
+                return null;
+            }
+                                    
+            return new ViewUpdate(artifactStrings.size(), pageIndex, artifactString);
         }
-    }            
+        
+        @Override
+        protected void done() {
+            if (!isCancelled()) {
+                try {
+                    ViewUpdate viewUpdate = get();
+                    if (viewUpdate != null) {
+                        updateView(viewUpdate);
+                    }
+                }
+                catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                
+                }                
+            }
+        }
+    }               
 }
