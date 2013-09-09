@@ -43,7 +43,6 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(AddImageVisualPanel1.allFilter);
         fc.addChoosableFileFilter(AddImageVisualPanel1.rawFilter);
         fc.addChoosableFileFilter(AddImageVisualPanel1.encaseFilter);
         fc.setFileFilter(AddImageVisualPanel1.allFilter);
