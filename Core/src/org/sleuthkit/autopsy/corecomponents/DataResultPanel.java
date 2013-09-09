@@ -185,8 +185,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
         if (totalTabs == 0) {
             // @@@ Restore the implementation of DataResultViewerTable and DataResultViewerThumbnail
-            // as DataResultViewer service providers when DataResultViewers can be made compatible with node 
-            // multiple selection actions.    
+            // as DataResultViewer service providers when DataResultViewers are updated
+            // to better handle the ExplorerManager sharing implemented to support actions that operate on 
+            // multiple selected nodes.
             addDataResultViewer(new DataResultViewerTable(this.explorerManager));
             addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
                                     
@@ -353,7 +354,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         int currentTab = pane.getSelectedIndex();
         if (currentTab != -1) {
             UpdateWrapper drv = this.viewers.get(currentTab);
-            if (drv.isOutdated()) {
+            // @@@ Restore commented out isOutDated() check after DataResultViewers are updated
+            // to better handle the ExplorerManager sharing implemented to support actions that operate on 
+            // multiple selected nodes.
+            //if (drv.isOutdated()) {
                 // change the cursor to "waiting cursor" for this operation
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
@@ -361,7 +365,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 } finally {
                     this.setCursor(null);
                 }
-            }
+            //}
         }
     }
 
