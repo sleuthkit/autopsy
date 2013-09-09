@@ -353,7 +353,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public String getTitle() {
-        return "Thumbnail View";
+        return "Thumbnail";
     }
 
     @Override
