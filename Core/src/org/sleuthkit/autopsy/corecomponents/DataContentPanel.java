@@ -1,7 +1,22 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2013 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
@@ -18,7 +33,6 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -26,15 +40,16 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Instances of this class use child DataContentViewers to present one or more 
+ * views of the content underlying a Node.
  */
 public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
     
-    private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();;
+    private final List<UpdateWrapper> viewers = new ArrayList<>();;
     private Node currentNode;
-    private final boolean isMain;
+    private final boolean isMain; // @@@ This is not used, suggesting some simplifications.
 
     /**
      * Creates new DataContentPanel panel
@@ -70,6 +85,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             jTabbedPane1.setEnabledAt(tab, false);
         }
         
+        // This wires the stateChanged() method to the events of the tabbed pane.
         jTabbedPane1.addChangeListener(this);
     }
     
@@ -121,8 +137,6 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            
-            
             String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
             // set the file path
             if (selectedNode == null) {
@@ -157,8 +171,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
      *
      * @param selectedNode  the selected content Node
      */
-    public void setupTabs(Node selectedNode) {
-        
+    public void setupTabs(Node selectedNode) {    
         // get the preference for the preferred viewer
         Preferences pref = NbPreferences.forModule(GeneralPanel.class);
         boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
@@ -169,7 +182,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int preferredViewerIndex = 0;
         for (int i = 0; i < totalTabs; ++i) {
             UpdateWrapper dcv = viewers.get(i);
-            dcv.resetComponent();
+            dcv.resetComponent(); // Marks each viewer as "dirty."
 
             // disable an unsupported tab (ex: picture viewer)
             if ((selectedNode == null) || (dcv.isSupported(selectedNode) == false)) {
@@ -201,6 +214,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         }
     }
 
+    // This is needed because the DataContent interface extends PropertyChangeListener.
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
     }
@@ -256,6 +270,5 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int isPreferred(Node node, boolean isSupported) {
             return this.wrapped.isPreferred(node, isSupported);
         }
-    }
-    
+    } 
 }

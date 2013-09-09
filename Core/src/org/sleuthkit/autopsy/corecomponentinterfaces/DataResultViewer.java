@@ -17,73 +17,71 @@
  * limitations under the License.
  */
 
-
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
 
 /**
- * Interface for the different viewers that show a set of nodes in the DataResult area. 
- * AbstractDataResultViewer has default implementations for the action handlers. 
- * 
+ * Interface for the viewers that show a set of nodes in the data result mode 
+ * (area). Note that the AbstractDataResultViewer class provides a default 
+ * implementation of this interface. 
  */
 public interface DataResultViewer {
     /**
-     * Set the root node to display in this viewer. When called with null, must
-     * clear all references to previous nodes.
+     * Sets the root node for the viewer to display. May be called with null
+     * to indicate there is currently no root node to display.
      */
     public void setNode(Node selectedNode);
 
     /**
-     * Gets the title of this viewer
+     * Gets the title of the viewer.
      */
     public String getTitle();
 
     /**
-     * Get a new instance of DataResultViewer
+     * Gets a new instance of the viewer.
      */
     public DataResultViewer createInstance();
     
     /**
-     * Get the Swing component (i.e. JPanel) for this viewer
+     * Gets the visual component (e.g., a JPanel) of the viewer.
      */
     public Component getComponent();
 
     /**
-     * Resets the viewer.
+     * Resets the display of the viewer to an empty state.
      */
     public void resetComponent();
 
     /**
-     * Frees the objects that have been allocated by this viewer, in
+     * Frees the objects that have been allocated by the viewer, in
      * preparation for permanently disposing of it.
      */
     public void clearComponent();
     
     /**
-     * Expand node, if supported by the viewed
-     * @param n Node to expand
+     * Directs the viewer to expand the indicated node, if the viewer supports 
+     * Node expansion.
      */
-    public void expandNode(Node n);
+    public void expandNode(Node node);
     
     /**
-     * Select the given node array
+     * Notifies the viewer of a node selection event.
      */
-    public void setSelectedNodes(Node[] selected);
+    public void setSelectedNodes(Node[] selectedNodes);
     
     /**
-     * Checks whether the currently selected root node
-     * is supported by this viewer
-     * @param selectedNode the selected node
-     * @return True if supported, else false
+     * Returns true if the viewer supports displaying the indicated node, false
+     * otherwise.
      */
     public boolean isSupported(Node selectedNode);
-    
+
     /**
-     * Set a custom content viewer to respond to selection events from this result viewer.
-     * If not set, the default content viewer is user
-     * @param contentViewer content viewer to respond to selection events from this viewer
+     * Sets a custom content viewer (i.e., a data content mode (area) component) 
+     * to which the viewer is expected to push node selection events.
+     * @deprecated
      */
+    @Deprecated
     public void setContentViewer(DataContent contentViewer);
 }

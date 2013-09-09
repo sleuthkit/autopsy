@@ -78,7 +78,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
         ov.setAllowedDropActions(DnDConstants.ACTION_NONE);
 
-        // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // don't show the root node
@@ -258,7 +257,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 ///    root = new TableFilterNode(root, true);
                 //}
 
-                em.setRootContext(root);
+                getExplorerManager().setRootContext(root);
 
 
                 final OutlineView ov = ((OutlineView) this.tableScrollPanel);
@@ -345,7 +344,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } else {
                 final OutlineView ov = ((OutlineView) this.tableScrollPanel);
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
+                getExplorerManager().setRootContext(emptyNode); // make empty node
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 ov.setPropertyColumns(); // set the empty property header
             }

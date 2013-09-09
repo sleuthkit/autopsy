@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -176,33 +177,89 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Do not use if used one of the factory methods to create and open the component.
      */
     public void open() {
-        if (null == this.explorerManager) {
-            this.explorerManager = ExplorerManager.find(this);
+        if (null == explorerManager) {
+            // Get an ExplorerManager to pass to the child DataResultViewers. If the application
+            // components are put together as expected, this will be an ExplorerManager owned
+            // by an ancestor TopComponent. The TopComponent will have put this ExplorerManager
+            // in a Lookup that is set as the global action context when the TopComponent has 
+            // focus. This makes Node selections available to Actions without coupling the
+            // actions to a particular Component. Note that getting the ExplorerManager in the
+            // construcotr would be too soon, since the object has no ancestor TopComponent at
+            // that point.
+            explorerManager = ExplorerManager.find(this);
+
+            // A DataResultPanel listens for Node selections in its DataResultViewers so it 
+            // can push the selections both to its child DataResultViewers and to a DataContent object. 
+            // The default DataContent object is a DataContentTopComponent in the data content mode (area),
+            // and is the parent of a DataContentPanel that hosts a set of DataContentViewers. 
+            explorerManager.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (!Case.isCaseOpen()) {
+                            // Handle the in-between condition when case is being closed
+                            // and legacy selection events are pumped.
+                            return;
+                        }
+
+                        String propertyChanged = evt.getPropertyName();
+                        if (propertyChanged.equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+                            // If a custom DataContent object has not been specified, get the default instance.
+                            DataContent contentViewer = customContentViewer;
+                            if (null == contentViewer) {
+                                contentViewer = Lookup.getDefault().lookup(DataContent.class);
+                            }
+
+                            try {
+                                Node[] selectedNodes = explorerManager.getSelectedNodes();
+                                for (UpdateWrapper drv : viewers) {
+                                    drv.setSelectedNodes(selectedNodes);
+                                }                                
+                                                                
+                                // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
+                                // This is important to the DataContent object, since the content mode (area) of the app is designed 
+                                // to show only the content underlying a single Node.                                
+                                if (selectedNodes.length == 1) {
+                                    contentViewer.setNode(selectedNodes[0]);
+                                } 
+                                else {                                    
+                                    contentViewer.setNode(null);
+                                }
+                            } 
+                            finally {
+                                setCursor(null);
+                            }
+                        }
+                    }
+                });                        
         }
-        
-        // Add all the DataContentViewer to the tabbed pannel.
+
+        // Add all the DataContentViewers to the tabbed pannel.
         // (Only when the it's opened at the first time: tabCount = 0)
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
         if (totalTabs == 0) {
-            // @@@ Restore the implementation of DataResultViewerTable and DataResultViewerThumbnail
-            // as DataResultViewer service providers when DataResultViewers are updated
-            // to better handle the ExplorerManager sharing implemented to support actions that operate on 
-            // multiple selected nodes.
+            // Add the default DataResultViewer service providers to the tabbed pane.
             addDataResultViewer(new DataResultViewerTable(this.explorerManager));
             addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
                                     
-            // Find all DataResultViewer service providers and add them to the tabbed pane.
+            // Find additional DataResultViewer service providers and add them to the tabbed pane.
+            // @@@ DataResultViewers using this extension point do not currently get a reference
+            // to the DataResultTopComponent's ExplorerManager, so any node selection events in
+            // them or their child components are not available to Actions via the global action
+            // context. one way to fix this would be to change the DataResultViewer.createInstance()
+            // method called below to accept an ExplorerManager argument.
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                 // @@@ Revist this isMain condition, it may be obsolete. If not, 
                 // document the intent of DataResultViewer.createInstance() in the
                 // DataResultViewer interface defintion.
                 DataResultViewer drv;
                 if (isMain) {
-                    //for main window, use the instance in the lookup
+                    // For main window, use the instance in the lookup.
                     drv = factory; 
                 }
                 else {
-                    //create a new instance of the viewer for non-main window
+                    // Create a new instance of the viewer for a non-main window.
                     drv = factory.createInstance();
                 }
                 addDataResultViewer(drv);
@@ -334,7 +391,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public List<DataResultViewer> getViewers() {
-        List<DataResultViewer> ret = new ArrayList<DataResultViewer>();
+        List<DataResultViewer> ret = new ArrayList<>();
         for (UpdateWrapper w : viewers) {
             ret.add(w.getViewer());
         }

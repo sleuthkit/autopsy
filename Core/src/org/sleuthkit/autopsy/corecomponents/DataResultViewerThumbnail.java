@@ -249,7 +249,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 break;
         }                    
 
-        Node root = em.getRootContext();
+        Node root = getExplorerManager().getRootContext();
         for (Children c : Arrays.asList(root.getChildren()) ) {
             ((ThumbnailViewChildren)c).setIconSize(iconSize);
         }
@@ -265,7 +265,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // update even though the new and old Node values are identical. This in turn
         // will cause the entire view to update completely. After this we 
         // immediately set the node back to the current child by calling switchPage().        
-        em.setExploredContext(root);
+        getExplorerManager().setExploredContext(root);
         switchPage();
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
@@ -312,10 +312,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
-                em.setRootContext(root);
+                getExplorerManager().setRootContext(root);
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
+                getExplorerManager().setRootContext(emptyNode); // make empty node
 
                 IconView iv = ((IconView) this.thumbnailScrollPanel);
                 iv.setBackground(Color.BLACK);
@@ -436,9 +436,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
                 progress.start();
                 progress.switchToIndeterminate();
-                Node root = em.getRootContext();
+                Node root = getExplorerManager().getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(curPage - 1);    
-                em.setExploredContext(pageNode);
+                getExplorerManager().setExploredContext(pageNode);
                 curPageImages = pageNode.getChildren().getNodesCount();
                 return null;
             }
@@ -534,7 +534,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     }
                 });
 
-                em.setExploredContext(pageNode);
+                getExplorerManager().setExploredContext(pageNode);
             }
 
 
