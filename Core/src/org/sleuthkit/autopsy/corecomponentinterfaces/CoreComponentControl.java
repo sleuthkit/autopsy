@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.Lookup;
@@ -75,13 +76,42 @@ public class CoreComponentControl {
      */
     public static void closeCoreWindows() {
         WindowManager wm = WindowManager.getDefault();
+        Set<? extends Mode> modes = wm.getModes();
         Iterator<? extends Mode> iter = wm.getModes().iterator();
 
+        TopComponent directoryTree = null;
+        TopComponent favorites = null;
+        String tcName = "";
         while (iter.hasNext()) {
             Mode mode = iter.next();
             for (TopComponent tc : mode.getTopComponents()) {
-                tc.close();
+                tcName = tc.getName();
+                if (tcName == null) {
+                    logger.log(Level.INFO, "tcName was null");
+                    tcName = "";
+                }
+                switch (tcName) {
+                    case "Directory Tree":
+                        logger.log(Level.INFO, "Found directory tree top component.");
+                        directoryTree = tc;
+                        break;
+                    case "Favorites":
+                        logger.log(Level.INFO, "Found favorites topc component.");
+                        favorites = tc;
+                        break;
+                    default:
+                        logger.log(Level.INFO, "Closing: " + tc.getName());
+                        tc.close();
+                        break;
+                }
             }
+        }
+        
+        if (directoryTree != null) {
+            directoryTree.close();
+        }
+        if (favorites != null) {
+            favorites.close();
         }
     }
 }

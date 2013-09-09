@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -41,7 +40,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
-import static javafx.scene.layout.BorderPane.setAlignment;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -57,7 +55,6 @@ import static javafx.scene.media.MediaPlayer.Status.STOPPED;
 import javafx.scene.media.MediaPlayerBuilder;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -97,32 +94,21 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     public FXVideoPanel() {
         fxInited = Installer.isJavaFxInited();
         initComponents();
-        customizeComponents();
+        if (fxInited) {
+            setupFx();
+        }
     }
 
     public JPanel getVideoPanel() {
         return this;
     }
-
-    public Component getVideoComponent() {
-        return videoComponent;
-    }
-
-    private void customizeComponents() {
-        if (fxInited) {
-            setupFx();
-        }
-    }
     
-    void setupFx() {
+    private void setupFx() {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 videoComponent = new JFXPanel();
                 mediaPane = new MediaPane();
-                Scene fxScene = new Scene(mediaPane);
-                videoComponent.setScene(fxScene);
-
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -136,6 +122,15 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
     @Override
     synchronized void setupVideo(final AbstractFile file, final Dimension dims) {
+        if(file.equals(currentFile)) {
+            return;
+        }
+        if (!Case.isCaseOpen()) {
+            //handle in-between condition when case is being closed
+            //and an image was previously selected
+            return;
+        }
+        reset();
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
@@ -195,16 +190,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+
+        setBackground(new java.awt.Color(0, 0, 0));
+        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
@@ -325,13 +313,13 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
         
         /** The Listener for MediaPlayer.onReady(). **/
-        private final MediaPane.ReadyListener READY_LISTENER = new MediaPane.ReadyListener();
+        private final ReadyListener READY_LISTENER = new MediaPane.ReadyListener();
         
         /** The Listener for MediaPlayer.onEndOfMedia(). **/
-        private final MediaPane.EndOfMediaListener END_LISTENER = new MediaPane.EndOfMediaListener();
+        private final EndOfMediaListener END_LISTENER = new MediaPane.EndOfMediaListener();
         
         /** The Listener for the CurrentTime property of the MediaPlayer. **/
-        private final MediaPane.TimeListener TIME_LISTENER = new MediaPane.TimeListener();
+        private final TimeListener TIME_LISTENER = new MediaPane.TimeListener();
         
         public MediaPane() {
             // Video Display
@@ -371,7 +359,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
         
         /**
-         * Setup the MediaPane for media playback.
+         * Setup the MediaPane for media playback. Run on the JavaFx Thread.
+         * 
          * 
          * @param mediaUri the URI of the media
          */
@@ -379,6 +368,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             disableControls(true);
             mediaPlayer = createMediaPlayer(mediaUri);
             mediaView.setMediaPlayer(mediaPlayer);
+            Scene fxScene = new Scene(mediaPane);
+            videoComponent.setScene(fxScene);
             disableControls(false);
         }
         
@@ -388,7 +379,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          */
         public void reset() {
             if (mediaPlayer != null) {
-                if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING ) {
+                if (mediaPlayer.getStatus() == Status.PLAYING) {
                     mediaPlayer.stop();
                 }
                 mediaPlayer = null;

@@ -32,7 +32,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
-import org.openide.modules.ModuleInstall;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -182,8 +182,13 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
 
                 fxPanel.setScene(fxScene);
 
-                //show the panel after fully loaded
-                fxPanel.setVisible(true);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        //show the panel after fully loaded
+                        fxPanel.setVisible(true);
+                    }
+                });
 
             }
         });
