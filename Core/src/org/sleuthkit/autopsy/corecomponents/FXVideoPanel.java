@@ -54,6 +54,7 @@ import static javafx.scene.media.MediaPlayer.Status.READY;
 import static javafx.scene.media.MediaPlayer.Status.STOPPED;
 import javafx.scene.media.MediaPlayerBuilder;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -150,6 +151,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         
         ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
         em.execute();
+        
+        mediaPane.setFit(dims);
     }
     
     
@@ -303,6 +306,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         /** The container for the media video output. **/
         private HBox mediaViewPane;
         
+        private VBox controlPanel;
+        
         private Slider progressSlider;
         private Button pauseButton;
         private Label progressLabel;
@@ -313,13 +318,21 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
         
         /** The Listener for MediaPlayer.onReady(). **/
-        private final ReadyListener READY_LISTENER = new MediaPane.ReadyListener();
+        private final ReadyListener READY_LISTENER = new ReadyListener();
         
         /** The Listener for MediaPlayer.onEndOfMedia(). **/
-        private final EndOfMediaListener END_LISTENER = new MediaPane.EndOfMediaListener();
+        private final EndOfMediaListener END_LISTENER = new EndOfMediaListener();
         
         /** The Listener for the CurrentTime property of the MediaPlayer. **/
-        private final TimeListener TIME_LISTENER = new MediaPane.TimeListener();
+        private final TimeListener TIME_LISTENER = new TimeListener();
+        
+        private final NotPlayListener NOT_PLAY_LISTENER = new NotPlayListener();
+        
+        private final PlayListener PLAY_LISTENER = new PlayListener();
+        
+        private static final String PLAY_TEXT = "►";
+        
+        private static final String PAUSE_TEXT = "||";
         
         public MediaPane() {
             // Video Display
@@ -331,22 +344,22 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             setCenter(mediaViewPane);
             
             // Media Controls
-            VBox controlPanel = new VBox();
+            controlPanel = new VBox();
             mediaTools = new HBox();
             mediaTools.setAlignment(Pos.CENTER);
             mediaTools.setPadding(new Insets(5, 10, 5, 10));
             
-            pauseButton  = new Button("►");
+            pauseButton  = new Button(PLAY_TEXT);
             mediaTools.getChildren().add(pauseButton);
-            mediaTools.getChildren().add(new Label("    "));
+            mediaTools.getChildren().add(new Label("  "));
             progressSlider = new Slider();
             HBox.setHgrow(progressSlider,Priority.ALWAYS);
             progressSlider.setMinWidth(50);
             progressSlider.setMaxWidth(Double.MAX_VALUE);
             mediaTools.getChildren().add(progressSlider);
             progressLabel = new Label();
-            progressLabel.setPrefWidth(130);
-            progressLabel.setMinWidth(50);
+            progressLabel.setPrefWidth(135);
+            progressLabel.setMinWidth(135);
             mediaTools.getChildren().add(progressLabel);
             
             controlPanel.getChildren().add(mediaTools);
@@ -355,7 +368,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             controlPanel.getChildren().add(infoLabel);
             setBottom(controlPanel);
             setProgressActionListeners();
-            disableControls(true);
         }
         
         /**
@@ -365,12 +377,12 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param mediaUri the URI of the media
          */
         public void prepareMedia(String mediaUri) {
-            disableControls(true);
+//            disableControls(false);
             mediaPlayer = createMediaPlayer(mediaUri);
             mediaView.setMediaPlayer(mediaPlayer);
             Scene fxScene = new Scene(mediaPane);
             videoComponent.setScene(fxScene);
-            disableControls(false);
+//            disableControls(true);
         }
         
         /**
@@ -385,7 +397,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 mediaPlayer = null;
             }
             setInfoLabelText("");
-            disableControls(true);
+            resetProgress();
         }
         
         /**
@@ -394,6 +406,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param text
          */
         public void setInfoLabelText(final String text) {
+            logger.log(Level.INFO, "Setting Info Label Text: " + text);
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -401,6 +414,23 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 }
             });
         }
+        
+        /**
+         * Set the size of the MediaPane and it's components.
+         * 
+         * @param dims the current dimensions of the DataContentViewer
+         */
+        public void setFit(final Dimension dims) {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    setPrefSize(dims.getWidth(), dims.getHeight());
+                    // Set the Video output to fit the size allocated for it. give an 
+                    // extra few px to ensure the info label will be shown
+                    mediaView.setFitHeight(dims.getHeight() - controlPanel.getHeight());
+                }
+            });
+        } 
         
         /**
          * Set the action listeners for the pause button and progress slider.
@@ -414,25 +444,18 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                     switch (status) {
                         // If playing, pause
                         case PLAYING:
-                            pauseButton.setText("►");
                             mediaPlayer.pause();
                             break;
                         // If ready, paused or stopped, continue playing
                         case READY:
                         case PAUSED:
                         case STOPPED:
-                            pauseButton.setText("||");
                             mediaPlayer.play();
-                            if(mediaPlayer.getStatus() == Status.PAUSED) {
-                                mediaPlayer.stop();
-                                setInfoLabelText("Playback error. File may be corrupted.");
-                            }
                             break;
                         default:
                             logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString());
                             // If the MediaPlayer is in an unexpected state, stop playback.
-                            pauseButton.setText("►");
-                            mediaPlayer.pause();
+                            mediaPlayer.stop();
                             setInfoLabelText("Playback error.");
                             break;
                     }
@@ -466,6 +489,17 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
         
         /**
+         * Reset the progress label and slider to zero.
+         */
+        private void resetProgress() {
+            totalHours = 0;
+            totalMinutes = 0;
+            totalSeconds = 0;
+            updateSlider(Duration.ZERO);
+            updateTime(Duration.ZERO);
+        }
+        
+        /**
          * Construct a MediaPlayer from the given Media URI.
          * 
          * Also adds the necessary listeners to MediaPlayer events.
@@ -481,6 +515,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             MediaPlayerBuilder mediaPlayerBuilder = MediaPlayerBuilder.create();
             mediaPlayerBuilder.media(media);
             mediaPlayerBuilder.onReady(READY_LISTENER);
+            mediaPlayerBuilder.onPaused(NOT_PLAY_LISTENER);
+            mediaPlayerBuilder.onStopped(NOT_PLAY_LISTENER);
+            mediaPlayerBuilder.onPlaying(PLAY_LISTENER);
             mediaPlayerBuilder.onEndOfMedia(END_LISTENER);
             
             MediaPlayer player = mediaPlayerBuilder.build();
@@ -592,14 +629,14 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 Duration beginning = mediaPlayer.getStartTime();
                 mediaPlayer.stop();
                 mediaPlayer.pause();
-                pauseButton.setText("►");
+                pauseButton.setText(PLAY_TEXT);
                 updateSlider(beginning);
                 updateTime(beginning);
             } 
         }
         
         /**
-         * Responds changes in the MediaPlayer currentTime property.
+         * Responds to changes in the MediaPlayer currentTime property.
          * 
          * Updates the progress slider and label with the current Time.
          */
@@ -608,6 +645,26 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
                 updateSlider(newValue);
                 updateTime(newValue);
+            }
+        }
+        
+        /**
+         * Triggered when MediaPlayer State changes to PAUSED or Stopped.
+         */
+        private class NotPlayListener implements Runnable {
+            @Override
+            public void run() {
+                pauseButton.setText(PLAY_TEXT);
+            }
+        }
+        
+        /**
+         * Triggered when MediaPlayer State changes to PLAYING.
+         */
+        private class PlayListener implements Runnable {
+            @Override
+            public void run() {
+                pauseButton.setText(PAUSE_TEXT);
             }
         }
     }
