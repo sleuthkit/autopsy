@@ -127,14 +127,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (file.equals(lastFile)) {
                 return; //prevent from loading twice if setNode() called mult. times
             } 
+            
             lastFile = file;
-//            videoPanel.reset();
            
             final Dimension dims = DataContentViewerMedia.this.getSize();
 
             if (imagePanelInited && containsExt(file.getName(), IMAGES)) {
                 imagePanel.showImageFx(file, dims);
-                            this.switchPanels(false);
+                this.switchPanels(false);
             } else if (videoPanelInited
                     && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
                 videoPanel.setupVideo(file, dims);
@@ -182,8 +182,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void resetComponent() {
-//        videoPanel.reset();
-        // @@@ Seems like we should also reset the image viewer...
+        // No need to reset the video panel. It resets itself when a node is
+        // set.
         lastFile = null;
     }
 

@@ -110,6 +110,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             public void run() {
                 videoComponent = new JFXPanel();
                 mediaPane = new MediaPane();
+                Scene fxScene = new Scene(mediaPane);
+                videoComponent.setScene(fxScene);
+                
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -377,12 +380,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param mediaUri the URI of the media
          */
         public void prepareMedia(String mediaUri) {
-//            disableControls(false);
             mediaPlayer = createMediaPlayer(mediaUri);
             mediaView.setMediaPlayer(mediaPlayer);
-            Scene fxScene = new Scene(mediaPane);
-            videoComponent.setScene(fxScene);
-//            disableControls(true);
         }
         
         /**
@@ -396,7 +395,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 }
                 mediaPlayer = null;
             }
-            setInfoLabelText("");
             resetProgress();
         }
         
@@ -473,29 +471,13 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
         
         /**
-         * Toggle the availability of the progress slider and pause button.
-         * 
-         * @param disable <code>true</code> to disable controls
-         *                 <code>false</code> to enable controls
-         */
-        private void disableControls(final boolean disable) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    pauseButton.setDisable(disable);
-                    progressSlider.setDisable(disable);
-                }
-            });
-        }
-        
-        /**
          * Reset the progress label and slider to zero.
          */
         private void resetProgress() {
             totalHours = 0;
             totalMinutes = 0;
             totalSeconds = 0;
-            updateSlider(Duration.ZERO);
+            progressSlider.setValue(0.0);
             updateTime(Duration.ZERO);
         }
         
@@ -542,7 +524,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          */
         private void updateSlider(Duration currentTime) {
             if (progressSlider != null) {
-                progressSlider.setDisable(duration.isUnknown());
+                progressSlider.setDisable(currentTime.isUnknown());
                 if (!progressSlider.isDisabled() && duration.greaterThan(Duration.ZERO) 
                   && !progressSlider.isValueChanging()) {
                     progressSlider.setValue(currentTime.divide(duration.toMillis()).toMillis() * 100.0);
