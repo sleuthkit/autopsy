@@ -72,7 +72,11 @@ public class CoreComponentControl {
 
     /**
      * Closes all TopComponent windows that needed ({@link DataExplorer}, {@link DataResult}, and
-     * {@link DataContent})
+     * {@link DataContent}).
+     * 
+     * Note: The DataContent Top Component must be closed before the Directory Tree
+     * and Favorites Top Components. Otherwise a NullPointerException will be thrown
+     * from JFXPanel.
      */
     public static void closeCoreWindows() {
         WindowManager wm = WindowManager.getDefault();
@@ -92,15 +96,12 @@ public class CoreComponentControl {
                 }
                 switch (tcName) {
                     case "Directory Tree":
-                        logger.log(Level.INFO, "Found directory tree top component.");
                         directoryTree = tc;
                         break;
                     case "Favorites":
-                        logger.log(Level.INFO, "Found favorites topc component.");
                         favorites = tc;
                         break;
                     default:
-                        logger.log(Level.INFO, "Closing: " + tc.getName());
                         tc.close();
                         break;
                 }
