@@ -46,15 +46,6 @@
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
     
-<!--     Verify that the JRE_HOME env variable is set 
-    <target name="findJRE">
-        <property environment="env"/>
-        <condition property="jreFound">
-            <isset property="env.JRE_HOME"/>
-        </condition>
-        <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
-    </target>-->
-    
      <target name="getJunit">
         <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
          <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
@@ -80,9 +71,6 @@
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
          
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-<!--        <copy todir="${zip-tmp}/${app.name}/jre">
-            <fileset dir="${env.JRE_HOME}"/>
-        </copy>-->
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />

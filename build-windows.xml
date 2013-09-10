@@ -72,7 +72,7 @@
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre-32,add-ai-shortcuts,add-ai-env">
+    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre-32,add-ai-shortcuts-32,add-ai-env">
         <!-- Leaving this commented out bit for documentation purposes. Not sure what its supposed to do. -->       
         <!-- Need to find a way to deal with beta version -->
         <!--<echo message="Setting ${app.name} version to ${app.version}..."/>
@@ -91,7 +91,7 @@
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/installer_${app.name}_64-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre-64,add-ai-shortcuts,add-ai-env"/>
+    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre-64,add-ai-shortcuts-64,add-ai-env"/>
    
     <target name="add-ai-productinfo" description="Add product information to the aip file">
         <scriptdef name="generateguid" language="javascript">
@@ -161,13 +161,23 @@
         </exec>
     </target>
 
-    <target name="add-ai-shortcuts" description="Add shortcuts to the aip file">
+    <target name="add-ai-shortcuts-32" description="Add shortcuts to the aip file">
         <echo message="Adding desktop/menu shortcuts..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
         </exec>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
+        </exec>
+    </target>
+    
+    <target name="add-ai-shortcuts-64" description="Add shortcuts to the aip file">
+        <echo message="Adding desktop/menu shortcuts..."/>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${app.name}64.exe -icon ${inst-path}\icon.ico"/>
+        </exec>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${app.name}64.exe -icon ${inst-path}\icon.ico"/>
         </exec>
     </target>
 
