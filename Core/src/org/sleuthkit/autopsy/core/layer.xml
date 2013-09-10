@@ -361,6 +361,7 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
         </folder>
+        <folder name="QuickSearch_hidden" />
     </folder>
 
 
