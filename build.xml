@@ -239,7 +239,7 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <target name="build-installer-dir" depends="getProps, versioning-script, build-zip" description="Builds Autopsy with branding and all dependencies" >
+    <target name="build-installer-dir" depends="getProps, build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
     
