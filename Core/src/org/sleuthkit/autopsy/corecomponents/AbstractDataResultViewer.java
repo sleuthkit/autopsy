@@ -41,7 +41,7 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
      * an ExplorerManager provided by a DataResultTopComponent, allowing Node
-     * selections to be available to Actions via the global action context when 
+     * selections to be available to Actions via the action global context lookup when 
      * the DataResultTopComponent has focus. The ExplorerManager must be present
      * when the object is constructed so that its child components can discover
      * it using the ExplorerManager.find() method. 
@@ -52,8 +52,8 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     
     /**
      * This constructor can be used by AbstractDataResultViewers that do not
-     * need to make Node selections available to Actions via the global action 
-     * context.
+     * need to make Node selections available to Actions via the action global 
+     * context lookup.
      */
     public AbstractDataResultViewer() {
         explorerManager = new ExplorerManager();
@@ -79,7 +79,7 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     @Override
     public void setSelectedNodes(Node[] selected) {
         try {
-            this.explorerManager.setSelectedNodes(selected);
+            explorerManager.setSelectedNodes(selected);
         } 
         catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Couldn't set selected nodes", ex);
@@ -111,7 +111,7 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     }
     
     /**
-     * Notifies the viewer of a node single selection event.
+     * Notifies the viewer of the first node in a single selection event.
      * @deprecated
      */
     @Deprecated    

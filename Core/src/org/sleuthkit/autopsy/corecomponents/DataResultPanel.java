@@ -181,10 +181,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // Get an ExplorerManager to pass to the child DataResultViewers. If the application
             // components are put together as expected, this will be an ExplorerManager owned
             // by an ancestor TopComponent. The TopComponent will have put this ExplorerManager
-            // in a Lookup that is set as the global action context when the TopComponent has 
+            // in a Lookup that is set as the action global context when the TopComponent has 
             // focus. This makes Node selections available to Actions without coupling the
             // actions to a particular Component. Note that getting the ExplorerManager in the
-            // construcotr would be too soon, since the object has no ancestor TopComponent at
+            // constructor would be too soon, since the object has no ancestor TopComponent at
             // that point.
             explorerManager = ExplorerManager.find(this);
 
@@ -246,11 +246,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // Find additional DataResultViewer service providers and add them to the tabbed pane.
             // @@@ DataResultViewers using this extension point do not currently get a reference
             // to the DataResultTopComponent's ExplorerManager, so any node selection events in
-            // them or their child components are not available to Actions via the global action
-            // context. one way to fix this would be to change the DataResultViewer.createInstance()
+            // them or their child components are not available to Actions via the action global
+            // context lookup. One way to fix this would be to change the DataResultViewer.createInstance()
             // method called below to accept an ExplorerManager argument.
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                // @@@ Revist this isMain condition, it may be obsolete. If not, 
+                // @@@ Revisit this isMain condition, it may be obsolete. If not, 
                 // document the intent of DataResultViewer.createInstance() in the
                 // DataResultViewer interface defintion.
                 DataResultViewer drv;
