@@ -136,7 +136,7 @@ public class ExtractIE extends Extract {
         }
         
         try {
-            this.parsePascoResults(pascoResults);
+            this.getHistory(pascoResults);
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing IE History", e);
@@ -394,7 +394,7 @@ public class ExtractIE extends Extract {
             execPasco.execute(writer, JAVA_PATH, 
                     "-cp", PASCO_LIB_PATH, 
                     "isi.pasco2.Main", "-T", "history", indexFilePath );
-
+            // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             success = false;
             logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex);
@@ -416,7 +416,7 @@ public class ExtractIE extends Extract {
         return success;
     }
 
-    private void parsePascoResults(List<String> filenames) {
+    private void getHistory(List<String> filenames) {
         if (pascoFound == false) {
             return;
         }
@@ -451,6 +451,15 @@ public class ExtractIE extends Extract {
 
                                 String line = fileScanner.nextLine();
 
+                                // lines at end of file
+                                if ((line.startsWith("LEAK entries")) ||
+                                        (line.startsWith("REDR entries")) ||
+                                        (line.startsWith("URL entries")) ||
+                                        (line.startsWith("ent entries")) ||
+                                        (line.startsWith("unknown entries"))) {        
+                                    continue;
+                                }
+                                
                                 if (line.startsWith("URL")) {  
                                     String[] lineBuff = line.split("\\t");
                                     
@@ -466,6 +475,10 @@ public class ExtractIE extends Extract {
                                     String realurl = "";
                                     String domain = "";
                                     
+                                    /* We've seen two types of lines: 
+                                     * URL  http://XYZ.com ....
+                                     * URL  Visited: Joe@http://XYZ.com ....
+                                     */
                                     if (lineBuff[1].contains("@")) {
                                         String url[] = lineBuff[1].split("@", 2);
                                         user = url[0];
