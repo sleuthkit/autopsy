@@ -46,7 +46,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
-    private static final String NO_MATCHES = "<span style='background:red'>No matches in content.</span>";
+    private static final String NO_MATCHES = "<span style='background:yellow'>There were no keyword hits on this page. <br />Advance to another page for hits or choose Extracted Text to view original text..</span>";
     private Content content;
     private String keywordHitQuery;
     private Server solrServer;

@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.LinkedHashMap;
 
 /**
- * Interface to provide HTML markup (to be displayed in ExtractedContentViewer)
- * in a Node's lookup
+ * Interface to provide HTML text to display in ExtractedContentViewer.
+ * There is a SOLR implementaiton of this that interfaces with SOLR to 
+ * highlight the keyword hits and a version that does not do markup
+ * so that you can simply view the stored text. 
  */
 public interface MarkupSource {
 
