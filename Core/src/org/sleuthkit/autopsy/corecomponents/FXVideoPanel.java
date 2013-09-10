@@ -125,7 +125,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     
 
     @Override
-    synchronized void setupVideo(final AbstractFile file, final Dimension dims) {
+    void setupVideo(final AbstractFile file, final Dimension dims) {
         if(file.equals(currentFile)) {
             return;
         }
