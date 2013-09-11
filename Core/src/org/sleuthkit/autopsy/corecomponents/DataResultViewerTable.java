@@ -78,7 +78,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
         ov.setAllowedDropActions(DnDConstants.ACTION_NONE);
 
-        // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // don't show the root node
