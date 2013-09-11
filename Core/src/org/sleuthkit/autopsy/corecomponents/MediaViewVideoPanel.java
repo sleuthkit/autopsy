@@ -115,4 +115,9 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @param dims dimension of the parent window
      */
     abstract void setupVideo(final AbstractFile file, final Dimension dims);
+    
+    /**
+     * Return the extensions supported by this video panel.
+     */
+    abstract public String[] getExtensions();
 }
