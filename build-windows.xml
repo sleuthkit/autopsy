@@ -65,14 +65,18 @@
         </if>
     </target>
     
-    <target name="check-ai-32" if="jre.home.32">
-        <property name="aip-path" value="${aip-path-32}"/>
+    <target name="check-ai-32" if="jre.home.32" description="Builds the 32 bit installer IF JRE_HOME_32 is set.">
+        <property environment="env"/>
+        <var name="aip-path" value="${aip-path-32}"/>
+        <var name="extra-bin-name" value="${app.name}64.exe"/>
+        <var name="aut-bin-name" value="${app.name}.exe"/>
+        <var name="jre-path" value="${env.JRE_HOME_32}"/>
         <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre-32,add-ai-shortcuts-32,add-ai-env">
+    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env" description="Builds the 64 bit installer.">
         <!-- Leaving this commented out bit for documentation purposes. Not sure what its supposed to do. -->       
         <!-- Need to find a way to deal with beta version -->
         <!--<echo message="Setting ${app.name} version to ${app.version}..."/>
@@ -82,16 +86,19 @@
         <!--<delete file="${aip-path}"/>-->
     </target>
 
-    <target name="check-ai-64" if="jre.home.64">
-        <var name="aip-path" unset="true"/>
-        <property name="aip-path" value="${aip-path-64}"/>
+    <target name="check-ai-64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
+        <property environment="env"/>
+        <var name="aip-path" value="${aip-path-64}"/>
+        <var name="extra-bin-name" value="${app.name}.exe"/>
+        <var name="aut-bin-name" value="${app.name}64.exe"/>
+        <var name="jre-path" value="${env.JRE_HOME_64}"/>
         <echo message="aip-path: ${aip-path}" />
         <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/installer_${app.name}_64-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre-64,add-ai-shortcuts-64,add-ai-env"/>
+    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env" description="Builds the 64 bit installer."/>
    
     <target name="add-ai-productinfo" description="Add product information to the aip file">
         <scriptdef name="generateguid" language="javascript">
@@ -128,6 +135,10 @@
                 </dirset>
             </path>
         </foreach>
+        <echo message="Removing extra executable..."/>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFile APPDIR\bin\${extra-bin-name}"/>
+        </exec>
     </target>
 
     <target name="add-file-or-dir" depends="is-file-or-folder">
@@ -144,40 +155,21 @@
         </condition>
     </target>
     
-    <target name="add-ai-jre-32" description="Adds 32-bit JRE to Advanced Installer project">
-        <property environment="env"/>
+    <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
         <echo message="${ai-exe-path}" /> 
-        <echo message="Adding JRE to installer: ${env.JRE_HOME_32}"/>
+        <echo message="Adding JRE to installer: ${jre-path}"/>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${env.JRE_HOME_32}&quot;" />
+            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${jre-path}&quot;" />
         </exec>
     </target>
 
-    <target name="add-ai-jre-64" description="Adds 64-bit JRE to Advanced Installer project">
-        <echo message="${ai-exe-path}" /> 
-        <echo message="Adding JRE to installer: ${env.JRE_HOME_64}"/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${env.JRE_HOME_64}&quot;" />
-        </exec>
-    </target>
-
-    <target name="add-ai-shortcuts-32" description="Add shortcuts to the aip file">
+    <target name="add-ai-shortcuts" description="Add shortcuts to the aip file">
         <echo message="Adding desktop/menu shortcuts..."/>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
+            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
         </exec>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
-        </exec>
-    </target>
-    
-    <target name="add-ai-shortcuts-64" description="Add shortcuts to the aip file">
-        <echo message="Adding desktop/menu shortcuts..."/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${app.name}64.exe -icon ${inst-path}\icon.ico"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${app.name}64.exe -icon ${inst-path}\icon.ico"/>
+            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
         </exec>
     </target>
 
@@ -197,5 +189,4 @@
             <arg line="/build ${aip-path}"/>
         </exec>
     </target>
-
 </project>
