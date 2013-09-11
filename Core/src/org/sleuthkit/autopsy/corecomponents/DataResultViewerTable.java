@@ -385,7 +385,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     @Override
     public String getTitle() {
-        return "Table View";
+        return "Table";
     }
 
     @Override

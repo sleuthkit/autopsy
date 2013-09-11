@@ -390,7 +390,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public String getTitle() {
-        return "Hex View";
+        return "Hex";
     }
 
     @Override
