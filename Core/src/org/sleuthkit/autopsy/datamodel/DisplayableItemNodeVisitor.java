@@ -53,7 +53,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(ExtractedContentNode ecn);
 
-    T visit(FileSearchFilterNode fsfn);
+    T visit(FileTypeNode fsfn);
 
     T visit(DeletedContentNode dcn);
 
@@ -63,7 +63,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileSizeNode fsn);
 
-    T visit(SearchFiltersNode sfn);
+    T visit(FileTypesNode sfn);
 
     T visit(RecentFilesNode rfn);
 
@@ -155,7 +155,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileSearchFilterNode fsfn) {
+        public T visit(FileTypeNode fsfn) {
             return defaultVisit(fsfn);
         }
 
@@ -180,7 +180,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(SearchFiltersNode sfn) {
+        public T visit(FileTypesNode sfn) {
             return defaultVisit(sfn);
         }
 

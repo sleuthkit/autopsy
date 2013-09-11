@@ -24,15 +24,15 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Node for the file search filter
+ * Node for a specific file type / extension
  */
-public class FileSearchFilterNode extends DisplayableItemNode {
+public class FileTypeNode extends DisplayableItemNode {
 
-    SearchFilters.SearchFilterInterface filter;
+    FileTypeExtensionFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
 
-    FileSearchFilterNode(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
-        super(Children.create(new FileSearchFilterChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
+    FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
+        super(Children.create(new FileTypeChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
         
         this.filter = filter;
         this.skCase = skCase;
@@ -40,7 +40,7 @@ public class FileSearchFilterNode extends DisplayableItemNode {
         super.setName(filter.getName());
         
         //get count of children without preloading all children nodes
-        final long count = new FileSearchFilterChildren(filter, skCase).calculateItems();
+        final long count = new FileTypeChildren(filter, skCase).calculateItems();
         //final long count = getChildren().getNodesCount(true);
         super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
 
