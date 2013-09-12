@@ -40,7 +40,9 @@ public class KeywordSearchQueryManager {
 
     // how to display the results
     public enum Presentation {
-        FLAT, COLLAPSE, DETAIL
+        FLAT,   // all results are in a single level (even if multiple keywords and reg-exps are used).  We made this because we were having problems with multiple-levels of nodes and the thumbnail and table view sharing an ExplorerManager. IconView seemed to change EM so that it did not allow lower levels to be selected.
+        COLLAPSE, // two levels. Keywords on top, files on bottom.
+        DETAIL // not currently used, but seems like it has three levels of nodes
     };
     
     private List<Keyword> keywords;
