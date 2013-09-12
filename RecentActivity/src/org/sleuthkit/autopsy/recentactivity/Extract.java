@@ -25,7 +25,6 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -39,7 +38,7 @@ abstract public class Extract extends IngestModuleDataSource{
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
-    protected final ArrayList<String> errorMessages = new ArrayList<String>();
+    protected final ArrayList<String> errorMessages = new ArrayList<>();
     protected String moduleName = "";
     
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -47,10 +46,23 @@ abstract public class Extract extends IngestModuleDataSource{
         
     }
     
+    /**
+     * Returns a List of string error messages from the inheriting class
+     * @return  errorMessages returns all error messages logged
+     */
     List<String> getErrorMessages() {
         return errorMessages;
     }
 
+    /**
+     * Adds a string to the error message list
+     *
+     * @param  message is an error message represented as a string
+     */
+    protected void addErrorMessage(String message) {
+        errorMessages.add(message);
+    }
+    
 
     /**
      * Generic method for adding a blackboard artifact to the blackboard
@@ -120,25 +132,10 @@ abstract public class Extract extends IngestModuleDataSource{
 
         return list;
     }
-        /**
-     * Returns a List of string error messages from the inheriting class
-     * @return  errorMessages returns all error messages logged
-     */
+    
+    
 
-    public ArrayList<String> getErrorMessage() {
-        return errorMessages;
-    }
-
-        /**
-     * Adds a string to the error message list
-     *
-     * @param  message is an error message represented as a string
-     */
-    public void addErrorMessage(String message) {
-        errorMessages.add(message);
-    }
-
-        /**
+    /**
      * Returns the name of the inheriting class
      * @return  Gets the moduleName set in the moduleName data member
      */

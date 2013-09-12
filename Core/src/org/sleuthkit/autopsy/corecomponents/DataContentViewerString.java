@@ -443,7 +443,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     @Override
     public String getTitle() {
-        return "String View";
+        return "Strings";
     }
 
     @Override

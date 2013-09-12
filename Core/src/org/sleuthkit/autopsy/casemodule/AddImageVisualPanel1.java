@@ -48,7 +48,7 @@ final class AddImageVisualPanel1 extends JPanel {
     static final String encaseDesc = "Encase Images (*.e01)";
     static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
     static final List<String> allExt = new ArrayList<String>();
-    {
+    static {
         allExt.addAll(rawExt);
         allExt.addAll(encaseExt);
     }
