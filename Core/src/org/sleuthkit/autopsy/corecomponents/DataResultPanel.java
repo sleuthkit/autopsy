@@ -188,13 +188,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // as DataResultViewer service providers when DataResultViewers are updated
             // to better handle the ExplorerManager sharing implemented to support actions that operate on 
             // multiple selected nodes.
-            addDataResultViewer(new DataResultViewerTable(this.explorerManager));
-            
-            // @@@ Temporary fix until unintended interaction between DataResultViewerTable and DataResultViewerThumbnail
-            // via the shared ExplorerManager in a Keyword Search Result window is resolved.
-            if (isMain) {
-                addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
-            }
+            addDataResultViewer(new DataResultViewerTable(this.explorerManager));            
+            addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
                                     
             // Find all DataResultViewer service providers and add them to the tabbed pane.
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
