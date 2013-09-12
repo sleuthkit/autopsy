@@ -234,7 +234,7 @@ public class EventLogs implements AutopsyVisitableItem {
 
                         break;
                     case ALL_EVENT_LOG_FILTER:
-                        query = query = "name like '%.log'";
+                        query = "name like '%.log'";
                      
                         break;
 
