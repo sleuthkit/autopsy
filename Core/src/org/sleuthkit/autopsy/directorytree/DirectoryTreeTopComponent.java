@@ -219,10 +219,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        // update the back and forward List
+        
+        // the end is the current place,
         String[] currentNodePath = backList.pollLast();
-        String[] newCurrentNodePath = backList.peekLast();
         forwardList.addLast(currentNodePath);
+        forwardButton.setEnabled(true);
+        
+        /* We peek instead of poll because we use its existence
+         * in the list later on so that we do not reset the forward list
+         * after the selection occurs. */
+        String[] newCurrentNodePath = backList.peekLast();
 
         // enable / disable the back and forward button
         if (backList.size() > 1) {
@@ -230,39 +236,31 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else {
             backButton.setEnabled(false);
         }
-        this.forwardButton.setEnabled(true);
-
+        
         // update the selection on directory tree
         setSelectedNode(newCurrentNodePath, null);
 
-
         this.setCursor(null);
-
     }//GEN-LAST:event_backButtonActionPerformed
 
     private void forwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_forwardButtonActionPerformed
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//        try {
-        // update the back and forward List
-        //int newCurrentIndex = forwardList.size() - 1;
-        String[] newCurrentNodePath = forwardList.pollLast();
-        //forwardList.remove(newCurrentIndex);
-        backList.addLast(newCurrentNodePath);
 
-        // enable / disable the back and forward button
+        String[] newCurrentNodePath = forwardList.pollLast();
         if (!forwardList.isEmpty()) {
             forwardButton.setEnabled(true);
         } else {
             forwardButton.setEnabled(false);
         }
-        this.backButton.setEnabled(true);
-
+        
+        backList.addLast(newCurrentNodePath);
+        backButton.setEnabled(true);
+ 
         // update the selection on directory tree
         setSelectedNode(newCurrentNodePath, null);
 
         this.setCursor(null);
-
     }//GEN-LAST:event_forwardButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
@@ -337,7 +335,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
                     // if there's at least one image, load the image and open the top component
-                    List<Object> items = new ArrayList<Object>();
+                    List<Object> items = new ArrayList<>();
                     final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
                     items.add(new DataSources(tskCase));
                     items.add(new Views(tskCase));
@@ -375,7 +373,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
 
                     // Reset the forward and back lists because we're resetting the root context
-                    resetHistoryListAndButtons();
+                    resetHistory();
 
                     Children childNodes = em.getRootContext().getChildren();
                     TreeView tree = getTree();
@@ -533,7 +531,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
             // case opened
             if (newValue != null) {
-                resetHistoryListAndButtons();
+                resetHistory();
             }
         } // if the image is added to the case
         else if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
@@ -671,31 +669,53 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         });
 
         // update the back and forward list
-        Node[] selectedNode = em.getSelectedNodes();
-        if (selectedNode.length > 0) {
-            Node selectedContext = selectedNode[0];
-
-            final String[] selectedPath = NodeOp.createPath(selectedContext, em.getRootContext());
-            String[] currentLast = backList.peekLast();
-            String lastNodeName = null;
-            if (currentLast != null) {
-                lastNodeName = currentLast[currentLast.length - 1];
-            }
-            String selectedNodeName = selectedContext.getName();
-            if (currentLast == null || !selectedNodeName.equals(lastNodeName)) {
-                //add to the list if the last if not the same as current
-
-                backList.addLast(selectedPath); // add the node to the "backList"
-                if (backList.size() > 1) {
-                    backButton.setEnabled(true);
-                } else {
-                    backButton.setEnabled(false);
-                }
-
-                forwardList.clear(); // clear the "forwardList"
-                forwardButton.setEnabled(false); // disable the forward Button
-            }
+        updateHistory(em.getSelectedNodes());
+    }
+    
+    private void updateHistory(Node[] selectedNodes) {
+        if (selectedNodes.length == 0) {
+            return;
         }
+        
+        Node selectedNode = selectedNodes[0];
+        String selectedNodeName = selectedNode.getName();
+
+        /* get the previous entry to make sure we don't duplicate it.
+         * Motivation for this is also that if we used the back button,
+         * then we already added the 'current' node to 'back' and we will 
+         * detect that and not reset the forward list. 
+         */
+        String[] currentLast = backList.peekLast();
+        String lastNodeName = null;
+        if (currentLast != null) {
+            lastNodeName = currentLast[currentLast.length - 1];
+        }
+
+        if (currentLast == null || !selectedNodeName.equals(lastNodeName)) {
+            //add to the list if the last if not the same as current
+            final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
+            backList.addLast(selectedPath); // add the node to the "backList"
+            if (backList.size() > 1) {
+                backButton.setEnabled(true);
+            } else {
+                backButton.setEnabled(false);
+            }
+
+            forwardList.clear(); // clear the "forwardList"
+            forwardButton.setEnabled(false); // disable the forward Button
+        }
+    }
+    
+    /**
+     * Resets the back and forward list, and also disable the back and forward
+     * buttons.
+     */
+    private void resetHistory() {
+        // clear the back and forward list
+        backList.clear();
+        forwardList.clear();
+        backButton.setEnabled(false);
+        forwardButton.setEnabled(false);
     }
 
     @Override
@@ -708,17 +728,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         pcs.removePropertyChangeListener(listener);
     }
 
-    /**
-     * Resets the back and forward list, and also disable the back and forward
-     * buttons.
-     */
-    private void resetHistoryListAndButtons() {
-        // clear the back and forward list
-        backList.clear();
-        forwardList.clear();
-        backButton.setEnabled(false);
-        forwardButton.setEnabled(false);
-    }
+    
 
     /**
      * Gets the tree on this DirectoryTreeTopComponent.
@@ -845,19 +855,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                 if (path.length > 0 && (rootNodeName == null || path[0].equals(rootNodeName))) {
                     try {
-                        final TreeView tree = getTree();
                         Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                        //resetHistoryListAndButtons();
+                        
                         if (newSelection != null) {
                             if (rootNodeName != null) {
                                 //called from tree auto refresh context
                                 //remove last from backlist, because auto select will result in duplication
                                 backList.pollLast();
                             }
-                            //select
-                            //tree.expandNode(newSelection);
                             em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         }
+                        
                         // We need to set the selection, which will refresh dataresult and get rid of the oob exception
                     } catch (NodeNotFoundException ex) {
                         logger.log(Level.WARNING, "Node not found", ex);

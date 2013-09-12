@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.FileTypeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
-import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
 import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -452,12 +452,12 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(FileSearchFilterNode fsfn) {
+        public AbstractAction visit(FileTypeNode fsfn) {
             return openChild(fsfn);
         }
 
         @Override
-        public AbstractAction visit(SearchFiltersNode sfn) {
+        public AbstractAction visit(FileTypesNode sfn) {
             return openChild(sfn);
         }
 
