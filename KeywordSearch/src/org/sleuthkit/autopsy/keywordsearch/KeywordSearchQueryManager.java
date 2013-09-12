@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
@@ -41,7 +40,7 @@ public class KeywordSearchQueryManager {
 
     // how to display the results
     public enum Presentation {
-        COLLAPSE, DETAIL
+        FLAT, COLLAPSE, DETAIL
     };
     
     private List<Keyword> keywords;
@@ -70,7 +69,7 @@ public class KeywordSearchQueryManager {
      * @param presentation Presentation Layout
      */
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
-        keywords = new ArrayList<Keyword>();
+        keywords = new ArrayList<>();
         keywords.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
         this.presentation = presentation;
         queryType = qt;
@@ -84,7 +83,7 @@ public class KeywordSearchQueryManager {
      * @param presentation Presentation layout
      */
     public KeywordSearchQueryManager(String query, boolean isLiteral, Presentation presentation) {
-        keywords = new ArrayList<Keyword>();
+        keywords = new ArrayList<>();
         keywords.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
         queryType = isLiteral ? QueryType.WORD : QueryType.REGEX;
@@ -96,7 +95,7 @@ public class KeywordSearchQueryManager {
      * Create a list of queries to later run
      */
     private void init() {
-        queryDelegates = new ArrayList<KeywordSearchQuery>();
+        queryDelegates = new ArrayList<>();
         for (Keyword keyword : keywords) {
             KeywordSearchQuery query = null;
             switch (queryType) {
@@ -137,18 +136,17 @@ public class KeywordSearchQueryManager {
         // } else {
         
         //Collapsed view
-        Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
+        Collection<KeyValueQuery> things = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
         for (KeywordSearchQuery q : queryDelegates) {
-            Map<String, Object> kvs = new LinkedHashMap<String, Object>();
+            Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
             queryConcat.append(queryStr).append(" ");
             things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
         }
 
-        Node rootNode = null;
-
+        Node rootNode;
         String queryConcatStr = queryConcat.toString();
         final int queryConcatStrLen = queryConcatStr.length();
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
@@ -156,7 +154,7 @@ public class KeywordSearchQueryManager {
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(keywords, things, Presentation.COLLAPSE, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(keywords, things, presentation, searchResultWin), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -179,7 +177,7 @@ public class KeywordSearchQueryManager {
         boolean allValid = true;
         for (KeywordSearchQuery tcq : queryDelegates) {
             if (!tcq.validate()) {
-                logger.log(Level.WARNING, "Query has invalid syntax: " + tcq.getQueryString());
+                logger.log(Level.WARNING, "Query has invalid syntax: {0}", tcq.getQueryString());
                 allValid = false;
                 break;
             }
