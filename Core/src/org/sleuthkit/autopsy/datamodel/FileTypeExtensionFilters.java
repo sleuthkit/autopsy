@@ -25,11 +25,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Filters database results by file extension.
  */
-public class SearchFilters implements AutopsyVisitableItem {
+public class FileTypeExtensionFilters implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 
-    public enum FileSearchFilter implements AutopsyVisitableItem,SearchFilterInterface {
+    // root node filters
+    public enum RootFilter implements AutopsyVisitableItem,SearchFilterInterface {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", FileTypeExtensions.getVideoExtensions()),
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
@@ -42,7 +43,7 @@ public class SearchFilters implements AutopsyVisitableItem {
         private String displayName;
         private List<String> filter;
 
-        private FileSearchFilter(int id, String name, String displayName, List<String> filter){
+        private RootFilter(int id, String name, String displayName, List<String> filter){
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -75,6 +76,7 @@ public class SearchFilters implements AutopsyVisitableItem {
         }
     }
     
+    // document sub-node filters
     public enum DocumentFilter implements AutopsyVisitableItem,SearchFilterInterface {
         AUT_DOC_HTML(0, "AUT_DOC_HTML", "HTML", Arrays.asList(".htm", ".html")),
         AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", "Office", Arrays.asList(".doc", ".docx", 
@@ -122,6 +124,7 @@ public class SearchFilters implements AutopsyVisitableItem {
     }
     
     
+    // executable sub-node filters
     public enum ExecutableFilter implements AutopsyVisitableItem,SearchFilterInterface {
         ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")),
         ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")),
@@ -167,7 +170,7 @@ public class SearchFilters implements AutopsyVisitableItem {
         }
     }
 
-    public SearchFilters(SleuthkitCase skCase){
+    public FileTypeExtensionFilters(SleuthkitCase skCase){
         this.skCase = skCase;
     }
 
