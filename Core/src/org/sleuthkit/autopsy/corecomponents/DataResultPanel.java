@@ -349,7 +349,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
         this.numberMatchLabel.setVisible(true);
-        this.numberMatchLabel.setVisible(true);
 
         resetTabs(selectedNode);
 

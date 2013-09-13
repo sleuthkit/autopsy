@@ -63,7 +63,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         this.isDefault = isDefault;
         
-        dataContentPanel = new DataContentPanel(isDefault);
+        dataContentPanel = new DataContentPanel();
         add(dataContentPanel);
         
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isDefault)); // prevent option to close compoment in GUI
