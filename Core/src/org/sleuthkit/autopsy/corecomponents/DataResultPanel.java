@@ -290,9 +290,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             int childrenCount = selectedNode.getChildren().getNodesCount(true);
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
-
         this.numberMatchLabel.setVisible(true);
-        this.numberMatchLabel.setVisible(true);
+        
 
         resetTabs(selectedNode);
 
@@ -308,11 +307,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             ++drvC;
         }
 
-        // set the display on the current active tab
+        // if the current tab is no longer enabled, then find one that is
+        boolean hasViewerEnabled = true;
         int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if (currentActiveTab != -1) {
-            UpdateWrapper drv = viewers.get(currentActiveTab);
-            drv.setNode(selectedNode);
+        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+            hasViewerEnabled = false;
+            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                if (dataResultTabbedPanel.isEnabledAt(i)) {
+                    currentActiveTab = i;
+                    hasViewerEnabled = true;
+                    break;
+                }
+            }
+            
+            if (hasViewerEnabled) {
+                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+            }
+        }
+        
+        if (hasViewerEnabled) {
+            viewers.get(currentActiveTab).setNode(selectedNode);
         }
     }
 
