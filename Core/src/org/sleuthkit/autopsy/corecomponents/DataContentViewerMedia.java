@@ -25,9 +25,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.SwingUtilities;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -41,16 +39,15 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
     @ServiceProvider(service = DataContentViewer.class, position = 5)
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
-
-    private String[] IMAGES; // use javafx supported 
-    private static final String[] VIDEOS = new String[]{".swf", ".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
-    private static final String[] AUDIOS = new String[]{".mp3", ".wav", ".wma"};
+    private static final String[] AUDIO_EXTENSIONS = new String[]{".mp3", ".wav", ".wma"};
 
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
 
     private AbstractFile lastFile;
     //UI
     private final MediaViewVideoPanel videoPanel;
+    private final String[] videoExtensions; // get them from the panel
+    private String[] imageExtensions; // use javafx supported 
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
@@ -72,6 +69,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoPanelInited = videoPanel.isInited();
         imagePanelInited = imagePanel.isInited();
         
+        videoExtensions = videoPanel.getExtensions();
+        
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
@@ -80,12 +79,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         //initialize supported image types
         //TODO use mime-types instead once we have support
         String[] fxSupportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
-        IMAGES = new String[fxSupportedImagesSuffixes.length];
+        imageExtensions = new String[fxSupportedImagesSuffixes.length];
         //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
         for (int i = 0; i < fxSupportedImagesSuffixes.length; ++i) {
             String suffix = fxSupportedImagesSuffixes[i];
             //logger.log(Level.INFO, "suffix: " + suffix);
-            IMAGES[i] = "." + suffix;
+            imageExtensions[i] = "." + suffix;
         }
 
         add(imagePanel, IMAGE_VIEWER_LAYER);
@@ -132,11 +131,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
            
             final Dimension dims = DataContentViewerMedia.this.getSize();
 
-            if (imagePanelInited && containsExt(file.getName(), IMAGES)) {
+            if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                             this.switchPanels(false);
             } else if (videoPanelInited
-                    && (containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS))) {
+                    && (containsExt(file.getName(), videoExtensions) || containsExt(file.getName(), AUDIO_EXTENSIONS))) {
                 videoPanel.setupVideo(file, dims);
                 switchPanels(true);
             }
@@ -162,7 +161,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public String getTitle() {
-        return "Media View";
+        return "Media";
     }
 
     @Override
@@ -203,13 +202,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
 
         String name = file.getName().toLowerCase();
-        if (imagePanelInited && containsExt(name, IMAGES)) {
+        if (imagePanelInited && containsExt(name, imageExtensions)) {
             return true;
         } //for gstreamer formats, check if initialized first, then
         //support audio formats, and video formats
         else if (videoPanelInited && videoPanel.isInited()
-                && (containsExt(name, AUDIOS)
-                || (containsExt(name, VIDEOS)))) {
+                && (containsExt(name, AUDIO_EXTENSIONS)
+                || (containsExt(name, videoExtensions)))) {
             return true;
         }
 
@@ -227,7 +226,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             String name = file.getName().toLowerCase();
 
             boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-            if (containsExt(name, VIDEOS) && deleted) {
+            if (containsExt(name, videoExtensions) && deleted) {
                 return 0;
             } else {
                 return 7;

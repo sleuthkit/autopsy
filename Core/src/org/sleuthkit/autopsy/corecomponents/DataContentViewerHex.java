@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,8 +32,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -41,11 +39,10 @@ import org.sleuthkit.datamodel.TskException;
  */
 @ServiceProvider(service = DataContentViewer.class, position = 1)
 public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
-
-    private static long currentOffset = 0;
     private static final long pageLength = 16384;
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
+    private int totalPages;
     private Content dataSource;
 
     private static final Logger logger = Logger.getLogger(DataContentViewerHex.class.getName());
@@ -243,39 +240,28 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }// </editor-fold>//GEN-END:initComponents
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
-        //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
-        currentOffset -= pageLength;
-        currentPage = currentPage - 1;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset);
+        setDataView(currentPage - 1);
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
-        //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
-        currentOffset += pageLength;
-        currentPage = currentPage + 1;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset);
+        setDataView(currentPage + 1);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
         int pageNumber = 0;
-        int maxPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
-            pageNumber = maxPage + 1;
+            pageNumber = totalPages + 1;
         }
-        if (pageNumber > maxPage || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + maxPage,
+        if (pageNumber > totalPages || pageNumber < 1) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
                     "Invalid page number", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        currentOffset = (pageNumber - 1) * pageLength;
-        currentPage = pageNumber;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset);
+        setDataView(pageNumber);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
@@ -296,30 +282,27 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     // End of variables declaration//GEN-END:variables
 
     
-    @Deprecated
-    public void setDataView(Content dataSource, long offset, boolean reset) {        
-        if (reset) {
-            resetComponent();
-            return;
-        }
-        setDataView(dataSource, offset);
-    }
-    
     /**
      * Sets the DataView (The tabbed panel)
      *
-     * @param dataSource the content that want to be shown
-     * @param offset the starting offset
+     * @param page Page to display (1-based counting)
      */
-    private void setDataView(Content dataSource, long offset) {
-        if (dataSource == null) {
+    private void setDataView(int page) {
+        if (this.dataSource == null) {
             return;
         }
+        
+        if (page == 0) {
+            return;
+        }
+        
+        currentPage = page;
+        long offset = (currentPage - 1) * pageLength;
+        
         
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        this.dataSource = dataSource;
         String errorText = null;     
 
         int bytesRead = 0;
@@ -327,7 +310,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
-                errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
+                errorText = "(offset " + offset + "-" + (offset + pageLength)
                     + " could not be read)";
                 logger.log(Level.WARNING, "Error while trying to show the hex content.", ex);
             }
@@ -335,27 +318,26 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         // set the data on the bottom and show it
         if (bytesRead <= 0) {
-            errorText = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
+            errorText = "(offset " + offset + "-" + (offset + pageLength)
                     + " could not be read)";
         }
         
 
         // disable or enable the next button
-        if ((errorText != null) && (offset + pageLength < dataSource.getSize())) {
+        if ((errorText == null) && (currentPage < totalPages)) {
             nextPageButton.setEnabled(true);
-        } else {
+        } 
+        else {
             nextPageButton.setEnabled(false);
         }
 
-        if ((offset == 0) || (errorText == null)) {
-            prevPageButton.setEnabled(false);
-            currentPage = 1; // reset the page number
-        } else {
+        if ((errorText == null) && (currentPage > 1)) {
             prevPageButton.setEnabled(true);
+        } 
+        else {
+            prevPageButton.setEnabled(false);
         }
-
-        int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
-        totalPageLabel.setText(Integer.toString(totalPage));
+        
         currentPageLabel.setText(Integer.toString(currentPage));
         setComponentsVisibility(true); // shows the components that not needed
 
@@ -384,13 +366,20 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             resetComponent();
             return;
         }
+        
+        dataSource = content;
+        totalPages = 0;
+        if (dataSource.getSize() > 0) {
+            totalPages = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        }
+        totalPageLabel.setText(Integer.toString(totalPages));
             
-        this.setDataView(content, 0);
+        this.setDataView(1);
     }
 
     @Override
     public String getTitle() {
-        return "Hex View";
+        return "Hex";
     }
 
     @Override
@@ -408,7 +397,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     public void resetComponent() {
         // clear / reset the fields
         currentPage = 1;
-        currentOffset = 0;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");

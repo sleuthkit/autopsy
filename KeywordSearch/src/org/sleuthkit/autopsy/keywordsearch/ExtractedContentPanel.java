@@ -378,7 +378,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     *
+     * Return the types of mark up sources that this viewer knows about. 
+     * Different sources will markup the text in different ways. 
+     * 
      * @return currently available sources on the panel
      */
     public List<MarkupSource> getSources() {
@@ -390,7 +392,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     *
+     * Get the source selected in the combo box
      * @return currently selected Source
      */
     public MarkupSource getSelectedSource() {
@@ -652,7 +654,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Gets and sets new markup. Updates GUI in GUI thread and gets markup in
+     * Gets and sets new markup (i.e. based on user choose keyword hits or pure text).
+     * Updates GUI in GUI thread and gets markup in
      * background thread. To be invoked from GUI thread only.
      */
     private void setMarkup(MarkupSource source) {

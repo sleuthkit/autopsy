@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -35,12 +35,10 @@ import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +50,6 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -61,7 +58,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
@@ -69,24 +65,16 @@ import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
 
 public class ExtractIE extends Extract {
-
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private IngestServices services;
-    private String recentQuery = "select * from `tsk_files` where parent_path LIKE '%/Recent%' and name LIKE '%.lnk'";
-    //sleauthkit db handle
-    SleuthkitCase tskCase;
+    
     //paths set in init()
-    private String PASCO_RESULTS_PATH;
+    private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;
-    //Results List to be referenced/used outside the class
-    public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
+    
     // List of Pasco result files for this data source
     private List<String> pascoResults;
-    //Look Up Table  that holds Pasco2 results
-    private HashMap<String, Object> PASCO_RESULTS_LUT;
-    private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
-    public LinkedHashMap<String, Object> IE_OBJ;
     boolean pascoFound = false;
     final public static String MODULE_VERSION = "1.0";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -96,6 +84,8 @@ public class ExtractIE extends Extract {
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
         moduleName = "Internet Explorer";
+        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results";
+        JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     @Override
@@ -106,11 +96,52 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        this.getHistory(dataSource, controller);
-        this.getBookmark(dataSource, controller);
-        this.getCookie(dataSource, controller);
-        this.getRecentDocuments(dataSource, controller);
-        this.parsePascoResults(pascoResults);
+        /* @@@ BC: All of these try / catches are added because the exception 
+         * handing in here isn't the best.  We were losing results before because
+         * cookies was throwing an exceptionb ecause of an invalid URL and we 
+         * skipped the rest of the data types.   Need to push this eror handling 
+         * further down though. 
+         */
+        
+        try {
+            this.extractAndRunPasco(dataSource, controller);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error extracting IE index.dat files", e);
+            addErrorMessage("Error extracting and analyzing IE index.dat files");
+        }
+        
+        try {
+            this.getBookmark(dataSource, controller);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error parsing IE bookmarks", e);
+            addErrorMessage("Error parsing IE bookmarks");
+        }
+        
+        try {
+            this.getCookie(dataSource, controller);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error parsing IE cookies", e);
+            addErrorMessage("Error parsing IE Cookies");
+        }
+        
+        try {
+            this.getRecentDocuments(dataSource, controller);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error parsing IE Recent Docs", e);
+            addErrorMessage("Error parsing IE Recent Documents");
+        }
+        
+        try {
+            this.getHistory(pascoResults);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Error parsing IE History", e);
+            addErrorMessage("Error parsing IE History");
+        }
     }
 
     //Favorites section
@@ -158,7 +189,7 @@ public class ExtractIE extends Extract {
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
@@ -207,7 +238,7 @@ public class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
             //TODO Revisit usage of deprecated Constructor as of TSK-583
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
@@ -273,20 +304,11 @@ public class ExtractIE extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
     }
 
-    //@Override
-    public KeyValue getRecentActivity() {
-        return IE_PASCO_LUT;
-    }
 
-    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
-        currentCase = Case.getCurrentCase();
-        tskCase = currentCase.getSleuthkitCase();
-        
-        PASCO_RESULTS_PATH = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results";
-        JAVA_PATH = PlatformUtil.getJavaPath();
+    private void extractAndRunPasco(Content dataSource, IngestDataSourceWorkerController controller) {
         pascoResults = new ArrayList<String>();
 
-        logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
+        logger.log(Level.INFO, "Pasco results path: " + moduleTempResultsDir);
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
         if (pascoRoot == null) {
@@ -303,7 +325,7 @@ public class ExtractIE extends Extract {
         PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator
                 + pascoHome + File.separator + "*";
 
-        File resultsDir = new File(PASCO_RESULTS_PATH);
+        File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
      
  
@@ -365,14 +387,14 @@ public class ExtractIE extends Extract {
 
         Writer writer = null;
         try {
-            final String pascoOutFile = PASCO_RESULTS_PATH + File.separator + filename;
+            final String pascoOutFile = moduleTempResultsDir + File.separator + filename;
             logger.log(Level.INFO, "Writing pasco results to: " + pascoOutFile);
             writer = new FileWriter(pascoOutFile);
             execPasco = new ExecUtil();
             execPasco.execute(writer, JAVA_PATH, 
                     "-cp", PASCO_LIB_PATH, 
                     "isi.pasco2.Main", "-T", "history", indexFilePath );
-
+            // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             success = false;
             logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex);
@@ -394,17 +416,13 @@ public class ExtractIE extends Extract {
         return success;
     }
 
-    private void parsePascoResults(List<String> filenames) {
+    private void getHistory(List<String> filenames) {
         if (pascoFound == false) {
             return;
         }
         // First thing we want to do is check to make sure the results directory
         // is not empty.
-        File rFile = new File(PASCO_RESULTS_PATH);
-
-
-        //Let's make sure our list and lut are empty.
-        //PASCO_RESULTS_LIST.clear();
+        File rFile = new File(moduleTempResultsDir);
 
         if (rFile.exists()) {
             //Give me a list of pasco results in that directory
@@ -418,7 +436,6 @@ public class ExtractIE extends Extract {
                         continue;
                     }
                     long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".") + 1, fileName.lastIndexOf(".")));
-                    //bbartname = bbartname.substring(0, 4);
 
                     // Make sure the file the is not empty or the Scanner will
                     // throw a "No Line found" Exception
@@ -429,29 +446,41 @@ public class ExtractIE extends Extract {
                             fileScanner.nextLine();
                             fileScanner.nextLine();
                             fileScanner.nextLine();
-                            //  long inIndexId = 0;
 
                             while (fileScanner.hasNext()) {
-                                //long bbartId = Long.parseLong(bbartname + inIndexId++);
 
                                 String line = fileScanner.nextLine();
 
-                                //Need to change this pattern a bit because there might
-                                //be instances were "V" might not apply.
-                                String pattern = "(?)URL(\\s)(V|\\:)";
-                                Pattern p = Pattern.compile(pattern);
-                                Matcher m = p.matcher(line);
-                                if (m.find()) {
+                                // lines at end of file
+                                if ((line.startsWith("LEAK entries")) ||
+                                        (line.startsWith("REDR entries")) ||
+                                        (line.startsWith("URL entries")) ||
+                                        (line.startsWith("ent entries")) ||
+                                        (line.startsWith("unknown entries"))) {        
+                                    continue;
+                                }
+                                
+                                if (line.startsWith("URL")) {  
                                     String[] lineBuff = line.split("\\t");
-                                    PASCO_RESULTS_LUT = new HashMap<String, Object>();
-                                    String url[] = lineBuff[1].split("@", 2);
+                                    
+                                    if (lineBuff.length < 4) {
+                                        // @@@ Could log a message here 
+                                        continue;
+                                    }
+                                                                        
                                     String ddtime = lineBuff[2];
                                     String actime = lineBuff[3];
                                     Long ftime = (long) 0;
                                     String user = "";
                                     String realurl = "";
                                     String domain = "";
-                                    if (url.length > 1) {
+                                    
+                                    /* We've seen two types of lines: 
+                                     * URL  http://XYZ.com ....
+                                     * URL  Visited: Joe@http://XYZ.com ....
+                                     */
+                                    if (lineBuff[1].contains("@")) {
+                                        String url[] = lineBuff[1].split("@", 2);
                                         user = url[0];
                                         user = user.replace("Visited:", "");
                                         user = user.replace(":Host:", "");
@@ -462,12 +491,19 @@ public class ExtractIE extends Extract {
                                         realurl = realurl.replaceAll(":(.*?):", "");
                                         realurl = realurl.replace(":Host:", "");
                                         realurl = realurl.trim();
-                                        domain = Util.extractDomain(realurl);
                                     }
+                                    else {
+                                        user = "";
+                                        realurl = lineBuff[1].trim();
+                                    }
+                                    
+                                    domain = Util.extractDomain(realurl);
+                                    
                                     if (!ddtime.isEmpty()) {
                                         ddtime = ddtime.replace("T", " ");
                                         ddtime = ddtime.substring(ddtime.length() - 5);
                                     }
+                                    
                                     if (!actime.isEmpty()) {
                                         try {
                                             Long epochtime = dateFormatter.parse(actime).getTime();
@@ -478,12 +514,11 @@ public class ExtractIE extends Extract {
                                         }
                                     }
 
-                                    // TODO: Need to fix this so we have the right obj_id
                                     try {
                                         BlackboardArtifact bbart = tskCase.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+                                        //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
 
@@ -497,27 +532,19 @@ public class ExtractIE extends Extract {
                                         bbart.addAttributes(bbattributes);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
-                                    }
-
-                                    //KeyValueThing
-                                    //This will be redundant in terms IE.name() because of
-                                    //the way they implemented KeyValueThing
-                                    IE_OBJ = new LinkedHashMap<String, Object>();
-                                    IE_OBJ.put(BrowserType.IE.name(), PASCO_RESULTS_LUT);
-                                    IE_PASCO_LUT.addMap(IE_OBJ);
-
-                                    PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
+                                    }                                    
                                 }
+                                else {
+                                    // @@@ Log that we didn't parse this
+                                }
+                               
 
                             }
                         } catch (FileNotFoundException ex) {
                             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex);
                         }
                     }
-                    //TODO: Fix Delete issue
-                    boolean bDelete = file.delete();
                 }
-
             }
         }
 
@@ -532,8 +559,8 @@ public class ExtractIE extends Extract {
     @Override
     public void complete() {
         // Delete all the results when complete
-        for (String file : pascoResults) {
-            String filePath = PASCO_RESULTS_PATH + File.separator + file;
+        /*for (String file : pascoResults) {
+            String filePath = moduleTempResultsDir + File.separator + file;
             try {
                 File f = new File(filePath);
                 if (f.exists() && f.canWrite()) {
@@ -545,6 +572,7 @@ public class ExtractIE extends Extract {
                 logger.log(Level.WARNING, "Incorrect permission to delete file " + filePath, ex);
             }
         }
+        */
         pascoResults.clear();
         logger.info("Internet Explorer extract has completed.");
     }
@@ -556,7 +584,6 @@ public class ExtractIE extends Extract {
             execPasco = null;
         }
         
-
         //call regular cleanup from complete() method
         complete();
     }

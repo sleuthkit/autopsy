@@ -71,11 +71,13 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", module.getName());
                 break;
             }
+            
             try {
                 module.process(pipelineContext, dataSource, controller);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
+                errors.add(module.getName() + "had errors -- see log");
             }
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
@@ -84,7 +86,9 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         // create the final message for inbox
         StringBuilder errorMessage = new StringBuilder();
         String errorMsgSubject;
-        if (!errors.isEmpty()) {
+        MessageType msgLevel = MessageType.INFO;
+        if (errors.isEmpty() == false) {
+            msgLevel = MessageType.ERROR;
             errorMessage.append("<p>Errors encountered during analysis: <ul>\n");
             for (String msg : errors) {
                 errorMessage.append("<li>").append(msg).append("</li>\n");
@@ -100,7 +104,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             errorMessage.append("<p>No errors encountered.</p>");
             errorMsgSubject = "No errors reported";
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
     }
 
