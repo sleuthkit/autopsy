@@ -85,7 +85,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        // only allow one item to be selected at a time
         ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         curPage = -1;
@@ -353,7 +352,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public String getTitle() {
-        return "Thumbnail View";
+        return "Thumbnail";
     }
 
     @Override

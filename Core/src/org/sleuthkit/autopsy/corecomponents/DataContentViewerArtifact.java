@@ -31,11 +31,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
 import javax.swing.SwingWorker;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -245,22 +244,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
         
-        outputViewPane.setContentType("text/html;charset=UTF-8");
-        HTMLEditorKit kit = new HTMLEditorKit();
-        outputViewPane.setEditorKit(kit);
-        StyleSheet styleSheet = kit.getStyleSheet();
-        /* I tried to play around with inheritence on font-size and it didn't 
-         * always work.  Defined all of the basics just in case. 
-         * @@@ IngestInboxViewer also defines styles similar to this.  Consider
-         * a method that sets consistent styles for all viewers and takes font
-         * size as an argument. 
-         */
-        styleSheet.addRule("body {font-family:Arial;font-size:14pt;}");
-        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
-        styleSheet.addRule("li {font-family:Arial;font-size:14pt;}");
-        styleSheet.addRule("td {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}");
-        styleSheet.addRule("th {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}");
-        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}");
+        Utilities.configureTextPaneAsHtml(outputViewPane);
     }
 
     /**
@@ -304,7 +288,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public String getTitle() {
-        return "Result View";
+        return "Results";
     }
 
     @Override

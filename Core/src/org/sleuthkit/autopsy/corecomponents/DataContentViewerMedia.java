@@ -162,7 +162,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public String getTitle() {
-        return "Media View";
+        return "Media";
     }
 
     @Override
