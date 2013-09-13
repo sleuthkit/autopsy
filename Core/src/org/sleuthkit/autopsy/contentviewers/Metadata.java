@@ -144,6 +144,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         }
         addRow(sb, "MD5", md5);
         
+        addRow(sb, "Internal ID", new Long(file.getId()).toString());
+        
         endTable(sb);
         setText(sb.toString());
     }

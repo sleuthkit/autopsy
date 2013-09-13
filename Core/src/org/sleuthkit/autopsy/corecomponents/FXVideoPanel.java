@@ -76,6 +76,7 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
 
+    private static final String[] EXTENSIONS = new String[]{".swf", ".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
@@ -639,4 +640,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //            return frames;
 //        }
 //    }
+    
+    @Override
+    public String[] getExtensions() {
+        return EXTENSIONS;
+    }
 }
