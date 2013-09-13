@@ -21,18 +21,19 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestDialogPanel;
-import static org.sleuthkit.autopsy.ingest.IngestDialogPanel.DISABLED_MOD;
-import static org.sleuthkit.autopsy.ingest.IngestDialogPanel.PARSE_UNALLOC;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.datamodel.Content;
 
 @ServiceProvider(service = IngestConfigurator.class)
-public class GeneralIngestConfigurator implements IngestConfigurator {    
+public class GeneralIngestConfigurator implements IngestConfigurator { 
+    public static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules";
+    public static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
     private List<Content> contentToIngest;
     private IngestManager manager;
     private IngestDialogPanel ingestDialogPanel;
@@ -79,21 +80,19 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
 
     @Override
     public void save() {
-        // Save the user's configuration of the currently selected module.
+        // Save the user's configuration of the currently selected ingest module.
         IngestModuleAbstract currentModule = ingestDialogPanel.getCurrentIngestModule();
         if (currentModule != null && currentModule.hasSimpleConfiguration()) {
             currentModule.saveSimpleConfiguration();
         }
         
-        // Create a list of the modules the user wants to be disabled.
-        List<IngestModuleAbstract> disabledModules = IngestManager.getDefault().enumerateAllModules();
-        disabledModules.removeAll(ingestDialogPanel.getModulesToStart());        
-        String disabledModulesCsv = moduleListToCsv(disabledModules);
+        // Save the user's configuration of the set of enabled ingest modules.
+        String enabledModulesCsvList = moduleListToCsv(ingestDialogPanel.getModulesToStart());
+        ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, enabledModulesCsvList);
         
         // Save the user's general ingest configuration.
-        ModuleSettings.setConfigSetting(moduleContext, DISABLED_MOD, disabledModulesCsv);
         String processUnalloc = Boolean.toString(ingestDialogPanel.processUnallocSpaceEnabled());
-        ModuleSettings.setConfigSetting(moduleContext, PARSE_UNALLOC, processUnalloc);
+        ModuleSettings.setConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
     }
 
     @Override
@@ -132,11 +131,16 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         String[] moduleNames = csv.split(", ");
         List<IngestModuleAbstract> allModules = IngestManager.getDefault().enumerateAllModules();
         for (String moduleName : moduleNames) {
+            boolean moduleFound = false;
             for (IngestModuleAbstract module : allModules) {
                 if (moduleName.equals(module.getName())) {
                     modules.add(module);
+                    moduleFound = true;
                     break;
                 }
+            }
+            if (moduleFound == false) {
+                JOptionPane.showMessageDialog(null, "Failed to find and load " + moduleName + " module", "Ingest Module Not Found", JOptionPane.ERROR_MESSAGE);
             }
         }
         
@@ -144,16 +148,21 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
     }
 
     private void loadSettings() {
-        // get the csv list of disabled modules
-        String disabledModulesCsv = ModuleSettings.getConfigSetting(moduleContext, DISABLED_MOD);
+        loadEnabledIngestModulesSetting();
         
-        // create a list of modules from it
-        List<IngestModuleAbstract> disabledModules = csvToModuleList(disabledModulesCsv);
-        
-        // tell the ingestDialogPanel to unselect these modules
-        ingestDialogPanel.setDisabledModules(disabledModules);
-        
-        boolean processUnalloc = Boolean.parseBoolean(ModuleSettings.getConfigSetting(moduleContext, PARSE_UNALLOC));
+        boolean processUnalloc = Boolean.parseBoolean(ModuleSettings.getConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY));
         ingestDialogPanel.setProcessUnallocSpaceEnabled(processUnalloc);        
+    }
+    
+    private void loadEnabledIngestModulesSetting() {
+        // If there is no enabled ingest modules setting for this user, default to enabling all
+        // of the ingest modules the IngestManager has loaded.
+        if (ModuleSettings.settingExists(moduleContext, ENABLED_INGEST_MODULES_KEY) == false) {
+            String defaultSetting = moduleListToCsv(IngestManager.getDefault().enumerateAllModules());
+            ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, defaultSetting);
+        }        
+        
+        String enabledModulesSetting = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY);
+        ingestDialogPanel.setEnabledIngestModules(csvToModuleList(enabledModulesSetting));                            
     }
 }

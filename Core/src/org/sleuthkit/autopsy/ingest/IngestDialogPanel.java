@@ -44,8 +44,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
 
     private IngestModuleAbstract currentModule;
     private ModulesTableModel tableModel;
-    public static final String DISABLED_MOD = "Disabled_Ingest_Modules";
-    public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
     private String context;
 
     /**
@@ -123,8 +121,8 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         processUnallocCheckbox.setSelected(enabled);
     }
     
-    public void setDisabledModules(List<IngestModuleAbstract> disabledModules) {
-        tableModel.setUnselectedModules(disabledModules);
+    public void setEnabledIngestModules(List<IngestModuleAbstract> enabledModules) {
+        tableModel.setSelectedModules(enabledModules);
     }
 
     /**
