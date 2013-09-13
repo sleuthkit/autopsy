@@ -39,11 +39,16 @@ import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
+import org.apache.tika.language.LanguageIdentifier;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -123,7 +128,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
-            
+
             //Parse the file in a task
             Tika tika = new Tika(); //new tika instance for every file, to workaround tika memory issues
             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
@@ -152,7 +157,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 return false;
             }
 
-            
+
             // break the results into chunks and index
             success = true;
             long readSize;
@@ -213,7 +218,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 }
 
                 extracted = sb.toString();
-                
+
+                //attempt to identify language of extracted text and post it to the blackboard
+                new TikaLanguageIdentifier().addLanguageToBlackBoard(extracted, sourceFile);
+
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
@@ -272,7 +280,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         if (detectedFormat == null) {
             return false;
         } else if (detectedFormat.equals("application/octet-stream")
-                || detectedFormat.equals("application/x-msdownload") ) {
+                || detectedFormat.equals("application/x-msdownload")) {
             //any binary unstructured blobs (string extraction will be used)
             return false;
         } else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
@@ -292,8 +300,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     /**
-     * Runnable task that calls tika to parse the content using
-     * the input stream.  Provides reader for results. 
+     * Runnable task that calls tika to parse the content using the input
+     * stream. Provides reader for results.
      */
     private static class ParseRequestTask implements Runnable {
 

@@ -148,6 +148,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
                 //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
                 //encode to bytes to index as byte stream
                 String extracted;
+
                 //add BOM and trim the 0 bytes
                 //set initial size to chars read + bom - try to prevent from resizing
                 StringBuilder sb = new StringBuilder((int) totalRead + 1000);
@@ -162,6 +163,11 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
                 //reset for next chunk
                 totalRead = 0;
                 extracted = sb.toString();
+
+
+                //attempt to identify language of extracted text and post it to the blackboard
+                new TikaLanguageIdentifier().addLanguageToBlackBoard(extracted, sourceFile);
+
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(outCharset);
@@ -216,13 +222,11 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         if (detectedFormat == null) {
             return false;
-        }
-        else if (WEB_MIME_TYPES.contains(detectedFormat) ) {
+        } else if (WEB_MIME_TYPES.contains(detectedFormat)) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
-        
+
     }
 }
