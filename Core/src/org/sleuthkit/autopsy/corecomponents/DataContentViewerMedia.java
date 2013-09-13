@@ -182,8 +182,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void resetComponent() {
-        // No need to reset the video panel. It resets itself when a node is
-        // set.
+        videoPanel.reset();
         lastFile = null;
     }
 
