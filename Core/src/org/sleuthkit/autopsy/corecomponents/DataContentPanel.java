@@ -24,20 +24,16 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class use child DataContentViewers to present one or more 
@@ -81,29 +77,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     @Override
     public void setNode(Node selectedNode) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            // Set the file path.
-            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
-            if (selectedNode == null) {
-                setName(defaultName);
-            } 
-            else {
-                Content content = selectedNode.getLookup().lookup(Content.class);
-                if (content != null) {
-                    String path = defaultName;
-                    try {
-                        path = content.getUniquePath();
-                    } 
-                    catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Failure getting path of " + content, ex);
-                    }
-                    setName(path);
-                } 
-                else {
-                    setName(defaultName);
-                }
-            }
-            
+        try {            
             // The selected node is cached since it is only pushed to each 
             // content viewer as the corresponding tab is activated.
             currentNode = selectedNode;
@@ -123,27 +97,29 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     public void activateTabs(Node selectedNode) {   
         if (listeningToTabbedPane == false) {
             jTabbedPane1.addChangeListener(this);        
+            listeningToTabbedPane = true;
         }
         
-        // get the preference for the preferred viewer
-        Preferences pref = NbPreferences.forModule(GeneralPanel.class);
-        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
-
+        // Determine which tabs to activate and which viewer thinks it is the 
+        // preferred viewer for the content underlying the selected node.
         int currTabIndex = jTabbedPane1.getSelectedIndex();
         int totalTabs = jTabbedPane1.getTabCount();
         int maxPreferred = 0;
         int preferredViewerIndex = 0;
         for (int i = 0; i < totalTabs; ++i) {
             DataContentViewerUpdateManager contentViewer = contentViewers.get(i);
-            contentViewer.resetComponent(); // Marks each viewer as "dirty."
+            
+            // Since this is a new node, marks each viewer as needing an update.
+            contentViewer.resetComponent(); 
 
-            // disable an unsupported tab (ex: picture viewer)
             if ((selectedNode == null) || (contentViewer.isSupported(selectedNode) == false)) {
                 jTabbedPane1.setEnabledAt(i, false);
-            } else {
+            } 
+            else {
+                // Enable this viewer's tab.
                 jTabbedPane1.setEnabledAt(i, true);
                 
-                // remember the viewer with the highest preference value
+                // Let the viewer make its case for having its tab selected.
                 int currentPreferred = contentViewer.isPreferred(selectedNode, true);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
@@ -152,18 +128,18 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             }
         }
         
-        // let the user decide if we should stay with the current viewer
+        // Get the user's preference for the selected tab. The user's preference
+        // takes priority over the votes casr by the viewers. 
+        Preferences pref = NbPreferences.forModule(GeneralPanel.class);
+        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
         int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
 
-        // set the tab to the one the user wants, then set that viewer's node.
+        // Select the tab and push the node to the lucky viewer corresponding to 
+        // the selected tab - if that viewer can handle the node.
         jTabbedPane1.setSelectedIndex(tabIndex);
-        DataContentViewerUpdateManager dcv = contentViewers.get(tabIndex);
-        // this is really only needed if no tabs were enabled 
-        if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
-            dcv.resetComponent();
-        }
-        else {
-            dcv.setNode(selectedNode);
+        DataContentViewerUpdateManager viewer = contentViewers.get(tabIndex);        
+        if (jTabbedPane1.isEnabledAt(tabIndex)) {
+            viewer.setNode(selectedNode);
         }
     }
 
