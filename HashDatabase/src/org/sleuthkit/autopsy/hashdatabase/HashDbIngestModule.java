@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -375,4 +376,14 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
         return ret;
     }
+    
+    public ArrayList<String> getKnownBadSetNames() {
+        ArrayList<String> knownBadSetNames = new ArrayList<>();
+        HashDbXML hdbxml = HashDbXML.getCurrent();
+        for (HashDb db : hdbxml.getKnownBadSets()) {
+            knownBadSetNames.add(db.getName());
+        }
+        return knownBadSetNames;
+    }
+    
 }
