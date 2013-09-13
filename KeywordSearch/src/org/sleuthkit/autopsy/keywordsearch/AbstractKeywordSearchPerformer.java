@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-import java.util.logging.Level;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
@@ -35,7 +32,6 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentatio
 abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
     protected int filesIndexed;
-    private static final Logger logger = Logger.getLogger(AbstractKeywordSearchPerformer.class.getName());
 
     AbstractKeywordSearchPerformer() {
         initListeners();
@@ -47,7 +43,6 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
                         String changed = evt.getPropertyName();
-                        Object oldValue = evt.getOldValue();
                         Object newValue = evt.getNewValue();
 
                         if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
@@ -114,7 +109,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                 KeywordSearchUtil.displayDialog("Keyword Search Error", "Keyword list is empty, please add at least one keyword to the list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(keywords, Presentation.COLLAPSE);
+            man = new KeywordSearchQueryManager(keywords, Presentation.FLAT);
         } 
         else {
             QueryType queryType = null;
@@ -128,7 +123,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                 KeywordSearchUtil.displayDialog("Keyword Search Error", "Please enter a keyword to search for", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.COLLAPSE);
+            man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.FLAT);
         }
 
         if (man.validate()) {
