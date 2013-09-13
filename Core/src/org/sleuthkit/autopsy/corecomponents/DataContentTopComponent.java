@@ -178,7 +178,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      * @return tab pane with individual DataContentViewers
      */
     public JTabbedPane getTabPanels() {
-        return dataContentPanel.getTabPanels();
+        return dataContentPanel.getTabbedPanel();
     }
 
     /**

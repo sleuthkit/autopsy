@@ -47,33 +47,34 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
-    private final List<UpdateWrapper> viewers = new ArrayList<>();;
+    private final List<DataContentViewerUpdateManager> contentViewers = new ArrayList<>();
     private Node currentNode;
+    private boolean listeningToTabbedPane = false;
 
     public DataContentPanel() {
         initComponents();
-        
+        customizeComponents();
+    }
+    
+    private void customizeComponents() {
         // Get all implementers of DataContentViewer, decorate them (partially) 
         // with an update manager, and add their UI component to the child 
         // tabbed pane.
-        Collection<? extends DataContentViewer> views = Lookup.getDefault().lookupAll(DataContentViewer.class);
-        for (DataContentViewer view : views) {
-            viewers.add(new UpdateWrapper(view));
-            jTabbedPane1.addTab(view.getTitle(), null, view.getComponent(), view.getToolTip());
+        Collection<? extends DataContentViewer> viewers = Lookup.getDefault().lookupAll(DataContentViewer.class);
+        for (DataContentViewer viewer : viewers) {
+            contentViewers.add(new DataContentViewerUpdateManager(viewer));
+            jTabbedPane1.addTab(viewer.getTitle(), null, viewer.getComponent(), viewer.getToolTip());
         }
         
-        // Disable all of the tabs until a node is received.
+        // Disable all of the tabs until a node is selected.
         int numTabs = jTabbedPane1.getTabCount();
         for (int tab = 0; tab < numTabs; ++tab) {
             jTabbedPane1.setEnabledAt(tab, false);
-        }
-        
-        // Listen to the tabbed pane to be able to push the current node to the
-        // selected viewer. 
-        jTabbedPane1.addChangeListener(this);
+        }                
     }
         
-    public JTabbedPane getTabPanels() {
+    // @@@ Why does this component need to be publicly exposed?
+    public JTabbedPane getTabbedPanel() {
         return jTabbedPane1;
     }
 
@@ -81,8 +82,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     public void setNode(Node selectedNode) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
+            // Set the file path.
             String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
-            // set the file path
             if (selectedNode == null) {
                 setName(defaultName);
             } 
@@ -94,7 +95,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                         path = content.getUniquePath();
                     } 
                     catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content);
+                        logger.log(Level.SEVERE, "Failure getting path of " + content, ex);
                     }
                     setName(path);
                 } 
@@ -102,10 +103,12 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                     setName(defaultName);
                 }
             }
-
-            // 
+            
+            // The selected node is cached since it is only pushed to each 
+            // content viewer as the corresponding tab is activated.
             currentNode = selectedNode;
-            setupTabs(selectedNode);
+                        
+            activateTabs(selectedNode);
         } 
         finally {
             this.setCursor(null);
@@ -113,12 +116,15 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     }
     
     /**
-     * Resets the tabs based on the selected Node. If the selected node is null
-     * or not supported, disable that tab as well.
-     *
-     * @param selectedNode  the selected content Node
+     * Activates the tabs capable of displaying the content underlying the
+     * selected node, sets the current tab to be that of the preferred viewer 
+     * for that content, and passes the node to that tab.   
      */
-    public void setupTabs(Node selectedNode) {    
+    public void activateTabs(Node selectedNode) {   
+        if (listeningToTabbedPane == false) {
+            jTabbedPane1.addChangeListener(this);        
+        }
+        
         // get the preference for the preferred viewer
         Preferences pref = NbPreferences.forModule(GeneralPanel.class);
         boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
@@ -128,17 +134,17 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int maxPreferred = 0;
         int preferredViewerIndex = 0;
         for (int i = 0; i < totalTabs; ++i) {
-            UpdateWrapper dcv = viewers.get(i);
-            dcv.resetComponent(); // Marks each viewer as "dirty."
+            DataContentViewerUpdateManager contentViewer = contentViewers.get(i);
+            contentViewer.resetComponent(); // Marks each viewer as "dirty."
 
             // disable an unsupported tab (ex: picture viewer)
-            if ((selectedNode == null) || (dcv.isSupported(selectedNode) == false)) {
+            if ((selectedNode == null) || (contentViewer.isSupported(selectedNode) == false)) {
                 jTabbedPane1.setEnabledAt(i, false);
             } else {
                 jTabbedPane1.setEnabledAt(i, true);
                 
                 // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode, true);
+                int currentPreferred = contentViewer.isPreferred(selectedNode, true);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
                     maxPreferred = currentPreferred;
@@ -151,7 +157,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         // set the tab to the one the user wants, then set that viewer's node.
         jTabbedPane1.setSelectedIndex(tabIndex);
-        UpdateWrapper dcv = viewers.get(tabIndex);
+        DataContentViewerUpdateManager dcv = contentViewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 
         if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
             dcv.resetComponent();
@@ -167,12 +173,12 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
     @Override
     public void stateChanged(ChangeEvent evt) {
-        // Push the current node to the viewer corresponding to the active tab
+        // Push the current node to the viewer corresponding to the selected tab
         // in the child tabbed pane.
         int currentTab = ((JTabbedPane)evt.getSource()).getSelectedIndex();
         if (currentTab != -1) {
-            UpdateWrapper viewer = viewers.get(currentTab);
-            if (viewer.isOutdated()) {
+            DataContentViewerUpdateManager viewer = contentViewers.get(currentTab);
+            if (viewer.needsUpdate()) {
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
                     viewer.setNode(currentNode);
@@ -184,36 +190,36 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         }
     }
 
-    private static class UpdateWrapper {
+    private static class DataContentViewerUpdateManager {
 
-        private DataContentViewer wrapped;
-        private boolean outdated;
+        private DataContentViewer dataContentViewer;
+        private boolean updateNeeded;
 
-        UpdateWrapper(DataContentViewer wrapped) {
-            this.wrapped = wrapped;
-            this.outdated = true;
+        DataContentViewerUpdateManager(DataContentViewer wrapped) {
+            dataContentViewer = wrapped;
+            updateNeeded = true;
         }
 
         void setNode(Node selectedNode) {
-            this.wrapped.setNode(selectedNode);
-            this.outdated = false;
+            dataContentViewer.setNode(selectedNode);
+            updateNeeded = false;
         }
 
         void resetComponent() {
-            this.wrapped.resetComponent();
-            this.outdated = true;
+            dataContentViewer.resetComponent();
+            updateNeeded = true;
         }
 
-        boolean isOutdated() {
-            return this.outdated;
+        boolean needsUpdate() {
+            return updateNeeded;
         }
 
         boolean isSupported(Node node) {
-            return this.wrapped.isSupported(node);
+            return dataContentViewer.isSupported(node);
         }
         
         int isPreferred(Node node, boolean isSupported) {
-            return this.wrapped.isPreferred(node, isSupported);
+            return dataContentViewer.isPreferred(node, isSupported);
         }
     } 
         

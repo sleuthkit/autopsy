@@ -49,19 +49,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
+    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private ExplorerManager explorerManager;
     private Node rootNode;
-    private PropertyChangeSupport pcs;
-    
-    // Different DataResultsViewers
+    private PropertyChangeSupport pcs;    
     private final List<UpdateWrapper> viewers = new ArrayList<>();
-    //custom content viewer to send selections to, or null if the main one
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
     
-    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
-
     /**
      * Creates new DataResultPanel
      * Default constructor, needed mostly  for the palette/UI builder
@@ -73,7 +69,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         initComponents();
         
         setName(title);
-
         this.title = "";
 
         this.dataResultTabbedPanel.addChangeListener(this);
@@ -88,9 +83,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(boolean isMain, String title) {
         this();
-        
         setName(title);
-
         this.isMain = isMain;
         this.title = title;
     }
@@ -105,10 +98,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
-        
         setName(title);
-
-        //custom content viewer tc to setup for every result viewer
         this.customContentViewer = customContentViewer; 
     }
     
@@ -123,7 +113,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches) {
         DataResultPanel newDataResult = new DataResultPanel(false, title);
-
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         newDataResult.open();
         return newDataResult;
@@ -141,7 +130,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches, DataContent dataContent) {
         DataResultPanel newDataResult = new DataResultPanel(title, dataContent);
-
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         newDataResult.open();
         return newDataResult;
@@ -156,8 +144,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultPanel newDataResult) {
         newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
-
-        // set the tree table view
         newDataResult.setNode(givenNode);
         newDataResult.setPath(pathText);
     }
@@ -322,8 +308,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
         if (pcs == null) {
-            logger.log(Level.WARNING, "Could not add listener to DataResultPanel, "
-                    + "listener support not fully initialized yet, listener: " + listener.toString() );
+            logger.log(Level.WARNING, "Could not add listener to DataResultPanel, listener support not fully initialized yet, listener: {0}" , listener.toString());
         }
         else {
             this.pcs.addPropertyChangeListener(listener);
@@ -375,7 +360,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public void setTitle(String title) {
         setName(title);
-        
     }
 
     @Override
