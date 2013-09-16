@@ -80,7 +80,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add("Unable to load " + moduleName + " module, it will not be available");
+                messages.add("Unable to load " + moduleName + " module");
             }
         }        
         ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
