@@ -30,9 +30,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.GeneralIngestConfigurator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 
@@ -49,8 +48,14 @@ public class IngestDialog extends JDialog {
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
         ingestConfigurator = new GeneralIngestConfigurator();
-        ingestConfigurator.setContext(IngestDialog.class.getCanonicalName());
-        ingestConfigurator.reload();
+        List<String> messages = ingestConfigurator.setContext(IngestDialog.class.getCanonicalName());
+        if (messages.isEmpty() == false) {
+            StringBuilder warning = new StringBuilder();
+            for (String message : messages) {
+                warning.append(message).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warning.toString());
+        }
     }
     
     public IngestDialog(){

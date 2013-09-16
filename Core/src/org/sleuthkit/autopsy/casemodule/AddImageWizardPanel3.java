@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestDialog;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -86,7 +88,14 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         this.action = action;
         this.wizPanel = wizPanel;
         ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        ingestConfig.setContext(AddImageWizardPanel3.class.getCanonicalName());
+        List<String> messages = ingestConfig.setContext(AddImageWizardPanel3.class.getCanonicalName());
+        if (messages.isEmpty() == false) {
+            StringBuilder warning = new StringBuilder();
+            for (String message : messages) {
+                warning.append(message).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warning.toString());
+        }        
     }
 
     /**

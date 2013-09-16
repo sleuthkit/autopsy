@@ -405,7 +405,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Custom cell renderer for tooltips with module description
+     * Custom cell renderer for tool tips with module description
      */
     private class ModulesTableRenderer extends DefaultTableCellRenderer {
         

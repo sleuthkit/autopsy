@@ -23,47 +23,62 @@ import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Lookup interface for ingest configuration dialog
+ * Instances of this class provide the following services:
+ *    1. A way to save and load the ingest process configuration settings for a 
+ *       given ingest process context.
+ *    2. A UI component for configuring ingest process settings.
+ *    3. A way to specify input content and start the ingest process for a 
+ *       given ingest process context.
  */
+// @@@ This interface needs to be re-designed. An interface for allowing the 
+// authors of ingest modules to expose context sensitive module configuration 
+// settings needs to be provided; there also needs to be a way for users to 
+// configure the ingest process that uses those modules. These are separate 
+// concerns; likewise, kicking off an ingest process for particular content in
+// a particular context is a separate concern.
 public interface IngestConfigurator {
     /**
-     * get JPanel container with the configurator
-     * @return 
+     * Specifies the ingest process context for the purpose of choosing, saving, 
+     * and loading ingest process configuration settings; also determines what
+     * configuration settings will be in effect if the setContent() and start()
+     * methods are called to start the ingest process for some content specified
+     * using the setContent() method.
+     * @return A list, possibly empty, of messages describing errors that 
+     * occurred when loading the configuration settings.
      */
-    JPanel getIngestConfigPanel();
+    public List<String> setContext(String contextName);
     
     /**
-     * set input Content to be configured for ingest
-     * @param inputContent content to be configured for ingest
+     * Provides a UI component for choosing ingest process configuration 
+     * settings for the ingest process context specified using the setContext() 
+     * method.
+     */
+    JPanel getIngestConfigPanel();
+
+    /**
+     * Saves the ingest process configuration settings for the ingest process 
+     * context specified using the setContext() method.
+     */
+    void save();
+        
+    /**
+     * Sets the input content for an ingest process prior to calling start() to
+     * run the process using the process configuration settings for the context 
+     * specified using setContext(). 
      */
     void setContent(List<Content> inputContent);
     
     /**
-     * start ingest enqueing previously set image
+     * Starts (queues) the ingest process for the content specified using the 
+     * setContent() method, using the configuration settings corresponding to 
+     * the ingest process context specified using the setContext() method.
      */
     void start();
-    
+        
     /**
-     * save configuration of lastly selected service
+     * Returns true if any ingest process is running, false otherwise.
+     * Note that the running process may or may not be the process started 
+     * (queued) by an invocation of the start() method.
      */
-    void save();
-    
-    /**
-     * reload the simple panel
-     */
-    void reload();
-    
-    /**
-     * find out if ingest is currently running
-     * 
-     * @return  true if ingest process is running, false otherwise
-     */
-    boolean isIngestRunning();
-    
-    /**
-     * Set the context for the configuration.
-     * @param context 
-     */
-    public void setContext(String context);
- 
+    boolean isIngestRunning(); 
 }
