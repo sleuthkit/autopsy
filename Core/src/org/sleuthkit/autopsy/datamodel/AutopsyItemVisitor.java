@@ -39,6 +39,10 @@ public interface AutopsyItemVisitor<T> {
     T visit(RecentFiles.RecentFilesFilter rff);
 
     T visit(DeletedContent dc);
+    
+    T visit(EventLogs.EventLogFilter evt);
+    
+    T visit(EventLogs evt);
 
     T visit(DeletedContent.DeletedContentFilter dcf);
 
@@ -92,6 +96,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(DeletedContent dc) {
             return defaultVisit(dc);
+        }
+        
+        @Override
+        public T visit(EventLogs.EventLogFilter evt) {
+            return defaultVisit(evt);
+        }
+        
+        @Override
+        public T visit(EventLogs evt) {
+            return defaultVisit(evt);
         }
 
         @Override
