@@ -136,7 +136,7 @@ public class ExtractIE extends Extract {
         }
         
         try {
-            this.parsePascoResults(pascoResults);
+            this.getHistory(pascoResults);
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing IE History", e);
@@ -189,7 +189,7 @@ public class ExtractIE extends Extract {
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
@@ -238,7 +238,7 @@ public class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
             //TODO Revisit usage of deprecated Constructor as of TSK-583
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
@@ -394,7 +394,7 @@ public class ExtractIE extends Extract {
             execPasco.execute(writer, JAVA_PATH, 
                     "-cp", PASCO_LIB_PATH, 
                     "isi.pasco2.Main", "-T", "history", indexFilePath );
-
+            // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             success = false;
             logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex);
@@ -416,7 +416,7 @@ public class ExtractIE extends Extract {
         return success;
     }
 
-    private void parsePascoResults(List<String> filenames) {
+    private void getHistory(List<String> filenames) {
         if (pascoFound == false) {
             return;
         }
@@ -451,6 +451,15 @@ public class ExtractIE extends Extract {
 
                                 String line = fileScanner.nextLine();
 
+                                // lines at end of file
+                                if ((line.startsWith("LEAK entries")) ||
+                                        (line.startsWith("REDR entries")) ||
+                                        (line.startsWith("URL entries")) ||
+                                        (line.startsWith("ent entries")) ||
+                                        (line.startsWith("unknown entries"))) {        
+                                    continue;
+                                }
+                                
                                 if (line.startsWith("URL")) {  
                                     String[] lineBuff = line.split("\\t");
                                     
@@ -466,6 +475,10 @@ public class ExtractIE extends Extract {
                                     String realurl = "";
                                     String domain = "";
                                     
+                                    /* We've seen two types of lines: 
+                                     * URL  http://XYZ.com ....
+                                     * URL  Visited: Joe@http://XYZ.com ....
+                                     */
                                     if (lineBuff[1].contains("@")) {
                                         String url[] = lineBuff[1].split("@", 2);
                                         user = url[0];
@@ -505,7 +518,7 @@ public class ExtractIE extends Extract {
                                         BlackboardArtifact bbart = tskCase.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+                                        //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
 

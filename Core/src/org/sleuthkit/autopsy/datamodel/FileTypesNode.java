@@ -24,19 +24,27 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Node for search filter
+ * Node for extension/file type filter view
  */
-public class SearchFiltersNode extends DisplayableItemNode {
+public class FileTypesNode extends DisplayableItemNode {
 
     private static final String FNAME = "File Types";
     private SleuthkitCase skCase;
 
-    SearchFiltersNode(SleuthkitCase skCase, SearchFilters.FileSearchFilter filter) {
-        super(Children.create(new SearchFiltersChildren(skCase, filter), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+    /**
+     * 
+     * @param skCase
+     * @param filter null to display root node of file type tree, pass in something to provide a sub-node.  
+     */
+    FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
+        super(Children.create(new FileTypesChildren(skCase, filter), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        // root node of tree
         if (filter == null) {
             super.setName(FNAME);
             super.setDisplayName(FNAME);
-        } else {
+        } 
+        // sub-node in file tree (i.e. documents, exec, etc.)
+        else {
             super.setName(filter.getName());
             super.setDisplayName(filter.getDisplayName());
         }

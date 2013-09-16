@@ -67,6 +67,8 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class GstVideoPanel extends MediaViewVideoPanel {
 
+    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
+    
     private static final Logger logger = Logger.getLogger(GstVideoPanel.class.getName());
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
@@ -768,5 +770,10 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 }
             });
         }
+    }
+    
+    @Override
+    public String[] getExtensions() {
+        return EXTENSIONS;
     }
 }
