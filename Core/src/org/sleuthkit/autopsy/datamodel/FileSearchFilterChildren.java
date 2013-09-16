@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -45,7 +44,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     private SleuthkitCase skCase;
     private SearchFilters.SearchFilterInterface filter;
     private static final Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
-    //private final static int MAX_OBJECTS = 2000;
+//    private final static int MAX_OBJECTS = 2000;
 
     public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
@@ -57,7 +56,6 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         list.addAll(runQuery());
         return true;
     }
-
     
     private String createQuery(){
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -66,18 +64,15 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             query += " OR name LIKE '%" + s + "'";
         }
         query += ')';
-        //query += " LIMIT " + MAX_OBJECTS;
+//        query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
 
     
-    private List<AbstractFile> runQuery(){
-        List<AbstractFile> list = new ArrayList<AbstractFile>();
+    private List<? extends Content> runQuery(){
+        List<? extends Content> list = new ArrayList<>();
         try {
-            List<AbstractFile> res = skCase.findAllFilesWhere(createQuery());
-            for(AbstractFile c : res){
-                    list.add(c);
-            }
+            list = skCase.findAllFilesWhere(createQuery());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get search results", ex);
         }

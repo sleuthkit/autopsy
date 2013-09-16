@@ -287,7 +287,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     public void setNode(Node selectedNode) {
         this.rootNode = selectedNode;
         if (selectedNode != null) {
-            int childrenCount = selectedNode.getChildren().getNodesCount(true);
+            int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
 
