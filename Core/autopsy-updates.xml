@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE module_updates PUBLIC "-//NetBeans//DTD Autoupdate Catalog 2.5//EN" "http://www.netbeans.org/dtds/autoupdate-catalog-2_7.dtd">
+
+<module_updates timestamp="03/01/21/12/03/2008">
+	
+<!--notification element goes here for user pop-up.  Attribute url is the URL to display along with the message contained between notification xml elements.
+-->
+
+<notification url="http://sleuthkit.org/autopsy">
+	Visit http://sleuthkit.org/autopsy to download the latest version of Autopsy.
+</notification>
+
+
+
+</module_updates>
