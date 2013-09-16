@@ -5,4 +5,25 @@
 <project name="org.sleuthkit.autopsy.timeline" default="netbeans" basedir=".">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.timeline.</description>
     <import file="nbproject/build-impl.xml"/>
+    
+    <!-- Verify that the TSK_HOME env variable is set -->
+    <target name="findTSK">
+        <property environment="env"/>
+        <condition property="tskFound">
+            <isset property="env.TSK_HOME"/>
+        </condition>
+        <fail unless="tskFound" message="TSK_HOME must be set as an environment variable."/>
+        <echo> TSK_HOME: ${env.TSK_HOME}</echo>
+    </target>  
+    
+    <target name="getMacTime" depends="findTSK">
+        <property environment="env"/>
+        <copy file="${env.TSK_HOME}/tools/timeline/mactime" tofile="${basedir}/release/mactime/mactime.pl"/>
+    </target>
+    
+    
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init">
+        <!-- get additional deps -->
+        <!-- This should only be done on non-Windows systems. <antcall target="getMacTime" /> -->
+    </target>
 </project>
