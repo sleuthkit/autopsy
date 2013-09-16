@@ -33,7 +33,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 
 /**
  * Dialog box that allows ingest modules to be run on an image. 

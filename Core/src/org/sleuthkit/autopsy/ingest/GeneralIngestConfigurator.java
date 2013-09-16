@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestDialogPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;

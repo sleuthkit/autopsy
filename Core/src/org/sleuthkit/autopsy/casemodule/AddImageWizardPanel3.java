@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
