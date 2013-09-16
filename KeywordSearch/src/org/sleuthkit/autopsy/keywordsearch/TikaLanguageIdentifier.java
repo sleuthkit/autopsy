@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
@@ -14,9 +28,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * TextLanguageIdentifier implementation based on a wrapped Tike
  * LanguageIdentifier
- *
- *
- * @author jmillman
  */
 public class TikaLanguageIdentifier implements TextLanguageIdentifier {
 
@@ -33,12 +44,11 @@ public class TikaLanguageIdentifier implements TextLanguageIdentifier {
 
             BlackboardArtifact genInfo;
             try {
-                genInfo = sourceFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+                genInfo = sourceFile.getGenInfoArtifact();
 
                 BlackboardAttribute textLang = new BlackboardAttribute(
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT_LANGUAGE.getTypeID(),
                         KeywordSearchIngestModule.MODULE_NAME, li.getLanguage());
-
 
                 genInfo.addAttribute(textLang);
 
@@ -46,31 +56,8 @@ public class TikaLanguageIdentifier implements TextLanguageIdentifier {
                 logger.log(Level.WARNING, "failed to add TSK_TEXT_LANGUAGE attribute to TSK_GEN_INFO artifact for file: " + sourceFile.getName(), ex);
             }
 
-
-
-
-        }else{
+        } else {
             logger.info("extracted text too short, skipping language detection on " + sourceFile.getName());
         }
-    } /*  //attempt to verify that artifact with attribute was created
-     ArrayList<BlackboardArtifact> arts;
-        
-        
-     try {
-     arts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO, sourceFile.getId());
-        
-     for (BlackboardArtifact art : arts) {
-        
-     List<BlackboardAttribute> attrs = art.getAttributes();
-     for (BlackboardAttribute attr : attrs) {
-     if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT_LANGUAGE.getTypeID()) {
-     logger.log(Level.INFO, "succesfully added " + attr.getValueString() + " to gen info for:" + sourceFile.getName());
-     break;
-     }
-     }
-     }
-     } catch (TskCoreException ex) {
-     Exceptions.printStackTrace(ex);
-     }*/
-
+    }
 }

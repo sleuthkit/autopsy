@@ -59,8 +59,10 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
             "text/javascript" //"application/xml",
             //"application/xml-dtd",
             );
+    private final TikaLanguageIdentifier tikaLanguageIdentifier;
 
     AbstractFileHtmlExtract() {
+        tikaLanguageIdentifier = new TikaLanguageIdentifier();
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
     }
@@ -166,7 +168,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
 
 
                 //attempt to identify language of extracted text and post it to the blackboard
-                new TikaLanguageIdentifier().addLanguageToBlackBoard(extracted, sourceFile);
+                tikaLanguageIdentifier.addLanguageToBlackBoard(extracted, sourceFile);
 
 
                 //converts BOM automatically to charSet encoding

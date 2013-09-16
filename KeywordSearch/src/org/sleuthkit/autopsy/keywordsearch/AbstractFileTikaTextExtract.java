@@ -76,8 +76,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<String>();
+    private final TikaLanguageIdentifier tikaLanguageIdentifier;
 
     AbstractFileTikaTextExtract() {
+        tikaLanguageIdentifier = new TikaLanguageIdentifier();
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
 
@@ -220,7 +222,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 extracted = sb.toString();
 
                 //attempt to identify language of extracted text and post it to the blackboard
-                new TikaLanguageIdentifier().addLanguageToBlackBoard(extracted, sourceFile);
+                tikaLanguageIdentifier.addLanguageToBlackBoard(extracted, sourceFile);
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
