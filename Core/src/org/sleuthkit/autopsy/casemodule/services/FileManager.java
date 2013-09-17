@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Transaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
@@ -244,12 +245,13 @@ public class FileManager implements Closeable {
             rootsToAdd.add(localFile);
         }
 
+        Transaction trans = tskCase.createTransaction();
         // make a virtual top-level directory for this set of files/dirs
-        final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir();
+        final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
 
         // recursively add each item in the set
         for (java.io.File localRootToAdd : rootsToAdd) {
-            AbstractFile localFileAdded = addLocalDirInt(fileSetRootDir, localRootToAdd, addProgressUpdater);
+            AbstractFile localFileAdded = addLocalDirInt(trans ,fileSetRootDir, localRootToAdd, addProgressUpdater);
             
             if (localFileAdded == null) {
                 String msg = "One of the local files/dirs could not be added: " + localRootToAdd.getAbsolutePath();
@@ -263,6 +265,7 @@ public class FileManager implements Closeable {
             }
         }
 
+        trans.commit();
         return fileSetRootDir;
     }
 
@@ -273,7 +276,7 @@ public class FileManager implements Closeable {
      * @return the virtual dir root container created
      * @throws TskCoreException
      */
-    private VirtualDirectory addLocalFileSetRootDir() throws TskCoreException {
+    private VirtualDirectory addLocalFileSetRootDir(Transaction trans) throws TskCoreException {
 
         VirtualDirectory created = null;
 
@@ -281,7 +284,7 @@ public class FileManager implements Closeable {
         final String fileSetName = VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + newFileSetCount;
 
         try {
-            created = tskCase.addVirtualDirectory(0, fileSetName);
+            created = tskCase.addVirtualDirectory(0, fileSetName, trans);
             curNumFileSets = newFileSetCount;
         } catch (TskCoreException ex) {
             String msg = "Error creating local file set dir: " + fileSetName;
@@ -303,7 +306,7 @@ public class FileManager implements Closeable {
      * @returns File object of file added or new virtualdirectory for the directory.
      * @throws TskCoreException
      */
-    private AbstractFile addLocalDirInt(VirtualDirectory parentVd,
+    private AbstractFile addLocalDirInt( Transaction trans,VirtualDirectory parentVd,
             java.io.File localFile, FileAddProgressUpdater addProgressUpdater) throws TskCoreException {
 
         if (tskCase == null) {
@@ -321,7 +324,7 @@ public class FileManager implements Closeable {
 
         if (localFile.isDirectory()) {
             //create virtual folder
-            final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), localFile.getName());
+            final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), localFile.getName(), trans);
             if (childVd != null && addProgressUpdater != null) {
                 addProgressUpdater.fileAdded(childVd);
             }
@@ -329,13 +332,13 @@ public class FileManager implements Closeable {
             final java.io.File[] childrenFiles = localFile.listFiles();
             if (childrenFiles != null) {
                 for (java.io.File childFile : childrenFiles) {
-                    addLocalDirInt(childVd, childFile, addProgressUpdater);
+                    addLocalDirInt(trans, childVd, childFile, addProgressUpdater);
                 }
             }
             return childVd;
         } else {
             //add leaf file, base case
-            return this.addLocalFileInt(parentVd, localFile);
+            return this.addLocalFileInt(parentVd, localFile, trans);
         }
     }
 
@@ -352,7 +355,7 @@ public class FileManager implements Closeable {
      * due to a critical system error or of the file manager has already been
      * closed
      */
-    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile) throws TskCoreException {
+    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, Transaction trans) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException("Attempted to use FileManager after it was closed.");
@@ -370,7 +373,7 @@ public class FileManager implements Closeable {
 
         LocalFile lf = tskCase.addLocalFile(fileName, localFile.getAbsolutePath(), size,
                 ctime, crtime, atime, mtime,
-                isFile, parentFile);
+                isFile, parentFile, trans);
 
         return lf;
     }
