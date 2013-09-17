@@ -213,6 +213,8 @@ public class DeletedContent implements AutopsyVisitableItem {
             private SleuthkitCase skCase;
             private DeletedContent.DeletedContentFilter filter;
             private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
+            
+        private static final int MAX_OBJECTS = 2000;
 
             DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
                 this.skCase = skCase;
@@ -258,6 +260,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
+                query += " LIMIT " + MAX_OBJECTS;
                 return query;
             }
 
