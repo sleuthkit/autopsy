@@ -384,6 +384,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * why does this take a Node as parameter and then ignore it?
+     * 
+     * 
+     * 
      * Resets the tabs based on the selected Node. If the selected node is null
      * or not supported, disable that tab as well.
      *

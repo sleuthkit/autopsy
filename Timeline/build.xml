@@ -6,6 +6,10 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.timeline.</description>
     <import file="nbproject/build-impl.xml"/>
     
+    <condition property="os.family.unix">
+        <os family="unix"/>
+    </condition>
+    
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
         <property environment="env"/>
@@ -16,7 +20,7 @@
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>  
     
-    <target name="getMacTime" depends="findTSK">
+    <target name="getMacTime" depends="findTSK" if="os.family.unix">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/tools/timeline/mactime" tofile="${basedir}/release/mactime/mactime.pl"/>
     </target>
