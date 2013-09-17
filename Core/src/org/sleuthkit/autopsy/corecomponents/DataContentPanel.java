@@ -189,8 +189,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // let the user decide if we should stay with the current viewer
         int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
 
-        // set the tab to the one the user wants, then set that viewer's node.
-        jTabbedPane1.setSelectedIndex(tabIndex);
+        
         UpdateWrapper dcv = viewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 
         if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
@@ -199,6 +198,9 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         else {
             dcv.setNode(selectedNode);
         }
+        
+        // set the tab to the one the user wants, then set that viewer's node.
+        jTabbedPane1.setSelectedIndex(tabIndex);
     }
 
     @Override
