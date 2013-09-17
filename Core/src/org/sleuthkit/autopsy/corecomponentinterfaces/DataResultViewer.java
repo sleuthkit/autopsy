@@ -80,8 +80,6 @@ public interface DataResultViewer {
     /**
      * Sets a custom content viewer (i.e., a data content mode (area) component) 
      * to which the viewer is expected to push node selection events.
-     * @deprecated
      */
-    @Deprecated
     public void setContentViewer(DataContent contentViewer);
 }

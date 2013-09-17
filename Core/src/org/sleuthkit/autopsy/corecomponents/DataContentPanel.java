@@ -33,16 +33,14 @@ import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Instances of this class use child DataContentViewers to present one or more 
- * views of the content underlying a Node. The DataContentViewers interface is
+ * views of the content underlying a Node. The DataContentViewer interface is
  * an extension point for developers wishing to create additional viewers.
  */
 public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
-    private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
     private final List<DataContentViewerUpdateManager> contentViewers = new ArrayList<>();
     private Node currentNode;
     private boolean listeningToTabbedPane = false;
@@ -68,8 +66,12 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             jTabbedPane1.setEnabledAt(tab, false);
         }                
     }
-        
-    // @@@ Why does this component need to be publicly exposed?
+
+    /**
+     * Provides access to JTabbedPane child of this panel. 
+     */
+    // @@@ Why does this component need to be publicly exposed? It currently is
+    // bubbled up to the ChangeViewAction class, but is this really necessary?
     public JTabbedPane getTabbedPanel() {
         return jTabbedPane1;
     }
@@ -95,6 +97,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
      * for that content, and passes the node to that tab.   
      */
     public void activateTabs(Node selectedNode) {   
+        // Deferring becoming a listener to the tabbed pane until this point
+        // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
             jTabbedPane1.addChangeListener(this);        
             listeningToTabbedPane = true;
@@ -119,7 +123,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                 // Enable this viewer's tab.
                 jTabbedPane1.setEnabledAt(i, true);
                 
-                // Let the viewer make its case for having its tab selected.
+                // Let the viewer make its case for having its tab selected as well.
                 int currentPreferred = contentViewer.isPreferred(selectedNode, true);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
@@ -129,13 +133,13 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         }
         
         // Get the user's preference for the selected tab. The user's preference
-        // takes priority over the votes casr by the viewers. 
+        // takes priority over the votes cast by the viewers. 
         Preferences pref = NbPreferences.forModule(GeneralPanel.class);
         boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
         int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
 
-        // Select the tab and push the node to the lucky viewer corresponding to 
-        // the selected tab - if that viewer can handle the node.
+        // Make the indicated tab selection and push the node to the lucky viewer 
+        // corresponding to the selected tab - if that viewer can handle the node.
         jTabbedPane1.setSelectedIndex(tabIndex);
         DataContentViewerUpdateManager viewer = contentViewers.get(tabIndex);        
         if (jTabbedPane1.isEnabledAt(tabIndex)) {

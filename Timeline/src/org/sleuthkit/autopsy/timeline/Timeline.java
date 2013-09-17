@@ -189,7 +189,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 dataContentPanel = new DataContentPanel();
                 dataResultPanel = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
-                dataResultPanel.setContentViewer(dataContentPanel);
                 logger.log(Level.INFO, "Successfully created viewers");
 
                 mainFrame.setBottomLeftPanel(dataResultPanel);
@@ -317,8 +316,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         @Override
                         public void run() {
                             mainFrame.setTopPanel(fxPanelCharts);
-                            dataResultPanel.open();
-                            //mainFrame.pack();
                             mainFrame.setVisible(true);
                         }
                     });
