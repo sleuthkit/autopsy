@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE settings PUBLIC "-//NetBeans//DTD Session settings 1.0//EN" "http://www.netbeans.org/dtds/sessionsettings-1_0.dtd">
+<settings version="1.0">
+    <module name="org.sleuthkit.autopsy.core/8"/>
+    <instanceof class="org.openide.ServiceType"/>
+    <instanceof class="org.netbeans.modules.autoupdate.AutoupdateType"/>
+    <instanceof class="org.netbeans.modules.autoupdate.XMLAutoupdateType"/>
+    <instance class="org.netbeans.modules.autoupdate.XMLAutoupdateType" method="createXMLAutoupdateType"/>
+</settings>

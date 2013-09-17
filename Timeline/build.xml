@@ -28,6 +28,6 @@
     
     <target name="init" depends="basic-init,files-init,build-init,-javac-init">
         <!-- get additional deps -->
-        <antcall target="getMacTime" />
+        <!-- This should only be done on non-Windows systems. <antcall target="getMacTime" /> -->
     </target>
 </project>
