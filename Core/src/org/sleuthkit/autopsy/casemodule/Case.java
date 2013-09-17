@@ -236,7 +236,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param configFilePath the path of the configuration file that's opened
      * @throws CaseActionException
      */
-    static void open(String configFilePath) throws CaseActionException {
+  public static void open(String configFilePath) throws CaseActionException {
         logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
 
         try {

@@ -57,7 +57,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * Return the content data associated with this node
      * @return the content object wrapped by this node
      */
-    public Content getContent() {
+    public T getContent() {
         return content;
     }
 
