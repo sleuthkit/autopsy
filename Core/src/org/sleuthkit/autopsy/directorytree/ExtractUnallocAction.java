@@ -164,7 +164,10 @@ public final class ExtractUnallocAction extends AbstractAction {
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
         try {
-            return c.getChildren().get(0).accept(uv); //Launching it on the root directory
+            List<Content> unallocFiles = c.getChildren();
+            if (unallocFiles.isEmpty() == false) {
+                return unallocFiles.get(0).accept(uv); //Launching it on the root directory
+            }
         } catch (TskCoreException tce) {
             logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at sending out the visitor ", tce);
         }
