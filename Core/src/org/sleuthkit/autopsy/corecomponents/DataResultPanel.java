@@ -188,7 +188,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // as DataResultViewer service providers when DataResultViewers are updated
             // to better handle the ExplorerManager sharing implemented to support actions that operate on 
             // multiple selected nodes.
-            addDataResultViewer(new DataResultViewerTable(this.explorerManager));
+            addDataResultViewer(new DataResultViewerTable(this.explorerManager));            
             addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
                                     
             // Find all DataResultViewer service providers and add them to the tabbed pane.
@@ -290,9 +290,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             int childrenCount = selectedNode.getChildren().getNodesCount(true);
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
-
         this.numberMatchLabel.setVisible(true);
-        this.numberMatchLabel.setVisible(true);
+        
 
         resetTabs(selectedNode);
 
@@ -308,11 +307,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             ++drvC;
         }
 
-        // set the display on the current active tab
+        // if the current tab is no longer enabled, then find one that is
+        boolean hasViewerEnabled = true;
         int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if (currentActiveTab != -1) {
-            UpdateWrapper drv = viewers.get(currentActiveTab);
-            drv.setNode(selectedNode);
+        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+            hasViewerEnabled = false;
+            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                if (dataResultTabbedPanel.isEnabledAt(i)) {
+                    currentActiveTab = i;
+                    hasViewerEnabled = true;
+                    break;
+                }
+            }
+            
+            if (hasViewerEnabled) {
+                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+            }
+        }
+        
+        if (hasViewerEnabled) {
+            viewers.get(currentActiveTab).setNode(selectedNode);
         }
     }
 
@@ -370,6 +384,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * why does this take a Node as parameter and then ignore it?
+     * 
+     * 
+     * 
      * Resets the tabs based on the selected Node. If the selected node is null
      * or not supported, disable that tab as well.
      *

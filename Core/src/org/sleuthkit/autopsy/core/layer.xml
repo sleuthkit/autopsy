@@ -270,6 +270,13 @@
          Services
          ====================================================== -->
     <folder name="Services">
+        <folder name="AutoupdateType">
+            <file name="org_sleuthkit_autopsy_core_update_center.settings" url="org_sleuthkit_autopsy_core_update_centerSettings.xml">
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.core.Bundle#Services/AutoupdateType/org_sleuthkit_autopsy_core_update_center.settings"/>
+                <attr name="enabled" boolvalue="true"/>
+                <attr name="url" bundlevalue="org.sleuthkit.autopsy.core.Bundle#org_sleuthkit_autopsy_core_update_center"/>
+            </file>
+        </folder>
         <file name="org-sleuthkit-autopsy-corecomponents-DataContentTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataContent"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.corecomponents.DataContentTopComponent.getDefault"/>
@@ -361,6 +368,7 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
         </folder>
+        <folder name="QuickSearch_hidden" />
     </folder>
 
 

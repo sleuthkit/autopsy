@@ -81,20 +81,23 @@ public class ExtractedContentViewer implements DataContentViewer {
             currentNode = selectedNode;
         }
 
-        // sources are custom markup from the node (if available) and default
-        // markup is fetched from solr
+        /* Sources contain implementations that will markup the text
+         * in different ways. The original behavior for this was a source
+         * for the text markedup by SOLR and another that just displayed
+         * raw text. 
+         */
         final List<MarkupSource> sources = new ArrayList<MarkupSource>();
 
         //add additional registered sources for this node
         sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
 
-        if (!solrHasContent(selectedNode)) {
-            //currentNode = null;
-            //resetComponent();
-            // first source will be the default displayed
+        
+        // if it doesn't have any SOLR content, then we won't add more sources
+        if (solrHasContent(selectedNode) == false) {
             setPanel(sources);
             return;
         }
+        
         Content content = selectedNode.getLookup().lookup(Content.class);
         if (content == null) {
             return;
@@ -103,6 +106,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         //add to page tracking if not there yet
         final long contentID = content.getId();
 
+        // make a new source for the raw content
+        // @@@ BC: Why isn't this its own class like Highlight?
         final MarkupSource newSource = new MarkupSource() {
             private boolean inited = false;
             private int numPages = 0;
@@ -259,7 +264,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return "Text View";
+        return "Text";
     }
 
     @Override
@@ -289,6 +294,8 @@ public class ExtractedContentViewer implements DataContentViewer {
     public void resetComponent() {
         setPanel(new ArrayList<MarkupSource>());
         panel.resetDisplay();
+        currentNode = null;
+        currentSource = null;
     }
 
     @Override
@@ -460,6 +467,11 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
+            if (source == null) {
+                // reset
+                panel.updateControls(null);
+                return;
+            }
             final boolean hasNextItem = source.hasNextItem();
             final boolean hasNextPage = source.hasNextPage();
             int indexVal = 0;
@@ -552,6 +564,12 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void nextPage() {
+        // we should never have gotten here -- reset
+        if (currentSource == null) {
+            panel.updateControls(null);
+            return;
+        }
+        
         if (currentSource.hasNextPage()) {
             currentSource.nextPage();
 
@@ -579,6 +597,12 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void previousPage() {
+        // reset, we should have never gotten here if null
+        if (currentSource == null) {
+            panel.updateControls(null);
+            return;
+        }
+        
         if (currentSource.hasPreviousPage()) {
             currentSource.previousPage();
 

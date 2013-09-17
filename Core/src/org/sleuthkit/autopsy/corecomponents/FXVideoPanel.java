@@ -18,14 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.sun.javafx.application.PlatformImpl;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -45,19 +44,23 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
+import javafx.scene.media.MediaBuilder;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
+import static javafx.scene.media.MediaPlayer.Status.PAUSED;
+import static javafx.scene.media.MediaPlayer.Status.PLAYING;
 import static javafx.scene.media.MediaPlayer.Status.READY;
+import static javafx.scene.media.MediaPlayer.Status.STOPPED;
+import javafx.scene.media.MediaPlayerBuilder;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.modules.ModuleInstall;
 import org.openide.util.Cancellable;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -67,6 +70,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.core.Installer;
 
 /**
  * Video viewer part of the Media View layered pane.
@@ -76,10 +80,10 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
 
+    private static final String[] EXTENSIONS = new String[]{".swf", ".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
-    private MediaPlayer fxMediaPlayer;
     private MediaPane mediaPane;
     // Current media content representations
     private AbstractFile currentFile;
@@ -90,35 +94,53 @@ public class FXVideoPanel extends MediaViewVideoPanel {
      * Creates new form MediaViewVideoPanel
      */
     public FXVideoPanel() {
-        org.sleuthkit.autopsy.core.Installer coreInstaller =
-                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
-        if (coreInstaller != null) {
-            fxInited = coreInstaller.isJavaFxInited();
-        }
+        fxInited = Installer.isJavaFxInited();
         initComponents();
-        customizeComponents();
+        if (fxInited) {
+            setupFx();
+        }
     }
 
     public JPanel getVideoPanel() {
-        return videoPanel;
+        return this;
     }
-
-    public Component getVideoComponent() {
-        return videoComponent;
-    }
-
-    private void customizeComponents() {
-        setupFx();
+    
+    private void setupFx() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                videoComponent = new JFXPanel();
+                mediaPane = new MediaPane();
+                Scene fxScene = new Scene(mediaPane);
+                videoComponent.setScene(fxScene);
+                
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        add(videoComponent);
+                    }
+                });
+            }
+        });
     }
     
 
     @Override
-    synchronized void setupVideo(final AbstractFile file, final Dimension dims) {
+    void setupVideo(final AbstractFile file, final Dimension dims) {
+        if(file.equals(currentFile)) {
+            return;
+        }
+        if (!Case.isCaseOpen()) {
+            //handle in-between condition when case is being closed
+            //and an image was previously selected
+            return;
+        }
+        reset();
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
             mediaPane.setInfoLabelText("Playback of deleted videos is not supported, use an external player.");
-            videoPanel.removeAll();
+            removeAll();
             return;
         }
 
@@ -133,56 +155,22 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         
         ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
         em.execute();
+        
+        mediaPane.setFit(dims);
     }
     
-    synchronized void setupFx() {
-        if(!fxInited) {
-            return;
-        }
-        logger.log(Level.INFO, "In Setup FX");
-        PlatformImpl.runLater(new Runnable() {
-            @Override
-            public void run() {
-                mediaPane = new MediaPane();
-                logger.log(Level.INFO, "Created MediaPane");
-                Scene fxScene = new Scene(mediaPane);
-                videoComponent = new JFXPanel();
-                videoComponent.setScene(fxScene);
-                
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Configure VideoPanel
-                        videoPanel.removeAll();
-                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-                        videoPanel.add(videoComponent);
-                        videoPanel.setVisible(true);
-                    }
-                });
-            }
-        });
-    }
     
     
     @Override
     void reset() {
-
-        PlatformImpl.runLater(new Runnable() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                if (fxMediaPlayer != null) {
-                    if (fxMediaPlayer.getStatus() == MediaPlayer.Status.PLAYING ) {
-                        fxMediaPlayer.stop();
-                    }
-                    fxMediaPlayer = null;
-                }
-                        
-                if (videoComponent != null) {
-                    videoComponent = null;
+                if (mediaPane != null) {
+                    mediaPane.reset();
                 }
             }
-        });  
-
+        });
         currentFile = null;
     }
 
@@ -207,37 +195,14 @@ public class FXVideoPanel extends MediaViewVideoPanel {
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        videoPanel = new javax.swing.JPanel();
-
-        javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
-        videoPanel.setLayout(videoPanelLayout);
-        videoPanelLayout.setHorizontalGroup(
-            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 448, Short.MAX_VALUE)
-        );
-        videoPanelLayout.setVerticalGroup(
-            videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 248, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(videoPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-    }// </editor-fold>                        
-
-    // Variables declaration - do not modify                     
-    private javax.swing.JPanel videoPanel;
-    // End of variables declaration                   
+        setBackground(new java.awt.Color(0, 0, 0));
+        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
+    }// </editor-fold>//GEN-END:initComponents
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
 
     @Override
     public boolean isInited() {
@@ -265,8 +230,13 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             return extractedBytes;
         }
         
-        public Media getMedia() {
-            return new Media(Paths.get(jFile.getAbsolutePath()).toUri().toString());
+        /**
+         * Get the URI of the media file.
+         * 
+         * @return the URI of the media file.
+         */
+        public String getMediaUri() {
+            return Paths.get(jFile.getAbsolutePath()).toUri().toString();
         }
 
         @Override
@@ -307,13 +277,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "ExtractMedia in done: " + jFile.getName());
                     try {
-                        PlatformImpl.runLater(new Runnable() {
+                        Platform.runLater(new Runnable() {
                             @Override
                             public void run() {
-                                fxMediaPlayer = new MediaPlayer(getMedia());
-                                logger.log(Level.INFO, "Fx Media Player null? " + (fxMediaPlayer == null));
-                                logger.log(Level.INFO, "Media Tools null? " + (mediaPane == null));
-                                mediaPane.setMediaPlayer(fxMediaPlayer);
+                                mediaPane.prepareMedia(getMediaUri());
                             }
                         });
                     } catch(MediaException e) {
@@ -327,20 +294,63 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
     }
     
+    /**
+     * The JavaFX Component that contains the Media and it's Controls.
+     * 
+     */
     private class MediaPane extends BorderPane {
         private MediaPlayer mediaPlayer;
         private MediaView mediaView;
+        /** The Duration of the media. **/
         private Duration duration;
+        
+        /** The container for the media controls. **/
         private HBox mediaTools;
+        
+        /** The container for the media video output. **/
         private HBox mediaViewPane;
+        
+        private VBox controlPanel;
+        
         private Slider progressSlider;
         private Button pauseButton;
+        private Button stopButton;
         private Label progressLabel;
         private Label infoLabel;
         private int totalHours;
         private int totalMinutes;
         private int totalSeconds;
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
+        
+        /** The EventHandler for MediaPlayer.onReady(). **/
+        private final ReadyListener READY_LISTENER = new ReadyListener();
+        
+        /** The EventHandler for MediaPlayer.onEndOfMedia(). **/
+        private final EndOfMediaListener END_LISTENER = new EndOfMediaListener();
+        
+        /** The EventHandler for the CurrentTime property of the MediaPlayer. **/
+        private final TimeListener TIME_LISTENER = new TimeListener();
+        
+        /** The EventHandler for MediaPlayer.onPause and MediaPlayer.onStop. **/
+        private final NotPlayListener NOT_PLAY_LISTENER = new NotPlayListener();
+        
+        /** The EventHandler for MediaPlayer.onPlay. **/
+        private final PlayListener PLAY_LISTENER = new PlayListener();
+        
+        private static final String PLAY_TEXT = "►";
+        
+        private static final String PAUSE_TEXT = "||";
+        
+        private static final String STOP_TEXT = "X";
+        
+        /** CSS-formatted skin for pauseButton when showing PLAY_TEXT. **/
+        private static final String PLAY_STYLE = "-fx-text-fill: green;";
+        
+        /** CSS-formatted skin for pauseButton when showing PAUSE_TEXT. **/
+        private static final String PAUSE_STYLE = "-fx-font-weight: bolder;";
+        
+        /** CSS-formatted skin for stopButton. **/
+        private static final String STOP_STYLE = "-fx-text-fill: red; -fx-font-weight: bold;";
         
         public MediaPane() {
             // Video Display
@@ -349,26 +359,30 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             mediaViewPane.setAlignment(Pos.CENTER);
             mediaView = new MediaView();
             mediaViewPane.getChildren().add(mediaView);
-            setAlignment(mediaViewPane, Pos.CENTER);
             setCenter(mediaViewPane);
             
             // Media Controls
-            VBox controlPanel = new VBox();
+            controlPanel = new VBox();
             mediaTools = new HBox();
             mediaTools.setAlignment(Pos.CENTER);
             mediaTools.setPadding(new Insets(5, 10, 5, 10));
             
-            pauseButton  = new Button("►");
+            pauseButton  = new Button(PLAY_TEXT);
+            pauseButton.setStyle(PLAY_STYLE);
+            stopButton = new Button(STOP_TEXT);
+            stopButton.setStyle(STOP_STYLE);
             mediaTools.getChildren().add(pauseButton);
-            mediaTools.getChildren().add(new Label("    "));
+            mediaTools.getChildren().add(new Label("  "));
+            mediaTools.getChildren().add(stopButton);
+            mediaTools.getChildren().add(new Label("  "));
             progressSlider = new Slider();
             HBox.setHgrow(progressSlider,Priority.ALWAYS);
             progressSlider.setMinWidth(50);
             progressSlider.setMaxWidth(Double.MAX_VALUE);
             mediaTools.getChildren().add(progressSlider);
             progressLabel = new Label();
-            progressLabel.setPrefWidth(130);
-            progressLabel.setMinWidth(50);
+            progressLabel.setPrefWidth(135);
+            progressLabel.setMinWidth(135);
             mediaTools.getChildren().add(progressLabel);
             
             controlPanel.getChildren().add(mediaTools);
@@ -379,8 +393,39 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             setProgressActionListeners();
         }
         
+        /**
+         * Setup the MediaPane for media playback. Run on the JavaFx Thread.
+         * 
+         * 
+         * @param mediaUri the URI of the media
+         */
+        public void prepareMedia(String mediaUri) {
+            mediaPlayer = createMediaPlayer(mediaUri);
+            mediaView.setMediaPlayer(mediaPlayer);
+        }
+        
+        /**
+         * Reset this MediaPane.
+         * 
+         */
+        public void reset() {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.getStatus() == Status.PLAYING) {
+                    mediaPlayer.stop();
+                }
+                mediaPlayer = null;
+            }
+            resetProgress();
+        }
+        
+        /**
+         * Set the Information Label of this MediaPane.
+         * 
+         * @param text
+         */
         public void setInfoLabelText(final String text) {
-            PlatformImpl.runLater(new Runnable() {
+            logger.log(Level.INFO, "Setting Info Label Text: " + text);
+            Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     infoLabel.setText(text);
@@ -388,54 +433,26 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             });
         }
         
-        public void setMediaPlayer(MediaPlayer mp) {
-            pauseButton.setDisable(true);
-            mediaPlayer = mp;
-            mediaView.setMediaPlayer(mp);
-            pauseButton.setDisable(false);
-            
-            setMediaActionListeners();
-        }
-        
-        private void setMediaActionListeners() {
-            mediaPlayer.setOnReady(new Runnable() {
+        /**
+         * Set the size of the MediaPane and it's components.
+         * 
+         * @param dims the current dimensions of the DataContentViewer
+         */
+        public void setFit(final Dimension dims) {
+            Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    duration = mediaPlayer.getMedia().getDuration();
-                    long durationInMillis = (long) fxMediaPlayer.getMedia().getDuration().toMillis();
-                
-                    // pick out the total hours, minutes, seconds
-                    long durationSeconds = (int) durationInMillis / 1000;
-                    totalHours = (int) durationSeconds / 3600;
-                    durationSeconds -= totalHours * 3600;
-                    totalMinutes = (int) durationSeconds / 60;
-                    durationSeconds -= totalMinutes * 60;
-                    totalSeconds = (int) durationSeconds;
-                    updateProgress();
-                } 
-            });
-            
-            mediaPlayer.setOnEndOfMedia(new Runnable() {
-                @Override
-                public void run() {
-                    Duration beginning = mediaPlayer.getStartTime();
-                    mediaPlayer.stop();
-                    mediaPlayer.pause();
-                    pauseButton.setText("►");
-                    updateSlider(beginning);
-                    updateTime(beginning);
+                    setPrefSize(dims.getWidth(), dims.getHeight());
+                    // Set the Video output to fit the size allocated for it. give an 
+                    // extra few px to ensure the info label will be shown
+                    mediaView.setFitHeight(dims.getHeight() - controlPanel.getHeight());
                 }
             });
-            
-            mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
-                @Override
-                public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
-                    updateSlider(newValue);
-                    updateTime(newValue);
-                }
-            });
-        }
+        } 
         
+        /**
+         * Set the action listeners for the pause button and progress slider.
+         */
         private void setProgressActionListeners() {
             pauseButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
@@ -445,20 +462,29 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                     switch (status) {
                         // If playing, pause
                         case PLAYING:
-                            pauseButton.setText("►");
                             mediaPlayer.pause();
                             break;
                         // If ready, paused or stopped, continue playing
                         case READY:
                         case PAUSED:
                         case STOPPED:
-                            pauseButton.setText("||");
                             mediaPlayer.play();
                             break;
                         default:
+                            logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString());
+                            // If the MediaPlayer is in an unexpected state, stop playback.
+                            mediaPlayer.stop();
+                            setInfoLabelText("Playback error.");
                             break;
                     }
                 }
+            });
+            
+            stopButton.setOnAction(new EventHandler<ActionEvent>() {
+               @Override
+               public void handle(ActionEvent e) {
+                   mediaPlayer.stop();
+               }
             });
             
             progressSlider.valueProperty().addListener(new InvalidationListener() {
@@ -471,15 +497,61 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             });
         }
         
+        /**
+         * Reset the progress label and slider to zero.
+         */
+        private void resetProgress() {
+            totalHours = 0;
+            totalMinutes = 0;
+            totalSeconds = 0;
+            progressSlider.setValue(0.0);
+            updateTime(Duration.ZERO);
+        }
+        
+        /**
+         * Construct a MediaPlayer from the given Media URI.
+         * 
+         * Also adds the necessary listeners to MediaPlayer events.
+         * 
+         * @param mediaUri the location of the media.
+         * @return a MediaPlayer
+         */
+        private MediaPlayer createMediaPlayer(String mediaUri) {
+            MediaBuilder mediaBuilder = MediaBuilder.create();
+            mediaBuilder.source(mediaUri);
+            Media media = mediaBuilder.build();
+            
+            MediaPlayerBuilder mediaPlayerBuilder = MediaPlayerBuilder.create();
+            mediaPlayerBuilder.media(media);
+            mediaPlayerBuilder.onReady(READY_LISTENER);
+            mediaPlayerBuilder.onPaused(NOT_PLAY_LISTENER);
+            mediaPlayerBuilder.onStopped(NOT_PLAY_LISTENER);
+            mediaPlayerBuilder.onPlaying(PLAY_LISTENER);
+            mediaPlayerBuilder.onEndOfMedia(END_LISTENER);
+            
+            MediaPlayer player = mediaPlayerBuilder.build();
+            player.currentTimeProperty().addListener(TIME_LISTENER);
+            
+            return player;
+        }
+        
+        /**
+         * Update the progress slider and label with the current time of the media.
+         */
         private void updateProgress() {
             Duration currentTime = mediaPlayer.getCurrentTime();
             updateSlider(currentTime);
             updateTime(currentTime);
         }
         
+        /**
+         * Update the slider with the current time.
+         * 
+         * @param currentTime 
+         */
         private void updateSlider(Duration currentTime) {
             if (progressSlider != null) {
-                progressSlider.setDisable(duration.isUnknown());
+                progressSlider.setDisable(currentTime.isUnknown());
                 if (!progressSlider.isDisabled() && duration.greaterThan(Duration.ZERO) 
                   && !progressSlider.isValueChanging()) {
                     progressSlider.setValue(currentTime.divide(duration.toMillis()).toMillis() * 100.0);
@@ -487,6 +559,11 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             }
         }
         
+        /**
+         * Update the progress label with the current time.
+         * 
+         * @param currentTime 
+         */
         private void updateTime(Duration currentTime) {
             long millisElapsed = (long) currentTime.toMillis();
                 
@@ -502,11 +579,16 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             String durationStr = String.format(durationFormat,
                         elapsedHours, elapsedMinutes, elapsedSeconds,
                         totalHours, totalMinutes, totalSeconds);
-            progressLabel.setText(durationStr);
+            setProgressLabelText(durationStr);
         }
 
+        /**
+         * Update the progress label to show the text.
+         * 
+         * @param text 
+         */
         private void setProgressLabelText(final String text) {
-            PlatformImpl.runLater(new Runnable() {
+            Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     progressLabel.setText(text);
@@ -515,12 +597,86 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
 
         private void setInfoLabelToolTipText(final String text) {
-            PlatformImpl.runLater(new Runnable() {
+            Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     infoLabel.setTooltip(new Tooltip(text));
                 }
             });
+        }
+        
+        /**
+         * Responds to MediaPlayer onReady events.
+         * 
+         * Updates the progress label with the duration of the media.
+         */
+        private class ReadyListener implements Runnable {
+            @Override
+            public void run() {
+                duration = mediaPlayer.getMedia().getDuration();
+                long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
+
+                // pick out the total hours, minutes, seconds
+                long durationSeconds = (int) durationInMillis / 1000;
+                totalHours = (int) durationSeconds / 3600;
+                durationSeconds -= totalHours * 3600;
+                totalMinutes = (int) durationSeconds / 60;
+                durationSeconds -= totalMinutes * 60;
+                totalSeconds = (int) durationSeconds;
+                updateProgress();
+            } 
+        }
+        
+        /**
+         * Responds to MediaPlayer onEndOfMediaEvents.
+         * 
+         * Prepares the media to be replayed.
+         */
+        private class EndOfMediaListener implements Runnable {
+            @Override
+            public void run() {
+                Duration beginning = mediaPlayer.getStartTime();
+                mediaPlayer.stop();
+                mediaPlayer.pause();
+                pauseButton.setText(PLAY_TEXT);
+                updateSlider(beginning);
+                updateTime(beginning);
+            } 
+        }
+        
+        /**
+         * Responds to changes in the MediaPlayer currentTime property.
+         * 
+         * Updates the progress slider and label with the current Time.
+         */
+        private class TimeListener implements ChangeListener<Duration> {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
+                updateSlider(newValue);
+                updateTime(newValue);
+            }
+        }
+        
+        /**
+         * Triggered when MediaPlayer State changes to PAUSED or Stopped.
+         */
+        private class NotPlayListener implements Runnable {
+            @Override
+            public void run() {
+                pauseButton.setText(PLAY_TEXT);
+                pauseButton.setStyle(PLAY_STYLE);
+            }
+        }
+        
+        /**
+         * Triggered when MediaPlayer State changes to PLAYING.
+         */
+        private class PlayListener implements Runnable {
+            @Override
+            public void run() {
+                pauseButton.setText(PAUSE_TEXT);
+                pauseButton.setStyle(PAUSE_STYLE);
+            }
         }
     }
     
@@ -566,7 +722,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //        }
 //        
 //        private void initFx(final java.io.File file) {
-//            PlatformImpl.runAndWait(new Runnable() {
+//            Platform.runAndWait(new Runnable() {
 //                @Override
 //                public void run() {
 //                    logger.log(Level.INFO, "In initFX.");
@@ -620,7 +776,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //               logger.log(Level.INFO, "Grabbing a frame...");
 //               final long timeStamp = i * frameInterval + INTER_FRAME_PERIOD_MS;
 //
-//            //            PlatformImpl.runLater(new Runnable() {
+//            //            Platform.runLater(new Runnable() {
 //            //                @Override
 //            //                public void run() {
 //            //                    synchronized (frameLock) {
@@ -639,4 +795,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 //            return frames;
 //        }
 //    }
+    
+    @Override
+    public String[] getExtensions() {
+        return EXTENSIONS;
+    }
 }

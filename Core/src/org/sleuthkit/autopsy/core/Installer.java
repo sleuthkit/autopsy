@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import com.sun.javafx.application.PlatformImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
@@ -37,10 +37,11 @@ public class Installer extends ModuleInstall {
 
     private List<ModuleInstall> packageInstallers;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
-    private volatile boolean javaFxInit = true;
+    private static volatile boolean javaFxInit = false;
 
     public Installer() {
-        javaFxInit = true;
+        logger.log(Level.INFO, "core installer created");
+        javaFxInit = false;
         packageInstallers = new ArrayList<ModuleInstall>();
 
         packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
@@ -54,23 +55,20 @@ public class Installer extends ModuleInstall {
      * Check if JavaFx initialized
      * @return false if java fx not initialized (classes coult not load), true if initialized
      */
-    public boolean isJavaFxInited() {
-        return this.javaFxInit;
+    public static boolean isJavaFxInited() {
+        return javaFxInit;
     }
     
-    private void initJavaFx() {
+    private static void initJavaFx() {
         //initialize java fx if exists
+        System.setProperty("javafx.macosx.embedded", "true");
         try {
+            // Creating a JFXPanel initializes JavaFX
+            new JFXPanel();
             Platform.setImplicitExit(false);
-            PlatformImpl.startup(new Runnable() {
-                @Override
-                public void run() {
-                    logger.log(Level.INFO, "Initializing JavaFX for image viewing");
-                }
-            });
+            javaFxInit = true;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
             //in case javafx not present
-            javaFxInit = false;
             final String msg = "Error initializing JavaFX.  ";
             final String details = " Some features will not be available. "
                     + " Check that you have the right JRE installed (Oracle JRE > 1.7.10). ";
