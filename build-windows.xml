@@ -71,20 +71,13 @@
         <var name="extra-bin-name" value="${app.name}64.exe"/>
         <var name="aut-bin-name" value="${app.name}.exe"/>
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
+        <var name="package-type" value="x86" />
         <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env" description="Builds the 64 bit installer.">
-        <!-- Leaving this commented out bit for documentation purposes. Not sure what its supposed to do. -->       
-        <!-- Need to find a way to deal with beta version -->
-        <!--<echo message="Setting ${app.name} version to ${app.version}..."/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /SetVersion ${app.version}"/>
-        </exec>--> 
-        <!--<delete file="${aip-path}"/>-->
-    </target>
+    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env,ai-build" description="Builds the 32 bit installer."/>
 
     <target name="check-ai-64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
         <property environment="env"/>
@@ -92,13 +85,14 @@
         <var name="extra-bin-name" value="${app.name}.exe"/>
         <var name="aut-bin-name" value="${app.name}64.exe"/>
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
+        <var name="package-type" value="x64" />
         <echo message="aip-path: ${aip-path}" />
         <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/installer_${app.name}_64-${app.version}.msi" />
     </target>
     
-    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env" description="Builds the 64 bit installer."/>
+    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,ai-set-type,ai-build" description="Builds the 64 bit installer."/>
    
     <target name="add-ai-productinfo" description="Add product information to the aip file">
         <scriptdef name="generateguid" language="javascript">
@@ -185,8 +179,17 @@
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
+    </target>
+    
+    <target name="ai-build" description="Build the installer.">
         <exec executable="${ai-exe-path}">
             <arg line="/build ${aip-path}"/>
+        </exec>
+    </target>
+    
+    <target name="ai-set-type" description="Set the installer to only install on 64 bit machines.">
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /SetPackageType ${package-type}"/>
         </exec>
     </target>
 </project>

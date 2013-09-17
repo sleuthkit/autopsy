@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -37,16 +38,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Children factory for the file by type view in dir tree
+ * Children factory for a specific file type - does the database query. 
  */
-class FileSearchFilterChildren extends ChildFactory<Content> {
+class FileTypeChildren extends ChildFactory<Content> {
 
     private SleuthkitCase skCase;
-    private SearchFilters.SearchFilterInterface filter;
-    private static final Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
-//    private final static int MAX_OBJECTS = 2000;
+    private FileTypeExtensionFilters.SearchFilterInterface filter;
+    private static final Logger logger = Logger.getLogger(FileTypeChildren.class.getName());
+    //private final static int MAX_OBJECTS = 2000;
 
-    public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
+    public FileTypeChildren(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
         this.skCase = skCase;
     }
@@ -59,7 +60,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     
     private String createQuery(){
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + " AND (known IS NULL OR known != 1) AND (0";
+                + " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
@@ -69,8 +70,8 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     }
 
     
-    private List<? extends Content> runQuery(){
-        List<? extends Content> list = new ArrayList<>();
+    private List<AbstractFile> runQuery(){
+        List<AbstractFile> list = new ArrayList<>();
         try {
             list = skCase.findAllFilesWhere(createQuery());
         } catch (TskCoreException ex) {

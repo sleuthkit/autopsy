@@ -475,6 +475,9 @@ public final class IngestModuleLoader {
         
         for (final ModuleInfo moduleInfo : moduleInfos) {
             if (moduleInfo.isEnabled()) {
+                /* NOTE: We have an assumption here that the modules in an NBM will 
+                 * have the same package name as the NBM name. This means that
+                 * an NBM can have only one package with modules in it. */
                 String basePackageName = moduleInfo.getCodeNameBase();
                 
                 // skip the standard ones

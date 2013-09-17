@@ -1046,7 +1046,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
             macpath = machome + java.io.File.separator + "mactime.exe";
-            cmdpath = PlatformUtil.getOSFilePath(cmdpath);
+            cmdpath = PlatformUtil.getOSFilePath(macpath);
             mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
         } else {
             cmdpath = "perl";
