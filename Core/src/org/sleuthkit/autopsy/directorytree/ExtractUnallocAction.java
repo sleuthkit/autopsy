@@ -165,7 +165,7 @@ public final class ExtractUnallocAction extends AbstractAction {
         UnallocVisitor uv = new UnallocVisitor();
         try {
             List<Content> unallocFiles = c.getChildren();
-            if (unallocFiles.isEmpty() == false) {
+            if (null != unallocFiles && unallocFiles.isEmpty() == false) {
                 return unallocFiles.get(0).accept(uv); //Launching it on the root directory
             }
         } catch (TskCoreException tce) {
