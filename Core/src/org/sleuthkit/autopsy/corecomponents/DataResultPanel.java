@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -29,6 +30,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeMemberEvent;
+import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
@@ -58,6 +63,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
+    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
 
@@ -285,7 +291,16 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public void setNode(Node selectedNode) {
+        if (this.rootNode != null) {
+            this.rootNode.removeNodeListener(dummyNodeListener);
+        }
         this.rootNode = selectedNode;
+        if (this.rootNode != null) {
+            this.rootNode.addNodeListener(dummyNodeListener);
+        }
+        
+        setupTabs(selectedNode);
+        
         if (selectedNode != null) {
             int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
@@ -295,7 +310,16 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.numberMatchLabel.setVisible(true);
 
         resetTabs(selectedNode);
-
+        
+        // set the display on the current active tab
+        int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
+        if (currentActiveTab != -1) {
+            UpdateWrapper drv = viewers.get(currentActiveTab);
+            drv.setNode(selectedNode);
+        }
+    }
+    
+    private void setupTabs(Node selectedNode) {
         //update/disable tabs based on if supported for this node
         int drvC = 0;
         for (UpdateWrapper drv : viewers) {
@@ -306,13 +330,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 dataResultTabbedPanel.setEnabledAt(drvC, false);
             }
             ++drvC;
-        }
-
-        // set the display on the current active tab
-        int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if (currentActiveTab != -1) {
-            UpdateWrapper drv = viewers.get(currentActiveTab);
-            drv.setNode(selectedNode);
         }
     }
 
@@ -498,5 +515,29 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public void setNumMatches(int numMatches) {
         this.numberMatchLabel.setText(Integer.toString(numMatches));
+    }
+    
+    private class DummyNodeListener implements NodeListener {
+        
+        @Override
+        public void childrenAdded(NodeMemberEvent nme) {
+            setupTabs(nme.getNode());
+        }
+
+        @Override
+        public void childrenRemoved(NodeMemberEvent nme) {
+        }
+
+        @Override
+        public void childrenReordered(NodeReorderEvent nre) {
+        }
+
+        @Override
+        public void nodeDestroyed(NodeEvent ne) {
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+        }
     }
 }
