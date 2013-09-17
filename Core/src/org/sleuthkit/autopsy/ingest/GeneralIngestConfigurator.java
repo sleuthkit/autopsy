@@ -23,9 +23,6 @@ import java.util.List;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestDialogPanel;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.datamodel.Content;
 
 @ServiceProvider(service = IngestConfigurator.class)
