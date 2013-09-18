@@ -80,7 +80,7 @@ import org.sleuthkit.autopsy.core.Installer;
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
 
-    private static final String[] EXTENSIONS = new String[]{".swf", ".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
+    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"};
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
