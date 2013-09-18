@@ -23,6 +23,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JProgressBar;
 
+/**
+ * visual component to display progress bar and status updates while adding an
+ * image in the wizard
+ */
 public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     /**
@@ -36,11 +40,13 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         return "Add Data Source";
     }
 
-    void done() {
-
+    /**
+     * hide the progress components and show the "done" components
+     */
+    void setStateFinished() {
         loadingPanel.setVisible(false);
         donePanel.setVisible(true);
-//        add(donePanel, BorderLayout.CENTER);
+        //force repaint just in case
         validate();
         repaint();
     }
@@ -54,18 +60,21 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     }
 
     private void customizeComponents() {
+        //done and log button are both hidden to start
         donePanel.setVisible(false);
         viewLogButton.setVisible(false);
+        //match visual background of panel
         this.TextArea_CurrentDirectory.setBackground(this.getBackground());
 
     }
 
+    /**
+     * reset some of the visual components.
+     *
+     * is this ever invoked?
+     */
     void resetInfoPanel() {
         viewLogButton.setVisible(false);
-//        if (errorButton != null) {
-//            infoPanel.remove(errorButton);
-//            errorButton = null;
-//        }
         progressLabel.setText("");
     }
 
@@ -74,13 +83,13 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     }
 
     /**
-     * Changes the progress bar text and color.
+     * update the progress bar and label text and color.
      *
      * @param text  the text to be shown
      * @param value the current value of the progress bar
      * @param color the color of the progress bar text
      */
-    public void changeProgressBarTextAndColor(String text, int value, Color color) {
+    public void setProgressBarTextAndColor(String text, int value, Color color) {
         progressLabel.setText(text);
         progressLabel.setForeground(color);
         progressBar.setValue(value);
@@ -95,14 +104,15 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         this.TextArea_CurrentDirectory.setText(dir);
     }
 
-//    /**
-//     * Sets the CurrentlyProcessing tag and text area to be invisible
-//     */
-//    public void setProcessInvis() {
-//        this.TextArea_CurrentDirectory.setText("");
-//        this.TextArea_CurrentDirectory.setVisible(false);
-//    }
-    void setErrors(final String errors, boolean critical) {
+    /**
+     * reconfigure the components to indicate error(s) and show "view log
+     * button"
+     *
+     *
+     * @param errors   a string containing a description of the error(s)
+     * @param critical true to indicate the error(s) are critical
+     */
+    void showErrors(final String errors, boolean critical) {
         progressBar.setValue(100); //always invoked when process completed
         if (critical) {
             statusLabel.setText("*Failed to add image (critical errors encountered). Click below to view the log.");
@@ -112,11 +122,10 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
         viewLogButton.setVisible(true);
 
-
         viewLogButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //JOptionPane.showMessageDialog(null, errors, "Add image non-critical errors", JOptionPane.WARNING_MESSAGE);
+                //show error dialog
                 AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
                 dialog.setErrors(errors);
                 dialog.setVisible(true);

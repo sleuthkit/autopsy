@@ -51,8 +51,10 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * The "Add Image" wizard panel3. Presents the options to finish/cancel
- * image-add and run ingest.
+ * second panel of add image wizard, allows user to configure ingest modules.
+ *
+ * TODO: review this for dead code. think about moving logic of adding image to
+ * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
@@ -226,7 +228,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             ingestConfig.setContent(newContents);
             ingestConfig.start();
             progressPanel.setStateFinished();
-          
+
         }
     }
 
@@ -354,26 +356,26 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             setProgress(100);
 
             //clear updates
-       //     progressPanel.getComponent().setProcessInvis();
+            //     progressPanel.getComponent().setProcessInvis();
 
             if (interrupted || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in logical files process");
                 if (hasCritError) {
                     //core error
-                    progressPanel.getComponent().setErrors(errorString, true);
+                    progressPanel.getComponent().showErrors(errorString, true);
                 }
                 return;
             } else {
                 if (errorString != null) {
                     //data error (non-critical)
                     logger.log(Level.INFO, "Handling non-critical errors that occured in logical files process");
-                    progressPanel.getComponent().setErrors(errorString, false);
+                    progressPanel.getComponent().showErrors(errorString, false);
                 }
             }
             try {
                 // When everything happens without an error:
                 if (errorString == null) { // complete progress bar
-                    progressPanel.getComponent().changeProgressBarTextAndColor("*Logical Files added.", 100, Color.black);
+                    progressPanel.getComponent().setProgressBarTextAndColor("*Logical Files added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
@@ -399,7 +401,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             } catch (Exception ex) {
                 //handle unchecked exceptions
                 logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
-                progressPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
+                progressPanel.getComponent().setProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
                 logger.log(Level.SEVERE, "Error adding image to case", ex);
             }
         }
@@ -585,7 +587,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 revert();
                 if (hasCritError) {
                     //core error
-                    progressPanel.getComponent().setErrors(errorString, true);
+                    progressPanel.getComponent().showErrors(errorString, true);
                 }
                 return;
             } else {
@@ -613,7 +615,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 cleanupImage.enable();
 
                 if (errorString == null) { // complete progress bar
-                    progressPanel.getComponent().changeProgressBarTextAndColor("*Data Source added.", 100, Color.black);
+                    progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
@@ -656,7 +658,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
                 logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
 
-                progressPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
+                progressPanel.getComponent().setProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
 
                 // Log error/display warning
 

@@ -29,24 +29,34 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 /**
- * The "Add Data Source" wizard panel2. Handles processing the image in a worker
- * thread, and any errors that may occur during the add process.
+ * The final panel of the add image wizard. It displays a progress bar and
+ * status updates.
+ *
+ * All the real work is kicked off in the previous panel:
+ * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
+ * -jm)
  */
 class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+
+    /**
+     * flag to indicate that the image adding process is finished and this panel
+     * is completed(valid)
+     */
     private boolean imgAdded = false;
-    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private AddImageWizardAddingProgressVisual component;
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
      * but never displayed, or not all panels are displayed, it is better to
      * create only those which really need to be visible.
+     *
+     * It also separates the view from the control - jm
      *
      * @return component the UI component of this wizard panel
      */
@@ -91,7 +101,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
-        component.changeProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
+        component.setProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
     }
 
     /**
@@ -99,7 +109,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     void setStateFinished() {
         imgAdded = true;
-        getComponent().done();
+        getComponent().setStateFinished();
         fireChangeEvent();
     }
 
@@ -150,26 +160,34 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        settings.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
-        if(imgAdded) {
-            getComponent().done();
+        settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
+        if (imgAdded) {
+            getComponent().setStateFinished();
         }
     }
 
     /**
+     * this doesn't appear to store anything? plus, there are no settings in
+     * this panel -jm
      *
      * @param settings the setting to be stored to
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        //why do we do this?
         getComponent().resetInfoPanel();
     }
 
-    void setErrors(String errorString, boolean b) {
-     getComponent().setErrors(errorString, b);
+    /**
+     * forward errors to visual component
+     *
+     * should this be modified to handle a list of errors? -jm
+     *
+     *
+     * @param errorString the error string to be displayed
+     * @param critical    true if this is a critical error
+     */
+    void setErrors(String errorString, boolean critical) {
+        getComponent().showErrors(errorString, critical);
     }
-
-
- 
-
 }
