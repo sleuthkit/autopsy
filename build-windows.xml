@@ -27,6 +27,17 @@
         <condition property="jre.home.64">
             <isset property="env.JRE_HOME_64"/>
         </condition>
+        
+        <!-- Update configuration file to include jre -->
+        <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
+        <propertyfile file="${inst.property.file}">
+            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
+            <entry key="default_options" value="@JVM_OPTIONS" />
+            <entry key="jdkhome" value="&quot;jre7&quot;" />
+        </propertyfile>
+        <!-- workaround for ant escaping : and = when setting properties -->
+        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
