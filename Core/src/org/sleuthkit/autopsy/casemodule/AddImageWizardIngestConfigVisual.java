@@ -25,11 +25,11 @@ import javax.swing.JPanel;
 /**
  * Data Source added, ingest configure wizard visual panel 3
  */
-public class AddImageVisualPanel3 extends javax.swing.JPanel {
+public class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
     private JPanel ingestPanel = null;
 
     /** Creates new form AddImageVisualPanel3 */
-    public AddImageVisualPanel3(JPanel ingestPanel) {
+    public AddImageWizardIngestConfigVisual(JPanel ingestPanel) {
         this.ingestPanel = ingestPanel;
         initComponents();
         customizeComponents();
@@ -68,9 +68,9 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(569, 300));
 
         titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        titleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel3.class, "AddImageVisualPanel3.titleLabel.text")); // NOI18N
+        titleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.titleLabel.text")); // NOI18N
 
-        subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel3.class, "AddImageVisualPanel3.subtitleLabel.text")); // NOI18N
+        subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.subtitleLabel.text")); // NOI18N
 
         configPanel.setPreferredSize(new java.awt.Dimension(569, 255));
 

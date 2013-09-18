@@ -37,13 +37,13 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
-class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, PropertyChangeListener {
+class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<WizardDescriptor>, PropertyChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private AddImageVisualPanel1 component;
+    private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
     private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH";
     private static final String PROP_LASTDATASOURCE_TYPE = "LBL_LastDataSource_TYPE";
@@ -59,9 +59,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      * @return component the UI component of this wizard panel
      */
     @Override
-    public AddImageVisualPanel1 getComponent() {
+    public AddImageWizardChooseDataSourceVisual getComponent() {
         if (component == null) {
-            component = new AddImageVisualPanel1(this);
+            component = new AddImageWizardChooseDataSourceVisual(this);
         }
         component.addPropertyChangeListener(this);
         return component;
@@ -194,7 +194,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
                 try {
                     cleanupTask.cleanup();
                 } catch (Exception ex) {
-                    Logger logger = Logger.getLogger(AddImageWizardPanel1.class.getName());
+                    Logger logger = Logger.getLogger(AddImageWizardChooseDataSourcePanel.class.getName());
                     logger.log(Level.WARNING, "Error cleaning up image task", ex);
                 } finally {
                     cleanupTask.disable();

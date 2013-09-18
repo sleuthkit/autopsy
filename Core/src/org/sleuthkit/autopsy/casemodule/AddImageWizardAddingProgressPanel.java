@@ -32,14 +32,15 @@ import org.openide.util.Lookup;
  * The "Add Data Source" wizard panel2. Handles processing the image in a worker
  * thread, and any errors that may occur during the add process.
  */
-class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<WizardDescriptor> {
     private boolean imgAdded = false;
     
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private AddImageVisualPanel2 component;
+    private AddImageWizardAddingProgressVisual component;
+    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -50,9 +51,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * @return component the UI component of this wizard panel
      */
     @Override
-    public AddImageVisualPanel2 getComponent() {
+    public AddImageWizardAddingProgressVisual getComponent() {
         if (component == null) {
-            component = new AddImageVisualPanel2();
+            component = new AddImageWizardAddingProgressVisual();
         }
         return component;
     }
@@ -89,7 +90,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Updates the UI to display the add image process has begun.
      */
     void setStateStarted() {
-        component.getCrDbProgressBar().setIndeterminate(true);
+        component.getProgressBar().setIndeterminate(true);
         component.changeProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
     }
 
@@ -98,9 +99,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     void setStateFinished() {
         imgAdded = true;
+        getComponent().done();
         fireChangeEvent();
     }
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Adds a listener to changes of the panel's validity.
@@ -162,6 +163,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public void storeSettings(WizardDescriptor settings) {
         getComponent().resetInfoPanel();
+    }
+
+    void setErrors(String errorString, boolean b) {
+     getComponent().setErrors(errorString, b);
     }
 
 

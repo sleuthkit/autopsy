@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
  * the panel 1 for "Add Image" wizard panel.
  *
  */
-final class AddImageVisualPanel1 extends JPanel {
+final class AddImageWizardChooseDataSourceVisual extends JPanel {
     
     enum EVENT {UPDATE_UI, FOCUS_NEXT};
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
@@ -54,7 +54,7 @@ final class AddImageVisualPanel1 extends JPanel {
     }
     static final String allDesc = "All Supported Types";
     static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    private AddImageWizardPanel1 wizPanel;
+    private AddImageWizardChooseDataSourcePanel wizPanel;
     private ContentTypeModel model;
     
     private ContentTypePanel currentPanel;
@@ -63,7 +63,7 @@ final class AddImageVisualPanel1 extends JPanel {
      * Creates new form AddImageVisualPanel1
      * @param wizPanel corresponding WizardPanel to handle logic of wizard step
      */
-    AddImageVisualPanel1(AddImageWizardPanel1 wizPanel) {
+    AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
         createTimeZoneList();
@@ -92,10 +92,10 @@ final class AddImageVisualPanel1 extends JPanel {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.UPDATE_UI.toString())) {
+                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
                     updateUI(null);
                 }
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.FOCUS_NEXT.toString())) {
+                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
                     wizPanel.moveFocusToNext();
                 }
             }
@@ -240,24 +240,24 @@ final class AddImageVisualPanel1 extends JPanel {
         typeComboBox = new javax.swing.JComboBox<ContentTypePanel>();
         imgInfoLabel = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(588, 328));
 
-        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.nextLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.timeZoneLabel.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 
-        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.text")); // NOI18N
-        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.text")); // NOI18N
+        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.descLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.descLabel.text")); // NOI18N
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.typeTabel.text")); // NOI18N
 
         typePanel.setMinimumSize(new java.awt.Dimension(0, 65));
         typePanel.setPreferredSize(new java.awt.Dimension(521, 65));
@@ -301,7 +301,7 @@ final class AddImageVisualPanel1 extends JPanel {
         );
 
         imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.imgInfoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
