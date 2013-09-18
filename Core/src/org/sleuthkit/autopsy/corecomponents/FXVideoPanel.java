@@ -400,8 +400,13 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param mediaUri the URI of the media
          */
         public void prepareMedia(String mediaUri) {
-            mediaPlayer = createMediaPlayer(mediaUri);
-            mediaView.setMediaPlayer(mediaPlayer);
+            try {
+                mediaPlayer = createMediaPlayer(mediaUri);
+                mediaView.setMediaPlayer(mediaPlayer);
+            } catch (MediaException ex) {
+                this.setProgressLabelText("");
+                this.setInfoLabelText("Unsupported Format.");
+            }
         }
         
         /**
@@ -414,6 +419,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                     mediaPlayer.stop();
                 }
                 mediaPlayer = null;
+                mediaView.setMediaPlayer(null);
             }
             resetProgress();
         }
