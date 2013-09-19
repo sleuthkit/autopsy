@@ -517,14 +517,15 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();
 
-                //enqueue what would be in done() to EDT thread
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        postProcessImage();
-                    }
-                });
+//                //enqueue what would be in done() to EDT thread
+//                EventQueue.invokeLater(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        postProcessImage();
+//                    }
+//                });
 
+                /////////////////Done() is already executed in EDT per SwingWorker javadocs -jm
             }
 
             return 0;
@@ -572,11 +573,17 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             }
         }
 
+       
+
+        
+        
         /**
          *
          * (called by EventDispatch Thread after doInBackground finishes)
          */
-        protected void postProcessImage() {
+        @Override
+        protected void done() {
+            //these are required to stop the CurrentDirectoryFetcher
             progressBar.setIndeterminate(false);
             setProgress(100);
 
@@ -587,15 +594,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 revert();
                 if (hasCritError) {
                     //core error
-                    progressPanel.getComponent().showErrors(errorString, true);
+                    progressPanel.setErrors(errorString, true);
                 }
                 return;
-            } else {
-                if (errorString != null) {
-                    //data error (non-critical)
-                    logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                    progressPanel.setErrors(errorString, false);
-                }
+            } else if (errorString != null) {
+                //data error (non-critical)
+                logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
+                progressPanel.setErrors(errorString, false);
             }
 
 
