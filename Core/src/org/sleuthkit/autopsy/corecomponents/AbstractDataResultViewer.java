@@ -19,42 +19,51 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
-import java.awt.Cursor;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
-import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerManager.Provider;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Holds commonalities between all DataResultViewers, such as:
- * - Pushes selection to DataContentViewers
+ * This class provides a default implementation of selected methods of the 
+ * DataResultViewer interface. Derived classes will be Swing JPanel objects. 
+ * Additionally, the ExplorerManager.Provider interface is implemented to 
+ * supply an ExplorerManager to derived classes and their child components. 
  */
 public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em;
-    private PropertyChangeListener nodeSelListener;
     /**
      * Content viewer to respond to selection events Either the main one, or
      * custom one if set
      */
     protected DataContent contentViewer;
 
+    /**
+     * This constructor is intended to allow an AbstractDataResultViewer to use
+     * an ExplorerManager provided by a TopComponent, allowing Node selections
+     * to be available to Actions via the action global context lookup when 
+     * the TopComponent has focus. The ExplorerManager must be present when the
+     * object is constructed so that its child components can discover it using
+     * the ExplorerManager.find() method. 
+     */
     public AbstractDataResultViewer(ExplorerManager explorerManager) {
         this.em = explorerManager;
         initialize();
     }
     
+    /**
+     * This constructor can be used by AbstractDataResultViewers that do not
+     * need to make Node selections available to Actions via the action global 
+     * context lookup.
+     */
     public AbstractDataResultViewer() {
         em = new ExplorerManager();
         initialize();
@@ -63,73 +72,13 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     private void initialize() {
         //DataContent is designed to return only the default viewer from lookup
         //use the default one unless set otherwise
-        contentViewer = Lookup.getDefault().lookup(DataContent.class);
-
-        //property listener to send nodes to content viewer    
-        nodeSelListener = new PropertyChangeListener() {
-            /**
-             * Propagates changes in the current select node from the
-             * DataResultViewer to the DataContentTopComponent
-             */
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (!Case.isCaseOpen()) {
-                    //handle in-between condition when case is being closed
-                    //and legacy selection events are pumped
-                    return;
-                }
-
-                String changed = evt.getPropertyName();
-
-                // change that should affect view
-                if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                    //|| changed.equals(ExplorerManager.PROP_NODE_CHANGE)
-                    //|| changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)
-                    //|| changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
-
-                    // change the cursor to "waiting cursor" for this operation
-                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    try {
-                        Node[] selectedNodes = getExplorerManager().getSelectedNodes();
-                        if (selectedNodes.length == 1) {
-                            nodeSelected(selectedNodes[0]);
-                            
-                            // there's a new/changed node to display
-                            // push the node to default "DataContent"
-                            //TODO only the active viewer should be calling setNode
-                            //not all of them, otherwise it results in multiple setNode() invocations
-                            //alternative is to use a single instance of the event listener
-                            //, per top component and not the tab perhaps
-                            contentViewer.setNode(selectedNodes[0]);
-                        } else {
-                            // clear the node viewer
-                            contentViewer.setNode(null);
-                        }
-                    } finally {
-                        setCursor(null);
-                    }
-                }
-
-                /*
-                 else if (changed.equals(ExplorerManager.PROP_NODE_CHANGE) ) {
-                 }
-                 else if (changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
-                 }
-                 else if (changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
-                 }
-                 */
-            }
-        };
-
-        em.addPropertyChangeListener(nodeSelListener);        
+        contentViewer = Lookup.getDefault().lookup(DataContent.class);       
     }
     
     @Override
     public void clearComponent() {
-        em.removePropertyChangeListener(nodeSelListener);
     }
 
-    @Deprecated    
     public Node getSelectedNode() {
         Node result = null;
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
@@ -146,14 +95,6 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     @Override
     public void resetComponent() {
     }
-
-    /**
-     * Called when a new node has been selected in the result viewer Can update
-     * the viewer, etc.
-     *
-     * @param selectedNode the new node currently selected
-     */
-    public abstract void nodeSelected(Node selectedNode);
 
     @Override
     public Component getComponent() {
