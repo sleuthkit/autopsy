@@ -60,6 +60,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private String title;
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
+    private boolean listeningToTabbedPane = false;    
 
     /**
      * Creates new DataResultPanel
@@ -74,8 +75,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setName(title);
 
         this.title = "";
-
-        this.dataResultTabbedPanel.addChangeListener(this);
     }
 
     /**
@@ -285,6 +284,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public void setNode(Node selectedNode) {
+        // Deferring becoming a listener to the tabbed pane until this point
+        // eliminates handling a superfluous stateChanged event during construction.
+        if (listeningToTabbedPane == false) {
+            dataResultTabbedPanel.addChangeListener(this);        
+            listeningToTabbedPane = true;
+        }
+                
         this.rootNode = selectedNode;
         if (selectedNode != null) {
             int childrenCount = selectedNode.getChildren().getNodesCount(true);
