@@ -18,7 +18,6 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -31,11 +30,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
-    
-    private final List<UpdateWrapper> viewers = new ArrayList<UpdateWrapper>();;
+    private final List<UpdateWrapper> viewers = new ArrayList<>();;
     private Node currentNode;
     private final boolean isMain;
-
+    private boolean listeningToTabbedPane = false;    
+    
     /**
      * Creates new DataContentPanel panel
      * The main data content panel can only be created by the data content top component, 
@@ -69,8 +68,6 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         for (int tab = 0; tab < numTabs; ++tab) {
             jTabbedPane1.setEnabledAt(tab, false);
         }
-        
-        jTabbedPane1.addChangeListener(this);
     }
     
     
@@ -135,7 +132,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                     try {
                         path = content.getUniquePath();
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content);
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content);
                     }
                     setName(path);
                 } else {
@@ -158,7 +155,13 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
      * @param selectedNode  the selected content Node
      */
     public void setupTabs(Node selectedNode) {
-        
+        // Deferring becoming a listener to the tabbed pane until this point
+        // eliminates handling a superfluous stateChanged event during construction.
+        if (listeningToTabbedPane == false) {
+            jTabbedPane1.addChangeListener(this);        
+            listeningToTabbedPane = true;
+        }
+                
         // get the preference for the preferred viewer
         Preferences pref = NbPreferences.forModule(GeneralPanel.class);
         boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);

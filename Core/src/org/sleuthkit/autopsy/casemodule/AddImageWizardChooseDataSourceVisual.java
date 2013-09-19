@@ -34,13 +34,16 @@ import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 
 /**
- * The "Add Image" wizard panel 1. This class is used to design the "form" of
- * the panel 1 for "Add Image" wizard panel.
+ * visual component for the first panel of add image wizard. Allows user to pick
+ * data source and timezone.
  *
  */
-final class AddImageVisualPanel1 extends JPanel {
-    
-    enum EVENT {UPDATE_UI, FOCUS_NEXT};
+final class AddImageWizardChooseDataSourceVisual extends JPanel {
+
+    enum EVENT {
+
+        UPDATE_UI, FOCUS_NEXT
+    };
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
     static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
@@ -48,28 +51,29 @@ final class AddImageVisualPanel1 extends JPanel {
     static final String encaseDesc = "Encase Images (*.e01)";
     static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
     static final List<String> allExt = new ArrayList<String>();
+
     static {
         allExt.addAll(rawExt);
         allExt.addAll(encaseExt);
     }
     static final String allDesc = "All Supported Types";
     static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    private AddImageWizardPanel1 wizPanel;
+    private AddImageWizardChooseDataSourcePanel wizPanel;
     private ContentTypeModel model;
-    
     private ContentTypePanel currentPanel;
 
     /**
      * Creates new form AddImageVisualPanel1
+     *
      * @param wizPanel corresponding WizardPanel to handle logic of wizard step
      */
-    AddImageVisualPanel1(AddImageWizardPanel1 wizPanel) {
+    AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
         createTimeZoneList();
         customInit();
     }
-    
+
     private void customInit() {
         model = new ContentTypeModel();
         typeComboBox.setModel(model);
@@ -77,9 +81,10 @@ final class AddImageVisualPanel1 extends JPanel {
         typePanel.setLayout(new BorderLayout());
         updateCurrentPanel(ImageFilePanel.getDefault());
     }
-    
+
     /**
      * Changes the current panel to the given panel.
+     *
      * @param panel instance of ImageTypePanel to change to
      */
     private void updateCurrentPanel(ContentTypePanel panel) {
@@ -89,17 +94,15 @@ final class AddImageVisualPanel1 extends JPanel {
         typePanel.validate();
         typePanel.repaint();
         currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.UPDATE_UI.toString())) {
+                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
                     updateUI(null);
                 }
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.FOCUS_NEXT.toString())) {
+                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
                     wizPanel.moveFocusToNext();
                 }
             }
-            
         });
         currentPanel.select();
         if (currentPanel.getContentType().equals(ContentType.LOCAL)) {
@@ -107,8 +110,7 @@ final class AddImageVisualPanel1 extends JPanel {
             noFatOrphansCheckbox.setEnabled(false);
             descLabel.setEnabled(false);
             timeZoneComboBox.setEnabled(false);
-        }
-        else {
+        } else {
             noFatOrphansCheckbox.setEnabled(true);
             descLabel.setEnabled(true);
             timeZoneComboBox.setEnabled(true);
@@ -120,7 +122,7 @@ final class AddImageVisualPanel1 extends JPanel {
      * Returns the name of the this panel. This name will be shown on the left
      * panel of the "Add Image" wizard panel.
      *
-     * @return name  the name of this panel
+     * @return name the name of this panel
      */
     @Override
     public String getName() {
@@ -135,8 +137,8 @@ final class AddImageVisualPanel1 extends JPanel {
     public String getContentPaths() {
         return currentPanel.getContentPaths();
     }
-    
-     /**
+
+    /**
      * Gets the data sources type selected
      *
      * @return data source selected
@@ -144,24 +146,25 @@ final class AddImageVisualPanel1 extends JPanel {
     public ContentType getContentType() {
         return currentPanel.getContentType();
     }
-    
+
     /**
      * Reset the data sources panel selected
      */
     public void reset() {
         currentPanel.reset();
     }
-    
+
     /**
      * Sets the image path of the current panel.
+     *
      * @param s the image path to set
      */
     public void setContentPath(String s) {
         currentPanel.setContentPath(s);
     }
-    
+
     /**
-     * 
+     *
      * @return true if no fat orphans processing is selected
      */
     boolean getNoFatOrphans() {
@@ -171,7 +174,7 @@ final class AddImageVisualPanel1 extends JPanel {
     /**
      * Gets the time zone that selected on the drop down list.
      *
-     * @return timeZone  the time zone that selected
+     * @return timeZone the time zone that selected
      */
     public String getSelectedTimezone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
@@ -194,17 +197,13 @@ final class AddImageVisualPanel1 extends JPanel {
             String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
 
             /*
-            DateFormat dfm = new SimpleDateFormat("z");
-            dfm.setTimeZone(zone);
-            boolean hasDaylight = zone.useDaylightTime();
-            String first = dfm.format(new Date(2010, 1, 1));
-            String second = dfm.format(new Date(2011, 6, 6));
-            int mid = hour * -1;
-            String result = first + Integer.toString(mid);
-            if(hasDaylight){
-            result = result + second;
-            }
-            timeZoneComboBox.addItem(item + " (" + result + ")");
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
              */
             timeZoneComboBox.addItem(item);
         }
@@ -219,7 +218,7 @@ final class AddImageVisualPanel1 extends JPanel {
         timeZoneComboBox.setSelectedItem(formatted);
     }
 
-    /** 
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -240,24 +239,24 @@ final class AddImageVisualPanel1 extends JPanel {
         typeComboBox = new javax.swing.JComboBox<ContentTypePanel>();
         imgInfoLabel = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(588, 328));
 
-        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.nextLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.timeZoneLabel.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 
-        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.text")); // NOI18N
-        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.text")); // NOI18N
+        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.descLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.descLabel.text")); // NOI18N
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.typeTabel.text")); // NOI18N
 
         typePanel.setMinimumSize(new java.awt.Dimension(0, 65));
         typePanel.setPreferredSize(new java.awt.Dimension(521, 65));
@@ -301,7 +300,7 @@ final class AddImageVisualPanel1 extends JPanel {
         );
 
         imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.imgInfoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -346,7 +345,6 @@ final class AddImageVisualPanel1 extends JPanel {
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JLabel descLabel;
@@ -367,21 +365,21 @@ final class AddImageVisualPanel1 extends JPanel {
      * fields on this panel. This is also the method to check whether all the
      * fields on this panel are correctly filled and decides whether to enable
      * the "Next" button or not.
-     * 
-     * @param e  the document event
+     *
+     * @param e the document event
      */
     public void updateUI(DocumentEvent e) {
         this.wizPanel.enableNextButton(currentPanel.enableNext());
     }
-    
+
     /**
      * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
      */
     private class ContentTypeModel implements ComboBoxModel<ContentTypePanel> {
+
         private ContentTypePanel selected;
         private ContentTypePanel[] types = ContentTypePanel.getPanels();
-        
-        
+
         @Override
         public void setSelectedItem(Object anItem) {
             selected = (ContentTypePanel) anItem;
@@ -410,6 +408,5 @@ final class AddImageVisualPanel1 extends JPanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-
     }
 }

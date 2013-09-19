@@ -234,7 +234,7 @@ public class LocalDiskPanel extends ContentTypePanel {
             if(ready) {
                 selected = anItem;
                 enableNext = true;
-                pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
+                pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
             }
         }
 

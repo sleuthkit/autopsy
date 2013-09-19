@@ -66,6 +66,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
+    private boolean listeningToTabbedPane = false;    
 
     /**
      * Creates new DataResultPanel
@@ -80,8 +81,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setName(title);
 
         this.title = "";
-
-        this.dataResultTabbedPanel.addChangeListener(this);
     }
 
     /**
@@ -182,8 +181,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Do not use if used one of the factory methods to create and open the component.
      */
     public void open() {
-        if (null == this.explorerManager) {
-            this.explorerManager = ExplorerManager.find(this);
+        if (null == explorerManager) {
+            // Get an ExplorerManager to pass to the child DataResultViewers. If the application
+            // components are put together as expected, this will be an ExplorerManager owned
+            // by an ancestor TopComponent. The TopComponent will have put this ExplorerManager
+            // in a Lookup that is set as the action global context when the TopComponent has 
+            // focus. This makes Node selections available to Actions without coupling the
+            // actions to a particular Component. Note that getting the ExplorerManager in the
+            // constructor would be too soon, since the object has no ancestor TopComponent at
+            // that point.
+            explorerManager = ExplorerManager.find(this);
+
+            // A DataResultPanel listens for Node selections in its DataResultViewers so it 
+            // can push the selections both to its child DataResultViewers and to a DataContent object. 
+            // The default DataContent object is a DataContentTopComponent in the data content mode (area),
+            // and is the parent of a DataContentPanel that hosts a set of DataContentViewers. 
+            explorerManager.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         }
         
         // Add all the DataContentViewer to the tabbed pannel.
@@ -224,7 +237,48 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
+        
+    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (!Case.isCaseOpen()) {
+                // Handle the in-between condition when case is being closed
+                // and legacy selection events are pumped.
+                return;
+            }
 
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+                // If a custom DataContent object has not been specified, get the default instance.
+                DataContent contentViewer = customContentViewer;
+                if (null == contentViewer) {
+                    contentViewer = Lookup.getDefault().lookup(DataContent.class);
+                }
+
+                try {
+                    Node[] selectedNodes = explorerManager.getSelectedNodes();
+                    for (UpdateWrapper drv : viewers) {
+                        drv.setSelectedNodes(selectedNodes);
+                    }                                
+
+                    // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
+                    // This is important to the DataContent object, since the content mode (area) of the app is designed 
+                    // to show only the content underlying a single Node.                                
+                    if (selectedNodes.length == 1) {
+                        contentViewer.setNode(selectedNodes[0]);
+                    } 
+                    else {                                    
+                        contentViewer.setNode(null);
+                    }
+                } 
+                finally {
+                    setCursor(null);
+                }
+            }
+        }
+    }
+    
     private void addDataResultViewer(DataResultViewer dataResultViewer) {
         UpdateWrapper viewerWrapper = new UpdateWrapper(dataResultViewer);
         if (null != this.customContentViewer) {
@@ -294,6 +348,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (this.rootNode != null) {
             this.rootNode.removeNodeListener(dummyNodeListener);
         }
+        // Deferring becoming a listener to the tabbed pane until this point
+        // eliminates handling a superfluous stateChanged event during construction.
+        if (listeningToTabbedPane == false) {
+            dataResultTabbedPanel.addChangeListener(this);        
+            listeningToTabbedPane = true;
+        }
+        
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
             this.rootNode.addNodeListener(dummyNodeListener);

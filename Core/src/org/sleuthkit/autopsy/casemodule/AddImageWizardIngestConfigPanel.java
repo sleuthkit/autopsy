@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestDialog;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -52,12 +51,14 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * The "Add Image" wizard panel3. Presents the options to finish/cancel
- * image-add and run ingest.
+ * second panel of add image wizard, allows user to configure ingest modules.
+ *
+ * TODO: review this for dead code. think about moving logic of adding image to
+ * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
-class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private static final Logger logger = Logger.getLogger(AddImageWizardPanel3.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
     private IngestConfigurator ingestConfig;
     /**
      * The visual component that displays this panel. If you need to access the
@@ -76,27 +77,25 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     private boolean noFatOrphans;
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
-    // flag to control the availiablity of next action
-    private boolean imgAdded; // initalized to false in readSettings()
     private CurrentDirectoryFetcher fetcher;
     private AddImageProcess process;
     private AddImageAction action;
     private AddImageTask addImageTask;
     private AddLocalFilesTask addLocalFilesTask;
-    private AddImageWizardPanel2 wizPanel;
+    private AddImageWizardAddingProgressPanel progressPanel;
 
-    AddImageWizardPanel3(AddImageAction action, AddImageWizardPanel2 wizPanel) {
+    AddImageWizardIngestConfigPanel(AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
         this.action = action;
-        this.wizPanel = wizPanel;
+        this.progressPanel = proPanel;
         ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        List<String> messages = ingestConfig.setContext(AddImageWizardPanel3.class.getCanonicalName());
+        List<String> messages = ingestConfig.setContext(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
                 warning.append(message).append("\n");
             }
             JOptionPane.showMessageDialog(null, warning.toString());
-        }        
+        }
     }
 
     /**
@@ -110,7 +109,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageVisualPanel3(ingestConfig.getIngestConfigPanel());
+            component = new AddImageWizardIngestConfigVisual(ingestConfig.getIngestConfigPanel());
         }
         return component;
     }
@@ -183,7 +182,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupImage = null;
         readyToIngest = false;
-        imgAdded = false;
+
         newContents.clear();
         dataSourcePath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
         dataSourceType = (ContentType) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
@@ -228,7 +227,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             ingested = true;
             ingestConfig.setContent(newContents);
             ingestConfig.start();
-            wizPanel.getComponent().appendProgressText(" Ingest started.");
+            progressPanel.setStateFinished();
+
         }
     }
 
@@ -240,10 +240,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
         AddImageTask task;
         JProgressBar prog;
-        AddImageVisualPanel2 wiz;
+        AddImageWizardAddingProgressVisual wiz;
         AddImageProcess proc;
 
-        CurrentDirectoryFetcher(JProgressBar prog, AddImageVisualPanel2 wiz, AddImageProcess proc) {
+        CurrentDirectoryFetcher(JProgressBar prog, AddImageWizardAddingProgressVisual wiz, AddImageProcess proc) {
             this.wiz = wiz;
             this.proc = proc;
             this.prog = prog;
@@ -260,7 +260,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            wiz.changeCurrentDir(proc.currentDirectory());
+                            wiz.setCurrentDirText(proc.currentDirectory());
                         }
                     });
 
@@ -270,14 +270,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             } catch (InterruptedException ie) {
                 return -1;
             }
-        }
-
-        /**
-         * When done, set the Wizards processing tags to be invisible
-         */
-        @Override
-        protected void done() {
-            wiz.setProcessInvis();
         }
     }
 
@@ -301,7 +293,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         private Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
 
         protected AddLocalFilesTask(WizardDescriptor settings) {
-            this.progressBar = wizPanel.getComponent().getCrDbProgressBar();
+            this.progressBar = progressPanel.getComponent().getProgressBar();
             currentCase = Case.getCurrentCase();
             this.settings = settings;
         }
@@ -310,6 +302,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
          * Starts the addImage process, but does not commit the results.
          *
          * @return
+         *
          * @throws Exception
          */
         @Override
@@ -326,10 +319,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             };
 
             cancelledWhileRunning.enable();
-            final LocalFilesAddProgressUpdater progUpdater = new LocalFilesAddProgressUpdater(this.progressBar, wizPanel.getComponent());
+            final LocalFilesAddProgressUpdater progUpdater = new LocalFilesAddProgressUpdater(this.progressBar, progressPanel.getComponent());
             try {
                 final FileManager fileManager = currentCase.getServices().getFileManager();
-                wizPanel.setStateStarted();
+                progressPanel.setStateStarted();
                 String[] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
                 List<String> absLocalPaths = new ArrayList<String>();
                 for (String path : paths) {
@@ -361,31 +354,33 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         protected void postProcess() {
             progressBar.setIndeterminate(false);
             setProgress(100);
-            
+
             //clear updates
-            wizPanel.getComponent().setProcessInvis();
+            //     progressPanel.getComponent().setProcessInvis();
 
             if (interrupted || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in logical files process");
                 if (hasCritError) {
                     //core error
-                    wizPanel.getComponent().setErrors(errorString, true);
+                    progressPanel.getComponent().showErrors(errorString, true);
                 }
                 return;
-            } else if (errorString != null) {
-                //data error (non-critical)
-                logger.log(Level.INFO, "Handling non-critical errors that occured in logical files process");
-                wizPanel.getComponent().setErrors(errorString, false);
+            } else {
+                if (errorString != null) {
+                    //data error (non-critical)
+                    logger.log(Level.INFO, "Handling non-critical errors that occured in logical files process");
+                    progressPanel.getComponent().showErrors(errorString, false);
+                }
             }
             try {
                 // When everything happens without an error:
                 if (errorString == null) { // complete progress bar
-                    wizPanel.getComponent().changeProgressBarTextAndColor("*Logical Files added.", 100, Color.black);
+                    progressPanel.getComponent().setProgressBarTextAndColor("*Logical Files added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-                AddImageVisualPanel2 panel = wizPanel.getComponent();
+                AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
                 if (panel != null) {
                     Window w = SwingUtilities.getWindowAncestor(panel);
                     if (w != null) {
@@ -393,7 +388,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                     }
                 }
 
-                wizPanel.setStateFinished();
+                progressPanel.setStateFinished();
 
                 //notify the case
                 if (!newContents.isEmpty()) {
@@ -406,7 +401,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             } catch (Exception ex) {
                 //handle unchecked exceptions
                 logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
-                wizPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
+                progressPanel.getComponent().setProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
                 logger.log(Level.SEVERE, "Error adding image to case", ex);
             }
         }
@@ -418,9 +413,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
             private int count = 0;
             private JProgressBar prog;
-            private AddImageVisualPanel2 wiz;
+            private AddImageWizardAddingProgressVisual wiz;
 
-            LocalFilesAddProgressUpdater(JProgressBar prog, AddImageVisualPanel2 wiz) {
+            LocalFilesAddProgressUpdater(JProgressBar prog, AddImageWizardAddingProgressVisual wiz) {
                 this.wiz = wiz;
                 this.prog = prog;
             }
@@ -431,7 +426,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            wiz.changeCurrentDir(newFile.getParentPath() + "/" + newFile.getName());
+                            wiz.setCurrentDirText(newFile.getParentPath() + "/" + newFile.getName());
                         }
                     });
 
@@ -452,25 +447,25 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         private boolean interrupted = false;
         private boolean hasCritError = false;
         private String errorString = null;
-        private long start;
-        private WizardDescriptor settings;
+        private WizardDescriptor wizDescriptor;
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
 
         protected AddImageTask(WizardDescriptor settings) {
-            this.progressBar = wizPanel.getComponent().getCrDbProgressBar();
+            this.progressBar = progressPanel.getComponent().getProgressBar();
             currentCase = Case.getCurrentCase();
-            this.settings = settings;
+            this.wizDescriptor = settings;
         }
 
         /**
          * Starts the addImage process, but does not commit the results.
          *
          * @return
+         *
          * @throws Exception
          */
         @Override
         protected Integer doInBackground() {
-            start = System.currentTimeMillis();
+
             this.setProgress(0);
 
 
@@ -504,10 +499,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             }
 
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            fetcher = new CurrentDirectoryFetcher(this.progressBar, wizPanel.getComponent(), process);
+            fetcher = new CurrentDirectoryFetcher(this.progressBar, progressPanel.getComponent(), process);
             cancelledWhileRunning.enable();
             try {
-                wizPanel.setStateStarted();
+                progressPanel.setStateStarted();
                 fetcher.execute();
                 process.run(new String[]{dataSourcePath});
             } catch (TskCoreException ex) {
@@ -540,7 +535,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
          * would have reverted it.
          *
          * @param settings property set to get AddImageProcess and CleanupTask
-         * from
+         *                 from
+         *
          * @throws Exception if commit or adding the image to the case failed
          */
         private void commitImage(WizardDescriptor settings) throws Exception {
@@ -591,13 +587,15 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 revert();
                 if (hasCritError) {
                     //core error
-                    wizPanel.getComponent().setErrors(errorString, true);
+                    progressPanel.getComponent().showErrors(errorString, true);
                 }
                 return;
-            } else if (errorString != null) {
-                //data error (non-critical)
-                logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                wizPanel.getComponent().setErrors(errorString, false);
+            } else {
+                if (errorString != null) {
+                    //data error (non-critical)
+                    logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
+                    progressPanel.setErrors(errorString, false);
+                }
             }
 
 
@@ -617,12 +615,12 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 cleanupImage.enable();
 
                 if (errorString == null) { // complete progress bar
-                    wizPanel.getComponent().changeProgressBarTextAndColor("*Data Source added.", 100, Color.black);
+                    progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
                 }
 
                 // Get attention for the process finish
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-                AddImageVisualPanel2 panel = wizPanel.getComponent();
+                AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
                 if (panel != null) {
                     Window w = SwingUtilities.getWindowAncestor(panel);
                     if (w != null) {
@@ -631,7 +629,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 }
 
                 // Tell the panel we're done
-                wizPanel.setStateFinished();
+                progressPanel.setStateFinished();
 
                 // Commit the image
                 if (!newContents.isEmpty()) //already commited
@@ -643,7 +641,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 if (process != null) { // and if we're done configuring ingest
                     // commit anything
                     try {
-                        commitImage(settings);
+                        commitImage(wizDescriptor);
                     } catch (Exception ex) {
                         // Log error/display warning
                         logger.log(Level.SEVERE, "Error adding image to case.", ex);
@@ -660,7 +658,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
                 logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
 
-                wizPanel.getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
+                progressPanel.getComponent().setProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
 
                 // Log error/display warning
 
