@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -37,20 +37,27 @@ public class Services implements Closeable {
     
     // NOTE: all new services added to Services class must be added to this list
     // of services.
-    private List<Closeable> services = new ArrayList<Closeable>();
+    private List<Closeable> services = new ArrayList<>();
     
     // services
     private FileManager fileManager;
+    private TagsManager tagsManager;
 
     public Services(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
         //create and initialize FileManager as early as possibly in the new/opened Case
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
+        tagsManager = new TagsManager(tskCase);
+        services.add(tagsManager);
     }
     
     public FileManager getFileManager() {
         return fileManager;
+    }
+    
+    public TagsManager getTagsManager() {
+        return tagsManager;
     }
 
     @Override
