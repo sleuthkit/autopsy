@@ -481,20 +481,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         
         @Override
         public void childrenAdded(NodeMemberEvent nme) {
+            Node added = nme.getNode();
+            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                // If it's the dummy waiting node, we don't want
+                // to reload the table headers
+                return;
+            }
+            setupTable(added);
         }
 
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
-            Node removed = nme.getDelta()[0];
-            if (! removed.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
-                // If it's not the dummy waiting node, we don't want
-                // to reload the table headers
-                return;
-            }
-
-            // dummy node removed. Reset the table headers.
-            Node node = nme.getNode();
-            setupTable(node);
+            
         }
 
         @Override

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
@@ -379,40 +380,46 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
     
-    private void setupTabs(Node selectedNode) {
-        //update/disable tabs based on if supported for this node
-        int drvC = 0;
-        for (UpdateWrapper drv : viewers) {
+    private void setupTabs(final Node selectedNode) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //update/disable tabs based on if supported for this node
+                int drvC = 0;
+                for (UpdateWrapper drv : viewers) {
 
-            if (drv.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(drvC, true);
-            } else {
-                dataResultTabbedPanel.setEnabledAt(drvC, false);
-            }
-            ++drvC;
-        }
+                    if (drv.isSupported(selectedNode)) {
+                        dataResultTabbedPanel.setEnabledAt(drvC, true);
+                    } else {
+                        dataResultTabbedPanel.setEnabledAt(drvC, false);
+                    }
+                    ++drvC;
+                }
 
-        // if the current tab is no longer enabled, then find one that is
-        boolean hasViewerEnabled = true;
-        int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
-            hasViewerEnabled = false;
-            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
-                if (dataResultTabbedPanel.isEnabledAt(i)) {
-                    currentActiveTab = i;
-                    hasViewerEnabled = true;
-                    break;
+                // if the current tab is no longer enabled, then find one that is
+                boolean hasViewerEnabled = true;
+                int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
+                if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+                    hasViewerEnabled = false;
+                    for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                        if (dataResultTabbedPanel.isEnabledAt(i)) {
+                            currentActiveTab = i;
+                            hasViewerEnabled = true;
+                            break;
+                        }
+                    }
+
+                    if (hasViewerEnabled) {
+                        dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+                    }
+                }
+
+                if (hasViewerEnabled) {
+                    viewers.get(currentActiveTab).setNode(selectedNode);
                 }
             }
-            
-            if (hasViewerEnabled) {
-                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
-            }
-        }
+        });
         
-        if (hasViewerEnabled) {
-            viewers.get(currentActiveTab).setNode(selectedNode);
-        }
     }
 
     @Override
@@ -604,9 +611,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
     
     private class DummyNodeListener implements NodeListener {
+        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
         
         @Override
-        public void childrenAdded(NodeMemberEvent nme) {
+        public void childrenAdded(final NodeMemberEvent nme) {
+            Node added = nme.getNode();
+            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                // don't set up tabs if the new node is a waiting node
+                return;
+            }
             setupTabs(nme.getNode());
         }
 
