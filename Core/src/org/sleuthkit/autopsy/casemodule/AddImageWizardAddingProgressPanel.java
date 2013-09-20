@@ -174,8 +174,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //why do we do this?
-      //  getComponent().resetInfoPanel();
+        //why did we do this? -jm
+        //  getComponent().resetInfoPanel();
     }
 
     /**
@@ -193,6 +193,6 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
 
     @Override
     public boolean isFinishPanel() {
-      return true;
+        return true;
     }
 }

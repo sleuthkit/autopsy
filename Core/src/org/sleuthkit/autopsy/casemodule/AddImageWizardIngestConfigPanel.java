@@ -43,12 +43,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
@@ -559,6 +562,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
                 if (imageId != 0) {
                     Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
+
+                    newImage.getSsize();
+
+                    verifyImageSizes(newImage);
+
                     newContents.add(newImage);
                     settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
                 }
@@ -570,13 +578,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
                 logger.log(Level.INFO, "Image committed, imageId: " + imageId);
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+
             }
         }
 
-       
-
-        
-        
         /**
          *
          * (called by EventDispatch Thread after doInBackground finishes)
@@ -655,6 +660,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                     logger.log(Level.SEVERE, "Missing image process object");
                 }
 
+
+
+
                 // Start ingest if we can
                 startIngest();
 
@@ -695,6 +703,33 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 //unlock db write within EWT thread
                 SleuthkitCase.dbWriteUnlock();
             }
+        }
+
+        private void verifyImageSizes(Image newImage) throws TskCoreException {
+            List<VolumeSystem> volumeSystems = newImage.getVolumeSystems();
+            logger.log(Level.INFO, "found volume systems: " + volumeSystems.size());
+            for (VolumeSystem vs : volumeSystems) {
+                List<Volume> volumes = vs.getVolumes();
+                logger.log(Level.INFO, "found volumes: " + volumes.size());
+                for (Volume v : volumes) {
+                    byte[] buf = new byte[100];
+                    v.getStart();
+                    v.getSize();
+                    v.getLength();
+                    try {
+                        int readBytes = newImage.read(buf, v.getStart() + v.getLength() - 1, 1);
+
+                        if (readBytes < 0) {
+                            logger.warning("problem reading volume");
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.warning("error reading volume: " + ex.getLocalizedMessage());
+                    }
+                }
+            }
+            List<FileSystem> fileSystems = newImage.getFileSystems();
+
+            logger.log(Level.INFO, "found file systems: " + fileSystems.size());
         }
     }
 }
