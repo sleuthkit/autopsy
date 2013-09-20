@@ -28,16 +28,7 @@
             <isset property="env.JRE_HOME_64"/>
         </condition>
         
-        <!-- Update configuration file to include jre -->
-        <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
-        <propertyfile file="${inst.property.file}">
-            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
-            <entry key="default_options" value="@JVM_OPTIONS" />
-            <entry key="jdkhome" value="&quot;jre7&quot;" />
-        </propertyfile>
-        <!-- workaround for ant escaping : and = when setting properties -->
-        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
+        
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
@@ -83,6 +74,7 @@
         <var name="aut-bin-name" value="${app.name}.exe"/>
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
         <var name="package-type" value="x86" />
+        <var name="jvm.max.mem" value="512" />
         <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
@@ -97,6 +89,7 @@
         <var name="aut-bin-name" value="${app.name}64.exe"/>
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
         <var name="package-type" value="x64" />
+        <var name="jvm.max.mem" value="2048"/>
         <echo message="aip-path: ${aip-path}" />
         <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
@@ -129,7 +122,22 @@
                         replace="ProductVersion&quot; Value=&quot;${app.version}" />   
     </target>
    
-    <target name="add-ai-files" description="Add the files in the installation path to the installer file">
+    <target name="update-config" description="Updates configuration file with correct JVM args.">
+        <!-- Update configuration file to include jre -->
+        <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
+        <!-- Sets max heap size to be ${jvm.mem} which is set in the run-ai-(32/64) target -->
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
+        <propertyfile file="${inst.property.file}">
+            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
+            <entry key="default_options" value="@JVM_OPTIONS" />
+            <entry key="jdkhome" value="&quot;jre7&quot;" />
+        </propertyfile>
+        <!-- workaround for ant escaping : and = when setting properties -->
+        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
+    </target>
+    
+    
+    <target name="add-ai-files" depends="update-config" description="Add the files in the installation path to the installer file">
         <foreach target="add-file-or-dir" param="theFile" inheritall="true" inheritrefs="true">
             <path> 
                 <fileset dir="${inst-path}">
