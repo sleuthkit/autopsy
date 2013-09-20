@@ -107,7 +107,7 @@ public class AddImageErrorsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     
-    void setErrors(String errors) {
+   public void setErrors(String errors) {
         errorsText.setText(errors);
     }
     
