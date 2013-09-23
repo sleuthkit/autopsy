@@ -602,7 +602,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                     progressPanel.setErrors(errorString, true);
                 }
                 return;
-            } else if (errorString != null) {
+            }
+            if (errorString != null) {
                 //data error (non-critical)
                 logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
                 progressPanel.setErrors(errorString, false);
@@ -720,15 +721,28 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                         int readBytes = newImage.read(buf, v.getStart() + v.getLength() - 1, 1);
 
                         if (readBytes < 0) {
-                            logger.warning("problem reading volume");
+                            logger.warning("problem reading volume.  Not as much data as expected");
+                            errorString += "\n problem reading volume";
+                            progressPanel.setErrors(errorString, false);
                         }
                     } catch (TskCoreException ex) {
-                        logger.warning("error reading volume: " + ex.getLocalizedMessage());
+                        errorString += "\n  Not as much data as expected: error reading volume:" + ex.getLocalizedMessage();
+                        progressPanel.setErrors(errorString, false);
+                        logger.warning(" Not as much data as expected: error reading volume: " + ex.getLocalizedMessage());
                     }
                 }
             }
             List<FileSystem> fileSystems = newImage.getFileSystems();
-
+            for (FileSystem fs : fileSystems) {
+                  byte[] buf = new byte[100];
+                fs.getBlock_count();
+                fs.getBlock_size();
+                fs.getSize();
+                fs.getImageOffset();
+                //fs.read(buf, offset, len);
+                  
+              //  fs.read(buf, fs.getl, len);
+            }
             logger.log(Level.INFO, "found file systems: " + fileSystems.size());
         }
     }
