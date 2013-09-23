@@ -101,7 +101,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
-        component.setProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
+        component.setProgressBarTextAndColor("*This process may take some time for large data sources.", 0, Color.black);
     }
 
     /**
