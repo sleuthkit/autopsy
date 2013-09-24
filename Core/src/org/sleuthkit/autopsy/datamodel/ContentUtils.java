@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public final class ContentUtils {
 
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     // don't instantiate
@@ -105,12 +105,17 @@ public final class ContentUtils {
 
     public static TimeZone getTimeZone(Content c) {
         try {
-            final Image image = c.getImage();
-            if (image != null) {
-                return TimeZone.getTimeZone(image.getTimeZone());
-            } else {
-                //case such as top level VirtualDirectory
-                return TimeZone.getDefault();
+            if (false) {
+                return TimeZone.getTimeZone("GMT");
+            }
+            else {
+                final Image image = c.getImage();
+                if (image != null) {
+                    return TimeZone.getTimeZone(image.getTimeZone());
+                } else {
+                    //case such as top level VirtualDirectory
+                    return TimeZone.getDefault();
+                }
             }
         } catch (TskException ex) {
             return TimeZone.getDefault();

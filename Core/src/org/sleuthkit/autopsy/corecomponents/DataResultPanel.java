@@ -26,10 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeMemberEvent;
+import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
@@ -59,6 +64,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
+    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private boolean listeningToTabbedPane = false;    
@@ -340,56 +346,80 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public void setNode(Node selectedNode) {
+        if (this.rootNode != null) {
+            this.rootNode.removeNodeListener(dummyNodeListener);
+        }
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
             dataResultTabbedPanel.addChangeListener(this);        
             listeningToTabbedPane = true;
         }
-                
+        
         this.rootNode = selectedNode;
+        if (this.rootNode != null) {
+            this.rootNode.addNodeListener(dummyNodeListener);
+        }
+        
+        setupTabs(selectedNode);
+        
         if (selectedNode != null) {
-            int childrenCount = selectedNode.getChildren().getNodesCount(true);
+            int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
         this.numberMatchLabel.setVisible(true);
         
 
         resetTabs(selectedNode);
-
-        //update/disable tabs based on if supported for this node
-        int drvC = 0;
-        for (UpdateWrapper drv : viewers) {
-
-            if (drv.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(drvC, true);
-            } else {
-                dataResultTabbedPanel.setEnabledAt(drvC, false);
-            }
-            ++drvC;
-        }
-
-        // if the current tab is no longer enabled, then find one that is
-        boolean hasViewerEnabled = true;
+        
+        // set the display on the current active tab
         int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
-            hasViewerEnabled = false;
-            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
-                if (dataResultTabbedPanel.isEnabledAt(i)) {
-                    currentActiveTab = i;
-                    hasViewerEnabled = true;
-                    break;
+        if (currentActiveTab != -1) {
+            UpdateWrapper drv = viewers.get(currentActiveTab);
+            drv.setNode(selectedNode);
+        }
+    }
+    
+    private void setupTabs(final Node selectedNode) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //update/disable tabs based on if supported for this node
+                int drvC = 0;
+                for (UpdateWrapper drv : viewers) {
+
+                    if (drv.isSupported(selectedNode)) {
+                        dataResultTabbedPanel.setEnabledAt(drvC, true);
+                    } else {
+                        dataResultTabbedPanel.setEnabledAt(drvC, false);
+                    }
+                    ++drvC;
+                }
+
+                // if the current tab is no longer enabled, then find one that is
+                boolean hasViewerEnabled = true;
+                int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
+                if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+                    hasViewerEnabled = false;
+                    for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                        if (dataResultTabbedPanel.isEnabledAt(i)) {
+                            currentActiveTab = i;
+                            hasViewerEnabled = true;
+                            break;
+                        }
+                    }
+
+                    if (hasViewerEnabled) {
+                        dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+                    }
+                }
+
+                if (hasViewerEnabled) {
+                    viewers.get(currentActiveTab).setNode(selectedNode);
                 }
             }
-            
-            if (hasViewerEnabled) {
-                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
-            }
-        }
+        });
         
-        if (hasViewerEnabled) {
-            viewers.get(currentActiveTab).setNode(selectedNode);
-        }
     }
 
     @Override
@@ -578,5 +608,35 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public void setNumMatches(int numMatches) {
         this.numberMatchLabel.setText(Integer.toString(numMatches));
+    }
+    
+    private class DummyNodeListener implements NodeListener {
+        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        
+        @Override
+        public void childrenAdded(final NodeMemberEvent nme) {
+            Node added = nme.getNode();
+            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                // don't set up tabs if the new node is a waiting node
+                return;
+            }
+            setupTabs(nme.getNode());
+        }
+
+        @Override
+        public void childrenRemoved(NodeMemberEvent nme) {
+        }
+
+        @Override
+        public void childrenReordered(NodeReorderEvent nre) {
+        }
+
+        @Override
+        public void nodeDestroyed(NodeEvent ne) {
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+        }
     }
 }
