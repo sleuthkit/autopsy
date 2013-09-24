@@ -346,16 +346,16 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public void setNode(Node selectedNode) {
-        if (this.rootNode != null) {
-            this.rootNode.removeNodeListener(dummyNodeListener);
-        }
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
             dataResultTabbedPanel.addChangeListener(this);        
             listeningToTabbedPane = true;
         }
-        
+                
+        if (this.rootNode != null) {
+            this.rootNode.removeNodeListener(dummyNodeListener);
+        }
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
             this.rootNode.addNodeListener(dummyNodeListener);
