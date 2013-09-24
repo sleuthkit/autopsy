@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskException;
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer{
     
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-    private final static String WAIT_TEXT = "Preparing display, please wait...";
+    private final static String WAIT_TEXT = "Retrieving and preparing data, please wait...";
     private final static String ERROR_TEXT = "Error retrieving result";
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
