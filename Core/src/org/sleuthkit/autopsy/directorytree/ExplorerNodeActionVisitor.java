@@ -247,7 +247,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             Boolean counter = false;
 
             imgDetailPanel.setImgNameValue(img.getName());
-            imgDetailPanel.setImgTypeValue(Image.imageTypeToString(img.getType()));
+            imgDetailPanel.setImgTypeValue(img.getType().getName());
             imgDetailPanel.setImgSectorSizeValue(Long.toString(img.getSsize()));
             counter = true;
 

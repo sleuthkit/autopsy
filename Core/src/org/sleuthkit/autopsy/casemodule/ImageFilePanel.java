@@ -43,9 +43,9 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(AddImageVisualPanel1.rawFilter);
-        fc.addChoosableFileFilter(AddImageVisualPanel1.encaseFilter);
-        fc.setFileFilter(AddImageVisualPanel1.allFilter);
+        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.rawFilter);
+        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.encaseFilter);
+        fc.setFileFilter(AddImageWizardChooseDataSourceVisual.allFilter);
     }
     
     /**
@@ -131,7 +131,7 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
             String path = fc.getSelectedFile().getPath();
             pathTextField.setText(path);
         }
-        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.FOCUS_NEXT.toString(), false, true);
+        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString(), false, true);
     }//GEN-LAST:event_browseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -194,17 +194,17 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
     
     /**

@@ -22,14 +22,17 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
+import java.beans.PropertyChangeEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -38,6 +41,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
+import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeMemberEvent;
+import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
@@ -53,6 +60,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private String firstColumnLabel = "Name";
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
+    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node 
@@ -98,10 +106,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             OutlineView ov = ((OutlineView) this.tableScrollPanel);
             ov.expandNode(n);
         }
-    }
-
-    @Override
-    public void nodeSelected(Node selectedNode) {
     }
 
     /**
@@ -245,11 +249,38 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 
-
+            Node oldNode = this.em.getRootContext();
+            if (oldNode != null) {
+                oldNode.removeNodeListener(dummyNodeListener);
+            }
+            
             // if there's no selection node, do nothing
             if (hasChildren) {
                 Node root = selectedNode;
-
+                root.addNodeListener(dummyNodeListener);
+                setupTable(root);
+            } else {
+                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+                Node emptyNode = new AbstractNode(Children.LEAF);
+                em.setRootContext(emptyNode); // make empty node
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                ov.setPropertyColumns(); // set the empty property header
+            }
+        } finally {
+            this.setCursor(null);
+        }
+    }
+    
+    /**
+     * Create Column Headers based on the Content represented by the Nodes in
+     * the table.
+     * 
+     * @param root The parent Node of the ContentNodes
+     */
+    private void setupTable(final Node root) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
                 //wrap to filter out children
                 //note: this breaks the tree view mode in this generic viewer,
                 //so wrap nodes earlier if want 1 level view
@@ -260,11 +291,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 em.setRootContext(root);
 
 
-                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+                final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
 
                 propertiesAcc.clear();
 
-                this.getAllChildPropertyHeadersRec(selectedNode, 100);
+                DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
                 List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
                 if (props.size() > 0) {
                     Node.Property prop = props.remove(0);
@@ -314,7 +345,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 // get first 100 rows values for the table
                 Object[][] content = null;
-                content = getRowValues(selectedNode, 100);
+                content = getRowValues(root, 100);
 
 
                 if (content != null) {
@@ -340,17 +371,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     // turn on the auto resize
                     ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 }
-
-            } else {
-                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
-                Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                ov.setPropertyColumns(); // set the empty property header
             }
-        } finally {
-            this.setCursor(null);
-        }
+        });
     }
 
     private static Object[][] getRowValues(Node node, int rows) {
@@ -452,5 +474,37 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         this.tableScrollPanel = null;
 
         super.clearComponent();
+    }
+    
+    private class DummyNodeListener implements NodeListener {
+        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        
+        @Override
+        public void childrenAdded(NodeMemberEvent nme) {
+            Node added = nme.getNode();
+            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                // If it's the dummy waiting node, we don't want
+                // to reload the table headers
+                return;
+            }
+            setupTable(added);
+        }
+
+        @Override
+        public void childrenRemoved(NodeMemberEvent nme) {
+            
+        }
+
+        @Override
+        public void childrenReordered(NodeReorderEvent nre) {
+        }
+
+        @Override
+        public void nodeDestroyed(NodeEvent ne) {
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+        }
     }
 }

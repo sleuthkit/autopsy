@@ -108,10 +108,10 @@ public class MissingImageDialog extends javax.swing.JDialog {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.UPDATE_UI.toString())) {
+                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
                     updateSelectButton();
                 }
-                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.FOCUS_NEXT.toString())) {
+                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
                     moveFocusToSelect();
                 }
             }

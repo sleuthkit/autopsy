@@ -29,17 +29,26 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 /**
- * The "Add Data Source" wizard panel2. Handles processing the image in a worker
- * thread, and any errors that may occur during the add process.
+ * The final panel of the add image wizard. It displays a progress bar and
+ * status updates.
+ *
+ * All the real work is kicked off in the previous panel:
+ * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
+ * -jm)
  */
-class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+
+    /**
+     * flag to indicate that the image adding process is finished and this panel
+     * is completed(valid)
+     */
     private boolean imgAdded = false;
-    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private AddImageVisualPanel2 component;
+    private AddImageWizardAddingProgressVisual component;
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -47,12 +56,14 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * but never displayed, or not all panels are displayed, it is better to
      * create only those which really need to be visible.
      *
+     * It also separates the view from the control - jm
+     *
      * @return component the UI component of this wizard panel
      */
     @Override
-    public AddImageVisualPanel2 getComponent() {
+    public AddImageWizardAddingProgressVisual getComponent() {
         if (component == null) {
-            component = new AddImageVisualPanel2();
+            component = new AddImageWizardAddingProgressVisual();
         }
         return component;
     }
@@ -89,8 +100,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Updates the UI to display the add image process has begun.
      */
     void setStateStarted() {
-        component.getCrDbProgressBar().setIndeterminate(true);
-        component.changeProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
+        component.getProgressBar().setIndeterminate(true);
+        component.setProgressBarTextAndColor("*This process may take some time for large data sources.", 0, Color.black);
     }
 
     /**
@@ -98,9 +109,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     void setStateFinished() {
         imgAdded = true;
+        getComponent().setStateFinished();
         fireChangeEvent();
     }
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Adds a listener to changes of the panel's validity.
@@ -149,22 +160,34 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        settings.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
-        if(imgAdded) {
-            getComponent().done();
+        settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
+        if (imgAdded) {
+            getComponent().setStateFinished();
         }
     }
 
     /**
+     * this doesn't appear to store anything? plus, there are no settings in
+     * this panel -jm
      *
      * @param settings the setting to be stored to
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        //why do we do this?
         getComponent().resetInfoPanel();
     }
 
-
- 
-
+    /**
+     * forward errors to visual component
+     *
+     * should this be modified to handle a list of errors? -jm
+     *
+     *
+     * @param errorString the error string to be displayed
+     * @param critical    true if this is a critical error
+     */
+    void setErrors(String errorString, boolean critical) {
+        getComponent().showErrors(errorString, critical);
+    }
 }
