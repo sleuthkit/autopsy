@@ -62,6 +62,8 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         // If there are any images, let's select the first one
         if (imagesTable.getRowCount() > 0) {
             imagesTable.setRowSelectionInterval(0, 0);
+        } else {
+            openButton.setEnabled(false);
         }
     }
 
