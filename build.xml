@@ -74,7 +74,7 @@
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
@@ -215,7 +215,7 @@
     <target name="versioning-script-if-release" if="is-release">
         <exec dir="${basedir}" executable="python" failonerror="true">
             <arg line="update_versions.py -a" />
-        </exec>
+        </exec>j
     </target>
     
     <target name="versioning-script-if-not-release" unless="is-release">
