@@ -27,8 +27,6 @@
         <condition property="jre.home.64">
             <isset property="env.JRE_HOME_64"/>
         </condition>
-        
-        
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
@@ -75,6 +73,9 @@
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
         <var name="package-type" value="x86" />
         <var name="jvm.max.mem" value="512" />
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
+        </exec>
         <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
@@ -91,6 +92,9 @@
         <var name="package-type" value="x64" />
         <var name="jvm.max.mem" value="2048"/>
         <echo message="aip-path: ${aip-path}" />
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFiles64Folder][ProductName]-${app.version}"/>
+        </exec>
         <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/installer_${app.name}_64-${app.version}.msi" />
@@ -125,15 +129,15 @@
     <target name="update-config" description="Updates configuration file with correct JVM args.">
         <!-- Update configuration file to include jre -->
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
-        <!-- Sets max heap size to be ${jvm.mem} which is set in the run-ai-(32/64) target -->
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
+        <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
         <propertyfile file="${inst.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
             <entry key="jdkhome" value="&quot;jre7&quot;" />
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
-        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
+        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.args}" />
     </target>
     
     
@@ -155,7 +159,6 @@
     </target>
 
     <target name="add-file-or-dir" depends="is-file-or-folder">
-        <echo message="${ai-exe-path}" /> 
         <echo message="Adding ${file-or-folder} to installer: ${theFile}"/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /Add${file-or-folder} APPDIR ${theFile}" />
