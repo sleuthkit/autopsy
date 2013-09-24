@@ -215,7 +215,7 @@
     <target name="versioning-script-if-release" if="is-release">
         <exec dir="${basedir}" executable="python" failonerror="true">
             <arg line="update_versions.py -a" />
-        </exec>j
+        </exec>
     </target>
     
     <target name="versioning-script-if-not-release" unless="is-release">
