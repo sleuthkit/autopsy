@@ -31,6 +31,8 @@ import org.openide.WizardDescriptor;
 public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     private static final String ADDING_DATA_SOURCE_COMPLETE = "Adding Data Source - Complete";
+    private String errorLog;
+    private boolean hasCriticalErrors = false;
 
     /**
      * Returns the name of the this panel. This name will be shown on the left
@@ -46,7 +48,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     /**
      * hide the progress components and show the "done" components
      */
-  protected  void setStateFinished() {
+    protected void setStateFinished() {
         inProgressPanel.setVisible(false);
         titleLabel.setText(ADDING_DATA_SOURCE_COMPLETE);
         donePanel.setVisible(true);
@@ -117,25 +119,16 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
      * @param critical true to indicate the error(s) are critical
      */
     public void showErrors(final String errors, boolean critical) {
+        hasCriticalErrors |= critical;
         progressBar.setValue(100); //always invoked when process completed
-        if (critical) {
+        if (hasCriticalErrors) {
             statusLabel.setText("*Failed to add image (critical errors encountered). Click below to view the log.");
         } else {
             statusLabel.setText("*Data Source added (non-critical errors encountered). Click below to view the log.");
         }
 
+        errorLog = errors;
         viewLogButton.setVisible(true);
-
-        viewLogButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //show error dialog
-                AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
-                dialog.setErrors(errors);
-                dialog.setLocationRelativeTo(null);
-                dialog.setVisible(true);
-            }
-        });
 
     }
 
@@ -174,6 +167,11 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(statusLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.statusLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(viewLogButton, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.viewLogButton.text")); // NOI18N
+        viewLogButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewLogButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout donePanelLayout = new javax.swing.GroupLayout(donePanel);
         donePanel.setLayout(donePanelLayout);
@@ -270,6 +268,14 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void viewLogButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewLogButtonActionPerformed
+        //show error dialog
+        AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
+        dialog.setErrors(errorLog);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_viewLogButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     protected javax.swing.JTextArea TextArea_CurrentDirectory;
     protected javax.swing.JPanel donePanel;

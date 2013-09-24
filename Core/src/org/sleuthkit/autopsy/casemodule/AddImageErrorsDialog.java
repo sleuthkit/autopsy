@@ -108,7 +108,7 @@ public class AddImageErrorsDialog extends javax.swing.JDialog {
 
     
    public void setErrors(String errors) {
-        errorsText.append(errors);
+        errorsText.append(errors +"\n");
     }
     
 

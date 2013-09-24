@@ -564,8 +564,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                     Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
 
                     newImage.getSsize();
+                    String verificationErrors = Case.verifyImageSize(newImage);
+                    if (verificationErrors != null) {
+                        //data error (non-critical)
+                        progressPanel.setErrors(verificationErrors, false);
+                    }
 
-                    verifyImageSizes(newImage);
 
                     newContents.add(newImage);
                     settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
@@ -608,6 +612,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
                 progressPanel.setErrors(errorString, false);
             }
+
+            errorString = null;
 
 
 
@@ -704,46 +710,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 //unlock db write within EWT thread
                 SleuthkitCase.dbWriteUnlock();
             }
-        }
-
-        private void verifyImageSizes(Image newImage) throws TskCoreException {
-            List<VolumeSystem> volumeSystems = newImage.getVolumeSystems();
-            logger.log(Level.INFO, "found volume systems: " + volumeSystems.size());
-            for (VolumeSystem vs : volumeSystems) {
-                List<Volume> volumes = vs.getVolumes();
-                logger.log(Level.INFO, "found volumes: " + volumes.size());
-                for (Volume v : volumes) {
-                    byte[] buf = new byte[100];
-                    v.getStart();
-                    v.getSize();
-                    v.getLength();
-                    try {
-                        int readBytes = newImage.read(buf, v.getStart() + v.getLength() - 1, 1);
-
-                        if (readBytes < 0) {
-                            logger.warning("problem reading volume.  Not as much data as expected");
-                            errorString += "\n problem reading volume";
-                            progressPanel.setErrors(errorString, false);
-                        }
-                    } catch (TskCoreException ex) {
-                        errorString += "\n  Not as much data as expected: error reading volume:" + ex.getLocalizedMessage();
-                        progressPanel.setErrors(errorString, false);
-                        logger.warning(" Not as much data as expected: error reading volume: " + ex.getLocalizedMessage());
-                    }
-                }
-            }
-            List<FileSystem> fileSystems = newImage.getFileSystems();
-            for (FileSystem fs : fileSystems) {
-                  byte[] buf = new byte[100];
-                fs.getBlock_count();
-                fs.getBlock_size();
-                fs.getSize();
-                fs.getImageOffset();
-                //fs.read(buf, offset, len);
-                  
-              //  fs.read(buf, fs.getl, len);
-            }
-            logger.log(Level.INFO, "found file systems: " + fileSystems.size());
         }
     }
 }
