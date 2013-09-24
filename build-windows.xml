@@ -74,7 +74,7 @@
         <var name="package-type" value="x86" />
         <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
-        <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/installer_${app.name}_32-${app.version}.msi" />
+        <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-32bit.msi" />
     </target>
     
     <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env,ai-build" description="Builds the 32 bit installer."/>
@@ -89,7 +89,7 @@
         <echo message="aip-path: ${aip-path}" />
         <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
-        <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/installer_${app.name}_64-${app.version}.msi" />
+        <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
     </target>
     
     <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,ai-set-type,ai-build" description="Builds the 64 bit installer."/>
