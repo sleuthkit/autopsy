@@ -59,7 +59,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         MOD_TIME {
             @Override
             public String toString() {
-                return "Mod. Time";
+                return "Modified Time";
             }
         },
         CHANGED_TIME {
