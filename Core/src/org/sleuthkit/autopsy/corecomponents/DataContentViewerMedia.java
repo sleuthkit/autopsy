@@ -21,20 +21,16 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -137,17 +133,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
-            } else if (imagePanelInited) {
-                final InputStream inputStream = new ReadContentInputStream(file);
-                byte[] buf = new byte[2];
+            } else if (imagePanelInited && Utilities.isJpegFileHeader(file)) {
 
-                inputStream.read(buf);
-                logger.info("looking for jpeg magic number, found :  " + buf);
-                if (buf[0] == Byte.parseByte("FF", 16) && buf[1] == Byte.parseByte("D8", 16)) {
-                    imagePanel.showImageFx(file, dims);
-                    this.switchPanels(false);
-                }
-
+                imagePanel.showImageFx(file, dims);
+                this.switchPanels(false);
 
             } else if (videoPanelInited
                     && (containsExt(file.getName(), videoExtensions) || containsExt(file.getName(), AUDIO_EXTENSIONS))) {
@@ -222,17 +211,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 && containsExt(name, imageExtensions)) {
             return true;
         } else if (imagePanelInited) {
-            final InputStream inputStream = new ReadContentInputStream(file);
-            byte[] buf = new byte[4];
-            try {
-                inputStream.read(buf);
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            logger.info("looking for jpeg magic number, found :  " + buf);
-            if (buf[0] == 0xff && buf[1] == 0xd8) {
-                return true;
-            } //for gstreamer formats, check if initialized first, then
+
+
+            return Utilities.isJpegFileHeader(file);
+            //for gstreamer formats, check if initialized first, then
             //support audio formats, and video formats
         } else if (videoPanelInited
                 && videoPanel.isInited()

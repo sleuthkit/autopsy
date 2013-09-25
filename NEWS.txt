@@ -13,6 +13,8 @@ Improvements:
 - File size view does not show unalloc files
 - Tagged files in report show more data
 - Updated test scripts
+- Improved speed of adding logical files
+- Improved error detection and display when adding images
 
 
 Bugfixes:
