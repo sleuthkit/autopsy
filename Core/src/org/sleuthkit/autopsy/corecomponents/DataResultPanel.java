@@ -355,7 +355,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             dataResultTabbedPanel.addChangeListener(this);        
             listeningToTabbedPane = true;
         }
-        
+                
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
             this.rootNode.addNodeListener(dummyNodeListener);
