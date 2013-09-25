@@ -48,6 +48,7 @@ public class Services implements Closeable {
         //create and initialize FileManager as early as possibly in the new/opened Case
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
+        
         tagsManager = new TagsManager(tskCase);
         services.add(tagsManager);
     }
