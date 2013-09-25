@@ -109,60 +109,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
 
-    /**
-     *
-     * @param newImage the value of newImage
-     *
-     * @throws TskCoreException
-     */
-    public static String verifyImageSize(Image newImage) {
-        Logger logger1 = Logger.getLogger("verifyImageSizes");
-        String errorString = "";
-        try {
-            List<VolumeSystem> volumeSystems = newImage.getVolumeSystems();
 
-            logger1.log(Level.INFO, "found volume systems: " + volumeSystems.size());
-
-            for (VolumeSystem vs : volumeSystems) {
-                List<Volume> volumes = vs.getVolumes();
-                logger1.log(Level.INFO, "found volumes: " + volumes.size());
-                for (Volume v : volumes) {
-                    byte[] buf = new byte[100];
-                    try {
-                        int readBytes = newImage.read(buf, v.getStart() + v.getLength() - 100, 100);
-                        if (readBytes < 0) {
-                            logger1.warning("problem reading volume:  Not as much data as expected");
-                            errorString = "\n problem reading volume:  Not as much data as expected";
-                        }
-                    } catch (TskCoreException ex) {
-                        logger1.warning("error reading volume:  Not as much data as expected." + ex.getLocalizedMessage());
-                        errorString = "\n error reading volume:  Not as much data as expected.";
-                    }
-                }
-            }
-            List<FileSystem> fileSystems = newImage.getFileSystems();
-            logger1.log(Level.INFO, "found file systems: " + fileSystems.size());
-            for (FileSystem fs : fileSystems) {
-                long block_size = fs.getBlock_size();
-                byte[] buf = new byte[(int) block_size];
-                try {
-                    int readBytes = newImage.read(buf, fs.getImageOffset() + fs.getSize() - block_size, block_size);
-                    if (readBytes < 0) {
-                        logger1.warning("problem reading file system:  Not as much data as expected.");
-                        errorString = "\n problem reading file system:  Not as much data as expected.";
-                    }
-                } catch (TskCoreException ex) {
-                    logger1.warning("error reading file system:  Not as much data as expected." + ex.getLocalizedMessage());
-                    errorString = "\n error reading file system:  Not as much data as expected.";
-                }
-            }
-
-        } catch (TskCoreException ex) {
-            errorString = "Error reading volume or filesystem.  Could not verify image size";
-            logger1.warning(errorString + ex);
-        }
-        return errorString;
-    }
+    
     private String name;
     private String number;
     private String examiner;
