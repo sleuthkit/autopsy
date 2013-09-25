@@ -36,7 +36,7 @@ import org.openide.util.Lookup;
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
-class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
     /**
      * flag to indicate that the image adding process is finished and this panel
@@ -174,8 +174,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //why do we do this?
-        getComponent().resetInfoPanel();
+        //why did we do this? -jm
+        //  getComponent().resetInfoPanel();
     }
 
     /**
@@ -189,5 +189,10 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     void setErrors(String errorString, boolean critical) {
         getComponent().showErrors(errorString, critical);
+    }
+
+    @Override
+    public boolean isFinishPanel() {
+        return true;
     }
 }
