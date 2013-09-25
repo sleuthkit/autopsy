@@ -37,6 +37,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
@@ -81,15 +82,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static final String CASE_EXAMINER = "caseExaminer";
     /**
-     * Property name that indicates a new data source (image, disk or local file) has been added to the current
-     * case. The new value is the newly-added instance of the new data source, and the old
-     * value is always null.
+     * Property name that indicates a new data source (image, disk or local
+     * file) has been added to the current case. The new value is the
+     * newly-added instance of the new data source, and the old value is always
+     * null.
      */
     public static final String CASE_ADD_DATA_SOURCE = "addDataSource";
     /**
-     * Property name that indicates a data source has been removed from the current
-     * case. The "old value" is the (int) content ID of the data source that was
-     * removed, the new value is the instance of the data source.
+     * Property name that indicates a data source has been removed from the
+     * current case. The "old value" is the (int) content ID of the data source
+     * that was removed, the new value is the instance of the data source.
      */
     public static final String CASE_DEL_DATA_SOURCE = "removeDataSource";
     /**
@@ -106,6 +108,61 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public static final String propStartup = "LBL_StartupDialog";
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
+
+    /**
+     *
+     * @param newImage the value of newImage
+     *
+     * @throws TskCoreException
+     */
+    public static String verifyImageSize(Image newImage) {
+        Logger logger1 = Logger.getLogger("verifyImageSizes");
+        String errorString = "";
+        try {
+            List<VolumeSystem> volumeSystems = newImage.getVolumeSystems();
+
+            logger1.log(Level.INFO, "found volume systems: " + volumeSystems.size());
+
+            for (VolumeSystem vs : volumeSystems) {
+                List<Volume> volumes = vs.getVolumes();
+                logger1.log(Level.INFO, "found volumes: " + volumes.size());
+                for (Volume v : volumes) {
+                    byte[] buf = new byte[100];
+                    try {
+                        int readBytes = newImage.read(buf, v.getStart() + v.getLength() - 100, 100);
+                        if (readBytes < 0) {
+                            logger1.warning("problem reading volume:  Not as much data as expected");
+                            errorString = "\n problem reading volume:  Not as much data as expected";
+                        }
+                    } catch (TskCoreException ex) {
+                        logger1.warning("error reading volume:  Not as much data as expected." + ex.getLocalizedMessage());
+                        errorString = "\n error reading volume:  Not as much data as expected.";
+                    }
+                }
+            }
+            List<FileSystem> fileSystems = newImage.getFileSystems();
+            logger1.log(Level.INFO, "found file systems: " + fileSystems.size());
+            for (FileSystem fs : fileSystems) {
+                long block_size = fs.getBlock_size();
+                byte[] buf = new byte[(int) block_size];
+                try {
+                    int readBytes = newImage.read(buf, fs.getImageOffset() + fs.getSize() - block_size, block_size);
+                    if (readBytes < 0) {
+                        logger1.warning("problem reading file system:  Not as much data as expected.");
+                        errorString = "\n problem reading file system:  Not as much data as expected.";
+                    }
+                } catch (TskCoreException ex) {
+                    logger1.warning("error reading file system:  Not as much data as expected." + ex.getLocalizedMessage());
+                    errorString = "\n error reading file system:  Not as much data as expected.";
+                }
+            }
+
+        } catch (TskCoreException ex) {
+            errorString = "Error reading volume or filesystem.  Could not verify image size";
+            logger1.warning(errorString + ex);
+        }
+        return errorString;
+    }
     private String name;
     private String number;
     private String examiner;
@@ -137,6 +194,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Gets the currently opened case, if there is one.
      *
      * @return the current open case
+     *
      * @throws IllegalStateException if there is no case open.
      */
     public static Case getCurrentCase() {
@@ -195,12 +253,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Creates a new case (create the XML config file and database) 
+     * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir The directory to store case data in.  Will be created if it doesn't already exist. If it exists, it should have all of the needed sub dirs that createCaseDirectory() will create. 
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
+     * @param examiner   the examiner for this case
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
@@ -209,7 +270,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (new File(caseDir).exists() == false) {
             Case.createCaseDirectory(caseDir);
         }
-        
+
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
@@ -226,7 +287,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-        
+
         changeCase(newCase);
     }
 
@@ -234,9 +295,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Opens the existing case (open the XML config file)
      *
      * @param configFilePath the path of the configuration file that's opened
+     *
      * @throws CaseActionException
      */
-  public static void open(String configFilePath) throws CaseActionException {
+    public static void open(String configFilePath) throws CaseActionException {
         logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
 
         try {
@@ -260,7 +322,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-            
+
             changeCase(openedCase);
 
         } catch (Exception ex) {
@@ -323,7 +385,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId the ID of the image that being added
+     * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      */
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
@@ -338,19 +400,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException("Error adding image to the case", ex);
         }
     }
-    
+
     /**
-     * Finishes adding new local data source to the case
-     * Sends out event and reopens windows if needed.
-     * 
+     * Finishes adding new local data source to the case Sends out event and
+     * reopens windows if needed.
+     *
      * @param newDataSource new data source added
      */
     void addLocalDataSource(Content newDataSource) {
-         pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
-         CoreComponentControl.openCoreWindows();
+        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        CoreComponentControl.openCoreWindows();
     }
-    
-     
 
     /**
      * @return The Services object for this case.
@@ -388,6 +448,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Delete this case. This methods delete all folders and files of this case.
      *
      * @param caseDir case dir to delete
+     *
      * @throws CaseActionException exception throw if case could not be deleted
      */
     void deleteCase(File caseDir) throws CaseActionException {
@@ -413,9 +474,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Updates the case name.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath the old path that wants to be updated
+     * @param oldPath     the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath the new path
+     * @param newPath     the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -507,9 +568,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return appName
      */
     public static String getAppName() {
-        if ((appName == null ) || appName.equals("")) {
+        if ((appName == null) || appName.equals("")) {
             appName = WindowManager.getDefault().getMainWindow().getTitle();
-        }        
+        }
         return appName;
     }
 
@@ -578,7 +639,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return xmlcm.getCacheDir();
         }
     }
-    
+
     /**
      * Gets the full path to the export directory of this case
      *
@@ -707,6 +768,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Check if image from the given image path exists.
      *
      * @param imgPath the image path
+     *
      * @return isExist whether the path exists
      */
     public static boolean pathExists(String imgPath) {
@@ -735,6 +797,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Does the given drive path exist?
      *
      * @param path to drive
+     *
      * @return true if the drive exists, false otherwise
      */
     static boolean driveExists(String path) {
@@ -766,6 +829,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * "EST5EDT", etc
      *
      * @param timezoneID
+     *
      * @return
      */
     public static String convertTimeZone(String timezoneID) {
@@ -793,23 +857,29 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return result;
     }
 
-    /* The methods below are used to manage the case directories (creating, checking, deleting, etc) */
+    /*
+     * The methods below are used to manage the case directories (creating,
+     * checking, deleting, etc)
+     */
     /**
      * to create the case directory
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
+     *
      * @throws CaseActionException throw if could not create the case dir
      * @Deprecated
      */
     static void createCaseDirectory(String caseDir, String caseName) throws CaseActionException {
         createCaseDirectory(caseDir);
-        
+
     }
+
     /**
-     * Create the case directory and its needed subfolders. 
+     * Create the case directory and its needed subfolders.
      *
      * @param caseDir Path to the case directory (typically base + case name)
+     *
      * @throws CaseActionException throw if could not create the case dir
      */
     static void createCaseDirectory(String caseDir) throws CaseActionException {
@@ -836,17 +906,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     && (new File(caseDir + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdir();
 
             if (result == false) {
-                throw new CaseActionException("Could not create case directory: " + caseDir );
+                throw new CaseActionException("Could not create case directory: " + caseDir);
             }
 
             final String modulesOutDir = caseDir + File.separator + getModulesOutputDirRelPath();
             result = new File(modulesOutDir).mkdir();
             if (result == false) {
-                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir );
+                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir);
             }
 
         } catch (Exception e) {
-            throw new CaseActionException("Could not create case directory: " + caseDir , e);
+            throw new CaseActionException("Could not create case directory: " + caseDir, e);
         }
     }
 
@@ -854,6 +924,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * delete the given case directory
      *
      * @param casePath the case path
+     *
      * @return boolean whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
@@ -886,6 +957,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Checks if a String is a valid case name
      *
      * @param caseName the candidate String
+     *
      * @return true if the candidate String is a valid case name
      */
     static public boolean isValidName(String caseName) {
@@ -990,8 +1062,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
     }
 
-
-
     //delete image helper
     private void doDeleteImage() {
         // no more image left in this case
@@ -1000,9 +1070,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             CoreComponentControl.closeCoreWindows();
         }
     }
-    
+
     @Override
     public void receiveError(String context, String errorMessage) {
-        MessageNotifyUtil.Notify.error(context, errorMessage);        
+        MessageNotifyUtil.Notify.error(context, errorMessage);
     }
 }
