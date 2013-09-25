@@ -343,15 +343,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         
         private static final String STOP_TEXT = "X";
         
-        /** CSS-formatted skin for pauseButton when showing PLAY_TEXT. **/
-        private static final String PLAY_STYLE = "-fx-text-fill: green;";
-        
-        /** CSS-formatted skin for pauseButton when showing PAUSE_TEXT. **/
-        private static final String PAUSE_STYLE = "-fx-font-weight: bolder;";
-        
-        /** CSS-formatted skin for stopButton. **/
-        private static final String STOP_STYLE = "-fx-text-fill: red; -fx-font-weight: bold;";
-        
         public MediaPane() {
             // Video Display
             mediaViewPane = new HBox();
@@ -368,9 +359,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             mediaTools.setPadding(new Insets(5, 10, 5, 10));
             
             pauseButton  = new Button(PLAY_TEXT);
-            pauseButton.setStyle(PLAY_STYLE);
             stopButton = new Button(STOP_TEXT);
-            stopButton.setStyle(STOP_STYLE);
             mediaTools.getChildren().add(pauseButton);
             mediaTools.getChildren().add(new Label("  "));
             mediaTools.getChildren().add(stopButton);
@@ -670,7 +659,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             @Override
             public void run() {
                 pauseButton.setText(PLAY_TEXT);
-                pauseButton.setStyle(PLAY_STYLE);
             }
         }
         
@@ -681,7 +669,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             @Override
             public void run() {
                 pauseButton.setText(PAUSE_TEXT);
-                pauseButton.setStyle(PAUSE_STYLE);
             }
         }
     }

@@ -36,7 +36,7 @@ import org.openide.util.Lookup;
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
-class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
     /**
      * flag to indicate that the image adding process is finished and this panel
@@ -101,7 +101,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
-        component.setProgressBarTextAndColor("*This process take some time for large data sources.", 0, Color.black);
+        component.setProgressBarTextAndColor("*This process may take some time for large data sources.", 0, Color.black);
     }
 
     /**
@@ -174,8 +174,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //why do we do this?
-        getComponent().resetInfoPanel();
+        //why did we do this? -jm
+        //  getComponent().resetInfoPanel();
     }
 
     /**
@@ -187,7 +187,12 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.Panel<Wizard
      * @param errorString the error string to be displayed
      * @param critical    true if this is a critical error
      */
-    void setErrors(String errorString, boolean critical) {
+    void addErrors(String errorString, boolean critical) {
         getComponent().showErrors(errorString, critical);
+    }
+
+    @Override
+    public boolean isFinishPanel() {
+        return true;
     }
 }

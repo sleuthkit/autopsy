@@ -39,8 +39,8 @@ public class TikaLanguageIdentifier implements TextLanguageIdentifier {
         if (extracted.length() > MIN_STRING_LENGTH) {
             org.apache.tika.language.LanguageIdentifier li = new org.apache.tika.language.LanguageIdentifier(extracted);
 
-            logger.log(Level.INFO, sourceFile.getName() + " detected language: " + li.getLanguage()
-                    + " with " + ((li.isReasonablyCertain()) ? "HIGH" : "LOW") + " confidence");
+            //logger.log(Level.INFO, sourceFile.getName() + " detected language: " + li.getLanguage()
+            //        + " with " + ((li.isReasonablyCertain()) ? "HIGH" : "LOW") + " confidence");
 
             BlackboardArtifact genInfo;
             try {
@@ -56,8 +56,6 @@ public class TikaLanguageIdentifier implements TextLanguageIdentifier {
                 logger.log(Level.WARNING, "failed to add TSK_TEXT_LANGUAGE attribute to TSK_GEN_INFO artifact for file: " + sourceFile.getName(), ex);
             }
 
-        } else {
-            logger.info("extracted text too short, skipping language detection on " + sourceFile.getName());
-        }
+        } 
     }
 }

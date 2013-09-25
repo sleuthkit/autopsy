@@ -77,8 +77,8 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>8</release-version>
-                        <specification-version>6.0</specification-version>
+                        <release-version>9</release-version>
+                        <specification-version>7.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>

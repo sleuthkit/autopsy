@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -213,6 +215,8 @@ public class DeletedContent implements AutopsyVisitableItem {
             private SleuthkitCase skCase;
             private DeletedContent.DeletedContentFilter filter;
             private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
+            
+        private static final int MAX_OBJECTS = 2001;
 
             DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
                 this.skCase = skCase;
@@ -221,7 +225,20 @@ public class DeletedContent implements AutopsyVisitableItem {
 
             @Override
             protected boolean createKeys(List<AbstractFile> list) {
-                list.addAll(runFsQuery());
+                List<AbstractFile> queryList = runFsQuery();
+                if (queryList.size() == MAX_OBJECTS) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            JOptionPane.showMessageDialog(null, "There are more Deleted Files than can be displayed. Only the first " 
+                                                                + (MAX_OBJECTS - 1) 
+                                                                + " Deleted Files will be shown.");
+                        }
+                    });
+                }
+                
+                queryList.remove(queryList.size() - 1);
+                list.addAll(queryList);
                 return true;
             }
 
@@ -258,6 +275,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
+                query += " LIMIT " + MAX_OBJECTS;
                 return query;
             }
 

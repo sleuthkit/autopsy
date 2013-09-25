@@ -57,7 +57,6 @@ class FileTypeChildren extends ChildFactory<Content> {
         list.addAll(runQuery());
         return true;
     }
-
     
     private String createQuery(){
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -66,7 +65,7 @@ class FileTypeChildren extends ChildFactory<Content> {
             query += " OR name LIKE '%" + s + "'";
         }
         query += ')';
-        //query += " LIMIT " + MAX_OBJECTS;
+//        query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
 
@@ -74,10 +73,7 @@ class FileTypeChildren extends ChildFactory<Content> {
     private List<AbstractFile> runQuery(){
         List<AbstractFile> list = new ArrayList<>();
         try {
-            List<AbstractFile> res = skCase.findAllFilesWhere(createQuery());
-            for(AbstractFile c : res){
-                    list.add(c);
-            }
+            list = skCase.findAllFilesWhere(createQuery());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get search results", ex);
         }
