@@ -564,9 +564,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                     Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
 
                     newImage.getSsize();
-                    String verificationErrors = Case.verifyImageSize(newImage);
-                    if (verificationErrors != null) {
+                    String verificationErrors = newImage.verifyImageSize();
+                    if (verificationErrors.equals("") == false) {
                         //data error (non-critical)
+                        // @@@ Aren't we potentially overwriting existing errors...
                         progressPanel.setErrors(verificationErrors, false);
                     }
 
