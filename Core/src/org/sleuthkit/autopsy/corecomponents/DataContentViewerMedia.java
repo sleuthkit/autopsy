@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -39,10 +40,9 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
     @ServiceProvider(service = DataContentViewer.class, position = 5)
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
+
     private static final String[] AUDIO_EXTENSIONS = new String[]{".mp3", ".wav", ".wma"};
-
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
-
     private AbstractFile lastFile;
     //UI
     private final MediaViewVideoPanel videoPanel;
@@ -51,7 +51,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
-    
     private static final String IMAGE_VIEWER_LAYER = "IMAGE";
     private static final String VIDEO_VIEWER_LAYER = "VIDEO";
 
@@ -61,16 +60,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public DataContentViewerMedia() {
 
         initComponents();
-        
+
         // get the right panel for our platform
         videoPanel = MediaViewVideoPanel.createVideoPanel();
-        
+
         imagePanel = new MediaViewImagePanel();
         videoPanelInited = videoPanel.isInited();
         imagePanelInited = imagePanel.isInited();
-        
+
         videoExtensions = videoPanel.getExtensions();
-        
+
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
@@ -89,7 +88,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         add(imagePanel, IMAGE_VIEWER_LAYER);
         add(videoPanel, VIDEO_VIEWER_LAYER);
-        
+
         switchPanels(false);
 
     }
@@ -113,7 +112,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public void setNode(Node selectedNode) {
         try {
             if (selectedNode == null) {
-                resetComponent(); 
+                resetComponent();
                 return;
             }
 
@@ -125,24 +124,28 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
             if (file.equals(lastFile)) {
                 return; //prevent from loading twice if setNode() called mult. times
-            } 
-            
-            lastFile = file;
-           
-            final Dimension dims = DataContentViewerMedia.this.getSize();
+            }
 
+            lastFile = file;
+
+            final Dimension dims = DataContentViewerMedia.this.getSize();
+            logger.info("setting node on media viewer");
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
+            } else if (imagePanelInited && Utilities.isJpegFileHeader(file)) {
+
+                imagePanel.showImageFx(file, dims);
+                this.switchPanels(false);
+
             } else if (videoPanelInited
                     && (containsExt(file.getName(), videoExtensions) || containsExt(file.getName(), AUDIO_EXTENSIONS))) {
                 videoPanel.setupVideo(file, dims);
                 switchPanels(true);
             }
-            
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception while setting node", e);
-        } 
+        }
     }
 
     /**
@@ -151,7 +154,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @param showVideo true if video panel, false if image panel
      */
     private void switchPanels(boolean showVideo) {
-        CardLayout layout = (CardLayout)this.getLayout();
+        CardLayout layout = (CardLayout) this.getLayout();
         if (showVideo) {
             layout.show(this, VIDEO_VIEWER_LAYER);
         } else {
@@ -189,23 +192,32 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public boolean isSupported(Node node) {
         if (node == null) {
             return false;
+
+
         }
-        
+
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
+        if (file
+                == null) {
             return false;
         }
 
-        if (file.getSize() == 0) {
+        if (file.getSize()
+                == 0) {
             return false;
         }
-
         String name = file.getName().toLowerCase();
-        if (imagePanelInited && containsExt(name, imageExtensions)) {
+        if (imagePanelInited
+                && containsExt(name, imageExtensions)) {
             return true;
-        } //for gstreamer formats, check if initialized first, then
-        //support audio formats, and video formats
-        else if (videoPanelInited && videoPanel.isInited()
+        } else if (imagePanelInited) {
+
+
+            return Utilities.isJpegFileHeader(file);
+            //for gstreamer formats, check if initialized first, then
+            //support audio formats, and video formats
+        } else if (videoPanelInited
+                && videoPanel.isInited()
                 && (containsExt(name, AUDIO_EXTENSIONS)
                 || (containsExt(name, videoExtensions)))) {
             return true;
@@ -219,13 +231,15 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (isSupported) {
             //special case, check if deleted video, then do not make it preferred
             AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (file == null) {
+            if (file
+                    == null) {
                 return 0;
             }
             String name = file.getName().toLowerCase();
-
             boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-            if (containsExt(name, videoExtensions) && deleted) {
+
+            if (containsExt(name, videoExtensions)
+                    && deleted) {
                 return 0;
             } else {
                 return 7;
@@ -244,12 +258,3 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         return Arrays.asList(exts).contains(ext);
     }
 }
-
-  
-   
-    
-
-       
-
-
-
