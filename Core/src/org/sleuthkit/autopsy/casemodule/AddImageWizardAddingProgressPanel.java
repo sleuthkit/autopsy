@@ -187,7 +187,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
      * @param errorString the error string to be displayed
      * @param critical    true if this is a critical error
      */
-    void setErrors(String errorString, boolean critical) {
+    void addErrors(String errorString, boolean critical) {
         getComponent().showErrors(errorString, critical);
     }
 

@@ -31,7 +31,7 @@ import org.openide.WizardDescriptor;
 public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     private static final String ADDING_DATA_SOURCE_COMPLETE = "Adding Data Source - Complete";
-    private String errorLog;
+    private String errorLog = "";
     private boolean hasCriticalErrors = false;
 
     /**
@@ -75,15 +75,6 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     }
 
-//    /**
-//     * reset some of the visual components.
-//     *
-//     * is this ever invoked?
-//     */
-//    void resetInfoPanel() {
-//        viewLogButton.setVisible(false);
-//        progressLabel.setText("");
-//    }
     public JProgressBar getProgressBar() {
         return this.progressBar;
     }
@@ -120,16 +111,16 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
      */
     public void showErrors(final String errors, boolean critical) {
         hasCriticalErrors |= critical;
-        progressBar.setValue(100); //always invoked when process completed
+
+        //progressBar.setValue(100); //always invoked when process completed
         if (hasCriticalErrors) {
             statusLabel.setText("*Failed to add image (critical errors encountered). Click below to view the log.");
         } else {
             statusLabel.setText("*Data Source added (non-critical errors encountered). Click below to view the log.");
         }
 
-        errorLog = errors;
+        errorLog += errors + "\n";
         viewLogButton.setVisible(true);
-
     }
 
     /**
@@ -272,7 +263,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     private void viewLogButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewLogButtonActionPerformed
         //show error dialog
         AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
-        dialog.setErrors(errorLog);
+        dialog.appendErrors(errorLog);
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
     }//GEN-LAST:event_viewLogButtonActionPerformed

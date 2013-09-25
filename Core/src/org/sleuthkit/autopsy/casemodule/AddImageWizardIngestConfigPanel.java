@@ -520,15 +520,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();
 
-//                //enqueue what would be in done() to EDT thread
-//                EventQueue.invokeLater(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        postProcessImage();
-//                    }
-//                });
-
-                /////////////////Done() is already executed in EDT per SwingWorker javadocs -jm
             }
 
             return 0;
@@ -563,12 +554,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 if (imageId != 0) {
                     Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
 
-                    newImage.getSsize();
+                    //while we have the image, verify the size of its contents
                     String verificationErrors = newImage.verifyImageSize();
                     if (verificationErrors.equals("") == false) {
                         //data error (non-critical)
-                        // @@@ Aren't we potentially overwriting existing errors...
-                        progressPanel.setErrors(verificationErrors, false);
+                        progressPanel.addErrors(verificationErrors, false);
                     }
 
 
@@ -604,18 +594,15 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 revert();
                 if (hasCritError) {
                     //core error
-                    progressPanel.setErrors(errorString, true);
+                    progressPanel.addErrors(errorString, true);
                 }
                 return;
             }
             if (errorString != null) {
                 //data error (non-critical)
                 logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                progressPanel.setErrors(errorString, false);
+                progressPanel.addErrors(errorString, false);
             }
-
-            errorString = null;
-
 
 
             try {
