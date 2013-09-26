@@ -26,6 +26,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -34,6 +35,8 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
+
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
  * original data result children nodes of the passed in parent node, and creates
@@ -157,8 +160,8 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
-    }    
-    
+    }
+
     private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
 
         private final List<String> SUPP_EXTENSIONS;
@@ -177,7 +180,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         public Boolean visit(DerivedFile f) {
             return isSupported(f);
         }
-        
+
         @Override
         public Boolean visit(LocalFile f) {
             return isSupported(f);
@@ -186,7 +189,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         public Boolean visit(LayoutFile f) {
             return isSupported(f);
         }
-
 
         @Override
         public Boolean visit(File f) {
@@ -197,14 +199,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             final String fName = f.getName();
             final int dotIdx = fName.lastIndexOf('.');
             if (dotIdx == -1) {
-                return false;
+                return Utilities.isJpegFileHeader(f);
             }
 
             final String ext = fName.substring(dotIdx).toLowerCase();
 
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-            return f.getSize() > 0
-                    && SUPP_EXTENSIONS.contains(ext);
+            return (f.getSize() > 0
+                    && SUPP_EXTENSIONS.contains(ext));
         }
 
         @Override

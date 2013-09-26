@@ -1,23 +1,27 @@
----------------- VERSION Current (development)  --------------
+---------------- VERSION 3.0.7  --------------
 
 New features:
 - 64-bit support (JavaFX for video)
 - Multi-select
 - different sized thumbnails
-- Custom tags persist accross runs of the app
+- Custom tags persist across runs of the app
 - RegRipper is run on each hive and raw output is available. 
+- Metadata content viewer
+- Basic sanity check when adding images to see if parts could be missing.
 
 
 Improvements:
 - EXIF module uses only signatures
-- File size view does not show unalloc files
+- File size View does not show unalloc files
 - Tagged files in report show more data
 - Updated test scripts
+- Better OS X look and feel
 
 
 Bugfixes:
 - Several -> Didn't keep good track in this file. 
-
+- Error messages from adding disk to database are better displayed.
+- RecentActivity better reports errors parsing data
 
 
 ---------------- VERSION 3.0.6  --------------

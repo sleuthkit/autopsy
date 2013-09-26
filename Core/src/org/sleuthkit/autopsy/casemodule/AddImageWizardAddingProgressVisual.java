@@ -22,12 +22,17 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JProgressBar;
+import org.openide.WizardDescriptor;
 
 /**
  * visual component to display progress bar and status updates while adding an
  * image in the wizard
  */
 public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
+
+    private static final String ADDING_DATA_SOURCE_COMPLETE = "Adding Data Source - Complete";
+    private String errorLog = "";
+    private boolean hasCriticalErrors = false;
 
     /**
      * Returns the name of the this panel. This name will be shown on the left
@@ -43,8 +48,9 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     /**
      * hide the progress components and show the "done" components
      */
-    void setStateFinished() {
-        loadingPanel.setVisible(false);
+    protected void setStateFinished() {
+        inProgressPanel.setVisible(false);
+        titleLabel.setText(ADDING_DATA_SOURCE_COMPLETE);
         donePanel.setVisible(true);
         //force repaint just in case
         validate();
@@ -57,6 +63,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     public AddImageWizardAddingProgressVisual() {
         initComponents();
         customizeComponents();
+
     }
 
     private void customizeComponents() {
@@ -66,16 +73,6 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         //match visual background of panel
         this.TextArea_CurrentDirectory.setBackground(this.getBackground());
 
-    }
-
-    /**
-     * reset some of the visual components.
-     *
-     * is this ever invoked?
-     */
-    void resetInfoPanel() {
-        viewLogButton.setVisible(false);
-        progressLabel.setText("");
     }
 
     public JProgressBar getProgressBar() {
@@ -112,26 +109,18 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
      * @param errors   a string containing a description of the error(s)
      * @param critical true to indicate the error(s) are critical
      */
-    void showErrors(final String errors, boolean critical) {
-        progressBar.setValue(100); //always invoked when process completed
-        if (critical) {
+    public void showErrors(final String errors, boolean critical) {
+        hasCriticalErrors |= critical;
+
+        //progressBar.setValue(100); //always invoked when process completed
+        if (hasCriticalErrors) {
             statusLabel.setText("*Failed to add image (critical errors encountered). Click below to view the log.");
         } else {
             statusLabel.setText("*Data Source added (non-critical errors encountered). Click below to view the log.");
         }
 
+        errorLog += errors + "\n";
         viewLogButton.setVisible(true);
-
-        viewLogButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //show error dialog
-                AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
-                dialog.setErrors(errors);
-                dialog.setVisible(true);
-            }
-        });
-
     }
 
     /**
@@ -143,25 +132,37 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        loadingPanel = new javax.swing.JPanel();
         donePanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
-        crDbLabel = new javax.swing.JLabel();
         viewLogButton = new javax.swing.JButton();
-        loadingPanel = new javax.swing.JPanel();
-        addingDataSourceLabel = new javax.swing.JLabel();
-        progressLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
+        titleLabel = new javax.swing.JLabel();
+        inProgressPanel = new javax.swing.JPanel();
         progressBar = new javax.swing.JProgressBar();
-        infoPanel = new javax.swing.JPanel();
+        progressLabel = new javax.swing.JLabel();
         TextArea_CurrentDirectory = new javax.swing.JTextArea();
+        subTitle2Label = new javax.swing.JLabel();
+        subTitle1Label = new javax.swing.JLabel();
+
+        javax.swing.GroupLayout loadingPanelLayout = new javax.swing.GroupLayout(loadingPanel);
+        loadingPanel.setLayout(loadingPanelLayout);
+        loadingPanelLayout.setHorizontalGroup(
+            loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 540, Short.MAX_VALUE)
+        );
+        loadingPanelLayout.setVerticalGroup(
+            loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 247, Short.MAX_VALUE)
+        );
 
         org.openide.awt.Mnemonics.setLocalizedText(statusLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.statusLabel.text")); // NOI18N
 
-        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(crDbLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.crDbLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(viewLogButton, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.viewLogButton.text")); // NOI18N
+        viewLogButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewLogButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout donePanelLayout = new javax.swing.GroupLayout(donePanel);
         donePanel.setLayout(donePanelLayout);
@@ -170,10 +171,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
             .addGroup(donePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(donePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(donePanelLayout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(viewLogButton))
-                    .addComponent(crDbLabel)
+                    .addComponent(viewLogButton)
                     .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -181,34 +179,19 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
             donePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(donePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(crDbLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(statusLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(viewLogButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        addingDataSourceLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(addingDataSourceLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.addingDataSourceLabel.text")); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.titleLabel.text")); // NOI18N
+
+        progressBar.setIndeterminate(true);
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.progressLabel.text")); // NOI18N
         progressLabel.setPreferredSize(null);
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.jLabel5.text")); // NOI18N
-
-        javax.swing.GroupLayout infoPanelLayout = new javax.swing.GroupLayout(infoPanel);
-        infoPanel.setLayout(infoPanelLayout);
-        infoPanelLayout.setHorizontalGroup(
-            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 73, Short.MAX_VALUE)
-        );
-        infoPanelLayout.setVerticalGroup(
-            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 25, Short.MAX_VALUE)
-        );
 
         TextArea_CurrentDirectory.setEditable(false);
         TextArea_CurrentDirectory.setBackground(new java.awt.Color(240, 240, 240));
@@ -219,48 +202,36 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         TextArea_CurrentDirectory.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         TextArea_CurrentDirectory.setFocusable(false);
 
-        javax.swing.GroupLayout loadingPanelLayout = new javax.swing.GroupLayout(loadingPanel);
-        loadingPanel.setLayout(loadingPanelLayout);
-        loadingPanelLayout.setHorizontalGroup(
-            loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(loadingPanelLayout.createSequentialGroup()
+        org.openide.awt.Mnemonics.setLocalizedText(subTitle2Label, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.subTitle2Label.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(subTitle1Label, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.subTitle1Label.text")); // NOI18N
+
+        javax.swing.GroupLayout inProgressPanelLayout = new javax.swing.GroupLayout(inProgressPanel);
+        inProgressPanel.setLayout(inProgressPanelLayout);
+        inProgressPanelLayout.setHorizontalGroup(
+            inProgressPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(inProgressPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, loadingPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(addingDataSourceLabel)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5)
-                            .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 489, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(loadingPanelLayout.createSequentialGroup()
-                        .addGroup(loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(loadingPanelLayout.createSequentialGroup()
-                                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(TextArea_CurrentDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, 487, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                .addGroup(inProgressPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(subTitle2Label)
+                    .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(subTitle1Label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(TextArea_CurrentDirectory)
+                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 8, Short.MAX_VALUE))
         );
-        loadingPanelLayout.setVerticalGroup(
-            loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(loadingPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(addingDataSourceLabel)
+        inProgressPanelLayout.setVerticalGroup(
+            inProgressPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(inProgressPanelLayout.createSequentialGroup()
+                .addComponent(subTitle1Label)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(subTitle2Label, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(TextArea_CurrentDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(loadingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(loadingPanelLayout.createSequentialGroup()
-                        .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -269,34 +240,44 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(loadingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(titleLabel)
+                    .addComponent(inProgressPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(donePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 69, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(loadingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(titleLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(inProgressPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(donePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void viewLogButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewLogButtonActionPerformed
+        //show error dialog
+        AddImageErrorsDialog dialog = new AddImageErrorsDialog(null, true);
+        dialog.appendErrors(errorLog);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_viewLogButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextArea TextArea_CurrentDirectory;
-    private javax.swing.JLabel addingDataSourceLabel;
-    private javax.swing.JLabel crDbLabel;
-    private javax.swing.JPanel donePanel;
-    private javax.swing.JPanel infoPanel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel5;
+    protected javax.swing.JTextArea TextArea_CurrentDirectory;
+    protected javax.swing.JPanel donePanel;
+    protected javax.swing.JPanel inProgressPanel;
     private javax.swing.JPanel loadingPanel;
     private javax.swing.JProgressBar progressBar;
-    private javax.swing.JLabel progressLabel;
-    private javax.swing.JLabel statusLabel;
-    private javax.swing.JButton viewLogButton;
+    protected javax.swing.JLabel progressLabel;
+    protected javax.swing.JLabel statusLabel;
+    protected javax.swing.JLabel subTitle1Label;
+    protected javax.swing.JLabel subTitle2Label;
+    protected javax.swing.JLabel titleLabel;
+    protected javax.swing.JButton viewLogButton;
     // End of variables declaration//GEN-END:variables
 }
