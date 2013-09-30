@@ -10,6 +10,7 @@ final class GeneralPanel extends javax.swing.JPanel {
 
     private final GeneralOptionsPanelController controller;
     private final static String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
+    private final static String USE_LOCAL_TIME = "useLocalTime";
 
     GeneralPanel(GeneralOptionsPanelController controller) {
         this.controller = controller;
@@ -26,9 +27,13 @@ final class GeneralPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
+        buttonGroup3 = new javax.swing.ButtonGroup();
         useBestViewerRB = new javax.swing.JRadioButton();
         keepCurrentViewerRB = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        useLocalTimeRB = new javax.swing.JRadioButton();
+        useGMTTimeRB = new javax.swing.JRadioButton();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
@@ -46,6 +51,15 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel1.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel2.text")); // NOI18N
+
+        buttonGroup3.add(useLocalTimeRB);
+        useLocalTimeRB.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(useLocalTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useLocalTimeRB.text")); // NOI18N
+
+        buttonGroup3.add(useGMTTimeRB);
+        org.openide.awt.Mnemonics.setLocalizedText(useGMTTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useGMTTimeRB.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -54,11 +68,14 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
+                    .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(useLocalTimeRB)
                             .addComponent(keepCurrentViewerRB)
-                            .addComponent(useBestViewerRB))))
+                            .addComponent(useBestViewerRB)
+                            .addComponent(useGMTTimeRB))))
                 .addGap(0, 112, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -69,7 +86,13 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addComponent(useBestViewerRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(keepCurrentViewerRB)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(useLocalTimeRB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(useGMTTimeRB)
+                .addContainerGap(26, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -81,10 +104,14 @@ final class GeneralPanel extends javax.swing.JPanel {
         boolean keepPreferredViewer = NbPreferences.forModule(GeneralPanel.class).getBoolean(KEEP_PREFERRED_VIEWER, false);
         keepCurrentViewerRB.setSelected(keepPreferredViewer);
         useBestViewerRB.setSelected(!keepPreferredViewer);
+        boolean useLocalTime = NbPreferences.forModule(GeneralPanel.class).getBoolean(USE_LOCAL_TIME, true);
+        useLocalTimeRB.setSelected(useLocalTime);
+        useGMTTimeRB.setSelected(!useLocalTime);
     }
 
     void store() {
         NbPreferences.forModule(GeneralPanel.class).putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
+        NbPreferences.forModule(GeneralPanel.class).putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
     }
 
     boolean valid() {
@@ -93,8 +120,12 @@ final class GeneralPanel extends javax.swing.JPanel {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton keepCurrentViewerRB;
     private javax.swing.JRadioButton useBestViewerRB;
+    private javax.swing.JRadioButton useGMTTimeRB;
+    private javax.swing.JRadioButton useLocalTimeRB;
     // End of variables declaration//GEN-END:variables
 }
