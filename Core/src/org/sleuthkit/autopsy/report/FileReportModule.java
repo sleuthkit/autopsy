@@ -27,9 +27,6 @@ import org.sleuthkit.datamodel.AbstractFile;
  * @author jwallace
  */
 public interface FileReportModule extends ReportModule {
-
-    public void generateReport(String reportPath, ReportProgressPanel progress, List<FILE_REPORT_INFO> enabled);
-    
     /** 
      * Initialize the report which will be stored at the given path.
      * @param path 

@@ -83,6 +83,18 @@ public enum FILE_REPORT_INFO {
                 return "";
             }
         }
+    }, 
+    PERMISSIONS("Permissions") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return file.getModesAsString();
+        }
+    },
+    ADDRESS("Address") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return String.valueOf(file.getMetaAddr());
+        }
     };
     
     private String name;

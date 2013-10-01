@@ -139,31 +139,4 @@ public class FileReportText implements FileReportModule {
     public String getFilePath() {
         return "report.txt";
     }
-
-    @Override
-    public void generateReport(String reportPath, ReportProgressPanel progress, List<FILE_REPORT_INFO> enabled) {
-        progress.setIndeterminate(false);
-        progress.start();
-        progress.updateStatusLabel("querying database");
-        List<AbstractFile> absFiles;
-        try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("NOT meta_type = 2");
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-            return;
-        }
-        progress.setMaximumProgress(absFiles.size());
-        startReport(reportPath);
-        startTable(enabled);
-        for (AbstractFile file: absFiles) {
-            progress.increment();
-            progress.updateStatusLabel("Now processing " + file.getName());
-            addRow(file, enabled);
-        }
-        endTable();
-        endReport();
-        progress.complete();
-    }
-    
 }
