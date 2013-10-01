@@ -201,7 +201,7 @@ public class ReportGenerator {
      * @param enabledInfo the Information that should be included about each file
      * in the report.
      */
-    public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo, Map<String, Boolean> tagSelections) {
+    public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo) {
         if (!fileProgress.isEmpty() && null != enabledInfo) {
             List<FILE_REPORT_INFO> enabled = new ArrayList<>();
             for (Entry<FILE_REPORT_INFO, Boolean> e : enabledInfo.entrySet()) {
@@ -209,13 +209,7 @@ public class ReportGenerator {
                     enabled.add(e.getKey());
                 }
             }
-            List<String> tagsEnabled = new ArrayList<>();
-            for (Entry<String, Boolean> e : tagSelections.entrySet()) {
-                if(e.getValue()) {
-                    tagsEnabled.add(e.getKey());
-                }
-            }
-            FileReportsWorker worker = new FileReportsWorker(enabled, tagsEnabled);
+            FileReportsWorker worker = new FileReportsWorker(enabled);
             worker.execute();
         }
     }
@@ -244,11 +238,9 @@ public class ReportGenerator {
     private class FileReportsWorker extends SwingWorker<Integer, Integer> {
         private List<FILE_REPORT_INFO> enabledInfo = Arrays.asList(FILE_REPORT_INFO.values());
         private List<FileReportModule> fileModules = new ArrayList<>();
-        private List<String> tags = new ArrayList<>();
         
-        FileReportsWorker(List<FILE_REPORT_INFO> enabled, List<String> tagsEnabled) {
+        FileReportsWorker(List<FILE_REPORT_INFO> enabled) {
             enabledInfo = enabled;
-            tags = tagsEnabled;
             for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
                 fileModules.add(entry.getKey());
             }
@@ -264,7 +256,7 @@ public class ReportGenerator {
                 }
             }
             
-            List<AbstractFile> files = getFiles(tags);
+            List<AbstractFile> files = getFiles();
             int numFiles = files.size();
             for (FileReportModule module : fileModules) {
                 module.startReport(reportPath);
@@ -317,40 +309,6 @@ public class ReportGenerator {
                 // TODO
                 return Collections.EMPTY_LIST;
             }
-        }
-        
-        /**
-         * Get Files tagged with the given TagName.
-         * @param tagNames
-         * @return 
-         */
-        private List<AbstractFile> getFiles(List<String> tagNames) {
-            if(tags.isEmpty()) {
-                return getFiles();
-            }
-            List<AbstractFile> absFiles = new ArrayList<>();
-            List<BlackboardArtifact> artifacts = new ArrayList<>();
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            for (String tagName : tagNames) {
-                try {
-                    artifacts.addAll(skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, tagName));
-                } catch (TskCoreException ex) {
-                    return Collections.EMPTY_LIST;
-                }
-            }
-            
-            for (BlackboardArtifact artifact : artifacts) {
-                try {
-                    // TODO: Is this safe to call? Will it always give an AbstractFile?
-                    absFiles.add(skCase.getAbstractFileById(artifact.getObjectID()));
-                } catch (TskCoreException ex) {
-                    return Collections.EMPTY_LIST;
-                }
-            }
-            if(!absFiles.isEmpty()) {
-            System.out.println(absFiles.size());
-            }
-            return absFiles;
         }
     }
     
