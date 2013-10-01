@@ -47,7 +47,6 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -59,6 +58,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -201,7 +201,7 @@ public class ReportGenerator {
      * @param enabledInfo the Information that should be included about each file
      * in the report.
      */
-    public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo) {
+    public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo, Map<String, Boolean> tagSelections) {
         if (!fileProgress.isEmpty() && null != enabledInfo) {
             List<FILE_REPORT_INFO> enabled = new ArrayList<>();
             for (Entry<FILE_REPORT_INFO, Boolean> e : enabledInfo.entrySet()) {
@@ -209,7 +209,13 @@ public class ReportGenerator {
                     enabled.add(e.getKey());
                 }
             }
-            FileReportsWorker worker = new FileReportsWorker(enabled);
+            List<String> tagsEnabled = new ArrayList<>();
+            for (Entry<String, Boolean> e : tagSelections.entrySet()) {
+                if(e.getValue()) {
+                    tagsEnabled.add(e.getKey());
+                }
+            }
+            FileReportsWorker worker = new FileReportsWorker(enabled, tagsEnabled);
             worker.execute();
         }
     }
@@ -238,9 +244,11 @@ public class ReportGenerator {
     private class FileReportsWorker extends SwingWorker<Integer, Integer> {
         private List<FILE_REPORT_INFO> enabledInfo = Arrays.asList(FILE_REPORT_INFO.values());
         private List<FileReportModule> fileModules = new ArrayList<>();
+        private List<String> tags = new ArrayList<>();
         
-        FileReportsWorker(List<FILE_REPORT_INFO> enabled) {
+        FileReportsWorker(List<FILE_REPORT_INFO> enabled, List<String> tagsEnabled) {
             enabledInfo = enabled;
+            tags = tagsEnabled;
             for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
                 fileModules.add(entry.getKey());
             }
@@ -256,7 +264,7 @@ public class ReportGenerator {
                 }
             }
             
-            List<AbstractFile> files = getFiles();
+            List<AbstractFile> files = getFiles(tags);
             int numFiles = files.size();
             for (FileReportModule module : fileModules) {
                 module.startReport(reportPath);
@@ -295,6 +303,10 @@ public class ReportGenerator {
             return 0;
         }
         
+        /**
+         * Get all files in the image.
+         * @return 
+         */
         private List<AbstractFile> getFiles() {
             List<AbstractFile> absFiles;
             try {
@@ -305,6 +317,40 @@ public class ReportGenerator {
                 // TODO
                 return Collections.EMPTY_LIST;
             }
+        }
+        
+        /**
+         * Get Files tagged with the given TagName.
+         * @param tagNames
+         * @return 
+         */
+        private List<AbstractFile> getFiles(List<String> tagNames) {
+            if(tags.isEmpty()) {
+                return getFiles();
+            }
+            List<AbstractFile> absFiles = new ArrayList<>();
+            List<BlackboardArtifact> artifacts = new ArrayList<>();
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            for (String tagName : tagNames) {
+                try {
+                    artifacts.addAll(skCase.getBlackboardArtifacts(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME, tagName));
+                } catch (TskCoreException ex) {
+                    return Collections.EMPTY_LIST;
+                }
+            }
+            
+            for (BlackboardArtifact artifact : artifacts) {
+                try {
+                    // TODO: Is this safe to call? Will it always give an AbstractFile?
+                    absFiles.add(skCase.getAbstractFileById(artifact.getObjectID()));
+                } catch (TskCoreException ex) {
+                    return Collections.EMPTY_LIST;
+                }
+            }
+            if(!absFiles.isEmpty()) {
+            System.out.println(absFiles.size());
+            }
+            return absFiles;
         }
     }
     
