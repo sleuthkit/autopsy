@@ -202,14 +202,16 @@ public class ReportGenerator {
      * in the report.
      */
     public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo) {
-        List<FILE_REPORT_INFO> enabled = new ArrayList<>();
-        for (Entry<FILE_REPORT_INFO, Boolean> e : enabledInfo.entrySet()) {
-            if(e.getValue()) {
-                enabled.add(e.getKey());
+        if (!fileProgress.isEmpty() && null != enabledInfo) {
+            List<FILE_REPORT_INFO> enabled = new ArrayList<>();
+            for (Entry<FILE_REPORT_INFO, Boolean> e : enabledInfo.entrySet()) {
+                if(e.getValue()) {
+                    enabled.add(e.getKey());
+                }
             }
+            FileReportsWorker worker = new FileReportsWorker(enabled);
+            worker.execute();
         }
-        FileReportsWorker worker = new FileReportsWorker(enabled);
-        worker.execute();
     }
     
     /**
@@ -250,7 +252,6 @@ public class ReportGenerator {
                 ReportProgressPanel progress = fileProgress.get(module);
                 if (progress.getStatus() != ReportStatus.CANCELED) {
                     progress.start();
-                    progress.setIndeterminate(false);
                     progress.updateStatusLabel("Querying database...");
                 }
             }
@@ -260,6 +261,7 @@ public class ReportGenerator {
             for (FileReportModule module : fileModules) {
                 module.startReport(reportPath);
                 module.startTable(enabledInfo);
+                fileProgress.get(module).setIndeterminate(false);
                 fileProgress.get(module).setMaximumProgress(numFiles);
             }
             
