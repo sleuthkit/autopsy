@@ -24,16 +24,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Tab-delimited text report of the files in the case.
