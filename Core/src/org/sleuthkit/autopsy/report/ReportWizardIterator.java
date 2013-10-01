@@ -35,6 +35,7 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
             panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
             panels.add(new ReportWizardPanel1());
             panels.add(new ReportWizardPanel2());
+            panels.add(new ReportWizardFileOptionsPanel());
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();

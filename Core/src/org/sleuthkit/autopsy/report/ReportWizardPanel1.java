@@ -104,5 +104,6 @@ public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<Wiza
     public void storeSettings(WizardDescriptor wiz) {
         wiz.putProperty("tableModuleStates", getComponent().getTableModuleStates());
         wiz.putProperty("generalModuleStates", getComponent().getGeneralModuleStates());
+        wiz.putProperty("fileListModuleStates", getComponent().getFileListModuleStates());
     }
 }

@@ -47,6 +47,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -77,13 +78,14 @@ public class ReportGenerator {
     
     private Map<TableReportModule, ReportProgressPanel> tableProgress;
     private Map<GeneralReportModule, ReportProgressPanel> generalProgress;
+    private Map<FileReportModule, ReportProgressPanel> fileProgress;
     
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
     static final String REPORTS_DIR = "Reports";
         
-    ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
+    ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
@@ -100,7 +102,8 @@ public class ReportGenerator {
         // Initialize the progress panels
         generalProgress = new HashMap<>();
         tableProgress = new HashMap<>();
-        setupProgressPanels(tableModuleStates, generalModuleStates);
+        fileProgress = new HashMap<>();
+        setupProgressPanels(tableModuleStates, generalModuleStates, fileListModuleStates);
     }
     
     /**
@@ -109,7 +112,7 @@ public class ReportGenerator {
      * @param tableModuleStates the enabled/disabled state of each TableReportModule
      * @param generalModuleStates the enabled/disabled state of each GeneralReportModule
      */
-    private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
+    private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         if (null != tableModuleStates) {
             for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
                 if (entry.getValue()) {
@@ -124,6 +127,15 @@ public class ReportGenerator {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
                     generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
+            }
+        }
+        
+        if (null != fileListModuleStates) {
+            for(Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    FileReportModule module = entry.getKey();
+                    fileProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
                 }
             }
         }
@@ -184,6 +196,23 @@ public class ReportGenerator {
     }
     
     /**
+     * Generate the FileReportModule reports in a new SwingWorker.
+     * 
+     * @param enabledInfo the Information that should be included about each file
+     * in the report.
+     */
+    public void generateFileListReports(Map<FILE_REPORT_INFO, Boolean> enabledInfo) {
+        List<FILE_REPORT_INFO> enabled = new ArrayList<>();
+        for (Entry<FILE_REPORT_INFO, Boolean> e : enabledInfo.entrySet()) {
+            if(e.getValue()) {
+                enabled.add(e.getKey());
+            }
+        }
+        FileReportsWorker worker = new FileReportsWorker(enabled);
+        worker.execute();
+    }
+    
+    /**
      * SwingWorker to generate a report on all GeneralReportModules.
      */
     private class GeneralWorker extends SwingWorker<Integer, Integer> {
@@ -199,6 +228,82 @@ public class ReportGenerator {
             return 0;
         }
         
+    }
+    
+    /**
+     * SwingWorker to generate a FileReport.
+     */
+    private class FileReportsWorker extends SwingWorker<Integer, Integer> {
+        private List<FILE_REPORT_INFO> enabledInfo = Arrays.asList(FILE_REPORT_INFO.values());
+        private List<FileReportModule> fileModules = new ArrayList<>();
+        
+        FileReportsWorker(List<FILE_REPORT_INFO> enabled) {
+            enabledInfo = enabled;
+            for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
+                fileModules.add(entry.getKey());
+            }
+        }
+        
+        @Override
+        protected Integer doInBackground() throws Exception {
+            for (FileReportModule module : fileModules) {
+                ReportProgressPanel progress = fileProgress.get(module);
+                if (progress.getStatus() != ReportStatus.CANCELED) {
+                    progress.start();
+                    progress.setIndeterminate(false);
+                    progress.updateStatusLabel("Querying database...");
+                }
+            }
+            
+            List<AbstractFile> files = getFiles();
+            int numFiles = files.size();
+            for (FileReportModule module : fileModules) {
+                module.startReport(reportPath);
+                module.startTable(enabledInfo);
+                fileProgress.get(module).setMaximumProgress(numFiles);
+            }
+            
+            // Add files to report.
+            for (AbstractFile file : files) {
+                // Check to see if any reports have been cancelled.
+                if (fileModules.isEmpty()) {
+                    break;
+                }
+                // Remove cancelled reports, add files to report otherwise.
+                Iterator<FileReportModule> iter = fileModules.iterator();
+                while (iter.hasNext()) {
+                    FileReportModule module = iter.next();
+                    ReportProgressPanel progress = fileProgress.get(module);
+                    if (progress.getStatus() == ReportStatus.CANCELED) {
+                        iter.remove();
+                    } else {
+                        progress.updateStatusLabel("Now processing " + file.getName());
+                        module.addRow(file, enabledInfo);
+                        progress.increment();
+                    }
+                }
+            }
+            
+            for (FileReportModule module : fileModules) {
+                module.endTable();
+                module.endReport();
+                fileProgress.get(module).complete();
+            }
+            
+            return 0;
+        }
+        
+        private List<AbstractFile> getFiles() {
+            List<AbstractFile> absFiles;
+            try {
+                SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+                absFiles = skCase.findAllFilesWhere("NOT meta_type = 2");
+                return absFiles;
+            } catch (TskCoreException ex) {
+                // TODO
+                return Collections.EMPTY_LIST;
+            }
+        }
     }
     
     /**
