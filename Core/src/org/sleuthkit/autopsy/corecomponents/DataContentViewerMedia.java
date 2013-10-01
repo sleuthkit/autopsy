@@ -192,35 +192,33 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     public boolean isSupported(Node node) {
         if (node == null) {
             return false;
-
-
         }
 
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file
-                == null) {
+        if (file == null) {
             return false;
         }
 
-        if (file.getSize()
-                == 0) {
+        if (file.getSize() == 0) {
             return false;
         }
         String name = file.getName().toLowerCase();
-        if (imagePanelInited
-                && containsExt(name, imageExtensions)) {
-            return true;
-        } else if (imagePanelInited) {
-
-
-            return Utilities.isJpegFileHeader(file);
+        if (imagePanelInited) {
+            if (containsExt(name, imageExtensions)) {
+                return true;
+            }
+            else if (Utilities.isJpegFileHeader(file)) {
+                return true;
+            }
             //for gstreamer formats, check if initialized first, then
             //support audio formats, and video formats
-        } else if (videoPanelInited
-                && videoPanel.isInited()
-                && (containsExt(name, AUDIO_EXTENSIONS)
-                || (containsExt(name, videoExtensions)))) {
-            return true;
+        } 
+        
+        if (videoPanelInited && videoPanel.isInited()) {
+            if (containsExt(name, AUDIO_EXTENSIONS)
+                || (containsExt(name, videoExtensions))) {
+                return true;
+            }
         }
 
         return false;
@@ -231,17 +229,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (isSupported) {
             //special case, check if deleted video, then do not make it preferred
             AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (file
-                    == null) {
+            if (file == null) {
                 return 0;
             }
             String name = file.getName().toLowerCase();
             boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
 
-            if (containsExt(name, videoExtensions)
-                    && deleted) {
+            if (containsExt(name, videoExtensions) && deleted) {
                 return 0;
-            } else {
+            } 
+            else {
                 return 7;
             }
         } else {
