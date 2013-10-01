@@ -19,23 +19,43 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.NbPreferences;
 
 public final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
     private int index;
+    
+    private ReportWizardPanel1 firstPanel;
+    private ReportWizardPanel2 tableConfigPanel;
+    private ReportWizardFileOptionsPanel fileConfigPanel;
+    
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
+    
+    private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
+    private String[] allConfigIndex;
+    private WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
+    private String[] tableConfigIndex;
+    private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
+    private String[] fileConfigIndex;
+    
+    ReportWizardIterator() {
+        firstPanel = new ReportWizardPanel1();
+        tableConfigPanel = new ReportWizardPanel2();
+        fileConfigPanel = new ReportWizardFileOptionsPanel();
+        
+        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel};
+        tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
+        fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
+    }
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
-            panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
-            panels.add(new ReportWizardPanel1());
-            panels.add(new ReportWizardPanel2());
-            panels.add(new ReportWizardFileOptionsPanel());
+            panels = Arrays.asList(allConfigPanels);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -50,8 +70,31 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
                     jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
                 }
             }
+            
+            allConfigIndex = steps;
+            tableConfigIndex = new String[] {steps[0], steps[1]};
+            fileConfigIndex = new String[] {steps[0], steps[2]};
         }
         return panels;
+    }
+    
+    /**
+     * Change which panels will be shown based on the selection of reporting modules.
+     * @param tableConfig true if a TableReportModule was selected
+     * @param fileConfig true if a FileReportModule was selected
+     */
+    private void enableConfigPanels(boolean tableConfig, boolean fileConfig) {
+        if (tableConfig && fileConfig) {
+            panels = Arrays.asList(allConfigPanels);
+        } else if (tableConfig) {
+            // Only TableReport Modules need configuration
+            panels = Arrays.asList(tableConfigPanels);
+        } else {
+            // Only FileReport Modules need configuration.
+            // If no modules need configuration, finish button will be pressed
+            // and we won't get to this function.
+            panels = Arrays.asList(fileConfigPanels);
+        }
     }
 
     @Override
@@ -79,6 +122,16 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
+        
+        if(index == 0) {
+            // Update path through configuration panels
+            boolean tableConfig, fileConfig;
+            // These preferences are set in ReportWizardPanel1.storeSettings()
+            tableConfig = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableConfig", true);
+            fileConfig = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("fileConfig", true);
+            enableConfigPanels(tableConfig, fileConfig);
+        }
+        
         index++;
     }
 

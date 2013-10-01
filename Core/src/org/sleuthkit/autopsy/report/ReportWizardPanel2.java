@@ -24,6 +24,7 @@ import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbPreferences;
 
 public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private ReportVisualPanel2 component;
@@ -33,7 +34,7 @@ public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     
     ReportWizardPanel2() {
         finishButton = new JButton("Finish");
-        finishButton.setEnabled(true);
+        setFinish(true);
         
         nextButton = new JButton("Next >");
         nextButton.setEnabled(true);
@@ -80,14 +81,20 @@ public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     }
     
     public void setFinish(boolean enabled) {
+        // If FileReportModules need to be configured, disable the Finish button.
+        if (NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("fileConfig", false)) {
+            finishButton.setEnabled(false);
+            return;
+        }
         finishButton.setEnabled(enabled);
     }
 
     @Override
     public void readSettings(WizardDescriptor wiz) {
         // Re-enable the normal wizard buttons
+        setFinish(true);
         this.wiz = wiz;
-        wiz.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, finishButton, WizardDescriptor.CANCEL_OPTION});
+        wiz.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
     }
 
     @Override

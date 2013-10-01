@@ -20,10 +20,14 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.Map;
+import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbPreferences;
 
 public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
     private WizardDescriptor wiz;
@@ -102,8 +106,30 @@ public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<Wiza
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        wiz.putProperty("tableModuleStates", getComponent().getTableModuleStates());
+        Map<TableReportModule, Boolean> tables = getComponent().getTableModuleStates();
+        Map<FileReportModule, Boolean> files = getComponent().getFileListModuleStates();
+        wiz.putProperty("tableModuleStates", tables);
         wiz.putProperty("generalModuleStates", getComponent().getGeneralModuleStates());
-        wiz.putProperty("fileListModuleStates", getComponent().getFileListModuleStates());
+        wiz.putProperty("fileListModuleStates", files);
+        
+        // Store preferences that WizardIterator will use to determine what 
+        // panels need to be shown
+        Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
+        prefs.putBoolean("tableConfig", any(tables.values()));
+        prefs.putBoolean("fileConfig", any(files.values()));
+    }
+    
+    /**
+     * Are any of the given booleans true?
+     * @param bools
+     * @return 
+     */
+    private boolean any(Collection<Boolean> bools) {
+        for (Boolean b : bools) {
+            if (b) {
+                return true;
+            }
+        }
+        return false;
     }
 }
