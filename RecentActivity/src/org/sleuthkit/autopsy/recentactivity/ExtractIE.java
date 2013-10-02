@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 // TSK Imports
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -146,16 +145,15 @@ public class ExtractIE extends Extract {
 
     //Favorites section
     // This gets the favorite info
-    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
-
-        int errors = 0;
-        
+    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {       
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> favoritesFiles = null;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            this.addErrorMessage(this.getName() + ": Error getting Internet Explorer Bookmarks.");
+            return;
         }
 
         for (AbstractFile favoritesFile : favoritesFiles) {
@@ -168,6 +166,8 @@ public class ExtractIE extends Extract {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer favorite.", ex);
+                this.addErrorMessage(this.getName() + ": Error reading Internet Explorer Bookmark file " + favoritesFile.getName());
+                return;
             }
             String bookmarkString = new String(t);
             String re1 = ".*?";	// Non-greedy match on filler
@@ -197,9 +197,6 @@ public class ExtractIE extends Extract {
 
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
-        if (errors > 0) {
-            this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Internet Explorer favorites.");
-        }
     }
 
     //Cookies section
@@ -212,9 +209,10 @@ public class ExtractIE extends Extract {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            this.addErrorMessage(this.getName() + ": " + "Error getting Internet Explorer cookie files.");
+            return;
         }
 
-        int errors = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
@@ -225,6 +223,8 @@ public class ExtractIE extends Extract {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex);
+                this.addErrorMessage(this.getName() + ": Error reading Internet Explorer cookie " + cookiesFile.getName());
+                continue;
             }
             String cookieString = new String(t);
             String[] values = cookieString.split("\n");
@@ -232,8 +232,8 @@ public class ExtractIE extends Extract {
             String value = values.length > 1 ? values[1] : "";
             String name = values.length > 0 ? values[0] : "";
             Long datetime = cookiesFile.getCrtime();
-            String Tempdate = datetime.toString();
-            datetime = Long.valueOf(Tempdate);
+            String tempDate = datetime.toString();
+            datetime = Long.valueOf(tempDate);
             String domain = Util.extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -250,9 +250,6 @@ public class ExtractIE extends Extract {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
         }
-        if (errors > 0) {
-            this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Internet Explorer cookies.");
-        }
 
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
@@ -267,6 +264,8 @@ public class ExtractIE extends Extract {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            this.addErrorMessage(this.getName() + ": Error getting Recent Files.");
+            return;
         }
 
         for (AbstractFile recentFile : recentFiles) {
@@ -281,10 +280,10 @@ public class ExtractIE extends Extract {
             JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize());
             try {
                 lnk = lnkParser.parse();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //TODO should throw a specific checked exception
                 logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile);
+                this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
                 continue;
             }
             String path = lnk.getBestPath();
