@@ -34,7 +34,6 @@ public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     
     ReportWizardPanel2() {
         finishButton = new JButton("Finish");
-        setFinish(true);
         
         nextButton = new JButton("Next >");
         nextButton.setEnabled(true);
@@ -81,12 +80,15 @@ public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     }
     
     public void setFinish(boolean enabled) {
-        // If FileReportModules need to be configured, disable the Finish button.
+        // If FileReportModules need to be configured, disable the Finish button
+        // and enable the next button.
         if (NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("fileConfig", false)) {
             finishButton.setEnabled(false);
-            return;
+            nextButton.setEnabled(enabled);
+        } else {
+            nextButton.setEnabled(false);
+            finishButton.setEnabled(enabled);
         }
-        finishButton.setEnabled(enabled);
     }
 
     @Override
