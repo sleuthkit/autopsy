@@ -167,7 +167,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException 
      */
     public void addContentTag(Content content, TagType tagType) throws TskCoreException {
-        addContentTag(content, tagType, "", 0, content.getSize());
+        addContentTag(content, tagType, "", 0, content.getSize() - 1);
     }    
     
     /**

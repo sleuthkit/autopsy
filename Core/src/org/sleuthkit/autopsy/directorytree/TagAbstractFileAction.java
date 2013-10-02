@@ -75,12 +75,12 @@ public class TagAbstractFileAction extends AbstractAction implements Presenter.P
                 Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
                 for (AbstractFile file : selectedFiles) {
                     Tags.createTag(file, tagDisplayName, comment);
-                    try {
-                        tagsManager.addContentTag(file, tagType);            
-                    }
-                    catch (TskCoreException ex) {
-                        Logger.getLogger(TagAbstractFileMenu.class.getName()).log(Level.SEVERE, "Error tagging content", ex);                
-                    }                    
+//                    try {
+//                        tagsManager.addContentTag(file, tagType);            
+//                    }
+//                    catch (TskCoreException ex) {
+//                        Logger.getLogger(TagAbstractFileMenu.class.getName()).log(Level.SEVERE, "Error tagging content", ex);                
+//                    }                    
                 }                             
             }
             catch (TagsManager.TagTypeAlreadyExistsException ex) {
