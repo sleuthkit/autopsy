@@ -36,10 +36,16 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
     
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
     
+    // Panels that should be shown if both Table and File report modules should
+    // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
     private String[] allConfigIndex;
+    // Panels that should be shown if only Table report modules should
+    // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
     private String[] tableConfigIndex;
+    // Panels that should be shown if only File report modules should
+    // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
     private String[] fileConfigIndex;
     
