@@ -133,7 +133,9 @@ public class ExtractRegistry extends Extract {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
+                String msg = "Error fetching registry file: " + regFileName;
+                logger.log(Level.WARNING, msg);
+                this.addErrorMessage(this.getName() + ": " + msg);
             }
         }
         ExtractUSB extrctr = new ExtractUSB();
@@ -155,6 +157,7 @@ public class ExtractRegistry extends Extract {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
+                this.addErrorMessage(this.getName() + ": Error analyzing registry file " + regFileName);
                 continue;
             }
            
@@ -172,6 +175,7 @@ public class ExtractRegistry extends Extract {
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             if (parseReg(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                this.addErrorMessage(this.getName() + ": Failed parsing registry file results " + regFileName);
                 continue;
             }
 
@@ -292,8 +296,10 @@ public class ExtractRegistry extends Extract {
                         "-r", regFilePath, "-f", fullType);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } finally {
                 if (writer != null) {
                     try {
