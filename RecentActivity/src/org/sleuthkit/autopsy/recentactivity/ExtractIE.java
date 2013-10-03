@@ -167,7 +167,7 @@ public class ExtractIE extends Extract {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer favorite.", ex);
                 this.addErrorMessage(this.getName() + ": Error reading Internet Explorer Bookmark file " + favoritesFile.getName());
-                return;
+                continue;
             }
             String bookmarkString = new String(t);
             String re1 = ".*?";	// Non-greedy match on filler
@@ -335,6 +335,7 @@ public class ExtractIE extends Extract {
             indexFiles = fileManager.findFiles(dataSource, "index.dat");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            return;
         }
 
         String temps;
