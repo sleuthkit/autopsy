@@ -81,9 +81,9 @@ public class FileReportText implements FileReportModule {
     }
     
     @Override
-    public void startTable(List<FILE_REPORT_INFO> headers) {
+    public void startTable(List<FileReportInfo> headers) {
         List<String> titles = new ArrayList<>();
-        for(FILE_REPORT_INFO col : headers) {
+        for(FileReportInfo col : headers) {
             titles.add(col.getName());
         }
         try {
@@ -94,9 +94,9 @@ public class FileReportText implements FileReportModule {
     }
 
     @Override
-    public void addRow(AbstractFile toAdd, List<FILE_REPORT_INFO> columns) {
+    public void addRow(AbstractFile toAdd, List<FileReportInfo> columns) {
         List<String> cells = new ArrayList<>();
-        for(FILE_REPORT_INFO type : columns) {
+        for(FileReportInfo type : columns) {
             cells.add(type.getValue(toAdd));
         }
         try {

@@ -43,7 +43,7 @@ public interface FileReportModule extends ReportModule {
      * Start the file list table.
      * @param headers The columns that should be included in the table.
      */
-    public void startTable(List<FILE_REPORT_INFO> headers);
+    public void startTable(List<FileReportInfo> headers);
     
     /**
      * Add the given AbstractFile as a row in the table. 
@@ -51,7 +51,7 @@ public interface FileReportModule extends ReportModule {
      * @param toAdd the AbstractFile to be added.
      * @param columns the columns that should be included
      */
-    public void addRow(AbstractFile toAdd, List<FILE_REPORT_INFO> columns);
+    public void addRow(AbstractFile toAdd, List<FileReportInfo> columns);
     
     /**
      * Close the table.

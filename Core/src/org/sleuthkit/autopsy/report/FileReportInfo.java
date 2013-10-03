@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * @author jwallace
  */
-public enum FILE_REPORT_INFO {
+public enum FileReportInfo {
     
     NAME("Name") {
         @Override
@@ -99,7 +99,7 @@ public enum FILE_REPORT_INFO {
     
     private String name;
     
-    FILE_REPORT_INFO(String name) {
+    FileReportInfo(String name) {
         this.name = name;
     }
     
