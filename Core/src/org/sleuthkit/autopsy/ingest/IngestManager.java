@@ -76,6 +76,7 @@ public class IngestManager {
     private IngestModuleLoader moduleLoader = null;
     //property file name id for the module
     public final static String MODULE_PROPERTIES = "ingest";
+    private volatile int messageID = 0;
 
     /**
      * Possible events about ingest modules Event listeners can get the event
@@ -372,7 +373,8 @@ public class IngestManager {
                 try {
                     s.init(moduleInit);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName());
+                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
+                    postMessage(IngestMessage.createErrorMessage(++messageID, s, "Failed to load " + s.getName(), ""));
                 }
             }
             abstractFileIngester.execute();
