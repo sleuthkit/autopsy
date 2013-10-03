@@ -95,52 +95,11 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        /* @@@ BC: All of these try / catches are added because the exception 
-         * handing in here isn't the best.  We were losing results before because
-         * cookies was throwing an exceptionb ecause of an invalid URL and we 
-         * skipped the rest of the data types.   Need to push this eror handling 
-         * further down though. 
-         */
-        
-        try {
             this.extractAndRunPasco(dataSource, controller);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Error extracting IE index.dat files", e);
-            addErrorMessage("Error extracting and analyzing IE index.dat files");
-        }
-        
-        try {
             this.getBookmark(dataSource, controller);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing IE bookmarks", e);
-            addErrorMessage("Error parsing IE bookmarks");
-        }
-        
-        try {
             this.getCookie(dataSource, controller);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing IE cookies", e);
-            addErrorMessage("Error parsing IE Cookies");
-        }
-        
-        try {
             this.getRecentDocuments(dataSource, controller);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing IE Recent Docs", e);
-            addErrorMessage("Error parsing IE Recent Documents");
-        }
-        
-        try {
             this.getHistory(pascoResults);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing IE History", e);
-            addErrorMessage("Error parsing IE History");
-        }
     }
 
     //Favorites section
@@ -151,7 +110,7 @@ public class ExtractIE extends Extract {
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.", ex);
             this.addErrorMessage(this.getName() + ": Error getting Internet Explorer Bookmarks.");
             return;
         }
@@ -334,6 +293,7 @@ public class ExtractIE extends Extract {
         try {
             indexFiles = fileManager.findFiles(dataSource, "index.dat");
         } catch (TskCoreException ex) {
+            this.addErrorMessage(this.getName() + ": Error getting Internet Explorer history files");
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
             return;
         }
