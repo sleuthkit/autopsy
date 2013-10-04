@@ -164,6 +164,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
+            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
             return ProcessResult.OK;
         }
         try {
@@ -182,6 +183,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
+            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
             return ProcessResult.ERROR;
         } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
