@@ -478,21 +478,21 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     private class DummyNodeListener implements NodeListener {
         private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
-        
+        private boolean reload = false;
         @Override
         public void childrenAdded(NodeMemberEvent nme) {
-            Node added = nme.getNode();
-            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
-                // If it's the dummy waiting node, we don't want
-                // to reload the table headers
-                return;
+            if (reload = true) {
+                setupTable(nme.getNode());
+                reload = false;
             }
-            setupTable(added);
         }
 
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
-            
+            Node removed = nme.getNode();
+            if (removed.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                reload = true;
+            }
         }
 
         @Override
