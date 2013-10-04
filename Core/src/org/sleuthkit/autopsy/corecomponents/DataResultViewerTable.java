@@ -481,7 +481,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         private boolean reload = false;
         @Override
         public void childrenAdded(NodeMemberEvent nme) {
-            if (reload = true) {
+            if (reload) {
                 setupTable(nme.getNode());
                 reload = false;
             }
