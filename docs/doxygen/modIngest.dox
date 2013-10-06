@@ -153,29 +153,34 @@ module configurations or state.
 The ModuleSettings API can be used also via org.sleuthkit.autopsy.ingest.IngestServices class.
 
 
-\section ingestmodule_making_results Posting Results
+\section ingestmodule_making_results Making Results Available to User
 
-Ingest modules run in the background.  There are three ways to send messages and save results:
-- Blackboard for long-term storage of analysis results and display in the results tree.
+Ingest modules run in the background.  There are three ways to send messages and save results so that the user can see them:
+- Blackboard for long-term storage of analysis results and to display in the results tree.
 - Ingest Inbox to notify user of high-value analysis results that were also posted to blackboard.
 - Error messages.
 
 \subsection ingestmodule_making_results_bb Posting Results to Blackboard
 The blackboard is used to store results so that they are displayed in the results tree.  See \ref platform_blackboard  for details on posting results to it. 
 
+The blackboard defines artifacts for specific data types (such as web bookmarks). You can use one of the standard artifact types, create your own, or simply post text with a org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT. The later is much easier (for example, you can simply copy in the output from an existing tool), but it forces the user to parse the output themselves.  
+
 When modules add data to the blackboard, 
-modules should notify listeners of the new data by 
+they should notify listeners of the new data by 
 invoking IngestServices.fireModuleDataEvent() method. 
 Do so as soon as you have added an artifact to the blackboard.
 This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
 However, if you are writing a larger number of blackboard artifacts in a loop, it is better to invoke
 IngestServices.fireModuleDataEvent() only once after the bulk write, not to flood the system with events.
 
+
 \subsection ingestmodule_making_results_inbox Posting Results to Message Inbox
 
-Modules should post messages to the inbox when interesting data is found that has also been posted to the blackboard.
-The idea behind these messages are that they are presented in chronological order so that users can see what was 
-found while they were focusing on something else. 
+Modules should post messages to the inbox when interesting data is found
+that has also been posted to the blackboard.  The idea behind these
+messages are that they are presented in chronological order so that
+users can see what was found while they were focusing on something else.
+Error messages are also sent here as is summary information after the module has run to give the user some feedback. 
 
 
 These messages should only be sent if the result has a low false positive rate and will likely be relevant.  
@@ -191,13 +196,21 @@ and to determine the overall importance priority of the message
 
 For example, for a keyword search module, the uniqueness attribute would the keyword that was hit.
 
-Messages are created using the org.sleuthkit.autopsy.ingest.IngestMessage class and posted
-using methods in \ref ingestmodule_services.
+Messages are created using the org.sleuthkit.autopsy.ingest.IngestMessage class and posted to the inbox using org.sleuthkit.autopsy.ingest.IngestServices.postMessage() method. 
+
+
+\subsection ingestmodule_making_results_error Reporting Errors
+
+When an error occurs, you should send a message to the ingest inbox with an error level.  The downside of this though is that the ingest inbox was not entirely designed for this goal and it is easy for the user to miss these messages.  Therefore, we identify these messages in the IngestInbox and also post a pop-up message that comes up in the lower right. 
+
+You can make your own message in the lower right by using 
+org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show()
+
 
 
 \section ingestmodule_making_configuration Module Configuration
 
-Ingest modules may require user configuration. In \ref mod_dev_adv_options, you learned about Autopsy-wide settings.  There are some
+Ingest modules may require user configuration. In \ref mod_dev_adv_options, you wll learn about Autopsy-wide settings.  There are some
 settings that are specific to ingest modules as well. 
 
 The framework 

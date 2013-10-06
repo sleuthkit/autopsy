@@ -6,6 +6,7 @@ Autopsy has been designed as a platform for open source tools besides just The S
 If you want to write modules, then these pages are for you:
 - \subpage platform_page
 - \subpage mod_dev_page
+- \subpage services_page
 - The following are based on specific types of modules:
  - \subpage mod_ingest_page
  - \subpage mod_report_page
