@@ -530,7 +530,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         else if (changed.equals(Case.CASE_CURRENT_CASE)) {
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
-            // opened, the old value is null and the new value the new Case
+            // opened, the old value is null and the new value is the new Case
             // object.
             // @@@ This needs to be revisited. Perhaps case closed and case
             // opened events instead of property change events would be a better
