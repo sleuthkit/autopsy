@@ -37,6 +37,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -292,7 +293,8 @@ public class IngestManager {
     private synchronized void startAll() {
         final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
         final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
+        boolean allInited = true;
+        IngestModuleAbstract failedModule = null;
         logger.log(Level.INFO, "DataSource queue: " + dataSourceScheduler.toString());
         logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
 
@@ -300,9 +302,13 @@ public class IngestManager {
             ingestMonitor.start();
         }
 
+        List<IngestDataSourceThread> newThreads = new ArrayList<>();
         //image ingesters
         // cycle through each data source content in the queue
         while (dataSourceScheduler.hasNext()) {
+            if (allInited == false) {
+                break;
+            }
             //dequeue
             // get next data source content and set of modules
             final ScheduledTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
@@ -335,14 +341,30 @@ public class IngestManager {
                             new PipelineContext<IngestModuleDataSource>(dataSourceTask, getProcessUnallocSpace());
                     final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
                             dataSourcepipelineContext, dataSourceTask.getContent(), taskModule, moduleInit);
-
+                    try {
+                        newDataSourceWorker.init();
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + taskModule.getName(), e);
+                        allInited = false;
+                        failedModule = taskModule;
+                        break;
+                    }
                     dataSourceIngesters.add(newDataSourceWorker);
-
-                    //wrap the module in a worker, that will run init, process and complete on the module
-                    newDataSourceWorker.execute();
-                    IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), taskModule.getName());
+                    // Add the worker to the list of new IngestThreads to be started
+                    // if all modules initialize.
+                    newThreads.add(newDataSourceWorker);
                 }
             }
+        }
+        
+        // Check to make sure all modules initialized
+        if (allInited == false) {
+            MessageNotifyUtil.Message.error("Failed to load " + failedModule.getName() + "ingest module.\n"
+                                            + "No ingest modules will be run. Please disable the module"
+                                            + " or fix the error and restart ingest by right clicking on"
+                                            + " the data source and selecting re-run ingest.");
+            dataSourceIngesters.removeAll(newThreads);
+            return;
         }
 
         //AbstractFile ingester
@@ -365,19 +387,40 @@ public class IngestManager {
             stats = new IngestManagerStats();
             abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
-            /* @@@ I don't understand why we do an init on each module.  Should do only modules
-             * that we are going to be using in the pipeline
-             */
+
             for (IngestModuleAbstractFile s : abstractFileModules) {
+                if (fileScheduler.hasModuleEnqueued(s) == false) {
+                    continue;
+                } 
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
                     s.init(moduleInit);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
-                    postMessage(IngestMessage.createErrorMessage(++messageID, s, "Failed to load " + s.getName(), ""));
+                    allInited = false;
+                    failedModule = s;
+                    break;
                 }
             }
-            abstractFileIngester.execute();
+        }
+        
+        if (allInited) {
+            // Start DataSourceIngestModules
+            for (IngestDataSourceThread dataSourceWorker : newThreads) {
+                dataSourceWorker.execute();
+                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), dataSourceWorker.getModule().getName());
+            }
+            // Start AbstractFileIngestModules
+            if (startAbstractFileIngester) {
+                abstractFileIngester.execute();
+            }
+        } else {
+            MessageNotifyUtil.Message.error("Failed to load " + failedModule.getName() + "ingest module.\n"
+                                            + "No ingest modules will be run. Please disable the module"
+                                            + " or fix the error and restart ingest by right clicking on"
+                                            + " the data source and selecting re-run ingest.");
+            dataSourceIngesters.removeAll(newThreads);
+            abstractFileIngester = null;
         }
     }
 
