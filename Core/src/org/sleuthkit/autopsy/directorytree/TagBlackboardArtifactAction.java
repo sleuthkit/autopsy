@@ -20,12 +20,19 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TagType;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public class TagBlackboardArtifactAction extends AbstractAction implements Presenter.Popup {
     // This class is a singleton to support multi-selection of nodes, since 
@@ -61,11 +68,28 @@ public class TagBlackboardArtifactAction extends AbstractAction implements Prese
         }
 
         @Override
-        protected void applyTag(String tagName, String comment) {
-            Collection<? extends BlackboardArtifact> selectedArtifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
-            for (BlackboardArtifact artifact : selectedArtifacts) {
-                Tags.createTag(artifact, tagName, comment);
-            } 
+        protected void applyTag(String tagDisplayName, String comment) {
+            try {
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                TagType tagType = tagsManager.addTagType(tagDisplayName);
+                
+                Collection<? extends BlackboardArtifact> selectedArtifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
+                for (BlackboardArtifact artifact : selectedArtifacts) {
+                    Tags.createTag(artifact, tagDisplayName, comment);
+                    try {
+                        tagsManager.addBlackboardArtifactTag(artifact, tagType);
+                    }
+                    catch (TskCoreException ex) {
+                        Logger.getLogger(TagBlackboardArtifactMenu.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
+                    }                    
+                }                             
+            }
+            catch (TagsManager.TagTypeAlreadyExistsException ex) {
+                JOptionPane.showMessageDialog(null, "A " + tagDisplayName + " tag type has already been defined.", "Duplicate Tag Type", JOptionPane.ERROR_MESSAGE);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(TagBlackboardArtifactMenu.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag type", ex);
+            }
         }
     }    
 }
