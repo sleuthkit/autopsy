@@ -57,7 +57,8 @@ public class HashDb implements Comparable<HashDb> {
     }
     
     // Suffix added to the end of a database name to get its index file
-    private static final String INDEX_SUFFIX = "-md5.idx";
+    private static final String INDEX_SUFFIX = ".kdb";
+    private static final String INDEX_SUFFIX_OLD = "-md5.idx";
     
     private String name;
     private List<String> databasePaths; // TODO: Length limited to one for now...
@@ -230,7 +231,7 @@ public class HashDb implements Comparable<HashDb> {
      * @return true if index
      */
     static boolean isIndexPath(String path) {
-        return path.endsWith(INDEX_SUFFIX);
+        return (path.endsWith(INDEX_SUFFIX) || path.endsWith(INDEX_SUFFIX_OLD));
     }
 
     /**
@@ -239,11 +240,15 @@ public class HashDb implements Comparable<HashDb> {
      * @return 
      */
     static String toDatabasePath(String indexPath) {
-        return indexPath.substring(0, indexPath.lastIndexOf(INDEX_SUFFIX));
+        if (indexPath.endsWith(INDEX_SUFFIX_OLD)) {
+            return indexPath.substring(0, indexPath.lastIndexOf(INDEX_SUFFIX_OLD));
+        } else {
+            return indexPath.substring(0, indexPath.lastIndexOf(INDEX_SUFFIX));
+        }
     }
 
     /**
-     * Derives image path from an database path by appending the suffix.
+     * Derives index path from an database path by appending the suffix.
      * @param databasePath
      * @return 
      */
@@ -251,6 +256,15 @@ public class HashDb implements Comparable<HashDb> {
         return databasePath.concat(INDEX_SUFFIX);
     }
 
+    /**
+     * Derives old-format index path from an database path by appending the suffix.
+     * @param databasePath
+     * @return 
+     */
+    static String toOldIndexPath(String databasePath) {
+        return databasePath.concat(INDEX_SUFFIX_OLD);
+    }    
+    
     /**
      * Calls Sleuth Kit method via JNI to determine whether there is an
      * index for the given path
