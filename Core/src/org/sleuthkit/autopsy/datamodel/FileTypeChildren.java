@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -45,6 +47,8 @@ class FileTypeChildren extends ChildFactory<Content> {
     private SleuthkitCase skCase;
     private FileTypeExtensionFilters.SearchFilterInterface filter;
     private static final Logger logger = Logger.getLogger(FileTypeChildren.class.getName());
+    private final Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
+    private static final String HIDE_KNOWN = "viewsHideKnown";
     //private final static int MAX_OBJECTS = 2000;
 
     public FileTypeChildren(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
@@ -59,8 +63,11 @@ class FileTypeChildren extends ChildFactory<Content> {
     }
     
     private String createQuery(){
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0";
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
+        if (prefs.getBoolean(HIDE_KNOWN, true)) {
+            query += " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")";  
+        }
+        query += " AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
