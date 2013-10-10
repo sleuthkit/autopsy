@@ -24,8 +24,10 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -36,7 +38,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
@@ -194,17 +195,28 @@ public class Chrome extends Extract {
             try {
                  tempReader = new FileReader(temps);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome." + ex);
+                logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome.", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file: " + bookmarkFile.getName());
                 continue;
             }
             
             final JsonParser parser = new JsonParser();
-            JsonElement jsonElement = parser.parse(tempReader);
-            JsonObject jElement = jsonElement.getAsJsonObject();
-            JsonObject jRoot = jElement.get("roots").getAsJsonObject();
-            JsonObject jBookmark = jRoot.get("bookmark_bar").getAsJsonObject();
-            JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children");
+            JsonElement jsonElement;
+            JsonObject jElement, jRoot, jBookmark;
+            JsonArray jBookmarkArray;
+            
+            try {
+                jsonElement = parser.parse(tempReader);
+                jElement = jsonElement.getAsJsonObject();
+                jRoot = jElement.get("roots").getAsJsonObject();
+                jBookmark = jRoot.get("bookmark_bar").getAsJsonObject();
+                jBookmarkArray = jBookmark.getAsJsonArray("children");
+            } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
+                logger.log(Level.WARNING, "Error parsing Json from Chrome Bookmark.", ex);
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file: " + bookmarkFile.getName());
+                continue;
+            }
+            
             for (JsonElement result : jBookmarkArray) {
                 JsonObject address = result.getAsJsonObject();
                 if (address == null) {
