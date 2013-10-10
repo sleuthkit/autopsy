@@ -77,7 +77,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
-                errors.add(module.getName() + "had errors -- see log");
+                errors.add(module.getName() + " had errors -- see log");
             }
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
