@@ -635,7 +635,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(treeNode));
+                        Node kffn = new KnownFileFilterNode(drfn);
                         dataResult.setNode(new TableFilterNode(kffn, true));
 
                         String displayName = "";

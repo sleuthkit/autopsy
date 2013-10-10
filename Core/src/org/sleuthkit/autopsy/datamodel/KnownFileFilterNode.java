@@ -28,13 +28,33 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * A Filter Node responsible for filtering out Nodes that represent known files
- * if the filter known files option is set.
+ * A Filter Node responsible for conditionally filtering out Nodes that 
+ * represent known files. 
+ * 
+ * Filters known files IF the option to Filter Known files for the given
+ * SelectionContext is set. Otherwise, does nothing.
  * 
  * @author jwallace
  */
 public class KnownFileFilterNode extends FilterNode {
     
+    /** Preference key values. */
+    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
+    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
+    
+    /** True if Nodes selected from the Views Node should filter Known Files. */
+    private static boolean filterFromViews = true;
+    
+    /** True if Nodes selected from the DataSources Node should filter Known Files. */
+    private static boolean filterFromDataSources = false;
+    
+    /** True if a listener has not been added to the preferences. */
+    private static boolean addListener = true;
+    
+    /**
+     * Represents the top level category the Node this KnownFileFilterNode wraps
+     * is a sub-node of. (i.e. Data Sources, Views, Results)
+     */
     public enum SelectionContext {
         DATA_SOURCES("Data Sources"),   // Subnode of DataSources
         VIEWS("Views"),                 // Subnode of Views
@@ -46,6 +66,13 @@ public class KnownFileFilterNode extends FilterNode {
             this.displayName = displayName;
         }
         
+        /**
+         * Get the SelectionContext from the display name of a Node that is a
+         * direct child of the root node.
+         * 
+         * @param name
+         * @return 
+         */
         public static SelectionContext getContextFromName(String name) {
             if (name.equals(DATA_SOURCES.getName())) {
                 return DATA_SOURCES;
@@ -61,17 +88,35 @@ public class KnownFileFilterNode extends FilterNode {
         }
     }
     
-    public KnownFileFilterNode(Node arg, SelectionContext context) {
-        super(arg, new KnownFileFilterChildren(arg, context));
+    /**
+     * Create a KnownFileFilterNode from the given Node. Note that the Node
+     * should be from the directory tree.
+     * 
+     * @param arg
+     * @param context 
+     */
+    public KnownFileFilterNode(Node arg) {
+        super(arg, new KnownFileFilterChildren(arg, getSelectionContext(arg)));
+        
+        if (addListener) {
+            addPreferenceListener();
+            addListener = false;
+        }
     }
     
-    KnownFileFilterNode(Node arg, boolean filter) {
+    private KnownFileFilterNode(Node arg, boolean filter) {
         super(arg, new KnownFileFilterChildren(arg, filter));
     }
     
-    public static SelectionContext getSelectionContext(Node n) {
-        if (n == null) {
-            // Parent of root node. Should never get here.
+    /**
+     * Get the selection context of a Node in the DirectoryTree. 
+     * 
+     * @param n
+     * @return 
+     */
+    private static SelectionContext getSelectionContext(Node n) {
+        if (n == null || n.getParentNode() == null) {
+            // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
         } else if (n.getParentNode().getParentNode() == null) {
             // One level below root node. Should be one of DataSources, Views, or Results
@@ -80,99 +125,84 @@ public class KnownFileFilterNode extends FilterNode {
             return getSelectionContext(n.getParentNode());
         }
     }
-}
+    
+    private void addPreferenceListener() {
+        Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
+        // Initialize with values stored in preferences
+        filterFromViews = prefs.getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
+        filterFromDataSources = prefs.getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
 
-/**
- * Complementary class to KnownFileFilterNode. 
- * 
- * Listens for changes to the Filter Known Files option. Filters out children
- * the Nodes which represent known files. Otherwise, returns the original node
- * wrapped in another instance of the KnownFileFilterNode.
- * 
- * @author jwallace
- */
-class KnownFileFilterChildren extends FilterNode.Children {
-    
-    /** Preference key values. */
-    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
-    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
-    
-    /** True if Nodes selected from the Views Node should filter Known Files. */
-    private static boolean filterFromViews = true;
-    
-    /** True if Nodes selected from the DataSources Node should filter Known Files. */
-    private static boolean filterFromDataSources = false;
-    
-    /** True if a listener has not been added to the preferences. */
-    private static boolean addListener = true;
-    
-    /** True if this KnownFileFilterChildren should filter out known files. */
-    private boolean filter;
-    
-    /** 
-     * Constructor used when the context has already been determined.
-     * Should only be used internally by KnownFileFilerNode.
-     * @param arg
-     * @param filter 
-     */
-    KnownFileFilterChildren(Node arg, boolean filter) {
-        super(arg);
-        this.filter = filter;
-    }
-
-    /**
-     * Constructor used when the context has not been determined.
-     * @param arg
-     * @param context 
-     */
-    KnownFileFilterChildren(Node arg, KnownFileFilterNode.SelectionContext context) {
-        super(arg);
-        
-        if (addListener) {
-            Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
-            // Initialize with values stored in preferences
-            filterFromViews = prefs.getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
-            filterFromDataSources = prefs.getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
-            
-            // Add listener
-            prefs.addPreferenceChangeListener(new PreferenceChangeListener() {
-                @Override
-                public void preferenceChange(PreferenceChangeEvent evt) {
-                    switch (evt.getKey()) {
-                        case VIEWS_HIDE_KNOWN:
-                            filterFromViews = evt.getNode().getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
-                            break;
-                        case DS_HIDE_KNOWN:
-                            filterFromDataSources = evt.getNode().getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
-                            break;
-                    }
+        // Add listener
+        prefs.addPreferenceChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                switch (evt.getKey()) {
+                    case VIEWS_HIDE_KNOWN:
+                        filterFromViews = evt.getNode().getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
+                        break;
+                    case DS_HIDE_KNOWN:
+                        filterFromDataSources = evt.getNode().getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
+                        break;
                 }
-            });
-            addListener = false;
-        }
-        
-        switch (context) {
-            case DATA_SOURCES:
-                filter = filterFromDataSources;
-                break;
-            case VIEWS:
-                filter = filterFromViews;
-                break;
-            default:
-                filter = false;
-                break;
-        }
+            }
+        });
     }
     
-    @Override
-    protected Node[] createNodes(Node arg) {
-        if (filter) {
-            // Filter out child nodes that represent known files
-            AbstractFile file = arg.getLookup().lookup(AbstractFile.class);
-            if (file!= null && file.getKnown() == TskData.FileKnown.KNOWN) {
-                return new Node[]{};
+    /**
+    * Complementary class to KnownFileFilterNode. 
+    * 
+    * Filters out children Nodes that represent known files. Otherwise, returns 
+    * the original node wrapped in another instance of the KnownFileFilterNode.
+    * 
+    * @author jwallace
+    */
+    private static class KnownFileFilterChildren extends FilterNode.Children {
+        
+        /** True if this KnownFileFilterChildren should filter out known files. */
+        private boolean filter;
+
+        /** 
+         * Constructor used when the context has already been determined.
+         * 
+         * @param arg
+         * @param filter 
+         */
+        private KnownFileFilterChildren(Node arg, boolean filter) {
+            super(arg);
+            this.filter = filter;
+        }
+
+        /**
+         * Constructor used when the context has not been determined.
+         * @param arg
+         * @param context 
+         */
+        private KnownFileFilterChildren(Node arg, KnownFileFilterNode.SelectionContext context) {
+            super(arg);
+
+            switch (context) {
+                case DATA_SOURCES:
+                    filter = filterFromDataSources;
+                    break;
+                case VIEWS:
+                    filter = filterFromViews;
+                    break;
+                default:
+                    filter = false;
+                    break;
             }
         }
-        return new Node[] { new KnownFileFilterNode(arg, filter) };
+
+        @Override
+        protected Node[] createNodes(Node arg) {
+            if (filter) {
+                // Filter out child nodes that represent known files
+                AbstractFile file = arg.getLookup().lookup(AbstractFile.class);
+                if (file!= null && file.getKnown() == TskData.FileKnown.KNOWN) {
+                    return new Node[]{};
+                }
+            }
+            return new Node[] { new KnownFileFilterNode(arg, filter) };
+        }
     }
 }
