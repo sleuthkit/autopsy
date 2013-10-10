@@ -295,6 +295,7 @@ public class IngestManager {
         final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
         boolean allInited = true;
         IngestModuleAbstract failedModule = null;
+        String errorMessage = "";
         logger.log(Level.INFO, "DataSource queue: " + dataSourceScheduler.toString());
         logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
 
@@ -347,6 +348,7 @@ public class IngestManager {
                         logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + taskModule.getName(), e);
                         allInited = false;
                         failedModule = taskModule;
+                        errorMessage = e.getMessage();
                         break;
                     }
                     dataSourceIngesters.add(newDataSourceWorker);
@@ -359,10 +361,7 @@ public class IngestManager {
         
         // Check to make sure all modules initialized
         if (allInited == false) {
-            MessageNotifyUtil.Message.error("Failed to load " + failedModule.getName() + "ingest module.\n"
-                                            + "No ingest modules will be run. Please disable the module"
-                                            + " or fix the error and restart ingest by right clicking on"
-                                            + " the data source and selecting re-run ingest.");
+            displayInitError(failedModule.getName(), errorMessage);
             dataSourceIngesters.removeAll(newThreads);
             return;
         }
@@ -399,6 +398,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
                     allInited = false;
                     failedModule = s;
+                    errorMessage = e.getMessage();
                     break;
                 }
             }
@@ -415,13 +415,25 @@ public class IngestManager {
                 abstractFileIngester.execute();
             }
         } else {
-            MessageNotifyUtil.Message.error("Failed to load " + failedModule.getName() + "ingest module.\n"
-                                            + "No ingest modules will be run. Please disable the module"
-                                            + " or fix the error and restart ingest by right clicking on"
-                                            + " the data source and selecting re-run ingest.");
+            displayInitError(failedModule.getName(), errorMessage);
             dataSourceIngesters.removeAll(newThreads);
             abstractFileIngester = null;
         }
+    }
+    
+    /**
+     * Open a dialog box to report an initialization error to the user.
+     * 
+     * @param moduleName The name of the module that failed to initialize.
+     * @param errorMessage The message gotten from the exception that was thrown.
+     */
+    private void displayInitError(String moduleName, String errorMessage) {
+        MessageNotifyUtil.Message.error(
+                "Failed to load " + moduleName + " ingest module.\n\n"
+                + "No ingest modules will be run. Please disable the module "
+                + "or fix the error and restart ingest by right clicking on "
+                + "the data source and selecting Run Ingest Modules.\n\n"
+                + "Error: " + errorMessage);
     }
 
     /**
