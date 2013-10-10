@@ -59,8 +59,8 @@ class FileTypeChildren extends ChildFactory<Content> {
     }
     
     private String createQuery(){
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
-        query += " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0";
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
