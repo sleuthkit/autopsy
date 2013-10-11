@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.actions.TagBlackboardArtifactAction;
+import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;

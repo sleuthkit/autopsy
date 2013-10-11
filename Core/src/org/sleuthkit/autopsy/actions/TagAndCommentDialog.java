@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -30,6 +30,7 @@ import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.directorytree.CreateTagDialog;
 
 /**
  * Tag dialog for tagging files and results. User enters an optional comment.

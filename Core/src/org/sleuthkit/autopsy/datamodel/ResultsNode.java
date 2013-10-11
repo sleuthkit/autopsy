@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -36,7 +35,8 @@ public class ResultsNode extends DisplayableItemNode {
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new Tags(sleuthkitCase) //TODO move to the top of the tree 
+                new Tags(sleuthkitCase), //TODO move to the top of the tree
+                new TagsNodeKey()
                 )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);

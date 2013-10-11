@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,6 +24,8 @@ import java.util.TreeSet;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.directorytree.CreateTagDialog;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -91,6 +93,7 @@ public abstract class TagMenu extends JMenu {
         
     private void refreshDirectoryTree() {
         //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
+        // RJCTODO: Explain what is going on here and pare to one refreshTree() call.
         DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);

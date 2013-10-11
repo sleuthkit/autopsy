@@ -54,12 +54,14 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Tags t);
 
+    T visit(TagsNodeKey tagsNodeKey);
+        
     T visit(DataSources i);
 
     T visit(Views v);
 
     T visit(Results r);
-
+    
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -137,6 +139,11 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Tags t) {
             return defaultVisit(t);
+        }
+
+        @Override
+        public T visit(TagsNodeKey tagsNodeKey) {
+            return defaultVisit(tagsNodeKey);
         }
 
         @Override

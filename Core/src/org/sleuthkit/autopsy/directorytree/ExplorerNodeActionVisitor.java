@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Font;

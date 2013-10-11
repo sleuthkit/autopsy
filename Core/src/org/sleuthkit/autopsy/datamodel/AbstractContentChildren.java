@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -159,6 +158,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractNode visit(Tags t) {
             return t.new TagsRootNode();
+        }
+
+        @Override
+        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
+            return new TagsNode();
         }
 
         @Override

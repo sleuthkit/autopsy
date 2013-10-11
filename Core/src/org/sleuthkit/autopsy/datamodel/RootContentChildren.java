@@ -85,11 +85,15 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                     case TSK_TAG_FILE:
                         if (o instanceof Tags)
                             this.refreshKey(o);
+                        if (o instanceof TagsNodeKey)
+                            this.refreshKey(o);
                         break;
                         
                         //TODO check
                      case TSK_TAG_ARTIFACT:
                         if (o instanceof Tags)
+                            this.refreshKey(o);
+                        if (o instanceof TagsNodeKey)
                             this.refreshKey(o);
                         break;
                     default:
@@ -106,6 +110,8 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                 else if (o instanceof EmailExtracted)
                     this.refreshKey(o);
                 else if (o instanceof Tags)
+                    this.refreshKey(o);
+                else if (o instanceof TagsNodeKey)
                     this.refreshKey(o);
                 else if (o instanceof ExtractedContent)
                     this.refreshKey(o);

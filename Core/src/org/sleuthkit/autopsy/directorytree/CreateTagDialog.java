@@ -48,7 +48,6 @@ public class CreateTagDialog extends JDialog {
     }
     
     private void init() {
-        
         setTitle("Create a new tag");
         
         initComponents();

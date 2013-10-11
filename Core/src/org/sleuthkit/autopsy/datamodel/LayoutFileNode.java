@@ -27,7 +27,7 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
