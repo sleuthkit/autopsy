@@ -20,17 +20,39 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.List;
 
 abstract class ContentTypePanel extends JPanel {
     
-    public enum ContentType{IMAGE, DISK, LOCAL};
+    // Collection of panels that are dynamically discovered and registered
+    private static List<ContentTypePanel> registeredPanels = new ArrayList<ContentTypePanel>();;
+    
+    public static void RegisterPanel(ContentTypePanel panel)
+    {
+        // RAMAN TBD: check if this panel is already regsitered...
+        
+        registeredPanels.add(panel);
+        
+        
+    }
+    //public enum ContentType{IMAGE, DISK, LOCAL};
+    
+    
+    private String contentType;
     
     /**
      * Returns a list off all the panels extending ImageTypePanel.
      * @return list of all ImageTypePanels
      */
     public static ContentTypePanel[] getPanels() {
-        return new ContentTypePanel[] {ImageFilePanel.getDefault(), LocalDiskPanel.getDefault(), LocalFilesPanel.getDefault() };
+        //return new ContentTypePanel[] {ImageFilePanel.getDefault(), LocalDiskPanel.getDefault(), LocalFilesPanel.getDefault() };
+        
+        
+            
+        
+                
+        return registeredPanels.toArray(new ContentTypePanel[registeredPanels.size()]);
     }
     
     /**
@@ -50,7 +72,7 @@ abstract class ContentTypePanel extends JPanel {
      * Get content type (image, disk, local file) of the source this wizard panel is for
      * @return ContentType of the source panel
      */
-    abstract public ContentType getContentType();
+    abstract public String getContentType();
     
     /**
      * Returns if the next button should be enabled in the current wizard.

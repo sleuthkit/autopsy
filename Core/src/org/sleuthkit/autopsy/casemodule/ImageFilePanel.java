@@ -158,8 +158,8 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     }
 
     @Override
-    public ContentType getContentType() {
-        return ContentType.IMAGE;
+    public String getContentType() {
+        return "IMAGE";
     }
 
     @Override

@@ -153,8 +153,8 @@ public class LocalDiskPanel extends ContentTypePanel {
     }
     
     @Override
-    public ContentType getContentType() {
-        return ContentType.DISK;
+    public String getContentType() {
+        return "DISK";
     }
 
     /**

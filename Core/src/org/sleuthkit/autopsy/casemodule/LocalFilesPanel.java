@@ -79,8 +79,8 @@ public class LocalFilesPanel extends ContentTypePanel {
     }
     
     @Override
-    public ContentType getContentType() {
-        return ContentType.LOCAL;
+    public String getContentType() {
+        return "LOCAL";
     }
 
     @Override

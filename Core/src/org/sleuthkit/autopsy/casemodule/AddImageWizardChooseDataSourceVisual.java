@@ -24,14 +24,20 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataListener;
-import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.ContentTypePanel;
+//import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * visual component for the first panel of add image wizard. Allows user to pick
@@ -40,6 +46,8 @@ import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
  */
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
+    static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+    
     enum EVENT {
 
         UPDATE_UI, FOCUS_NEXT
@@ -61,6 +69,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private AddImageWizardChooseDataSourcePanel wizPanel;
     private ContentTypeModel model;
     private ContentTypePanel currentPanel;
+    
+    static private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();;
+           
+
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -75,12 +87,54 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     }
 
     private void customInit() {
+        
+
+        discoverDataSourceProcessors();
+        
         model = new ContentTypeModel();
         typeComboBox.setModel(model);
         typeComboBox.setSelectedIndex(0);
         typePanel.setLayout(new BorderLayout());
-        updateCurrentPanel(ImageFilePanel.getDefault());
+        
+        //updateCurrentPanel(ImageFilePanel.getDefault());
+        updateCurrentPanel(model.getElementAt(0));
     }
+
+    private void discoverDataSourceProcessors() {
+        
+        //datasourceHandlersMap.clear();
+        logger.log(Level.INFO, "RAMAN discoverDataSourceProcessors()...");
+        
+         // RAMAN TBD: hack for now
+        {
+            //ContentTypePanel.RegisterPanel(ImageFilePanel.getDefault());
+            //ContentTypePanel.RegisterPanel(LocalDiskPanel.getDefault());
+            //ContentTypePanel.RegisterPanel(LocalFilesPanel.getDefault());
+        }
+        
+        for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
+            
+            logger.log(Level.INFO, "RAMAN discoverDataSourceHandlers(): found an instance of DataSourceHandler");
+          
+             
+            String dsType = dsProcessor.getType();
+            JPanel panel = dsProcessor.getPanel();
+            String validate = dsProcessor.validatePanel();
+            //dshandler.run(null);
+            //String[] errors = dshandler.getErrors();
+            
+            if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
+                
+            // Regsiter the panel for the discovered DS handler here
+             ContentTypePanel.RegisterPanel(dsProcessor.getPanel());
+             
+             datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
+            }
+             
+        }
+        
+       
+    } 
 
     /**
      * Changes the current panel to the given panel.
@@ -105,7 +159,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             }
         });
         currentPanel.select();
-        if (currentPanel.getContentType().equals(ContentType.LOCAL)) {
+        if (currentPanel.getContentType().equals("LOCAL")) {
             //disable image specific options
             noFatOrphansCheckbox.setEnabled(false);
             descLabel.setEnabled(false);
@@ -118,6 +172,25 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         updateUI(null);
     }
 
+     /**
+     * Returns the currently selected DS handler in the combobox
+     *
+     *
+     * @return name the name of this panel
+     */
+    public DataSourceProcessor GetCurrentDSProcessor() {
+    
+         logger.log(Level.INFO, "RAMAN GetCurrentDSProcessor()...");
+        // get the type of the currently selected panel and then look up 
+        // the correspodning DS Handler in the map
+        String dsType = currentPanel.getContentType();
+        
+        DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(dsType);
+        
+        return dsProcessor;
+        
+    }
+            
     /**
      * Returns the name of the this panel. This name will be shown on the left
      * panel of the "Add Image" wizard panel.
@@ -143,7 +216,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      *
      * @return data source selected
      */
-    public ContentType getContentType() {
+    public String getContentType() {
         return currentPanel.getContentType();
     }
 

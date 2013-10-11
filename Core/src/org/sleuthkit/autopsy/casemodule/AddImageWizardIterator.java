@@ -47,11 +47,16 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      */
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
-            AddImageWizardAddingProgressPanel wizPanel = new AddImageWizardAddingProgressPanel();
             panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
-            panels.add(new AddImageWizardChooseDataSourcePanel());
-            panels.add(new AddImageWizardIngestConfigPanel(action, wizPanel));
-            panels.add(wizPanel);
+            
+            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
+            
+            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
+            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
+            
+            panels.add(dsPanel);
+            panels.add(ingestConfigPanel);
+            panels.add(progressPanel);
 
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {

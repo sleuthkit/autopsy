@@ -37,7 +37,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
+//import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -73,7 +73,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private boolean readyToIngest = false;
     // the paths of the image files to be added
     private String dataSourcePath;
-    private ContentType dataSourceType;
+    private String dataSourceType;
     // the time zone where the image is added
     private String timeZone;
     //whether to not process FAT filesystem orphans
@@ -82,14 +82,19 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
     private CurrentDirectoryFetcher fetcher;
     private AddImageProcess process;
-    private AddImageAction action;
+    private AddImageAction addImageAction;
     private AddImageTask addImageTask;
     private AddLocalFilesTask addLocalFilesTask;
     private AddImageWizardAddingProgressPanel progressPanel;
+    private AddImageWizardChooseDataSourcePanel dataSourcePanel;
+    private DataSourceProcessor dsProcessor;
+    private AddImageAction.CleanupTask cleanupTask; 
 
-    AddImageWizardIngestConfigPanel(AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
-        this.action = action;
+    AddImageWizardIngestConfigPanel(AddImageWizardChooseDataSourcePanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
+        this.addImageAction = action;
         this.progressPanel = proPanel;
+        this.dataSourcePanel = dsPanel;
+        
         ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
         List<String> messages = ingestConfig.setContext(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         if (messages.isEmpty() == false) {
@@ -188,12 +193,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
         newContents.clear();
         dataSourcePath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
-        dataSourceType = (ContentType) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
+        dataSourceType = (String) settings.getProperty(AddImageAction.DATASOURCETYPE_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
         //start the process of adding the content
-        if (dataSourceType.equals(ContentType.LOCAL)) {
+        /*******
+        if (dataSourceType.equals("LOCAL")) {
             addLocalFilesTask = new AddLocalFilesTask(settings);
             addLocalFilesTask.execute();
         } else {
@@ -201,6 +207,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             addImageTask = new AddImageTask(settings);
             addImageTask.execute();
         }
+        * ********/
+        
+        startDataSourceProcessing(settings);
     }
 
     /**
@@ -234,7 +243,74 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
         }
     }
+    
+     /**
+     * Start the Data source handling by kicking of the selected DataSourceProcessor
+     */
+    private void startDataSourceProcessing(WizardDescriptor settings) {
+       
+       logger.log(Level.INFO, "RAMAN startDataSourceProcessing()...");
+        
+        // get the selected DSProcessor
+        dsProcessor =  dataSourcePanel.getComponent().GetCurrentDSProcessor();
+       
+      
+             
+        // Add a cleanup task to interrupt the backgroud process if the
+        // wizard exits while the background process is running.
+        cleanupTask = addImageAction.new CleanupTask() {
+            @Override
+            void cleanup() throws Exception {
+                cancelDataSourceProcessing();
+            }
+        };
+         
+        // RAMAN TBD: this cleanup task needs to be cancelled, if dsProcessor runs successfully
+        cleanupTask.enable();
+       
+        DSPCallback cbObj = new DSPCallback () {
+            @Override
+            public void doneEDT(DSP_Result result, List<String> errList,  List<Content> contents)  {
+                dataSourceProcessorDone(result, errList, contents );
+            }
+            
+        };
+        // Kick off the DSProcessor 
+        dsProcessor.run(settings, progressPanel, cbObj);
+     
+    }
 
+    private void cancelDataSourceProcessing() {
+         logger.log(Level.INFO, "RAMAN cancelDataSourceProcessing().");
+         dsProcessor.cancel();
+    }
+    
+    private void dataSourceProcessorDone(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents) {
+        logger.log(Level.INFO, "RAMAN dataSourceProcessorDone().");
+        
+        // RAMAN TBD
+        // check if there is any new content and kick off ingest....
+       
+        // RAMAN TBD: check the result
+        
+        // RAMAN TBD: if errors, display them on the progress panel
+        
+        // disbale the cleanup task
+        cleanupTask.disable();
+         
+        
+        newContents.clear();
+        newContents.addAll(contents);
+        
+        //notify the case
+        if (!newContents.isEmpty()) {
+            Case.getCurrentCase().addLocalDataSource(newContents.get(0));
+        }
+
+        // Start ingest if we can
+        startIngest();
+        
+    }
     /**
      * Class for getting the currently processing directory.
      *
@@ -313,7 +389,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             this.setProgress(0);
             // Add a cleanup task to interupt the backgroud process if the
             // wizard exits while the background process is running.
-            AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
+            AddImageAction.CleanupTask cancelledWhileRunning = addImageAction.new CleanupTask() {
                 @Override
                 void cleanup() throws Exception {
                     logger.log(Level.INFO, "Add logical files process interrupted.");
@@ -474,7 +550,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
             // Add a cleanup task to interupt the backgroud process if the
             // wizard exits while the background process is running.
-            AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
+            AddImageAction.CleanupTask cancelledWhileRunning = addImageAction.new CleanupTask() {
                 @Override
                 void cleanup() throws Exception {
                     logger.log(Level.INFO, "Add image process interrupted.");
@@ -609,7 +685,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 // When everything happens without an error:
 
                 // the add-image process needs to be reverted if the wizard doesn't finish
-                cleanupImage = action.new CleanupTask() {
+                cleanupImage = addImageAction.new CleanupTask() {
                     //note, CleanupTask runs inside EWT thread
                     @Override
                     void cleanup() throws Exception {

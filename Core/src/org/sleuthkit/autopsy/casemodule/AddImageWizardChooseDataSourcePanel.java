@@ -43,6 +43,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
+    private AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
     private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH";
@@ -50,6 +51,12 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
 
+    
+     AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
+      
+        this.progressPanel = proPanel;
+       
+    }
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
