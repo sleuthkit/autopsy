@@ -67,11 +67,6 @@ public class TagNameNode  extends DisplayableItemNode {
     }
 
     @Override
-    public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-        return DisplayableItemNode.TYPE.META; // RJCTODO: What do these types mean and how are they used? What is correct?
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return false;
     }

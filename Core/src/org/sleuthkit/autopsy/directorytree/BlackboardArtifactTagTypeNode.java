@@ -67,11 +67,6 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
     }
 
     @Override
-    public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-        return DisplayableItemNode.TYPE.META; // RJCTODO: Is this right?
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return true;
     }

@@ -156,6 +156,11 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+                
+        @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
@@ -175,11 +180,6 @@ public class Tags implements AutopsyVisitableItem {
                     getName()));
 
             return s;
-        }
-
-        @Override
-        public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-            return DisplayableItemNode.TYPE.ARTIFACT;
         }
     }
 
@@ -244,11 +244,6 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.META;
         }
 
         @Override
@@ -323,11 +318,6 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        @Override
-        public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-            return DisplayableItemNode.TYPE.ARTIFACT;
         }
 
         @Override

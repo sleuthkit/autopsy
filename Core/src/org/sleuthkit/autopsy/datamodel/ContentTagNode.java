@@ -63,11 +63,6 @@ public class ContentTagNode extends DisplayableItemNode {
     }
 
     @Override
-    public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-        return DisplayableItemNode.TYPE.META; // RJCTODO: Is this right? What is this stuff for?
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return true;
     }    

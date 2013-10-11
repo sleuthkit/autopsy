@@ -30,7 +30,7 @@ import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Content;
@@ -151,7 +151,7 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(ExtractAction.getInstance());
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(TagAbstractFileAction.getInstance());
+            actions.add(AddContentTagAction.getInstance());
             return actions;            
         }
 

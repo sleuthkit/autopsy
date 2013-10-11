@@ -20,7 +20,8 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -29,29 +30,26 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.directorytree.CreateTagDialog;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.datamodel.TagName;
 
-/**
- * Tag dialog for tagging files and results. User enters an optional comment.
- */
-public class TagAndCommentDialog extends JDialog {
+public class GetTagNameAndCommentDialog extends JDialog {
+    private static final String NO_TAG_NAMES_MESSAGE = "No Tags";    // RJCTODO: ??
+    private final HashMap<String, TagName> tagNames = new HashMap<>();
+    private TagNameAndComment tagNameAndComment = null;
 
-    private static final String NO_TAG_MESSAGE = "No Tags";    
-    private String tagName = "";
-    private String comment = "";
-
-    public static class CommentedTag {
-        private String name;
+    public static class TagNameAndComment {
+        private TagName tagName;
         private String comment;
 
-        CommentedTag(String name, String comment) {
-            this.name = name;
+        private TagNameAndComment(TagName tagName, String comment) {
+            this.tagName = tagName;
             this.comment = comment;
         }
         
-        public String getName() {
-            return name;
+        public TagName getTagName() {
+            return tagName;
         }
 
         public String getComment() {
@@ -59,25 +57,17 @@ public class TagAndCommentDialog extends JDialog {
         }
     }
     
-    public static CommentedTag doDialog() {
-        TagAndCommentDialog dialog = new TagAndCommentDialog();
-        if (!dialog.tagName.isEmpty()) {
-            return new CommentedTag(dialog.tagName, dialog.comment);
-        }
-        else {
-            return null;
-        }
+    public static TagNameAndComment doDialog() {
+        GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog();
+        return dialog.tagNameAndComment;
     }
     
-    /**
-     * Creates new form TagDialog
-     */
-    private TagAndCommentDialog() {
-        super((JFrame)WindowManager.getDefault().getMainWindow(), "Tag and Comment", true);
-        
+    private GetTagNameAndCommentDialog() {
+        super((JFrame)WindowManager.getDefault().getMainWindow(), "Create Tag", true);   
         initComponents();
 
-        // Close the dialog when Esc is pressed
+        // Set up the dialog to close when Esc is pressed.
+        // RJCTODO: Could do this for the other dialog, too.
         String cancelName = "cancel";
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
@@ -88,24 +78,25 @@ public class TagAndCommentDialog extends JDialog {
                 dispose();
             }
         });
-        
-        // get the current list of tag names
-        TreeSet<String> tags = Tags.getAllTagNames();
-        
-        // if there are no tags, add the NO_TAG_MESSAGE
-        if (tags.isEmpty()) {
-            tags.add(NO_TAG_MESSAGE);
+                        
+        // Populate the combo box with the available tag names.
+        // Save the tag names to be enable to return the one the user selects.
+        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+        ArrayList<TagName> currentTagNames = new ArrayList<>();
+        tagsManager.getTagNames(currentTagNames);        
+        if (currentTagNames.isEmpty()) {
+            tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
         }
-
-        // add the tags to the combo box
-        for (String tag : tags) {
-            tagCombo.addItem(tag);
+        else {
+            for (TagName tagName : currentTagNames) {
+                tagNames.put(tagName.getDisplayName(), tagName);
+                tagCombo.addItem(tagName.getDisplayName());
+            }            
         }
       
-        //center it
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        
-        setVisible(true); // blocks
+        // Center and show the dialog box. 
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());        
+        setVisible(true);
     }
         
     /**
@@ -131,30 +122,30 @@ public class TagAndCommentDialog extends JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        tagCombo.setToolTipText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.tagCombo.toolTipText")); // NOI18N
+        tagCombo.setToolTipText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.tagCombo.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(tagLabel, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.tagLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tagLabel, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.tagLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentLabel.text")); // NOI18N
 
-        commentText.setText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentText.text")); // NOI18N
-        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.commentText.toolTipText")); // NOI18N
+        commentText.setText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.text")); // NOI18N
+        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(newTagButton, org.openide.util.NbBundle.getMessage(TagAndCommentDialog.class, "TagAndCommentDialog.newTagButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTagButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.newTagButton.text")); // NOI18N
         newTagButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newTagButtonActionPerformed(evt);
@@ -213,26 +204,27 @@ public class TagAndCommentDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        tagName = (String)tagCombo.getSelectedItem();
-        comment = commentText.getText();        
+        tagNameAndComment = new TagNameAndComment(tagNames.get((String)tagCombo.getSelectedItem()), commentText.getText());        
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        tagNameAndComment = null;
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    /**
-     * Closes the dialog
-     */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
+        // RJCTODO: Is this dead code?
+        tagNameAndComment = null;
         dispose();
     }//GEN-LAST:event_closeDialog
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        String newTagName = CreateTagDialog.getNewTagNameDialog(null);
+        // RJCTODO: Make suer this works for dups
+        TagName newTagName = GetTagNameDialog.doDialog();
         if (newTagName != null) {
-            tagCombo.addItem(newTagName);
+            tagNames.put(newTagName.getDisplayName(), newTagName);
+            tagCombo.addItem(newTagName.getDisplayName());
             tagCombo.setSelectedItem(newTagName);
         }
     }//GEN-LAST:event_newTagButtonActionPerformed

@@ -44,6 +44,11 @@ public class TagsNode extends DisplayableItemNode {
     }
     
     @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
@@ -61,12 +66,7 @@ public class TagsNode extends DisplayableItemNode {
 
         return propertySheet;
     }
-        
-    @Override
-    public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-        return DisplayableItemNode.TYPE.ARTIFACT;
-    }        
-    
+            
     private static class TagsNodeChildFactory extends ChildFactory<TagName> {
         @Override
         protected boolean createKeys(List<TagName> keys) {

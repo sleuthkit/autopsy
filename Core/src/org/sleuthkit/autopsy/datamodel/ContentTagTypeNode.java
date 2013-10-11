@@ -63,11 +63,6 @@ public class ContentTagTypeNode extends DisplayableItemNode {
     }
 
     @Override
-    public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-        return DisplayableItemNode.TYPE.META;
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return false;
     }

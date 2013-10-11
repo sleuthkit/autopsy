@@ -44,6 +44,11 @@ public class ResultsNode extends DisplayableItemNode {
     }
 
     @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
@@ -62,10 +67,5 @@ public class ResultsNode extends DisplayableItemNode {
                 "no description",
                 NAME));
         return s;
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
     }
 }

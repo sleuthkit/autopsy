@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -102,7 +102,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         return actions;
     }
 
@@ -110,7 +110,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         return actions;
     }
 
@@ -118,7 +118,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         return actions;
     }
 
@@ -126,7 +126,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final LocalFile d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         return actions;
     }
 
@@ -134,7 +134,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         return actions;
     }
 

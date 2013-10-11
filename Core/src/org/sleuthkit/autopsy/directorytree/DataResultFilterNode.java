@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.sleuthkit.autopsy.actions.TagBlackboardArtifactAction;
-import org.sleuthkit.autopsy.actions.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -208,8 +208,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -224,8 +224,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                 }
             }
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -240,8 +240,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
@@ -255,8 +255,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
@@ -271,8 +271,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                 }
             }
 

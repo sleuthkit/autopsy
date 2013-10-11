@@ -113,6 +113,11 @@ public class Bookmarks implements AutopsyVisitableItem {
         }
 
         @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+    
+        @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return null; // v.visit(this);
         }
@@ -132,11 +137,6 @@ public class Bookmarks implements AutopsyVisitableItem {
                     getName()));
 
             return s;
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
     }
 
@@ -199,18 +199,13 @@ public class Bookmarks implements AutopsyVisitableItem {
         }
 
         @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+    
+        @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return null; //v.visit(this);
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return true;
         }
     }
 
