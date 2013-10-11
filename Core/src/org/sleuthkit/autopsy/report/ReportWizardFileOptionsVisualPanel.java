@@ -38,8 +38,8 @@ import javax.swing.event.ListDataListener;
  * @author jwallace
  */
 public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
-    private List<FileReportInfo> options;
-    private Map<FileReportInfo, Boolean> optionStates = new EnumMap<>(FileReportInfo.class);
+    private List<FileReportDataTypes> options;
+    private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel model;
     private ReportWizardFileOptionsPanel wizPanel;
     
@@ -59,8 +59,8 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
      * Populate the list of File Report Information that can be selected.
      */
     private void initOptionsList() {
-        options = Arrays.asList(FileReportInfo.values());
-        for(FileReportInfo col : options) {
+        options = Arrays.asList(FileReportDataTypes.values());
+        for(FileReportDataTypes col : options) {
             optionStates.put(col, Boolean.FALSE);
         }
       
@@ -78,7 +78,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                FileReportInfo value = (FileReportInfo) model.getElementAt(index);
+                FileReportDataTypes value = (FileReportDataTypes) model.getElementAt(index);
                 optionStates.put(value, !optionStates.get(value));
                 list.repaint();
                 boolean anySelected = anySelected();
@@ -119,7 +119,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
      * Get the user-selected settings.
      * @return 
      */
-    Map<FileReportInfo, Boolean> getFileReportOptions() {
+    Map<FileReportDataTypes, Boolean> getFileReportOptions() {
         return optionStates;
     }
     /**
@@ -196,7 +196,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
-        for (FileReportInfo option : options) {
+        for (FileReportDataTypes option : options) {
             optionStates.put(option, Boolean.TRUE);
         }
         optionsList.repaint();
@@ -206,7 +206,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
-        for (FileReportInfo option : options) {
+        for (FileReportDataTypes option : options) {
             optionStates.put(option, Boolean.FALSE);
         }
         optionsList.repaint();
@@ -252,7 +252,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
-                FileReportInfo col = (FileReportInfo) value;
+                FileReportDataTypes col = (FileReportDataTypes) value;
                 setEnabled(list.isEnabled());
                 setSelected(optionStates.get(col));
                 setFont(list.getFont());

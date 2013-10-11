@@ -201,10 +201,10 @@ public class ReportGenerator {
      * @param enabledInfo the Information that should be included about each file
      * in the report.
      */
-    public void generateFileListReports(Map<FileReportInfo, Boolean> enabledInfo) {
+    public void generateFileListReports(Map<FileReportDataTypes, Boolean> enabledInfo) {
         if (!fileProgress.isEmpty() && null != enabledInfo) {
-            List<FileReportInfo> enabled = new ArrayList<>();
-            for (Entry<FileReportInfo, Boolean> e : enabledInfo.entrySet()) {
+            List<FileReportDataTypes> enabled = new ArrayList<>();
+            for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if(e.getValue()) {
                     enabled.add(e.getKey());
                 }
@@ -236,10 +236,10 @@ public class ReportGenerator {
      * SwingWorker to generate a FileReport.
      */
     private class FileReportsWorker extends SwingWorker<Integer, Integer> {
-        private List<FileReportInfo> enabledInfo = Arrays.asList(FileReportInfo.values());
+        private List<FileReportDataTypes> enabledInfo = Arrays.asList(FileReportDataTypes.values());
         private List<FileReportModule> fileModules = new ArrayList<>();
         
-        FileReportsWorker(List<FileReportInfo> enabled) {
+        FileReportsWorker(List<FileReportDataTypes> enabled) {
             enabledInfo = enabled;
             for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
                 fileModules.add(entry.getKey());

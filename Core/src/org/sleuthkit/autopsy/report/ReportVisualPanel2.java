@@ -122,7 +122,7 @@ public final class ReportVisualPanel2 extends JPanel {
 
     @Override
     public String getName() {
-        return "Configure HTML and Excel reports";
+        return "Configure Artifact Reports";
     }
     
     /**

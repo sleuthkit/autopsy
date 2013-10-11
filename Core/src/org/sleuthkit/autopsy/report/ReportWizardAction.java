@@ -72,7 +72,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
                     (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
                     (Map<FileReportModule, Boolean>)wiz.getProperty("fileListModuleStates"));
             generator.generateArtifactTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
-            generator.generateFileListReports((Map<FileReportInfo, Boolean>)wiz.getProperty("fileReportOptions"));
+            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions"));
             generator.generateGeneralReports();
             generator.displayProgressPanels();
         }        

@@ -23,31 +23,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * A Tab-delimited text report of the files in the case.
  * 
  * @author jwallace
  */
-public class FileReportText implements FileReportModule {
-    private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
+public class ReportText implements TableReportModule {
+    private static final Logger logger = Logger.getLogger(ReportText.class.getName());
     private String reportPath;
     private Writer out;
-    
-    private static FileReportText instance;
-    
-    // Get the default implementation of this report
-    public static synchronized FileReportText getDefault() {
-        if (instance == null) {
-            instance = new FileReportText();
-        }
-        return instance;
+    ReportText() {
+        // do nothing for now
     }
     
     @Override
@@ -70,22 +62,49 @@ public class FileReportText implements FileReportModule {
             }
         }
     }
-    
-    private String getTabDelimitedList(List<String> list) {
-        StringBuilder output = new StringBuilder();
-        Iterator<String> it = list.iterator();
-        while(it.hasNext()) {
-            output.append(it.next()).append((it.hasNext() ? "\t" : System.lineSeparator()));
-        }
-        return output.toString();
-    }
-    
+
     @Override
-    public void startTable(List<FileReportDataTypes> headers) {
-        List<String> titles = new ArrayList<>();
-        for(FileReportDataTypes col : headers) {
-            titles.add(col.getName());
+    public void startDataType(String title) {
+        StringBuilder start = new StringBuilder();
+        start.append(title.toUpperCase()).append("\n");
+        try {
+            out.write(start.toString());
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error when writing to report file: {0}", ex);
         }
+    }
+
+    @Override
+    public void endDataType() {
+        try {
+            out.write("\n\n");
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error when writing to report file: {0}", ex);
+        }
+    }
+
+    @Override
+    public void startSet(String setName) {
+        // Do nothing for now.
+    }
+
+    @Override
+    public void endSet() {
+        // Do nothing for now.
+    }
+
+    @Override
+    public void addSetIndex(List<String> sets) {
+        // Do nothing for now.
+    }
+
+    @Override
+    public void addSetElement(String elementName) {
+        // Do nothing for now.
+    }
+
+    @Override
+    public void startTable(List<String> titles) {
         try {
             out.write(getTabDelimitedList(titles));
         } catch (IOException ex) {
@@ -94,35 +113,46 @@ public class FileReportText implements FileReportModule {
     }
 
     @Override
-    public void addRow(AbstractFile toAdd, List<FileReportDataTypes> columns) {
-        List<String> cells = new ArrayList<>();
-        for(FileReportDataTypes type : columns) {
-            cells.add(type.getValue(toAdd));
-        }
+    public void endTable() {
         try {
-            out.write(getTabDelimitedList(cells));
+            out.write("\n");
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error when writing to report file: {0}", ex);
+        }
+    }
+    
+    private String getTabDelimitedList(List<String> list) {
+        StringBuilder output = new StringBuilder();
+        Iterator<String> it = list.iterator();
+        while(it.hasNext()) {
+            output.append(it.next()).append((it.hasNext() ? "\t" : "\n"));
+        }
+        return output.toString();
+    }
+
+    @Override
+    public void addRow(List<String> row) {
+        try {
+            out.write(getTabDelimitedList(row));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error when writing row to report file: {0}", ex);
         }
     }
 
     @Override
-    public void endTable() {
-        try {
-            out.write(System.lineSeparator());
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error when closing table: {0}", ex);
-        }
+    public String dateToString(long date) {
+        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        return sdf.format(new java.util.Date(date * 1000));
     }
 
     @Override
     public String getName() {
-        return "Files - Text";
+        return "report";
     }
 
     @Override
     public String getDescription() {
-        return "A tab delimited text file containing information about files in the case."; 
+        return "A tab delimited report file.";
     }
 
     @Override
@@ -132,6 +162,7 @@ public class FileReportText implements FileReportModule {
 
     @Override
     public String getFilePath() {
-        return "report.txt";
+        return this.reportPath;
     }
+    
 }
