@@ -37,7 +37,7 @@ public class TagsNode extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
         
     public TagsNode() {
-        super(Children.create(new TagsNodeChildFactory(), true));
+        super(Children.create(new TagNameNodeFactory(), true));
         super.setName(DISPLAY_NAME);
         super.setDisplayName(DISPLAY_NAME);
         this.setIconBaseWithExtension(ICON_PATH);
@@ -67,10 +67,10 @@ public class TagsNode extends DisplayableItemNode {
         return propertySheet;
     }
             
-    private static class TagsNodeChildFactory extends ChildFactory<TagName> {
+    private static class TagNameNodeFactory extends ChildFactory<TagName> {
         @Override
         protected boolean createKeys(List<TagName> keys) {
-            Case.getCurrentCase().getServices().getTagsManager().getTagNames(keys);
+            Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys); // RJCTODO: Change this call to filtered call
             return true;
         }
 

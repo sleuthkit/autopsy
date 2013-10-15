@@ -81,7 +81,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // Get the current set of tag names.
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             ArrayList<TagName> tagNames = new ArrayList<>();
-            tagsManager.getTagNames(tagNames);
+            tagsManager.getAllTagNames(tagNames);
                         
             // Create a "Quick Tag" sub-menu.
             JMenu quickTagMenu = new JMenu("Quick Tag");

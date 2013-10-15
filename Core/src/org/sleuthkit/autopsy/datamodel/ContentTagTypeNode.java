@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.TagName;
  * then by tag name. 
  */
 public class ContentTagTypeNode extends DisplayableItemNode {
-    private static final String DISPLAY_NAME = "Content Tags";
+    private static final String DISPLAY_NAME = "File Tags";
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
 
     public ContentTagTypeNode(TagName tagName) {
@@ -64,7 +64,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
 
     @Override
     public boolean isLeafTypeNode() {
-        return false;
+        return true;
     }
     
     private static class ContentTagNodeFactory extends ChildFactory<ContentTag> {

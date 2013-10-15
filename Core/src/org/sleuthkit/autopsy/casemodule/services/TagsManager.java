@@ -56,10 +56,10 @@ public class TagsManager implements Closeable {
      * blackboard artifacts.
      * @return [out] A list, possibly empty, of TagName data transfer objects (DTOs). 
      */
-    public void getTagNames(List<TagName> tagNames) {    
+    public void getAllTagNames(List<TagName> tagNames) {    
         try {
             tagNames.clear();
-            tskCase.getTagNames(tagNames);
+            tskCase.getAllTagNames(tagNames);
         }
         catch (TskCoreException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names from the current case", ex);                    
@@ -214,7 +214,12 @@ public class TagsManager implements Closeable {
      * @return 
      */
     public void getContentTags(TagName tagName, List<ContentTag> tags) {
-        // RJCTODO: Implement
+        try {
+            tskCase.getContentTagsByTagName(tagName, tags);        
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get content tags from the current case", ex);                    
+        }
     }
     
     /**
@@ -223,7 +228,12 @@ public class TagsManager implements Closeable {
      * @return 
      */
     public void getBlackboardArtifactTags(TagName tagName, List<BlackboardArtifactTag> tags) {
-        // RJCTODO: Implement
+        try {
+            tskCase.getBlackboardArtifactTagsByTagName(tagName, tags);        
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags from the current case", ex);                    
+        }
     }
     
     @Override
@@ -235,7 +245,7 @@ public class TagsManager implements Closeable {
         // Get any tag names already defined for the current case.
         try {
             ArrayList<TagName> currentTagNames = new ArrayList<>();
-            tskCase.getTagNames(currentTagNames);
+            tskCase.getAllTagNames(currentTagNames);
             for (TagName tagName : currentTagNames) {
                 tagNames.put(tagName.getDisplayName(), tagName);
             }

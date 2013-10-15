@@ -23,6 +23,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class wrap ContentTag objects. In the Autopsy
@@ -32,12 +33,14 @@ import org.sleuthkit.datamodel.ContentTag;
  */
 public class ContentTagNode extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private final ContentTag tag;
 
     public ContentTagNode(ContentTag tag) {
-        super(Children.LEAF, Lookups.singleton(tag));
+        super(Children.LEAF, Lookups.fixed(tag, tag.getContent()));
         super.setName(tag.getContent().getName());
         super.setDisplayName(tag.getContent().getName());
         this.setIconBaseWithExtension(ICON_PATH);
+        this.tag = tag;
     }
 
     @Override
@@ -50,7 +53,16 @@ public class ContentTagNode extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Name", "Name", "", getName()));
+        properties.put(new NodeProperty("Source File", "Source File", "", getName()));
+        String contentPath; 
+        try {
+            contentPath = tag.getContent().getUniquePath();
+        }
+        catch (TskCoreException ex) {
+            // RJCTODO: Add to log
+            contentPath = "Unavailable";
+        }
+        properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
 
         return propertySheet;
     }

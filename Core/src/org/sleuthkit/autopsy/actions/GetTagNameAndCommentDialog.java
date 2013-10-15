@@ -83,7 +83,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // Save the tag names to be enable to return the one the user selects.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         ArrayList<TagName> currentTagNames = new ArrayList<>();
-        tagsManager.getTagNames(currentTagNames);        
+        tagsManager.getAllTagNames(currentTagNames);        
         if (currentTagNames.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
         }

@@ -34,7 +34,7 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; // RJCTODO: Want better icons?
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
-        super(Children.LEAF, Lookups.singleton(tag));
+        super(Children.LEAF, Lookups.fixed(tag, tag.getArtifact()));
         super.setName(tag.getArtifact().getDisplayName());
         super.setDisplayName(tag.getArtifact().getDisplayName());
         this.setIconBaseWithExtension(ICON_PATH);
