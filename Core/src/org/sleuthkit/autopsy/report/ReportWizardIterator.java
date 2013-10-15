@@ -86,19 +86,19 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
     
     /**
      * Change which panels will be shown based on the selection of reporting modules.
-     * @param tableConfig true if a TableReportModule was selected
-     * @param fileConfig true if a FileReportModule was selected
+     * @param moreConfig true if a GeneralReportModule was selected
+     * @param tableConfig true if a TReportModule was selected
      */
-    private void enableConfigPanels(boolean tableConfig, boolean fileConfig) {
-        if (tableConfig && fileConfig) {
-            panels = Arrays.asList(allConfigPanels);
-        } else if (tableConfig) {
-            // Only TableReport Modules need configuration
+    private void enableConfigPanels(boolean generalModule, boolean tableModule) {
+        if (generalModule) {
+            // General Module selected, no additional panels
+        } else if (tableModule) {
+            // Table Module selected, need Artifact Configuration Panel
+            // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
         } else {
-            // Only FileReport Modules need configuration.
-            // If no modules need configuration, finish button will be pressed
-            // and we won't get to this function.
+            // File Module selected, need File Report Configuration Panel
+            // (ReportWizardFileOptionsPanel)
             panels = Arrays.asList(fileConfigPanels);
         }
     }
@@ -131,11 +131,11 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
         
         if(index == 0) {
             // Update path through configuration panels
-            boolean tableConfig, fileConfig;
+            boolean generalModule, tableModule;
             // These preferences are set in ReportWizardPanel1.storeSettings()
-            tableConfig = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableConfig", true);
-            fileConfig = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("fileConfig", true);
-            enableConfigPanels(tableConfig, fileConfig);
+            generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true);
+            tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true);
+            enableConfigPanels(generalModule, tableModule);
         }
         
         index++;

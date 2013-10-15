@@ -66,11 +66,11 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
     public static void doReportWizard() {
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
-        wiz.setTitle("Generate Report");        
+        wiz.setTitle("Generate Report");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), 
                     (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
-                    (Map<FileReportModule, Boolean>)wiz.getProperty("fileListModuleStates"));
+                    (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates"));
             generator.generateArtifactTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
             generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions"));
             generator.generateGeneralReports();

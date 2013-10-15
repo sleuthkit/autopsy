@@ -107,16 +107,16 @@ public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<Wiza
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         Map<TableReportModule, Boolean> tables = getComponent().getTableModuleStates();
-        Map<FileReportModule, Boolean> files = getComponent().getFileListModuleStates();
+        Map<GeneralReportModule, Boolean> generals = getComponent().getGeneralModuleStates();
         wiz.putProperty("tableModuleStates", tables);
-        wiz.putProperty("generalModuleStates", getComponent().getGeneralModuleStates());
-        wiz.putProperty("fileListModuleStates", files);
+        wiz.putProperty("generalModuleStates", generals);
+        wiz.putProperty("fileListModuleStates", getComponent().getFileModuleStates());
         
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableConfig", any(tables.values()));
-        prefs.putBoolean("fileConfig", any(files.values()));
+        prefs.putBoolean("tableModule", any(tables.values()));
+        prefs.putBoolean("generalModule", any(generals.values()));
     }
     
     /**

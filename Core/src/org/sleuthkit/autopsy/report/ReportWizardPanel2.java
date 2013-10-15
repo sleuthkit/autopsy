@@ -80,15 +80,8 @@ public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     }
     
     public void setFinish(boolean enabled) {
-        // If FileReportModules need to be configured, disable the Finish button
-        // and enable the next button.
-        if (NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("fileConfig", false)) {
-            finishButton.setEnabled(false);
-            nextButton.setEnabled(enabled);
-        } else {
-            nextButton.setEnabled(false);
-            finishButton.setEnabled(enabled);
-        }
+        nextButton.setEnabled(false);
+        finishButton.setEnabled(enabled);
     }
 
     @Override
