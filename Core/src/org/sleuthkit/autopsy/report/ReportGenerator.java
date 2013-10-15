@@ -265,6 +265,7 @@ public class ReportGenerator {
                 fileProgress.get(module).setMaximumProgress(numFiles);
             }
             
+            int i = 0;
             // Add files to report.
             for (AbstractFile file : files) {
                 // Check to see if any reports have been cancelled.
@@ -279,11 +280,15 @@ public class ReportGenerator {
                     if (progress.getStatus() == ReportStatus.CANCELED) {
                         iter.remove();
                     } else {
-                        progress.updateStatusLabel("Now processing " + file.getName());
                         module.addRow(file, enabledInfo);
                         progress.increment();
                     }
+                    
+                    if ((i % 100) == 0) {
+                        progress.updateStatusLabel("Now processing " + file.getName());
+                    }
                 }
+                i++;
             }
             
             for (FileReportModule module : fileModules) {
