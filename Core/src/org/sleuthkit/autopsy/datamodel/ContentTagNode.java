@@ -19,6 +19,8 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
@@ -45,7 +47,6 @@ public class ContentTagNode extends DisplayableItemNode {
 
     @Override
     protected Sheet createSheet() {
-        // RJCTODO: Make additional properties as needed for DataResultViewers
         Sheet propertySheet = super.createSheet();
         Sheet.Set properties = propertySheet.get(Sheet.PROPERTIES);
         if (properties == null) {
@@ -53,13 +54,13 @@ public class ContentTagNode extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Source File", "Source File", "", getName()));
+        properties.put(new NodeProperty("Source File", "Source File", "", tag.getContent().getName()));
         String contentPath; 
         try {
             contentPath = tag.getContent().getUniquePath();
         }
         catch (TskCoreException ex) {
-            // RJCTODO: Add to log
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
             contentPath = "Unavailable";
         }
         properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
@@ -69,8 +70,6 @@ public class ContentTagNode extends DisplayableItemNode {
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        // See classes derived from DisplayableItemNodeVisitor<AbstractNode> 
-        // for behavior added using the Visitor pattern.
         return v.visit(this);
     }
 

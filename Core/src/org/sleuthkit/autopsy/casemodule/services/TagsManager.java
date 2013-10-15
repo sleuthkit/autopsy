@@ -201,7 +201,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException 
      */
     public void addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
-        tskCase.addBlackboardArtifactTag(new BlackboardArtifactTag(artifact, tagName, comment));       
+        tskCase.addBlackboardArtifactTag(new BlackboardArtifactTag(artifact, tskCase.getContentById(artifact.getObjectID()), tagName, comment));       
     }
 
     void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {

@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
@@ -31,18 +34,19 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
  * either content or blackboard artifact tag nodes.
  */
 public class BlackboardArtifactTagNode  extends DisplayableItemNode {  
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; // RJCTODO: Want better icons?
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private final BlackboardArtifactTag tag; 
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
-        super(Children.LEAF, Lookups.fixed(tag, tag.getArtifact()));
-        super.setName(tag.getArtifact().getDisplayName());
-        super.setDisplayName(tag.getArtifact().getDisplayName());
+        super(Children.LEAF, Lookups.fixed(tag, tag.getArtifact(), tag.getContent()));
+        super.setName(tag.getContent().getName());
+        super.setDisplayName(tag.getContent().getName());
         this.setIconBaseWithExtension(ICON_PATH);
+        this.tag = tag;
     }
 
     @Override
     protected Sheet createSheet() {
-        // RJCTODO: Make additional properties as needed for DataResultViewers
         Sheet propertySheet = super.createSheet();
         Sheet.Set properties = propertySheet.get(Sheet.PROPERTIES);
         if (properties == null) {
@@ -50,15 +54,23 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Name", "Name", "", getName()));
-
+        properties.put(new NodeProperty("Source File", "Source File", "", tag.getContent().getName()));
+        String contentPath; 
+        try {
+            contentPath = tag.getContent().getUniquePath();
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
+            contentPath = "Unavailable";
+        }
+        properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
+        properties.put(new NodeProperty("Result Type", "Result Type", "", tag.getArtifact().getDisplayName()));
+        
         return propertySheet;
     }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        // See classes derived from DisplayableItemNodeVisitor<AbstractNode> 
-        // for behavior added using the Visitor pattern.
         return v.visit(this);
     }
 
