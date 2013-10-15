@@ -84,6 +84,14 @@
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
         <var name="package-type" value="x86" />
         <var name="jvm.max.mem" value="512" />
+        <var name="new-jre-path" value="${inst-path}\jre"/>
+        <delete failonerror="false" dir="${new-jre-path}"/>
+        <mkdir dir="${new-jre-path}"/>
+        <copy todir="${new-jre-path}" overwrite="true">  
+            <fileset dir="${jre-path}">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
         </exec>
@@ -92,7 +100,7 @@
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-32bit.msi" />
     </target>
     
-    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,add-ai-env,ai-build" description="Builds the 32 bit installer."/>
+    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-shortcuts,add-ai-env,ai-build" description="Builds the 32 bit installer."/>
 
     <target name="check-ai-64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
         <property environment="env"/>
@@ -102,6 +110,14 @@
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
         <var name="package-type" value="x64" />
         <var name="jvm.max.mem" value="2048"/>
+        <var name="new-jre-path" value="${inst-path}\jre"/>
+        <delete failonerror="false" dir="${new-jre-path}"/>
+        <mkdir dir="${new-jre-path}"/>
+        <copy todir="${new-jre-path}" overwrite="true">  
+            <fileset dir="${jre-path}">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
         <echo message="aip-path: ${aip-path}" />
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFiles64Folder][ProductName]-${app.version}"/>
@@ -111,7 +127,7 @@
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
     </target>
     
-    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-jre,add-ai-shortcuts,ai-set-type,ai-build" description="Builds the 64 bit installer."/>
+    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-shortcuts,ai-set-type,ai-build" description="Builds the 64 bit installer."/>
    
     <target name="add-ai-productinfo" description="Add product information to the aip file">
         <scriptdef name="generateguid" language="javascript">
@@ -182,20 +198,14 @@
         </condition>
     </target>
     
-    <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
-        <var name="new-jre-path" value="${inst-path}\jre"/>
-        <mkdir dir="${new-jre-path}"/>
-        <copy todir="${new-jre-path}" >  
-            <fileset dir="${jre-path}">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
+<!--    <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
+        
         <echo message="${ai-exe-path}" /> 
         <echo message="Adding JRE to installer: ${jre-path}"/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${new-jre-path}&quot;" />
         </exec>
-    </target>
+    </target>-->
 
     <target name="add-ai-shortcuts" description="Add shortcuts to the aip file">
         <echo message="Adding desktop/menu shortcuts..."/>
