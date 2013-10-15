@@ -145,7 +145,7 @@
         <propertyfile file="${inst.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
-            <entry key="jdkhome" value="&quot;jre7&quot;" />
+            <entry key="jdkhome" value="&quot;jre&quot;" />
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
         <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.args}" />
@@ -183,10 +183,17 @@
     </target>
     
     <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
+        <var name="new-jre-path" value="${inst-path}/jre"/>
+        <mkdir dir="${new-jre-path}"/>
+        <copy todir="${new-jre-path}" >  
+            <fileset dir="&quot;${jre-path}&quot;">  
+                <include name="**"/>
+            </fileset>
+        </copy>
         <echo message="${ai-exe-path}" /> 
         <echo message="Adding JRE to installer: ${jre-path}"/>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${jre-path}&quot;" />
+            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${new-jre-path}&quot;" />
         </exec>
     </target>
 
