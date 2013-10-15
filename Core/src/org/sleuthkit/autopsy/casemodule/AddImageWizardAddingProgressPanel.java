@@ -50,6 +50,29 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
+    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    
+    public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
+        return dspProgressMonitorImpl;
+    }
+            
+    private class DSPProgressMonitorImpl implements DSPProgressMonitor {
+        @Override
+        public void setIndeterminate(boolean indeterminate) {
+             getComponent().getProgressBar().setIndeterminate(indeterminate);
+            
+        }
+        @Override
+        public void setProgress(int progress)  {
+                getComponent().getProgressBar().setValue(progress);
+        }
+        @Override
+        public void setText(String text) {
+           getComponent().setCurrentDirText(text);
+            
+        }
+        
+    }
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created

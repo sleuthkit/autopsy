@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.List;
 import javax.swing.JPanel;
 import org.openide.WizardDescriptor;
-import org.sleuthkit.autopsy.casemodule.AddImageWizardAddingProgressPanel;
+import org.sleuthkit.autopsy.casemodule.DSPProgressMonitor;
 import org.sleuthkit.autopsy.casemodule.ContentTypePanel;
 import org.sleuthkit.datamodel.Content;
 
@@ -59,7 +59,7 @@ public interface DataSourceProcessor {
     * @param progressPanel progress panel to be updated while processing
     * 
     **/
-    void run(WizardDescriptor settings, AddImageWizardAddingProgressPanel progressPanel, DSPCallback dspCallback);
+    void run(WizardDescriptor settings, DSPProgressMonitor progressPanel, DSPCallback dspCallback);
     
     /**
     * Called after run() is done to get the new content added by the handler.

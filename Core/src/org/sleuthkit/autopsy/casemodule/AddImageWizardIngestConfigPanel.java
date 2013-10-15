@@ -275,8 +275,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             }
             
         };
+        
+        progressPanel.setStateStarted();
+        
         // Kick off the DSProcessor 
-        dsProcessor.run(settings, progressPanel, cbObj);
+        dsProcessor.run(settings, progressPanel.getDSPProgressMonitorImpl(), cbObj);
      
     }
 
@@ -288,15 +291,22 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void dataSourceProcessorDone(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents) {
         logger.log(Level.INFO, "RAMAN dataSourceProcessorDone().");
         
-        // RAMAN TBD
-        // check if there is any new content and kick off ingest....
-       
-        // RAMAN TBD: check the result
-        
-        // RAMAN TBD: if errors, display them on the progress panel
-        
-        // disbale the cleanup task
+         // disable the cleanup task
         cleanupTask.disable();
+       
+        //check the result and display to user
+        if (result == DSPCallback.DSP_Result.NO_ERRORS)
+            progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
+        else 
+            progressPanel.getComponent().setProgressBarTextAndColor("*Errors encountered in adding Data Source.", 100, Color.red);
+       
+        
+        //if errors, display them on the progress panel
+        for ( String err: errList ) {
+            // TBD: there should be an error level for each error
+             progressPanel.addErrors(err, false);
+        }
+       
          
         
         newContents.clear();
@@ -307,6 +317,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             Case.getCurrentCase().addLocalDataSource(newContents.get(0));
         }
 
+        
+        progressPanel.setStateStarted();
+         
         // Start ingest if we can
         startIngest();
         

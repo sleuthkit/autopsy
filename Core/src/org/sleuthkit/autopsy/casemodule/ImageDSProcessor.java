@@ -40,9 +40,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     
     private ImageFilePanel imageFilePanel;
     private AddImageTask addImageTask;
-    private CurrentDirectoryFetcher fetcher;
-  
-    private boolean addImageDone = false;
+   
     private boolean cancelled = false;
     
     DSPCallback callbackObj = null;
@@ -91,15 +89,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
    }
     
   @Override
-  public void run(WizardDescriptor settings, AddImageWizardAddingProgressPanel progressPanel, DSPCallback cbObj) {
+  public void run(WizardDescriptor settings, DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
       
       logger.log(Level.INFO, "RAMAN run()...");
       
       callbackObj = cbObj;
-      addImageDone = false;
       cancelled = false;
       
-      addImageTask = new AddImageTask(settings, progressPanel, cbObj);
+      addImageTask = new AddImageTask(settings, progressMonitor, cbObj);
       addImageTask.execute();
        
       return;
@@ -135,72 +132,70 @@ public class ImageDSProcessor implements DataSourceProcessor {
    * *****/
     
   
-  private static class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
-
-        //AddImageWizardIngestConfigPanel.AddImageTask task;
-        JProgressBar progressBar;
-        AddImageWizardAddingProgressVisual progressVisual;
-        SleuthkitJNI.CaseDbHandle.AddImageProcess process;
-
-        CurrentDirectoryFetcher(JProgressBar aProgressBar, AddImageWizardAddingProgressVisual wiz, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
-            this.progressVisual = wiz;
-            this.process = proc;
-            this.progressBar = aProgressBar;
-        }
-
-        /**
-         * @return the currently processing directory
-         */
-        @Override
-        protected Integer doInBackground() {
-            try {
-                while (progressBar.getValue() < 100 || progressBar.isIndeterminate()) { //TODO Rely on state variable in AddImgTask class
-
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressVisual.setCurrentDirText(process.currentDirectory());
-                        }
-                    });
-
-                    Thread.sleep(2 * 1000);
-                }
-                return 1;
-            } catch (InterruptedException ie) {
-                return -1;
-            }
-        }
-    }
-  
+   
   
    private class AddImageTask extends SwingWorker<Integer, Integer> {
 
-        private JProgressBar progressBar;
         private Case currentCase;
         // true if the process was requested to stop
         private boolean cancelled = false;
         //true if revert has been invoked.
         private boolean reverted = false;
         private boolean hasCritError = false;
-        private boolean addImagedone = false;
+        private boolean addImageDone = false;
         
-        
-        //private String errorString = null;
         private List<String> errorList = new ArrayList<String>();
         
         private WizardDescriptor wizDescriptor;
         
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
-        private AddImageWizardAddingProgressPanel progressPanel;
+        private DSPProgressMonitor progressMonitor;
         private DSPCallback callbackObj;
         
         private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
         
         private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
+        private CurrentDirectoryFetcher fetcher;
+   
         
-        protected AddImageTask(WizardDescriptor settings, AddImageWizardAddingProgressPanel aProgressPanel, DSPCallback cbObj ) {
-            this.progressPanel = aProgressPanel;
-            this.progressBar = progressPanel.getComponent().getProgressBar();
+      
+        private class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
+
+            DSPProgressMonitor progressMonitor;
+            SleuthkitJNI.CaseDbHandle.AddImageProcess process;
+
+            CurrentDirectoryFetcher(DSPProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
+                this.progressMonitor = aProgressMonitor;
+                this.process = proc;
+               // this.progressBar = aProgressBar;
+            }
+
+            /**
+             * @return the currently processing directory
+             */
+            @Override
+            protected Integer doInBackground() {
+                try {
+                    while (!(addImageDone)) { 
+                        EventQueue.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressMonitor.setText(process.currentDirectory()); 
+                            }
+                        });
+
+                        Thread.sleep(2 * 1000);
+                    }
+                    return 1;
+                } catch (InterruptedException ie) {
+                    return -1;
+                }
+            }
+        }
+   
+         
+        protected AddImageTask(WizardDescriptor settings, DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
+            this.progressMonitor = aProgressMonitor;
             currentCase = Case.getCurrentCase();
             
             this.callbackObj = cbObj;
@@ -223,18 +218,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
 
             errorList.clear();
 
-            /**** RAMAN TBD: a higher level caller should set up the cleanup task and then call DataSourceHandler.cancelProcessing()
-             *
-            // Add a cleanup task to interrupt the backgroud process if the
-            // wizard exits while the background process is running.
-            AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
-                @Override
-                void cleanup() throws Exception {
-                    logger.log(Level.INFO, "Add image process interrupted.");
-                    addImageTask.interrupt(); //it might take time to truly interrupt
-                }
-            };
-            * *************************/
 
 
             try {
@@ -263,27 +246,24 @@ public class ImageDSProcessor implements DataSourceProcessor {
         
             
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            fetcher = new CurrentDirectoryFetcher(this.progressBar, progressPanel.getComponent(), addImageProcess);
-            //RAMAN TBD: handle the cleanup task
-            //cancelledWhileRunning.enable();
+            fetcher = new CurrentDirectoryFetcher(progressMonitor, addImageProcess);
+          
             try {
-                progressPanel.setStateStarted();
+                progressMonitor.setIndeterminate(true);
+                progressMonitor.setProgress(0);
+               
                 fetcher.execute();
                 addImageProcess.run(new String[]{dataSourcePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
                 hasCritError = true;
-                //errorString = ex.getMessage();
                 errorList.add(ex.getMessage());
             } catch (TskDataException ex) {
                 logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
-                //errorString = ex.getMessage();
-                 errorList.add(ex.getMessage());
+                errorList.add(ex.getMessage());
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
-                 //RAMAN TBD: handle the cleanup task
-                //cancelledWhileRunning.disable();
 
             }
 
@@ -327,20 +307,19 @@ public class ImageDSProcessor implements DataSourceProcessor {
                     if (verificationErrors.equals("") == false) {
                         //data error (non-critical)
                         errorList.add(verificationErrors);
-                        //progressPanel.addErrors(verificationErrors, false);
                     }
 
-                    /*** RAMAN TBD: how to handle the newContent notification back to IngestConfigPanel **/
+                    // 
                     newContents.add(newImage);
                    
+                    // RAMAN TBD: imageID should be return via the callback
                     settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
                 }
 
                 // Can't bail and revert image add after commit, so disable image cleanup
                 // task
                 
-                // RAMAN TBD: cleanup task should be handled by the caller
-               // cleanupImage.disable();
+             
                 
                 settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
 
@@ -360,10 +339,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
         protected void done() {
             
             logger.log(Level.INFO, "RAMAN: done()...");
-                    
-            //these are required to stop the CurrentDirectoryFetcher
-            progressBar.setIndeterminate(false);
+                   
             setProgress(100);
+            
+            // cancel
+            fetcher.cancel(true);
 
             addImageDone = true;
             
@@ -372,19 +352,13 @@ public class ImageDSProcessor implements DataSourceProcessor {
             if (cancelled || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
                 revert();
-                if (hasCritError) {
-                    //core error
-                    // RAMAN TBD: Error reporting needs to be removed from here. All errors are returned to caller directly.
-                    //progressPanel.addErrors(errorString, true);
-                }
                 // Do not return yet.  Callback must be called
             }
             if (!errorList.isEmpty()) {
-                //data error (non-critical)
+               
                 logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
                 
-                 // RAMAN TBD: Error reporting needs to be removed from here. All errors are returned to caller directly.
-                //progressPanel.addErrors(errorString, false);
+                // error are returned back to the caller
             }
             
             // When everything happens without an error:
@@ -393,28 +367,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
                 try {
                     
 
-                    /* *****************************
-                     * RAMAN TBD: the caller needs to handle the cleanup ???
-                    // the add-image process needs to be reverted if the wizard doesn't finish
-                    cleanupImage = action.new CleanupTask() {
-                        //note, CleanupTask runs inside EWT thread
-                        @Override
-                        void cleanup() throws Exception {
-                            logger.log(Level.INFO, "Running cleanup task after add image process");
-                            revert();
-                        }
-                    };
-                    cleanupImage.enable();
-                    * ************************/
+                    
 
-                    //if (errorString == null) { // complete progress bar
-                    if (errorList.isEmpty() ) { // complete progress bar
-                        progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
-                    }
+                   
 
                     // RAMAN TBD: this should not be happening in here - caller should do this
 
                     // Get attention for the process finish
+                    /******
                     java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
                     AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
                     if (panel != null) {
@@ -423,9 +383,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
                             w.toFront();
                         }
                     }
+                    * *******/
 
                     // Tell the panel we're done
-                    progressPanel.setStateFinished();
+                    progressMonitor.setProgress(100);
 
 
                     if (newContents.isEmpty()) {
@@ -434,6 +395,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
                             try {
                                 commitImage(wizDescriptor);
                             } catch (Exception ex) {
+                                errorList.add(ex.getMessage());
                                 // Log error/display warning
                                 logger.log(Level.SEVERE, "Error adding image to case.", ex);
                             }
@@ -442,28 +404,19 @@ public class ImageDSProcessor implements DataSourceProcessor {
                         }
                     }
 
-                    else    //already commited?
-                         {
+                    else {   //already commited?
                         logger.log(Level.INFO, "Assuming image already committed, will not commit.");
-
                     }
 
 
 
-
-                    // Start ingest if we can
-                    // RAMAN TBD - remove this from here
-                    //startIngest();  
-
                 } catch (Exception ex) {
                     //handle unchecked exceptions post image add
 
+                    errorList.add(ex.getMessage());
+                    
                     logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
-
-                    progressPanel.getComponent().setProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
-
-                    // Log error/display warning
-
+                   
                     logger.log(Level.SEVERE, "Error adding image to case", ex);
                 } finally {
 
@@ -497,13 +450,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
               callbackObj.done(result, errorList, newContents);
         }
         
-        /*****
-        public List<Content> getNewContents() {
-            
-            return newContents;
-            
-        }
-        * ********/
         
         void cancelTask() {
             
