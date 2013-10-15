@@ -39,6 +39,7 @@ public class FileReportText implements FileReportModule {
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;
     private Writer out;
+    private static final String FILE_NAME = "file-report.txt";
     
     private static FileReportText instance;
     
@@ -52,7 +53,7 @@ public class FileReportText implements FileReportModule {
     
     @Override
     public void startReport(String path) {
-        this.reportPath = path + "report.txt";
+        this.reportPath = path + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
@@ -132,6 +133,6 @@ public class FileReportText implements FileReportModule {
 
     @Override
     public String getFilePath() {
-        return "file-report.txt";
+        return FILE_NAME;
     }
 }
