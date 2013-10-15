@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
@@ -90,18 +89,15 @@ public class Firefox extends Extract {
         try {
             historyFiles = fileManager.findFiles(dataSource, "%places.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching internet history files for Firefox.");
-        }
-        
-        if (historyFiles == null) {
-            return;
+            String msg = "Error fetching internet history files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
         }
 
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             String fileName = historyFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
-            int errors = 0;
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps));
             } catch (IOException ex) {
@@ -130,9 +126,6 @@ public class Firefox extends Extract {
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
 
             }
-            if (errors > 0) {
-                this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
-            }
             ++j;
             dbFile.delete();
         }
@@ -147,10 +140,9 @@ public class Firefox extends Extract {
         try {
             bookmarkFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching bookmark files for Firefox.");
-        }
-        
-        if (bookmarkFiles == null) {
+            String msg = "Error fetching bookmark files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
 
@@ -158,7 +150,6 @@ public class Firefox extends Extract {
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             String fileName = bookmarkFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
-            int errors = 0;
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps));
             } catch (IOException ex) {
@@ -184,9 +175,6 @@ public class Firefox extends Extract {
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
 
             }
-            if (errors > 0) {
-                this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
-            }
             ++j;
             dbFile.delete();
         }
@@ -203,10 +191,9 @@ public class Firefox extends Extract {
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "cookies.sqlite", "Firefox");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching cookies files for Firefox.");
-        }
-        
-        if (cookiesFiles == null) {
+            String msg = "Error fetching cookies files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
 
@@ -214,7 +201,6 @@ public class Firefox extends Extract {
         for (AbstractFile cookiesFile : cookiesFiles) {
             String fileName = cookiesFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
-            int errors = 0;
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps));
             } catch (IOException ex) {
@@ -261,9 +247,6 @@ public class Firefox extends Extract {
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
 
             }
-            if (errors > 0) {
-                this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
-            }
             ++j;
             dbFile.delete();
         }
@@ -280,10 +263,9 @@ public class Firefox extends Extract {
         try {
             downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'downloads' files for Firefox.");
-        }
-
-        if (downloadsFiles == null) {
+            String msg = "Error fetching 'downloads' files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
 
