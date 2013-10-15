@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +39,10 @@ public final class ReportVisualPanel1 extends JPanel {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private ReportWizardPanel1 wizPanel;
     
-    private Map<TableReportModule, Boolean> tableModuleStates = new LinkedHashMap<TableReportModule, Boolean>();
     private Map<GeneralReportModule, Boolean> generalModuleStates = new LinkedHashMap<GeneralReportModule, Boolean>();
     private Map<FileReportModule, Boolean> fileListModuleStates = new LinkedHashMap<FileReportModule, Boolean>();
-    private List<TableReportModule> tableModules = new ArrayList<TableReportModule>();
-    private List<GeneralReportModule> generalModules = new ArrayList<GeneralReportModule>();
-    private List<FileReportModule> fileListModules = new ArrayList<FileReportModule>();
+    private List<ReportModule> modules = new ArrayList<>();
+    private Map<ReportModule, Boolean> moduleStates;
     
     private ModulesTableModel modulesModel;
     private ModuleSelectionListener modulesListener;
@@ -51,6 +51,7 @@ public final class ReportVisualPanel1 extends JPanel {
      * Creates new form ReportVisualPanel1
      */
     public ReportVisualPanel1(ReportWizardPanel1 wizPanel) {
+        moduleStates = new LinkedHashMap<>();
         initComponents();
         initModules();
         this.wizPanel = wizPanel;
@@ -61,22 +62,28 @@ public final class ReportVisualPanel1 extends JPanel {
     
     // Initialize the list of ReportModules
     private void initModules() {
-        for(TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
-            if(module.getName().equals("HTML")) {
-                tableModuleStates.put(module, Boolean.TRUE);
+        for (ReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
+            if (module.getName().equals("Results - HTML")) {
+                moduleStates.put(module, Boolean.TRUE);
             } else {
-                tableModuleStates.put(module, Boolean.FALSE);
+                moduleStates.put(module, Boolean.FALSE);
             }
-            tableModules.add(module);
         }
-        for(GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
-            generalModuleStates.put(module, Boolean.FALSE);
-            generalModules.add(module);
+        for (ReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
+            moduleStates.put(module, Boolean.FALSE);
         }
-        for(FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
-            fileListModuleStates.put(module, Boolean.FALSE);
-            fileListModules.add(module);
+        for (ReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
+            moduleStates.put(module, Boolean.FALSE);
         }
+        
+        modules.addAll(moduleStates.keySet());
+        Collections.sort(modules, new Comparator<ReportModule>() {
+            @Override
+            public int compare(ReportModule rm1, ReportModule rm2) {
+                return rm1.getName().compareTo(rm2.getName());
+            }
+            
+        });
         
         modulesModel = new ModulesTableModel();
         modulesListener = new ModuleSelectionListener();
@@ -106,6 +113,12 @@ public final class ReportVisualPanel1 extends JPanel {
      * @return the enabled/disabled states of all TableReportModules
      */
     Map<TableReportModule, Boolean> getTableModuleStates() {
+        Map<TableReportModule, Boolean> tableModuleStates = new LinkedHashMap<>();
+        for (Entry<ReportModule, Boolean> module : moduleStates.entrySet()) {
+            if (module.getKey() instanceof TableReportModule) {
+                tableModuleStates.put((TableReportModule) module.getKey(), module.getValue());
+            }
+        }
         return tableModuleStates;
     }
     
@@ -113,6 +126,12 @@ public final class ReportVisualPanel1 extends JPanel {
      * @return the enabled/disabled states of all GeneralReportModules
      */
     Map<GeneralReportModule, Boolean> getGeneralModuleStates() {
+        Map<GeneralReportModule, Boolean> generalModuleStates = new LinkedHashMap<>();
+        for (Entry<ReportModule, Boolean> module : moduleStates.entrySet()) {
+            if (module.getKey() instanceof GeneralReportModule) {
+                generalModuleStates.put((GeneralReportModule) module.getKey(), module.getValue());
+            }
+        }
         return generalModuleStates;
     }
     
@@ -120,7 +139,13 @@ public final class ReportVisualPanel1 extends JPanel {
      * @return the enabled/disabled states of all FileListReportModules
      */
     Map<FileReportModule, Boolean> getFileListModuleStates() {
-        return fileListModuleStates;
+        Map<FileReportModule, Boolean> fileModuleStates = new LinkedHashMap<>();
+        for (Entry<ReportModule, Boolean> module : moduleStates.entrySet()) {
+            if (module.getKey() instanceof FileReportModule) {
+                fileModuleStates.put((FileReportModule) module.getKey(), module.getValue());
+            }
+        }
+        return fileModuleStates;
     }
     
     /**
@@ -217,7 +242,7 @@ public final class ReportVisualPanel1 extends JPanel {
 
         @Override
         public int getRowCount() {
-           return tableModules.size() + generalModules.size() + fileListModules.size();
+            return moduleStates.size();
         }
 
         @Override
@@ -227,22 +252,15 @@ public final class ReportVisualPanel1 extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            ReportModule module;
-            if (rowIndex < tableModules.size()) {
-                module = tableModules.get(rowIndex);
-            } else if (rowIndex >= tableModules.size() && rowIndex < tableModules.size() + generalModules.size()){
-                module = generalModules.get(rowIndex - tableModules.size());
-            } else {
-                module = fileListModules.get(rowIndex - tableModules.size() - generalModules.size());
+            if (rowIndex >= moduleStates.size()) {
+                return "";
             }
-            if (columnIndex == 0 && rowIndex < tableModules.size()) {
-               return tableModuleStates.get(tableModules.get(rowIndex));
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size() && rowIndex < tableModules.size() + generalModules.size()) {
-                return generalModuleStates.get(generalModules.get(rowIndex - tableModules.size()));
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size() + generalModules.size()) {
-                return fileListModuleStates.get(fileListModules.get(rowIndex - tableModules.size() - generalModules.size()));
+            if (columnIndex == 0) {
+                // selection status
+                return moduleStates.get(modules.get(rowIndex));
             } else {
-                return module.getName();
+                // module name
+                return modules.get(rowIndex).getName();
             }
         }
 
@@ -253,36 +271,27 @@ public final class ReportVisualPanel1 extends JPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == 0 && rowIndex < tableModules.size()) {
-                tableModuleStates.put(tableModules.get(rowIndex), (Boolean) aValue);
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size() && rowIndex < tableModules.size() + generalModules.size()) {
-                generalModuleStates.put(generalModules.get(rowIndex - tableModules.size()), (Boolean) aValue);
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size() + generalModules.size()) {
-                fileListModuleStates.put(fileListModules.get(rowIndex - tableModules.size() - generalModules.size()), (Boolean) aValue);
+            if (columnIndex == 0) {
+                moduleStates.put(modules.get(rowIndex), (Boolean) aValue);
             }
+            
             // Check if there are any TableReportModules enabled
-            boolean tableModuleEnabled = false;
-            for (Entry<TableReportModule, Boolean> module : tableModuleStates.entrySet()) {
+            boolean moduleEnabled = false;
+            boolean moreConfig = false;
+            for (Entry<ReportModule, Boolean> module : moduleStates.entrySet()) {
                 if (module.getValue()) {
-                    tableModuleEnabled = true;
-                }
+                    if (module.getKey() instanceof TableReportModule
+                            || module.getKey() instanceof FileReportModule) {
+                        moreConfig = true;
+                    } 
+                    moduleEnabled = true;
+                } 
             }
-            boolean generalModuleEnabled = false;
-            for (Entry<GeneralReportModule, Boolean> module : generalModuleStates.entrySet()) {
-                if (module.getValue()) {
-                    generalModuleEnabled = true;
-                }
-            }
-            boolean fileListModuleEnabled = false;
-            for (Entry<FileReportModule, Boolean> module : fileListModuleStates.entrySet()) {
-                if (module.getValue()) {
-                    fileListModuleEnabled = true;
-                }
-            }
-            if(tableModuleEnabled || fileListModuleEnabled) {
+            
+            if(moreConfig) {
                 wizPanel.setNext(true);
                 wizPanel.setFinish(false);
-            } else if(generalModuleEnabled) {
+            } else if (moduleEnabled) {
                 wizPanel.setFinish(true);
                 wizPanel.setNext(false);
             } else {
@@ -303,20 +312,16 @@ public final class ReportVisualPanel1 extends JPanel {
         public void valueChanged(ListSelectionEvent e) {
             configurationPanel.removeAll();
             int rowIndex = modulesTable.getSelectedRow();
-            if (rowIndex < tableModules.size()) {
-                configurationPanel.add(new DefaultReportConfigurationPanel(), BorderLayout.CENTER);
-                descriptionTextPane.setText(tableModules.get(rowIndex).getDescription());
-            } else if (rowIndex >= tableModules.size() && rowIndex < tableModules.size() + generalModules.size()) {
-                GeneralReportModule module = generalModules.get(rowIndex - tableModules.size());
-                JPanel panel = module.getConfigurationPanel();
-                descriptionTextPane.setText(module.getDescription());
-                if (panel != null) {
-                    configurationPanel.add(panel, BorderLayout.CENTER);
-                }
-            } else {
-                configurationPanel.add(new DefaultReportConfigurationPanel(), BorderLayout.CENTER);
-                descriptionTextPane.setText(fileListModules.get(rowIndex - tableModules.size() - generalModules.size()).getDescription());
+            
+            JPanel panel = new DefaultReportConfigurationPanel();
+            ReportModule module = modules.get(rowIndex);
+            if (module instanceof GeneralReportModule) {
+                JPanel generalPanel = ((GeneralReportModule) module).getConfigurationPanel();
+                panel = (generalPanel == null) ? panel : generalPanel;
             }
+            
+            descriptionTextPane.setText(module.getDescription());
+            configurationPanel.add(panel, BorderLayout.CENTER);
             configurationPanel.revalidate();
             configurationPanel.repaint();
         }
