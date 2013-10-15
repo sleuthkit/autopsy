@@ -110,7 +110,7 @@ public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<Wiza
         Map<GeneralReportModule, Boolean> generals = getComponent().getGeneralModuleStates();
         wiz.putProperty("tableModuleStates", tables);
         wiz.putProperty("generalModuleStates", generals);
-        wiz.putProperty("fileListModuleStates", getComponent().getFileModuleStates());
+        wiz.putProperty("fileModuleStates", getComponent().getFileModuleStates());
         
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
