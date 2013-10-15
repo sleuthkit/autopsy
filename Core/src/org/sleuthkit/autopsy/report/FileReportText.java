@@ -132,6 +132,6 @@ public class FileReportText implements FileReportModule {
 
     @Override
     public String getFilePath() {
-        return "report.txt";
+        return "file-report.txt";
     }
 }
