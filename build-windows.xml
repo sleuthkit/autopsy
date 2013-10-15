@@ -183,10 +183,11 @@
     </target>
     
     <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
-        <var name="new-jre-path" value="${inst-path}/jre"/>
+        <var name="new-jre-path" value="${inst-path}\jre"/>
         <mkdir dir="${new-jre-path}"/>
         <copy todir="${new-jre-path}" >  
-            <fileset dir="&quot;${jre-path}&quot;">
+            <fileset dir="${jre-path}">
+                <include name="**/*"/>
             </fileset>
         </copy>
         <echo message="${ai-exe-path}" /> 
