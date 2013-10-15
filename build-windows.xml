@@ -186,8 +186,7 @@
         <var name="new-jre-path" value="${inst-path}/jre"/>
         <mkdir dir="${new-jre-path}"/>
         <copy todir="${new-jre-path}" >  
-            <fileset dir="&quot;${jre-path}&quot;">  
-                <include name="**"/>
+            <fileset dir="&quot;${jre-path}&quot;">
             </fileset>
         </copy>
         <echo message="${ai-exe-path}" /> 
