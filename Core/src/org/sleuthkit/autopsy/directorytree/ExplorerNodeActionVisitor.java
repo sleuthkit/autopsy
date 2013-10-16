@@ -249,6 +249,13 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             imgDetailPanel.setImgNameValue(img.getName());
             imgDetailPanel.setImgTypeValue(img.getType().getName());
             imgDetailPanel.setImgSectorSizeValue(Long.toString(img.getSsize()));
+            imgDetailPanel.setImgTotalSizeValue(Long.toString(img.getSize()));
+            String hash = img.getHash();
+            // don't show the hash if there isn't one
+            imgDetailPanel.setVisibleHashInfo(hash != null);
+            imgDetailPanel.setImgHashValue(hash);
+            
+            
             counter = true;
 
             if (counter) {
