@@ -30,9 +30,6 @@ import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsRootNode;
 import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 
 /**
@@ -85,12 +82,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(EmailExtractedAccountNode eean);
 
     T visit(EmailExtractedFolderNode eefn);
-
-    T visit(TagsRootNode bksrn);
-
-    T visit(TagsNodeRoot bksrn);
-
-    T visit(TagNodeRoot tnr);
 
     T visit(TagsNode node);
 
@@ -275,21 +266,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(VirtualDirectoryNode ldn) {
             return defaultVisit(ldn);
-        }
-
-        @Override
-        public T visit(TagsRootNode bksrn) {
-            return defaultVisit(bksrn);
-        }
-
-        @Override
-        public T visit(TagsNodeRoot bksnr) {
-            return defaultVisit(bksnr);
-        }
-
-        @Override
-        public T visit(TagNodeRoot tnr) {
-            return defaultVisit(tnr);
         }
 
         @Override

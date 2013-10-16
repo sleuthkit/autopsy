@@ -35,8 +35,12 @@ import org.sleuthkit.datamodel.TagName;
  * An abstract base class for Actions that allow users to tag SleuthKit data 
  * model objects.  
  */
-abstract class AddTagAction extends AbstractAction implements Presenter.Popup { 
+abstract class AddTagAction extends TagAction implements Presenter.Popup { 
     private static final String NO_COMMENT = "";
+    
+    AddTagAction(String menuText) {
+        super(menuText);
+    }
     
     @Override
     public JMenuItem getPopupPresenter() {            
@@ -44,7 +48,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     }
                 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    protected void doAction(ActionEvent event) {
     }
             
     /**
@@ -58,14 +62,6 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
      * comment to one or more a SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
-
-    private void refreshDirectoryTree() {
-        //TODO instead should send event to node children, which will call its refresh() / refreshKeys()
-        // RJCTODO: Explain what is going on here and pare to one refreshTree() call.
-        DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-    }
 
     /**
      * Instances of this class implement a context menu user interface for 
@@ -90,7 +86,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
             // a tag with the associated tag name. 
-            if (tagNames.isEmpty()) {
+            if (!tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
                     JMenuItem tagNameItem = new JMenuItem(tagName.getDisplayName());
                     tagNameItem.addActionListener(new ActionListener() {
@@ -114,7 +110,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
-            JMenuItem newTagMenuItem = new JMenuItem("Choose Tag...");
+            JMenuItem newTagMenuItem = new JMenuItem("New Tag...");
             newTagMenuItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -127,10 +123,10 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             });
             quickTagMenu.add(newTagMenuItem);
 
-            // Create a "Choose Tag and Comment..." menu item. Selecting this itme initiates
+            // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an 
             // optional comment and adds a tag with the resulting name.
-            JMenuItem tagAndCommentItem = new JMenuItem("Choose Tag and Comment...");
+            JMenuItem tagAndCommentItem = new JMenuItem("Tag and Comment...");
             tagAndCommentItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

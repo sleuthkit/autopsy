@@ -19,11 +19,15 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -68,6 +72,13 @@ public class ContentTagNode extends DisplayableItemNode {
         return propertySheet;
     }
 
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actions = new ArrayList<>();
+        actions.add(DeleteContentTagAction.getInstance());
+        return actions.toArray(new Action[0]);
+    }    
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

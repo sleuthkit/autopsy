@@ -46,6 +46,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
     }
 
     private AddBlackboardArtifactTagAction() {
+        super("");
     }
                 
     @Override
@@ -57,7 +58,6 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
     protected void addTag(TagName tagName, String comment) {
         Collection<? extends BlackboardArtifact> selectedArtifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
         for (BlackboardArtifact artifact : selectedArtifacts) {
-            Tags.createTag(artifact, tagName.getDisplayName(), comment); //RJCTODO: Jettision this
             try {
                 Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
             }

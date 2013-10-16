@@ -52,8 +52,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(EmailExtracted ee);
 
-    T visit(Tags t);
-
     T visit(TagsNodeKey tagsNodeKey);
         
     T visit(DataSources i);
@@ -134,11 +132,6 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(EmailExtracted ee) {
             return defaultVisit(ee);
-        }
-
-        @Override
-        public T visit(Tags t) {
-            return defaultVisit(t);
         }
 
         @Override

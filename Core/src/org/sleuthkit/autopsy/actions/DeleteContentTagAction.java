@@ -18,52 +18,48 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to apply tags to content.  
+ * Instances of this Action allow users to delete tags applied to content.  
  */
-public class AddContentTagAction extends AddTagAction { 
+public class DeleteContentTagAction extends TagAction {
+    private static final String MENU_TEXT = "Delete Tag(s)";
+        
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
-    private static AddContentTagAction instance;
+    private static DeleteContentTagAction instance;
 
-    public static synchronized AddContentTagAction getInstance() {
+    public static synchronized DeleteContentTagAction getInstance() {
         if (null == instance) {
-            instance = new AddContentTagAction();
+            instance = new DeleteContentTagAction();
         }
         return instance;
     }
 
-    private AddContentTagAction() {
-        super("");
-    }
-                       
+    private DeleteContentTagAction() {
+        super(MENU_TEXT);
+    }    
+    
     @Override
-    protected String getActionDisplayName() {
-        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File";
-    }
-
-    @Override
-    protected void addTag(TagName tagName, String comment) {
-        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        for (AbstractFile file : selectedFiles) {
+    protected void doAction(ActionEvent e) {
+        Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
+        for (ContentTag tag : selectedTags) {
             try {
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
+                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
-                JOptionPane.showMessageDialog(null, "Unable to tag " + file.getName() + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex);                
+                JOptionPane.showMessageDialog(null, "Unable to delete tag " + tag.getName() + ".", "Tag Deletion Error", JOptionPane.ERROR_MESSAGE);
             }                    
         }                             
     }    

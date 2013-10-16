@@ -77,7 +77,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<ContentTag> keys) {
             // Use the content tags bearing the specified tag name as the keys. 
-            Case.getCurrentCase().getServices().getTagsManager().getContentTags(tagName, keys);            
+            Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName, keys);            
             return true;
         }
 

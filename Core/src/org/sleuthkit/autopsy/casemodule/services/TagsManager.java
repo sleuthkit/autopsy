@@ -37,20 +37,105 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A singleton instance of this class functions as an Autopsy service that 
- * manages the creation, updating, and deletion of tags applied to Content and 
- * BlackboardArtifacts objects by users. 
+ * manages the creation, updating, and deletion of tags applied to content and 
+ * blackboard artifacts by users. 
  */
 public class TagsManager implements Closeable {
-    private static final String TAGS_SETTINGS_FILE_NAME = "tags";
-    private static final String TAG_NAMES_SETTING_KEY = "tagNames";    
+    private static final String TAGS_SETTINGS_NAME = "Tags";
+    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; 
+    private static final TagName[] predefinedTagNames = new TagName[]{new TagName("Bookmark", "", TagName.HTML_COLOR.NONE)};
     private final SleuthkitCase tskCase;    
     private final HashMap<String, TagName> tagNames = new HashMap<>();
+    private final Object lock = new Object();
     
+    // Use this exception and the member hash map to manage uniqueness of hash 
+    // names. This is deemed more proactive and informative than leaving this to 
+    // the UNIQUE constraint on the display_name field of the tag_names table in 
+    // the case database.
+    public class TagNameAlreadyExistsException extends Exception {
+    }
+        
+    /**
+     * Package-scope constructor for use of Services class. An instance of 
+     * TagsManager should be created for each case that is opened.
+     * @param [in] tskCase The SleuthkitCase object for the current case. 
+     */
     TagsManager(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
-        loadTagNamesFromTagSettings();
+        getExistingTagNames();
+        saveTagNamesToTagsSettings();                            
     }
-          
+
+    private void getExistingTagNames() {
+        getTagNamesFromCurrentCase();
+        getTagNamesFromTagsSettings();
+        getPredefinedTagNames();
+    }
+    
+    private void getTagNamesFromCurrentCase() {
+        try {
+            ArrayList<TagName> currentTagNames = new ArrayList<>();
+            tskCase.getAllTagNames(currentTagNames);
+            for (TagName tagName : currentTagNames) {
+                tagNames.put(tagName.getDisplayName(), tagName);
+            }
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex);                    
+        }        
+    }
+    
+    private void getTagNamesFromTagsSettings() {
+        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+        if (null != setting && !setting.isEmpty()) {                
+            // Read the tag name setting and break it into tag name tuples.
+            List<String> tagNameTuples = Arrays.asList(setting.split(";"));                        
+            
+            // Parse each tuple and add the tag names to the current case, one
+            // at a time to gracefully discard any duplicates or corrupt tuples.
+            for (String tagNameTuple : tagNameTuples) {                
+                String[] tagNameAttributes = tagNameTuple.split(",");
+                if (!tagNames.containsKey(tagNameAttributes[0])) {
+                    TagName tagName = new TagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
+                    addTagName(tagName, "Failed to add " + tagName.getDisplayName() + " tag name from tag settings to the current case");
+                }
+            }
+        }                                            
+    }
+
+    private void getPredefinedTagNames() {
+        for (TagName tagName : predefinedTagNames) {
+            if (!tagNames.containsKey(tagName.getDisplayName())) {
+                addTagName(tagName, "Failed to add predefined " + tagName.getDisplayName() + " tag name to the current case");
+            }
+        }
+    }
+    
+    private void addTagName(TagName tagName, String errorMessage) {
+        try {
+            tskCase.addTagName(tagName);
+            tagNames.put(tagName.getDisplayName(), tagName);
+        }
+        catch(TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, errorMessage, ex);            
+        }                                
+    }
+    
+    private void saveTagNamesToTagsSettings() {
+        if (!tagNames.isEmpty()) {
+            StringBuilder setting = new StringBuilder();
+            for (TagName tagName : tagNames.values()) {
+                if (setting.length() != 0) {
+                    setting.append(";");
+                }
+                setting.append(tagName.getDisplayName()).append(",");
+                setting.append(tagName.getDescription()).append(",");
+                setting.append(tagName.getColor().name());
+            }
+            ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());            
+        }
+    }    
+        
     /**
      * Gets a list of all tag names currently available for tagging content or 
      * blackboard artifacts.
@@ -67,27 +152,35 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * RJCTODO: Discard or properly comment 
+     * Gets a list of all tag names currently used for tagging content or 
+     * blackboard artifacts.
+     * @return [out] A list, possibly empty, of TagName data transfer objects (DTOs). 
+     */
+    public void getTagNamesInUse(List<TagName> tagNames) {    
+        try {
+            tagNames.clear();
+            tskCase.getTagNamesInUse(tagNames);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names from the current case", ex);                    
+        }
+    }
+        
+    /**
+     * Checks whether a tag name with a given display name exists.
+     * @param [in] tagDisplayName The display name for which to check.
+     * @return True if the tag name exists, false otherwise.
      */
     public boolean tagNameExists(String tagDisplayName) {
-        return tagNames.containsKey(tagDisplayName);
+        synchronized(lock) {
+            return tagNames.containsKey(tagDisplayName);
+        }
     }
                     
     /**
-     * RJCTODO: Discard or properly comment 
-     */
-    public TagName getTagName(String tagDisplayName) {
-        if (!tagNames.containsKey(tagDisplayName)) {
-            // RJCTODO: Throw exception
-        }
-        
-        return tagNames.get(tagDisplayName);
-    }
-    
-    /**
      * Adds a new tag name to the current case and to the tags settings file.
-     * @param displayName The display name for the new tag name.
-     * @return A TagName object representing the new tag name on success, null on failure.  
+     * @param [in] displayName The display name for the new tag name.
+     * @return A TagName data transfer object (DTO) representing the new tag name.  
      * @throws TskCoreException 
      */
     public TagName addTagName(String displayName) throws TagNameAlreadyExistsException, TskCoreException {
@@ -96,9 +189,9 @@ public class TagsManager implements Closeable {
 
     /**
      * Adds a new tag name to the current case and to the tags settings file.
-     * @param displayName The display name for the new tag name.
-     * @param description The description for the new tag name.
-     * @return A TagName object representing the new tag name on success, null on failure.  
+     * @param [in] displayName The display name for the new tag name.
+     * @param [in] description The description for the new tag name.
+     * @return A TagName data transfer object (DTO) representing the new tag name.  
      * @throws TskCoreException 
      */
     public TagName addTagName(String displayName, String description) throws TagNameAlreadyExistsException, TskCoreException {
@@ -107,31 +200,34 @@ public class TagsManager implements Closeable {
 
     /**
      * Adds a new tag name to the current case and to the tags settings file.
-     * @param displayName The display name for the new tag name.
-     * @param description The description for the new tag name.
-     * @param color The HTML color to associate with the new tag name.
-     * @return A TagName object representing the new tag name.  
+     * @param [in] displayName The display name for the new tag name.
+     * @param [in] description The description for the new tag name.
+     * @param [in] color The HTML color to associate with the new tag name.
+     * @return A TagName data transfer object (DTO) representing the new tag name.  
      * @throws TskCoreException 
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
-        if (tagNames.containsKey(displayName)) {
-            throw new TagNameAlreadyExistsException();
-        }
+        synchronized(lock) {
+            if (tagNames.containsKey(displayName)) {
+                throw new TagNameAlreadyExistsException();
+            }
+
+            // Add the tag name to the case.
+            TagName newTagName = new TagName(displayName, description, color);
+            tskCase.addTagName(newTagName); 
+
+            // Add the tag name to the tags settings.
+            tagNames.put(newTagName.getDisplayName(), newTagName);
+            saveTagNamesToTagsSettings();        
+    
+            return newTagName;
+        }        
+    }
         
-        TagName newTagName = new TagName(displayName, description, color);
-        tskCase.addTagName(newTagName); 
-        tagNames.put(newTagName.getDisplayName(), newTagName);
-        saveTagNamesToTagsSettings();
-        return newTagName;
-    }
-    
-    public class TagNameAlreadyExistsException extends Exception {
-    }
-    
     /**
-     * Tags a Content object.
-     * @param content The Content to tag.
-     * @param tagName The type of tag to add.
+     * Tags a content object.
+     * @param [in] content The content to tag.
+     * @param [in] tagName The name to use for the tag.
      * @throws TskCoreException 
      */
     public void addContentTag(Content content, TagName tagName) throws TskCoreException {
@@ -139,10 +235,10 @@ public class TagsManager implements Closeable {
     }    
     
     /**
-     * Tags a Content object.
-     * @param content The Content to tag.
-     * @param tagName The name to use for the tag.
-     * @param comment A comment to store with the tag.
+     * Tags a content object.
+     * @param [in] content The content to tag.
+     * @param [in] tagName The name to use for the tag.
+     * @param [in] comment A comment to store with the tag.
      * @throws TskCoreException 
      */
     public void addContentTag(Content content, TagName tagName, String comment) throws TskCoreException {
@@ -150,12 +246,12 @@ public class TagsManager implements Closeable {
     }    
     
     /**
-     * Tags a Content object or a portion of a content object.
-     * @param content The Content to tag.
-     * @param tagName The name to use for the tag.
-     * @param comment A comment to store with the tag.
-     * @param beginByteOffset Designates the beginning of a tagged extent. 
-     * @param endByteOffset Designates the end of a tagged extent.
+     * Tags a content object or a portion of a content object.
+     * @param [in] content The content to tag.
+     * @param [in] tagName The name to use for the tag.
+     * @param [in] comment A comment to store with the tag.
+     * @param [in] beginByteOffset Designates the beginning of a tagged extent. 
+     * @param [in] endByteOffset Designates the end of a tagged extent.
      * @throws TskCoreException 
      */
     public void addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws IllegalArgumentException, TskCoreException {
@@ -176,7 +272,7 @@ public class TagsManager implements Closeable {
     
     /**
      * Deletes a content tag.
-     * @param tag The tag to delete.
+     * @param [in] tag The tag to delete.
      * @throws TskCoreException 
      */
     public void deleteContentTag(ContentTag tag) throws TskCoreException {
@@ -184,36 +280,11 @@ public class TagsManager implements Closeable {
     }
     
     /**
-     * Tags a BlackboardArtifact object.
-     * @param artifact The BlackboardArtifact to tag.
-     * @param tagName The name to use for the tag.
-     * @throws TskCoreException 
+     * Gets content tags by tag name.
+     * @param [in] tagName The tag name of interest. 
+     * @return A list, possibly empty, of the content tags with the specified tag name.
      */
-    public void addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
-        addBlackboardArtifactTag(artifact, tagName, "");   
-    }
-        
-    /**
-     * Tags a BlackboardArtifact object.
-     * @param artifact The BlackboardArtifact to tag.
-     * @param tagName The name to use for the tag.
-     * @param comment A comment to store with the tag.
-     * @throws TskCoreException 
-     */
-    public void addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
-        tskCase.addBlackboardArtifactTag(new BlackboardArtifactTag(artifact, tskCase.getContentById(artifact.getObjectID()), tagName, comment));       
-    }
-
-    void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
-        tskCase.deleteBlackboardArtifactTag(tag);
-    }
-    
-    /**
-     * RJCTODO
-     * @param tagName
-     * @return 
-     */
-    public void getContentTags(TagName tagName, List<ContentTag> tags) {
+    public void getContentTagsByTagName(TagName tagName, List<ContentTag> tags) {
         try {
             tskCase.getContentTagsByTagName(tagName, tags);        
         }
@@ -221,13 +292,43 @@ public class TagsManager implements Closeable {
             Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get content tags from the current case", ex);                    
         }
     }
-    
+        
     /**
-     * RJCTODO
-     * @param tagName
-     * @return 
+     * Tags a blackboard artifact object.
+     * @param [in] artifact The blackboard artifact to tag.
+     * @param [in] tagName The name to use for the tag.
+     * @throws TskCoreException 
      */
-    public void getBlackboardArtifactTags(TagName tagName, List<BlackboardArtifactTag> tags) {
+    public void addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
+        addBlackboardArtifactTag(artifact, tagName, "");   
+    }
+        
+    /**
+     * Tags a blackboard artifact object.
+     * @param [in] artifact The blackboard artifact to tag.
+     * @param [in] tagName The name to use for the tag.
+     * @param [in] comment A comment to store with the tag.
+     * @throws TskCoreException 
+     */
+    public void addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
+        tskCase.addBlackboardArtifactTag(new BlackboardArtifactTag(artifact, tskCase.getContentById(artifact.getObjectID()), tagName, comment));       
+    }
+
+    /**
+     * Deletes a blackboard artifact tag.
+     * @param [in] tag The tag to delete.
+     * @throws TskCoreException 
+     */
+    public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
+        tskCase.deleteBlackboardArtifactTag(tag);
+    }
+        
+    /**
+     * Gets blackboard artifact tags by tag name.
+     * @param [in] tagName The tag name of interest. 
+     * @return A list, possibly empty, of the content tags with the specified tag name.
+     */
+    public void getBlackboardArtifactTagsByTagName(TagName tagName, List<BlackboardArtifactTag> tags) {
         try {
             tskCase.getBlackboardArtifactTagsByTagName(tagName, tags);        
         }
@@ -239,62 +340,5 @@ public class TagsManager implements Closeable {
     @Override
     public void close() throws IOException {  
         saveTagNamesToTagsSettings();            
-    }
-    
-    private void loadTagNamesFromTagSettings() {
-        // Get any tag names already defined for the current case.
-        try {
-            ArrayList<TagName> currentTagNames = new ArrayList<>();
-            tskCase.getAllTagNames(currentTagNames);
-            for (TagName tagName : currentTagNames) {
-                tagNames.put(tagName.getDisplayName(), tagName);
-            }
-        }
-        catch (TskCoreException ex) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex);                    
-        }
-        
-        // Read the saved tag names, if any, from the tags settings file and 
-        // add them to the current case if they haven't already been added, e.g, 
-        // when the case was last opened.
-        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY);
-        if (null != setting && !setting.isEmpty()) {                
-            // Read the tag types setting and break in into tag type tuples.
-            List<String> tagNameTuples = Arrays.asList(setting.split(";"));                        
-            
-            // Parse each tuple and add the tag types to the current case, one
-            // at a time to gracefully discard any duplicates or corrupt tuples.
-            for (String tagNameTuple : tagNameTuples) {                
-                String[] tagNameAttributes = tagNameTuple.split(",");
-                if (!tagNames.containsKey(tagNameAttributes[0])) {
-                    TagName tagName = new TagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
-                    try {
-                        tskCase.addTagName(tagName);
-                        tagNames.put(tagName.getDisplayName(),tagName);
-                    }
-                    catch(TskCoreException ex) {
-                        Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, "Failed to add saved " + tagName.getDisplayName() + " tag name to the current case", ex);            
-                    }            
-                }
-            }
-
-            saveTagNamesToTagsSettings();            
-        }                                    
-    }
-    
-    private void saveTagNamesToTagsSettings() {
-        if (!tagNames.isEmpty()) {
-            StringBuilder setting = new StringBuilder();
-            for (TagName tagName : tagNames.values()) {
-                if (setting.length() != 0) {
-                    setting.append(";");
-                }
-                setting.append(tagName.getDisplayName()).append(",");
-                setting.append(tagName.getDescription()).append(",");
-                setting.append(tagName.getColor().name());
-            }
-
-            ModuleSettings.setConfigSetting(TAGS_SETTINGS_FILE_NAME, TAG_NAMES_SETTING_KEY, setting.toString());            
-        }
     }    
 }

@@ -43,6 +43,10 @@ public class TagsNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
     }
     
+    public static String getNodeName() {
+        return DISPLAY_NAME;
+    }
+    
     @Override
     public boolean isLeafTypeNode() {
         return false;
@@ -70,7 +74,7 @@ public class TagsNode extends DisplayableItemNode {
     private static class TagNameNodeFactory extends ChildFactory<TagName> {
         @Override
         protected boolean createKeys(List<TagName> keys) {
-            Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys); // RJCTODO: Change this call to filtered call
+            Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys);
             return true;
         }
 

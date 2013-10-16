@@ -35,7 +35,6 @@ public class ResultsNode extends DisplayableItemNode {
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new Tags(sleuthkitCase), //TODO move to the top of the tree
                 new TagsNodeKey()
                 )), Lookups.singleton(NAME));
         setName(NAME);

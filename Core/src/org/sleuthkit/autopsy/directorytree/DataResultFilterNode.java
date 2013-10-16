@@ -63,8 +63,6 @@ import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -403,16 +401,6 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public AbstractAction visit(ArtifactTypeNode atn) {
             return openChild(atn);
-        }
-
-        @Override
-        public AbstractAction visit(TagNodeRoot tnr) {
-            return openChild(tnr);
-        }
-
-        @Override
-        public AbstractAction visit(TagsNodeRoot tnr) {
-            return openChild(tnr);
         }
 
         @Override

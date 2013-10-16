@@ -81,7 +81,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
             // Use the blackboard artifact tags bearing the specified tag name as the keys. 
-            Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTags(tagName, keys);            
+            Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, keys);            
             return true;
         }
 
