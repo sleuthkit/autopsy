@@ -197,15 +197,6 @@
             <available file="${theFile}" type="file" />
         </condition>
     </target>
-    
-<!--    <target name="add-ai-jre" description="Adds JRE to Advanced Installer project">
-        
-        <echo message="${ai-exe-path}" /> 
-        <echo message="Adding JRE to installer: ${jre-path}"/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /AddFolder APPDIR &quot;${new-jre-path}&quot;" />
-        </exec>
-    </target>-->
 
     <target name="add-ai-shortcuts" description="Add shortcuts to the aip file">
         <echo message="Adding desktop/menu shortcuts..."/>
