@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.report;
 
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Represents Column Headers for FileList Reports.
@@ -42,6 +43,21 @@ public enum FileReportDataTypes {
             String name = file.getName();
             int extIndex = name.lastIndexOf(".");
             return (extIndex == -1 ? "" : name.substring(extIndex));
+        }
+    },
+    FILE_TYPE("File Type") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return file.getMetaTypeAsString();
+        }
+    },
+    DELETED("Is Deleted") {
+        @Override
+        public String getValue(AbstractFile file) {
+            if (file.getMetaFlagsAsString().equals(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString())) {
+                return "yes";
+            }
+            return "";
         }
     },
     A_TIME("Last Accessed") {
@@ -68,10 +84,28 @@ public enum FileReportDataTypes {
             return String.valueOf(file.getSize());
         }
     },
+    ADDRESS("Address") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return String.valueOf(file.getMetaAddr());
+        }
+    },
     HASH_VALUE("Hash Value") {
         @Override
         public String getValue(AbstractFile file) {
             return file.getMd5Hash();
+        }
+    },
+    KNOWN_STATUS("Known Status") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return file.getKnown().getName();
+        }
+    },
+    PERMISSIONS("Permissions") {
+        @Override
+        public String getValue(AbstractFile file) {
+            return file.getModesAsString();
         }
     },
     FULL_PATH("Full Path") {
@@ -82,18 +116,6 @@ public enum FileReportDataTypes {
             } catch (TskCoreException ex) {
                 return "";
             }
-        }
-    }, 
-    PERMISSIONS("Permissions") {
-        @Override
-        public String getValue(AbstractFile file) {
-            return file.getModesAsString();
-        }
-    },
-    ADDRESS("Address") {
-        @Override
-        public String getValue(AbstractFile file) {
-            return String.valueOf(file.getMetaAddr());
         }
     };
     
