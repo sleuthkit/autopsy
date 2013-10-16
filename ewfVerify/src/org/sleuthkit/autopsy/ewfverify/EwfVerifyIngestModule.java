@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -40,7 +39,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Data Source Ingest Module that generates a hash of an E01 image file and
+ * verifies it with the value stored in the image.
+ * 
  * @author jwallace
  */
 public class EwfVerifyIngestModule extends IngestModuleDataSource {
@@ -52,11 +53,13 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
     private volatile boolean running = false;
     private Image img;
     private String imgName;
-    private MessageDigest md;
+    private MessageDigest messageDigest;
     private static Logger logger = null;
     private static int messageId = 0;
-    private volatile boolean cancelled = false;
     private boolean verified = false;
+    private boolean skipped = false;
+    private String calculatedHash = "";
+    private String storedHash = "";
     private SleuthkitCase skCase;
 
     public EwfVerifyIngestModule() {
@@ -78,17 +81,18 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
         // Skip images that are not E01
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
-            logger.log(Level.INFO, "Skipping non-ewf image " + img.getName());
+            logger.log(Level.INFO, "Skipping non-ewf image " + imgName);
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
                     "Skipping non-ewf image " + imgName));
+            skipped = true;
             return;
         }
         
         // Get the hash stored in the E01 file from the database
-        String storedHash = "";
         if (skCase.imageHasHash(img)) {
             try {
                 storedHash = skCase.getImageHash(img).toLowerCase();
+                logger.info("Hash value stored in " + imgName + ": " + storedHash);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to get stored hash from image " + imgName, ex);
                 services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
@@ -135,19 +139,19 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
             try {
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
-                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, "Error processing " + img.getName()));
-                logger.log(Level.SEVERE, "Error reading from image: " + imgName, ex);
+                String msg = "Error reading " + imgName + " at chunk " + i;
+                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, msg));
+                logger.log(Level.SEVERE, msg, ex);
                 return;
             }
-            md.update(data);
+            messageDigest.update(data);
             controller.progress(i);
         }
         
         // Finish generating the hash and get it as a string value
-        String hash = DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
-//        String hash = bytesToString(md.digest());
-        verified = hash.equals(storedHash);
-        logger.log(Level.INFO, "Calculated MD5 hash: " + hash);
+        calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
+        verified = calculatedHash.equals(storedHash);
+        logger.info("Hash calculated from " + imgName + ": " + calculatedHash);
         running = false;
     }
 
@@ -155,31 +159,47 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
+        running = false;
+        verified = false;
+        skipped = false;
+        img = null;
+        imgName = "";
+        storedHash = "";
+        calculatedHash = "";
+        
         if (logger == null) {
             logger = services.getLogger(this);
         }
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException ex) {
-            logger.log(Level.WARNING, "Error getting md5 algorithm", ex);
-            throw new RuntimeException("Failed to get MD5 algorithm");
+        
+        if (messageDigest == null) {
+            try {
+                messageDigest = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException ex) {
+                logger.log(Level.WARNING, "Error getting md5 algorithm", ex);
+                throw new RuntimeException("Failed to get MD5 algorithm");
+            }
+        } else {
+            messageDigest.reset();
         }
-        cancelled = false;
-        running = false;
-        img = null;
-        imgName = "";
     }
 
     @Override
     public void complete() {
         logger.info("complete() " + this.getName());
-        String msg = verified ? " verified." : " not verified.";
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, imgName +  msg));
-        logger.info(imgName + msg);
+        if (skipped == false) {
+            String msg = verified ? " verified" : " not verified";
+            String extra = "<p>EWF Verification Results for " + imgName + "</p>";
+            extra += "<li>Result:" + msg + "</li>";
+            extra += "<li>Calculated hash: " + calculatedHash + "</li>";
+            extra += "<li>Stored hash: " + storedHash + "</li>";
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, imgName +  msg, extra));
+            logger.info(imgName + msg);
+        }
     }
 
     @Override
     public void stop() {
+        running = false;
     }
 
     @Override
