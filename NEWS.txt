@@ -1,3 +1,7 @@
+---------------- VERSION 3.0.8  --------------
+Bug Fixes:
+- Fixed installer bug on Windows. No other code changes. 
+
 ---------------- VERSION 3.0.7  --------------
 
 New features:

@@ -310,6 +310,11 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportBodyFile.getDefault"/>
             <attr name="position" intvalue="902"/>
         </file>
+        <file name="org-sleuthkit-autopsy-report-FileReportText.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.FileReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.FileReportText.getDefault"/>
+            <attr name="position" intvalue="903"/>
+        </file>
         <!--<folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">
                 <attr name="position" intvalue="3075"/>
@@ -368,7 +373,7 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
         </folder>
-        <folder name="QuickSearch_hidden" />
+        <folder name="QuickSearch_hidden"/>
     </folder>
 
 

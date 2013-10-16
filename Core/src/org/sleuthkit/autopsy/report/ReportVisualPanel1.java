@@ -19,76 +19,72 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public final class ReportVisualPanel1 extends JPanel {
+public final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private ReportWizardPanel1 wizPanel;
-    
-    private Map<TableReportModule, Boolean> tableModuleStates = new LinkedHashMap<TableReportModule, Boolean>();
-    private Map<GeneralReportModule, Boolean> generalModuleStates = new LinkedHashMap<GeneralReportModule, Boolean>();
-    private List<TableReportModule> tableModules = new ArrayList<TableReportModule>();
-    private List<GeneralReportModule> generalModules = new ArrayList<GeneralReportModule>();
-    
-    private ModulesTableModel modulesModel;
-    private ModuleSelectionListener modulesListener;
+    private List<ReportModule> modules = new ArrayList<>();
+    private List<GeneralReportModule> generalModules = new ArrayList<>();
+    private List<TableReportModule> tableModules = new ArrayList<>();
+    private List<FileReportModule> fileModules = new ArrayList<>();
+    private Integer selectedIndex;
 
     /**
      * Creates new form ReportVisualPanel1
      */
     public ReportVisualPanel1(ReportWizardPanel1 wizPanel) {
-        initComponents();
-        initModules();
         this.wizPanel = wizPanel;
+        initComponents();
         configurationPanel.setLayout(new BorderLayout());
         descriptionTextPane.setEditable(false);
-        modulesTable.setRowSelectionInterval(0, 0);
+        initModules();
     }
     
     // Initialize the list of ReportModules
     private void initModules() {
-        for(TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
-            if(module.getName().equals("HTML")) {
-                tableModuleStates.put(module, Boolean.TRUE);
-            } else {
-                tableModuleStates.put(module, Boolean.FALSE);
-            }
+        for (TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
             tableModules.add(module);
+            modules.add(module);
         }
-        for(GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
-            generalModuleStates.put(module, Boolean.FALSE);
+        
+        for (GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
             generalModules.add(module);
+            modules.add(module);
         }
         
-        modulesModel = new ModulesTableModel();
-        modulesListener = new ModuleSelectionListener();
-        modulesTable.setModel(modulesModel);
-        modulesTable.getSelectionModel().addListSelectionListener(modulesListener);
-        modulesTable.setTableHeader(null);
-        modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        modulesTable.setRowHeight(modulesTable.getRowHeight() + 5);
+        for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
+            fileModules.add(module);
+            modules.add(module);
+        }
         
-        int width = modulesScrollPane.getPreferredSize().width;
-        for (int i = 0; i < modulesTable.getColumnCount(); i++) {
-            TableColumn column = modulesTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.15)));
-            } else {
-                column.setPreferredWidth(((int) (width * 0.84)));
+        Collections.sort(modules, new Comparator<ReportModule>() {
+            @Override
+            public int compare(ReportModule rm1, ReportModule rm2) {
+                return rm1.getName().compareTo(rm2.getName());
             }
-        }
+        });
+        
+        modulesJList.getSelectionModel().addListSelectionListener(this);
+        modulesJList.setCellRenderer(new ModuleCellRenderer());
+        modulesJList.setListData(modules.toArray());
+        selectedIndex = 0;
+        modulesJList.setSelectedIndex(selectedIndex);
     }
 
     @Override
@@ -96,20 +92,52 @@ public final class ReportVisualPanel1 extends JPanel {
         return "Select and Configure Report Modules";
     }
     
-    /**
-     * @return the enabled/disabled states of all TableReportModules
-     */
-    Map<TableReportModule, Boolean> getTableModuleStates() {
-        return tableModuleStates;
+    public ReportModule getSelectedModule() {
+        return modules.get(selectedIndex);
     }
     
     /**
-     * @return the enabled/disabled states of all GeneralReportModules
+     * Get the Selection status of the TableModules.
+     * 
+     * @return 
+     */
+    Map<TableReportModule, Boolean> getTableModuleStates() {
+        Map<TableReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
+        ReportModule mod = getSelectedModule();
+        if (tableModules.contains(mod)) {
+            reportModuleStates.put((TableReportModule) mod, Boolean.TRUE);
+        }
+        return reportModuleStates;
+    }
+    
+    /**
+     * Get the selection status of the GeneralReportModules.
+     * 
+     * @return 
      */
     Map<GeneralReportModule, Boolean> getGeneralModuleStates() {
-        return generalModuleStates;
+        Map<GeneralReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
+        ReportModule mod = getSelectedModule();
+        if (generalModules.contains(mod)) {
+            reportModuleStates.put((GeneralReportModule) mod, Boolean.TRUE);
+        }
+        return reportModuleStates;
     }
-
+    
+    /**
+     * Get the selection status of the FileReportModules.
+     * 
+     * @return 
+     */
+    Map<FileReportModule, Boolean> getFileModuleStates() {
+        Map<FileReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
+        ReportModule mod = getSelectedModule();
+        if (fileModules.contains(mod)) {
+            reportModuleStates.put((FileReportModule) mod, Boolean.TRUE);
+        }
+        return reportModuleStates;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -118,27 +146,14 @@ public final class ReportVisualPanel1 extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        modulesScrollPane = new javax.swing.JScrollPane();
-        modulesTable = new javax.swing.JTable();
         reportModulesLabel = new javax.swing.JLabel();
         configurationPanel = new javax.swing.JPanel();
         descriptionScrollPane = new javax.swing.JScrollPane();
         descriptionTextPane = new javax.swing.JTextPane();
+        modulesScrollPane = new javax.swing.JScrollPane();
+        modulesJList = new javax.swing.JList();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
-
-        modulesTable.setBackground(new java.awt.Color(240, 240, 240));
-        modulesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        modulesTable.setShowHorizontalLines(false);
-        modulesTable.setShowVerticalLines(false);
-        modulesScrollPane.setViewportView(modulesTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(reportModulesLabel, org.openide.util.NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.reportModulesLabel.text")); // NOI18N
 
@@ -152,7 +167,7 @@ public final class ReportVisualPanel1 extends JPanel {
         );
         configurationPanelLayout.setVerticalGroup(
             configurationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 168, Short.MAX_VALUE)
         );
 
         descriptionScrollPane.setBorder(null);
@@ -160,6 +175,14 @@ public final class ReportVisualPanel1 extends JPanel {
         descriptionTextPane.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextPane.setBorder(null);
         descriptionScrollPane.setViewportView(descriptionTextPane);
+
+        modulesJList.setBackground(new java.awt.Color(240, 240, 240));
+        modulesJList.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        modulesScrollPane.setViewportView(modulesJList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -169,8 +192,8 @@ public final class ReportVisualPanel1 extends JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(reportModulesLabel)
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(10, 10, 10)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(descriptionScrollPane))
@@ -183,11 +206,11 @@ public final class ReportVisualPanel1 extends JPanel {
                 .addComponent(reportModulesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(modulesScrollPane))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -195,104 +218,47 @@ public final class ReportVisualPanel1 extends JPanel {
     private javax.swing.JPanel configurationPanel;
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextPane descriptionTextPane;
+    private javax.swing.JList modulesJList;
     private javax.swing.JScrollPane modulesScrollPane;
-    private javax.swing.JTable modulesTable;
     private javax.swing.JLabel reportModulesLabel;
     // End of variables declaration//GEN-END:variables
+   
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+            return;
+        }
+        configurationPanel.removeAll();
+        ListSelectionModel m = (ListSelectionModel) e.getSource();
+        // single selection, so max selection index is the only one selected.
+        selectedIndex = m.getMaxSelectionIndex();
 
-    private class ModulesTableModel extends AbstractTableModel {
-
-        @Override
-        public int getRowCount() {
-           return tableModules.size() + generalModules.size();
+        JPanel panel = new DefaultReportConfigurationPanel();
+        ReportModule module = modules.get(selectedIndex);
+        boolean generalModuleSelected = false;
+        if (module instanceof GeneralReportModule) {
+            JPanel generalPanel = ((GeneralReportModule) module).getConfigurationPanel();
+            panel = (generalPanel == null) ? new JPanel() : panel;
+            generalModuleSelected = true;
         }
 
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
+        descriptionTextPane.setText(module.getDescription());
+        configurationPanel.add(panel, BorderLayout.CENTER);
+        configurationPanel.revalidate();
 
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            ReportModule module;
-            if (rowIndex < tableModules.size()) {
-                module = tableModules.get(rowIndex);
-            } else {
-                module = generalModules.get(rowIndex - tableModules.size());
-            }
-            if (columnIndex == 0 && rowIndex < tableModules.size()) {
-               return tableModuleStates.get(tableModules.get(rowIndex));
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size()) {
-                return generalModuleStates.get(generalModules.get(rowIndex - tableModules.size()));
-            } else {
-                return module.getName();
-            }
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0;
-        }
-
-        @Override
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == 0 && rowIndex < tableModules.size()) {
-                tableModuleStates.put(tableModules.get(rowIndex), (Boolean) aValue);
-            } else if (columnIndex == 0 && rowIndex >= tableModules.size()) {
-                generalModuleStates.put(generalModules.get(rowIndex - tableModules.size()), (Boolean) aValue);
-            }
-            // Check if there are any TableReportModules enabled
-            boolean tableModuleEnabled = false;
-            for (Entry<TableReportModule, Boolean> module : tableModuleStates.entrySet()) {
-                if (module.getValue()) {
-                    tableModuleEnabled = true;
-                }
-            }
-            boolean generalModuleEnabled = false;
-            for (Entry<GeneralReportModule, Boolean> module : generalModuleStates.entrySet()) {
-                if (module.getValue()) {
-                    generalModuleEnabled = true;
-                }
-            }
-            if(tableModuleEnabled) {
-                wizPanel.setNext(true);
-                wizPanel.setFinish(false);
-            } else if(generalModuleEnabled) {
-                wizPanel.setFinish(true);
-                wizPanel.setNext(false);
-            } else {
-                wizPanel.setFinish(false);
-                wizPanel.setNext(false);
-            }
-        }
-
-        @Override
-        public Class<?> getColumnClass(int c) {
-            return getValueAt(0, c).getClass();
-        }
+        wizPanel.setNext(!generalModuleSelected);
+        wizPanel.setFinish(generalModuleSelected);
     }
-    
-    private class ModuleSelectionListener implements ListSelectionListener {
+
+    private class ModuleCellRenderer extends JRadioButton implements ListCellRenderer<ReportModule> {
 
         @Override
-        public void valueChanged(ListSelectionEvent e) {
-            configurationPanel.removeAll();
-            int rowIndex = modulesTable.getSelectedRow();
-            if (rowIndex < tableModules.size()) {
-                configurationPanel.add(new DefaultReportConfigurationPanel(), BorderLayout.CENTER);
-                descriptionTextPane.setText(tableModules.get(rowIndex).getDescription());
-            } else {
-                GeneralReportModule module = generalModules.get(rowIndex - tableModules.size());
-                JPanel panel = module.getConfigurationPanel();
-                descriptionTextPane.setText(module.getDescription());
-                if (panel != null) {
-                    configurationPanel.add(panel, BorderLayout.CENTER);
-                }
-            }
-            configurationPanel.revalidate();
-            configurationPanel.repaint();
+        public Component getListCellRendererComponent(JList list, ReportModule value, int index, boolean isSelected, boolean cellHasFocus) {
+            this.setText(value.getName());
+            this.setEnabled(true);
+            this.setSelected(isSelected);
+            return this;
         }
         
     }
-
 }
