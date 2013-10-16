@@ -95,8 +95,8 @@ public class KnownFileFilterNode extends FilterNode {
      * @param arg
      * @param context 
      */
-    public KnownFileFilterNode(Node arg) {
-        super(arg, new KnownFileFilterChildren(arg, getSelectionContext(arg)));
+    public KnownFileFilterNode(Node arg, SelectionContext context) {
+        super(arg, new KnownFileFilterChildren(arg, context));
         
         if (addListener) {
             addPreferenceListener();
@@ -114,7 +114,7 @@ public class KnownFileFilterNode extends FilterNode {
      * @param n
      * @return 
      */
-    private static SelectionContext getSelectionContext(Node n) {
+    public static SelectionContext getSelectionContext(Node n) {
         if (n == null || n.getParentNode() == null) {
             // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
@@ -198,7 +198,7 @@ public class KnownFileFilterNode extends FilterNode {
             if (filter) {
                 // Filter out child nodes that represent known files
                 AbstractFile file = arg.getLookup().lookup(AbstractFile.class);
-                if (file!= null && file.getKnown() == TskData.FileKnown.KNOWN) {
+                if (file != null && (file.getKnown() == TskData.FileKnown.KNOWN)) {
                     return new Node[]{};
                 }
             }
