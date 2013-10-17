@@ -161,7 +161,7 @@ public class ReportBodyFile implements GeneralReportModule {
 
     @Override
     public String getName() {
-        String name = "Body File";
+        String name = "TSK Body File";
         return name;
     }
 
