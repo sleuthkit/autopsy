@@ -284,7 +284,8 @@ public class ExtractIE extends Extract {
             }
             catch (Exception e) {
                 //TODO should throw a specific checked exception
-                logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile);
+                logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
+                this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
                 continue;
             }
             String path = lnk.getBestPath();
@@ -364,14 +365,15 @@ public class ExtractIE extends Extract {
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt";
             boolean bPascProcSuccess = executePasco(temps, filename);
-            pascoResults.add(filename);
 
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
-
+                pascoResults.add(filename);
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
+            } else {
+                this.addErrorMessage(this.getName() + ": Error processing Internet Explorer history.");
             }
         }
     }
