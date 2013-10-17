@@ -328,7 +328,7 @@ public class TagsManager implements Closeable {
      * @param [in] tagName The tag name of interest. 
      * @return A list, possibly empty, of the content tags with the specified tag name.
      */
-    public void getBlackboardArtifactTagsByTagName(TagName tagName, List<BlackboardArtifactTag> tags) {
+    public void getBlackboardArtifactTagsByTagName(TagName tagName, List<BlackboardArtifactTag> tags) {        
         try {
             tskCase.getBlackboardArtifactTagsByTagName(tagName, tags);        
         }
@@ -336,7 +336,22 @@ public class TagsManager implements Closeable {
             Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags from the current case", ex);                    
         }
     }
-    
+
+    /**
+     * Gets blackboard artifact tags for a particular blackboard artifact.
+     * @param [in] artifact The blackboard artifact of interest.
+     * @param [out] tags A list, possibly empty, of the tags that have been applied to the artifact.
+     * @throws TskCoreException 
+     */
+    public void getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact, List<BlackboardArtifactTag> tags) {        
+        try {
+            tskCase.getBlackboardArtifactTagsByArtifact(artifact, tags);        
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags from the current case", ex);                    
+        }
+    }
+        
     @Override
     public void close() throws IOException {  
         saveTagNamesToTagsSettings();            

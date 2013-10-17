@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,9 +55,9 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -512,14 +511,18 @@ public class ReportGenerator {
     private List<ArtifactData> getFilteredArtifacts(ARTIFACT_TYPE type, HashSet<String> tagNamesFilter) {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
-             // For every artifact of the current type, add it and it's attributes to a list
              for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
-                 HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(artifact);
-                 if(failsTagFilter(tags, tagNamesFilter)) {
+                 ArrayList<BlackboardArtifactTag> tags = new ArrayList<>();
+                 Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact, tags);
+                 HashSet<String> uniqueTagNames = new HashSet<>();
+                 for (BlackboardArtifactTag tag : tags) {
+                     uniqueTagNames.add(tag.getName().getDisplayName());
+                 }
+                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                      continue;
                  }
                  try {
-                     artifacts.add(new ArtifactData(artifact, skCase.getBlackboardAttributes(artifact), tags));
+                     artifacts.add(new ArtifactData(artifact, skCase.getBlackboardAttributes(artifact), uniqueTagNames));
                  } catch (TskCoreException ex) {
                      logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex);
                  }
