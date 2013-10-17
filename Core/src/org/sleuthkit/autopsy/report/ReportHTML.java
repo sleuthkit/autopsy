@@ -665,7 +665,7 @@ public class ReportHTML implements TableReportModule {
     
     @Override
     public String getName() {
-        return "HTML";
+        return "Results - HTML";
     }
     
     @Override

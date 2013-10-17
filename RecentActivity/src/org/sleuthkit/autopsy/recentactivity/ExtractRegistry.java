@@ -133,7 +133,9 @@ public class ExtractRegistry extends Extract {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
+                String msg = "Error fetching registry file: " + regFileName;
+                logger.log(Level.WARNING, msg);
+                this.addErrorMessage(this.getName() + ": " + msg);
             }
         }
         ExtractUSB extrctr = new ExtractUSB();
@@ -155,6 +157,7 @@ public class ExtractRegistry extends Extract {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
+                this.addErrorMessage(this.getName() + ": Error analyzing registry file " + regFileName);
                 continue;
             }
            
@@ -164,8 +167,7 @@ public class ExtractRegistry extends Extract {
                 }
             } catch (TskCoreException ex) {
                 java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
             }
             
@@ -206,7 +208,6 @@ public class ExtractRegistry extends Extract {
                             logger.log(Level.WARNING, "Failed to close reader.", ex);
                         }
                     }
-
                     att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", sb.toString());
                     art.addAttribute(att);
                 } catch (FileNotFoundException ex) {
@@ -219,6 +220,7 @@ public class ExtractRegistry extends Extract {
                 regFileNameLocalFile.delete();
             }
         }
+        
         try {
             if (logFile != null) {
                 logFile.close();
@@ -267,7 +269,8 @@ public class ExtractRegistry extends Extract {
             type = "1default";
         }
 
-        if ((type.equals("") == false) && (rrFound)) {
+        if (!type.isEmpty() && rrFound) {
+            // TODO - add error messages
             try {
                 regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt";
                 logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins);
@@ -277,8 +280,10 @@ public class ExtractRegistry extends Extract {
                         "-r", regFilePath, "-f", type);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } finally {
                 if (writer != null) {
                     try {
@@ -292,7 +297,7 @@ public class ExtractRegistry extends Extract {
             logger.log(Level.INFO, "Not running Autopsy-only modules on hive");
         }
         
-        if ((fullType.equals("") == false) && (rrFullFound)) {
+        if (!fullType.isEmpty() && rrFullFound) {
             try {
                 regOutputFiles.fullPlugins = outFilePathBase + "-full.txt";
                 logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins);
@@ -302,8 +307,10 @@ public class ExtractRegistry extends Extract {
                         "-r", regFilePath, "-f", fullType);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex);
+                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
             } finally {
                 if (writer != null) {
                     try {

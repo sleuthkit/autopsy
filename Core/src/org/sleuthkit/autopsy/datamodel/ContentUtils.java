@@ -24,9 +24,11 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -104,8 +106,10 @@ public final class ContentUtils {
     }
 
     public static TimeZone getTimeZone(Content c) {
+        Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
+        boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
         try {
-            if (false) {
+            if (!useLocalTime) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {

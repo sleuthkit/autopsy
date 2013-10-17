@@ -19,22 +19,49 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.NbPreferences;
 
 public final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
     private int index;
+    
+    private ReportWizardPanel1 firstPanel;
+    private ReportWizardPanel2 tableConfigPanel;
+    private ReportWizardFileOptionsPanel fileConfigPanel;
+    
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
+    
+    // Panels that should be shown if both Table and File report modules should
+    // be configured.
+    private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
+    private String[] allConfigIndex;
+    // Panels that should be shown if only Table report modules should
+    // be configured.
+    private WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
+    private String[] tableConfigIndex;
+    // Panels that should be shown if only File report modules should
+    // be configured.
+    private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
+    private String[] fileConfigIndex;
+    
+    ReportWizardIterator() {
+        firstPanel = new ReportWizardPanel1();
+        tableConfigPanel = new ReportWizardPanel2();
+        fileConfigPanel = new ReportWizardFileOptionsPanel();
+        
+        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel};
+        tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
+        fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
+    }
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
-            panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
-            panels.add(new ReportWizardPanel1());
-            panels.add(new ReportWizardPanel2());
+            panels = Arrays.asList(allConfigPanels);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -49,8 +76,31 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
                     jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
                 }
             }
+            
+            allConfigIndex = steps;
+            tableConfigIndex = new String[] {steps[0], steps[1]};
+            fileConfigIndex = new String[] {steps[0], steps[2]};
         }
         return panels;
+    }
+    
+    /**
+     * Change which panels will be shown based on the selection of reporting modules.
+     * @param moreConfig true if a GeneralReportModule was selected
+     * @param tableConfig true if a TReportModule was selected
+     */
+    private void enableConfigPanels(boolean generalModule, boolean tableModule) {
+        if (generalModule) {
+            // General Module selected, no additional panels
+        } else if (tableModule) {
+            // Table Module selected, need Artifact Configuration Panel
+            // (ReportWizardPanel2)
+            panels = Arrays.asList(tableConfigPanels);
+        } else {
+            // File Module selected, need File Report Configuration Panel
+            // (ReportWizardFileOptionsPanel)
+            panels = Arrays.asList(fileConfigPanels);
+        }
     }
 
     @Override
@@ -78,6 +128,16 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
+        
+        if(index == 0) {
+            // Update path through configuration panels
+            boolean generalModule, tableModule;
+            // These preferences are set in ReportWizardPanel1.storeSettings()
+            generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true);
+            tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true);
+            enableConfigPanels(generalModule, tableModule);
+        }
+        
         index++;
     }
 
