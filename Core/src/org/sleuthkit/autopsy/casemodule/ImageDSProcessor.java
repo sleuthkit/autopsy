@@ -61,13 +61,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
         
     }
     
-    /****
-    @Override
-    public ImageDSProcessor createInstance() {
-        return new ImageDSProcessor();
-    }
-    *****/
-    
     
     @Override
     public String getType() {
@@ -84,8 +77,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
        
        logger.log(Level.INFO, "RAMAN getPanel()...");
        
-       // RAMAN TBD: we should preload the panel with any saved settings
+       // RAMAN TBD: we should ask the panel to preload with any saved settings
         
+       imageFilePanel.select();
+       
        return imageFilePanel;
    }
     
@@ -101,7 +96,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
    }
     
   @Override
-  public void run(WizardDescriptor settings, DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
+  public void run(DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
       
       logger.log(Level.INFO, "RAMAN run()...");
       
@@ -112,37 +107,19 @@ public class ImageDSProcessor implements DataSourceProcessor {
       {
           // get the image options from the panel
           imagePath = imageFilePanel.getContentPaths();
-          
-          /*** RAMAN TBD: get the TZ and NoFatOrhpns options from the config panel ******/
-          //timeZone = imageFilePanel.getTimeZone();
-          //noFatOrphans = imageFilePanel.getNoFatOrphans();
-          
-          
-          
+          timeZone = imageFilePanel.getTimeZone();
+          noFatOrphans = imageFilePanel.getNoFatOrphans(); 
       }
       
-      addImageTask = new AddImageTask(settings, progressMonitor, cbObj);
+      addImageTask = new AddImageTask(progressMonitor, cbObj);
       
-      /**** RAMAN TBD: set other params needed by AddImageTask - such as TZ and NoFatOrhpans **/
-      addImageTask.SetImageOptions(imagePath);
-              
-     
-      
+      // set the image options needed by AddImageTask - such as TZ and NoFatOrphans **/
+      addImageTask.SetImageOptions(imagePath, timeZone, noFatOrphans);
+          
       addImageTask.execute();
        
       return;
   }
-    
- /***   
- @Override
- public String[] getErrors() {
-     
-     logger.log(Level.INFO, "RAMAN getErrors()...");
-     
-     // RAMAN TBD
-     return null;
- }
- *****/
     
   @Override
   public void cancel() {
@@ -155,12 +132,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
       return;
   }
   
-  /*****
-   @Override
-   public List<Content> getNewContents() {
-       return addImageTask.getNewContents();
-   }
-   * *****/
    
   @Override
   public void reset() {
@@ -192,6 +163,8 @@ public class ImageDSProcessor implements DataSourceProcessor {
   
    private class AddImageTask extends SwingWorker<Integer, Integer> {
 
+        private Logger logger = Logger.getLogger(AddImageTask.class.getName());
+        
         private Case currentCase;
         // true if the process was requested to stop
         private boolean cancelled = false;
@@ -202,9 +175,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
         
         private List<String> errorList = new ArrayList<String>();
         
-        private WizardDescriptor wizDescriptor;
-        
-        private Logger logger = Logger.getLogger(AddImageTask.class.getName());
         private DSPProgressMonitor progressMonitor;
         private DSPCallback callbackObj;
         
@@ -220,12 +190,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
             
         
         
-        public void SetImageOptions(String imgPath) {
+        public void SetImageOptions(String imgPath, String tz, boolean noOrphans) {
             this.imagePath = imgPath;
-            
-            // RAMAN TBD: also set TZ and noFatOrphans
-            // this.timeZone = tz;
-            // this.noFatOrphans = noFatOrphans;
+            this.timeZone = tz;
+            this.noFatOrphans = noOrphans;
         }
         
       
@@ -264,12 +232,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
         }
    
          
-        protected AddImageTask(WizardDescriptor settings, DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
+        protected AddImageTask(DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
             this.progressMonitor = aProgressMonitor;
             currentCase = Case.getCurrentCase();
             
             this.callbackObj = cbObj;
-            this.wizDescriptor = settings;
         }
 
         /**
@@ -307,19 +274,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
                 logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
                 return 0;
             }
-
-    
-
-             
-            
-            /*** RAMAN TBD: TZ and NoFatOrpjhans should be moved into the Image panel and then should be set by the DSP
-             *  instead of the settings.
-             * 
-             */
-             timeZone = wizDescriptor.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-             noFatOrphans = ((Boolean) wizDescriptor.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
-            
-        
             
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             fetcher = new CurrentDirectoryFetcher(progressMonitor, addImageProcess);
@@ -355,14 +309,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
          *
          * @throws Exception if commit or adding the image to the case failed
          */
-        private void commitImage(WizardDescriptor settings) throws Exception {
+        private void commitImage() throws Exception {
 
             logger.log(Level.INFO, "RAMAN: commitImage()...");
-            
-            String contentPath = (String) settings.getProperty(AddImageAction.DATASOURCEPATH_PROP);
-
-            String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-            settings.putProperty(AddImageAction.IMAGEID_PROP, "");
 
             long imageId = 0;
             try {
@@ -376,7 +325,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
                 SleuthkitCase.dbWriteUnlock();
 
                 if (imageId != 0) {
-                    Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
+                    Image newImage = Case.getCurrentCase().addImage(imagePath, imageId, timeZone);
 
                     //while we have the image, verify the size of its contents
                     String verificationErrors = newImage.verifyImageSize();
@@ -385,23 +334,13 @@ public class ImageDSProcessor implements DataSourceProcessor {
                         errorList.add(verificationErrors);
                     }
 
-                    // 
+                    // Add the image to the list of new content
                     newContents.add(newImage);
-                   
-                    // RAMAN TBD: imageID should be return via the callback
-                    settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
+                    
                 }
-
-                // Can't bail and revert image add after commit, so disable image cleanup
-                // task
-                
-             
-                
-                settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
 
                 logger.log(Level.INFO, "Image committed, imageId: " + imageId);
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-
             }
         }
 
@@ -424,7 +363,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
             addImageDone = true;
             
             // attempt actions that might fail and force the process to stop
-
             if (cancelled || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
                 revert();
@@ -469,7 +407,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
                         if (addImageProcess != null) { // and if we're done configuring ingest
                             // commit anything
                             try {
-                                commitImage(wizDescriptor);
+                                commitImage();
                             } catch (Exception ex) {
                                 errorList.add(ex.getMessage());
                                 // Log error/display warning

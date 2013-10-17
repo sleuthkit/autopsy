@@ -82,7 +82,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
-        createTimeZoneList();
+        
         customInit();
     }
 
@@ -161,20 +161,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             }
         });
       
-        
-        /* RAMAN TBD: this should all be ripped from here. the content specific UI elements should all go 
-         * into the corresponding DSP
-         */
-        if (GetCurrentDSProcessor().getType().equals("LOCAL")) {
-            //disable image specific options
-            noFatOrphansCheckbox.setEnabled(false);
-            descLabel.setEnabled(false);
-            timeZoneComboBox.setEnabled(false);
-        } else {
-            noFatOrphansCheckbox.setEnabled(true);
-            descLabel.setEnabled(true);
-            timeZoneComboBox.setEnabled(true);
-        }
         updateUI(null);
     }
 
@@ -203,63 +189,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         return "Enter Data Source Information";
     }
 
-    /**
-     *
-     * @return true if no fat orphans processing is selected
-     */
-     /***RAMAN TBD: move this into DSP ****/
-    boolean getNoFatOrphans() {
-        return noFatOrphansCheckbox.isSelected();
-    }
-
-    /**
-     * Gets the time zone that selected on the drop down list.
-     *
-     * @return timeZone the time zone that selected
-     */
-    /***RAMAN TBD: move this into the DSP****/
-    public String getSelectedTimezone() {
-        String tz = timeZoneComboBox.getSelectedItem().toString();
-        return tz.substring(tz.indexOf(")") + 2).trim();
-    }
-
-    // add the timeZone list to the timeZoneComboBox
-    /**
-     * Creates the drop down list for the time zones and then makes the local
-     * machine time zones to be selected.
-     */
-    /*** RAMAN TBD: move this into the DSP panel ***/
-    public void createTimeZoneList() {
-        // load and add all timezone
-        String[] ids = SimpleTimeZone.getAvailableIDs();
-        for (String id : ids) {
-            TimeZone zone = TimeZone.getTimeZone(id);
-            int offset = zone.getRawOffset() / 1000;
-            int hour = offset / 3600;
-            int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
-
-            /*
-             * DateFormat dfm = new SimpleDateFormat("z");
-             * dfm.setTimeZone(zone); boolean hasDaylight =
-             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
-             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
-             * = hour * -1; String result = first + Integer.toString(mid);
-             * if(hasDaylight){ result = result + second; }
-             * timeZoneComboBox.addItem(item + " (" + result + ")");
-             */
-            timeZoneComboBox.addItem(item);
-        }
-        // get the current timezone
-        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
-        int thisOffset = thisTimeZone.getRawOffset() / 1000;
-        int thisHour = thisOffset / 3600;
-        int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
-
-        // set the selected timezone
-        timeZoneComboBox.setSelectedItem(formatted);
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -272,10 +201,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel2 = new javax.swing.JLabel();
         nextLabel = new javax.swing.JLabel();
-        timeZoneLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox<String>();
-        noFatOrphansCheckbox = new javax.swing.JCheckBox();
-        descLabel = new javax.swing.JLabel();
         inputPanel = new javax.swing.JPanel();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
@@ -287,15 +212,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         setPreferredSize(new java.awt.Dimension(588, 328));
 
         org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.timeZoneLabel.text")); // NOI18N
-
-        timeZoneComboBox.setMaximumRowCount(30);
-
-        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.text")); // NOI18N
-        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.descLabel.text")); // NOI18N
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -312,7 +228,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 77, Short.MAX_VALUE)
+            .addGap(0, 173, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
@@ -338,7 +254,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     .addComponent(typeTabel)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE)
+                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -356,14 +272,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(timeZoneLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(noFatOrphansCheckbox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addComponent(descLabel))
                             .addComponent(imgInfoLabel))
                         .addGap(0, 54, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -375,29 +283,17 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 .addComponent(imgInfoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeZoneLabel)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(descLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JLabel descLabel;
     private javax.swing.JLabel imgInfoLabel;
     private javax.swing.JPanel inputPanel;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel nextLabel;
-    private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JComboBox<String> timeZoneComboBox;
-    private javax.swing.JLabel timeZoneLabel;
     private javax.swing.JComboBox<String> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;

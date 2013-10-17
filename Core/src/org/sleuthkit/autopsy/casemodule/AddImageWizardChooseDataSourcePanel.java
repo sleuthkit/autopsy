@@ -228,12 +228,12 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
         /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
         settings.putProperty(AddImageAction.DATASOURCEPATH_PROP, getComponent().getContentPaths());
         settings.putProperty(AddImageAction.DATASOURCETYPE_PROP, getComponent().getContentType());
-        * ******************/
+       
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
         settings.putProperty(AddImageAction.NOFATORPHANS_PROP, Boolean.valueOf(getComponent().getNoFatOrphans()));
         //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
         //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
-
+        ******************/
         /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
         // Store the path to the first image selected into the properties file
         String firstImage = getComponent().getContentPaths();

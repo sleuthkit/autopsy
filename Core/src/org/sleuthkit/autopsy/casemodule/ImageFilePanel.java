@@ -22,7 +22,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -47,6 +50,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.rawFilter);
         fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.encaseFilter);
         fc.setFileFilter(AddImageWizardChooseDataSourceVisual.allFilter);
+        
+        createTimeZoneList();
+        noFatOrphansCheckbox.setEnabled(true);
+         
     }
     
     /**
@@ -80,6 +87,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         pathLabel = new javax.swing.JLabel();
         browseButton = new javax.swing.JButton();
         pathTextField = new javax.swing.JTextField();
+        timeZoneLabel = new javax.swing.JLabel();
+        timeZoneComboBox = new javax.swing.JComboBox<String>();
+        noFatOrphansCheckbox = new javax.swing.JCheckBox();
+        descLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -95,6 +106,15 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         pathTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathTextField.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.timeZoneLabel.text")); // NOI18N
+
+        timeZoneComboBox.setMaximumRowCount(30);
+
+        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.text")); // NOI18N
+        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -105,8 +125,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(browseButton)
                 .addGap(2, 2, 2))
             .addGroup(layout.createSequentialGroup()
-                .addComponent(pathLabel)
-                .addGap(0, 284, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(timeZoneLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(pathLabel)
+                    .addComponent(noFatOrphansCheckbox)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(descLabel)))
+                .addGap(0, 20, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -115,7 +144,16 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
-                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeZoneLabel)
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(noFatOrphansCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descLabel)
+                .addContainerGap(19, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -137,8 +175,12 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.JLabel descLabel;
+    private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
+    private javax.swing.JComboBox<String> timeZoneComboBox;
+    private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
         
     /**
@@ -156,6 +198,16 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         pathTextField.setText(s);
     }
 
+    public String getTimeZone() {
+        String tz = timeZoneComboBox.getSelectedItem().toString();
+        return tz.substring(tz.indexOf(")") + 2).trim();
+        
+    }
+    
+    boolean getNoFatOrphans() {
+        return noFatOrphansCheckbox.isSelected();
+    }
+     
     public String getContentType() {
         return "IMAGE";
     }
@@ -173,6 +225,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         if (path == null || path.isEmpty()) {
             return false;
         }
+        
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
@@ -180,6 +233,42 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         return (isExist || isPhysicalDrive || isPartition);
     }
 
+
+    /**
+     * Creates the drop down list for the time zones and then makes the local
+     * machine time zone to be selected.
+     */
+     public void createTimeZoneList() {
+        // load and add all timezone
+        String[] ids = SimpleTimeZone.getAvailableIDs();
+        for (String id : ids) {
+            TimeZone zone = TimeZone.getTimeZone(id);
+            int offset = zone.getRawOffset() / 1000;
+            int hour = offset / 3600;
+            int minutes = (offset % 3600) / 60;
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+
+            /*
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
+             */
+            timeZoneComboBox.addItem(item);
+        }
+        // get the current timezone
+        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
+        int thisOffset = thisTimeZone.getRawOffset() / 1000;
+        int thisHour = thisOffset / 3600;
+        int thisMinutes = (thisOffset % 3600) / 60;
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+
+        // set the selected timezone
+        timeZoneComboBox.setSelectedItem(formatted);
+    }
     /**
      * Update functions are called by the pathTextField which has this set
      * as it's DocumentEventListener. Each update function fires a property change

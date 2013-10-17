@@ -58,7 +58,7 @@ public interface DataSourceProcessor {
     * @param progressPanel progress panel to be updated while processing
     * 
     **/
-    void run(WizardDescriptor settings, DSPProgressMonitor progressPanel, DSPCallback dspCallback);
+    void run(DSPProgressMonitor progressPanel, DSPCallback dspCallback);
     
     /**
     * Called after run() is done to get the new content added by the handler.
