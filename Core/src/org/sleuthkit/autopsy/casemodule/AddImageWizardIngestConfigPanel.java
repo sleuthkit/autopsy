@@ -273,6 +273,17 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
          // disable the cleanup task
         cleanupTask.disable();
        
+         
+        // Get attention for the process finish
+        java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
+        AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
+        if (panel != null) {
+            Window w = SwingUtilities.getWindowAncestor(panel);
+            if (w != null) {
+                w.toFront();
+            }
+        }
+                   
         //check the result and display to user
         if (result == DSPCallback.DSP_Result.NO_ERRORS)
             progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);

@@ -54,7 +54,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
         
     
     public ImageDSProcessor() {
-        logger.log(Level.INFO, "RAMAN ImageDSHandler()...");
+        logger.log(Level.INFO, "RAMAN ImageDSProcessor()...");
         
         // Create the config panel
         imageFilePanel =  ImageFilePanel.getDefault();
@@ -380,24 +380,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
 
                 try {
                     
-
-                    
-
-                   
-
-                    // RAMAN TBD: this should not be happening in here - caller should do this
-
-                    // Get attention for the process finish
-                    /******
-                    java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-                    AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
-                    if (panel != null) {
-                        Window w = SwingUtilities.getWindowAncestor(panel);
-                        if (w != null) {
-                            w.toFront();
-                        }
-                    }
-                    * *******/
 
                     // Tell the panel we're done
                     progressMonitor.setProgress(100);

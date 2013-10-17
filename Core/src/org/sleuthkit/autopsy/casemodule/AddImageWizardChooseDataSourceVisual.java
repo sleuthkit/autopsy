@@ -53,20 +53,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
         UPDATE_UI, FOCUS_NEXT
     };
-    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
-    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
-    static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
-    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
-    static final String encaseDesc = "Encase Images (*.e01)";
-    static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
-    static final List<String> allExt = new ArrayList<String>();
-
-    static {
-        allExt.addAll(rawExt);
-        allExt.addAll(encaseExt);
-    }
-    static final String allDesc = "All Supported Types";
-    static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+   
     private AddImageWizardChooseDataSourcePanel wizPanel;
     private JPanel currentPanel;
     
@@ -123,6 +110,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
  
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
                 if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
+                    
+                    dsProcessor.reset();
                     datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
                 }
                 else {

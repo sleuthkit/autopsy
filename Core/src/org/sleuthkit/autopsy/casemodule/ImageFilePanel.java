@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
@@ -35,6 +36,24 @@ import javax.swing.JPanel;
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
+    
+    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
+    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
+    static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
+    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
+    static final String encaseDesc = "Encase Images (*.e01)";
+    static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
+    static final List<String> allExt = new ArrayList<String>();
+
+    static {
+        allExt.addAll(rawExt);
+        allExt.addAll(encaseExt);
+    }
+    static final String allDesc = "All Supported Types";
+    static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    
+    
+    
     private static ImageFilePanel instance = null;
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
@@ -47,13 +66,11 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.rawFilter);
-        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.encaseFilter);
-        fc.setFileFilter(AddImageWizardChooseDataSourceVisual.allFilter);
+        fc.addChoosableFileFilter(rawFilter);
+        fc.addChoosableFileFilter(encaseFilter);
+        fc.setFileFilter(allFilter);
         
         createTimeZoneList();
-        noFatOrphansCheckbox.setEnabled(true);
-         
     }
     
     /**
@@ -148,12 +165,12 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(19, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -213,7 +230,11 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }
 
     public void reset() {
-        //nothing to reset
+        //reset the UI elements to default
+        
+        pathTextField.setText(null);
+       
+        
     }
     
     /**
