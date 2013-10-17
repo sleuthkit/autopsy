@@ -171,42 +171,53 @@ public class ExtractRegistry extends Extract {
             
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
-            if (parseReg(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
-                continue;
+            
+            if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
+                if (parseReg(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                    this.addErrorMessage(this.getName() + ": Failed parsing registry file results " + regFileName);
+                    continue;
+                }
             }
 
-            try {
-                BlackboardArtifact art = regFile.newArtifact(ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID());
-                BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "RegRipper");
-                art.addAttribute(att);
-            
-                FileReader fread = new FileReader(regOutputFiles.fullPlugins);
-                BufferedReader input = new BufferedReader(fread);
-                
-                StringBuilder sb = new StringBuilder();
-                while (true) {
-                    
+            if (regOutputFiles.fullPlugins.isEmpty() == false) {
+                try {
+                    BlackboardArtifact art = regFile.newArtifact(ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID());
+                    BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "RegRipper");
+                    art.addAttribute(att);
+
+                    FileReader fread = new FileReader(regOutputFiles.fullPlugins);
+                    BufferedReader input = new BufferedReader(fread);
+
+                    StringBuilder sb = new StringBuilder();
                     try {
-                        String s = input.readLine();
-                        if (s == null) {
-                            break;
+                        while (true) {
+                            String s = input.readLine();
+                            if (s == null) {
+                                break;
+                            }
+                            sb.append(s).append("\n");
                         }
-                        sb.append(s).append("\n");
                     } catch (IOException ex) {
                         java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
-                        break;
+                    } finally {
+                        try {
+                            input.close();
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Failed to close reader.", ex);
+                        }
                     }
+
+                    att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", sb.toString());
+                    art.addAttribute(att);
+                } catch (FileNotFoundException ex) {
+                    this.addErrorMessage(this.getName() + ": Error reading registry file - " + regOutputFiles.fullPlugins);
+                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (TskCoreException ex) {
+                    // TODO - add error message here?
+                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                
-                att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", sb.toString());
-                art.addAttribute(att);
-            } catch (FileNotFoundException ex) {
-                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (TskCoreException ex) {
-                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
-            } 
-    
-            regFileNameLocalFile.delete();
+                regFileNameLocalFile.delete();
+            }
         }
         try {
             if (logFile != null) {
@@ -277,8 +288,7 @@ public class ExtractRegistry extends Extract {
                     }
                 }
             }
-        }
-        else {
+        } else {
             logger.log(Level.INFO, "Not running Autopsy-only modules on hive");
         }
         
@@ -303,8 +313,7 @@ public class ExtractRegistry extends Extract {
                     }
                 }
             }
-        }
-        else {
+        } else {
             logger.log(Level.INFO, "Not running original RR modules on hive");
         }
         return regOutputFiles;
@@ -321,6 +330,7 @@ public class ExtractRegistry extends Extract {
             // Read the file in and create a Document and elements
             File regfile = new File(regRecord);
             fstream = new FileInputStream(regfile);
+            
             //InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
             //BufferedReader input = new BufferedReader(fstreamReader);
             //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
