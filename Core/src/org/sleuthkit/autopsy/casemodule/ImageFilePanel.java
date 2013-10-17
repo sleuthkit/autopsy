@@ -26,11 +26,12 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.JPanel;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
-public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
+public class ImageFilePanel extends JPanel implements DocumentListener {
     private static ImageFilePanel instance = null;
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
@@ -144,7 +145,6 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
      * Get the path of the user selected image.
      * @return the image path
      */
-    @Override
     public String getContentPaths() {
         return pathTextField.getText();
     }
@@ -152,29 +152,23 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     /**
      * Set the path of the image file.
      */
-    @Override
     public void setContentPath(String s) {
         pathTextField.setText(s);
     }
 
-    @Override
     public String getContentType() {
         return "IMAGE";
     }
 
-    @Override
     public void reset() {
         //nothing to reset
     }
     
-    
-
     /**
      * Should we enable the next button of the wizard?
      * @return true if a proper image has been selected, false otherwise
      */
-    @Override
-    public boolean enableNext() {
+    public boolean validatePanel() {
         String path = getContentPaths();
         if (path == null || path.isEmpty()) {
             return false;
@@ -210,18 +204,10 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     /**
      * Set the focus to the pathTextField.
      */
-    @Override
     public void select() {
         pathTextField.requestFocusInWindow();
     }
     
-    /**
-     * @return the string form of this panel
-     */
-    @Override
-    public String toString() {
-        return "Image File";
-    }
     
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {

@@ -319,7 +319,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         + "\nPlease note that you will still be able to browse directories and generate reports\n"
                         + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Image", JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
+                    /***** RAMAN TBD: MissingImageDialog class needs to be refactored to eliminate ContentTypePanel dependency.
                     MissingImageDialog.makeDialog(obj_id, db);
+                    * *****************/
                 } else {
                     logger.log(Level.WARNING, "Selected image files don't match old files!");
                 }

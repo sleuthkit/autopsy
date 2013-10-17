@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -35,8 +38,6 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataListener;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.ContentTypePanel;
-//import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -67,11 +68,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     static final String allDesc = "All Supported Types";
     static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private AddImageWizardChooseDataSourcePanel wizPanel;
-    private ContentTypeModel model;
-    private ContentTypePanel currentPanel;
+    private JPanel currentPanel;
     
-    static private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();;
-           
+    private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();
+          
 
 
     /**
@@ -88,60 +88,62 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     private void customInit() {
         
-
         discoverDataSourceProcessors();
         
-        model = new ContentTypeModel();
-        typeComboBox.setModel(model);
+        // set up the DSP type combobox
+        typeComboBox.removeAllItems();
+        Set<String> dspTypes = datasourceProcessorsMap.keySet();
+        for(String dspType:dspTypes){
+            typeComboBox.addItem(dspType);
+        }
+        
+        //add actionlistner to listen for change
+        ActionListener cbActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dspSelectionChanged();
+            
+            }
+        };
+                 
+        typeComboBox.addActionListener(cbActionListener);
+                 
         typeComboBox.setSelectedIndex(0);
         typePanel.setLayout(new BorderLayout());
         
-        //updateCurrentPanel(ImageFilePanel.getDefault());
-        updateCurrentPanel(model.getElementAt(0));
+        updateCurrentPanel(GetCurrentDSProcessor().getPanel());
     }
 
     private void discoverDataSourceProcessors() {
-        
-        //datasourceHandlersMap.clear();
+     
         logger.log(Level.INFO, "RAMAN discoverDataSourceProcessors()...");
-        
-         // RAMAN TBD: hack for now
-        {
-            //ContentTypePanel.RegisterPanel(ImageFilePanel.getDefault());
-            //ContentTypePanel.RegisterPanel(LocalDiskPanel.getDefault());
-            //ContentTypePanel.RegisterPanel(LocalFilesPanel.getDefault());
-        }
-        
+      
         for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
-            
-            logger.log(Level.INFO, "RAMAN discoverDataSourceHandlers(): found an instance of DataSourceHandler");
-          
-             
-            String dsType = dsProcessor.getType();
-            JPanel panel = dsProcessor.getPanel();
-            String validate = dsProcessor.validatePanel();
-            //dshandler.run(null);
-            //String[] errors = dshandler.getErrors();
-            
+           logger.log(Level.INFO, "RAMAN discoverDataSourceProcessors()L found a DSP for type = " + dsProcessor.getType() );
+ 
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
-                
-            // Regsiter the panel for the discovered DS handler here
-             ContentTypePanel.RegisterPanel(dsProcessor.getPanel());
-             
-             datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
-            }
-             
+                if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
+                    datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
+                }
+                else {
+                    logger.log(Level.SEVERE, "RAMAN discoverDataSourceProcessors(): A DataSourceProcessor already exisits for type = " + dsProcessor.getType() );
+                }      
+            }  
         }
-        
-       
-    } 
+     } 
 
+     private void dspSelectionChanged() {
+         // update the current panel to selection
+         currentPanel = GetCurrentDSProcessor().getPanel();
+         updateCurrentPanel(currentPanel);
+    }
+     
     /**
      * Changes the current panel to the given panel.
      *
      * @param panel instance of ImageTypePanel to change to
      */
-    private void updateCurrentPanel(ContentTypePanel panel) {
+    private void updateCurrentPanel(JPanel panel) {
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
@@ -158,8 +160,12 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 }
             }
         });
-        currentPanel.select();
-        if (currentPanel.getContentType().equals("LOCAL")) {
+      
+        
+        /* RAMAN TBD: this should all be ripped from here. the content specific UI elements should all go 
+         * into the corresponding DSP
+         */
+        if (GetCurrentDSProcessor().getType().equals("LOCAL")) {
             //disable image specific options
             noFatOrphansCheckbox.setEnabled(false);
             descLabel.setEnabled(false);
@@ -173,18 +179,13 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     }
 
      /**
-     * Returns the currently selected DS handler in the combobox
-     *
-     *
-     * @return name the name of this panel
+     * Returns the currently selected DS Processor
+     * @return DataSourceProcessor the DataSourceProcessor corresponding to the data source type selected in the combobox
      */
     public DataSourceProcessor GetCurrentDSProcessor() {
-    
-         logger.log(Level.INFO, "RAMAN GetCurrentDSProcessor()...");
         // get the type of the currently selected panel and then look up 
         // the correspodning DS Handler in the map
-        String dsType = currentPanel.getContentType();
-        
+        String dsType = (String) typeComboBox.getSelectedItem();
         DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(dsType);
         
         return dsProcessor;
@@ -203,43 +204,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     }
 
     /**
-     * Gets the data sources path from the Image Path Text Field.
-     *
-     * @return data source path, can be comma separated for multiples
-     */
-    public String getContentPaths() {
-        return currentPanel.getContentPaths();
-    }
-
-    /**
-     * Gets the data sources type selected
-     *
-     * @return data source selected
-     */
-    public String getContentType() {
-        return currentPanel.getContentType();
-    }
-
-    /**
-     * Reset the data sources panel selected
-     */
-    public void reset() {
-        currentPanel.reset();
-    }
-
-    /**
-     * Sets the image path of the current panel.
-     *
-     * @param s the image path to set
-     */
-    public void setContentPath(String s) {
-        currentPanel.setContentPath(s);
-    }
-
-    /**
      *
      * @return true if no fat orphans processing is selected
      */
+     /***RAMAN TBD: move this into DSP ****/
     boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
     }
@@ -249,6 +217,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      *
      * @return timeZone the time zone that selected
      */
+    /***RAMAN TBD: move this into the DSP****/
     public String getSelectedTimezone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
         return tz.substring(tz.indexOf(")") + 2).trim();
@@ -259,6 +228,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * Creates the drop down list for the time zones and then makes the local
      * machine time zones to be selected.
      */
+    /*** RAMAN TBD: move this into the DSP panel ***/
     public void createTimeZoneList() {
         // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
@@ -309,7 +279,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         inputPanel = new javax.swing.JPanel();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
-        typeComboBox = new javax.swing.JComboBox<ContentTypePanel>();
+        typeComboBox = new javax.swing.JComboBox<String>();
         imgInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
@@ -428,7 +398,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
-    private javax.swing.JComboBox<ContentTypePanel> typeComboBox;
+    private javax.swing.JComboBox<String> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
@@ -442,44 +412,12 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * @param e the document event
      */
     public void updateUI(DocumentEvent e) {
-        this.wizPanel.enableNextButton(currentPanel.enableNext());
+        // Enable the Next button if the current DSP panel is valid
+        String err = GetCurrentDSProcessor().validatePanel();
+        if (null == err)
+            this.wizPanel.enableNextButton(true);
+        else
+            this.wizPanel.enableNextButton(false);
     }
 
-    /**
-     * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
-     */
-    private class ContentTypeModel implements ComboBoxModel<ContentTypePanel> {
-
-        private ContentTypePanel selected;
-        private ContentTypePanel[] types = ContentTypePanel.getPanels();
-
-        @Override
-        public void setSelectedItem(Object anItem) {
-            selected = (ContentTypePanel) anItem;
-            updateCurrentPanel(selected);
-        }
-
-        @Override
-        public Object getSelectedItem() {
-            return selected;
-        }
-
-        @Override
-        public int getSize() {
-            return types.length;
-        }
-
-        @Override
-        public ContentTypePanel getElementAt(int index) {
-            return types[index];
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener l) {
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener l) {
-        }
-    }
 }

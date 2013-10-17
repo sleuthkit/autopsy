@@ -45,6 +45,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
     
     DSPCallback callbackObj = null;
     
+    // set to TRUE if the image options have been set via API and config Jpanel should be ignored
+    private boolean imageOptionsSet = false;
+    private String imagePath;
+    private String timeZone;
+    private boolean noFatOrphans;
+            
+        
+    
     public ImageDSProcessor() {
         logger.log(Level.INFO, "RAMAN ImageDSHandler()...");
         
@@ -72,9 +80,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
             
     
    @Override
-    public ContentTypePanel getPanel() {
+    public JPanel getPanel() {
        
        logger.log(Level.INFO, "RAMAN getPanel()...");
+       
+       // RAMAN TBD: we should preload the panel with any saved settings
         
        return imageFilePanel;
    }
@@ -83,9 +93,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
    public String validatePanel() {
        
        logger.log(Level.INFO, "RAMAN validatePanel()...");
-               
-       return null;
-        
+       
+        if (imageFilePanel.validatePanel() )
+           return null;
+       else 
+           return "Error in panel";    
    }
     
   @Override
@@ -96,7 +108,26 @@ public class ImageDSProcessor implements DataSourceProcessor {
       callbackObj = cbObj;
       cancelled = false;
       
+      if (!imageOptionsSet)
+      {
+          // get the image options from the panel
+          imagePath = imageFilePanel.getContentPaths();
+          
+          /*** RAMAN TBD: get the TZ and NoFatOrhpns options from the config panel ******/
+          //timeZone = imageFilePanel.getTimeZone();
+          //noFatOrphans = imageFilePanel.getNoFatOrphans();
+          
+          
+          
+      }
+      
       addImageTask = new AddImageTask(settings, progressMonitor, cbObj);
+      
+      /**** RAMAN TBD: set other params needed by AddImageTask - such as TZ and NoFatOrhpans **/
+      addImageTask.SetImageOptions(imagePath);
+              
+     
+      
       addImageTask.execute();
        
       return;
@@ -130,9 +161,34 @@ public class ImageDSProcessor implements DataSourceProcessor {
        return addImageTask.getNewContents();
    }
    * *****/
-    
-  
    
+  @Override
+  public void reset() {
+      
+     logger.log(Level.INFO, "RAMAN reset()...");
+     
+     // reset the config panel
+     imageFilePanel.reset();
+    
+     // reset state 
+     imageOptionsSet = false;
+     imagePath = null;
+     timeZone = null;
+     noFatOrphans = false;
+    
+      return;
+  }
+  
+  public void SetDataSourceOptions(String imgPath, String tz, boolean noFat) {
+      
+    this.imagePath = imgPath;
+    this.timeZone  = tz;
+    this.noFatOrphans = noFat;
+      
+    imageOptionsSet = true;
+      
+  }
+  
   
    private class AddImageTask extends SwingWorker<Integer, Integer> {
 
@@ -157,6 +213,20 @@ public class ImageDSProcessor implements DataSourceProcessor {
         private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
         private CurrentDirectoryFetcher fetcher;
    
+        private String imagePath;
+        private String dataSourcetype;
+        String timeZone;
+        boolean noFatOrphans;
+            
+        
+        
+        public void SetImageOptions(String imgPath) {
+            this.imagePath = imgPath;
+            
+            // RAMAN TBD: also set TZ and noFatOrphans
+            // this.timeZone = tz;
+            // this.noFatOrphans = noFatOrphans;
+        }
         
       
         private class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
@@ -239,10 +309,16 @@ public class ImageDSProcessor implements DataSourceProcessor {
             }
 
     
-            String dataSourcePath = (String) wizDescriptor.getProperty(AddImageAction.DATASOURCEPATH_PROP);
-            String dataSourceType = (String) wizDescriptor.getProperty(AddImageAction.DATASOURCETYPE_PROP);
-            String timeZone = wizDescriptor.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-            boolean noFatOrphans = ((Boolean) wizDescriptor.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
+
+             
+            
+            /*** RAMAN TBD: TZ and NoFatOrpjhans should be moved into the Image panel and then should be set by the DSP
+             *  instead of the settings.
+             * 
+             */
+             timeZone = wizDescriptor.getProperty(AddImageAction.TIMEZONE_PROP).toString();
+             noFatOrphans = ((Boolean) wizDescriptor.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
+            
         
             
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
@@ -253,7 +329,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
                 progressMonitor.setProgress(0);
                
                 fetcher.execute();
-                addImageProcess.run(new String[]{dataSourcePath});
+                addImageProcess.run(new String[]{this.imagePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted

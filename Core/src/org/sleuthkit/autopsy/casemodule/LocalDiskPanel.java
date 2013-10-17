@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
-public class LocalDiskPanel extends ContentTypePanel {
+public class LocalDiskPanel extends JPanel {
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = null;
     private List<LocalDisk> disks = new ArrayList<LocalDisk>();
@@ -129,7 +129,7 @@ public class LocalDiskPanel extends ContentTypePanel {
      * Return the currently selected disk path.
      * @return String selected disk path
      */
-    @Override
+    //@Override
     public String getContentPaths() {
         if(disks.size() > 0) {
             LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
@@ -143,7 +143,7 @@ public class LocalDiskPanel extends ContentTypePanel {
     /**
      * Set the selected disk.
      */
-    @Override
+   // @Override
     public void setContentPath(String s) {
         for(int i=0; i<disks.size(); i++) {
             if(disks.get(i).getPath().equals(s)) {
@@ -152,7 +152,7 @@ public class LocalDiskPanel extends ContentTypePanel {
         }
     }
     
-    @Override
+    //@Override
     public String getContentType() {
         return "DISK";
     }
@@ -162,12 +162,12 @@ public class LocalDiskPanel extends ContentTypePanel {
      * Always return true because we control the possible selections.
      * @return true
      */
-    @Override
+    //@Override
     public boolean enableNext() {
         return enableNext;
     }
     
-    @Override
+    //@Override
     public void reset() {
         //nothing to reset
     }
@@ -175,7 +175,7 @@ public class LocalDiskPanel extends ContentTypePanel {
     /**
      * @return the representation of this panel as a String.
      */
-    @Override
+    //@Override
     public String toString() {
         return "Local Disk";
     }
@@ -183,7 +183,7 @@ public class LocalDiskPanel extends ContentTypePanel {
    /**
      * Set the focus to the diskComboBox and refreshes the list of disks.
      */
-    @Override
+   // @Override
     public void select() {
         diskComboBox.requestFocusInWindow();
         model.loadDisks();

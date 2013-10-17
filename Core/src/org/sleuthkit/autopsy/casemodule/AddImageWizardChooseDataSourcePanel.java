@@ -183,10 +183,12 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
             String lastDataSourceDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH);
             String lastDataSourceType = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE);
 
+            /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
             //set the last path for the content panel for which it was saved
             if (component.getContentType().toString().equals(lastDataSourceType)) {
                 component.setContentPath(lastDataSourceDirectory);
             }
+            * ******************/
 
             // Load hash database settings, enable or disable the checkbox
             this.NSRLPath = null;
@@ -223,19 +225,22 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
         settings.putProperty(AddImageAction.DATASOURCEPATH_PROP, getComponent().getContentPaths());
         settings.putProperty(AddImageAction.DATASOURCETYPE_PROP, getComponent().getContentType());
+        * ******************/
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
         settings.putProperty(AddImageAction.NOFATORPHANS_PROP, Boolean.valueOf(getComponent().getNoFatOrphans()));
         //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
         //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
 
+        /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
         // Store the path to the first image selected into the properties file
         String firstImage = getComponent().getContentPaths();
         String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH, firstImagePath);
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE, getComponent().getContentType().toString());
-
+        *********************/
     }
 
     /**

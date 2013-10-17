@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 
+/************
 abstract class ContentTypePanel extends JPanel {
     
     // Collection of panels that are dynamically discovered and registered
@@ -41,10 +42,10 @@ abstract class ContentTypePanel extends JPanel {
     
     private String contentType;
     
-    /**
-     * Returns a list off all the panels extending ImageTypePanel.
-     * @return list of all ImageTypePanels
-     */
+//    
+//     * Returns a list off all the panels extending ImageTypePanel.
+//     * @return list of all ImageTypePanels
+//     
     public static ContentTypePanel[] getPanels() {
         //return new ContentTypePanel[] {ImageFilePanel.getDefault(), LocalDiskPanel.getDefault(), LocalFilesPanel.getDefault() };
         
@@ -55,40 +56,41 @@ abstract class ContentTypePanel extends JPanel {
         return registeredPanels.toArray(new ContentTypePanel[registeredPanels.size()]);
     }
     
-    /**
-     * Return the path of the selected content in this panel.
-     * @return paths to selected content (one or more if multiselect supported)
-     */
+//    
+//     * Return the path of the selected content in this panel.
+//     * @return paths to selected content (one or more if multiselect supported)
+//     
     abstract public String getContentPaths();
     
-    /**
-     * Set the selected content in this panel to the provided path.
-     * This function is optional.
-     * @param s path to selected content
-     */
+//    
+//     * Set the selected content in this panel to the provided path.
+//     * This function is optional.
+//     * @param s path to selected content
+//     
     abstract public void setContentPath(String s);
     
-    /**
-     * Get content type (image, disk, local file) of the source this wizard panel is for
-     * @return ContentType of the source panel
-     */
+//    
+//     * Get content type (image, disk, local file) of the source this wizard panel is for
+//     * @return ContentType of the source panel
+//     
     abstract public String getContentType();
     
-    /**
-     * Returns if the next button should be enabled in the current wizard.
-     * @return true if the next button should be enabled, false otherwise
-     */
+//    
+//     * Returns if the next button should be enabled in the current wizard.
+//     * @return true if the next button should be enabled, false otherwise
+//     
     abstract public boolean enableNext();
     
-    /**
-     * Tells this panel to reset itself
-     */
+//    
+//     * Tells this panel to reset itself
+//     
     abstract public void reset();
     
-    /**
-     * Tells this panel it has been selected.
-     */
+//    
+//     * Tells this panel it has been selected.
+//     
     abstract public void select();
     
     
 }
+***************/

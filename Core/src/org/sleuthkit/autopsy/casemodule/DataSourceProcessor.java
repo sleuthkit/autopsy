@@ -22,7 +22,6 @@ import java.util.List;
 import javax.swing.JPanel;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.casemodule.DSPProgressMonitor;
-import org.sleuthkit.autopsy.casemodule.ContentTypePanel;
 import org.sleuthkit.datamodel.Content;
 
 public interface DataSourceProcessor {
@@ -43,7 +42,7 @@ public interface DataSourceProcessor {
     * Returns the picker panel to be displayed along with any other
     * runtime options supported by the data source handler. 
     **/
-    ContentTypePanel getPanel();
+    JPanel getPanel();
     
    /**
     * Called to validate the input data in the panel.
@@ -80,8 +79,11 @@ public interface DataSourceProcessor {
     **/
     void cancel();
     
-    
-    
+    /**
+    * Called to reset/reinit  the DSP.
+    * 
+    **/
+    void reset();
 
     
 }
