@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Color;
 import java.awt.Component;
@@ -51,7 +52,8 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
-
+import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
  *
@@ -249,7 +251,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
        
         DSPCallback cbObj = new DSPCallback () {
             @Override
-            public void doneEDT(DSP_Result result, List<String> errList,  List<Content> contents)  {
+            public void doneEDT(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents)  {
                 dataSourceProcessorDone(result, errList, contents );
             }
             

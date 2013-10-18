@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -39,6 +40,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataListener;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * visual component for the first panel of add image wizard. Allows user to pick

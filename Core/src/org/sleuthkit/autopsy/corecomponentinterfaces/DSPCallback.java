@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.awt.EventQueue;
 import java.util.List;
@@ -21,7 +21,7 @@ public abstract class DSPCallback {
                 NONCRITICAL_ERRORS,
     };
     
-    void done(DSP_Result result, List<String> errList,  List<Content> newContents)
+    public void done(DSP_Result result, List<String> errList,  List<Content> newContents)
     {
         
         final DSP_Result resultf = result;
@@ -38,5 +38,5 @@ public abstract class DSPCallback {
            }); 
     }
     
-    abstract void doneEDT(DSP_Result result, List<String> errList,  List<Content> newContents);
+    public abstract void doneEDT(DSP_Result result, List<String> errList,  List<Content> newContents);
 };

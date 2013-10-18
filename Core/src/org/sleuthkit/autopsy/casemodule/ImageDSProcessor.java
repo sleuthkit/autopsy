@@ -4,6 +4,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Window;
@@ -28,6 +29,9 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  *

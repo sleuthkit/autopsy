@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.Color;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and

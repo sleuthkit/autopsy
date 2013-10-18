@@ -16,12 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.util.List;
 import javax.swing.JPanel;
 import org.openide.WizardDescriptor;
-import org.sleuthkit.autopsy.casemodule.DSPProgressMonitor;
 import org.sleuthkit.datamodel.Content;
 
 public interface DataSourceProcessor {
