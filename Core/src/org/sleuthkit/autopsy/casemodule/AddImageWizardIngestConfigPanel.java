@@ -296,7 +296,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         
         //if errors, display them on the progress panel
         for ( String err: errList ) {
-            //  RAMANM TBD: there probably should be an error level for each error
+            //  RAMAN TBD: there probably should be an error level for each error
             progressPanel.addErrors(err, false);
         }
       

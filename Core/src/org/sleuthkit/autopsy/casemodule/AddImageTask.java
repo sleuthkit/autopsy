@@ -1,7 +1,22 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.EventQueue;
@@ -23,6 +38,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
+/*
+ * A background task (swingworker) that adds the given image to 
+ * database using the Sleuthkit JNI interface.
+ * 
+ * It updates the given ProgressMonitor as it works through adding the image,
+ * and et the end, calls the specified Callback.
+ */
 public class AddImageTask extends SwingWorker<Integer, Integer> {
 
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
@@ -275,7 +297,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
         }
 
         /*
-         * Call the callback with proper parameters
+         * Call the callback with results, new content, and errors, if any
          */
         private void doCallBack()
         {     

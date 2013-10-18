@@ -18,19 +18,31 @@
  */
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
-import java.util.List;
+
 import javax.swing.JPanel;
-import org.openide.WizardDescriptor;
 import org.sleuthkit.datamodel.Content;
 
+/*
+ * Defines an interface used by the Add DataSource wizard to discover different
+ * Data SourceProcessors. 
+ * A data source for Autopsy may be:
+ *   - Disk Image (Encase, Raw....)
+ *   - Local Disk
+ *   - Logical file(s)
+ *   - Phone Image
+ *   - A CellXML file with content extracted from phone.
+ * 
+ * Each data source may have its unique attributes and may need to be processed 
+ * differently.
+ * 
+ * The DataSourceProcessor interface defines a uniform mechanism for thre Autopsy UI
+ * to:
+ *  - collect details for the data source to be processed.
+ *  - Process the data source in the background
+ *  - Be notified when the processing is complete
+ */
 public interface DataSourceProcessor {
-    
-    
-               
-    
-   // public DataSourceProcessor createInstance();
-            
-    
+   
    /**
     * Returns the type of Data Source it handles. 
     * This name gets displayed in the drop-down listbox
@@ -59,27 +71,14 @@ public interface DataSourceProcessor {
     **/
     void run(DSPProgressMonitor progressPanel, DSPCallback dspCallback);
     
-    /**
-    * Called after run() is done to get the new content added by the handler.
-    * Returns a list of content added by the data source handler  
-    **/
-   // List<Content> getNewContents();
-            
-    
-   /**
-    * Called to get the list of errors.
-    **/
-   // String[] getErrors();
     
    /**
     * Called to cancel the background processing.
-    * 
-    * TODO look into current use cases to see if this should wait until it has stopped or not. 
     **/
     void cancel();
     
-    /**
-    * Called to reset/reinit  the DSP.
+   /**
+    * Called to reset/reinitialize  the DSP.
     * 
     **/
     void reset();
