@@ -19,12 +19,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class are the root nodes of tree that is a sub-tree of the 
@@ -74,7 +78,12 @@ public class TagsNode extends DisplayableItemNode {
     private static class TagNameNodeFactory extends ChildFactory<TagName> {
         @Override
         protected boolean createKeys(List<TagName> keys) {
-            Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys);
+            try {
+                Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            }            
             return true;
         }
 

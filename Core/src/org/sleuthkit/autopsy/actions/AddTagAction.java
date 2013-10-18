@@ -21,15 +21,15 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import javax.swing.AbstractAction;
+import java.util.logging.Level;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An abstract base class for Actions that allow users to tag SleuthKit data 
@@ -77,7 +77,12 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // Get the current set of tag names.
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             ArrayList<TagName> tagNames = new ArrayList<>();
-            tagsManager.getAllTagNames(tagNames);
+            try {
+                tagsManager.getAllTagNames(tagNames);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            }
                         
             // Create a "Quick Tag" sub-menu.
             JMenu quickTagMenu = new JMenu("Quick Tag");

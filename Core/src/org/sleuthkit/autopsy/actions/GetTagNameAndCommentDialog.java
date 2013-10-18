@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -32,7 +33,9 @@ import javax.swing.KeyStroke;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameAndCommentDialog extends JDialog {
     private static final String NO_TAG_NAMES_MESSAGE = "No Tags";    // RJCTODO: ??
@@ -83,7 +86,12 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // Save the tag names to be enable to return the one the user selects.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         ArrayList<TagName> currentTagNames = new ArrayList<>();
-        tagsManager.getAllTagNames(currentTagNames);        
+        try {
+            tagsManager.getAllTagNames(currentTagNames);        
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+        }        
         if (currentTagNames.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
         }

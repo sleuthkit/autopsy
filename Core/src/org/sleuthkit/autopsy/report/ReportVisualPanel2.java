@@ -73,8 +73,13 @@ public final class ReportVisualPanel2 extends JPanel {
     // Initialize the list of Tags
     private void initTags() {
         ArrayList<TagName> tagNamesInUse = new ArrayList<>();
-        Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse(tagNamesInUse);
-                
+        try {
+            Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse(tagNamesInUse);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+        }                                    
+                        
         for(TagName tagName : tagNamesInUse) {
             tagStates.put(tagName.getDisplayName(), Boolean.FALSE);
         }

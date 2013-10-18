@@ -19,13 +19,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class are are elements of a directory tree sub-tree
@@ -77,7 +80,12 @@ public class ContentTagTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<ContentTag> keys) {
             // Use the content tags bearing the specified tag name as the keys. 
-            Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName, keys);            
+            try {
+                Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName, keys);            
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(ContentTagTypeNode.ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            }                        
             return true;
         }
 

@@ -19,17 +19,21 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactTagNode;
+import org.sleuthkit.autopsy.datamodel.ContentTagTypeNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class are elements in a sub-tree of the Autopsy
@@ -80,8 +84,13 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
         
         @Override
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
-            // Use the blackboard artifact tags bearing the specified tag name as the keys. 
-            Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, keys);            
+            try  {
+                // Use the blackboard artifact tags bearing the specified tag name as the keys. 
+                Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, keys);            
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(BlackboardArtifactTagTypeNode.BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            }                                    
             return true;
         }
 
