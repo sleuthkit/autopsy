@@ -43,6 +43,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
+    private AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
     private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH";
@@ -50,6 +51,12 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
 
+    
+     AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
+      
+        this.progressPanel = proPanel;
+       
+    }
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
@@ -173,13 +180,16 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
 
         // Prepopulate the image directory from the properties file
         try {
+              /******* RAMAN TBD: all settings read/store needs to be moved into the DSP panel
             String lastDataSourceDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH);
             String lastDataSourceType = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE);
 
+          
             //set the last path for the content panel for which it was saved
             if (component.getContentType().toString().equals(lastDataSourceType)) {
                 component.setContentPath(lastDataSourceDirectory);
             }
+            * ******************/
 
             // Load hash database settings, enable or disable the checkbox
             this.NSRLPath = null;
@@ -216,19 +226,16 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        settings.putProperty(AddImageAction.DATASOURCEPATH_PROP, getComponent().getContentPaths());
-        settings.putProperty(AddImageAction.DATASOURCETYPE_PROP, getComponent().getContentType());
-        settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
-        settings.putProperty(AddImageAction.NOFATORPHANS_PROP, Boolean.valueOf(getComponent().getNoFatOrphans()));
+        /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
         //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
         //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
-
+       
         // Store the path to the first image selected into the properties file
         String firstImage = getComponent().getContentPaths();
         String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH, firstImagePath);
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE, getComponent().getContentType().toString());
-
+        *********************/
     }
 
     /**
