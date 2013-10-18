@@ -58,7 +58,7 @@ public class ContentTagNode extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Source File", "Source File", "", tag.getContent().getName()));
+        properties.put(new NodeProperty("File", "File", "", tag.getContent().getName()));
         String contentPath; 
         try {
             contentPath = tag.getContent().getUniquePath();
@@ -67,8 +67,9 @@ public class ContentTagNode extends DisplayableItemNode {
             Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
             contentPath = "Unavailable";
         }
-        properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
-
+        properties.put(new NodeProperty("File Path", "File Path", "", contentPath));        
+        properties.put(new NodeProperty("Comment", "Comment", "", tag.getComment()));
+        
         return propertySheet;
     }
 

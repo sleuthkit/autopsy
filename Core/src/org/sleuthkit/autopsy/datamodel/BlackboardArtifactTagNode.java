@@ -69,7 +69,8 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
         }
         properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
         properties.put(new NodeProperty("Result Type", "Result Type", "", tag.getArtifact().getDisplayName()));
-        
+        properties.put(new NodeProperty("Comment", "Comment", "", tag.getComment()));
+                
         return propertySheet;
     }
 
