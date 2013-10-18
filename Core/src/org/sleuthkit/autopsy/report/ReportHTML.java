@@ -568,15 +568,15 @@ public class ReportHTML implements TableReportModule {
      * @param sourceArtifact The artifact associated with the row. 
      */
     private void addRowDataForSourceArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        int artifactTypeID = sourceArtifact.getArtifactTypeID();
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
-        switch (type) {
-            case TSK_TAG_FILE:
-                addRowDataForFileTagArtifact(row, sourceArtifact);                
-                break;
-            default:
-                break;
-        }
+//        int artifactTypeID = sourceArtifact.getArtifactTypeID();
+//        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
+//        switch (type) {
+//            case TSK_TAG_FILE:
+//                addRowDataForFileTagArtifact(row, sourceArtifact);                
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     /**
@@ -586,63 +586,63 @@ public class ReportHTML implements TableReportModule {
      * @param sourceArtifact The artifact associated with the row. 
      */
     private void addRowDataForFileTagArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        try {
-            AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
-
-            // Don't make a local copy of the file if it is a directory or unallocated space.
-            if (file.isDir() ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-                row.add("");
-                return;
-            }
-            
-            // Make a folder for the local file with the same name as the tag.
-            StringBuilder localFilePath = new StringBuilder();
-            localFilePath.append(path);            
-            HashSet<String> tagNames = Tags.getUniqueTagNamesForArtifact(sourceArtifact);
-            if (!tagNames.isEmpty()) {
-                localFilePath.append(tagNames.iterator().next());
-            }
-            File localFileFolder = new File(localFilePath.toString());
-            if (!localFileFolder.exists()) { 
-                localFileFolder.mkdirs();
-            }
-
-            // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
-            String fileName = file.getName();
-            String objectIdSuffix = "_" + sourceArtifact.getObjectID();
-            int lastDotIndex = fileName.lastIndexOf(".");
-            if (lastDotIndex != -1 && lastDotIndex != 0) {
-                // The file name has a conventional extension. Insert the object id before the '.' of the extension.
-                fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
-            }
-            else {
-                // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
-                // Add the object id to the end of the file name.
-                fileName += objectIdSuffix;
-            }                                
-            localFilePath.append(File.separator);
-            localFilePath.append(fileName);
-
-            // If the local file doesn't already exist, create it now. 
-            // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
-            File localFile = new File(localFilePath.toString());
-            if (!localFile.exists()) {
-                ExtractFscContentVisitor.extract(file, localFile, null, null);
-            }
-
-            // Add the hyperlink to the row. A column header for it was created in startTable().
-            StringBuilder localFileLink = new StringBuilder();
-            localFileLink.append("<a href=\"file:///");
-            localFileLink.append(localFilePath.toString());
-            localFileLink.append("\">View File</a>");
-            row.add(localFileLink.toString());              
-        } 
-        catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get AbstractFile by ID.", ex);
-            row.add("");
-        }                                    
+//        try {
+//            AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
+//
+//            // Don't make a local copy of the file if it is a directory or unallocated space.
+//            if (file.isDir() ||
+//                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+//                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+//                row.add("");
+//                return;
+//            }
+//            
+//            // Make a folder for the local file with the same name as the tag.
+//            StringBuilder localFilePath = new StringBuilder();
+//            localFilePath.append(path);            
+//            HashSet<String> tagNames = Tags.getUniqueTagNamesForArtifact(sourceArtifact);
+//            if (!tagNames.isEmpty()) {
+//                localFilePath.append(tagNames.iterator().next());
+//            }
+//            File localFileFolder = new File(localFilePath.toString());
+//            if (!localFileFolder.exists()) { 
+//                localFileFolder.mkdirs();
+//            }
+//
+//            // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
+//            String fileName = file.getName();
+//            String objectIdSuffix = "_" + sourceArtifact.getObjectID();
+//            int lastDotIndex = fileName.lastIndexOf(".");
+//            if (lastDotIndex != -1 && lastDotIndex != 0) {
+//                // The file name has a conventional extension. Insert the object id before the '.' of the extension.
+//                fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+//            }
+//            else {
+//                // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
+//                // Add the object id to the end of the file name.
+//                fileName += objectIdSuffix;
+//            }                                
+//            localFilePath.append(File.separator);
+//            localFilePath.append(fileName);
+//
+//            // If the local file doesn't already exist, create it now. 
+//            // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
+//            File localFile = new File(localFilePath.toString());
+//            if (!localFile.exists()) {
+//                ExtractFscContentVisitor.extract(file, localFile, null, null);
+//            }
+//
+//            // Add the hyperlink to the row. A column header for it was created in startTable().
+//            StringBuilder localFileLink = new StringBuilder();
+//            localFileLink.append("<a href=\"file:///");
+//            localFileLink.append(localFilePath.toString());
+//            localFileLink.append("\">View File</a>");
+//            row.add(localFileLink.toString());              
+//        } 
+//        catch (TskCoreException ex) {
+//            logger.log(Level.WARNING, "Failed to get AbstractFile by ID.", ex);
+//            row.add("");
+//        }                                    
     }
     
     /**

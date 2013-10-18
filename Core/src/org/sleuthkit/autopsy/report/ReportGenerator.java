@@ -437,9 +437,9 @@ public class ReportGenerator {
                 
                 boolean msgSent = false;    
                 for(ArtifactData artifactData : unsortedArtifacts) {
-                    HashSet<String> tags = artifactData.getTags();
-                    
-                    String tagsList = makeCommaSeparatedList(tags);
+//                    HashSet<String> tags = artifactData.getTags();
+//                    
+//                    String tagsList = makeCommaSeparatedList(tags);
                     
                     // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
@@ -447,28 +447,22 @@ public class ReportGenerator {
                         // Get the row data for this type of artifact.
                         List<String> rowData; 
                         rowData = getArtifactRow(artifactData, module);   
-                        if (rowData == null) {
+                        if (rowData.isEmpty()) {
                             if (msgSent == false) {
                                 MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
                                 msgSent = true;
                             }
                             continue;
                         }
-                        // Add the list of tag names if the artifact is not itself as tag.
-                        if (artifactData.getArtifact().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
-                            artifactData.getArtifact().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
-                        {
-                            rowData.add(tagsList);
-                        }
 
-                        // This is a temporary workaround to avoid modifying the TableReportModule interface.
-                        if (module instanceof ReportHTML) {
-                            ReportHTML htmlReportModule = (ReportHTML)module;
-                            htmlReportModule.addRow(rowData, artifactData.getArtifact());
-                        }
-                        else {      
+//                        // This is a temporary workaround to avoid modifying the TableReportModule interface.
+//                        if (module instanceof ReportHTML) {
+//                            ReportHTML htmlReportModule = (ReportHTML)module;
+//                            htmlReportModule.addRow(rowData, artifactData.getArtifact());
+//                        }
+//                        else {      
                             module.addRow(rowData);
-                        }                        
+//                        }                        
                     }
                 }
                 
@@ -618,11 +612,15 @@ public class ReportGenerator {
                 }
  
                // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
-                if (failsTagFilter(tags, tagNamesFilter)) {
-                    continue;
-                }                    
-                String tagsList = makeCommaSeparatedList(tags);
+               HashSet<String> uniqueTagNames = new HashSet<>();
+               ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id"));
+               while (tagNameRows.next()) {
+                   uniqueTagNames.add(tagNameRows.getString("display_name"));
+               }
+               if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                   continue;
+               }                    
+               String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                         
                 Long objId = rs.getLong("obj_id");
                 String keyword = rs.getString("keyword");
@@ -761,12 +759,16 @@ public class ReportGenerator {
                     }
                 }
                 
-               // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(rs.getLong("artifact_id"), ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
-                if (failsTagFilter(tags, tagNamesFilter)) {
+                // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> uniqueTagNames = new HashSet<>();
+                ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id"));
+                while (tagNameRows.next()) {
+                    uniqueTagNames.add(tagNameRows.getString("display_name"));
+                }
+                if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
-                String tagsList = makeCommaSeparatedList(tags);
+                String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                                         
                 Long objId = rs.getLong("obj_id");
                 String set = rs.getString("setname");
@@ -819,7 +821,7 @@ public class ReportGenerator {
             }
         }
     }
-    
+        
     /**
      * For a given artifact type ID, return the list of the row titles we're reporting on.
      * 
@@ -828,9 +830,8 @@ public class ReportGenerator {
      */
     private List<String> getArtifactTableColumnHeaders(int artifactTypeId) {
         ArrayList<String> columnHeaders;
-        
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId);
-        
+
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId);        
         switch (type) {
             case TSK_WEB_BOOKMARK:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
@@ -865,12 +866,6 @@ public class ReportGenerator {
             case TSK_METADATA_EXIF: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
                 break;
-            case TSK_TAG_FILE: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"File", "Tag", "Comment"}));
-                break;
-            case TSK_TAG_ARTIFACT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Result Type", "Tag", "Comment", "Source File"}));
-                break;
             case TSK_CONTACT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Phone Number (Home)", "Phone Number (Office)", "Phone Number (Mobile)", "Email", "Source File"  }));
                 break;
@@ -884,25 +879,25 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
                 break;
             case TSK_SPEED_DIAL_ENTRY:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Short Cut", "Person Name", "Phone Number",  "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Short Cut", "Person Name", "Phone Number",  "Source File"  }));
                 break;
             case TSK_BLUETOOTH_PAIRING:
-                columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
                 break;
             case TSK_GPS_TRACKPOINT:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_GPS_BOOKMARK:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_GPS_LAST_KNOWN_LOCATION:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_GPS_SEARCH:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
                 break;
             case TSK_SERVICE_ACCOUNT:
-                 columnHeaders = new ArrayList<String>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Description", "ReplyTo Address", "Mail Server", "Source File" }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Description", "ReplyTo Address", "Mail Server", "Source File" }));
                 break;
             case TSK_TOOL_OUTPUT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
@@ -910,11 +905,7 @@ public class ReportGenerator {
             default:
                 return null;
         }
-
-        if (artifactTypeId != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID() && 
-            artifactTypeId != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-            columnHeaders.add("Tags");
-        }
+        columnHeaders.add("Tags");
         
         return columnHeaders;
     }
@@ -993,227 +984,175 @@ public class ReportGenerator {
     private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) throws TskCoreException {
         Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
         
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());
-        
+        List<String> rowData = new ArrayList<>();
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());        
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                List<String> bookmark = new ArrayList<>();
-                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                bookmark.add(getFileUniquePath(artifactData.getObjectID()));
-                return bookmark;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_WEB_COOKIE:
-                List<String> cookie = new ArrayList<>();
-                cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
-                cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                cookie.add(getFileUniquePath(artifactData.getObjectID()));
-                return cookie;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_WEB_HISTORY:
-                List<String> history = new ArrayList<>();
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                history.add(getFileUniquePath(artifactData.getObjectID()));
-                return history;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_WEB_DOWNLOAD:
-                List<String> download = new ArrayList<>();
-                download.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                download.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                download.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                download.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                download.add(getFileUniquePath(artifactData.getObjectID()));
-                return download;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_RECENT_OBJECT:
-                List<String> recent = new ArrayList<>();
-                recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                recent.add(getFileUniquePath(artifactData.getObjectID()));
-                return recent;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_INSTALLED_PROG:
-                List<String> installed = new ArrayList<>();
-                installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                installed.add(getFileUniquePath(artifactData.getObjectID()));
-                return installed;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_DEVICE_ATTACHED:
-                List<String> devices = new ArrayList<>();
-                devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                devices.add(getFileUniquePath(artifactData.getObjectID()));
-                return devices;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_WEB_SEARCH_QUERY:
-                List<String> search = new ArrayList<>();
-                search.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
-                search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                search.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                search.add(getFileUniquePath(artifactData.getObjectID()));
-                return search;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
             case TSK_METADATA_EXIF: 
-                List<String> exif = new ArrayList<>();
-                exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
-                exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                exif.add(getFileUniquePath(artifactData.getObjectID()));
-                return exif;
-            case TSK_TAG_FILE:
-                List<String> taggedFileRow = new ArrayList<>();
-                AbstractFile taggedFile = getAbstractFile(artifactData.getObjectID());
-                if (taggedFile != null) {
-                    taggedFileRow.add(taggedFile.getUniquePath());
-                } else {
-                    taggedFileRow.add("");
-                }
-                taggedFileRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()));
-                taggedFileRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                return taggedFileRow;
-            case TSK_TAG_ARTIFACT:
-                List<String> taggedArtifactRow = new ArrayList<>();
-                String taggedArtifactType = "";
-                for (BlackboardAttribute attr : artifactData.getAttributes()) {
-                    if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()) {
-                        BlackboardArtifact taggedArtifact = getArtifact(attr.getValueLong());
-                        if (taggedArtifact != null) {
-                            taggedArtifactType = taggedArtifact.getDisplayName();
-                        }
-                        break;
-                    }
-                }
-                taggedArtifactRow.add(taggedArtifactType);
-                taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()));
-                taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                AbstractFile sourceFile = getAbstractFile(artifactData.getObjectID());
-                if (sourceFile != null) {
-                    taggedArtifactRow.add(sourceFile.getUniquePath());
-                } else {
-                    taggedArtifactRow.add("");
-                }
-                return taggedArtifactRow;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
              case TSK_CONTACT:
-                List<String> contact = new ArrayList<>();
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
-                contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
-                contact.add(getFileUniquePath(artifactData.getObjectID()));
-                return contact;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
              case TSK_MESSAGE:
-                List<String> message = new ArrayList<>();
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
-                message.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                message.add(getFileUniquePath(artifactData.getObjectID()));
-                return message;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_CALLLOG:
-                List<String> call_log = new ArrayList<>();
-                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                call_log.add(getFileUniquePath(artifactData.getObjectID()));
-                return call_log;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_CALENDAR_ENTRY:
-                List<String> calEntry = new ArrayList<>();
-                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
-                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
-                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
-                calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                calEntry.add(getFileUniquePath(artifactData.getObjectID()));
-                return calEntry;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_SPEED_DIAL_ENTRY:
-                List<String> speedDialEntry = new ArrayList<String>();
-                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
-                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                speedDialEntry.add(getFileUniquePath(artifactData.getObjectID()));
-                return speedDialEntry;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_BLUETOOTH_PAIRING:
-                List<String> bluetoothEntry = new ArrayList<String>();
-                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
-                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                bluetoothEntry.add(getFileUniquePath(artifactData.getObjectID()));
-                return bluetoothEntry;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_GPS_TRACKPOINT:
-                List<String> gpsTrackpoint = new ArrayList<String>();
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsTrackpoint.add(getFileUniquePath(artifactData.getObjectID()));
-                return gpsTrackpoint;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_GPS_BOOKMARK:
-                List<String> gpsBookmarkEntry = new ArrayList<String>();
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsBookmarkEntry.add(getFileUniquePath(artifactData.getObjectID()));
-                return gpsBookmarkEntry;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_GPS_LAST_KNOWN_LOCATION:
-                List<String> gpsLastLocation = new ArrayList<String>();
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsLastLocation.add(getFileUniquePath(artifactData.getObjectID()));
-                return gpsLastLocation;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_GPS_SEARCH:
-                List<String> gpsSearch = new ArrayList<String>();
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsSearch.add(getFileUniquePath(artifactData.getObjectID()));
-                return gpsSearch;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
               case TSK_SERVICE_ACCOUNT:
-                List<String> appAccount = new ArrayList<String>();
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
-                appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
-                appAccount.add(getFileUniquePath(artifactData.getObjectID()));
-                return appAccount;
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
              case TSK_TOOL_OUTPUT: 
-                List<String> row = new ArrayList<>();
-                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                row.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                row.add(getFileUniquePath(artifactData.getObjectID()));
-                return row; 
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                rowData.add(getFileUniquePath(artifactData.getObjectID()));
+                break;
         }
-        return null;
+        rowData.add(makeCommaSeparatedList(artifactData.getTags()));
+        
+        return rowData; // RJCTODO: Is anyone checking for null here?
     }
     
     /**
@@ -1230,52 +1169,7 @@ public class ReportGenerator {
         }
         return "";
     }
-    
-    /**
-     * Given a tsk_file's obj_id, return the name of that file.
-     * 
-     * @param objId tsk_file obj_id
-     * @return String name
-     */
-    private String getFileName(long objId) {
-        try {
-            return skCase.getAbstractFileById(objId).getName();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
-        }
-        return "";
-    }
-    
-    /**
-     * Return the file associated with a tsk_file obj_id.
-     * 
-     * @param objId tsk_file obj_id
-     * @return AbstractFile associated with objId
-     */
-    private AbstractFile getAbstractFile(long objId) {
-        try {
-            return skCase.getAbstractFileById(objId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
-        }
-        return null;
-    }
-    
-    /**
-     * Get a BlackboardArtifact.
-     * 
-     * @param long artifactId An artifact id
-     * @return The BlackboardArtifact associated with the artifact id
-     */
-    private BlackboardArtifact getArtifact(long artifactId) {
-        try {
-            return skCase.getBlackboardArtifact(artifactId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get blackboard artifact by ID.", ex);
-        }
-        return null;
-    }
-    
+        
     /**
      * Container class that holds data about an Artifact to eliminate duplicate
      * calls to the Sleuthkit database.
