@@ -35,6 +35,7 @@ public class TagNameNode  extends DisplayableItemNode {
     private static final String CONTENT_TAG_TYPE_NODE_KEY = "Content Tags";
     private static final String BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY = "Result Tags";
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private final TagName tagName;
 
     public TagNameNode(TagName tagName) {
@@ -42,7 +43,12 @@ public class TagNameNode  extends DisplayableItemNode {
         this.tagName = tagName;
         super.setName(tagName.getDisplayName());
         super.setDisplayName(tagName.getDisplayName());
-        this.setIconBaseWithExtension(ICON_PATH);
+        if (tagName.getDisplayName().equals("Bookmark")) {
+            setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);
+        }
+        else {
+            setIconBaseWithExtension(ICON_PATH);
+        }
     }
 
     @Override
