@@ -104,12 +104,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     }
 
     private void discoverDataSourceProcessors() {
-     
-        logger.log(Level.INFO, "RAMAN discoverDataSourceProcessors()...");
       
         for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
-           logger.log(Level.INFO, "RAMAN discoverDataSourceProcessors()L found a DSP for type = " + dsProcessor.getType() );
- 
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
                 if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
                     
@@ -117,7 +113,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
                 }
                 else {
-                    logger.log(Level.SEVERE, "RAMAN discoverDataSourceProcessors(): A DataSourceProcessor already exisits for type = " + dsProcessor.getType() );
+                    logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getType() );
                 }      
             }  
         }

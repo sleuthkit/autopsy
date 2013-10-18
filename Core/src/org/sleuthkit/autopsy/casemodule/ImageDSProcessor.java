@@ -34,81 +34,101 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- *
- * @author raman
+ * Image data source processor.
+ * Handles the addition of  "disk images" to Autopsy.
+ * 
+ * An instance of this class is created via the Netbeans Lookup() method.
+ * 
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class ImageDSProcessor implements DataSourceProcessor {
   
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
+    // The Config UI panel that plugins into the Choose Data Source Wizard
     private ImageFilePanel imageFilePanel;
+    
+    // The Background task that does the actual work of adding the image 
     private AddImageTask addImageTask;
    
+    // true of cancelled by the caller
     private boolean cancelled = false;
     
     DSPCallback callbackObj = null;
     
     // set to TRUE if the image options have been set via API and config Jpanel should be ignored
     private boolean imageOptionsSet = false;
+    
+    // image options
     private String imagePath;
     private String timeZone;
     private boolean noFatOrphans;
             
         
-    
+    /*
+     * A no argument constructor is required for the NM lookup() method to create an object
+     */
     public ImageDSProcessor() {
-        logger.log(Level.INFO, "RAMAN ImageDSProcessor()...");
         
         // Create the config panel
         imageFilePanel =  ImageFilePanel.getDefault();
         
     }
     
-    
+    /**
+     * Returns the Data source type (string) handled by this DSP
+     *
+     * @return String the data source type
+     **/ 
     @Override
     public String getType() {
-      
-        logger.log(Level.INFO, "RAMAN getName()...");
-        
         return imageFilePanel.getContentType();
-        
     }
             
-    
+    /**
+     * Returns the JPanel for collecting the Data source information
+     *
+     * @return JPanel the config panel 
+     **/ 
    @Override
     public JPanel getPanel() {
-       
-       logger.log(Level.INFO, "RAMAN getPanel()...");
-       
+      
        // RAMAN TBD: we should ask the panel to preload with any saved settings
         
        imageFilePanel.select();
        
        return imageFilePanel;
    }
-    
+    /**
+     * Validates the data collected by the JPanel
+     *
+     * @return String returns NULL if success, error string if there is any errors  
+     **/  
    @Override
    public String validatePanel() {
-       
-       logger.log(Level.INFO, "RAMAN validatePanel()...");
        
         if (imageFilePanel.validatePanel() )
            return null;
        else 
            return "Error in panel";    
    }
-    
+    /**
+     * Runs the data source processor.
+     * This must kick off processing the data source in background
+     *
+     * @param progressMonitor Progress monitor to report progress during processing 
+     * @param cbObj callback to call when processing is done.
+     **/    
   @Override
   public void run(DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
-      
-      logger.log(Level.INFO, "RAMAN run()...");
       
       callbackObj = cbObj;
       cancelled = false;
       
       if (!imageOptionsSet)
       {
+          // RAMAN TBD: we should ask the panel to save the current settings now
+          
           // get the image options from the panel
           imagePath = imageFilePanel.getContentPaths();
           timeZone = imageFilePanel.getTimeZone();
@@ -124,11 +144,12 @@ public class ImageDSProcessor implements DataSourceProcessor {
        
       return;
   }
-    
+  
+    /**
+     * Cancel the data source processing
+     **/    
   @Override
   public void cancel() {
-      
-      logger.log(Level.INFO, "RAMAN cancelProcessing()...");
       
       cancelled = true;
       addImageTask.cancelTask();
@@ -136,12 +157,12 @@ public class ImageDSProcessor implements DataSourceProcessor {
       return;
   }
   
-   
+  /**
+   * Reset the data source processor
+   **/     
   @Override
   public void reset() {
       
-     logger.log(Level.INFO, "RAMAN reset()...");
-     
      // reset the config panel
      imageFilePanel.reset();
     
@@ -154,6 +175,15 @@ public class ImageDSProcessor implements DataSourceProcessor {
       return;
   }
   
+  /**
+   * Sets the data source options externally.
+   * To be used by a client that does not have a UI and does not use the JPanel to 
+   * collect this information from a user.
+   * 
+   * @param imgPath path to thew image or first image
+   * @param String timeZone 
+   * @param noFat whether to parse FAT orphans
+   **/ 
   public void SetDataSourceOptions(String imgPath, String tz, boolean noFat) {
       
     this.imagePath = imgPath;
@@ -164,7 +194,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
       
   }
   
-  
+   /*
+    * Background task that actualy adds the image
+    */
    private class AddImageTask extends SwingWorker<Integer, Integer> {
 
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
@@ -193,14 +225,19 @@ public class ImageDSProcessor implements DataSourceProcessor {
         boolean noFatOrphans;
             
         
-        
+        /*
+         * Sets the name/path and other options for the iimage to be processed
+         */
         public void SetImageOptions(String imgPath, String tz, boolean noOrphans) {
             this.imagePath = imgPath;
             this.timeZone = tz;
             this.noFatOrphans = noOrphans;
         }
         
-      
+        /*
+         * A Swingworker that updates the progressMonitor with the name of the 
+         * directory currently being processed  by the AddImageTask 
+         */
         private class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
 
             DSPProgressMonitor progressMonitor;
@@ -209,7 +246,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
             CurrentDirectoryFetcher(DSPProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
                 this.progressMonitor = aProgressMonitor;
                 this.process = proc;
-               // this.progressBar = aProgressBar;
             }
 
             /**
@@ -252,15 +288,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
          */
         @Override
         protected Integer doInBackground() {
-
-            logger.log(Level.INFO, "RAMAN: doInBackground()");
              
             this.setProgress(0);
 
             errorList.clear();
-
-
-
             try {
                 //lock DB for writes in EWT thread
                 //wait until lock acquired in EWT
@@ -315,8 +346,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
          */
         private void commitImage() throws Exception {
 
-            logger.log(Level.INFO, "RAMAN: commitImage()...");
-
             long imageId = 0;
             try {
                 imageId = addImageProcess.commit();
@@ -352,42 +381,32 @@ public class ImageDSProcessor implements DataSourceProcessor {
          *
          * (called by EventDispatch Thread after doInBackground finishes)
          * 
-         * Must Not return without invoking the callBack.
+         * Must Not return without invoking the callBack, unless the caller canceled
          */
         @Override
         protected void done() {
-            
-            logger.log(Level.INFO, "RAMAN: done()...");
                    
             setProgress(100);
             
-            // cancel
+            // cancel the directory fetcher
             fetcher.cancel(true);
 
-            addImageDone = true;
-            
+            addImageDone = true; 
             // attempt actions that might fail and force the process to stop
             if (cancelled || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
                 revert();
-                // Do not return yet.  Callback must be called
             }
             if (!errorList.isEmpty()) {
-               
                 logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                
-                // error are returned back to the caller
             }
             
             // When everything happens without an error:
             if (!(cancelled || hasCritError)) {
 
                 try {
-                    
-
-                    // Tell the panel we're done
+                    // Tell the progress monitor we're done
                     progressMonitor.setProgress(100);
-
 
                     if (newContents.isEmpty()) {
                         if (addImageProcess != null) { // and if we're done configuring ingest
@@ -408,8 +427,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
                         logger.log(Level.INFO, "Assuming image already committed, will not commit.");
                     }
 
-
-
                 } catch (Exception ex) {
                     //handle unchecked exceptions post image add
 
@@ -428,13 +445,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
             if (!cancelled)
                 doCallBack();
             
+            return;
         }
 
-        
-        void doCallBack()
-        {
-              logger.log(Level.INFO, "RAMAN In doCallback()");
-              
+        /*
+         * Call the callback with proper parameters
+         */
+        private void doCallBack()
+        {     
               DSPCallback.DSP_Result result;
               
               if (hasCritError) {
@@ -446,14 +464,15 @@ public class ImageDSProcessor implements DataSourceProcessor {
               else {
                   result = DSPCallback.DSP_Result.NO_ERRORS;
               }
-              
+
+              // invoke the callcak, passing it the result, list of new contents, and list of errors
               callbackObj.done(result, errorList, newContents);
         }
         
-        
-        void cancelTask() {
-            
-             logger.log(Level.INFO, "RAMAN: cancelTask()...");
+        /*
+         * cancel the image addition, if possible
+         */
+        public void cancelTask() {
             
              cancelled = true;
              
@@ -474,11 +493,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
                 }
             }
         }
-        void interrupt() throws Exception {
+        /*
+         * Interrurp the add image process if it is still running
+         */
+        private void interrupt() throws Exception {
             
-            logger.log(Level.INFO, "RAMAN: interrupt()...");
-             
-            //interrupted = true;
             try {
                 logger.log(Level.INFO, "interrupt() add image process");
                 addImageProcess.stop();  //it might take time to truly stop processing and writing to db
@@ -487,10 +506,11 @@ public class ImageDSProcessor implements DataSourceProcessor {
             }
         }
 
-        //runs in EWT
+        /*
+         * Revert - if image has already been added but not committed yet
+         */
         void revert() {
             
-             logger.log(Level.INFO, "RAMAN: revert()...");
              if (!reverted) {
                  
                 try {

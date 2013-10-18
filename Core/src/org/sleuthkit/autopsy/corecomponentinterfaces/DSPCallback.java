@@ -9,8 +9,7 @@ import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
 /**
- *
- * @author raman
+ * Abstract class for a callback
  */
 public abstract class DSPCallback {
     
@@ -21,6 +20,9 @@ public abstract class DSPCallback {
                 NONCRITICAL_ERRORS,
     };
     
+    /*
+     * Invoke the caller supplied callback function on the EDT thread
+     */
     public void done(DSP_Result result, List<String> errList,  List<Content> newContents)
     {
         
@@ -38,5 +40,8 @@ public abstract class DSPCallback {
            }); 
     }
     
+    /*
+     * calling code overrides to provide its own calllback 
+     */
     public abstract void doneEDT(DSP_Result result, List<String> errList,  List<Content> newContents);
 };

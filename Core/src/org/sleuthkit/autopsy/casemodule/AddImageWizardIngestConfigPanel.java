@@ -226,18 +226,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     }
     
      /**
-     * Start the Data source handling by kicking of the selected DataSourceProcessor
+     * Starts the Data source processing by kicking off the selected DataSourceProcessor
      */
     private void startDataSourceProcessing(WizardDescriptor settings) {
-       
-       logger.log(Level.INFO, "RAMAN startDataSourceProcessing()...");
         
-        // get the selected DSProcessor
-        dsProcessor =  dataSourcePanel.getComponent().GetCurrentDSProcessor();
        
-      
-             
-        // Add a cleanup task to interrupt the backgroud process if the
+       
+        // Add a cleanup task to interrupt the background process if the
         // wizard exits while the background process is running.
         cleanupTask = addImageAction.new CleanupTask() {
             @Override
@@ -245,10 +240,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 cancelDataSourceProcessing();
             }
         };
-         
-        // RAMAN TBD: this cleanup task needs to be cancelled, if dsProcessor runs successfully
+        
         cleanupTask.enable();
        
+         // get the selected DSProcessor
+        dsProcessor =  dataSourcePanel.getComponent().GetCurrentDSProcessor();
+        
         DSPCallback cbObj = new DSPCallback () {
             @Override
             public void doneEDT(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents)  {
@@ -264,18 +261,22 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      
     }
 
+    /*
+     * Cancels the data source processing - in case the users presses 'Cancel'
+     */
     private void cancelDataSourceProcessing() {
-         logger.log(Level.INFO, "RAMAN cancelDataSourceProcessing().");
          dsProcessor.cancel();
     }
     
+    /*
+     * Callback for the data source processor. 
+     * Invoked by the DSP on the EDT thread, when it finishes processing the data source.
+     */
     private void dataSourceProcessorDone(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents) {
-        logger.log(Level.INFO, "RAMAN dataSourceProcessorDone().");
         
          // disable the cleanup task
         cleanupTask.disable();
        
-         
         // Get attention for the process finish
         java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
         AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
@@ -295,8 +296,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         
         //if errors, display them on the progress panel
         for ( String err: errList ) {
-            // RAMAN TBD: there should be an error level for each error
-             progressPanel.addErrors(err, false);
+            //  RAMANM TBD: there probably should be an error level for each error
+            progressPanel.addErrors(err, false);
         }
       
         newContents.clear();
