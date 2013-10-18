@@ -19,12 +19,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class are elements of Node hierarchies consisting of 
@@ -32,8 +36,6 @@ import org.sleuthkit.datamodel.TagName;
  * tag name. 
  */
 public class TagNameNode  extends DisplayableItemNode {
-    private static final String CONTENT_TAG_TYPE_NODE_KEY = "Content Tags";
-    private static final String BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY = "Result Tags";
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private static final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private final TagName tagName;
@@ -41,8 +43,18 @@ public class TagNameNode  extends DisplayableItemNode {
     public TagNameNode(TagName tagName) {
         super(Children.create(new TagTypeNodeFactory(tagName), true));
         this.tagName = tagName;
-        super.setName(tagName.getDisplayName());
-        super.setDisplayName(tagName.getDisplayName());
+        
+        long tagsCount = 0;
+        try {
+            tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+            tagsCount += Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex);
+        }
+        
+        super.setName(tagName.getDisplayName() + " (" + tagsCount + ")");
+        super.setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
         if (tagName.getDisplayName().equals("Bookmark")) {
             setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);
         }
@@ -78,6 +90,8 @@ public class TagNameNode  extends DisplayableItemNode {
     }
     
     private static class TagTypeNodeFactory extends ChildFactory<String> {
+        private static final String CONTENT_TAG_TYPE_NODE_KEY = "Content Tags";
+        private static final String BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY = "Result Tags";
         private final TagName tagName;
         
         TagTypeNodeFactory(TagName tagName) {

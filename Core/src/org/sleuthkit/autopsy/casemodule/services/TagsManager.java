@@ -226,7 +226,22 @@ public class TagsManager implements Closeable {
         
         tskCase.deleteContentTag(tag);
     }
-    
+
+    /**
+     * Gets content tags count by tag name.
+     * @param [in] tagName The tag name of interest. 
+     * @return A count of the content tags with the specified tag name.
+     * @throws TskCoreException 
+     */
+    public synchronized long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+        
+        return tskCase.getContentTagsCountByTagName(tagName);        
+    }
+            
     /**
      * Gets content tags by tag name.
      * @param [in] tagName The tag name of interest. 
@@ -282,6 +297,21 @@ public class TagsManager implements Closeable {
         tskCase.deleteBlackboardArtifactTag(tag);
     }
         
+    /**
+     * Gets blackboard artifact tags count by tag name.
+     * @param [in] tagName The tag name of interest. 
+     * @return A count of the blackboard artifact tags with the specified tag name.
+     * @throws TskCoreException 
+     */
+    public synchronized long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+        
+        return tskCase.getBlackboardArtifactTagsCountByTagName(tagName);        
+    }
+                
     /**
      * Gets blackboard artifact tags by tag name.
      * @param [in] tagName The tag name of interest. 

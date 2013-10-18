@@ -42,12 +42,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
     private static final String DISPLAY_NAME = "Result Tags";
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; // RJCTODO: Different icon?
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
 
     public BlackboardArtifactTagTypeNode(TagName tagName) {
         super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true));
-        super.setName(DISPLAY_NAME);
-        super.setDisplayName(DISPLAY_NAME);
+
+        long tagsCount = 0;
+        try {
+            tagsCount = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex);
+        }
+        
+        super.setName(DISPLAY_NAME + " (" + tagsCount + ")");
+        super.setDisplayName(DISPLAY_NAME + " (" + tagsCount + ")");
         this.setIconBaseWithExtension(ICON_PATH);
     }
 

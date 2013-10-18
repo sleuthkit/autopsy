@@ -41,8 +41,17 @@ public class ContentTagTypeNode extends DisplayableItemNode {
 
     public ContentTagTypeNode(TagName tagName) {
         super(Children.create(new ContentTagNodeFactory(tagName), true));
-        super.setName(DISPLAY_NAME);
-        super.setDisplayName(DISPLAY_NAME);
+        
+        long tagsCount = 0;
+        try {
+            tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex);
+        }
+        
+        super.setName(DISPLAY_NAME + " (" + tagsCount + ")");
+        super.setDisplayName(DISPLAY_NAME + " (" + tagsCount + ")");
         this.setIconBaseWithExtension(ICON_PATH);
     }
 
