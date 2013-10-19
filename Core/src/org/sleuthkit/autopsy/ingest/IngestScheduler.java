@@ -702,6 +702,11 @@ class IngestScheduler {
                     HIGH_PRI_PATHS.add(Pattern.compile("^ProgramData", Pattern.CASE_INSENSITIVE));
                 }
 
+                /**
+                 * Get the scheduling priority for a given file. 
+                 * @param abstractFile
+                 * @return 
+                 */
                 static AbstractFilePriotity.Priority getPriority(final AbstractFile abstractFile) {
                     if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                         //quickly filter out unstructured content
