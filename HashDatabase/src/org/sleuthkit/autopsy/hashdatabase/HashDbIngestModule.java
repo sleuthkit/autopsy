@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -38,10 +37,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,8 +58,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     private boolean nsrlIsSet;
     private boolean knownBadIsSet;
     private boolean calcHashesIsSet;
-    private HashDb nsrlSet;
-    private int nsrlPointer;
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<>();
@@ -88,7 +81,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbXML hdbxml = HashDbXML.getCurrent();
-            nsrlSet = null;
             knownBadSets.clear();
             skCase.clearLookupDatabases();
             nsrlIsSet = false;
@@ -98,8 +90,8 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             HashDb nsrl = hdbxml.getNSRLSet();
             if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.status())) {
                 nsrlIsSet = true;
-                this.nsrlSet = nsrl;
-                nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
+                // @@@ Unchecked return value
+                skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
             }
 
             for (HashDb db : hdbxml.getKnownBadSets()) {
@@ -311,7 +303,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                 return ProcessResult.ERROR;
             }
         }
-
+        
 
         // look up in known bad first
         TskData.FileKnown status = TskData.FileKnown.UKNOWN;
@@ -320,7 +312,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
         if (knownBadIsSet) {
             for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
-
                 try {
                     long lookupstart = System.currentTimeMillis();
                     status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
