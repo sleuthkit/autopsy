@@ -243,8 +243,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             boolean hasChildren = false;
-
-
+            
             if (selectedNode != null) {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
@@ -257,6 +256,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             // if there's no selection node, do nothing
             if (hasChildren) {
                 Node root = selectedNode;
+                dummyNodeListener.reset();
                 root.addNodeListener(dummyNodeListener);
                 setupTable(root);
             } else {
@@ -478,21 +478,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     private class DummyNodeListener implements NodeListener {
         private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        private volatile boolean load = true;
+        
+        public void reset() {
+            load = true;
+        }
         
         @Override
         public void childrenAdded(NodeMemberEvent nme) {
-            Node added = nme.getNode();
-            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
-                // If it's the dummy waiting node, we don't want
-                // to reload the table headers
-                return;
+            Node[] delta = nme.getDelta();
+            if (load && containsReal(delta)) {
+                load = false;
+                setupTable(nme.getNode());
             }
-            setupTable(added);
+        }
+        
+        private boolean containsReal(Node[] delta) {
+            for (Node n : delta) {
+                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
-            
         }
 
         @Override
