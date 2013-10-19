@@ -162,6 +162,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         emailFolder = emailFolder + mboxFileName;
         emailFolder = emailFolder.replaceAll(".sbd", "");
         
+        boolean errorsFound = false;
         try {
             ReadContentInputStream contentStream = new ReadContentInputStream(abstractFile);
             ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
@@ -204,17 +205,28 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                 try {
                     bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
                     bbart.addAttributes(bbattributes);
+                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 } catch (TskCoreException ex) {
                     Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
+                    errorsFound = true;
                 }
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
             }
-        } catch (FileNotFoundException ex) {
+        } 
+        catch (FileNotFoundException ex) {
             Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
-        } catch (IOException ex) {
+            errorsFound = true;
+        } 
+        catch (IOException ex) {
             Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
-        } catch (SAXException | TikaException ex) {
+            errorsFound = true;
+        } 
+        catch (SAXException | TikaException ex) {
             Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
+            errorsFound = true;
+        }
+        if (errorsFound) {
+            // @@@ RECORD THEM...
+            return ProcessResult.ERROR;
         }
 
         return ProcessResult.OK;
