@@ -50,6 +50,9 @@ blackboard and with inbox messages to the user.
 To make a data source-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleDataSource". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleDataSource class for details on what each needs to do. 
 You can also refer to org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule as an example module. 
 
+
+Data source-level ingest modules must find the files that they want to analyze.  The best way to do that is using one of the findFiles() methods in org.sleuthkit.autopsy.casemodule.services.FileManager.   See \ref mod_dev_other_services for more details. 
+
 Example snippet of an ingest-level module process() method:
 
 \code
