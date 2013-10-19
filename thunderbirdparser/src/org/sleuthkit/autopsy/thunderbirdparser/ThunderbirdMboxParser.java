@@ -37,6 +37,9 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+/**
+ * Contains the logic to parse an MBOX file.  
+ */
 public class ThunderbirdMboxParser  {
 
     /** Serial version UID */
