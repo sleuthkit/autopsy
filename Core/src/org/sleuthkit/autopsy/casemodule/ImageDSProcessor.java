@@ -121,7 +121,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
       
       if (!imageOptionsSet)
       {
-          // RAMAN TBD: we should ask the panel to save the current settings now
+          // RAMAN TBD: we should ask the panel to save the current settings
           
           // get the image options from the panel
           imagePath = imageFilePanel.getContentPaths();
@@ -129,11 +129,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
           noFatOrphans = imageFilePanel.getNoFatOrphans(); 
       }
       
-      addImageTask = new AddImageTask(progressMonitor, cbObj);
-      
-      // set the image options needed by AddImageTask - such as TZ and NoFatOrphans **/
-      addImageTask.SetImageOptions(imagePath, timeZone, noFatOrphans);
-          
+      addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans,  progressMonitor, cbObj); 
       addImageTask.execute();
        
       return;

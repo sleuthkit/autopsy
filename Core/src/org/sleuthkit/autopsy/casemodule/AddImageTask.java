@@ -55,7 +55,8 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
         //true if revert has been invoked.
         private boolean reverted = false;
         private boolean hasCritError = false;
-        private boolean addImageDone = false;
+        
+        private boolean  addImageDone = false;
         
         private List<String> errorList = new ArrayList<String>();
         
@@ -65,7 +66,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
         private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
         
         private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
-        private CurrentDirectoryFetcher fetcher;
+        private Thread dirFetcher;
    
         private String imagePath;
         private String dataSourcetype;
@@ -74,19 +75,10 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
             
         
         /*
-         * Sets the name/path and other options for the iimage to be processed
-         */
-        public void SetImageOptions(String imgPath, String tz, boolean noOrphans) {
-            this.imagePath = imgPath;
-            this.timeZone = tz;
-            this.noFatOrphans = noOrphans;
-        }
-        
-        /*
          * A Swingworker that updates the progressMonitor with the name of the 
          * directory currently being processed  by the AddImageTask 
          */
-        private class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
+        private class CurrentDirectoryFetcher implements Runnable {
 
             DSPProgressMonitor progressMonitor;
             SleuthkitJNI.CaseDbHandle.AddImageProcess process;
@@ -100,31 +92,33 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
              * @return the currently processing directory
              */
             @Override
-            protected Integer doInBackground() {
+            public void run() {
                 try {
-                    while (!(addImageDone)) { 
-                        EventQueue.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressMonitor.setText(process.currentDirectory()); 
-                            }
-                        });
-
+                    while (!Thread.currentThread().isInterrupted()) { 
+                        
+                        progressMonitor.setText(process.currentDirectory()); 
+                            
                         Thread.sleep(2 * 1000);
                     }
-                    return 1;
+                    return;
                 } catch (InterruptedException ie) {
-                    return -1;
+                    return;
                 }
             }
         }
    
          
-        protected AddImageTask(DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
-            this.progressMonitor = aProgressMonitor;
+        protected AddImageTask(String imgPath, String tz, boolean noOrphans, DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
+           
             currentCase = Case.getCurrentCase();
             
+            
+            this.imagePath = imgPath;
+            this.timeZone = tz;
+            this.noFatOrphans = noOrphans;
+            
             this.callbackObj = cbObj;
+            this.progressMonitor = aProgressMonitor;
         }
 
         /**
@@ -159,13 +153,14 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
             }
             
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            fetcher = new CurrentDirectoryFetcher(progressMonitor, addImageProcess);
+            dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
           
             try {
                 progressMonitor.setIndeterminate(true);
                 progressMonitor.setProgress(0);
                
-                fetcher.execute();
+                dirFetcher.start();
+                
                 addImageProcess.run(new String[]{this.imagePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
@@ -237,7 +232,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
             setProgress(100);
             
             // cancel the directory fetcher
-            fetcher.cancel(true);
+            dirFetcher.interrupt();
 
             addImageDone = true; 
             // attempt actions that might fail and force the process to stop

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -60,19 +61,39 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
             
     private class DSPProgressMonitorImpl implements DSPProgressMonitor {
         @Override
-        public void setIndeterminate(boolean indeterminate) {
-             getComponent().getProgressBar().setIndeterminate(indeterminate);
-            
+        public void setIndeterminate(final boolean indeterminate) {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setIndeterminate(indeterminate);
+                    }
+                });
         }
+        
         @Override
-        public void setProgress(int progress)  {
-                getComponent().getProgressBar().setValue(progress);
+        public void setProgress(final int progress)  {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setValue(progress);
+                    }
+                });      
         }
+        
         @Override
-        public void setText(String text) {
-           getComponent().setCurrentDirText(text);
-            
+        public void setText(final String text) {
+            // update the progress UI asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().setCurrentDirText(text);
+                    }
+                });      
         }
+        
+        
         
     }
     /**
