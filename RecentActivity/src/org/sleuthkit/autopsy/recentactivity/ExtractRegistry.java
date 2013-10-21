@@ -175,7 +175,7 @@ public class ExtractRegistry extends Extract {
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseReg(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
                     this.addErrorMessage(this.getName() + ": Failed parsing registry file results " + regFileName);
                     continue;
                 }
@@ -217,8 +217,8 @@ public class ExtractRegistry extends Extract {
                     // TODO - add error message here?
                     java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                regFileNameLocalFile.delete();
             }
+            regFileNameLocalFile.delete();
         }
         
         try {
@@ -328,7 +328,7 @@ public class ExtractRegistry extends Extract {
     
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
 
-    private boolean parseReg(String regRecord, long orgId, ExtractUSB extrctr) {
+    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, ExtractUSB extrctr) {
         FileInputStream fstream = null;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
