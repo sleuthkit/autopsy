@@ -97,7 +97,7 @@ public class TagsManager implements Closeable {
         tagNames.clear();
         tskCase.getTagNamesInUse(tagNames);
     }
-        
+            
     /**
      * Checks whether a tag name with a given display name exists.
      * @param [in] tagDisplayName The display name for which to check.
@@ -228,6 +228,20 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets all content tags for the current case.
+     * @param [out] tags A list, possibly empty, of content tags.
+     * @throws TskCoreException 
+     */
+    public void getAllContentTags(List<ContentTag> tags) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+
+        tskCase.getAllContentTags(tags);        
+    }
+    
+    /**
      * Gets content tags count by tag name.
      * @param [in] tagName The tag name of interest. 
      * @return A count of the content tags with the specified tag name.
@@ -297,6 +311,20 @@ public class TagsManager implements Closeable {
         tskCase.deleteBlackboardArtifactTag(tag);
     }
         
+    /**
+     * Gets all blackboard artifact tags for the current case.
+     * @param [out] tags A list, possibly empty, of blackboard artifact tags.
+     * @throws TskCoreException 
+     */
+    public void getAllBlackboardArtifactTags(List<BlackboardArtifactTag> tags) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+
+        tskCase.getAllBlackboardArtifactTags(tags);        
+    }
+    
     /**
      * Gets blackboard artifact tags count by tag name.
      * @param [in] tagName The tag name of interest. 

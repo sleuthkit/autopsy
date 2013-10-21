@@ -50,7 +50,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -58,16 +57,15 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Generates all TableReportModules and GeneralReportModules, given whether each module for both
- * types is enabled or disabled, and the base report path to save them at.
- * 
- * After creating an instance of ReportGenerator, one must tell it which reports to run,
- * TableReportModules on Tags or Artifacts, and the GeneralReportModules.
- * Then, one calls displayProgressPanels() to display the progress to the user.
+ * Instances of this class use GeneralReportModules, TableReportModules and 
+ * FileReportModules to generate a report. If desired, displayProgressPanels()
+ * can be called to show report generation progress using ReportProgressPanel 
+ * objects displayed using a dialog box.
  */
 public class ReportGenerator {
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
@@ -106,10 +104,11 @@ public class ReportGenerator {
     }
     
     /**
-     * For every ReportModule which the user enabled, create a ReportProgressPanel for that report.
+     * Create a ReportProgressPanel for each report generation module selected by the user.
      * 
-     * @param tableModuleStates the enabled/disabled state of each TableReportModule
-     * @param generalModuleStates the enabled/disabled state of each GeneralReportModule
+     * @param tableModuleStates The enabled/disabled state of each TableReportModule
+     * @param generalModuleStates The enabled/disabled state of each GeneralReportModule
+     * @param fileListModuleStates The enabled/disabled state of each FileReportModule
      */
     private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         if (null != tableModuleStates) {
@@ -174,28 +173,28 @@ public class ReportGenerator {
     }
     
     /**
-     * Generate the GeneralReportModule reports in a new SwingWorker.
+     * Run the GeneralReportModules using a SwingWorker.
      */
     public void generateGeneralReports() {
-        GeneralWorker worker = new GeneralWorker();
+        GeneralReportsWorker worker = new GeneralReportsWorker();
         worker.execute();
     }
     
     /**
-     * Generate the TableReportModule reports on Blackboard Artifacts in a new SwingWorker.
+     * Run the TableReportModules using a SwingWorker.
      * 
      * @param artifactTypeSelections the enabled/disabled state of the artifact types to be included in the report
-     * @param tagSelections the enabled/disabled state of the tags to be included in the report
+     * @param tagSelections the enabled/disabled state of the tag names to be included in the report
      */
-    public void generateArtifactTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
+    public void generateBlackboardArtifactsReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
-            ArtifactsReportsWorker worker = new ArtifactsReportsWorker(artifactTypeSelections, tagSelections);
+            TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
         }
     }
     
     /**
-     * Generate the FileReportModule reports in a new SwingWorker.
+     * Run the FileReportModules using a SwingWorker.
      * 
      * @param enabledInfo the Information that should be included about each file
      * in the report.
@@ -214,9 +213,9 @@ public class ReportGenerator {
     }
     
     /**
-     * SwingWorker to generate a report on all GeneralReportModules.
+     * SwingWorker to run GeneralReportModules.
      */
-    private class GeneralWorker extends SwingWorker<Integer, Integer> {
+    private class GeneralReportsWorker extends SwingWorker<Integer, Integer> {
 
         @Override
         protected Integer doInBackground() throws Exception {
@@ -232,7 +231,7 @@ public class ReportGenerator {
     }
     
     /**
-     * SwingWorker to generate a FileReport.
+     * SwingWorker to run FileReportModules.
      */
     private class FileReportsWorker extends SwingWorker<Integer, Integer> {
         private List<FileReportDataTypes> enabledInfo = Arrays.asList(FileReportDataTypes.values());
@@ -317,15 +316,15 @@ public class ReportGenerator {
     }
     
     /**
-     * SwingWorker to generate reports on blackboard artifacts.
+     * SwingWorker to run TableReportModules to report on blackboard artifacts, 
+     * content tags, and blackboard artifact tags.
      */
-    private class ArtifactsReportsWorker extends SwingWorker<Integer, Integer> {
+    private class TableReportsWorker extends SwingWorker<Integer, Integer> {
         private List<TableReportModule> tableModules  = new ArrayList<>();
         private List<ARTIFACT_TYPE> artifactTypes  = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
         
-        // Create an ArtifactWorker with the enabled/disabled state of all Artifacts
-        ArtifactsReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagSelections) {
+        TableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
             // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
                 tableModules.add(entry.getKey());
@@ -338,9 +337,9 @@ public class ReportGenerator {
                 }
             }
             
-            // Get the tags selected by the user.
-            if (null != tagSelections) {
-                for (Entry<String, Boolean> entry : tagSelections.entrySet()) {
+            // Get the tag names selected by the user and make a tag names filter.
+            if (null != tagNameSelections) {
+                for (Entry<String, Boolean> entry : tagNameSelections.entrySet()) {
                     if (entry.getValue() == true) {
                         tagNamesFilter.add(entry.getKey());
                     }
@@ -350,39 +349,46 @@ public class ReportGenerator {
 
         @Override
         protected Integer doInBackground() throws Exception {
-            // Start the report
+            // Start the progress indicators for each active TableReportModule.
             for (TableReportModule module : tableModules) {
                 ReportProgressPanel progress = tableProgress.get(module);
                 if (progress.getStatus() != ReportStatus.CANCELED) {
                     module.startReport(reportPath);
                     progress.start();
                     progress.setIndeterminate(false);
-                    progress.setMaximumProgress(ARTIFACT_TYPE.values().length);
+                    progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
                 }
             }
+                        
+            makeBlackboardArtifactTables();
+            makeContentTagsTables();
+            makeBlackboardArtifactTagsTables();
             
-            // Make a comment on the tags filter.
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).complete();
+                module.endReport();
+            }
+            
+            return 0;
+        }
+        
+        private void makeBlackboardArtifactTables() {
+            // Make a comment string describing the tag names filter in effect. 
             StringBuilder comment = new StringBuilder();
             if (!tagNamesFilter.isEmpty()) {
-                comment.append("This report only includes files and artifacts tagged with: ");
+                comment.append("This report only includes results tagged with: ");
                 comment.append(makeCommaSeparatedList(tagNamesFilter));
             }            
-            
-            // For every enabled artifact type
+
+            // Add a table to the report for every enabled blackboard artifact type.
             for (ARTIFACT_TYPE type : artifactTypes) {
-                // Check to see if all the TableReportModules have been canceled
+                // Check for cancellaton.
+                removeCancelledTableReportModules();
                 if (tableModules.isEmpty()) {
-                    break;
+                    return;
                 }
-                Iterator<TableReportModule> iter = tableModules.iterator();
-                while (iter.hasNext()) {
-                    TableReportModule module = iter.next();
-                    if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
-                        iter.remove();
-                    }
-                }
-                
-                // If the type is keyword hit or hashset hit, use the helper
+                        
+                // Keyword hits and hashset hit artifacts get sepcial handling.
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
                     writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
@@ -392,20 +398,19 @@ public class ReportGenerator {
                 }
 
                 List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
-                
                 if (unsortedArtifacts.isEmpty()) {
-                    // Don't report on this artifact type if there are no results
                     continue;
                 }
+
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Collections.sort(unsortedArtifacts);
 
                 // Get the column headers appropriate for the artifact type.
-                /* @@@ BC: Seems like a better design here woudl be to have a method that 
-                 * takes in teh artifact as an argument andreturns the attributes. We then use that
-                 * to make the headers and to make each row afterwards so that we don't ahve artifact-specific
+                /* @@@ BC: Seems like a better design here would be to have a method that 
+                 * takes in the artifact as an argument and returns the attributes. We then use that
+                 * to make the headers and to make each row afterwards so that we don't have artifact-specific
                  * logic in both getArtifactTableCoumnHeaders and getArtifactRow()
                  */
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
@@ -414,37 +419,17 @@ public class ReportGenerator {
                     MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
-                
+
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
-
-                    // This is a temporary workaround to avoid modifying the TableReportModule interface.
-                    if (module instanceof ReportHTML) {
-                        ReportHTML htmlReportModule = (ReportHTML)module;
-                        htmlReportModule.startDataType(type.getDisplayName(), comment.toString());                        
-                        htmlReportModule.startTable(columnHeaders, type);
-                    }
-                    else if (module instanceof ReportExcel) {
-                        ReportExcel excelReportModule = (ReportExcel)module;
-                        excelReportModule.startDataType(type.getDisplayName(), comment.toString());                        
-                        excelReportModule.startTable(columnHeaders);                    
-                    }
-                    else {
-                        module.startDataType(type.getDisplayName());                        
-                        module.startTable(columnHeaders);
-                    }
+                    module.startDataType(type.getDisplayName(), comment.toString());                                            
+                    module.startTable(columnHeaders);                    
                 }
-                
+
                 boolean msgSent = false;    
-                for(ArtifactData artifactData : unsortedArtifacts) {
-//                    HashSet<String> tags = artifactData.getTags();
-//                    
-//                    String tagsList = makeCommaSeparatedList(tags);
-                    
+                for(ArtifactData artifactData : unsortedArtifacts) {                    
                     // Add the row data to all of the reports.
-                    for (TableReportModule module : tableModules) {
-                        
-                        // Get the row data for this type of artifact.
+                    for (TableReportModule module : tableModules) {                        
                         List<String> rowData; 
                         rowData = getArtifactRow(artifactData, module);   
                         if (rowData.isEmpty()) {
@@ -455,44 +440,160 @@ public class ReportGenerator {
                             continue;
                         }
 
-//                        // This is a temporary workaround to avoid modifying the TableReportModule interface.
-//                        if (module instanceof ReportHTML) {
-//                            ReportHTML htmlReportModule = (ReportHTML)module;
-//                            htmlReportModule.addRow(rowData, artifactData.getArtifact());
-//                        }
-//                        else {      
-                            module.addRow(rowData);
-//                        }                        
+                        module.addRow(rowData);
                     }
                 }
-                
+
                 // Finish up this data type
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).increment();
                     module.endTable();
                     module.endDataType();
                 }
-            }
-            
-            // End the report
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).complete();
-                module.endReport();
-            }
-            
-            return 0;
+            }        
         }
+        
+        private void makeContentTagsTables() {
+            // Check for cancellaton.
+            removeCancelledTableReportModules();
+            if (tableModules.isEmpty()) {
+                return;
+            }
+                        
+            // Get the content tags.
+            ArrayList<ContentTag> tags = new ArrayList<>();
+            try {
+                Case.getCurrentCase().getServices().getTagsManager().getAllContentTags(tags);
+            }
+            catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "failed to get content tags", ex);
+                return;
+            }
+                        
+            // Tell the modules reporting on content tags is beginning.
+            for (TableReportModule module : tableModules) {            
+                // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+                // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
+                tableProgress.get(module).updateStatusLabel("Now processing " + ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName() + "...");                                
+                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment"));                
+                StringBuilder comment = new StringBuilder();
+                if (!tagNamesFilter.isEmpty()) {
+                    comment.append("This report only includes file tagged with: ");
+                    comment.append(makeCommaSeparatedList(tagNamesFilter));
+                }            
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlReportModule = (ReportHTML)module;
+                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());                        
+                    htmlReportModule.startContentTagsTable(columnHeaders); 
+                }
+                else {
+                    module.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());                        
+                    module.startTable(columnHeaders);
+                }                
+            }
+                        
+            // Give the modules the rows for the content tags. 
+            for (ContentTag tag : tags) {
+                // Apply the tag names filter.
+                if (!tagNamesFilter.isEmpty()) {
+                    if (tagNamesFilter.contains(tag.getName().getDisplayName())) {
+                        continue;
+                    }
+                }
+                                
+                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
+                for (TableReportModule module : tableModules) {                                                                                       
+                    // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+                    if (module instanceof ReportHTML) {
+                        ReportHTML htmlReportModule = (ReportHTML)module;
+                        htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag); 
+                    }
+                    else {      
+                        module.addRow(rowData);
+                    }                        
+                }
+            }                
+                
+            // The the modules content tags reporting is ended.
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).increment();
+                module.endTable();
+                module.endDataType();
+            }            
+        }
+        
+        private void makeBlackboardArtifactTagsTables() {
+            // Check for cancellaton.
+            removeCancelledTableReportModules();
+            if (tableModules.isEmpty()) {
+                return;
+            }
+                        
+            ArrayList<BlackboardArtifactTag> tags = new ArrayList<>();
+            try {
+                Case.getCurrentCase().getServices().getTagsManager().getAllBlackboardArtifactTags(tags);
+            }
+            catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "failed to get blackboard artifact tags", ex);
+                return;
+            }
+
+            // Tell the modules reporting on blackboard artifact tags data type is beginning.
+            // @@@ Using the obsolete ARTIFACT_TYPE.TSK_TAG_ARTIFACT is an expedient hack.
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).updateStatusLabel("Now processing " + ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName() + "...");                                
+                StringBuilder comment = new StringBuilder();
+                if (!tagNamesFilter.isEmpty()) {
+                    comment.append("This report only includes results tagged with: ");
+                    comment.append(makeCommaSeparatedList(tagNamesFilter));
+                }                        
+                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());                        
+                module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
+            }
+                        
+            // Give the modules the rows for the content tags. 
+            for (BlackboardArtifactTag tag : tags) {
+                // Apply the tag names filter.
+                if (!tagNamesFilter.isEmpty()) {
+                    if (tagNamesFilter.contains(tag.getName().getDisplayName())) {
+                        continue;
+                    }
+                }
+                               
+                for (TableReportModule module : tableModules) {
+                    module.addRow(new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()))); 
+                }
+            }                
+
+            // The the modules blackboard artifact tags reporting is ended.
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).increment();
+                module.endTable();
+                module.endDataType();
+            }            
+        }     
+        
+        void removeCancelledTableReportModules() {
+            Iterator<TableReportModule> iter = tableModules.iterator();
+            while (iter.hasNext()) {
+                TableReportModule module = iter.next();
+                if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
+                    iter.remove();
+                }
+            }            
+        }        
     }
-    
-    private Boolean failsTagFilter(HashSet<String> tags, HashSet<String> tagsFilter) 
+        
+    /// @@@ Should move the methods specific to TableReportsWorker into that scope.
+    private Boolean failsTagFilter(HashSet<String> tagNames, HashSet<String> tagsNamesFilter) 
     {
-        if (null == tagsFilter || tagsFilter.isEmpty()) {
+        if (null == tagsNamesFilter || tagsNamesFilter.isEmpty()) {
             return false;
         }
 
-        HashSet<String> filteredTags = new HashSet<>(tags);
-        filteredTags.retainAll(tagsFilter);
-        return filteredTags.isEmpty();
+        HashSet<String> filteredTagNames = new HashSet<>(tagNames);
+        filteredTagNames.retainAll(tagsNamesFilter);
+        return filteredTagNames.isEmpty();
     }
     
     /**
@@ -554,18 +655,7 @@ public class ReportGenerator {
             
             // Make keyword data type and give them set index
             for (TableReportModule module : tableModules) {
-                // This is a temporary workaround to avoid modifying the TableReportModule interface.
-                if (module instanceof ReportHTML) {
-                    ReportHTML htmlReportModule = (ReportHTML)module;
-                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);                        
-                }
-                else if (module instanceof ReportExcel) {
-                    ReportExcel excelReportModule = (ReportExcel)module;
-                    excelReportModule.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);                                            
-                }
-                else {
-                   module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName());
-                }            
+                module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
                 module.addSetIndex(lists);
                 tableProgress.get(module).updateStatusLabel("Now processing "
                         + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName() + "...");
@@ -708,18 +798,7 @@ public class ReportGenerator {
             }
             
             for (TableReportModule module : tableModules) {
-                // This is a temporary workaround to avoid modifying the TableReportModule interface.
-                if (module instanceof ReportHTML) {
-                    ReportHTML htmlReportModule = (ReportHTML)module;
-                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);                        
-                }
-                else if (module instanceof ReportExcel) {
-                    ReportExcel excelReportModule = (ReportExcel)module;
-                    excelReportModule.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);                                            
-                }
-                else {
-                   module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName());
-                }            
+                module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);
                 module.addSetIndex(lists);
                 tableProgress.get(module).updateStatusLabel("Now processing "
                         + ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName() + "...");
@@ -981,7 +1060,7 @@ public class ReportGenerator {
      * @return List<String> row values
      * @throws TskCoreException 
      */
-    private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) throws TskCoreException {
+    private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) {
         Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
         
         List<String> rowData = new ArrayList<>();
@@ -1152,7 +1231,7 @@ public class ReportGenerator {
         }
         rowData.add(makeCommaSeparatedList(artifactData.getTags()));
         
-        return rowData; // RJCTODO: Is anyone checking for null here?
+        return rowData;
     }
     
     /**

@@ -51,8 +51,9 @@ public interface TableReportModule extends ReportModule {
      * It is up to the report how the differentiation is shown.
      * 
      * @param title String name of the data type
+     * @param description RJCTODO: fix this header comment
      */
-    public void startDataType(String title);
+    public void startDataType(String title, String description);
     
     /**
      * End the current data type and prepare for either the end of the report
