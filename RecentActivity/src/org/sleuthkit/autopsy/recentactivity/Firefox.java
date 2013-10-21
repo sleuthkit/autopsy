@@ -56,7 +56,7 @@ public class Firefox extends Extract {
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
     private static final String ff3cookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
-    private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
+    private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     private static final String ffdownloadquery = "select target, source,(startTime/1000000) as startTime, maxBytes  from moz_downloads";
     public int FireFoxCount = 0;
     final public static String MODULE_VERSION = "1.0";
@@ -178,6 +178,7 @@ public class Firefox extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", (Long.valueOf(result.get("dateAdded").toString()))));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
