@@ -48,6 +48,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
+import org.sleuthkit.autopsy.coreutils.JLnkParserException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -239,10 +240,14 @@ public class ExtractIE extends Extract {
             JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize());
             try {
                 lnk = lnkParser.parse();
-            } catch (Exception e) {
+            } catch (JLnkParserException e) {
                 //TODO should throw a specific checked exception
-                logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile);
-                this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
+                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+                if (unalloc == false) {
+                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
+                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                }
                 continue;
             }
             String path = lnk.getBestPath();
@@ -324,14 +329,16 @@ public class ExtractIE extends Extract {
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt";
             boolean bPascProcSuccess = executePasco(temps, filename);
-            pascoResults.add(filename);
 
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
-
+                pascoResults.add(filename);
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
+            } else {
+                logger.log(Level.WARNING, "pasco execution failed on: " + this.getName());
+                this.addErrorMessage(this.getName() + ": Error processing Internet Explorer history.");
             }
         }
     }
