@@ -57,12 +57,12 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class Chrome extends Extract {
 
-    private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
+    private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
-    private static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
-    private static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
-    private static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
-    private static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
+    private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
+    private static final String bookmarkQuery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+    private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads";
+    private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
     final public static String MODULE_VERSION = "1.0";
@@ -88,6 +88,11 @@ public class Chrome extends Extract {
         this.getDownload(dataSource, controller);
     }
 
+    /**
+     * Query for history databases and add artifacts
+     * @param dataSource
+     * @param controller 
+     */
     private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -135,7 +140,7 @@ public class Chrome extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = null;
-            tempList = this.dbConnect(temps, chquery);
+            tempList = this.dbConnect(temps, historyQuery);
             logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
 
@@ -158,6 +163,11 @@ public class Chrome extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
+    /**
+     * Search for bookmark files and make artifacts.
+     * @param dataSource
+     * @param controller 
+     */
     private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -175,6 +185,9 @@ public class Chrome extends Extract {
             
         while (j < bookmarkFiles.size()) {
             AbstractFile bookmarkFile =  bookmarkFiles.get(j++);
+            if (bookmarkFile.getSize() == 0) {
+                continue;
+            }
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + bookmarkFile.getName().toString() + j + ".db";
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps));
@@ -270,8 +283,11 @@ public class Chrome extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
 
-    //COOKIES section
-    // This gets the cookie info
+    /**
+     * Queries for cookie files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
     private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -288,6 +304,9 @@ public class Chrome extends Extract {
         int j = 0;
         while (j < cookiesFiles.size()) {
             AbstractFile cookiesFile = cookiesFiles.get(j++);
+            if (cookiesFile.getSize() == 0) {
+                continue;
+            }
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cookiesFile.getName().toString() + j + ".db";
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps));
@@ -302,7 +321,7 @@ public class Chrome extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, chcookiequery);
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, cookieQuery);
             logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -327,8 +346,11 @@ public class Chrome extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
-    //Downloads section
-    // This gets the downloads info
+    /**
+     * Queries for download files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
     private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -362,7 +384,7 @@ public class Chrome extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, chdownloadquery);
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -380,7 +402,6 @@ public class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFile, bbattributes);
-
             }
 
             dbFile.delete();
@@ -389,8 +410,11 @@ public class Chrome extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 
-    //Login/Password section
-    // This gets the user info
+    /**
+     * Queries for login files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
     private void getLogin(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -407,6 +431,9 @@ public class Chrome extends Extract {
         int j = 0;
         while (j < signonFiles.size()) {
             AbstractFile signonFile = signonFiles.get(j++);
+            if (signonFile.getSize() == 0) {
+                continue;
+            }
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName().toString() + j + ".db";
             try {
                 ContentUtils.writeToFile(signonFile, new File(temps));
@@ -420,7 +447,7 @@ public class Chrome extends Extract {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, chloginquery);
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, loginQuery);
             logger.log(Level.INFO, moduleName + "- Now getting login information from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -451,12 +478,10 @@ public class Chrome extends Extract {
 
     @Override
     public void complete() {
-        logger.info("Chrome Extract has completed");
     }
 
     @Override
     public void stop() {
-        logger.info("Attempted to stop chrome extract, but operation is not supported; skipping...");
     }
 
     @Override
