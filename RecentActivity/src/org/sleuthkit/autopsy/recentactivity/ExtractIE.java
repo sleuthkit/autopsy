@@ -222,8 +222,8 @@ public class ExtractIE extends Extract {
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
-            this.addErrorMessage(this.getName() + ": Error getting Recent Files.");
+            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
             return;
         }
 
