@@ -39,6 +39,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
   
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
+    // Data source type handled by this processor
+    private final String dsType = "Image File";
+    
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private ImageFilePanel imageFilePanel;
     
@@ -76,7 +79,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
      **/ 
     @Override
     public String getType() {
-        return imageFilePanel.getContentType();
+        return dsType;
     }
             
     /**
@@ -130,7 +133,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
       }
       
       addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans,  progressMonitor, cbObj); 
-      addImageTask.execute();
+      new Thread(addImageTask).start();
        
       return;
   }
@@ -142,6 +145,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
   public void cancel() {
       
       cancelled = true;
+      
       addImageTask.cancelTask();
       
       return;

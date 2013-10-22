@@ -273,7 +273,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Invoked by the DSP on the EDT thread, when it finishes processing the data source.
      */
     private void dataSourceProcessorDone(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents) {
-        
+         
          // disable the cleanup task
         cleanupTask.disable();
        
@@ -286,7 +286,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 w.toFront();
             }
         }
-                   
+        // Tell the panel we're done
+        progressPanel.setStateFinished();
+                
+      
         //check the result and display to user
         if (result == DSPCallback.DSP_Result.NO_ERRORS)
             progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
@@ -303,15 +306,15 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         newContents.clear();
         newContents.addAll(contents);
         
-        //notify the case
+        //notify the UI of the new content added to the case
         if (!newContents.isEmpty()) {
-            Case.getCurrentCase().addLocalDataSource(newContents.get(0));
+            
+             Case.getCurrentCase().notifyNewDataSource(newContents.get(0));
         }
 
         
+       // Start ingest if we can
         progressPanel.setStateStarted();
-         
-        // Start ingest if we can
         startIngest();
         
     }

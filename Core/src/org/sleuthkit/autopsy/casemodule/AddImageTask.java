@@ -45,18 +45,18 @@ import org.sleuthkit.datamodel.TskException;
  * It updates the given ProgressMonitor as it works through adding the image,
  * and et the end, calls the specified Callback.
  */
-public class AddImageTask extends SwingWorker<Integer, Integer> {
+public class AddImageTask implements Runnable {
 
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
         
         private Case currentCase;
         // true if the process was requested to stop
-        private boolean cancelled = false;
+        private volatile boolean cancelled = false;
         //true if revert has been invoked.
         private boolean reverted = false;
         private boolean hasCritError = false;
         
-        private boolean  addImageDone = false;
+        private volatile boolean  addImageDone = false;
         
         private List<String> errorList = new ArrayList<String>();
         
@@ -112,7 +112,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
            
             currentCase = Case.getCurrentCase();
             
-            
+    
             this.imagePath = imgPath;
             this.timeZone = tz;
             this.noFatOrphans = noOrphans;
@@ -129,29 +129,14 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
          * @throws Exception
          */
         @Override
-        protected Integer doInBackground() {
+        public void run() {
              
-            this.setProgress(0);
-
-            errorList.clear();
-            try {
-                //lock DB for writes in EWT thread
-                //wait until lock acquired in EWT
-                EventQueue.invokeAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        SleuthkitCase.dbWriteLock();
-                    }
-                });
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
-                return 0;
-
-            } catch (InvocationTargetException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
-                return 0;
-            }
             
+            errorList.clear();
+           
+            //lock DB for writes in this thread
+            SleuthkitCase.dbWriteLock();
+             
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
           
@@ -162,6 +147,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
                 dirFetcher.start();
                 
                 addImageProcess.run(new String[]{this.imagePath});
+                
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
@@ -170,25 +156,28 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
             } catch (TskDataException ex) {
                 logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
                 errorList.add(ex.getMessage());
-            } finally {
-                // process is over, doesn't need to be dealt with if cancel happens
-
+            } 
+            finally {
+             
             }
 
-            return 0;
+            // handle addImage done
+            postProcess();
+            
+            // unclock the DB 
+            SleuthkitCase.dbWriteUnlock();
+             
+            return;
         }
 
         /**
-         * Commit the finished AddImageProcess, and cancel the CleanupTask that
-         * would have reverted it.
+         * Commit the newly added image to DB
          *
-         * @param settings property set to get AddImageProcess and CleanupTask
-         *                 from
          *
          * @throws Exception if commit or adding the image to the case failed
          */
         private void commitImage() throws Exception {
-
+   
             long imageId = 0;
             try {
                 imageId = addImageProcess.commit();
@@ -196,13 +185,11 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
                 logger.log(Level.WARNING, "Errors occured while committing the image", e);
                 errorList.add(e.getMessage());
             } finally {
-                //commit done, unlock db write in EWT thread
-                //before doing anything else
-                SleuthkitCase.dbWriteUnlock();
-
+               
                 if (imageId != 0) {
-                    Image newImage = Case.getCurrentCase().addImage(imagePath, imageId, timeZone);
-
+                    // get the newly added Image so we can return to caller
+                    Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
+                     
                     //while we have the image, verify the size of its contents
                     String verificationErrors = newImage.verifyImageSize();
                     if (verificationErrors.equals("") == false) {
@@ -212,7 +199,6 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
 
                     // Add the image to the list of new content
                     newContents.add(newImage);
-                    
                 }
 
                 logger.log(Level.INFO, "Image committed, imageId: " + imageId);
@@ -221,21 +207,18 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
         }
 
         /**
-         *
-         * (called by EventDispatch Thread after doInBackground finishes)
+         * Post processing after the addImageProcess is done.
          * 
-         * Must Not return without invoking the callBack, unless the caller canceled
          */
-        @Override
-        protected void done() {
-                   
-            setProgress(100);
+        private void postProcess() {
+        
             
             // cancel the directory fetcher
             dirFetcher.interrupt();
-
+            
             addImageDone = true; 
             // attempt actions that might fail and force the process to stop
+            
             if (cancelled || hasCritError) {
                 logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
                 revert();
@@ -272,11 +255,9 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
 
                 } catch (Exception ex) {
                     //handle unchecked exceptions post image add
-
                     errorList.add(ex.getMessage());
                     
                     logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
-                   
                     logger.log(Level.SEVERE, "Error adding image to case", ex);
                 } finally {
 
@@ -285,12 +266,15 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
             }
             
             // invoke the callBack, unless the caller cancelled 
-            if (!cancelled)
+            if (!cancelled) {
                 doCallBack();
+            }
             
             return;
         }
 
+       
+                
         /*
          * Call the callback with results, new content, and errors, if any
          */
@@ -354,8 +338,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
          */
         void revert() {
             
-             if (!reverted) {
-                 
+             if (!reverted) {     
                 try {
                     logger.log(Level.INFO, "Revert after add image process");
                     try {
@@ -364,8 +347,7 @@ public class AddImageTask extends SwingWorker<Integer, Integer> {
                     logger.log(Level.WARNING, "Error reverting add image process", ex);
                     }
                 } finally {
-                     //unlock db write within EWT thread
-                        SleuthkitCase.dbWriteUnlock();
+                    
                 }
                 reverted = true;
             }
