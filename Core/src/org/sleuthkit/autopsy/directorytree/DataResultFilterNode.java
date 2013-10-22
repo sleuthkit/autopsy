@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.ContentTagTypeNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
@@ -63,6 +64,7 @@ import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
+import org.sleuthkit.autopsy.datamodel.TagNameNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -403,6 +405,21 @@ public class DataResultFilterNode extends FilterNode {
             return openChild(atn);
         }
 
+        @Override
+        public AbstractAction visit(TagNameNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(ContentTagTypeNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(BlackboardArtifactTagTypeNode node) {
+            return openChild(node);
+        }
+                
         @Override
         public AbstractAction visit(DirectoryNode dn) {
             if (dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR)) {

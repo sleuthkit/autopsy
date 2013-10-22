@@ -494,23 +494,18 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (ContentTag tag : tags) {
-                // Apply the tag names filter.
-                if (!tagNamesFilter.isEmpty()) {
-                    if (tagNamesFilter.contains(tag.getName().getDisplayName())) {
-                        continue;
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                                                               
+                    ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
+                    for (TableReportModule module : tableModules) {                                                                                       
+                        // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+                        if (module instanceof ReportHTML) {
+                            ReportHTML htmlReportModule = (ReportHTML)module;
+                            htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag); 
+                        }
+                        else {      
+                            module.addRow(rowData);
+                        }                        
                     }
-                }
-                                
-                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
-                for (TableReportModule module : tableModules) {                                                                                       
-                    // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
-                    if (module instanceof ReportHTML) {
-                        ReportHTML htmlReportModule = (ReportHTML)module;
-                        htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag); 
-                    }
-                    else {      
-                        module.addRow(rowData);
-                    }                        
                 }
             }                
                 
@@ -553,15 +548,10 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
-                // Apply the tag names filter.
-                if (!tagNamesFilter.isEmpty()) {
-                    if (tagNamesFilter.contains(tag.getName().getDisplayName())) {
-                        continue;
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                               
+                    for (TableReportModule module : tableModules) {
+                        module.addRow(new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()))); 
                     }
-                }
-                               
-                for (TableReportModule module : tableModules) {
-                    module.addRow(new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()))); 
                 }
             }                
 
@@ -572,6 +562,10 @@ public class ReportGenerator {
                 module.endDataType();
             }            
         }     
+        
+        boolean passesTagNamesFilter(String tagName) {
+            return tagNamesFilter.isEmpty() || tagNamesFilter.contains(tagName);
+        }
         
         void removeCancelledTableReportModules() {
             Iterator<TableReportModule> iter = tableModules.iterator();

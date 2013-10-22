@@ -53,7 +53,7 @@ public class TagNameNode  extends DisplayableItemNode {
             Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex);
         }
         
-        super.setName(tagName.getDisplayName() + " (" + tagsCount + ")");
+        super.setName(tagName.getDisplayName());
         super.setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
         if (tagName.getDisplayName().equals("Bookmark")) {
             setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);

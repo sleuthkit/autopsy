@@ -55,7 +55,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
             Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex);
         }
         
-        super.setName(DISPLAY_NAME + " (" + tagsCount + ")");
+        super.setName(DISPLAY_NAME);
         super.setDisplayName(DISPLAY_NAME + " (" + tagsCount + ")");
         this.setIconBaseWithExtension(ICON_PATH);
     }

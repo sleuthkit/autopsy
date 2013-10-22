@@ -46,10 +46,6 @@ public class TagsNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
     }
     
-    public static String getNodeName() {
-        return DISPLAY_NAME;
-    }
-    
     @Override
     public boolean isLeafTypeNode() {
         return false;
@@ -78,7 +74,7 @@ public class TagsNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-                Case.getCurrentCase().getServices().getTagsManager().getAllTagNames(keys);
+                Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse(keys);
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
