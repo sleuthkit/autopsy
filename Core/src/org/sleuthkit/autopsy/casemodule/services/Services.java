@@ -41,26 +41,18 @@ public class Services implements Closeable {
     
     // services
     private FileManager fileManager;
-    private TagsManager tagsManager;
 
     public Services(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
         //create and initialize FileManager as early as possibly in the new/opened Case
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
-        
-        tagsManager = new TagsManager(tskCase);
-        services.add(tagsManager);
     }
     
     public FileManager getFileManager() {
         return fileManager;
     }
     
-    public TagsManager getTagsManager() {
-        return tagsManager;
-    }
-
     @Override
     public void close() throws IOException {
         // close all services
