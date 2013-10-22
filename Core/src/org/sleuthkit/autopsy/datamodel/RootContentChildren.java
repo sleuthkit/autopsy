@@ -98,8 +98,6 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                     this.refreshKey(o);
                 else if (o instanceof EmailExtracted)
                     this.refreshKey(o);
-                else if (o instanceof Tags)
-                    this.refreshKey(o);
                 else if (o instanceof TagsNodeKey)
                     this.refreshKey(o);
                 else if (o instanceof ExtractedContent)
