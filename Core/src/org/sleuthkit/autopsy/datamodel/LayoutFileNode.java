@@ -27,7 +27,7 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -63,11 +63,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
-    }
-
-    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -96,6 +91,11 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
@@ -108,7 +108,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
-        actionsList.add(TagAbstractFileAction.getInstance());
+        actionsList.add(AddContentTagAction.getInstance());
         return actionsList.toArray(new Action[0]);
     }
 

@@ -80,11 +80,6 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return true;
     }
