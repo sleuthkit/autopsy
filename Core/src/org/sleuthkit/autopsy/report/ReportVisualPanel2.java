@@ -38,13 +38,12 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public final class ReportVisualPanel2 extends JPanel {
-    private static final Logger logger = Logger.getLogger(ReportVisualPanel2.class.getName());
     private ReportWizardPanel2 wizPanel;
     
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();
@@ -73,8 +72,16 @@ public final class ReportVisualPanel2 extends JPanel {
     
     // Initialize the list of Tags
     private void initTags() {
-        for(String tag : Tags.getTagNamesFromCurrentCase()) {
-            tagStates.put(tag, Boolean.FALSE);
+        ArrayList<TagName> tagNamesInUse = new ArrayList<>();
+        try {
+            Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse(tagNamesInUse);
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+        }                                    
+                        
+        for(TagName tagName : tagNamesInUse) {
+            tagStates.put(tagName.getDisplayName(), Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
         
@@ -95,16 +102,17 @@ public final class ReportVisualPanel2 extends JPanel {
                 list.repaint();
                 updateFinishButton();
             }
-        });
-        
+        });        
     }
     
     // Initialize the list of Artifacts
     private void initArtifactTypes() {
         
         try {
-             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
             
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
             
@@ -116,7 +124,6 @@ public final class ReportVisualPanel2 extends JPanel {
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex);
-            return;
         }
     }
 
@@ -355,8 +362,6 @@ public final class ReportVisualPanel2 extends JPanel {
                 return this;
             }
             return new JLabel();
-        }
-        
+        }        
     }
-
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,23 +18,17 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
-import org.openide.util.Lookup;
-
 /**
- * Interface for all displayable Nodes
+ * Instances of this class act as keys for use by instances of the 
+ * RootContentChildren class. RootContentChildren is a NetBeans child node 
+ * factory built on top of the NetBeans Children.Keys class.  
  */
-public abstract class DisplayableItemNode extends AbstractNode {
-
-    public DisplayableItemNode(Children children) {
-        super(children);
-    }
-
-    public DisplayableItemNode(Children children, Lookup lookup) {
-        super(children, lookup);
-    }
-     
-    abstract public boolean isLeafTypeNode();
-    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);    
+public class TagsNodeKey implements AutopsyVisitableItem {
+    // Creation of a TagsNode object corresponding to a TagsNodeKey object is done 
+    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
+    // override of Children.Keys<T>.createNodes().
+    @Override
+    public <T> T accept(AutopsyItemVisitor<T> v) {
+        return v.visit(this);
+    }    
 }

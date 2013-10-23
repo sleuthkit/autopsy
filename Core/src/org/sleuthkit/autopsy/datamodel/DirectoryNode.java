@@ -89,9 +89,9 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-
+    
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
-    }
+    public boolean isLeafTypeNode() {
+        return false;
+    }    
 }
