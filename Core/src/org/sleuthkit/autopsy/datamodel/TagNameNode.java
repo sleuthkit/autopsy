@@ -113,7 +113,8 @@ public class TagNameNode  extends DisplayableItemNode {
                 case BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY:
                     return new BlackboardArtifactTagTypeNode(tagName);
                 default:
-                    return null; // RJCTODO: Programming error decide how to handle.
+                    Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "{0} not a recognized key", key);                    
+                    return null;
             }
         }
     }

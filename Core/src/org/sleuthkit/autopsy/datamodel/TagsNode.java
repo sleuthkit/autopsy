@@ -74,7 +74,7 @@ public class TagsNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-                Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse(keys);
+                keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse());
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    

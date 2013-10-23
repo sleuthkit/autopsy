@@ -95,7 +95,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
             try  {
                 // Use the blackboard artifact tags bearing the specified tag name as the keys. 
-                Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, keys);            
+                keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));            
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(BlackboardArtifactTagTypeNode.BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    

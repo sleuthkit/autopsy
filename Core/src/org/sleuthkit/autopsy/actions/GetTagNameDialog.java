@@ -18,14 +18,20 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.openide.windows.WindowManager;
@@ -50,19 +56,36 @@ public class GetTagNameDialog extends JDialog {
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
         
+        // Set up the dialog to close when Esc is pressed.
+        String cancelName = "cancel";
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        ActionMap actionMap = getRootPane().getActionMap();
+        actionMap.put(cancelName, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+                                
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-        ArrayList<TagName> currentTagNames = new ArrayList<>();
+        List<TagName> currentTagNames = null;
         try {
-            tagsManager.getAllTagNames(currentTagNames);        
+            currentTagNames = tagsManager.getAllTagNames();        
         }
         catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
-        }        
-        for (TagName name : currentTagNames) {
-            this.tagNames.put(name.getDisplayName(), name);
-        }                    
+        }         
+        if (null != currentTagNames) {
+            for (TagName name : currentTagNames) {
+                this.tagNames.put(name.getDisplayName(), name);
+            }                    
+        }
+        else {
+            currentTagNames = new ArrayList<>();
+        }
         
         // Populate the tag names table.
         tagsTable.setModel(new TagsTableModel(currentTagNames));
@@ -251,7 +274,6 @@ public class GetTagNameDialog extends JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        // RJCTODO: Check out this stuff, titles etc.
         String tagDisplayName = tagNameField.getText();
         if (tagDisplayName.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Must supply a tag name to continue.", "Tag Name", JOptionPane.ERROR_MESSAGE);

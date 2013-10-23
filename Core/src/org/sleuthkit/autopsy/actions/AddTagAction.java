@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -76,9 +76,9 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
 
             // Get the current set of tag names.
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-            ArrayList<TagName> tagNames = new ArrayList<>();
+            List<TagName> tagNames = null;
             try {
-                tagsManager.getAllTagNames(tagNames);
+                tagNames = tagsManager.getAllTagNames();
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
@@ -91,7 +91,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
             // a tag with the associated tag name. 
-            if (!tagNames.isEmpty()) {
+            if (null != tagNames && !tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
                     JMenuItem tagNameItem = new JMenuItem(tagName.getDisplayName());
                     tagNameItem.addActionListener(new ActionListener() {

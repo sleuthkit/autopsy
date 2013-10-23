@@ -90,7 +90,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
         protected boolean createKeys(List<ContentTag> keys) {
             // Use the content tags bearing the specified tag name as the keys. 
             try {
-                Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName, keys);            
+                keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName));            
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(ContentTagTypeNode.ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    

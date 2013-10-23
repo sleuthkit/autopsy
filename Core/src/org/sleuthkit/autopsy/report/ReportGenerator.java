@@ -461,9 +461,9 @@ public class ReportGenerator {
             }
                         
             // Get the content tags.
-            ArrayList<ContentTag> tags = new ArrayList<>();
+            List<ContentTag> tags;
             try {
-                Case.getCurrentCase().getServices().getTagsManager().getAllContentTags(tags);
+                tags = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
             }
             catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "failed to get content tags", ex);
@@ -524,9 +524,9 @@ public class ReportGenerator {
                 return;
             }
                         
-            ArrayList<BlackboardArtifactTag> tags = new ArrayList<>();
+            List<BlackboardArtifactTag> tags;
             try {
-                Case.getCurrentCase().getServices().getTagsManager().getAllBlackboardArtifactTags(tags);
+                tags = Case.getCurrentCase().getServices().getTagsManager().getAllBlackboardArtifactTags();
             }
             catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "failed to get blackboard artifact tags", ex);
@@ -601,8 +601,7 @@ public class ReportGenerator {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
              for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
-                 ArrayList<BlackboardArtifactTag> tags = new ArrayList<>();
-                 Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact, tags);
+                 List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                  HashSet<String> uniqueTagNames = new HashSet<>();
                  for (BlackboardArtifactTag tag : tags) {
                      uniqueTagNames.add(tag.getName().getDisplayName());

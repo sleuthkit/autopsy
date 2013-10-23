@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameAndCommentDialog extends JDialog {
-    private static final String NO_TAG_NAMES_MESSAGE = "No Tags";    // RJCTODO: ??
+    private static final String NO_TAG_NAMES_MESSAGE = "No Tags";
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagNameAndComment tagNameAndComment = null;
 
@@ -70,7 +70,6 @@ public class GetTagNameAndCommentDialog extends JDialog {
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
-        // RJCTODO: Could do this for the other dialog, too.
         String cancelName = "cancel";
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
@@ -82,17 +81,17 @@ public class GetTagNameAndCommentDialog extends JDialog {
             }
         });
                         
-        // Populate the combo box with the available tag names.
-        // Save the tag names to be enable to return the one the user selects.
+        // Populate the combo box with the available tag names and save the 
+        // tag name DTOs to be enable to return the one the user selects.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-        ArrayList<TagName> currentTagNames = new ArrayList<>();
+        List<TagName> currentTagNames = null;
         try {
-            tagsManager.getAllTagNames(currentTagNames);        
+            currentTagNames = tagsManager.getAllTagNames();        
         }
         catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
         }        
-        if (currentTagNames.isEmpty()) {
+        if (null != currentTagNames && currentTagNames.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
         }
         else {
@@ -222,18 +221,16 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-        // RJCTODO: Is this dead code?
         tagNameAndComment = null;
         dispose();
     }//GEN-LAST:event_closeDialog
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        // RJCTODO: Make suer this works for dups
         TagName newTagName = GetTagNameDialog.doDialog();
         if (newTagName != null) {
             tagNames.put(newTagName.getDisplayName(), newTagName);
             tagCombo.addItem(newTagName.getDisplayName());
-            tagCombo.setSelectedItem(newTagName);
+            tagCombo.setSelectedItem(newTagName.getDisplayName());
         }
     }//GEN-LAST:event_newTagButtonActionPerformed
 
