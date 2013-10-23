@@ -178,7 +178,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
    * @param String timeZone 
    * @param noFat whether to parse FAT orphans
    **/ 
-  public void SetDataSourceOptions(String imgPath, String tz, boolean noFat) {
+  public void setDataSourceOptions(String imgPath, String tz, boolean noFat) {
       
     this.imagePath = imgPath;
     this.timeZone  = tz;

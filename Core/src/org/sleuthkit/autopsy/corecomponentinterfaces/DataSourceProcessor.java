@@ -25,12 +25,6 @@ import org.sleuthkit.datamodel.Content;
 /*
  * Defines an interface used by the Add DataSource wizard to discover different
  * Data SourceProcessors. 
- * A data source for Autopsy may be:
- *   - Disk Image (Encase, Raw....)
- *   - Local Disk
- *   - Logical file(s)
- *   - Phone Image
- *   - A CellXML file with content extracted from phone.
  * 
  * Each data source may have its unique attributes and may need to be processed 
  * differently.

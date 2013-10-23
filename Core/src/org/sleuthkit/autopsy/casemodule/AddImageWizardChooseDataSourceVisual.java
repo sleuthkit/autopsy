@@ -100,28 +100,26 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         typeComboBox.setSelectedIndex(0);
         typePanel.setLayout(new BorderLayout());
         
-        updateCurrentPanel(GetCurrentDSProcessor().getPanel());
+        updateCurrentPanel(getCurrentDSProcessor().getPanel());
     }
 
     private void discoverDataSourceProcessors() {
       
         for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
+           
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
-                if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
-                    
-                    dsProcessor.reset();
-                    datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
-                }
-                else {
-                    logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getType() );
-                }      
-            }  
+                dsProcessor.reset();
+                datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
+            }
+            else {
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getType() );
+            }      
         }
      } 
 
      private void dspSelectionChanged() {
          // update the current panel to selection
-         currentPanel = GetCurrentDSProcessor().getPanel();
+         currentPanel = getCurrentDSProcessor().getPanel();
          updateCurrentPanel(currentPanel);
     }
      
@@ -155,7 +153,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * Returns the currently selected DS Processor
      * @return DataSourceProcessor the DataSourceProcessor corresponding to the data source type selected in the combobox
      */
-    public DataSourceProcessor GetCurrentDSProcessor() {
+    public DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
         // the correspodning DS Handler in the map
         String dsType = (String) typeComboBox.getSelectedItem();
@@ -296,7 +294,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     public void updateUI(DocumentEvent e) {
         // Enable the Next button if the current DSP panel is valid
-        String err = GetCurrentDSProcessor().validatePanel();
+        String err = getCurrentDSProcessor().validatePanel();
         if (null == err)
             this.wizPanel.enableNextButton(true);
         else

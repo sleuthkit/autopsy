@@ -244,7 +244,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         cleanupTask.enable();
        
          // get the selected DSProcessor
-        dsProcessor =  dataSourcePanel.getComponent().GetCurrentDSProcessor();
+        dsProcessor =  dataSourcePanel.getComponent().getCurrentDSProcessor();
         
         DSPCallback cbObj = new DSPCallback () {
             @Override
