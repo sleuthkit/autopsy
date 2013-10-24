@@ -94,13 +94,11 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             
             }
         };
-                 
         typeComboBox.addActionListener(cbActionListener);
                  
-        typeComboBox.setSelectedIndex(0);
         typePanel.setLayout(new BorderLayout());
-        
-        updateCurrentPanel(getCurrentDSProcessor().getPanel());
+
+        typeComboBox.setSelectedIndex(0);
     }
 
     private void discoverDataSourceProcessors() {

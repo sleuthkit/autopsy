@@ -85,7 +85,7 @@ public class LocalFilesPanel extends JPanel {
     }
 
     //@Override
-    public boolean enableNext() {
+    public boolean validatePanel() {
         return enableNext;
     }
 
@@ -99,10 +99,11 @@ public class LocalFilesPanel extends JPanel {
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
-      @Override
+    @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
 	super.addPropertyChangeListener(pcl);
 

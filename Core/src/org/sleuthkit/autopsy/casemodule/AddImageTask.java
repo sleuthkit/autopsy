@@ -19,13 +19,11 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.EventQueue;
-import java.lang.reflect.InvocationTargetException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
