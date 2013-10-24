@@ -133,10 +133,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             //return v.visit(this);
@@ -214,10 +214,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -272,11 +272,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -293,6 +288,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             return s;
         }
 
+        @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -334,11 +334,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png");
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
 
         @Override
