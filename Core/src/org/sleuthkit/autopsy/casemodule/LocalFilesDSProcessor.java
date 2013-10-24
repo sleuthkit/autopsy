@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalFilesDSProcessor implements DataSourceProcessor {
     
-     static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
+    static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     
     // Data source type handled by this processor
     private final String dsType = "Logical Files";
@@ -37,8 +37,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private LocalFilesPanel localFilesPanel;
     
-    // The Background task that does the actual work of adding the local Disk 
-    // Adding a local disk is exactly same as adding an Image.
+    // The Background task that does the actual work of adding the files 
     private AddLocalFilesTask addFilesTask;
    
     // true if cancelled by the caller
@@ -60,8 +59,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     public LocalFilesDSProcessor() {
         
         // Create the config panel
-        localFilesPanel =  LocalFilesPanel.getDefault();
-        
+        localFilesPanel =  LocalFilesPanel.getDefault();    
     }
     
     /**
@@ -94,12 +92,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * @return String returns NULL if success, error string if there is any errors  
      **/  
    @Override
-   public String validatePanel() {
-       
-        if (localFilesPanel.validatePanel() )
-           return null;
-       else 
-           return "Error in panel";    
+   public boolean validatePanel() {
+        return localFilesPanel.validatePanel();
    }
     
     

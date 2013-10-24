@@ -31,6 +31,7 @@ import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
@@ -187,7 +188,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             String path = fc.getSelectedFile().getPath();
             pathTextField.setText(path);
         }
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
     }//GEN-LAST:event_browseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -298,17 +299,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
     
     /**

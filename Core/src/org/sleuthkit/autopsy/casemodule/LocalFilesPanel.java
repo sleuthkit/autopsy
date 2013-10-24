@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
@@ -233,7 +234,7 @@ public class LocalFilesPanel extends JPanel {
         else {
             enableNext = false;
         }
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed

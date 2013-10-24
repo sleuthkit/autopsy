@@ -96,12 +96,8 @@ public class LocalDiskDSProcessor  implements DataSourceProcessor {
      * @return String returns NULL if success, error string if there is any errors  
      **/  
    @Override
-   public String validatePanel() {
-       
-        if (localDiskPanel.validatePanel() )
-           return null;
-       else 
-           return "Error in panel";    
+   public boolean validatePanel() {
+           return localDiskPanel.validatePanel();
    }
     
     

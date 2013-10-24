@@ -51,14 +51,9 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
     
-    enum EVENT {
-
-        UPDATE_UI, FOCUS_NEXT
-    };
-   
     private AddImageWizardChooseDataSourcePanel wizPanel;
-    private JPanel currentPanel;
     
+    private JPanel currentPanel;
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();
           
 
@@ -135,10 +130,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
+                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString())) {
                     updateUI(null);
                 }
-                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
+                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString())) {
                     wizPanel.moveFocusToNext();
                 }
             }
@@ -292,11 +287,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     public void updateUI(DocumentEvent e) {
         // Enable the Next button if the current DSP panel is valid
-        String err = getCurrentDSProcessor().validatePanel();
-        if (null == err)
-            this.wizPanel.enableNextButton(true);
-        else
-            this.wizPanel.enableNextButton(false);
+        this.wizPanel.enableNextButton(getCurrentDSProcessor().validatePanel());
     }
 
 }

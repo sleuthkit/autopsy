@@ -102,12 +102,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * @return String returns NULL if success, error string if there is any errors  
      **/  
    @Override
-   public String validatePanel() {
+   public boolean validatePanel() {
        
-        if (imageFilePanel.validatePanel() )
-           return null;
-       else 
-           return "Error in panel";    
+        return imageFilePanel.validatePanel(); 
    }
     /**
      * Runs the data source processor.

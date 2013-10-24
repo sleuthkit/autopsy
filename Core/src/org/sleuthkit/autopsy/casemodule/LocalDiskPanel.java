@@ -40,6 +40,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -330,7 +331,7 @@ public class LocalDiskPanel extends JPanel  {
             if(ready) {
                 selected = anItem;
                 enableNext = true;
-                pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+                pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             }
         }
 

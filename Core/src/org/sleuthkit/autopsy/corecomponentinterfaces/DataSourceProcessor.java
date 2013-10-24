@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 
 import javax.swing.JPanel;
-import org.sleuthkit.datamodel.Content;
 
 /*
  * Defines an interface used by the Add DataSource wizard to discover different
@@ -29,7 +28,7 @@ import org.sleuthkit.datamodel.Content;
  * Each data source may have its unique attributes and may need to be processed 
  * differently.
  * 
- * The DataSourceProcessor interface defines a uniform mechanism for thre Autopsy UI
+ * The DataSourceProcessor interface defines a uniform mechanism for the Autopsy UI
  * to:
  *  - collect details for the data source to be processed.
  *  - Process the data source in the background
@@ -37,6 +36,18 @@ import org.sleuthkit.datamodel.Content;
  */
 public interface DataSourceProcessor {
    
+    /*
+     * The DSP Panel may fire Property change events
+     * The caller must enure to add itself as a listener and 
+     * then react appropriately to the events
+     */
+    enum DSP_PANEL_EVENT {
+
+        UPDATE_UI,  // the content of JPanel has changed that MAY warrant updates to the caller UI
+        FOCUS_NEXT  // the caller UI may move focus the the next UI element, floowing the panel.
+    };
+    
+    
    /**
     * Returns the type of Data Source it handles. 
     * This name gets displayed in the drop-down listbox
@@ -51,10 +62,10 @@ public interface DataSourceProcessor {
     
    /**
     * Called to validate the input data in the panel.
-    * Returns null if no errors, or 
-    * Returns a string describing the error if there are errors.  
+    * Returns true if no errors, or 
+    * Returns false if there is an error.  
     **/
-    String validatePanel();
+    boolean validatePanel();
     
    /**
     * Called to invoke the handling of Data source in the background.
