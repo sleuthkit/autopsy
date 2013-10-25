@@ -114,7 +114,7 @@ final class GeneralPanel extends javax.swing.JPanel {
                                     .addComponent(useBestViewerRB)
                                     .addComponent(dataSourcesHideKnownCB)
                                     .addComponent(viewsHideKnownCB))))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGap(0, 13, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
