@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -90,6 +91,17 @@ public class HashDb implements Comparable<HashDb> {
         else {
             HashDbXML.getCurrent().addKnownBadSet(database);        
         }            
+    }
+    
+    static public List<HashDb> getUpdateableHashDatabases() {
+        ArrayList<HashDb> updateableDbs = new ArrayList<>();
+        List<HashDb> candidateDbs = HashDbXML.getCurrent().getKnownBadSets();
+        for (HashDb db : candidateDbs) {
+            if (db.isUpdateable()) {
+                updateableDbs.add(db);
+            }
+        }
+        return updateableDbs;
     }
     
     private HashDb(int handle, String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
