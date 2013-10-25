@@ -37,16 +37,16 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @author dfickling
  */
-final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
+final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fc = new JFileChooser();
     private String databaseName;
-    private static final Logger logger = Logger.getLogger(HashDbAddDatabaseDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(HashDbImportDatabaseDialog.class.getName());
     /**
-     * Creates new form HashDbAddDatabaseDialog
+     * Creates new form HashDbImportDatabaseDialog
      */
-    HashDbAddDatabaseDialog() {
-        super(new javax.swing.JFrame(), "Add Hash Database", true);
+    HashDbImportDatabaseDialog() {
+        super(new javax.swing.JFrame(), "Import Hash Database", true);
         setResizable(false);
         initComponents();
         customizeComponents();
@@ -100,23 +100,23 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.databasePathTextField.text")); // NOI18N
+        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.databasePathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -124,7 +124,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         });
 
         buttonGroup1.add(nsrlRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(nsrlRadioButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.nsrlRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nsrlRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.nsrlRadioButton.text")); // NOI18N
         nsrlRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 nsrlRadioButtonActionPerformed(evt);
@@ -133,21 +133,21 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
         buttonGroup1.add(knownBadRadioButton);
         knownBadRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.knownBadRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.knownBadRadioButton.text")); // NOI18N
         knownBadRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 knownBadRadioButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.jLabel1.text")); // NOI18N
 
-        databaseNameTextField.setText(org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.databaseNameTextField.text")); // NOI18N
+        databaseNameTextField.setText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.databaseNameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.jLabel2.text")); // NOI18N
 
         useForIngestCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
         useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 useForIngestCheckboxActionPerformed(evt);
@@ -155,7 +155,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         });
 
         sendInboxMessagesCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

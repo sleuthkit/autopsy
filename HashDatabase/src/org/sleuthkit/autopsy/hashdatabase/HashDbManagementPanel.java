@@ -613,7 +613,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
     private void importHashSet(java.awt.event.ActionEvent evt) {
-        String name = new HashDbAddDatabaseDialog().display();
+        String name = new HashDbImportDatabaseDialog().display();
         if(name != null) {
             hashSetTableModel.selectRowByName(name);
         }
