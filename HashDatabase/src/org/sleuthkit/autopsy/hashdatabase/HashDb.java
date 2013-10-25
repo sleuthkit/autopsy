@@ -65,7 +65,7 @@ public class HashDb implements Comparable<HashDb> {
     private static final String INDEX_SUFFIX_OLD = "-md5.idx";
     
     private String name;
-    private List<String> databasePaths; // TODO: Length limited to one for now...
+    private List<String> databasePaths; // TODO: Only need a single path, may only need to store handle
     private boolean useForIngest;
     private boolean showInboxMessages;
     private boolean indexing;
@@ -119,7 +119,7 @@ public class HashDb implements Comparable<HashDb> {
         return true;
     }
     
-    public void addContent(Content content) throws TskCoreException {
+    public void addContentHash(Content content) throws TskCoreException {
         // @@@ This only works for AbstractFiles at present.
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile)content;
@@ -203,7 +203,7 @@ public class HashDb implements Comparable<HashDb> {
      * @return a File initialized with the database path
      */
     File databaseFile() {
-        return new File(databasePaths.get(0)); // TODO: support multiple paths
+        return new File(databasePaths.get(0)); // TODO: don't support multiple paths
     }
     
     /**
@@ -212,7 +212,7 @@ public class HashDb implements Comparable<HashDb> {
      * path
      */
     File indexFile() {
-        return new File(toIndexPath(databasePaths.get(0))); // TODO: support multiple paths
+        return new File(toIndexPath(databasePaths.get(0))); // TODO: don't support multiple paths
     }
 
     /**
