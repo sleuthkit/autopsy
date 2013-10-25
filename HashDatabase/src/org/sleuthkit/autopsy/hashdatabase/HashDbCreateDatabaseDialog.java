@@ -252,9 +252,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         }
         int retval = fc.showSaveDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
-            
-            ///@todo check if file already exists
+            File f = fc.getSelectedFile();            
             
             try {
                 String filePath = f.getCanonicalPath();
