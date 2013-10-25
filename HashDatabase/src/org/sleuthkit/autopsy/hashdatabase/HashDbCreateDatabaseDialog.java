@@ -302,19 +302,16 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         } else {
             type = DBType.KNOWN_BAD;
         }
+               
+        try
+        {
+            HashDb db = HashDb.createHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Database creation error: ", ex);
+            JOptionPane.showMessageDialog(this, "Database file cannot be created.\n");
+            return;
+        }             
         
-        /// @todo Call the HashDb create factory method here
-//        HashDb db = HashDb.create(databaseNameTextField.getText(), 
-//                Arrays.asList(new String[] {databasePathTextField.getText()}), 
-//                useForIngestCheckbox.isSelected(),
-//                sendInboxMessagesCheckbox.isSelected(),
-//                type);
-                
-//        if(type == DBType.KNOWN_BAD) {
-//            HashDbXML.getCurrent().addKnownBadSet(db);
-//        } else if(type == DBType.NSRL) {
-//            HashDbXML.getCurrent().setNSRLSet(db);
-//        }
         databaseName = databaseNameTextField.getText();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
