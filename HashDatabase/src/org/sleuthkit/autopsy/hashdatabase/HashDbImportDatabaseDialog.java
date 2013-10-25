@@ -303,16 +303,17 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         } else {
             type = DBType.KNOWN_BAD;
         }
-        HashDb db = new HashDb(databaseNameTextField.getText(), 
-                Arrays.asList(new String[] {databasePathTextField.getText()}), 
-                useForIngestCheckbox.isSelected(),
-                sendInboxMessagesCheckbox.isSelected(),
-                type);
-        if(type == DBType.KNOWN_BAD) {
-            HashDbXML.getCurrent().addKnownBadSet(db);
-        } else if(type == DBType.NSRL) {
-            HashDbXML.getCurrent().setNSRLSet(db);
-        }
+        // RJCTODO: Sam is replacing this class.
+//        HashDb db = new HashDb(databaseNameTextField.getText(), 
+//                Arrays.asList(new String[] {databasePathTextField.getText()}), 
+//                useForIngestCheckbox.isSelected(),
+//                sendInboxMessagesCheckbox.isSelected(),
+//                type);
+//        if(type == DBType.KNOWN_BAD) {
+//            HashDbXML.getCurrent().addKnownBadSet(db);
+//        } else if(type == DBType.NSRL) {
+//            HashDbXML.getCurrent().setNSRLSet(db);
+//        }
         databaseName = databaseNameTextField.getText();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed

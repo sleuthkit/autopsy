@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.directorytree.AddContentToHashDbAction;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,7 +64,7 @@ public class HashDbXML {
     private boolean calculate;
     
     private HashDbXML(String xmlFile) {
-        knownBadSets = new ArrayList<HashDb>();
+        knownBadSets = new ArrayList<>();
         this.xmlFile = xmlFile;
     }
     
@@ -82,7 +83,7 @@ public class HashDbXML {
      * Get the hash sets
      */
     public List<HashDb> getAllSets() {
-        List<HashDb> ret = new ArrayList<HashDb>();
+        List<HashDb> ret = new ArrayList<>();
         if(nsrlSet != null) {
             ret.add(nsrlSet);
         }
@@ -285,9 +286,10 @@ public class HashDbXML {
             final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
             Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
-            List<String> paths = new ArrayList<String>();
+            List<String> paths = new ArrayList<>();
 
             // Parse all paths
+            // @@@ TODO: There is no need for more than one path.
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
             for (int j = 0; j < numPaths; ++j) {
@@ -330,16 +332,20 @@ public class HashDbXML {
             }
             
             if(paths.isEmpty()) {
-                logger.log(Level.WARNING, "No paths were set for hash_set at index {0}. Removing the database.", i);
-            } else {
                 // No paths for this entry, the user most likely declined to search for them
+                logger.log(Level.WARNING, "No paths were set for hash_set at index {0}. Removing the database.", i);
+            } 
+            else {
                 DBType typeDBType = DBType.valueOf(type);
-                HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
-                
-                if(typeDBType == DBType.KNOWN_BAD) {
-                    knownBadSets.add(set);
-                } else if(typeDBType == DBType.NSRL) {
-                    this.nsrlSet = set;
+                try {
+                    // @@@ Note that this method calls back to addKnownBadSet() or setNSRLSet(). 
+                    // In the future, this class will become an inner class of HashDb and will only handle reading and
+                    // writing the XML file.
+                    HashDb.openHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);                
+                }
+                catch (TskCoreException ex) {
+                    Logger.getLogger(HashDbXML.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
+                    JOptionPane.showMessageDialog(null, "Unable to open " + paths.get(0) + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }

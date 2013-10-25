@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,17 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -66,14 +69,52 @@ public class HashDb implements Comparable<HashDb> {
     private boolean showInboxMessages;
     private boolean indexing;
     private DBType type;
+    private int handle;
     
-    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
+    static public HashDb openHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) throws TskCoreException {
+        HashDb database = new HashDb(SleuthkitJNI.openHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
+        addToXMLFile(database);
+        return database;
+    }
+    
+    static public HashDb createHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) throws TskCoreException {
+        HashDb database = new HashDb(SleuthkitJNI.newHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
+        addToXMLFile(database);
+        return database;
+    }
+    
+    static private void addToXMLFile(HashDb database) {
+        if (database.getDbType() == HashDb.DBType.NSRL) {
+            HashDbXML.getCurrent().setNSRLSet(database);
+        }
+        else {
+            HashDbXML.getCurrent().addKnownBadSet(database);        
+        }            
+    }
+    
+    private HashDb(int handle, String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
+        this.handle = handle;
         this.name = name;
         this.databasePaths = databasePaths;
         this.useForIngest = useForIngest;
         this.showInboxMessages = showInboxMessages;
         this.type = type;
         this.indexing = false;
+    }
+    
+    public boolean isUpdateable() {
+        // RJCTODO: Complete this
+        return true;
+    }
+    
+    public void addContent(Content content) throws TskCoreException {
+        // @@@ This only works for AbstractFiles at present.
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            if (null != file.getMd5Hash()) {
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
+            }
+        }
     }
     
     void addPropertyChangeListener(PropertyChangeListener pcl) {

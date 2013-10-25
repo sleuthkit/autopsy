@@ -528,9 +528,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } // changed current case
         else if (changed.equals(Case.CASE_CURRENT_CASE)) {
-
-            // case opened
-            if (newValue != null) {
+            // When a case is closed, the old value of this property is the 
+            // closed Case object and the new value is null. When a case is 
+            // opened, the old value is null and the new value is the new Case
+            // object.
+            // @@@ This needs to be revisited. Perhaps case closed and case
+            // opened events instead of property change events would be a better
+            // solution. Either way, more probably needs to be done to clean up
+            // data model objects when a case is closed.
+            if (oldValue != null && newValue == null) {
+                // The current case has been closed. Reset the ExplorerManager.
+                Node emptyNode = new AbstractNode(Children.LEAF);
+                em.setRootContext(emptyNode);
+            }
+            else if (newValue != null) {
+                // A new case has been opened. Reset the forward and back 
+                // buttons. Note that a call to CoreComponentControl.openCoreWindows()
+                // by the new Case object will lead to a componentOpened() call
+                // that will repopulate the tree.
+                // @@@ The repopulation of the tree in this fashion also merits
+                // reconsideration.
                 resetHistory();
             }
         } // if the image is added to the case
