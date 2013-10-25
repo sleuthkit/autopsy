@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.TskException;
  */
 final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
-    private JFileChooser fc = new JFileChooser();
+    private JFileChooser fc;
+            
     private String databaseName;
     private static final Logger logger = Logger.getLogger(HashDbCreateDatabaseDialog.class.getName());
     /**
@@ -47,6 +48,22 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     HashDbCreateDatabaseDialog() {
         super(new javax.swing.JFrame(), "Create Hash Database", true);
         setResizable(false);
+        
+        fc = new JFileChooser() {
+            @Override
+            public void approveSelection() {
+                File ftemp = getSelectedFile();
+                if (ftemp.exists()) {
+                    int r = JOptionPane.showConfirmDialog(this, "A file with this name already exists. Please enter a new filename.", "Existing File", JOptionPane.OK_CANCEL_OPTION);
+                    if (r == JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();                       
+                    }
+                    return;                    
+                }
+                super.approveSelection();
+            }
+        };        
+        
         initComponents();
         customizeComponents();
     }
@@ -236,6 +253,9 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         int retval = fc.showSaveDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
             File f = fc.getSelectedFile();
+            
+            ///@todo check if file already exists
+            
             try {
                 String filePath = f.getCanonicalPath();
                 if (HashDb.isIndexPath(filePath)) {
