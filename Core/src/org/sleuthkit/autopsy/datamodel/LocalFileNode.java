@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.TYPE;
+import org.sleuthkit.autopsy.directorytree.AddContentToHashDbAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -92,7 +93,8 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
         actionsList.add(null); // creates a menu separator
-        actionsList.add(TagAbstractFileAction.getInstance());
+        actionsList.add(TagAbstractFileAction.getInstance());        
+        actionsList.add(AddContentToHashDbAction.getInstance());        
         return actionsList.toArray(new Action[0]);
     }
 

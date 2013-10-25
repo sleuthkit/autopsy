@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class AddContentToHashDbAction extends AbstractAction {
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
     private static AddContentToHashDbAction instance;
     private static String SINGLE_SELECTION_NAME = "Add file to hash database"; 
-    private static String MULTIPLE_SELECTION_NAME = "Add file) to hash database"; 
+    private static String MULTIPLE_SELECTION_NAME = "Add files to hash database"; 
 
     public static synchronized AddContentToHashDbAction getInstance() {
         if (null == instance) {

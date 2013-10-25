@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -152,6 +153,7 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
             actions.add(TagAbstractFileAction.getInstance());
+            actions.add(AddContentToHashDbAction.getInstance());
             return actions;            
         }
 
