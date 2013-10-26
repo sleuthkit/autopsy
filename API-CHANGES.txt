@@ -2,5 +2,6 @@ Changes to make to API when we are ready to make backward incompatible changes:
 
 - HTMLReport has special API for more context on columns and special handling in REportGenerator. Change all reports to the new API.
 - DataContentViewer.isPreferred does not need isSupported to be passed in
-- DataContentViewerHex and STrings can have the public setDataView methods removed in favor of the new private ones
-Content.getUniquePath() shoudl not thrown TskException.  We should deal with it in the method.
+- DataContentViewerHex and Strings can have the public setDataView methods removed in favor of the new private ones
+- Content.getUniquePath() should not thrown TskException.  We should deal with it in the method.
+- Make the list of events that Case fires off to be part of an enum to group them together (like IngestManager does). 

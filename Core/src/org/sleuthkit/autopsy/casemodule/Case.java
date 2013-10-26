@@ -109,6 +109,71 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
 
+    /**
+     * Events that the case module will fire. Event listeners can get the event
+     * name by using String returned by toString() method on a specific event.
+     */
+    /* @@@ BC: I added this as a place holder for what I want this to be, but 
+     * this is not the time to change it.  We'll start using this at a major release
+     * version. 
+     */
+    private enum CaseModuleEvent_DoNotUse {
+       /**
+        * Property name that indicates the name of the current case has changed.
+        * Fired with the case is renamed, and when the current case is
+        * opened/closed/changed. The value is a String: the name of the case. The
+        * empty string ("") is used for no open case.
+        */
+       // @@@ BC: I propose that this is no longer called for case open/close.
+       CASE_NAME("caseName"),
+       
+       /**
+        * Property name that indicates the number of the current case has changed.
+        * Fired with the case number is changed. The value is an int: the number of
+        * the case. -1 is used for no case number set.
+        */
+       CASE_NUMBER("caseNumber"),
+       
+       /**
+        * Property name that indicates the examiner of the current case has
+        * changed. Fired with the case examiner is changed. The value is a String:
+        * the name of the examiner. The empty string ("") is used for no examiner
+        * set.
+        */
+       CASE_EXAMINER("caseExaminer"),
+       
+       /**
+        * Property name that indicates a new data source (image, disk or local
+        * file) has been added to the current case. The new value is the
+        * newly-added instance of the new data source, and the old value is always
+        * null.
+        */
+       CASE_ADD_DATA_SOURCE("addDataSource"),
+       
+       /**
+        * Property name that indicates a data source has been removed from the
+        * current case. The "old value" is the (int) content ID of the data source
+        * that was removed, the new value is the instance of the data source.
+        */
+       CASE_DEL_DATA_SOURCE("removeDataSource"),
+       
+        /**
+         * Property name that indicates the currently open case has changed. The new
+         * value is the instance of the opened Case, or null if there is no open
+         * case. The old value is the instance of the closed Case, or null if there
+         * was no open case.
+         */
+        CASE_CURRENT_CASE("currentCase");
+ 
+        private String name;
+        CaseModuleEvent_DoNotUse(String name) {
+            this.name = name;
+        }
+        
+        public String getName() {
+            return this.name;
+        }
+    };
 
     
     private String name;
