@@ -430,16 +430,17 @@ public class ExtractRegistry extends Extract {
 
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", usbMtime));
-                                String dev = artnode.getAttribute("dev");
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", dev));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
+                                String dev = artnode.getAttribute("dev");       
+                                String model = dev; 
                                 if (dev.toLowerCase().contains("vid")) {
                                     USBInfo info = extrctr.get(dev);
                                     if(info.getVendor()!=null)
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), "RecentActivity", info.getVendor()));
                                     if(info.getProduct() != null)
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", info.getProduct()));
+                                        model = info.getProduct();
                                 }
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", model));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
