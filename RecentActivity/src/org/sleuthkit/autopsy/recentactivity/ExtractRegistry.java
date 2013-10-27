@@ -280,7 +280,7 @@ public class ExtractRegistry extends Extract {
             fullType = "software";
         } 
         else if (regFilePath.toLowerCase().contains("ntuser")) {
-            autopsyType = "autopsy";
+            autopsyType = "autopsyntuser";
             fullType = "ntuser";
         }  
         else if (regFilePath.toLowerCase().contains("sam")) {
