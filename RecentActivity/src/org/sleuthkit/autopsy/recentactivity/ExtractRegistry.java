@@ -32,7 +32,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -40,7 +39,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USBInfo;
 import org.sleuthkit.datamodel.*;
@@ -54,17 +52,18 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
- * Extracting windows registry data using regripper
+ * Extract windows registry data using regripper.
+ * Runs two versions of regripper. One is the generally available set of plug-ins 
+ * and the second is a set that were customized for Autopsy to produce a more structured
+ * output of XML so that we can parse and turn into blackboard artifacts. 
  */
 public class ExtractRegistry extends Extract {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     private String RR_FULL_PATH;
-    boolean rrFound = false;
-    boolean rrFullFound = false;
-    private int sysid;
-    private IngestServices services;
+    boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
+    boolean rrFullFound = false; // true if we found the full version of regripper
     final public static String MODULE_VERSION = "1.0";
     private ExecUtil execRR;
 
@@ -130,7 +129,7 @@ public class ExtractRegistry extends Extract {
         }
 
         // find the system hives'
-        String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
+        String[] regFileNames = new String[] {"system", "software", "security", "sam"};
         for (String regFileName : regFileNames) {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
@@ -261,17 +260,17 @@ public class ExtractRegistry extends Extract {
         public String fullPlugins = "";
     }
 
-    // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     /**
      * Execute regripper on the given registry.
      * @param regFilePath Path to local copy of registry
      * @param outFilePathBase  Path to location to save output file to.  Base name that will be extended on
      */
     private RegOutputFiles executeRegRip(String regFilePath, String outFilePathBase) {
-     
         String autopsyType = "";    // Type argument for rr for autopsy-specific modules
         String fullType = "";   // Type argument for rr for full set of modules
 
+        RegOutputFiles regOutputFiles = new RegOutputFiles();
+        
         if (regFilePath.toLowerCase().contains("system")) {
             autopsyType = "autopsysystem";
             fullType = "system";
@@ -283,10 +282,7 @@ public class ExtractRegistry extends Extract {
         else if (regFilePath.toLowerCase().contains("ntuser")) {
             autopsyType = "autopsy";
             fullType = "ntuser";
-        } 
-        else if (regFilePath.toLowerCase().contains("default")) {
-            //type = "1default";
-        } 
+        }  
         else if (regFilePath.toLowerCase().contains("sam")) {
             fullType = "sam";
         } 
@@ -294,11 +290,8 @@ public class ExtractRegistry extends Extract {
             fullType = "security";
         } 
         else {
-            // @@@ Seems like we should error out or something...
-            autopsyType = "1default";
+            return regOutputFiles;
         }
-
-        RegOutputFiles regOutputFiles = new RegOutputFiles();
         
         // run the autopsy-specific set of modules
         if (!autopsyType.isEmpty() && rrFound) {
@@ -326,8 +319,6 @@ public class ExtractRegistry extends Extract {
                     }
                 }
             }
-        } else {
-            logger.log(Level.INFO, "Not running Autopsy-only modules on hive");
         }
         
         // run the full set of rr modules
@@ -355,9 +346,8 @@ public class ExtractRegistry extends Extract {
                     }
                 }
             }
-        } else {
-            logger.log(Level.INFO, "Not running original RR modules on hive");
         }
+        
         return regOutputFiles;
     }
     
@@ -519,13 +509,8 @@ public class ExtractRegistry extends Extract {
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.");
                             }
-
-                        } else {
-                            //BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
-                            //bbart.addAttributes(bbattributes);
                         }
                     }
-
                 }
             }
             return true;
@@ -555,7 +540,6 @@ public class ExtractRegistry extends Extract {
 
     @Override
     public void init(IngestModuleInit initContext) {
-        services = IngestServices.getDefault();
     }
 
     @Override
