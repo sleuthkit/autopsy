@@ -144,7 +144,7 @@ public class ExtractRegistry extends Extract {
     }
     
     /**
-     * Identifies registry files in the database by name, runs regripper on them, and parses the output.
+     * Identifies registry files in the database by mtimeItem, runs regripper on them, and parses the output.
      * 
      * @param dataSource
      * @param controller 
@@ -263,7 +263,7 @@ public class ExtractRegistry extends Extract {
     /**
      * Execute regripper on the given registry.
      * @param regFilePath Path to local copy of registry
-     * @param outFilePathBase  Path to location to save output file to.  Base name that will be extended on
+     * @param outFilePathBase  Path to location to save output file to.  Base mtimeItem that will be extended on
      */
     private RegOutputFiles executeRegRip(String regFilePath, String outFilePathBase) {
         String autopsyType = "";    // Type argument for rr for autopsy-specific modules
@@ -379,18 +379,19 @@ public class ExtractRegistry extends Extract {
             int len = children.getLength();
             for (int i = 0; i < len; i++) {
                 Element tempnode = (Element) children.item(i);
-                String context = tempnode.getNodeName();
+                
+                String dataType = tempnode.getNodeName();
 
-                NodeList timenodes = tempnode.getElementsByTagName("time");
-                Long time = null;
+                NodeList timenodes = tempnode.getElementsByTagName("mtime");
+                Long mtime = null;
                 if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
                     try {
                         Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
-                        time = epochtime.longValue();
-                        String Tempdate = time.toString();
-                        time = Long.valueOf(Tempdate) / 1000;
+                        mtime = epochtime.longValue();
+                        String Tempdate = mtime.toString();
+                        mtime = Long.valueOf(Tempdate) / 1000;
                     } catch (ParseException ex) {
                         logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.");
                     }
@@ -410,27 +411,25 @@ public class ExtractRegistry extends Extract {
                     // If it has attributes, then it is an Element (based off API)
                     if (artchild.hasAttributes()) {
                         Element artnode = (Element) artchild;
-                        String name = artnode.getAttribute("name");
+                        
                         String value = artnode.getTextContent().trim();
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
 
-                        if ("recentdocs".equals(context)) {
+                        if ("recentdocs".equals(dataType)) {
                             //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
+                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
+                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
                             //               bbart.addAttributes(bbattributes);
                             // @@@ BC: Why are we ignoring this...
                         } 
-                        else if ("usb".equals(context)) {
-                            try {
-                                Long utime = null;
-                                utime = Long.parseLong(name);
-                                String Tempdate = utime.toString();
-                                utime = Long.valueOf(Tempdate);
+                        else if ("usb".equals(dataType)) {
+                            try {      
+                                Long usbMtime = Long.parseLong(artnode.getAttribute("mtime"));
+                                usbMtime = Long.valueOf(usbMtime.toString());
 
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", utime));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", usbMtime));
                                 String dev = artnode.getAttribute("dev");
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", dev));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
@@ -446,29 +445,27 @@ public class ExtractRegistry extends Extract {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
                             }
                         } 
-                        else if ("uninstall".equals(context)) {
-                            Long ftime = null;
+                        else if ("uninstall".equals(dataType)) {
+                            Long itemMtime = null;
                             try {
-                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
-                                ftime = epochtime.longValue();
-                                ftime = ftime / 1000;
+                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime();
+                                itemMtime = epochtime.longValue();
+                                itemMtime = itemMtime / 1000;
                             } catch (ParseException e) {
                                 logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.");
                             }
 
                             try {
-                                if (time != null) {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
-                                }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ftime));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", itemMtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
                             }
                         } 
-                        else if ("WinVersion".equals(context)) {
+                        else if ("WinVersion".equals(dataType)) {
+                            String name = artnode.getAttribute("name");
 
                             if (name.contains("ProductName")) {
                                 winver = value;
@@ -496,11 +493,14 @@ public class ExtractRegistry extends Extract {
                                 }
                             }
                         } 
-                        else if ("office".equals(context)) {
+                        else if ("office".equals(dataType)) {
+                            String name = artnode.getAttribute("name");
+                            
                             try {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                                if (time != null) {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
+                                if (mtime != null) {
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", mtime));
                                 }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));

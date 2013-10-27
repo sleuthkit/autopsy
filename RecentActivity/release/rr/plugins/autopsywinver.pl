@@ -32,7 +32,7 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 		::rptMsg("<WinVersion>");
-		::rptMsg("<time>Not Available</time>");
+		::rptMsg("<mtime></mtime>");
 		::rptMsg("<artifacts>");
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion";
 	my $key;

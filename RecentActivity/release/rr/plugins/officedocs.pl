@@ -56,8 +56,8 @@ sub pluginmain {
 		#::rptMsg("MSOffice version ".$version." located.");
 		my $key_path = "Software\\Microsoft\\Office\\".$version;	                 
 		my $of_key = $root_key->get_subkey($key_path);
+		::rptMsg("<mtime> ".gmtime($of_key->get_timestamp())."</mtime>");
 		::rptMsg("<artifacts>");
-		::rptMsg("<time> ".gmtime($of_key->get_timestamp())."</time>");
 		if ($of_key) {
 # Attempt to retrieve Word docs			
 			my @funcs = ("Open","Save As","File Save");
