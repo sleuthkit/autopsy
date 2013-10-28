@@ -197,9 +197,9 @@ public class IngestManager {
     }
 
     /**
-     * Add property change listener to listen to ingest events
+     * Add property change listener to listen to ingest events as defined in IngestModuleEvent. 
      *
-     * @param l PropertyChangeListener to schedule
+     * @param l PropertyChangeListener to register
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);

@@ -11,3 +11,4 @@
 Doxyfile                text
 
 *.py                  text diff=python
+*.pl			text

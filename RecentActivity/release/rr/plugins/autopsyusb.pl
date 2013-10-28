@@ -59,7 +59,7 @@ sub pluginmain {
 	my $key_path = $ccs."\\Enum\\USB";
 	my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg("<usb><time>N/A</time><artifacts>");
+		::rptMsg("<usb><mtime></mtime><artifacts>");
 
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
@@ -69,8 +69,8 @@ sub pluginmain {
 				if (scalar(@sk) > 0) {
 					foreach my $k (@sk) {
 						my $serial = $k->get_name();
-						my $sn_lw = $k->get_timestamp();
-						my $str = $comp_name.",".$dev_class.",".$serial.",".$sn_lw;
+						my $mtime = $k->get_timestamp();
+						my $str = $comp_name.",".$dev_class.",".$serial.",".$mtime;
 						
 						my $loc;
 						eval {
@@ -94,7 +94,7 @@ sub pluginmain {
 						};
 
 
-						::rptMsg("<device name=\"" . $sn_lw. "\" dev=\"" . $dev_class . "\" >" . $serial .  "</device>");
+						::rptMsg("<device mtime=\"" . $mtime. "\" dev=\"" . $dev_class . "\" >" . $serial .  "</device>");
 					}
 				}
 			}
