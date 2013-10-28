@@ -89,9 +89,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
      **/ 
    @Override
     public JPanel getPanel() {
-      
-       // RAMAN TBD: we should ask the panel to preload with any saved settings
-        
+
+    
+       imageFilePanel.readSettings();
        imageFilePanel.select();
        
        return imageFilePanel;
@@ -121,7 +121,8 @@ public class ImageDSProcessor implements DataSourceProcessor {
       
       if (!imageOptionsSet)
       {
-          // RAMAN TBD: we should ask the panel to save the current settings
+          //tell the panel to save the current settings
+          imageFilePanel.storeSettings();
           
           // get the image options from the panel
           imagePath = imageFilePanel.getContentPaths();

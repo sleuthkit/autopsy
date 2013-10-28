@@ -180,16 +180,6 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
 
         // Prepopulate the image directory from the properties file
         try {
-              /******* RAMAN TBD: all settings read/store needs to be moved into the DSP panel
-            String lastDataSourceDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH);
-            String lastDataSourceType = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE);
-
-          
-            //set the last path for the content panel for which it was saved
-            if (component.getContentType().toString().equals(lastDataSourceType)) {
-                component.setContentPath(lastDataSourceDirectory);
-            }
-            * ******************/
 
             // Load hash database settings, enable or disable the checkbox
             this.NSRLPath = null;
@@ -226,16 +216,8 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        /******* RAMAN TBD: all settings read/store needs to be moved into the DSP
-        //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
-        //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
-       
-        // Store the path to the first image selected into the properties file
-        String firstImage = getComponent().getContentPaths();
-        String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
-        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_PATH, firstImagePath);
-        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTDATASOURCE_TYPE, getComponent().getContentType().toString());
-        *********************/
+  
+        return;
     }
 
     /**

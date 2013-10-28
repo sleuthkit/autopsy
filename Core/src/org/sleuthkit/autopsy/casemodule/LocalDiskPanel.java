@@ -221,8 +221,6 @@ public class LocalDiskPanel extends JPanel  {
     public void reset() {
         //nothing to reset
         
-       // RAMAN TBD this should reset the UI elements?
-        
     }
     
    

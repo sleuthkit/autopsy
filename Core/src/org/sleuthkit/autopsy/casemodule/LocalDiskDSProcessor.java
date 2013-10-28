@@ -84,8 +84,6 @@ public class LocalDiskDSProcessor  implements DataSourceProcessor {
      **/ 
    @Override
     public JPanel getPanel() {
-      
-       // RAMAN TBD: we should ask the panel to preload with any saved settings
        
        localDiskPanel.select();
        return localDiskPanel;
@@ -115,10 +113,7 @@ public class LocalDiskDSProcessor  implements DataSourceProcessor {
       callbackObj = cbObj;
       cancelled = false;
       
-      if (!localDiskOptionsSet)
-      {
-          // RAMAN TBD: we should ask the panel to save the current settings
-          
+      if (!localDiskOptionsSet) {
           // get the image options from the panel
           localDiskPath = localDiskPanel.getContentPaths();
           timeZone = localDiskPanel.getTimeZone();

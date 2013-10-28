@@ -79,11 +79,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      **/ 
    @Override
     public JPanel getPanel() {
-      
-       // RAMAN TBD: we should ask the panel to preload with any saved settings
-        
-        localFilesPanel.select();
-       
+       localFilesPanel.select();
        return localFilesPanel;
    }
     /**
@@ -111,11 +107,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
       callbackObj = cbObj;
       cancelled = false;
       
-      if (!localFilesOptionsSet)
-      {
-          // RAMAN TBD: we should ask the panel to save the current settings
-          
-          // get the image options from the panel
+      if (!localFilesOptionsSet) {
+          // get the selected file paths from the panel
           localFilesPath = localFilesPanel.getContentPaths();
       }
       

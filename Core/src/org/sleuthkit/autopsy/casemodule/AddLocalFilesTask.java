@@ -75,9 +75,8 @@ public class AddLocalFilesTask implements Runnable {
      */
     @Override
     public void run() {
-        errorList.clear();
         
-       // RAMAN TBD: dont we need to lock the DB ????
+        errorList.clear();
         
         final LocalFilesAddProgressUpdater progUpdater = new LocalFilesAddProgressUpdater(progressMonitor);
         try {

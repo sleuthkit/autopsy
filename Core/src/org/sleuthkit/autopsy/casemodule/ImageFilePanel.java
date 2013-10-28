@@ -32,11 +32,15 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
+    
+    private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
     
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
     static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
@@ -70,6 +74,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.addChoosableFileFilter(rawFilter);
         fc.addChoosableFileFilter(encaseFilter);
         fc.setFileFilter(allFilter);
+        
+        
+        pcs = new PropertyChangeSupport(this);
         
         createTimeZoneList();
     }
@@ -171,7 +178,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -226,16 +233,11 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         return noFatOrphansCheckbox.isSelected();
     }
      
-    public String getContentType() {
-        return "IMAGE";
-    }
+    
 
     public void reset() {
-        //reset the UI elements to default
-        
-        pathTextField.setText(null);
-       
-        
+        //reset the UI elements to default 
+        pathTextField.setText(null);  
     }
     
     /**
@@ -256,6 +258,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }
 
 
+    public void storeSettings() {
+       
+        String imagePathName = getContentPaths();
+        String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
+      
+        ModuleSettings.setConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH, imagePath);
+    }
+    
+    public void readSettings() {
+        
+        String lastImagePath = ModuleSettings.getConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH);
+        if (!lastImagePath.isEmpty())
+             pathTextField.setText(lastImagePath);  
+    }
     /**
      * Creates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
