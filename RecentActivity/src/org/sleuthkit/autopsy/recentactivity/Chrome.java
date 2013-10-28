@@ -62,6 +62,7 @@ public class Chrome extends Extract {
     private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
     private static final String bookmarkQuery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
     private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads";
+    private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
@@ -380,6 +381,11 @@ public class Chrome extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
+            
+            if (tempList.isEmpty()) {
+                tempList = this.dbConnect(temps, downloadQueryVersion30);
+            }
+            
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
