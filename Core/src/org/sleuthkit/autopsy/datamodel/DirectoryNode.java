@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
@@ -77,6 +78,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
 

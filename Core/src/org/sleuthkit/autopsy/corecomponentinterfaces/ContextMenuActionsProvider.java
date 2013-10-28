@@ -27,11 +27,12 @@ import javax.swing.Action;
  */
 public interface ContextMenuActionsProvider {
     /**
-     * Gets context menu Actions appropriate to the org.sleuthkit.datamodel 
-     * objects in the NetBeans Lookup for the active TopComponent. 
-     * Implementers can discover the data model objects by calling 
-     * org.openide.util.Utilities.actionsGlobalContext().lookupAll().
+     * Gets context menu Actions for the currently selected data model objects 
+     * exposed by the NetBeans Lookup of the active TopComponent. Implementers 
+     * should discover the selected objects by calling 
+     * org.openide.util.Utilities.actionsGlobalContext().lookupAll() for the 
+     * org.sleuthkit.datamodel classes of interest to the provider.
      * @return A list, possibly empty, of Action objects.
      */
-    List<Action> getActions();
+    public List<Action> getActions();
 }

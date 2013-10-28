@@ -16,34 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.hashdatabase;
 
-import org.openide.util.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.Action;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
+import org.sleuthkit.datamodel.AbstractFile;
 
-/**
- * This class implements the ContextMenuActionsProvider extension point.
- */
-public class ContextMenuExtensionPoint {
-    /**
-     * Gets all of the Actions provided by registered implementers of the 
-     * ContextMenuActionsProvider interface.
-     * @return A list, possibly empty, of Action objects.
-     */
-    static public List<Action> getActions() {
+@ServiceProvider(service = ContextMenuActionsProvider.class)
+public class HashDbContextMenuActionsProvider implements ContextMenuActionsProvider {
+    @Override
+    public List<Action> getActions() {
         ArrayList<Action> actions = new ArrayList<>();
-        Collection<? extends ContextMenuActionsProvider> actionProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
-        for (ContextMenuActionsProvider provider : actionProviders) {
-            List<Action> providerActions = provider.getActions();
-            if (!providerActions.isEmpty()) {
-                actions.add(null); // Separator to set off this provider's actions.
-                actions.addAll(provider.getActions());
-            }
-        }
+        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        if (!selectedFiles.isEmpty()) {
+            actions.add(AddContentToHashDbAction.getInstance());
+        } 
         return actions;
     }
 }

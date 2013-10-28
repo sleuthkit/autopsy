@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -109,6 +110,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(TagAbstractFileAction.getInstance());
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
     }
 

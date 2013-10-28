@@ -35,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -102,6 +103,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<>();
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
 
@@ -110,6 +112,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
 
@@ -118,6 +121,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
 
@@ -126,6 +130,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
 
@@ -134,6 +139,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
 
