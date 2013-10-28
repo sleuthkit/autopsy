@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.directorytree.AddContentToHashDbAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -110,7 +109,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(TagAbstractFileAction.getInstance());
-        actionsList.add(AddContentToHashDbAction.getInstance());        
         return actionsList.toArray(new Action[0]);
     }
 

@@ -16,25 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.openide.util.Utilities;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.ingest.IngestConfigurator;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to content to a hash database.  
  */
-public class AddContentToHashDbAction extends AbstractAction { 
+public class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup { 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -82,20 +86,43 @@ public class AddContentToHashDbAction extends AbstractAction {
     }
     
     @Override
+    public JMenuItem getPopupPresenter() {            
+        return new AddContentToHashDbMenu();
+    }
+    
+    @Override
     public void actionPerformed(ActionEvent event) {
-        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        for (AbstractFile file : selectedFiles) {
-            try {
-                // RJCTODO: Complete this method.
-                String md5Hash = file.getMd5Hash();
-                if (null != md5Hash) {
-                    throw new TskCoreException("RJCTODO");
-                }                
+    }  
+    
+    private class AddContentToHashDbMenu extends JMenu { 
+        AddContentToHashDbMenu() {
+            // RJCTODO: Need super call?
+            
+            // Get the current set of updateable hash databases and add each
+            // one as a menu item.
+            for (final HashDb database : HashDbXML.getCurrent().getKnownBadSets()) {
+                if (database.isUpdateable()) {
+                    JMenuItem databaseItem = add(database.getName());
+                    databaseItem.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+                            for (AbstractFile file : selectedFiles) {
+                                String md5Hash = file.getMd5Hash();
+                                if (null != md5Hash) {
+                                    try {
+                                        database.addContentHash(file);
+                                    }
+                                    catch (TskCoreException ex) {                        
+                                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
+                                        JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + "to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                                    }                    
+                                }                
+                            }
+                        }
+                    });
+                }
             }
-            catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
-                JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + "to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
-            }                    
-        }                             
-    }        
+        }
+    }    
 }

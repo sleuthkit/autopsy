@@ -102,7 +102,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<>();
         actions.add(TagAbstractFileAction.getInstance());
-        actions.add(AddContentToHashDbAction.getInstance());        
         return actions;
     }
 
@@ -111,7 +110,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
-        actions.add(AddContentToHashDbAction.getInstance());        
         return actions;
     }
 
@@ -120,7 +118,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
-        actions.add(AddContentToHashDbAction.getInstance());        
         return actions;
     }
 
@@ -129,7 +126,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
-        actions.add(AddContentToHashDbAction.getInstance());        
         return actions;
     }
 
@@ -138,7 +134,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
         actions.add(TagAbstractFileAction.getInstance());
-        actions.add(AddContentToHashDbAction.getInstance());        
         return actions;
     }
 

@@ -32,7 +32,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.directorytree.AddContentToHashDbAction;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;

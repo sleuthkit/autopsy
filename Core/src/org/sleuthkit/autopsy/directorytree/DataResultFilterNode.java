@@ -208,7 +208,6 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator                    
                     actions.add(TagAbstractFileAction.getInstance());
                     actions.add(TagBlackboardArtifactAction.getInstance());
-                    actions.add(AddContentToHashDbAction.getInstance());        
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -225,7 +224,6 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(TagAbstractFileAction.getInstance());
                     actions.add(TagBlackboardArtifactAction.getInstance());
-                    actions.add(AddContentToHashDbAction.getInstance());        
                 }
             }
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -242,7 +240,6 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(TagAbstractFileAction.getInstance());
                     actions.add(TagBlackboardArtifactAction.getInstance());
-                    actions.add(AddContentToHashDbAction.getInstance());        
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
@@ -258,7 +255,6 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(TagAbstractFileAction.getInstance());
                     actions.add(TagBlackboardArtifactAction.getInstance());
-                    actions.add(AddContentToHashDbAction.getInstance());        
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
@@ -275,7 +271,6 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(TagAbstractFileAction.getInstance());
                     actions.add(TagBlackboardArtifactAction.getInstance());
-                    actions.add(AddContentToHashDbAction.getInstance());        
                 }
             }
 
