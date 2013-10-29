@@ -40,7 +40,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    private final String dsType = "Image File";
+    protected final static String dsType = "Image File";
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private ImageFilePanel imageFilePanel;

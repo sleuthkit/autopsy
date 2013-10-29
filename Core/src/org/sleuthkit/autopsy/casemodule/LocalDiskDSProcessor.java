@@ -33,7 +33,7 @@ public class LocalDiskDSProcessor  implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    private final String dsType = "Local Disk";
+    static protected final String dsType = "Local Disk";
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private LocalDiskPanel localDiskPanel;

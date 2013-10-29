@@ -32,7 +32,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    private final String dsType = "Logical Files";
+    protected static final String dsType = "Logical Files";
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private LocalFilesPanel localFilesPanel;

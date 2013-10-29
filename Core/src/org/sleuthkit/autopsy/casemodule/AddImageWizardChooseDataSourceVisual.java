@@ -22,22 +22,20 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
 import java.util.logging.Level;
-import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
+import javax.swing.JList;
+import javax.swing.JSeparator;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListDataListener;
+import javax.swing.ListCellRenderer;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -57,6 +55,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();
           
 
+     List<String> coreDSPTypes = new ArrayList<String>();
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -71,28 +70,49 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     }
 
     private void customInit() {
+      
+        typePanel.setLayout(new BorderLayout());
         
         discoverDataSourceProcessors();
-        
+         
         // set up the DSP type combobox
         typeComboBox.removeAllItems();
+        
         Set<String> dspTypes = datasourceProcessorsMap.keySet();
-        for(String dspType:dspTypes){
+        
+        // make a list of core DSPs
+        // ensure that the core DSPs are at the top and in a fixed order
+        coreDSPTypes.add(ImageDSProcessor.dsType);
+        coreDSPTypes.add(LocalDiskDSProcessor.dsType);
+        coreDSPTypes.add(LocalFilesDSProcessor.dsType);
+          
+        for(String dspType:coreDSPTypes){
             typeComboBox.addItem(dspType);
         }
+        
+        // now add any addtional DSPs that haven't already been added
+        for(String dspType:dspTypes){
+            if (!coreDSPTypes.contains(dspType)) {
+                typeComboBox.addItem(dspType);
+            }
+        }
+        
+        // set a custom renderer that draws a separator at the end of the core DSPs in the combobox
+        typeComboBox.setRenderer(new ComboboxSeparatorRenderer(typeComboBox.getRenderer()){   
+            @Override
+            protected boolean addSeparatorAfter(JList list, Object value, int index){ 
+                return (index == coreDSPTypes.size() - 1);          
+            }                                                                            
+        });   
         
         //add actionlistner to listen for change
         ActionListener cbActionListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dspSelectionChanged();
-            
             }
         };
         typeComboBox.addActionListener(cbActionListener);
-                 
-        typePanel.setLayout(new BorderLayout());
-
         typeComboBox.setSelectedIndex(0);
     }
 
@@ -290,4 +310,27 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         this.wizPanel.enableNextButton(getCurrentDSProcessor().validatePanel());
     }
 
+    
+   public abstract class ComboboxSeparatorRenderer implements ListCellRenderer{
+        private ListCellRenderer delegate;
+        private JPanel separatorPanel = new JPanel(new BorderLayout());
+        private JSeparator separator = new JSeparator();
+
+        public ComboboxSeparatorRenderer(ListCellRenderer delegate){
+             this.delegate = delegate;
+        }
+
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus){
+            Component comp = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if(index!=-1 && addSeparatorAfter(list, value, index)){
+                separatorPanel.removeAll();
+                separatorPanel.add(comp, BorderLayout.CENTER);
+                separatorPanel.add(separator, BorderLayout.SOUTH);
+                return separatorPanel;
+            }else
+                return comp;
+        }
+
+        protected abstract boolean addSeparatorAfter(JList list, Object value, int index);
+    }
 }
