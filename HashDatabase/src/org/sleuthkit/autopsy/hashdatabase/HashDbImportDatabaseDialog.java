@@ -306,7 +306,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         
         try
         {
-            HashDb db = HashDb.openHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+            HashDb.openHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Invalid database: ", ex);
             JOptionPane.showMessageDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database");

@@ -85,12 +85,14 @@ public class HashDb implements Comparable<HashDb> {
     }
     
     static private void addToXMLFile(HashDb database) {
+        HashDbXML xmlFileManager = HashDbXML.getCurrent();
         if (database.getDbType() == HashDb.DBType.NSRL) {
-            HashDbXML.getCurrent().setNSRLSet(database);
+            xmlFileManager.setNSRLSet(database);
         }
         else {
-            HashDbXML.getCurrent().addKnownBadSet(database);        
+            xmlFileManager.addKnownBadSet(database);        
         }            
+        xmlFileManager.save();
     }
     
     static public List<HashDb> getUpdateableHashDatabases() {
