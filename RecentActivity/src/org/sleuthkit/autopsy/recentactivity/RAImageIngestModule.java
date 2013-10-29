@@ -23,8 +23,8 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,6 +49,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     private static int messageId = 0;
     private StringBuilder subCompleted = new StringBuilder();
     private ArrayList<Extract> modules;
+    private List<Extract> browserModules;
     final public static String MODULE_VERSION = "1.0";
 
     //public constructor is required
@@ -106,6 +107,17 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
+        
+        StringBuilder historyMsg = new StringBuilder();
+        historyMsg.append("<p>Browser Data on ").append(dataSource.getName()).append(":<ul>\n");
+        for (Extract module : browserModules) {
+            historyMsg.append("<li>").append(module.getName());
+            historyMsg.append(": ").append((module.foundHistory()) ? " Found." : " Not Found.");
+            historyMsg.append("</li>");
+        }
+        historyMsg.append("</ul>");
+        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, dataSource.getName() + " - Browser Results", historyMsg.toString());
+        services.postMessage(inboxMsg);
     }
 
     @Override
@@ -139,18 +151,29 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     @Override
     public void init(IngestModuleInit initContext) {
         modules = new ArrayList<>();
+        browserModules = new ArrayList();
         logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 
-        modules.add(new Chrome());
-        modules.add(new Firefox());
-        modules.add(new ExtractIE());
+        final Extract registry = new ExtractRegistry();
+        final Extract iexplore = new ExtractIE();
+        final Extract chrome = new Chrome();
+        final Extract firefox = new Firefox();
+        final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+
+        modules.add(chrome);
+        modules.add(firefox);
+        modules.add(iexplore);
         // this needs to run after the web browser modules
-        modules.add(new SearchEngineURLQueryAnalyzer());
+        modules.add(SEUQA);
         
         // this runs last because it is slowest
-        modules.add(new ExtractRegistry());
+        modules.add(registry);
         
+        browserModules.add(chrome);
+        browserModules.add(firefox);
+        browserModules.add(iexplore);
+
         for (Extract module : modules) {
             try {
                 module.init(initContext);

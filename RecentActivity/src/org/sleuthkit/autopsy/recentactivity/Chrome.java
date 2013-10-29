@@ -82,6 +82,7 @@ public class Chrome extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        historyFound = true;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
@@ -104,6 +105,7 @@ public class Chrome extends Extract {
             String msg = "Error when trying to get Chrome history files.";
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getName() + ": " + msg);
+            historyFound = false;
             return;
         }
         
@@ -117,7 +119,10 @@ public class Chrome extends Extract {
         
         // log a message if we don't have any allocated history files
         if (allocatedHistoryFiles.isEmpty()) {
-            logger.log(Level.INFO, "Could not find any allocated Chrome history files.");
+            String msg = "Could not find any allocated Chrome history files.";
+            logger.log(Level.INFO, msg);
+            addErrorMessage(getName() + ": " + msg);
+            historyFound = false;
             return;
         }
 
@@ -380,9 +385,11 @@ public class Chrome extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
+            List<HashMap<String, Object>> tempList = null;
             
-            if (tempList.isEmpty()) {
+            if (isChromePreVersion30(temps)) {
+                tempList = this.dbConnect(temps, downloadQuery);
+            } else {
                 tempList = this.dbConnect(temps, downloadQueryVersion30);
             }
             
@@ -493,6 +500,18 @@ public class Chrome extends Extract {
 
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+
+    private boolean isChromePreVersion30(String temps) {
+        String query = "PRAGMA table_info(downloads)";
+        List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
+        for (HashMap<String, Object> col : columns) {
+            if (col.get("name").equals("url")) {
+                return true;
+            }
+        }
+        
         return false;
     }
 }

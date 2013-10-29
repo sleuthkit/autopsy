@@ -74,7 +74,8 @@ public class Firefox extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        historyFound = true;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getDownload(dataSource, controller);
@@ -94,6 +95,16 @@ public class Firefox extends Extract {
             String msg = "Error fetching internet history files for Firefox.";
             logger.log(Level.WARNING, msg);
             this.addErrorMessage(this.getName() + ": " + msg);
+            historyFound = false;
+            return;
+        }
+        
+        if (historyFiles.isEmpty()) {
+            String msg = "No FireFox history files found.";
+            logger.log(Level.INFO, msg);
+            addErrorMessage(getName() + ": " + msg);
+            historyFound = false;
+            return;
         }
 
         int j = 0;
@@ -266,29 +277,8 @@ public class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
-    /**
-     * Queries for downloads files and adds artifacts
-     * @param dataSource
-     * @param controller 
-     */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
-
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadsFiles = null;
-        try {
-            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
-        } catch (TskCoreException ex) {
-            String msg = "Error fetching 'downloads' files for Firefox.";
-            logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
-            return;
-        }
-        
-        if (downloadsFiles.isEmpty()) {
-            getDownloadVersion24(dataSource, controller);
-            return;
-        }
-
+    
+    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -311,10 +301,6 @@ public class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
-            if (tempList.isEmpty()) {
-                getDownloadVersion24(dataSource, controller);
-                return;
-            }
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 
@@ -350,6 +336,28 @@ public class Firefox extends Extract {
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
+    /**
+     * Queries for downloads files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> downloadsFiles = null;
+        List<AbstractFile> placesFiles = null;
+        try {
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
+            placesFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+        } catch (TskCoreException ex) {
+            String msg = "Error fetching 'downloads' files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+        
+        getDownloadPreVersion24(dataSource, controller, downloadsFiles);
+        getDownloadVersion24(dataSource, controller, placesFiles);
+    }
 
     @Override
     public void init(IngestModuleInit initContext) {
@@ -374,18 +382,7 @@ public class Firefox extends Extract {
         return false;
     }
 
-    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadsFiles = null;
-        try {
-            downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
-        } catch (TskCoreException ex) {
-            String msg = "Error fetching 'places' files for Firefox.";
-            logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
-            return;
-        }
-
+    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -406,8 +403,9 @@ public class Firefox extends Extract {
                 dbFile.delete();
                 break;
             }
-
+            
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQueryVersion24);
+            
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 
