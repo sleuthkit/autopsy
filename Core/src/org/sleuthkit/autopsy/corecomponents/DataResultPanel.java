@@ -625,6 +625,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             if (load && containsReal(delta)) {
                 load = false;
                 setupTabs(nme.getNode());
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        numberMatchLabel.setText(Integer.toString(rootNode.getChildren().getNodesCount()));
+                    }
+                });
             }
         }
         
