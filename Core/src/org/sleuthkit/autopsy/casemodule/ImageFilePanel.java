@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
     
+     
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
     
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
@@ -178,7 +179,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -259,18 +260,19 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
 
     public void storeSettings() {
-       
         String imagePathName = getContentPaths();
-        String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
-      
-        ModuleSettings.setConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH, imagePath);
+        if (null != imagePathName ) {
+            String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
+            ModuleSettings.setConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH, imagePath);
+        }
     }
     
     public void readSettings() {
-        
         String lastImagePath = ModuleSettings.getConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH);
-        if (!lastImagePath.isEmpty())
-             pathTextField.setText(lastImagePath);  
+        if (null != lastImagePath) {
+            if (!lastImagePath.isEmpty())
+                 pathTextField.setText(lastImagePath);  
+        }  
     }
     /**
      * Creates the drop down list for the time zones and then makes the local
