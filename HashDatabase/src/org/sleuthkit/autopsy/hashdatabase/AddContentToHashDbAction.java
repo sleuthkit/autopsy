@@ -121,7 +121,7 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                                         }
                                         catch (TskCoreException ex) {                        
                                             Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                
-                                            JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + "to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                                            JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + " to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
                                         }                    
                                     }                
                                 }
