@@ -134,7 +134,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 String details = "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage();
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-                return;
+                throw e;
             }
         }
 
@@ -148,7 +148,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             String details = "Could not initialize 7-ZIP library: " + e.getMessage();
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-            return;
+            throw new RuntimeException(e);
         }
 
         archiveDepthCountTree = new ArchiveDepthCountTree();
