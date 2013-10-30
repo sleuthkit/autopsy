@@ -55,7 +55,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestServices services;
-    private static final String MODULE_NAME = "Thunderbird Parser";
+    private static final String MODULE_NAME = "MBox Parser";
     private final String hashDBModuleName = "Hash Lookup";
     final public static String MODULE_VERSION = "1.0";
 
