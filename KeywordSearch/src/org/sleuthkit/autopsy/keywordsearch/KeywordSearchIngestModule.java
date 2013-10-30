@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -98,7 +99,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
     private Ingester ingester = null;

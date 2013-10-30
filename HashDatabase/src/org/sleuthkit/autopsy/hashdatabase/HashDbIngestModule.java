@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
@@ -48,7 +49,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private IngestServices services;
     private SleuthkitCase skCase;

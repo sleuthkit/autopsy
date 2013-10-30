@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -50,7 +51,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     private StringBuilder subCompleted = new StringBuilder();
     private ArrayList<Extract> modules;
     private List<Extract> browserModules;
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
