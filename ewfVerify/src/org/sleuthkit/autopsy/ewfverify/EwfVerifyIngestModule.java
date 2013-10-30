@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -45,8 +46,8 @@ import org.sleuthkit.datamodel.TskData;
  * @author jwallace
  */
 public class EwfVerifyIngestModule extends IngestModuleDataSource {
-    private static final String MODULE_NAME = "ewf Verify";
-    private static final String MODULE_VERSION = "1.0";
+    private static final String MODULE_NAME = "EWF Verify";
+    private static final String MODULE_VERSION = Version.getVersion();
     private static final String MODULE_DESCRIPTION = "Validates the integrity of E01 files.";
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private IngestServices services;
