@@ -39,12 +39,6 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
     // 32 bit architectures
     private static final String[] ARCH32 = new String[]{"x86"};
     
-    // A Gstreamer implementation of MediaViewVideoPanel
-    private static GstVideoPanel gstVideoPanel = null;
-    
-    // A JavaFX implmentation of MediaViewVideoPanel
-    private static FXVideoPanel fxVideoPanel = null;
-    
     /**
      * Factory Method to create a MediaViewVideoPanel. 
      * 
@@ -78,10 +72,7 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @return a GstVideoPanel
      */
     private static MediaViewVideoPanel getGstImpl() {
-        if (gstVideoPanel == null) {
-            gstVideoPanel = new GstVideoPanel();
-        }
-        return gstVideoPanel;
+        return new GstVideoPanel();
     }
 
      /**
@@ -90,10 +81,7 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @return a FXVideoPanel
      */
     private static MediaViewVideoPanel getFXImpl() {
-        if (fxVideoPanel == null) {
-            fxVideoPanel = new FXVideoPanel();
-        }
-        return fxVideoPanel;
+        return new FXVideoPanel();
     }
     
     /**

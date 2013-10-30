@@ -43,12 +43,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
@@ -517,14 +520,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();
 
-                //enqueue what would be in done() to EDT thread
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        postProcessImage();
-                    }
-                });
-
             }
 
             return 0;
@@ -558,6 +553,15 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
                 if (imageId != 0) {
                     Image newImage = Case.getCurrentCase().addImage(contentPath, imageId, timezone);
+
+                    //while we have the image, verify the size of its contents
+                    String verificationErrors = newImage.verifyImageSize();
+                    if (verificationErrors.equals("") == false) {
+                        //data error (non-critical)
+                        progressPanel.addErrors(verificationErrors, false);
+                    }
+
+
                     newContents.add(newImage);
                     settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
                 }
@@ -569,6 +573,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
                 logger.log(Level.INFO, "Image committed, imageId: " + imageId);
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+
             }
         }
 
@@ -576,7 +581,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
          *
          * (called by EventDispatch Thread after doInBackground finishes)
          */
-        protected void postProcessImage() {
+        @Override
+        protected void done() {
+            //these are required to stop the CurrentDirectoryFetcher
             progressBar.setIndeterminate(false);
             setProgress(100);
 
@@ -587,17 +594,15 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 revert();
                 if (hasCritError) {
                     //core error
-                    progressPanel.getComponent().showErrors(errorString, true);
+                    progressPanel.addErrors(errorString, true);
                 }
                 return;
-            } else {
-                if (errorString != null) {
-                    //data error (non-critical)
-                    logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                    progressPanel.setErrors(errorString, false);
-                }
             }
-
+            if (errorString != null) {
+                //data error (non-critical)
+                logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
+                progressPanel.addErrors(errorString, false);
+            }
 
 
             try {
@@ -649,6 +654,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 } else {
                     logger.log(Level.SEVERE, "Missing image process object");
                 }
+
+
+
 
                 // Start ingest if we can
                 startIngest();

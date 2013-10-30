@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -51,6 +50,7 @@ import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -74,7 +74,6 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     final public static String MODULE_VERSION = "1.0";
     private IngestServices services;
     private volatile int messageID = 0;
-    private int processedFiles = 0;
     private boolean initialized = false;
     private static SevenZipIngestModule instance = null;
     //TODO use content type detection instead of extensions
@@ -115,7 +114,6 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public void init(IngestModuleInit initContext) {
-        logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
 
@@ -185,8 +183,8 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         try {
             if (abstractFile.hasChildren()) {
                 //check if local unpacked dir exists
-                final String localRootPath = getLocalRootRelPath(abstractFile);
-                final String localRootAbsPath = getLocalRootAbsPath(localRootPath);
+                final String uniqueFileName = getUniqueName(abstractFile);
+                final String localRootAbsPath = getLocalRootAbsPath(uniqueFileName);
                 if (new File(localRootAbsPath).exists()) {
                     logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: " + abstractFile.getName());
                     return ProcessResult.OK;
@@ -197,18 +195,13 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
 
-
         logger.log(Level.INFO, "Processing with " + MODULE_NAME + ": " + abstractFile.getName());
-        ++processedFiles;
-
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(abstractFile, unpackedFiles);
             rescheduleNewFiles(pipelineContext, unpackedFiles);
         }
-
-        //process, return error if occurred
 
         return ProcessResult.OK;
     }
@@ -230,7 +223,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
      * @param archiveFile
      * @return
      */
-    private String getLocalRootRelPath(AbstractFile archiveFile) {
+    private String getUniqueName(AbstractFile archiveFile) {
         return archiveFile.getName() + "_" + archiveFile.getId();
     }
 
@@ -238,7 +231,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
      * Get local abs path to the unpacked archive root
      *
      * @param localRootRelPath relative path to archive, from
-     * getLocalRootRelPath()
+     * getUniqueName()
      * @return
      */
     private String getLocalRootAbsPath(String localRootRelPath) {
@@ -297,10 +290,6 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex);
             return false;
         }
-
-
-
-
     }
 
     /**
@@ -350,8 +339,8 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
-            final String localRootPath = getLocalRootRelPath(archiveFile);
-            final String localRootAbsPath = getLocalRootAbsPath(localRootPath);
+            final String uniqueFileName = getUniqueName(archiveFile);
+            final String localRootAbsPath = getLocalRootAbsPath(uniqueFileName);
             final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
                 try {
@@ -364,7 +353,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
-            UnpackedTree uTree = new UnpackedTree(unpackDir + "/" + localRootPath, archiveFile, fileManager);
+            UnpackedTree uTree = new UnpackedTree(unpackDir + "/" + uniqueFileName, archiveFile, fileManager);
 
             long freeDiskSpace = services.getFreeDiskSpace();
 
@@ -453,7 +442,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                     }
                 }
 
-                final String localFileRelPath = localRootPath + File.separator + extractedPath;
+                final String localFileRelPath = uniqueFileName + File.separator + extractedPath;
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
 
@@ -565,9 +554,11 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         if (hasEncrypted) {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
-                BlackboardArtifact generalInfo = archiveFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
+                BlackboardArtifact generalInfo = archiveFile.getGenInfoArtifact();
                 generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
                         MODULE_NAME, encryptionType));
+                //@@@ We don't fire here because GEN_INFO isn't displayed in the tree....  Need to address how these should be displayed
+                //services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
@@ -580,29 +571,20 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
         }
 
-
         return unpackedFiles;
     }
 
     @Override
     public void complete() {
-        logger.log(Level.INFO, "complete()");
         if (initialized == false) {
             return;
         }
-
-        //cleanup if any
-        archiveDepthCountTree = null;
-
+       archiveDepthCountTree = null;
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "stop()");
-
-        //cleanup if any
         archiveDepthCountTree = null;
-
     }
 
     @Override
@@ -626,13 +608,13 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         return false;
     }
 
-
-    public boolean isSupported(AbstractFile file) {
+    private boolean isSupported(AbstractFile file) {
         String fileNameLower = file.getName().toLowerCase();
         int dotI = fileNameLower.lastIndexOf(".");
         if (dotI == -1 || dotI == fileNameLower.length() - 1) {
             return false; //no extension
         }
+        
         final String extension = fileNameLower.substring(dotI + 1);
         for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
             if (extension.equals(SUPPORTED_EXTENSIONS[i])) {
@@ -643,7 +625,6 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         //if no extension match, check for zip signature
         //(note, in near future, we will use pre-detected content type)
         return isZipFileHeader(file);
-
     }
 
     /**
@@ -672,7 +653,6 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         int signature = bytes.getInt();
 
         return signature == ZIP_SIGNATURE_BE;
-
     }
 
     /**

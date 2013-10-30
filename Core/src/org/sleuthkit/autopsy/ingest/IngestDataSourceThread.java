@@ -47,6 +47,7 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
     private IngestDataSourceWorkerController controller;
     private final IngestManager manager;
     private final IngestModuleInit init;
+    private boolean inited;
     //current method of enqueuing data source ingest modules with locks and internal lock queue
     //ensures that we init, run and complete a single data source ingest module at a time
     //uses fairness policy to run them in order enqueued
@@ -59,6 +60,7 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
         this.dataSource = dataSource;
         this.module = module;
         this.init = init;
+        this.inited = false;
     }
 
     PipelineContext<IngestModuleDataSource>getContext() {
@@ -71,6 +73,20 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
     IngestModuleDataSource getModule() {
         return module;
+    }
+    
+    public void init() {
+        
+        logger.log(Level.INFO, "Initializing module: " + module.getName());
+        try {
+            module.init(init);
+            inited = true;
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Failed initializing module: " + module.getName() + ", will not run.");
+            //will not run
+            inited = false;
+            throw e;
+        }
     }
 
     @Override
@@ -102,15 +118,10 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
             logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             progress.setDisplayName(displayName);
 
-            logger.log(Level.INFO, "Initializing module: " + module.getName());
-            try {
-                module.init(init);
-            } catch (Exception e) {
-                logger.log(Level.INFO, "Failed initializing module: " + module.getName() + ", will not run.");
+            if (inited == false) {
+                logger.log(Level.INFO, "Module wasn't initialized, will not run: " + module.getName());
                 return Void.TYPE.newInstance();
-                //will not run
             }
-
             logger.log(Level.INFO, "Starting processing of module: " + module.getName());
 
             controller = new IngestDataSourceWorkerController(this, progress);

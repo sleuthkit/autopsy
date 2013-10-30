@@ -77,7 +77,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
-                errors.add(module.getName() + "had errors -- see log");
+                errors.add(module.getName() + " had errors -- see log");
             }
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
@@ -142,18 +142,15 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 
-        final Extract registry = new ExtractRegistry();
-        final Extract iexplore = new ExtractIE();
-        final Extract chrome = new Chrome();
-        final Extract firefox = new Firefox();
-        final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-
-        modules.add(chrome);
-        modules.add(firefox);
-        modules.add(registry);
-        modules.add(iexplore);
-        modules.add(SEUQA);
-
+        modules.add(new Chrome());
+        modules.add(new Firefox());
+        modules.add(new ExtractIE());
+        // this needs to run after the web browser modules
+        modules.add(new SearchEngineURLQueryAnalyzer());
+        
+        // this runs last because it is slowest
+        modules.add(new ExtractRegistry());
+        
         for (Extract module : modules) {
             try {
                 module.init(initContext);

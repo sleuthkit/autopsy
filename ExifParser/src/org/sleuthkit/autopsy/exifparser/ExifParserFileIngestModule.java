@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,26 +49,23 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
- * Ingest module to parse image Exif metadata. Currently only supports JPEG files.
- * Ingests an image file and, if available, adds it's date, latitude, longitude,
- * altitude, device model, and device make to a blackboard artifact.
+ * Ingest module to parse image Exif metadata. Currently only supports JPEG
+ * files. Ingests an image file and, if available, adds it's date, latitude,
+ * longitude, altitude, device model, and device make to a blackboard artifact.
  */
 public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
-    
     final public static String MODULE_NAME = "Exif Parser";
     final public static String MODULE_VERSION = "1.0";
-        
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
-    
     private int filesProcessed = 0;
+    private boolean filesToFire = false;
 
     //file ingest modules require a private constructor
     //to ensure singleton instances
     private ExifParserFileIngestModule() {
-       
     }
 
     //default instance used for module registration
@@ -80,89 +77,93 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public IngestModuleAbstractFile.ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile content) {
-        
+    public IngestModuleAbstractFile.ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile content) {
+
         //skip unalloc
-        if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+        if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return IngestModuleAbstractFile.ProcessResult.OK;
         }
-        
+
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return IngestModuleAbstractFile.ProcessResult.OK;
         }
-        
-        //skip unsupported
-        if (! parsableFormat(content)) {
-            return IngestModuleAbstractFile.ProcessResult.OK;
+
+        // update the tree every 1000 files if we have EXIF data that is not being being displayed 
+        filesProcessed++;
+        if ((filesToFire) && (filesProcessed % 1000 == 0)) {
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            filesToFire = false;
         }
         
+        //skip unsupported
+        if (!parsableFormat(content)) {
+            return IngestModuleAbstractFile.ProcessResult.OK;
+        }
+
         return processFile(content);
     }
-    
+
     public IngestModuleAbstractFile.ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
-        
+
         try {
             in = new ReadContentInputStream(f);
             bin = new BufferedInputStream(in);
-            
+
             Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
             Metadata metadata = ImageMetadataReader.readMetadata(bin, true);
-            
+
             // Date
             ExifSubIFDDirectory exifDir = metadata.getDirectory(ExifSubIFDDirectory.class);
-            if(exifDir != null) {
+            if (exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-                if(date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime()/1000));
+                if (date != null) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), MODULE_NAME, date.getTime() / 1000));
                 }
             }
-            
+
             // GPS Stuff
             GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
-            
-            if(gpsDir != null) {
-                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
+            if (gpsDir != null) {
                 GeoLocation loc = gpsDir.getGeoLocation();
-                if(loc!=null) {
+                if (loc != null) {
                     double latitude = loc.getLatitude();
                     double longitude = loc.getLongitude();
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude));
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude));
                 }
-                if(altitude!=null) {
+                
+                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
+                if (altitude != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude.doubleValue()));
                 }
             }
-           
-            
+
             // Device info
             ExifIFD0Directory devDir = metadata.getDirectory(ExifIFD0Directory.class);
-            if(devDir != null) {
+            if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-                
-                if(model!=null && !model.isEmpty()) {
+                if (model != null && !model.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, model));
-                } if(make!=null && !make.isEmpty()) {
+                }
+                
+                String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
+                if (make != null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, make));
                 }
             }
-            
+
             // Add the attributes, if there are any, to a new artifact
-            if(!attributes.isEmpty()) {
+            if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                ++filesProcessed;
-                if (filesProcessed %100 == 0) {
-                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-                }
+                filesToFire = true;
             }
-            
+
             return IngestModuleAbstractFile.ProcessResult.OK;
-            
+
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata (" + ex.getLocalizedMessage() + ").");
         } catch (ImageProcessingException ex) {
@@ -171,38 +172,46 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
         } finally {
             try {
-                if(in!=null) { in.close(); }
-                if(bin!=null) { bin.close(); }
+                if (in != null) {
+                    in.close();
+                }
+                if (bin != null) {
+                    bin.close();
+                }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to close InputStream.", ex);
             }
         }
-        
+
         // If we got here, there was an error
         return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
-    
+
     /**
-     * Checks if should try to attempt to extract exif.
-     * Currently checks if JPEG image (by signature)
-     * @param f file to be checked 
-     * @return true if to be processed 
+     * Checks if should try to attempt to extract exif. Currently checks if JPEG
+     * image (by signature)
+     *
+     * @param f file to be checked
+     *
+     * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
         return isJpegFileHeader(f);
-        
+
     }
-    
-        /**
+
+    /**
      * Check if is jpeg file based on header
+     *
      * @param file
+     *
      * @return true if jpeg file, false otherwise
      */
-    private boolean isJpegFileHeader(AbstractFile file) {
+    public static boolean isJpegFileHeader(AbstractFile file) {
         if (file.getSize() < 100) {
             return false;
         }
-        
+
         byte[] fileHeaderBuffer = new byte[2];
         int bytesRead;
         try {
@@ -214,25 +223,23 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         if (bytesRead != 2) {
             return false;
         }
-        /* Check for the JPEG header. 
-         * Since Java bytes are signed, we cast them to an int first. 
+        /*
+         * Check for the JPEG header. Since Java bytes are signed, we cast them
+         * to an int first.
          */
-        if (((int)(fileHeaderBuffer[0] & 0xff) == 0xff) && ((int)(fileHeaderBuffer[1] & 0xff) == 0xd8)) {
+        if (((int) (fileHeaderBuffer[0] & 0xff) == 0xff) && ((int) (fileHeaderBuffer[1] & 0xff) == 0xd8)) {
             return true;
         }
         return false;
     }
-    
 
     @Override
     public void complete() {
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
-
-        if (filesProcessed > 0) {
+        if (filesToFire) {
             //send the final new data event
             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
         }
-        //module specific cleanup due to completion here
     }
 
     @Override
@@ -240,30 +247,27 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         return MODULE_VERSION;
     }
 
-    
     @Override
     public String getName() {
         return "Exif Image Parser";
     }
-    
+
     @Override
     public String getDescription() {
-        return "Ingests .jpg and .jpeg files and retrieves their metadata.";
+        return "Ingests JPEG files and retrieves their EXIF metadata.";
     }
 
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
-        
+
         filesProcessed = 0;
+        filesToFire = false;
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "stop()");
-
-        //module specific cleanup due to interruption here
     }
 
     @Override

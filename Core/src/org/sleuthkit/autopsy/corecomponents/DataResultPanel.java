@@ -355,9 +355,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             dataResultTabbedPanel.addChangeListener(this);        
             listeningToTabbedPane = true;
         }
-        
+                
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
+            dummyNodeListener.reset();
             this.rootNode.addNodeListener(dummyNodeListener);
         }
         
@@ -612,15 +613,28 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     
     private class DummyNodeListener implements NodeListener {
         private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        private volatile boolean load = true;
+        
+        public void reset() {
+            load = true;
+        }
         
         @Override
-        public void childrenAdded(final NodeMemberEvent nme) {
-            Node added = nme.getNode();
-            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
-                // don't set up tabs if the new node is a waiting node
-                return;
+        public void childrenAdded(NodeMemberEvent nme) {
+            Node[] delta = nme.getDelta();
+            if (load && containsReal(delta)) {
+                load = false;
+                setupTabs(nme.getNode());
             }
-            setupTabs(nme.getNode());
+        }
+        
+        private boolean containsReal(Node[] delta) {
+            for (Node n : delta) {
+                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
