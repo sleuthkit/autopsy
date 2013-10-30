@@ -79,7 +79,7 @@ public class HashDb implements Comparable<HashDb> {
     }
     
     static public HashDb createHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) throws TskCoreException {
-        HashDb database = new HashDb(SleuthkitJNI.newHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
+        HashDb database = new HashDb(SleuthkitJNI.createHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
         addToXMLFile(database);
         return database;
     }
