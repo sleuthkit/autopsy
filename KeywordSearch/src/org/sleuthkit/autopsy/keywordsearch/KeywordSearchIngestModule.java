@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,9 +43,9 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -61,8 +60,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -137,8 +134,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private enum IngestStatus {
         TEXT_INGESTED,   /// Text was extracted by knowing file type and text_ingested
         STRINGS_INGESTED, ///< Strings were extracted from file 
-        SKIPPED,    ///< File was skipped for whatever reason
-        METADATA_INGESTED   ///< No content, so we just text_ingested metadata
+        METADATA_INGESTED,   ///< No content, so we just text_ingested metadata
+        SKIPPED_ERROR_INDEXING, ///< File was skipped because index engine had problems
+        SKIPPED_ERROR_TEXTEXTRACT, ///< File was skipped because of text extraction issues
+        SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
     };
     private Map<Long, IngestStatus> ingestStatus;
 
@@ -164,7 +163,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: " + abstractFile.getName());
-            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
+            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
             return ProcessResult.OK;
         }
         try {
@@ -175,32 +174,32 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
+        
+        if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
+            //skip indexing of virtual dirs (no content, no real name) - will index children files
+            return ProcessResult.OK;
+        }
 
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-        IngestModuleAbstractFile.ProcessResult hashDBResult = services.getAbstractFileModuleResult(hashDBModuleName);
-        //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
-        if (hashDBResult == IngestModuleAbstractFile.ProcessResult.ERROR) {
-            //index meta-data only
+        if (services.getAbstractFileModuleResult(hashDBModuleName) == IngestModuleAbstractFile.ProcessResult.ERROR) {
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
-            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
+            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
             return ProcessResult.ERROR;
-        } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+        } 
+        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
         }
 
-        if (processedFiles == false) {
-            processedFiles = true;
-        }
+        processedFiles = true;        
 
         //check if it's time to commit after previous processing
         checkRunCommitSearch();
 
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
-
 
         return ProcessResult.OK;
     }
@@ -501,7 +500,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         int text_ingested = 0;
         int metadata_ingested = 0;
         int strings_ingested = 0;
-        int skipped = 0;
+        int error_text = 0;
+        int error_index = 0;
+        int error_io = 0;
         for (IngestStatus s : ingestStatus.values()) {
             switch (s) {
                 case TEXT_INGESTED:
@@ -513,8 +514,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 case STRINGS_INGESTED:
                     ++strings_ingested;
                     break;
-                case SKIPPED:
-                    ++skipped;
+                case SKIPPED_ERROR_TEXTEXTRACT:
+                    error_text++;
+                    break;
+                case SKIPPED_ERROR_INDEXING:
+                    error_index++;
+                    break;
+                case SKIPPED_ERROR_IO:
+                    error_io++;
                     break;
                 default:
                     ;
@@ -525,11 +532,19 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         msg.append("<table border=0><tr><td>Files with known types</td><td>").append(text_ingested).append("</td></tr>");
         msg.append("<tr><td>Files with general strings extracted</td><td>").append(strings_ingested).append("</td></tr>");
         msg.append("<tr><td>Metadata only was indexed</td><td>").append(metadata_ingested).append("</td></tr>");
-        msg.append("<tr><td>Skipped files</td><td>").append(skipped).append("</td></tr>");
+        msg.append("<tr><td>Error (indexer)</td><td>").append(error_index).append("</td></tr>");
+        msg.append("<tr><td>Error (text extraction)</td><td>").append(error_text).append("</td></tr>");
+        msg.append("<tr><td>Error (I/O)</td><td>").append(error_io).append("</td></tr>");
         msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
         services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Results", indexStats));
+        if (error_index > 0) {
+            MessageNotifyUtil.Notify.error("Keyword Indexing Errors", "Keyword index service had errors ingesting " + error_index + " files.");
+        }
+        else if (error_io + error_text > 0) {
+            MessageNotifyUtil.Notify.warn("Keyword Indexing Warning", "Keyword index service had errors reading files and extracting text. Could have been from corrupt media or files.");
+        }
     }
 
     /**
@@ -707,12 +722,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     return true;
                 } else {
                     logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
             } catch (IngesterException ex) {
                 logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);
-                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;
             }
         }
@@ -746,13 +761,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
-            //check its database file type
-            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-            if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
-                //skip indexing of virtual dirs (no content, no real name) - will index children files
-                return;
-            } // unallocated and unused blocks can only have strings extracted from them. 
-            else if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType(); 
+            
+            // unallocated and unused blocks can only have strings extracted from them. 
+            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
                 extractStringsAndIndex(aFile);
             }
 
@@ -762,8 +774,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } catch (IngesterException ex) {
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                } 
+                catch (IngesterException ex) {
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
                 return;
@@ -775,10 +788,11 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             try {
                 is = new ReadContentInputStream(aFile);
                 detectedFormat = tikaFormatDetector.detect(is, aFile.getName());
-
-            } catch (Exception e) {
+            } 
+            catch (Exception e) {
                 logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e);
-            } finally {
+            } 
+            finally {
                 if (is != null) {
                     try {
                         is.close();
@@ -788,24 +802,33 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     }
                 }
             }
+            
+            // @@@ Add file type signature to blackboard here
+            
             //logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
             if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
-                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                try {
+                    ingester.ingest(aFile, false); //meta-data only
+                    ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
+                } 
+                catch (IngesterException ex) {
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
+                }
                 return;
             }
 
-            boolean extractTextSupported = isTextExtractSupported(aFile, detectedFormat);
             boolean wasTextAdded = false;
-            if (extractTextSupported) {
+            if (isTextExtractSupported(aFile, detectedFormat)) {
                 //extract text with one of the extractors, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + aFile.getName());
                     if (!extractTextAndIndex(aFile, detectedFormat)) {
                         logger.log(Level.WARNING, "Failed to extract text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
-                        ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                        ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     } else {
                         ingestStatus.put(aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
@@ -814,11 +837,11 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 } catch (IngesterException e) {
                     logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", "
                             + aFile.getName(), e);
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", "
                             + aFile.getName(), e);
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 }
             }
 

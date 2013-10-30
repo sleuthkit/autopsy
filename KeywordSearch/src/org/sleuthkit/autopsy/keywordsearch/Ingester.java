@@ -183,6 +183,9 @@ public class Ingester {
         return fsc.accept(getContentFieldsV);
     }
 
+    /**
+     * Visitor used to create param list to send to SOLR index.
+     */
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         private SleuthkitCase curCase = null;
