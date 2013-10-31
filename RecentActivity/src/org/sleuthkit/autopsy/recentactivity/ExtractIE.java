@@ -93,7 +93,7 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        historyFound = true;
+        dataFound = false;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
         this.getRecentDocuments(dataSource, controller);
@@ -116,6 +116,12 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (favoritesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile favoritesFile : favoritesFiles) {
             if (favoritesFile.getSize() == 0) {
                 continue;
@@ -171,11 +177,17 @@ public class ExtractIE extends Extract {
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error finding cookie files for IE");
+            logger.log(Level.WARNING, "Error getting cookie files for IE");
             this.addErrorMessage(this.getName() + ": " + "Error getting Internet Explorer cookie files.");
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE cookies files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
@@ -231,6 +243,12 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (recentFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE recent files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
             if (controller.isCancelled()) {
                 break;
@@ -303,11 +321,10 @@ public class ExtractIE extends Extract {
         if (indexFiles.isEmpty()) {
             String msg = "No InternetExplorer history files found.";
             logger.log(Level.INFO, msg);
-            addErrorMessage(getName() + ": " + msg);
-            historyFound = false;
             return;
         }
         
+        dataFound = true;
         String temps;
         String indexFileName;
         for (AbstractFile indexFile : indexFiles) {

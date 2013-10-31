@@ -82,7 +82,7 @@ public class Chrome extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        historyFound = true;
+        dataFound = false;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
@@ -105,7 +105,6 @@ public class Chrome extends Extract {
             String msg = "Error when trying to get Chrome history files.";
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getName() + ": " + msg);
-            historyFound = false;
             return;
         }
         
@@ -121,11 +120,10 @@ public class Chrome extends Extract {
         if (allocatedHistoryFiles.isEmpty()) {
             String msg = "Could not find any allocated Chrome history files.";
             logger.log(Level.INFO, msg);
-            addErrorMessage(getName() + ": " + msg);
-            historyFound = false;
             return;
         }
 
+        dataFound = true;
         int j = 0;
         while (j < historyFiles.size()) {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
@@ -187,6 +185,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (bookmarkFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
             
         while (j < bookmarkFiles.size()) {
@@ -306,6 +310,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome cookies files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         while (j < cookiesFiles.size()) {
             AbstractFile cookiesFile = cookiesFiles.get(j++);
@@ -355,9 +365,9 @@ public class Chrome extends Extract {
     private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> historyFiles = null;
+        List<AbstractFile> downloadFiles = null;
         try {
-            historyFiles = fileManager.findFiles(dataSource, "History", "Chrome");
+            downloadFiles = fileManager.findFiles(dataSource, "History", "Chrome");
         } catch (TskCoreException ex) {
             String msg = "Error when trying to get Chrome history files.";
             logger.log(Level.SEVERE, msg, ex);
@@ -365,18 +375,24 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (downloadFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
-        while (j < historyFiles.size()) {
-            AbstractFile historyFile = historyFiles.get(j++);
-            if (historyFile.getSize() == 0) {
+        while (j < downloadFiles.size()) {
+            AbstractFile downloadFile = downloadFiles.get(j++);
+            if (downloadFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFile.getName().toString() + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + downloadFile.getName().toString() + j + ".db";
             try {
-                ContentUtils.writeToFile(historyFile, new File(temps));
+                ContentUtils.writeToFile(downloadFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
-                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + downloadFile.getName());
                 continue;
             }
             File dbFile = new File(temps);
@@ -409,7 +425,7 @@ public class Chrome extends Extract {
                 String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFile, bbattributes);
+                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
             }
 
             dbFile.delete();
@@ -436,6 +452,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (signonFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome signon files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         while (j < signonFiles.size()) {
             AbstractFile signonFile = signonFiles.get(j++);

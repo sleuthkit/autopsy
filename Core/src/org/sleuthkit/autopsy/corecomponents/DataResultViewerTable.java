@@ -292,7 +292,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
                 final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
-
+                
+                if (ov == null) {
+                    return;
+                }
+                
                 propertiesAcc.clear();
 
                 DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
@@ -339,7 +343,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //int scrollWidth = ttv.getWidth();
                 int margin = 4;
                 int startColumn = 1;
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                if (props.size() > 0) {
+                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                }
 
 
 

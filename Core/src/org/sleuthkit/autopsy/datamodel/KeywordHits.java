@@ -32,11 +32,14 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Keyword hits node support
@@ -326,7 +329,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty("List Name",
                     "List Name",
                     "no description",
-                    name));
+                    getDisplayName()));
 
 
             ss.put(new NodeProperty("Files with Hits",
@@ -364,7 +367,29 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact);
+            BlackboardArtifactNode n = new BlackboardArtifactNode(artifact);
+            AbstractFile file;
+            try {
+                file = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren");
+                return n;
+            }
+            
+            n.addNodeProperty(new NodeProperty("ModifiedTime",
+                    "Modified Time",
+                    "Modified Time",
+                    ContentUtils.getStringTime(file.getMtime(), file)));
+            n.addNodeProperty(new NodeProperty("AccessTime",
+                    "Access Time",
+                    "Access Time",
+                    ContentUtils.getStringTime(file.getAtime(), file)));
+            n.addNodeProperty(new NodeProperty("ChangeTime",
+                    "Change Time",
+                    "Change Time",
+                    ContentUtils.getStringTime(file.getCtime(), file)));
+            
+            return n;
         }
     }
 }

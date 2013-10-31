@@ -75,7 +75,7 @@ public class Firefox extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        historyFound = true;
+        dataFound = false;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getDownload(dataSource, controller);
@@ -95,18 +95,17 @@ public class Firefox extends Extract {
             String msg = "Error fetching internet history files for Firefox.";
             logger.log(Level.WARNING, msg);
             this.addErrorMessage(this.getName() + ": " + msg);
-            historyFound = false;
             return;
         }
         
         if (historyFiles.isEmpty()) {
             String msg = "No FireFox history files found.";
             logger.log(Level.INFO, msg);
-            addErrorMessage(getName() + ": " + msg);
-            historyFound = false;
             return;
         }
 
+        dataFound = true;
+        
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             if (historyFile.getSize() == 0) {
@@ -168,6 +167,13 @@ public class Firefox extends Extract {
             return;
         }
 
+        if (bookmarkFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any firefox bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
+        
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             if (bookmarkFile.getSize() == 0) {
@@ -224,6 +230,12 @@ public class Firefox extends Extract {
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Firefox cookie files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (cookiesFile.getSize() == 0) {
@@ -276,9 +288,44 @@ public class Firefox extends Extract {
 
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
-
     
-    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
+    /**
+     * Queries for downloads files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+        getDownloadPreVersion24(dataSource, controller);
+        getDownloadVersion24(dataSource, controller);
+    }
+
+    /**
+     * Finds downloads artifacts from Firefox data from versions before 24.0.
+     * 
+     * Downloads were stored in a separate downloads database.
+     * 
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> downloadsFiles = null;
+        try {
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
+        } catch (TskCoreException ex) {
+            String msg = "Error fetching 'downloads' files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+        
+        if (downloadsFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any pre-version-24.0 Firefox download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -336,18 +383,20 @@ public class Firefox extends Extract {
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
+    
     /**
-     * Queries for downloads files and adds artifacts
+     * Gets download artifacts from Firefox data from version 24.
+     * 
+     * Downloads are stored in the places database.
+     * 
      * @param dataSource
      * @param controller 
      */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles = null;
-        List<AbstractFile> placesFiles = null;
         try {
-            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
-            placesFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+            downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             String msg = "Error fetching 'downloads' files for Firefox.";
             logger.log(Level.WARNING, msg);
@@ -355,34 +404,12 @@ public class Firefox extends Extract {
             return;
         }
         
-        getDownloadPreVersion24(dataSource, controller, downloadsFiles);
-        getDownloadVersion24(dataSource, controller, placesFiles);
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public String getDescription() {
-        return "Extracts activity from the Mozilla FireFox browser.";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
-    }
-
-    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
+        if (downloadsFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any version-24.0 Firefox download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -431,5 +458,28 @@ public class Firefox extends Extract {
         }
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+    }
+
+    @Override
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
+    }
+
+    @Override
+    public void complete() {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extracts activity from the Mozilla FireFox browser.";
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }
