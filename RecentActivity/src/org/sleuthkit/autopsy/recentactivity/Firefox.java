@@ -276,9 +276,38 @@ public class Firefox extends Extract {
 
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
-
     
-    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
+    /**
+     * Queries for downloads files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+        getDownloadPreVersion24(dataSource, controller);
+        getDownloadVersion24(dataSource, controller);
+    }
+
+    /**
+     * Finds downloads artifacts from Firefox data from versions before 24.0.
+     * 
+     * Downloads were stored in a separate downloads database.
+     * 
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> downloadsFiles = null;
+        try {
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
+        } catch (TskCoreException ex) {
+            String msg = "Error fetching 'downloads' files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+        
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -336,18 +365,20 @@ public class Firefox extends Extract {
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
+    
     /**
-     * Queries for downloads files and adds artifacts
+     * Gets download artifacts from Firefox data from version 24.
+     * 
+     * Downloads are stored in the places database.
+     * 
      * @param dataSource
      * @param controller 
      */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles = null;
-        List<AbstractFile> placesFiles = null;
         try {
-            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
-            placesFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+            downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             String msg = "Error fetching 'downloads' files for Firefox.";
             logger.log(Level.WARNING, msg);
@@ -355,34 +386,6 @@ public class Firefox extends Extract {
             return;
         }
         
-        getDownloadPreVersion24(dataSource, controller, downloadsFiles);
-        getDownloadVersion24(dataSource, controller, placesFiles);
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public String getDescription() {
-        return "Extracts activity from the Mozilla FireFox browser.";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
-    }
-
-    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -431,5 +434,28 @@ public class Firefox extends Extract {
         }
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+    }
+
+    @Override
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
+    }
+
+    @Override
+    public void complete() {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extracts activity from the Mozilla FireFox browser.";
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }
