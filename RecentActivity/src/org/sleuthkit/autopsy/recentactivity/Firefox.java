@@ -75,7 +75,7 @@ public class Firefox extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        historyFound = true;
+        dataFound = false;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getDownload(dataSource, controller);
@@ -95,18 +95,17 @@ public class Firefox extends Extract {
             String msg = "Error fetching internet history files for Firefox.";
             logger.log(Level.WARNING, msg);
             this.addErrorMessage(this.getName() + ": " + msg);
-            historyFound = false;
             return;
         }
         
         if (historyFiles.isEmpty()) {
             String msg = "No FireFox history files found.";
             logger.log(Level.INFO, msg);
-            addErrorMessage(getName() + ": " + msg);
-            historyFound = false;
             return;
         }
 
+        dataFound = true;
+        
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             if (historyFile.getSize() == 0) {
@@ -168,6 +167,13 @@ public class Firefox extends Extract {
             return;
         }
 
+        if (bookmarkFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any firefox bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
+        
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             if (bookmarkFile.getSize() == 0) {
@@ -224,6 +230,12 @@ public class Firefox extends Extract {
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Firefox cookie files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (cookiesFile.getSize() == 0) {
@@ -308,6 +320,12 @@ public class Firefox extends Extract {
             return;
         }
         
+        if (downloadsFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any pre-version-24.0 Firefox download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -386,6 +404,12 @@ public class Firefox extends Extract {
             return;
         }
         
+        if (downloadsFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any version-24.0 Firefox download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {

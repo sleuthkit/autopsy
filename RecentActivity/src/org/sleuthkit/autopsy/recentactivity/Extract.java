@@ -40,11 +40,11 @@ abstract public class Extract extends IngestModuleDataSource{
     public final Logger logger = Logger.getLogger(this.getClass().getName());
     protected final ArrayList<String> errorMessages = new ArrayList<>();
     protected String moduleName = "";
-    protected boolean historyFound = false;
+    protected boolean dataFound = false;
     
     //hide public constructor to prevent from instantiation by ingest module loader
     Extract() {
-        historyFound = true;
+        dataFound = false;
     }
     
     /**
@@ -145,7 +145,7 @@ abstract public class Extract extends IngestModuleDataSource{
         return moduleName;
     }
     
-    public boolean foundHistory() {
-        return historyFound;
+    public boolean foundData() {
+        return dataFound;
     }
 }

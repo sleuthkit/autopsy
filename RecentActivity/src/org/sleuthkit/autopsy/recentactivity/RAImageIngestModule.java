@@ -113,7 +113,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         historyMsg.append("<p>Browser Data on ").append(dataSource.getName()).append(":<ul>\n");
         for (Extract module : browserModules) {
             historyMsg.append("<li>").append(module.getName());
-            historyMsg.append(": ").append((module.foundHistory()) ? " Found." : " Not Found.");
+            historyMsg.append(": ").append((module.foundData()) ? " Found." : " Not Found.");
             historyMsg.append("</li>");
         }
         historyMsg.append("</ul>");
