@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
@@ -57,7 +58,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
     final public static String MODULE_NAME = "Exif Parser";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
     private int filesProcessed = 0;

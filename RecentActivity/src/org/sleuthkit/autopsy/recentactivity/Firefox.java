@@ -56,7 +56,8 @@ public class Firefox extends Extract {
     private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
     private static final String cookieQueryV3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
     private static final String bookmarkQuery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
-    private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";   
+    private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";
+    private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3";
     
     public int FireFoxCount = 0;
     final public static String MODULE_VERSION = "1.0";
@@ -73,7 +74,8 @@ public class Firefox extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        historyFound = true;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getDownload(dataSource, controller);
@@ -93,6 +95,16 @@ public class Firefox extends Extract {
             String msg = "Error fetching internet history files for Firefox.";
             logger.log(Level.WARNING, msg);
             this.addErrorMessage(this.getName() + ": " + msg);
+            historyFound = false;
+            return;
+        }
+        
+        if (historyFiles.isEmpty()) {
+            String msg = "No FireFox history files found.";
+            logger.log(Level.INFO, msg);
+            addErrorMessage(getName() + ": " + msg);
+            historyFound = false;
+            return;
         }
 
         int j = 0;
@@ -265,24 +277,8 @@ public class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
-    /**
-     * Queries for downloads files and adds artifacts
-     * @param dataSource
-     * @param controller 
-     */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
-
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadsFiles = null;
-        try {
-            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
-        } catch (TskCoreException ex) {
-            String msg = "Error fetching 'downloads' files for Firefox.";
-            logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
-            return;
-        }
-
+    
+    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -340,6 +336,28 @@ public class Firefox extends Extract {
         
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
+    /**
+     * Queries for downloads files and adds artifacts
+     * @param dataSource
+     * @param controller 
+     */
+    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> downloadsFiles = null;
+        List<AbstractFile> placesFiles = null;
+        try {
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
+            placesFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+        } catch (TskCoreException ex) {
+            String msg = "Error fetching 'downloads' files for Firefox.";
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+        
+        getDownloadPreVersion24(dataSource, controller, downloadsFiles);
+        getDownloadVersion24(dataSource, controller, placesFiles);
+    }
 
     @Override
     public void init(IngestModuleInit initContext) {
@@ -362,5 +380,56 @@ public class Firefox extends Extract {
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
+    }
+
+    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller, List<AbstractFile> downloadsFiles) {
+        int j = 0;
+        for (AbstractFile downloadsFile : downloadsFiles) {
+            if (downloadsFile.getSize() == 0) {
+                continue;
+            }
+            String fileName = downloadsFile.getName();
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + "-downloads" + j + ".db";
+            int errors = 0;
+            try {
+                ContentUtils.writeToFile(downloadsFile, new File(temps));
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex);
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + fileName);
+                continue;
+            }
+            File dbFile = new File(temps);
+            if (controller.isCancelled()) {
+                dbFile.delete();
+                break;
+            }
+            
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQueryVersion24);
+            
+            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
+            for (HashMap<String, Object> result : tempList) {
+                
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
+                //TODO Revisit usage of deprecated constructor as per TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", Long.valueOf(result.get("lastModified").toString())));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", ((result.get("target").toString() != null) ? result.get("target").toString().replaceAll("file:///", "") : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                
+            }
+            if (errors > 0) {
+                this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web download artifacts.");
+            }
+            j++;
+            dbFile.delete();
+            break;
+        }
+        
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 }

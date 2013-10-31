@@ -93,6 +93,7 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        historyFound = true;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
         this.getRecentDocuments(dataSource, controller);
@@ -299,6 +300,14 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (indexFiles.isEmpty()) {
+            String msg = "No InternetExplorer history files found.";
+            logger.log(Level.INFO, msg);
+            addErrorMessage(getName() + ": " + msg);
+            historyFound = false;
+            return;
+        }
+        
         String temps;
         String indexFileName;
         for (AbstractFile indexFile : indexFiles) {

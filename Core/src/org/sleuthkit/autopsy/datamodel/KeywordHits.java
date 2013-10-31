@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -242,7 +241,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-
+            
             ss.put(new NodeProperty("List Name",
                     "List Name",
                     "no description",
@@ -323,15 +322,15 @@ public class KeywordHits implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-
+            
             ss.put(new NodeProperty("List Name",
                     "List Name",
                     "no description",
                     name));
 
 
-            ss.put(new NodeProperty("Number of Hits",
-                    "Number of Hits",
+            ss.put(new NodeProperty("Files with Hits",
+                    "Files with Hits",
                     "no description",
                     children.size()));
 
@@ -350,14 +349,16 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
+            List<BlackboardArtifact> tempList = new ArrayList<>();
             for (long l : children) {
                 try {
                     //TODO: bulk artifact gettings
-                    list.add(skCase.getBlackboardArtifact(l));
+                    tempList.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "TSK Exception occurred", ex);
                 }
             }
+            list.addAll(tempList);
             return true;
         }
 

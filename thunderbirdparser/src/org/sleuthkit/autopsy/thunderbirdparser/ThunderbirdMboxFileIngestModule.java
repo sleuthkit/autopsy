@@ -29,8 +29,8 @@ import java.util.logging.Level;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -55,9 +55,9 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestServices services;
-    private static final String MODULE_NAME = "Thunderbird Parser";
+    private static final String MODULE_NAME = "MBox Parser";
     private final String hashDBModuleName = "Hash Lookup";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
