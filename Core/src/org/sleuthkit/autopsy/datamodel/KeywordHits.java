@@ -329,7 +329,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty("List Name",
                     "List Name",
                     "no description",
-                    name));
+                    getDisplayName()));
 
 
             ss.put(new NodeProperty("Files with Hits",

@@ -343,7 +343,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //int scrollWidth = ttv.getWidth();
                 int margin = 4;
                 int startColumn = 1;
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                if (props.size() > 0) {
+                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                }
 
 
 
