@@ -292,7 +292,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
                 final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
-
+                
+                if (ov == null) {
+                    return;
+                }
+                
                 propertiesAcc.clear();
 
                 DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);

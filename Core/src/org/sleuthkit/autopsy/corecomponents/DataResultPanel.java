@@ -607,8 +607,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Set number of matches to be displayed in the top right
      * @param numMatches
      */
-    public void setNumMatches(int numMatches) {
-        this.numberMatchLabel.setText(Integer.toString(numMatches));
+    public void setNumMatches(Integer numMatches) {
+        if (this.numberMatchLabel != null) {
+            this.numberMatchLabel.setText(Integer.toString(numMatches));
+        }
     }
     
     private class DummyNodeListener implements NodeListener {
