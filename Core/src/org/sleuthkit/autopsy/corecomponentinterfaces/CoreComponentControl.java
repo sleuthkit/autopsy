@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.Lookup;
@@ -71,17 +72,47 @@ public class CoreComponentControl {
 
     /**
      * Closes all TopComponent windows that needed ({@link DataExplorer}, {@link DataResult}, and
-     * {@link DataContent})
+     * {@link DataContent}).
+     * 
+     * Note: The DataContent Top Component must be closed before the Directory Tree
+     * and Favorites Top Components. Otherwise a NullPointerException will be thrown
+     * from JFXPanel.
      */
     public static void closeCoreWindows() {
         WindowManager wm = WindowManager.getDefault();
+        Set<? extends Mode> modes = wm.getModes();
         Iterator<? extends Mode> iter = wm.getModes().iterator();
 
+        TopComponent directoryTree = null;
+        TopComponent favorites = null;
+        String tcName = "";
         while (iter.hasNext()) {
             Mode mode = iter.next();
             for (TopComponent tc : mode.getTopComponents()) {
-                tc.close();
+                tcName = tc.getName();
+                if (tcName == null) {
+                    logger.log(Level.INFO, "tcName was null");
+                    tcName = "";
+                }
+                switch (tcName) {
+                    case "Directory Tree":
+                        directoryTree = tc;
+                        break;
+                    case "Favorites":
+                        favorites = tc;
+                        break;
+                    default:
+                        tc.close();
+                        break;
+                }
             }
+        }
+        
+        if (directoryTree != null) {
+            directoryTree.close();
+        }
+        if (favorites != null) {
+            favorites.close();
         }
     }
 }

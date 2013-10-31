@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -85,8 +86,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        // only allow one item to be selected at a time
         ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
 
         curPage = -1;
         totalPages = 0;
@@ -324,33 +325,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             this.setCursor(null);
         }
     }
-
-    @Override
-    public void nodeSelected(Node selectedNode) {
-        if (selectedNode == null) {
-            filePathLabel.setText("");
-            
-        }
-        else {
-            AbstractFile af = selectedNode.getLookup().lookup(AbstractFile.class);
-            if (af == null) {
-                filePathLabel.setText("");
-            }
-            else {
-                try {
-                    String uPath = af.getUniquePath();
-                    filePathLabel.setText(uPath);
-                    filePathLabel.setToolTipText(uPath);
-                }
-                catch (TskCoreException e){
-                    logger.log(Level.WARNING, "Could not get unique path for content: " + af.getName());
-                }
-            }
-        }
-    }
     
-    
-
     @Override
     public String getTitle() {
         return "Thumbnail";
@@ -557,4 +532,38 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         public void nodeDestroyed(NodeEvent ne) {
         }
     }
+    
+    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                try {
+                    Node[] selectedNodes = em.getSelectedNodes();
+                    if (selectedNodes.length == 1) {
+                        AbstractFile af = selectedNodes[0].getLookup().lookup(AbstractFile.class);
+                        if (af == null) {
+                            filePathLabel.setText("");
+                        }
+                        else {
+                            try {
+                                String uPath = af.getUniquePath();
+                                filePathLabel.setText(uPath);
+                                filePathLabel.setToolTipText(uPath);
+                            }
+                            catch (TskCoreException e){
+                                logger.log(Level.WARNING, "Could not get unique path for content: {0}", af.getName());
+                            }
+                        }                        
+                    }
+                    else {
+                        filePathLabel.setText("");            
+                    }
+                } 
+                finally {
+                    setCursor(null);
+                }
+            }            
+        }
+    }    
 }

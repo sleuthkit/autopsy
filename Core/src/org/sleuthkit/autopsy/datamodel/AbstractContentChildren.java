@@ -122,8 +122,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
-        public AbstractNode visit(SearchFilters sf) {
-            return new SearchFiltersNode(sf.getSleuthkitCase(), null);
+        public AbstractNode visit(FileTypeExtensionFilters sf) {
+            return new FileTypesNode(sf.getSleuthkitCase(), null);
         }
 
         @Override

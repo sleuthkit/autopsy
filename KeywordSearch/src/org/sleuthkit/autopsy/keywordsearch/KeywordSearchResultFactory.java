@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -109,7 +108,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
     }
 
     KeywordSearchResultFactory(Keyword query, Collection<KeyValueQuery> things, Presentation presentation, DataResultTopComponent viewer) {
-        queries = new ArrayList<Keyword>();
+        queries = new ArrayList<>();
         queries.add(query);
         this.presentation = presentation;
         this.things = things;
@@ -134,7 +133,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         for (int i = 0; i < FS_PROPS_LEN; ++i) {
             toSet.put(fsTypes[i].toString(), "");
         }
-
     }
 
     public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, String value) {
@@ -150,10 +148,21 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
     @Override
     protected boolean createKeys(List<KeyValueQuery> toPopulate) {
         int id = 0;
-        if (presentation == Presentation.DETAIL) {
+        if (presentation == Presentation.FLAT) {
+            for (KeyValueQuery thing : things) {
+                Map<String, Object> map = thing.getMap();
+                initCommonProperties(map);
+                final String query = thing.getName();
+                setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
+                ResultCollapsedChildFactory childFactory = new ResultCollapsedChildFactory(thing);
+                childFactory.createKeysForFlatNodes(toPopulate);
+            }            
+        }
+        else if (presentation == Presentation.DETAIL) {
             Iterator<KeyValueQuery> it = things.iterator();
             for (Keyword keyword : queries) {
-                Map<String, Object> map = new LinkedHashMap<String, Object>();
+                Map<String, Object> map = new LinkedHashMap<>();
                 final String query = keyword.getQuery();
                 initCommonProperties(map);
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
@@ -166,25 +175,26 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
         } else {
             for (KeyValueQuery thing : things) {
-                //Map<String, Object> map = new LinkedHashMap<String, Object>();
                 Map<String, Object> map = thing.getMap();
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
                 setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
-                //toPopulate.add(new KeyValue(query, map, ++id));
                 toPopulate.add(thing);
             }
         }
-
+        
         return true;
     }
 
     @Override
     protected Node createNodeForKey(KeyValueQuery thing) {
-        ChildFactory<KeyValueQuery> childFactory = null;
-
-        if (presentation == Presentation.COLLAPSE) {
+        ChildFactory<KeyValueQuery> childFactory;
+        if (presentation == Presentation.FLAT) {
+            ResultCollapsedChildFactory factory = new ResultCollapsedChildFactory(thing);
+            return factory.createFlatNodeForKey(thing);                        
+        }
+        else if (presentation == Presentation.COLLAPSE) {            
             childFactory = new ResultCollapsedChildFactory(thing);
             final Node ret = new KeyValueNode(thing, Children.create(childFactory, true));
             SwingUtilities.invokeLater(new Runnable() {
@@ -199,7 +209,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             });
             return ret;
         } else {
-
             childFactory = new ResulTermsMatchesChildFactory(things);
             return new KeyValueNode(thing, Children.create(childFactory, true));
         }
@@ -218,9 +227,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             this.queryThing = queryThing;
         }
 
+        // @@@ This method is a workaround until we decide whether we need all three presentation modes or FLAT is sufficient. 
+        public boolean createKeysForFlatNodes(List<KeyValueQuery> toPopulate) {
+            return createKeys(toPopulate);
+        }
+        
         @Override
         protected boolean createKeys(List<KeyValueQuery> toPopulate) {
-            //final String origQuery = queryThing.getName();
             final KeyValueQuery queryThingQuery = queryThing;
             final KeywordSearchQuery tcq = queryThingQuery.getQuery();
 
@@ -229,6 +242,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 return false;
             }
 
+            List<KeyValueQuery> tempList = new ArrayList<>();
+            
             //execute the query and get fscontents matching
             Map<String, List<ContentHit>> tcqRes;
             try {
@@ -252,7 +267,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             for (final AbstractFile f : hitContents.keySet()) {
                 final int previewChunk = hitContents.get(f);
                 //get unique match result files
-                Map<String, Object> resMap = new LinkedHashMap<String, Object>();
+                Map<String, Object> resMap = new LinkedHashMap<>();
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
 
                 try {
@@ -298,20 +313,24 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
 
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
+                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
             }
+            
+            // Add all the nodes to toPopulate at once. Minimizes node creation
+            // EDT threads, which can slow and/or hang the UI on large queries.
+            toPopulate.addAll(tempList);
+            
             //write to bb
             //cannot reuse snippet in ResultWriter
             //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
             //whereas in bb we write every hit per file separately
             new ResultWriter(tcqRes, tcq, listName).execute();
 
-
             return true;
         }
 
         private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<ContentHit>> tcqRes, AbstractFile f) {
-            String highlightQueryEscaped = null;
+            String highlightQueryEscaped;
             if (literal_query) {
                 //literal, treat as non-regex, non-term component query
                 highlightQueryEscaped = tcq.getQueryString();
@@ -326,7 +345,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     highlightQuery.append(term);
                 } else {
                     //find terms for this file hit
-                    List<String> hitTerms = new ArrayList<String>();
+                    List<String> hitTerms = new ArrayList<>();
                     for (String term : tcqRes.keySet()) {
                         List<ContentHit> hitList = tcqRes.get(term);
 
@@ -363,10 +382,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             return highlightQueryEscaped;
         }
 
+        // @@@ This method is a workaround until we decide whether we need all three presentation modes or FLAT is sufficient. 
+        public Node createFlatNodeForKey(KeyValueQuery thing) {
+            return createNodeForKey(thing);
+        }        
+        
         @Override
         protected Node createNodeForKey(KeyValueQuery thing) {
-            //return new KeyValueNode(thing, Children.LEAF);
-            //return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
             final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
             final Content content = thingContent.getContent();
             final String queryStr = thingContent.getQueryStr();
@@ -377,7 +399,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
             HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false, hits);
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr, previewChunk);
-
         }
     }
 
@@ -435,16 +456,22 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 int resID = 0;
 
                 final KeywordSearchQuery origQuery = thing.getQuery();
-
+                
+                List<KeyValueQuery> tempList = new ArrayList<>();
+                
                 for (final AbstractFile f : uniqueMatches.keySet()) {
                     final int previewChunkId = uniqueMatches.get(f);
-                    Map<String, Object> resMap = new LinkedHashMap<String, Object>();
+                    Map<String, Object> resMap = new LinkedHashMap<>();
                     if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
                         AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
                     }
-                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
-
+                    tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
                 }
+                
+                // Add all the nodes to toPopulate at once. Minimizes node creation
+                // EDT threads, which can slow and/or hang the UI on large queries.
+                toPopulate.addAll(tempList);
+                
                 //write to bb
                 new ResultWriter(matchesRes, origQuery, "").execute();
 
@@ -458,7 +485,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final String query = thingContent.getQueryStr();
                 final int previewChunk = thingContent.getPreviewChunk();
                 final Map<String, List<ContentHit>> hits = thingContent.getHits();
-
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
@@ -475,7 +501,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
         private Content content;
         private String queryStr;
-        private KeywordSearchQuery query;
         private int previewChunk;
         private Map<String, List<ContentHit>> hits;
 
@@ -510,7 +535,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
      */
     static class ResultWriter extends SwingWorker<Object, Void> {
 
-        private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
+        private static List<ResultWriter> writers = new ArrayList<>();
         //lock utilized to enqueue writers and limit execution to 1 at a time
         private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
         //private static final Lock writerLock = rwLock.writeLock();
@@ -518,14 +543,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         private KeywordSearchQuery query;
         private String listName;
         private Map<String, List<ContentHit>> hits;
-        final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+        final Collection<BlackboardArtifact> na = new ArrayList<>();
         private static final int QUERY_DISPLAY_LEN = 40;
 
         ResultWriter(Map<String, List<ContentHit>> hits, KeywordSearchQuery query, String listName) {
             this.hits = hits;
             this.query = query;
             this.listName = listName;
-
         }
 
         protected void finalizeWorker() {
@@ -538,7 +562,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     progress.finish();
                 }
             });
-
 
             if (!this.isCancelled() && !na.isEmpty()) {
                 IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchIngestModule.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
@@ -573,7 +596,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     for (AbstractFile f : flattened.keySet()) {
                         int chunkId = flattened.get(f);
                         final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
-                        String snippet = null;
+                        String snippet;
                         try {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
                         } catch (NoOpenCoreException e) {
@@ -591,14 +614,10 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                             }
                         }
                     }
-
                 }
             } finally {
-                //writerLock.unlock();
                 finalizeWorker();
             }
-
-
 
             return null;
         }

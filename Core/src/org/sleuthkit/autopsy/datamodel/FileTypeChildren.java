@@ -38,16 +38,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Children factory for the file by type view in dir tree
+ * Children factory for a specific file type - does the database query. 
  */
-class FileSearchFilterChildren extends ChildFactory<Content> {
+class FileTypeChildren extends ChildFactory<Content> {
 
     private SleuthkitCase skCase;
-    private SearchFilters.SearchFilterInterface filter;
-    private static final Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
+    private FileTypeExtensionFilters.SearchFilterInterface filter;
+    private static final Logger logger = Logger.getLogger(FileTypeChildren.class.getName());
     //private final static int MAX_OBJECTS = 2000;
 
-    public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
+    public FileTypeChildren(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
         this.skCase = skCase;
     }
@@ -57,27 +57,23 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         list.addAll(runQuery());
         return true;
     }
-
     
     private String createQuery(){
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + " AND (known IS NULL OR known != 1) AND (0";
+                + " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0";
         for(String s : filter.getFilter()){
             query += " OR name LIKE '%" + s + "'";
         }
         query += ')';
-        //query += " LIMIT " + MAX_OBJECTS;
+//        query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
 
     
     private List<AbstractFile> runQuery(){
-        List<AbstractFile> list = new ArrayList<AbstractFile>();
+        List<AbstractFile> list = new ArrayList<>();
         try {
-            List<AbstractFile> res = skCase.findAllFilesWhere(createQuery());
-            for(AbstractFile c : res){
-                    list.add(c);
-            }
+            list = skCase.findAllFilesWhere(createQuery());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get search results", ex);
         }

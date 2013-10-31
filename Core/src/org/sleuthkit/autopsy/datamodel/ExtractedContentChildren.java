@@ -47,7 +47,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
         
         // these are shown in other parts of the UI tree
         doNotShow = new ArrayList();
-        //doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+        doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);

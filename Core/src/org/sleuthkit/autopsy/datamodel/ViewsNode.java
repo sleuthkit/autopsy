@@ -34,7 +34,7 @@ public class ViewsNode extends DisplayableItemNode {
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
-                new SearchFilters(sleuthkitCase), 
+                new FileTypeExtensionFilters(sleuthkitCase), 
                 new RecentFiles(sleuthkitCase), 
                 new DeletedContent(sleuthkitCase),
                 new EventLogs(sleuthkitCase),

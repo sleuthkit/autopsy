@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 /**
@@ -106,12 +105,9 @@ public class AddImageErrorsDialog extends javax.swing.JDialog {
         setVisible(false);
     }//GEN-LAST:event_closeButtonActionPerformed
 
-    
-    void setErrors(String errors) {
-        errorsText.setText(errors);
+    public void appendErrors(String errors) {
+        errorsText.append(errors + "\n");
     }
-    
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JButton copyButton;

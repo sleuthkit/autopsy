@@ -37,6 +37,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -76,6 +77,7 @@ public class IngestManager {
     private IngestModuleLoader moduleLoader = null;
     //property file name id for the module
     public final static String MODULE_PROPERTIES = "ingest";
+    private volatile int messageID = 0;
 
     /**
      * Possible events about ingest modules Event listeners can get the event
@@ -84,40 +86,52 @@ public class IngestManager {
     public enum IngestModuleEvent {
 
         /**
-         * Event sent when the ingest module has been started processing. Second
-         * argument of the property change fired contains module name String and
-         * third argument is null.
+         * Event sent when an ingest module has been started. Second
+         * argument of the property change is a string form of the module name
+         * and the third argument is null.
          */
         STARTED,
+        
         /**
-         * Event sent when the ingest module has completed processing. Second
-         * argument of the property change fired contains module name String and
-         * third argument is null.
+         * Event sent when an ingest module has completed processing by its own 
+         * means. Second
+         * argument of the property change is a string form of the module name
+         * and the third argument is null.
          *
          * This event is generally used by listeners to perform a final data
          * view refresh (listeners need to query all data from the blackboard).
-         *
          */
         COMPLETED,
+        
         /**
-         * Event sent when the ingest module has stopped processing, and likely
+         * Event sent when an ingest module has stopped processing, and likely
          * not all data has been processed. Second argument of the property
-         * change fired contains module name String and third argument is null.
+         * change is a string form of the module name and third argument is null.
          */
         STOPPED,
+        
         /**
-         * Event sent when ingest module has new data. Second argument of the
+         * Event sent when ingest module posts new data to blackboard or somewhere
+         * else. Second argument of the
          * property change fired contains ModuleDataEvent object and third
          * argument is null. The object can contain encapsulated new data
          * created by the module. Listener can also query new data as needed.
-         *
          */
         DATA,
+        
         /**
          * Event send when content changed, either its attributes changed, or
-         * new content children have been added
+         * new content children have been added.  I.e. from ZIP files or Carved files
          */
-        CONTENT_CHANGED
+        CONTENT_CHANGED,
+        
+        
+        /**
+         * Event sent when a file has finished going through a pipeline of modules.
+         * Second argument is the object ID. Third argument is null
+         */
+        FILE_DONE,
+        
     };
     //ui
     //Initialized by Installer in AWT thread once the Window System is ready
@@ -183,9 +197,9 @@ public class IngestManager {
     }
 
     /**
-     * Add property change listener to listen to ingest events
+     * Add property change listener to listen to ingest events as defined in IngestModuleEvent. 
      *
-     * @param l PropertyChangeListener to schedule
+     * @param l PropertyChangeListener to register
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
@@ -194,11 +208,29 @@ public class IngestManager {
     static synchronized void fireModuleEvent(String eventType, String moduleName) {
         pcs.firePropertyChange(eventType, moduleName, null);
     }
+    
+    
+    /**
+     * Fire event when file is done with a pipeline run
+     * @param objId ID of file that is done
+     */
+    static synchronized void fireFileDone(long objId) {
+        pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+    }
 
+    
+    /**
+     * Fire event for ModuleDataEvent (when modules post data to blackboard, etc.)
+     * @param moduleDataEvent 
+     */
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
     }
 
+    /**
+     * Fire event for ModuleContentChanged (when  modules create new content that needs to be analyzed)
+     * @param moduleContentEvent 
+     */
     static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
     }
@@ -280,7 +312,8 @@ public class IngestManager {
     }
 
     /**
-     * Starts the needed worker threads.
+     * Starts the File-level Ingest Module pipeline and the Data Source-level Ingest Modules
+     * for the queued up data sources and files. 
      *
      * if AbstractFile module is still running, do nothing and allow it to
      * consume queue otherwise start /restart AbstractFile worker
@@ -291,7 +324,9 @@ public class IngestManager {
     private synchronized void startAll() {
         final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
         final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
+        boolean allInited = true;
+        IngestModuleAbstract failedModule = null;
+        String errorMessage = "";
         logger.log(Level.INFO, "DataSource queue: " + dataSourceScheduler.toString());
         logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
 
@@ -299,9 +334,15 @@ public class IngestManager {
             ingestMonitor.start();
         }
 
-        //image ingesters
+        /////////
+        // Start the data source-level ingest modules
+        List<IngestDataSourceThread> newThreads = new ArrayList<>();
+        
         // cycle through each data source content in the queue
         while (dataSourceScheduler.hasNext()) {
+            if (allInited == false) {
+                break;
+            }
             //dequeue
             // get next data source content and set of modules
             final ScheduledTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
@@ -334,14 +375,28 @@ public class IngestManager {
                             new PipelineContext<IngestModuleDataSource>(dataSourceTask, getProcessUnallocSpace());
                     final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
                             dataSourcepipelineContext, dataSourceTask.getContent(), taskModule, moduleInit);
-
+                    try {
+                        newDataSourceWorker.init();
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + taskModule.getName(), e);
+                        allInited = false;
+                        failedModule = taskModule;
+                        errorMessage = e.getMessage();
+                        break;
+                    }
                     dataSourceIngesters.add(newDataSourceWorker);
-
-                    //wrap the module in a worker, that will run init, process and complete on the module
-                    newDataSourceWorker.execute();
-                    IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), taskModule.getName());
+                    // Add the worker to the list of new IngestThreads to be started
+                    // if all modules initialize.
+                    newThreads.add(newDataSourceWorker);
                 }
             }
+        }
+        
+        // Check to make sure all modules initialized
+        if (allInited == false) {
+            displayInitError(failedModule.getName(), errorMessage);
+            dataSourceIngesters.removeAll(newThreads);
+            return;
         }
 
         //AbstractFile ingester
@@ -364,19 +419,54 @@ public class IngestManager {
             stats = new IngestManagerStats();
             abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
-            /* @@@ I don't understand why we do an init on each module.  Should do only modules
-             * that we are going to be using in the pipeline
-             */
+
             for (IngestModuleAbstractFile s : abstractFileModules) {
+                if (fileScheduler.hasModuleEnqueued(s) == false) {
+                    continue;
+                } 
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
                     s.init(moduleInit);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName());
+                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
+                    allInited = false;
+                    failedModule = s;
+                    errorMessage = e.getMessage();
+                    break;
                 }
             }
-            abstractFileIngester.execute();
         }
+        
+        if (allInited) {
+            // Start DataSourceIngestModules
+            for (IngestDataSourceThread dataSourceWorker : newThreads) {
+                dataSourceWorker.execute();
+                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), dataSourceWorker.getModule().getName());
+            }
+            // Start AbstractFileIngestModules
+            if (startAbstractFileIngester) {
+                abstractFileIngester.execute();
+            }
+        } else {
+            displayInitError(failedModule.getName(), errorMessage);
+            dataSourceIngesters.removeAll(newThreads);
+            abstractFileIngester = null;
+        }
+    }
+    
+    /**
+     * Open a dialog box to report an initialization error to the user.
+     * 
+     * @param moduleName The name of the module that failed to initialize.
+     * @param errorMessage The message gotten from the exception that was thrown.
+     */
+    private void displayInitError(String moduleName, String errorMessage) {
+        MessageNotifyUtil.Message.error(
+                "Failed to load " + moduleName + " ingest module.\n\n"
+                + "No ingest modules will be run. Please disable the module "
+                + "or fix the error and restart ingest by right clicking on "
+                + "the data source and selecting Run Ingest Modules.\n\n"
+                + "Error: " + errorMessage);
     }
 
     /**
@@ -930,10 +1020,14 @@ public class IngestManager {
                         logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
                         stats.addError(module);
                     }
+                
                 } //end for every module
-
+                
                 //free the internal file resource after done with every module
                 fileToProcess.close();
+                
+                // notify listeners thsi file is done
+                fireFileDone(fileToProcess.getId());                
 
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
@@ -1019,7 +1113,7 @@ public class IngestManager {
         }
     }
 
-    /* Thread that adds content/file and module pairs to queues */
+    /* Thread that adds content/file and module pairs to queues.  Starts pipelines when done. */
     private class EnqueueWorker extends SwingWorker<Object, Void> {
 
         private List<IngestModuleAbstract> modules;

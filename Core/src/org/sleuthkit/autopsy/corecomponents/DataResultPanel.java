@@ -19,16 +19,22 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeMemberEvent;
+import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
@@ -58,8 +64,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
+    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
+    private boolean listeningToTabbedPane = false;    
 
     /**
      * Creates new DataResultPanel
@@ -74,8 +82,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setName(title);
 
         this.title = "";
-
-        this.dataResultTabbedPanel.addChangeListener(this);
     }
 
     /**
@@ -176,8 +182,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Do not use if used one of the factory methods to create and open the component.
      */
     public void open() {
-        if (null == this.explorerManager) {
-            this.explorerManager = ExplorerManager.find(this);
+        if (null == explorerManager) {
+            // Get an ExplorerManager to pass to the child DataResultViewers. If the application
+            // components are put together as expected, this will be an ExplorerManager owned
+            // by an ancestor TopComponent. The TopComponent will have put this ExplorerManager
+            // in a Lookup that is set as the action global context when the TopComponent has 
+            // focus. This makes Node selections available to Actions without coupling the
+            // actions to a particular Component. Note that getting the ExplorerManager in the
+            // constructor would be too soon, since the object has no ancestor TopComponent at
+            // that point.
+            explorerManager = ExplorerManager.find(this);
+
+            // A DataResultPanel listens for Node selections in its DataResultViewers so it 
+            // can push the selections both to its child DataResultViewers and to a DataContent object. 
+            // The default DataContent object is a DataContentTopComponent in the data content mode (area),
+            // and is the parent of a DataContentPanel that hosts a set of DataContentViewers. 
+            explorerManager.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         }
         
         // Add all the DataContentViewer to the tabbed pannel.
@@ -188,7 +208,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // as DataResultViewer service providers when DataResultViewers are updated
             // to better handle the ExplorerManager sharing implemented to support actions that operate on 
             // multiple selected nodes.
-            addDataResultViewer(new DataResultViewerTable(this.explorerManager));
+            addDataResultViewer(new DataResultViewerTable(this.explorerManager));            
             addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
                                     
             // Find all DataResultViewer service providers and add them to the tabbed pane.
@@ -218,7 +238,48 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
+        
+    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (!Case.isCaseOpen()) {
+                // Handle the in-between condition when case is being closed
+                // and legacy selection events are pumped.
+                return;
+            }
 
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+                // If a custom DataContent object has not been specified, get the default instance.
+                DataContent contentViewer = customContentViewer;
+                if (null == contentViewer) {
+                    contentViewer = Lookup.getDefault().lookup(DataContent.class);
+                }
+
+                try {
+                    Node[] selectedNodes = explorerManager.getSelectedNodes();
+                    for (UpdateWrapper drv : viewers) {
+                        drv.setSelectedNodes(selectedNodes);
+                    }                                
+
+                    // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
+                    // This is important to the DataContent object, since the content mode (area) of the app is designed 
+                    // to show only the content underlying a single Node.                                
+                    if (selectedNodes.length == 1) {
+                        contentViewer.setNode(selectedNodes[0]);
+                    } 
+                    else {                                    
+                        contentViewer.setNode(null);
+                    }
+                } 
+                finally {
+                    setCursor(null);
+                }
+            }
+        }
+    }
+    
     private void addDataResultViewer(DataResultViewer dataResultViewer) {
         UpdateWrapper viewerWrapper = new UpdateWrapper(dataResultViewer);
         if (null != this.customContentViewer) {
@@ -285,35 +346,81 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public void setNode(Node selectedNode) {
+        if (this.rootNode != null) {
+            this.rootNode.removeNodeListener(dummyNodeListener);
+        }
+        // Deferring becoming a listener to the tabbed pane until this point
+        // eliminates handling a superfluous stateChanged event during construction.
+        if (listeningToTabbedPane == false) {
+            dataResultTabbedPanel.addChangeListener(this);        
+            listeningToTabbedPane = true;
+        }
+                
         this.rootNode = selectedNode;
+        if (this.rootNode != null) {
+            dummyNodeListener.reset();
+            this.rootNode.addNodeListener(dummyNodeListener);
+        }
+        
+        setupTabs(selectedNode);
+        
         if (selectedNode != null) {
-            int childrenCount = selectedNode.getChildren().getNodesCount(true);
+            int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
-
         this.numberMatchLabel.setVisible(true);
-        this.numberMatchLabel.setVisible(true);
+        
 
         resetTabs(selectedNode);
-
-        //update/disable tabs based on if supported for this node
-        int drvC = 0;
-        for (UpdateWrapper drv : viewers) {
-
-            if (drv.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(drvC, true);
-            } else {
-                dataResultTabbedPanel.setEnabledAt(drvC, false);
-            }
-            ++drvC;
-        }
-
+        
         // set the display on the current active tab
         int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
         if (currentActiveTab != -1) {
             UpdateWrapper drv = viewers.get(currentActiveTab);
             drv.setNode(selectedNode);
         }
+    }
+    
+    private void setupTabs(final Node selectedNode) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //update/disable tabs based on if supported for this node
+                int drvC = 0;
+                for (UpdateWrapper drv : viewers) {
+
+                    if (drv.isSupported(selectedNode)) {
+                        dataResultTabbedPanel.setEnabledAt(drvC, true);
+                    } else {
+                        dataResultTabbedPanel.setEnabledAt(drvC, false);
+                    }
+                    ++drvC;
+                }
+
+                // if the current tab is no longer enabled, then find one that is
+                boolean hasViewerEnabled = true;
+                int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
+                if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+                    hasViewerEnabled = false;
+                    for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                        if (dataResultTabbedPanel.isEnabledAt(i)) {
+                            currentActiveTab = i;
+                            hasViewerEnabled = true;
+                            break;
+                        }
+                    }
+
+                    if (hasViewerEnabled) {
+                        dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+                    }
+                }
+
+                if (hasViewerEnabled) {
+                    viewers.get(currentActiveTab).setNode(selectedNode);
+                }
+            }
+        });
+        
     }
 
     @Override
@@ -370,6 +477,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * why does this take a Node as parameter and then ignore it?
+     * 
+     * 
+     * 
      * Resets the tabs based on the selected Node. If the selected node is null
      * or not supported, disable that tab as well.
      *
@@ -498,5 +609,48 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public void setNumMatches(int numMatches) {
         this.numberMatchLabel.setText(Integer.toString(numMatches));
+    }
+    
+    private class DummyNodeListener implements NodeListener {
+        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        private volatile boolean load = true;
+        
+        public void reset() {
+            load = true;
+        }
+        
+        @Override
+        public void childrenAdded(NodeMemberEvent nme) {
+            Node[] delta = nme.getDelta();
+            if (load && containsReal(delta)) {
+                load = false;
+                setupTabs(nme.getNode());
+            }
+        }
+        
+        private boolean containsReal(Node[] delta) {
+            for (Node n : delta) {
+                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void childrenRemoved(NodeMemberEvent nme) {
+        }
+
+        @Override
+        public void childrenReordered(NodeReorderEvent nre) {
+        }
+
+        @Override
+        public void nodeDestroyed(NodeEvent ne) {
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+        }
     }
 }

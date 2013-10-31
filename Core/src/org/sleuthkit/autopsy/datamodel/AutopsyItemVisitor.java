@@ -26,13 +26,13 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(ExtractedContent ec);
 
-    T visit(SearchFilters sf);
+    T visit(FileTypeExtensionFilters sf);
 
-    T visit(SearchFilters.FileSearchFilter fsf);
+    T visit(FileTypeExtensionFilters.RootFilter fsf);
 
-    T visit(SearchFilters.DocumentFilter df);
+    T visit(FileTypeExtensionFilters.DocumentFilter df);
 
-    T visit(SearchFilters.ExecutableFilter ef);
+    T visit(FileTypeExtensionFilters.ExecutableFilter ef);
 
     T visit(RecentFiles rf);
 
@@ -74,22 +74,22 @@ public interface AutopsyItemVisitor<T> {
         }
 
         @Override
-        public T visit(SearchFilters sf) {
+        public T visit(FileTypeExtensionFilters sf) {
             return defaultVisit(sf);
         }
 
         @Override
-        public T visit(SearchFilters.FileSearchFilter fsf) {
+        public T visit(FileTypeExtensionFilters.RootFilter fsf) {
             return defaultVisit(fsf);
         }
 
         @Override
-        public T visit(SearchFilters.DocumentFilter df) {
+        public T visit(FileTypeExtensionFilters.DocumentFilter df) {
             return defaultVisit(df);
         }
 
         @Override
-        public T visit(SearchFilters.ExecutableFilter ef) {
+        public T visit(FileTypeExtensionFilters.ExecutableFilter ef) {
             return defaultVisit(ef);
         }
 

@@ -18,14 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.sun.javafx.application.PlatformImpl;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
@@ -33,8 +32,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
-import org.openide.modules.ModuleInstall;
-import org.openide.util.Lookup;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -61,11 +59,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
 
 
 
-        org.sleuthkit.autopsy.core.Installer coreInstaller =
-                ModuleInstall.findObject(org.sleuthkit.autopsy.core.Installer.class, false);
-        if (coreInstaller != null) {
-            fxInited = coreInstaller.isJavaFxInited();
-        }
+        fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
 
 
         if (fxInited) {
@@ -82,7 +76,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
      */
     private void setupFx() {
         // load the image
-        PlatformImpl.runLater(new Runnable() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 fxPanel = new JFXPanel();
@@ -112,6 +106,15 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
 
     }
 
+    public void reset() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                fxImageView.setImage(null);
+            }
+        });
+    }
+    
     /**
      * Show image
      *
@@ -129,7 +132,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
         fxPanel.setVisible(false);
 
         // load the image
-        PlatformImpl.runLater(new Runnable() {
+        Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 if (!Case.isCaseOpen()) {
@@ -188,8 +191,13 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
 
                 fxPanel.setScene(fxScene);
 
-                //show the panel after fully loaded
-                fxPanel.setVisible(true);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        //show the panel after fully loaded
+                        fxPanel.setVisible(true);
+                    }
+                });
 
             }
         });
