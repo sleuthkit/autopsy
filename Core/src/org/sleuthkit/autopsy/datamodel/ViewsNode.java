@@ -37,7 +37,6 @@ public class ViewsNode extends DisplayableItemNode {
                 new FileTypeExtensionFilters(sleuthkitCase), 
                 new RecentFiles(sleuthkitCase), 
                 new DeletedContent(sleuthkitCase),
-                new EventLogs(sleuthkitCase),
                 new FileSize(sleuthkitCase)
                 )), 
                 Lookups.singleton(NAME));

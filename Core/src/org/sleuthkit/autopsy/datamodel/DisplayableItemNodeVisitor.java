@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
-import org.sleuthkit.autopsy.datamodel.EventLogs.EventLogsChildren.EventLogNode;
-import org.sleuthkit.autopsy.datamodel.EventLogs.EventLogsNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
@@ -60,10 +58,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(DeletedContentNode dcn);
 
     T visit(DeletedContentsNode dcn);
-    
-    T visit(EventLogsNode evt);
-    
-    T visit(EventLogNode evt);
 
     T visit(FileSizeRootNode fsrn);
 
@@ -168,16 +162,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(DeletedContentNode dcn) {
             return defaultVisit(dcn);
-        }
-        
-        @Override
-        public T visit(EventLogsNode evt) {
-            return defaultVisit(evt);
-        }
-        
-        @Override
-        public T visit(EventLogNode evt) {
-            return defaultVisit(evt);
         }
 
         @Override

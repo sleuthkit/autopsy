@@ -135,12 +135,6 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         public AbstractNode visit(DeletedContent dc) {
             return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase());
         }
-        
-        @Override
-        public AbstractNode visit(EventLogs evt) {
-            return new EventLogs.EventLogsNode(evt.getSleuthkitCase());
-        }
-
 
         @Override
         public AbstractNode visit(FileSize dc) {
