@@ -117,7 +117,7 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                                     String md5Hash = file.getMd5Hash();
                                     if (null != md5Hash) {
                                         try {
-                                            database.addContentHash(file);
+                                            database.addToHashDatabase(file);
                                         }
                                         catch (TskCoreException ex) {                        
                                             Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                

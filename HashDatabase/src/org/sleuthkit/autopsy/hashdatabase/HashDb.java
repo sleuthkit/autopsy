@@ -36,15 +36,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Hash database representation of NSRL and Known Bad hash databases
- * with indexing capability
- * 
+ * Instances of this class represent known file hash set databases. 
  */
 public class HashDb implements Comparable<HashDb> {
-
     enum EVENT {INDEXING_DONE };
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    
     
     public enum DBType{
         NSRL("NSRL"), KNOWN_BAD("Known Bad");
@@ -65,7 +61,7 @@ public class HashDb implements Comparable<HashDb> {
     private static final String INDEX_SUFFIX_OLD = "-md5.idx";
     
     private String name;
-    private List<String> databasePaths; // TODO: Only need a single path, may only need to store handle
+    private String databasePath;
     private boolean useForIngest;
     private boolean showInboxMessages;
     private boolean indexing;
@@ -73,20 +69,20 @@ public class HashDb implements Comparable<HashDb> {
     private int handle;
     
     static public HashDb openHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) throws TskCoreException {
-        HashDb database = new HashDb(SleuthkitJNI.openHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
+        HashDb database = new HashDb(SleuthkitJNI.openHashDatabase(databasePath), name, databasePath, useForIngest, showInboxMessages, type);
         addToXMLFile(database);
         return database;
     }
     
     static public HashDb createHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) throws TskCoreException {
-        HashDb database = new HashDb(SleuthkitJNI.newHashDatabase(databasePath), name, Collections.singletonList(databasePath), useForIngest, showInboxMessages, type);
+        HashDb database = new HashDb(SleuthkitJNI.createHashDatabase(databasePath), name, databasePath, useForIngest, showInboxMessages, type);
         addToXMLFile(database);
         return database;
     }
     
     static private void addToXMLFile(HashDb database) {
         HashDbXML xmlFileManager = HashDbXML.getCurrent();
-        if (database.getDbType() == HashDb.DBType.NSRL) {
+        if (database.getDbType() == DBType.NSRL) {
             xmlFileManager.setNSRLSet(database);
         }
         else {
@@ -106,10 +102,10 @@ public class HashDb implements Comparable<HashDb> {
         return updateableDbs;
     }
     
-    private HashDb(int handle, String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
+    private HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, DBType type) {
         this.handle = handle;
         this.name = name;
-        this.databasePaths = databasePaths;
+        this.databasePath = databasePath;
         this.useForIngest = useForIngest;
         this.showInboxMessages = showInboxMessages;
         this.type = type;
@@ -121,8 +117,9 @@ public class HashDb implements Comparable<HashDb> {
         return true;
     }
     
-    public void addContentHash(Content content) throws TskCoreException {
-        // @@@ This only works for AbstractFiles at present.
+    public void addToHashDatabase(Content content) throws TskCoreException {
+        // TODO: This only works for AbstractFiles at present. Change when Content
+        // can be queried for hashes.
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile)content;
             if (null != file.getMd5Hash()) {
@@ -155,8 +152,8 @@ public class HashDb implements Comparable<HashDb> {
         return name;
     }
     
-    List<String> getDatabasePaths() {
-        return databasePaths;
+    String getDatabasePath() {
+        return databasePath;
     }
     
     void setUseForIngest(boolean useForIngest) {
@@ -165,18 +162,6 @@ public class HashDb implements Comparable<HashDb> {
     
     void setShowInboxMessages(boolean showInboxMessages) {
         this.showInboxMessages = showInboxMessages;
-    }
-    
-    void setName(String name) {
-        this.name = name;
-    }
-    
-    void setDatabasePaths(List<String> databasePaths) {
-        this.databasePaths = databasePaths;
-    }
-    
-    void setDbType(DBType type) {
-        this.type = type;
     }
     
     /**
@@ -193,9 +178,11 @@ public class HashDb implements Comparable<HashDb> {
      */
     boolean indexExists() {
         try {
-            return hasIndex(databasePaths.get(0)); // TODO: support multiple paths
-        } catch (TskException ex) {
-            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error checking if index exists.", ex);
+            // RJCTODO: Replace with new API call.
+            return SleuthkitJNI.lookupIndexExists(databasePath);
+        } 
+        catch (TskException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error checking if index exists", ex);
             return false;
         }
     }
@@ -205,7 +192,7 @@ public class HashDb implements Comparable<HashDb> {
      * @return a File initialized with the database path
      */
     File databaseFile() {
-        return new File(databasePaths.get(0)); // TODO: don't support multiple paths
+        return new File(databasePath);
     }
     
     /**
@@ -214,7 +201,7 @@ public class HashDb implements Comparable<HashDb> {
      * path
      */
     File indexFile() {
-        return new File(toIndexPath(databasePaths.get(0))); // TODO: don't support multiple paths
+        return new File(toIndexPath(databasePath));
     }
 
     /**
@@ -224,6 +211,7 @@ public class HashDb implements Comparable<HashDb> {
      * file, else false
      */
     boolean isOutdated() {
+        // RJCTODO: Need to adapt this to set status correctly
         File i = indexFile();
         File db = databaseFile();
 
@@ -243,19 +231,25 @@ public class HashDb implements Comparable<HashDb> {
      * @return IndexStatus enum according to their definitions
      */
     IndexStatus status() {
-        boolean i = this.indexExists();
-        boolean db = this.databaseExists();
-
-        if(indexing)
+        // RJCTODO: Fix this using new API
+        
+        if (indexing) {
             return IndexStatus.INDEXING;
-        if (i) {
-            if (db) {
+        }
+        
+//        if (SleuthkitJNI.hashDatabaseIsLookupIndexOnly(handle)) {
+//            return databaseExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
+//        }
+        
+        if (indexExists()) {
+            if (databaseExists()) {
                 return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
-            } else {
+            } 
+            else {
                 return IndexStatus.NO_DB;
             }
         } else {
-            return db ? IndexStatus.NO_INDEX : IndexStatus.NONE;
+            return databaseExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
         }
     }
 
@@ -337,32 +331,21 @@ public class HashDb implements Comparable<HashDb> {
         return this.name.compareTo(o.name);
     }
     
-    /* Thread that creates a database's index */
     private class CreateIndex extends SwingWorker<Object,Void> {
-
         private ProgressHandle progress;
         
-        CreateIndex(){};
+        CreateIndex() {
+        };
 
         @Override
         protected Object doInBackground() throws Exception {
             progress = ProgressHandleFactory.createHandle("Indexing " + name);
-
-        /** We need proper cancel support in TSK to make the task cancellable
-         new Cancellable() {
-                Override
-                public boolean cancel() {
-                    return CreateIndex.this.cancel(true);
-                }
-            });
-            */
             progress.start();
             progress.switchToIndeterminate();
-            SleuthkitJNI.createLookupIndex(databasePaths.get(0));
+            SleuthkitJNI.createLookupIndex(databasePath);
             return null;
         }
 
-        /* clean up or start the worker threads */
         @Override
         protected void done() {
             indexing = false;

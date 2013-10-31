@@ -99,14 +99,14 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.status())) {
                 nsrlIsSet = true;
                 this.nsrlSet = nsrl;
-                nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
+                nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePath());
             }
 
             for (HashDb db : hdbxml.getKnownBadSets()) {
                 IndexStatus status = db.status();
                 if (db.getUseForIngest() && IndexStatus.isIngestible(status)) {
                     knownBadIsSet = true;
-                    int ret = skCase.addKnownBadDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
+                    int ret = skCase.addKnownBadDatabase(db.getDatabasePath());
                     knownBadSets.put(ret, db);
                 }
             }

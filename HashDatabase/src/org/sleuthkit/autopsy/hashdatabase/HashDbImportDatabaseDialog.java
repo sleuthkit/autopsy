@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,35 +16,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author dfickling
+ * Instances of this class allow a user to select a hash database for import.
  */
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
+    private JFileChooser fileChooser = new JFileChooser();
+    private HashDb importedHashDatabase;
 
-    private JFileChooser fc = new JFileChooser();
-    private String databaseName;
-    private static final Logger logger = Logger.getLogger(HashDbImportDatabaseDialog.class.getName());
-    /**
-     * Creates new form HashDbImportDatabaseDialog
-     */
     HashDbImportDatabaseDialog() {
         super(new javax.swing.JFrame(), "Import Hash Database", true);
         setResizable(false);
@@ -53,27 +45,20 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }
     
     void customizeComponents() {
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"};
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Hash Database File", EXTENSION);
-        fc.setFileFilter(filter);
-        fc.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
+        fileChooser.setFileFilter(filter);
+        fileChooser.setMultiSelectionEnabled(false);
     }
     
-    String display() {
+    HashDb display() {
+        // Center and display the dialog.
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-
-        // set the popUp window / JFrame
-        int w = this.getSize().width;
-        int h = this.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        
+        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
         this.setVisible(true);
-        return databaseName;
+        return importedHashDatabase;
     }
 
     /**
@@ -227,36 +212,21 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        String oldText = databasePathTextField.getText();
-        // set the current directory of the FileChooser if the databasePath Field is valid
-        File currentDir = new File(oldText);
+        File currentDir = new File(databasePathTextField.getText());
         if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
+            fileChooser.setCurrentDirectory(currentDir);
         }
-        int retval = fc.showOpenDialog(this);
+        int retval = fileChooser.showOpenDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
+            File f = fileChooser.getSelectedFile();
             try {
                 String filePath = f.getCanonicalPath();
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
-                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
                 databasePathTextField.setText(filePath);
-                databaseNameTextField.setText(derivedName);
-                if (derivedName.toLowerCase().contains("nsrl")) {
-                    nsrlRadioButton.setSelected(true);
-                    nsrlRadioButtonActionPerformed(null);
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Invalid database: ", ex);
-                int tryAgain = JOptionPane.showConfirmDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database.\n" + "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
-                if (tryAgain == JOptionPane.YES_OPTION) {
-                    browseButtonActionPerformed(evt);
-                }
-            }
+                databaseNameTextField.setText(HashDb.toDatabasePath(filePath));
+            } 
+            catch (IOException ex) {
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Failed to get path of selected file", ex);
+            } 
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
@@ -279,46 +249,48 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Database path cannot be empty");
             return;
         }
+        
         if(databaseNameTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Database name cannot be empty");
+            JOptionPane.showMessageDialog(this, "Database display name cannot be empty");
             return;
         }
+        
+        String filePath;
         try {
-            File db = new File(databasePathTextField.getText());
-            File idx = new File(databasePathTextField.getText() + ".kdb");
-            File idx_old = new File(databasePathTextField.getText() + "-md5.idx");
-            if (!db.exists() && !idx.exists() && !idx_old.exists()) {
+            File file = new File(databasePathTextField.getText());
+            if (!file.exists()) {
                 JOptionPane.showMessageDialog(this, "Selected file does not exist");
                 return;
             }
-            String path = db.getCanonicalPath();
-            SleuthkitJNI.getDatabaseName(path);
-        } catch (Exception ex) {
+            filePath = file.getCanonicalPath();
+        } 
+        catch (IOException ex) {
+            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Invalid database: ", ex);
             JOptionPane.showMessageDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database");
             return;
         }
+        
         DBType type;
-        if(nsrlRadioButton.isSelected()) {
+        if (nsrlRadioButton.isSelected()) {
             type = DBType.NSRL;
-        } else {
+        } 
+        else {
             type = DBType.KNOWN_BAD;
         }
         
-        try
-        {
-            HashDb.openHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Invalid database: ", ex);
+        try {
+            importedHashDatabase = HashDb.openHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+        } 
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Invalid database: ", ex);
             JOptionPane.showMessageDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database");
             return;
         }        
-
-        databaseName = databaseNameTextField.getText();
+        
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

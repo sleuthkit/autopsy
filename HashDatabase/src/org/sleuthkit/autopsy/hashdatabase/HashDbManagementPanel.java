@@ -110,7 +110,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             }
             
             setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, status);
-            String shortenPath = db.getDatabasePaths().get(0);
+            String shortenPath = db.getDatabasePath();
             this.hashDbLocationLabel.setToolTipText(shortenPath);
             if(shortenPath.length() > 50){
                 shortenPath = shortenPath.substring(0, 10 + shortenPath.substring(10).indexOf(File.separator) + 1) + "..." +
@@ -633,10 +633,11 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private javax.swing.JLabel typeLabel;
     private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
+    
     private void importHashSet(java.awt.event.ActionEvent evt) {
-        String name = new HashDbImportDatabaseDialog().display();
-        if(name != null) {
-            hashSetTableModel.selectRowByName(name);
+        HashDb hashDb = new HashDbImportDatabaseDialog().display();
+        if (hashDb != null) {
+            hashSetTableModel.selectRowByName(hashDb.getName());
         }
         resync();
     }

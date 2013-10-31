@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
@@ -205,7 +206,7 @@ public class HashDbXML {
             for (HashDb set : knownBadSets) {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
                 String showInboxMessages = Boolean.toString(set.getShowInboxMessages());
-                List<String> paths = set.getDatabasePaths();
+                List<String> paths = Collections.singletonList(set.getDatabasePath());
                 String type = DBType.KNOWN_BAD.toString();
 
                 Element setEl = doc.createElement(SET_EL);
@@ -227,7 +228,7 @@ public class HashDbXML {
             if(nsrlSet != null) {
                 String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
                 String showInboxMessages = Boolean.toString(nsrlSet.getShowInboxMessages());
-                List<String> paths = nsrlSet.getDatabasePaths();
+                List<String> paths = Collections.singletonList(nsrlSet.getDatabasePath());
                 String type = DBType.NSRL.toString();
 
                 Element setEl = doc.createElement(SET_EL);
