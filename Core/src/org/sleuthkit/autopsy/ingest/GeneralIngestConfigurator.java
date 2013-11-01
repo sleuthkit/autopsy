@@ -65,6 +65,9 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
         for (String moduleName : enabledModuleNames) {
+            if (moduleName.equals("Thunderbird Parser")) {
+                moduleName = "MBox Parser";
+            }
             IngestModuleAbstract moduleFound =  null;
             for (IngestModuleAbstract module : allModules) {
                 if (moduleName.equals(module.getName())) {
@@ -76,7 +79,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add("Unable to load " + moduleName + " module");
+                messages.add("Unable to enable ingest module: " + moduleName);
             }
         }        
         ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
