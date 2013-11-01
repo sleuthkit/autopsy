@@ -257,9 +257,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             
             try {
                 String filePath = f.getCanonicalPath();
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
                 String derivedName = f.getName();
                 databasePathTextField.setText(filePath);
                 databaseNameTextField.setText(derivedName);
