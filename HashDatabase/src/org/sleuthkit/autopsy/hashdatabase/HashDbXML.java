@@ -33,13 +33,24 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.KNOWN_FILES_HASH_SET_TYPE;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+/**
+ * This class is a singleton that handles the import and creation of known files
+ * hash set databases, manages the instances of the databases, and provides a 
+ * means for persisting the configuration of the hash sets. 
+ */
+// TODO: The class needs to renamed to something like HashDbManager - its use of
+// XML as a configuration persistence mechanism should be an implementation detail
+// hidden from its clients. More importantly, this class should be rewritten into
+// full and true encapsulation of state and behavior rather than a mixture of a 
+// configuration manager with something that can be manipulated like a mere data 
+// structure by its clients.
 public class HashDbXML {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
@@ -63,110 +74,171 @@ public class HashDbXML {
     private String xmlFile;
     private boolean calculate;
     
-    private HashDbXML(String xmlFile) {
-        knownBadSets = new ArrayList<>();
-        this.xmlFile = xmlFile;
-    }
-    
     /**
-     * get instance for managing the current keyword list of the application
+     * Gets the singleton instance of this class.
      */
-    static synchronized HashDbXML getCurrent() {
+    static synchronized HashDbXML getInstance() {
         if (currentInstance == null) {
             currentInstance = new HashDbXML(CUR_HASHSET_FILE);
             currentInstance.reload();
         }
         return currentInstance;
     }
+
+    private HashDbXML(String xmlFile) {
+        knownBadSets = new ArrayList<>();
+        this.xmlFile = xmlFile;
+    }
+        
+    /**
+     * Imports an existing known files hash database. 
+     * @param displayName Name used to represent the database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
+     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
+     * @param type The known type of the database. 
+     * @return A HashDb object representation of the new hash database.
+     * @throws TskCoreException 
+     */
+    // TODO: When this class is rewritten, this method should become private. It should add the HashDb object to the appropriate internal collection 
+    // and to the XML file, and should save the XML file.
+    HashDb importHashDatabase(String displayName, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), displayName, databasePath, useForIngest, showInboxMessages, type);
+    }
     
     /**
-     * Get the hash sets
+     * Creates a new known files hash database. 
+     * @param displayName Name used to represent the database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
+     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
+     * @param type The known type of the database. 
+     * @return A HashDb object representation of the opened hash database.
+     * @throws TskCoreException 
      */
-    public List<HashDb> getAllSets() {
-        List<HashDb> ret = new ArrayList<>();
-        if(nsrlSet != null) {
-            ret.add(nsrlSet);
-        }
-        ret.addAll(knownBadSets);
-        return ret;
+    // TODO: When this class is rewritten, this method should become private. It should add the HashDb object to the appropriate internal collection 
+    // and to the XML file, and should save the XML file.
+    HashDb createHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.createHashDatabase(databasePath), name, databasePath, useForIngest, showInboxMessages, type);
     }
-    
-    /** 
-     * Get the Known Bad sets
+
+    /**
+     * Sets the configured National Software Reference Library (NSRL) known 
+     * files hash set. Does not save the configuration.
      */
-    public List<HashDb> getKnownBadSets() {
-        return knownBadSets;
+    // TODO: When this class is rewritten, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
+    public void setNSRLSet(HashDb set) {
+        this.nsrlSet = set;
     }
-    
+
     /** 
-     * Get the NSRL set
+     * Gets the configured National Software Reference Library (NSRL) known files hash set.
+     * @return A HashDb object representing the hash set or null if an NSRL set 
+     * has not been added to the configuration.
      */
     public HashDb getNSRLSet() {
         return nsrlSet;
     }
-    
-    /**
-     * Add a known bad hash set
+
+    /** 
+     * Removes the configured National Software Reference Library (NSRL) known 
+     * files hash set. Does not save the configuration.
      */
+    // TODO: When this class is rewritten, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
+    public void removeNSRLSet() {
+        this.nsrlSet = null;
+    }
+
+    /**
+     * Adds a known bad files hash set to the configuration. Does not save the
+     * configuration.
+     */
+    // TODO: When this class is rewritten, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
     public void addKnownBadSet(HashDb set) {
         knownBadSets.add(set);
-        //save();
     }
-    
+        
     /**
-     * Add a known bad hash set
+     * Adds a known bad files hash set to the configuration. The set is added to
+     * the internal known bad sets collection at the index specified by the 
+     * caller. Note that this method does not save the configuration.
      */
+    // TODO: This method is an OO abomination that should be discarded when this 
+    // class is rewritten.
     public void addKnownBadSet(int index, HashDb set) {
         knownBadSets.add(index, set);
-        //save();
     }
-    
-    /**
-     * Set the NSRL hash set (override old set)
+        
+    /** 
+     * Gets the configured known bad files hash sets.
+     * @return A list, possibly empty, of HashDb objects representing the hash 
+     * sets.
      */
-    public void setNSRLSet(HashDb set) {
-        this.nsrlSet = set;
-        //save();
-    }
-    
-    /**
-     * Remove a hash known bad set
-     */
-    public void removeKnownBadSetAt(int index) {
-        knownBadSets.remove(index);
-        //save();
+    public List<HashDb> getKnownBadSets() {
+        return Collections.unmodifiableList(knownBadSets);
     }
     
     /** 
-     * Remove the NSRL database
+     * Removes the known bad files hash set from the internal known bad files 
+     * hash sets collection at the specified index. Does not save the configuration.
      */
-    public void removeNSRLSet() {
-        this.nsrlSet = null;
-        //save();
+    // TODO: This method is an OO abomination that should be replaced by a proper 
+    // remove() when this class is rewritten. Also, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
+    public void removeKnownBadSetAt(int index) {
+        knownBadSets.remove(index);
+    }
+        
+   /**
+     * Gets the configured known files hash sets that accept updates. 
+     * @return A list, possibly empty, of HashDb objects. 
+     */
+    public List<HashDb> getUpdateableHashSets() {
+        ArrayList<HashDb> updateableDbs = new ArrayList<>();
+        for (HashDb db : knownBadSets) {
+            if (db.isUpdateable()) {
+                updateableDbs.add(db);
+            }
+        }
+        return Collections.unmodifiableList(updateableDbs);
+    }
+
+    /**
+     * Gets all of the configured known files hash sets.
+     * @return A list, possibly empty, of HashDb objects representing the hash 
+     * sets.
+     */
+    public List<HashDb> getAllSets() {
+        List<HashDb> hashDbs = new ArrayList<>();
+        if (nsrlSet != null) {
+            hashDbs.add(nsrlSet);
+        }
+        hashDbs.addAll(knownBadSets);
+        return Collections.unmodifiableList(hashDbs);
     }
     
     /**
-     * load the file or create new
+     * Reloads the configuration file if it exists, creates it otherwise.
      */
+    // TODO: When this class is rewritten, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
     public void reload() {
+        // TODO: This does not look like it is correct. Revisit when time permits.
         boolean created = false;
-
-        //TODO clearing the list causes a bug: we lose track of the state
-        //whether db is being indexed, we should somehow preserve the state when loading new HashDb objects
         
-        knownBadSets.clear();
         nsrlSet = null;
+        knownBadSets.clear();
         
-        if (!this.setsFileExists()) {
-            //create new if it doesn't exist
+        if (!setsFileExists()) {
             save();
             created = true;
         }
 
-        //load, if fails to load create new; save regardless
         load();
         if (!created) {
-            //create new if failed to load
             save();
         }
     }
@@ -175,22 +247,27 @@ public class HashDbXML {
      * Sets the local variable calculate to the given boolean.
      * @param set the state to make calculate
      */
+    // TODO: Does this have any use?
     public void setCalculate(boolean set) {
         this.calculate = set;
-        //save();
     }
     
     /**
      * Returns the value of the local boolean calculate.
      * @return true if calculate is true, false otherwise
      */
+    // TODO: Does this have any use?
     public boolean getCalculate() {
         return this.calculate;
     }
     
     /**
-     * writes out current sets file replacing the last one
+     * Saves the known files hash sets configuration to disk.
+     * @return True on success, false otherwise.
      */
+    // TODO: When this class is rewritten, the class should be responsible for saving
+    // the configuration rather than deferring this responsibility to its clients.
+    // It looks like there is code duplication here.
     public boolean save() {
         boolean success = false;
 
@@ -203,14 +280,15 @@ public class HashDbXML {
             Element rootEl = doc.createElement(ROOT_EL);
             doc.appendChild(rootEl);
 
+            // TODO: Remove all the multiple database paths stuff, it was a mistake. 
             for (HashDb set : knownBadSets) {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
                 String showInboxMessages = Boolean.toString(set.getShowInboxMessages());
                 List<String> paths = Collections.singletonList(set.getDatabasePath());
-                String type = DBType.KNOWN_BAD.toString();
+                String type = KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD.toString();
 
                 Element setEl = doc.createElement(SET_EL);
-                setEl.setAttribute(SET_NAME_ATTR, set.getName());
+                setEl.setAttribute(SET_NAME_ATTR, set.getDisplayName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
                 setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, showInboxMessages);
@@ -225,14 +303,15 @@ public class HashDbXML {
                 rootEl.appendChild(setEl);
             }
             
+            // TODO: Remove all the multiple database paths stuff, it was a mistake. 
             if(nsrlSet != null) {
                 String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
                 String showInboxMessages = Boolean.toString(nsrlSet.getShowInboxMessages());
                 List<String> paths = Collections.singletonList(nsrlSet.getDatabasePath());
-                String type = DBType.NSRL.toString();
+                String type = KNOWN_FILES_HASH_SET_TYPE.NSRL.toString();
 
                 Element setEl = doc.createElement(SET_EL);
-                setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getName());
+                setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getDisplayName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
                 setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, showInboxMessages);
@@ -246,23 +325,22 @@ public class HashDbXML {
                 }
                 rootEl.appendChild(setEl);
             }
-            
+
+            // TODO: Does this have any use?
             String calcValue = Boolean.toString(calculate);
             Element setCalc = doc.createElement(SET_CALC);
             setCalc.setAttribute(SET_VALUE, calcValue);
             rootEl.appendChild(setCalc);
 
             success = XMLUtil.saveDoc(HashDbXML.class, xmlFile, ENCODING, doc);
-        } catch (ParserConfigurationException e) {
+        } 
+        catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving hash sets: can't initialize parser.", e);
         }
         return success;
     }
 
-    /**
-     * load and parse XML, then dispose
-     */
-    public boolean load() {
+    private boolean load() {
         final Document doc = XMLUtil.loadDoc(HashDbXML.class, xmlFile, XSDFILE);
         if (doc == null) {
             return false;
@@ -288,8 +366,7 @@ public class HashDbXML {
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
             List<String> paths = new ArrayList<>();
 
-            // Parse all paths
-            // @@@ TODO: There is no need for more than one path.
+            // TODO: Remove all the multiple database paths stuff, it was a mistake. 
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
             for (int j = 0; j < numPaths; ++j) {
@@ -336,12 +413,15 @@ public class HashDbXML {
                 logger.log(Level.WARNING, "No paths were set for hash_set at index {0}. Removing the database.", i);
             } 
             else {
-                DBType typeDBType = DBType.valueOf(type);
+                KNOWN_FILES_HASH_SET_TYPE typeDBType = KNOWN_FILES_HASH_SET_TYPE.valueOf(type);
                 try {
-                    // @@@ Note that this method calls back to addKnownBadSet() or setNSRLSet(). 
-                    // In the future, this class will become an inner class of HashDb and will only handle reading and
-                    // writing the XML file.
-                    HashDb.openHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);                
+                    HashDb db = importHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);
+                    if (typeDBType == KNOWN_FILES_HASH_SET_TYPE.NSRL) {
+                        setNSRLSet(db);
+                    }
+                    else {
+                        addKnownBadSet(db);
+                    }
                 }
                 catch (TskCoreException ex) {
                     Logger.getLogger(HashDbXML.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
@@ -425,7 +505,13 @@ public class HashDbXML {
     private boolean setsFileExists() {
         File f = new File(xmlFile);
         return f.exists() && f.canRead() && f.canWrite();
-    }
+    }    
     
-    
+    /**
+     * Closes all open hash databases.
+     * @throws TskCoreException 
+     */
+    void closeHashDatabases() throws TskCoreException {
+        SleuthkitJNI.closeHashDatabases();
+    }            
 }

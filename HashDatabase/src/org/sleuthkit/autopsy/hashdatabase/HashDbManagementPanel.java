@@ -43,6 +43,7 @@ import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
@@ -77,7 +78,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
-                    HashDbXML loader = HashDbXML.getCurrent();
+                    HashDbXML loader = HashDbXML.getInstance();
                     HashDb current = loader.getAllSets().get(index);
                     initUI(current);
                 } else {
@@ -90,20 +91,20 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private void initUI(HashDb db) {
         boolean useForIngestEnabled = db != null && !ingestRunning;
         boolean useForIngestSelected = db != null && db.getUseForIngest();
-        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getDbType().equals(HashDb.DBType.KNOWN_BAD);
+        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getKnownType().equals(HashDb.KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD);
         boolean showInboxMessagesSelected = db != null && db.getShowInboxMessages();
         boolean deleteButtonEnabled = db != null && !ingestRunning;
         boolean importButtonEnabled = !ingestRunning;
         if (db == null) {
-            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, IndexStatus.NONE);
+            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, IndexStatus.NO_INDEX);
             this.hashDbLocationLabel.setText("No database selected");
             this.hashDbNameLabel.setText("No database selected");
             this.hashDbIndexStatusLabel.setText("No database selected");
             this.hashDbTypeLabel.setText("No database selected");
         } else {
             //check if dn in indexing state
-            String dbName = db.getName();
-            IndexStatus status = db.status();
+            String dbName = db.getDisplayName();
+            IndexStatus status = db.getStatus();
             Boolean state = indexingState.get(dbName);
             if (state != null && state.equals(Boolean.TRUE) ) {
                 status = IndexStatus.INDEXING;
@@ -117,8 +118,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                         shortenPath.substring((shortenPath.length() - 20) + shortenPath.substring(shortenPath.length() - 20).indexOf(File.separator));
             }
             this.hashDbLocationLabel.setText(shortenPath);
-            this.hashDbNameLabel.setText(db.getName());
-            this.hashDbTypeLabel.setText(db.getDbType().getDisplayName());
+            this.hashDbNameLabel.setText(db.getDisplayName());
+            this.hashDbTypeLabel.setText(db.getKnownType().getDisplayName());
         }
         this.useForIngestCheckbox.setSelected(useForIngestSelected);
         this.useForIngestCheckbox.setEnabled(useForIngestEnabled);
@@ -142,7 +143,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         
         int selection = getSelection();
         if(selection != -1) {
-            initUI(HashDbXML.getCurrent().getAllSets().get(selection));
+            initUI(HashDbXML.getInstance().getAllSets().get(selection));
         }
     }
 
@@ -397,7 +398,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
         int selected = getSelection();
-        final HashDb current = HashDbXML.getCurrent().getAllSets().get(selected);
+        final HashDb current = HashDbXML.getInstance().getAllSets().get(selected);
         current.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
@@ -406,19 +407,19 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                     //update tracking of indexing status
                     indexingState.put((String)evt.getNewValue(), Boolean.FALSE);
                     
-                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, current.status());
+                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, current.getStatus());
                     resync();
                 }
             }
             
         });
-            indexingState.put(current.getName(), Boolean.TRUE);
+            indexingState.put(current.getDisplayName(), Boolean.TRUE);
             ModalNoButtons singleMNB = new ModalNoButtons(this, new Frame(), current);  //Modal reference, to be removed later
             singleMNB.setLocationRelativeTo(null);
             singleMNB.setVisible(true);
             singleMNB.setModal(true);                                                   //End Modal reference
-            indexingState.put(current.getName(), Boolean.FALSE);
-        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());      
+            indexingState.put(current.getDisplayName(), Boolean.FALSE);
+        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.getStatus());      
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
@@ -428,15 +429,15 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
 
             int selected = getSelection();
-            HashDbXML xmlHandle = HashDbXML.getCurrent();
+            HashDbXML xmlHandle = HashDbXML.getInstance();
             if (xmlHandle.getNSRLSet() != null) {
                 if (selected == 0) {
-                    HashDbXML.getCurrent().removeNSRLSet();
+                    HashDbXML.getInstance().removeNSRLSet();
                 } else {
-                    HashDbXML.getCurrent().removeKnownBadSetAt(selected - 1);
+                    HashDbXML.getInstance().removeKnownBadSetAt(selected - 1);
                 }
             } else {
-                HashDbXML.getCurrent().removeKnownBadSetAt(selected);
+                HashDbXML.getInstance().removeKnownBadSetAt(selected);
             }
             hashSetTableModel.resync();
         }
@@ -445,15 +446,15 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             int selected = getSelection();
-            HashDbXML xmlHandle = HashDbXML.getCurrent();
+            HashDbXML xmlHandle = HashDbXML.getInstance();
             if (xmlHandle.getNSRLSet() != null) {
                 if (selected == 0) {
-                    HashDbXML.getCurrent().removeNSRLSet();
+                    HashDbXML.getInstance().removeNSRLSet();
                 } else {
-                    HashDbXML.getCurrent().removeKnownBadSetAt(selected - 1);
+                    HashDbXML.getInstance().removeKnownBadSetAt(selected - 1);
                 }
             } else {
-                HashDbXML.getCurrent().removeKnownBadSetAt(selected);
+                HashDbXML.getInstance().removeKnownBadSetAt(selected);
             }
         }
         hashSetTableModel.resync();
@@ -461,43 +462,43 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
     private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
         int selected = getSelection();
-        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        HashDbXML xmlHandle = HashDbXML.getInstance();
         if (xmlHandle.getNSRLSet() != null) {
             if (selected == 0) {
-                HashDb current = HashDbXML.getCurrent().getNSRLSet();
+                HashDb current = HashDbXML.getInstance().getNSRLSet();
                 current.setUseForIngest(useForIngestCheckbox.isSelected());
-                HashDbXML.getCurrent().setNSRLSet(current);
+                HashDbXML.getInstance().setNSRLSet(current);
             } else {
-                HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected - 1);
+                HashDb current = HashDbXML.getInstance().getKnownBadSets().remove(selected - 1);
                 current.setUseForIngest(useForIngestCheckbox.isSelected());
-                HashDbXML.getCurrent().addKnownBadSet(selected - 1, current);
+                HashDbXML.getInstance().addKnownBadSet(selected - 1, current);
                 this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
             }
         } else {
-            HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected);
+            HashDb current = HashDbXML.getInstance().getKnownBadSets().remove(selected);
             current.setUseForIngest(useForIngestCheckbox.isSelected());
-            HashDbXML.getCurrent().addKnownBadSet(selected, current);
+            HashDbXML.getInstance().addKnownBadSet(selected, current);
             this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
         }
     }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     private void showInboxMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showInboxMessagesCheckBoxActionPerformed
         int selected = getSelection();
-        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        HashDbXML xmlHandle = HashDbXML.getInstance();
         if (xmlHandle.getNSRLSet() != null) {
             if (selected == 0) {
-                HashDb current = HashDbXML.getCurrent().getNSRLSet();
+                HashDb current = HashDbXML.getInstance().getNSRLSet();
                 current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
-                HashDbXML.getCurrent().setNSRLSet(current);
+                HashDbXML.getInstance().setNSRLSet(current);
             } else {
-                HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected - 1);
+                HashDb current = HashDbXML.getInstance().getKnownBadSets().remove(selected - 1);
                 current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
-                HashDbXML.getCurrent().addKnownBadSet(selected - 1, current);
+                HashDbXML.getInstance().addKnownBadSet(selected - 1, current);
             }
         } else {
-            HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected);
+            HashDb current = HashDbXML.getInstance().getKnownBadSets().remove(selected);
             current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
-            HashDbXML.getCurrent().addKnownBadSet(selected, current);
+            HashDbXML.getInstance().addKnownBadSet(selected, current);
         }
     }//GEN-LAST:event_showInboxMessagesCheckBoxActionPerformed
 
@@ -512,7 +513,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     @Override
     public void load() {
         hashSetTable.clearSelection();      // Deselect all rows
-        HashDbXML.getCurrent().reload();    // Reload XML
+        HashDbXML.getInstance().reload();    // Reload XML
         initUI(null);                       // Update the UI
         hashSetTableModel.resync();         // resync the table
         setIngestStatus(IngestManager.getDefault().isIngestRunning()); // check if ingest is running
@@ -539,7 +540,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         else if (unindexed.size() > 1){
             showInvalidIndex(true, unindexed);
         }
-        HashDbXML.getCurrent().save();
+        HashDbXML.getInstance().save();
         
     }
     
@@ -550,18 +551,18 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     * @param toRemove a list of HashDbs that are unindexed
     */
     void removeThese(List<HashDb> toRemove) {
-        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        HashDbXML xmlHandle = HashDbXML.getInstance();
         for (HashDb hdb : toRemove) {
             for (int i = 0; i < hashSetTableModel.getRowCount(); i++) {
                 if (hashSetTableModel.getDBAt(i).equals(hdb)) {
                     if (xmlHandle.getNSRLSet() != null) {
                         if (i == 0) {
-                            HashDbXML.getCurrent().removeNSRLSet();
+                            HashDbXML.getInstance().removeNSRLSet();
                         } else {
-                            HashDbXML.getCurrent().removeKnownBadSetAt(i - 1);
+                            HashDbXML.getInstance().removeKnownBadSetAt(i - 1);
                         }
                     } else {
-                        HashDbXML.getCurrent().removeKnownBadSetAt(i);
+                        HashDbXML.getInstance().removeKnownBadSetAt(i);
                     }
                     hashSetTableModel.resync();
                 }
@@ -579,7 +580,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         String total = "";
         String message;
         for(HashDb hdb : unindexed){
-            total+= "\n" + hdb.getName();
+            total+= "\n" + hdb.getDisplayName();
         }
         if(plural){
             message = "The following databases are not indexed, would you like to index them now? \n " + total;
@@ -637,15 +638,15 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private void importHashSet(java.awt.event.ActionEvent evt) {
         HashDb hashDb = new HashDbImportDatabaseDialog().display();
         if (hashDb != null) {
-            hashSetTableModel.selectRowByName(hashDb.getName());
+            hashSetTableModel.selectRowByName(hashDb.getDisplayName());
         }
         resync();
     }
     
     private void createHashSet(java.awt.event.ActionEvent evt) {
-        String name = new HashDbCreateDatabaseDialog().display();
-        if(name != null) {
-            hashSetTableModel.selectRowByName(name);
+        HashDb hashDb = new HashDbCreateDatabaseDialog().display();
+        if (null != hashDb) {
+            hashSetTableModel.selectRowByName(hashDb.getDisplayName());
         }
         resync();
     }    
@@ -675,7 +676,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
   
     private class HashSetTableModel extends AbstractTableModel {
 
-        private HashDbXML xmlHandle = HashDbXML.getCurrent();
+        private HashDbXML xmlHandle = HashDbXML.getInstance();
 
         @Override
         public int getColumnCount() {
@@ -695,18 +696,17 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if(xmlHandle.getNSRLSet() == null) {
-                return getDBAt(rowIndex).getName();
+                return getDBAt(rowIndex).getDisplayName();
             } else {
-                return rowIndex == 0 ? getDBAt(rowIndex).getName() + " (NSRL)" : getDBAt(rowIndex).getName();
+                return rowIndex == 0 ? getDBAt(rowIndex).getDisplayName() + " (NSRL)" : getDBAt(rowIndex).getDisplayName();
             }
         }
         
         //Internal function for determining whether a companion -md5.idx file exists
         private boolean indexExists(int rowIndex){
-            return getDBAt(rowIndex).indexExists();
+            return getDBAt(rowIndex).hasLookupIndex();
         }
-        
-        
+                
         //Internal function for getting the DB at a certain index. Used as-is, as well as by dispatch from getValueAt() and indexExists()
         private HashDb getDBAt(int rowIndex){
             if (xmlHandle.getNSRLSet() != null) {
@@ -725,18 +725,18 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             HashDb NSRL = xmlHandle.getNSRLSet();
             List<HashDb> bad = xmlHandle.getKnownBadSets();
             if(NSRL != null) {
-                if(NSRL.getName().equals(name)) {
+                if(NSRL.getDisplayName().equals(name)) {
                     setSelection(0);
                 } else {
                     for(int i=0; i<bad.size(); i++) {
-                        if(bad.get(i).getName().equals(name)) {
+                        if(bad.get(i).getDisplayName().equals(name)) {
                             setSelection(i + 1);
                         }
                     }
                 }
             } else {
                 for(int i=0; i<bad.size(); i++) {
-                    if(bad.get(i).getName().equals(name)) {
+                    if(bad.get(i).getDisplayName().equals(name)) {
                         setSelection(i);
                     }
                 }
@@ -766,16 +766,6 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     static void setButtonFromIndexStatus(JButton theButton, JLabel theLabel, IndexStatus status) {
         theLabel.setText(status.message());
         switch (status) {
-            case INDEX_OUTDATED:
-                theButton.setText("Re-index");
-                theLabel.setForeground(Color.black);
-                theButton.setEnabled(true);
-                break;
-            case INDEX_CURRENT:
-                theButton.setText("Re-index");
-                theLabel.setForeground(Color.black);
-                theButton.setEnabled(true);
-                break;
             case NO_INDEX:
                 theButton.setText("Index");
                 theLabel.setForeground(Color.red);

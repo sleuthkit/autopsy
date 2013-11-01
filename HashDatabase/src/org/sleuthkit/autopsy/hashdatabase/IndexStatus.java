@@ -26,29 +26,23 @@ package org.sleuthkit.autopsy.hashdatabase;
 enum IndexStatus {
 
     /**
-     * The index and database both exist, and the index is older.
+     * The index exists but the database does not. This indicates a text index
+     * without an accompanying text database.
      */
-    INDEX_OUTDATED("WARNING: Index is older than database"),
+    INDEX_ONLY("Index only"),
     /**
-     * The index and database both exist, and the index is not older.
+     * The database exists but the index does not. This indicates a text database
+     * with no index.
      */
-    INDEX_CURRENT("Database and index exist"),
+    NO_INDEX("No index"),
     /**
-     * The index exists but the database does not.
+     * The index is currently being generated.
      */
-    NO_DB("Index exists (no database)"),
+    INDEXING("Index is currently being generated"),
     /**
-     * The database exists but the index does not.
+     * The index is generated.
      */
-    NO_INDEX("ERROR: Index does not exist"),
-    /**
-     * Neither the index nor the database exists.
-     */
-    NONE("ERROR: No index or database"),
-    /**
-     * The index is currently being generated
-     */
-    INDEXING("Index is currently being generated");
+    INDEXED("Indexed");
     
     private String message;
 
@@ -68,6 +62,6 @@ enum IndexStatus {
     }
     
     public static boolean isIngestible(IndexStatus status) {
-        return status == NO_DB || status == INDEX_CURRENT || status == INDEX_OUTDATED;
+        return status == INDEX_ONLY || status == INDEXED;
     }
 }

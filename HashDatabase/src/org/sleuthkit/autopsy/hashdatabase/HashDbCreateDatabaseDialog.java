@@ -29,8 +29,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.KNOWN_FILES_HASH_SET_TYPE;
 import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -40,7 +41,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fc;
             
-    private String databaseName;
+    private HashDb hashDb = null;
     private static final Logger logger = Logger.getLogger(HashDbCreateDatabaseDialog.class.getName());
     /**
      * Creates new form HashDbCreateDatabaseDialog
@@ -78,7 +79,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         fc.setMultiSelectionEnabled(false);
     }
     
-    String display() {
+    HashDb display() {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -89,7 +90,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
         this.setVisible(true);
-        return databaseName;
+        return hashDb;
     }
 
     /**
@@ -296,23 +297,22 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             return;
         }
 
-        DBType type;
+        KNOWN_FILES_HASH_SET_TYPE type;
         if(nsrlRadioButton.isSelected()) {
-            type = DBType.NSRL;
+            type = KNOWN_FILES_HASH_SET_TYPE.NSRL;
         } else {
-            type = DBType.KNOWN_BAD;
+            type = KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD;
         }
                
         try
         {
-            HashDb db = HashDb.createHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
-        } catch (TskException ex) {
+            hashDb = HashDbXML.getInstance().createHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Database creation error: ", ex);
             JOptionPane.showMessageDialog(this, "Database file cannot be created.\n");
             return;
         }             
         
-        databaseName = databaseNameTextField.getText();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 

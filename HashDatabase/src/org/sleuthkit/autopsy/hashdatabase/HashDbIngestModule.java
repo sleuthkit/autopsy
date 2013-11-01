@@ -87,23 +87,23 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         services = IngestServices.getDefault();
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
-            HashDbXML hdbxml = HashDbXML.getCurrent();
+            HashDbXML hdbxml = HashDbXML.getInstance();
             nsrlSet = null;
             knownBadSets.clear();
-            skCase.clearLookupDatabases();
+            hdbxml.closeHashDatabases();
             nsrlIsSet = false;
             knownBadIsSet = false;
             calcHashesIsSet = hdbxml.getCalculate();
 
             HashDb nsrl = hdbxml.getNSRLSet();
-            if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.status())) {
+            if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.getStatus())) {
                 nsrlIsSet = true;
                 this.nsrlSet = nsrl;
                 nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePath());
             }
 
             for (HashDb db : hdbxml.getKnownBadSets()) {
-                IndexStatus status = db.status();
+                IndexStatus status = db.getStatus();
                 if (db.getUseForIngest() && IndexStatus.isIngestible(status)) {
                     knownBadIsSet = true;
                     int ret = skCase.addKnownBadDatabase(db.getDatabasePath());
@@ -140,7 +140,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
             detailsSb.append("<p>Databases Used:</p>\n<ul>");
             for (HashDb db : knownBadSets.values()) {
-                detailsSb.append("<li>").append(db.getName()).append("</li>\n");
+                detailsSb.append("<li>").append(db.getDisplayName()).append("</li>\n");
             }
 
             detailsSb.append("</ul>");
@@ -151,7 +151,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     private void clearHashDatabaseHandles() {
         try {
-            skCase.clearLookupDatabases();
+            HashDbXML.getInstance().closeHashDatabases();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error clearing hash database handles. ", ex);
         }
@@ -218,7 +218,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
-        HashDbXML.getCurrent().reload();
+        HashDbXML.getInstance().reload();
         return new HashDbSimplePanel();
     }
 
@@ -243,7 +243,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public void saveSimpleConfiguration() {
-        HashDbXML.getCurrent().save();
+        HashDbXML.getInstance().save();
     }
 
     private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
@@ -343,7 +343,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                                 "Error encountered while setting known bad state for " + name + "."));
                         ret = ProcessResult.ERROR;
                     }
-                    String hashSetName = entry.getValue().getName();
+                    String hashSetName = entry.getValue().getDisplayName();
                     processBadFile(file, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
                 }
             }
@@ -379,9 +379,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     
     public ArrayList<String> getKnownBadSetNames() {
         ArrayList<String> knownBadSetNames = new ArrayList<>();
-        HashDbXML hdbxml = HashDbXML.getCurrent();
+        HashDbXML hdbxml = HashDbXML.getInstance();
         for (HashDb db : hdbxml.getKnownBadSets()) {
-            knownBadSetNames.add(db.getName());
+            knownBadSetNames.add(db.getDisplayName());
         }
         return knownBadSetNames;
     }

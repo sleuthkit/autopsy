@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.KNOWN_FILES_HASH_SET_TYPE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -270,16 +270,16 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             return;
         }
         
-        DBType type;
+        KNOWN_FILES_HASH_SET_TYPE type;
         if (nsrlRadioButton.isSelected()) {
-            type = DBType.NSRL;
+            type = KNOWN_FILES_HASH_SET_TYPE.NSRL;
         } 
         else {
-            type = DBType.KNOWN_BAD;
+            type = KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD;
         }
         
         try {
-            importedHashDatabase = HashDb.openHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+            importedHashDatabase = HashDbXML.getInstance().importHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
         } 
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Invalid database: ", ex);

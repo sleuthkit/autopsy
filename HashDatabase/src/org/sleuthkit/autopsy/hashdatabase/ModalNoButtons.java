@@ -203,7 +203,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      */
     private void indexThis() {
         this.INDEXING_PROGBAR.setIndeterminate(true);
-        currentDb = this.toIndex.getName();
+        currentDb = this.toIndex.getDisplayName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
         this.length = 1;
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
@@ -224,7 +224,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         length = this.unindexed.size();
         this.INDEXING_PROGBAR.setIndeterminate(true);
         for (HashDb db : this.unindexed) {
-            currentDb = db.getName();
+            currentDb = db.getDisplayName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
             this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
             if (!db.isIndexing()) {
