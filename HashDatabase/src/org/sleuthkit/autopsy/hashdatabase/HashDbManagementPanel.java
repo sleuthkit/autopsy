@@ -280,9 +280,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.optionsLabel.text")); // NOI18N
 
-        importButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/btn_icon_create_new_16.png"))); // NOI18N
+        importButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(importButton1, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.importButton1.text")); // NOI18N
-        importButton1.setMargin(new java.awt.Insets(2, 11, 2, 14));
         importButton1.setMaximumSize(new java.awt.Dimension(140, 25));
         importButton1.setMinimumSize(new java.awt.Dimension(140, 25));
         importButton1.setPreferredSize(new java.awt.Dimension(140, 25));
