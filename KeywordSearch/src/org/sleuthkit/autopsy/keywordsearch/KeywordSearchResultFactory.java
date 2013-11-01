@@ -79,13 +79,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
             }
         },
-        MATCH {
-
-            @Override
-            public String toString() {
-                return "File Name";
-            }
-        },
         CONTEXT {
 
             @Override
@@ -268,7 +261,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final int previewChunk = hitContents.get(f);
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<>();
-                setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
 
                 try {
                     String snippet;

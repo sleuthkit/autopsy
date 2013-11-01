@@ -183,6 +183,9 @@ public class Ingester {
         return fsc.accept(getContentFieldsV);
     }
 
+    /**
+     * Visitor used to create param list to send to SOLR index.
+     */
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         private SleuthkitCase curCase = null;
@@ -199,41 +202,45 @@ public class Ingester {
         @Override
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
-            getCommonFsContentFields(params, f);
+            getCommonFileContentFields(params, f);
             return params;
         }
         
         @Override
         public Map<String, String> visit(DerivedFile df) {
             Map<String, String> params = getCommonFields(df);
-            //TODO mactimes after data model refactor
+            getCommonFileContentFields(params, df);
             return params;
         }
 
         @Override
         public Map<String, String> visit(Directory d) {
             Map<String, String> params = getCommonFields(d);
-            getCommonFsContentFields(params, d);
+            getCommonFileContentFields(params, d);
             return params;
         }
 
         @Override
         public Map<String, String> visit(LayoutFile lf) {
+            // layout files do not have times
             return getCommonFields(lf);
         }
         
         @Override
         public Map<String, String> visit(LocalFile lf) {
-            return getCommonFields(lf);
-        }
-
-        private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getCtime(), fsContent));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getAtime(), fsContent));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getMtime(), fsContent));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(fsContent.getCrtime(), fsContent));
+            Map<String, String> params = getCommonFields(lf);
+            getCommonFileContentFields(params, lf);
             return params;
         }
+
+        private Map<String, String> getCommonFileContentFields(Map<String, String> params, AbstractFile file) {
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(file.getMtime(), file));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
+            return params;
+        }
+        
 
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();

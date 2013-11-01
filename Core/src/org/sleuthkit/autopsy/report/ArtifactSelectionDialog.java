@@ -24,6 +24,8 @@ import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +73,13 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
             
             artifacts.removeAll(doNotReport);
             
+            Collections.sort(artifacts, new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
+                @Override
+                public int compare(ARTIFACT_TYPE o1, ARTIFACT_TYPE o2) {
+                    return o1.getDisplayName().compareTo(o2.getDisplayName());
+                }
+            });
+                        
             artifactStates = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
             for (BlackboardArtifact.ARTIFACT_TYPE type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
