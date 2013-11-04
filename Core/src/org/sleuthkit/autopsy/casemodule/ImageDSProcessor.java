@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.swing.filechooser.FileFilter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
@@ -37,6 +41,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 @ServiceProvider(service = DataSourceProcessor.class)
 public class ImageDSProcessor implements DataSourceProcessor {
   
+   
+     
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
     // Data source type handled by this processor
@@ -60,7 +66,29 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private String imagePath;
     private String timeZone;
     private boolean noFatOrphans;
-            
+     
+    
+    
+    
+    static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+    
+    static final List<String> allExt = new ArrayList<String>();
+    static {
+        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+    }
+    static final String allDesc = "All Supported Types";
+    static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    
+    static final List<FileFilter> filtersList = new ArrayList<FileFilter>();
+    
+    static {
+        filtersList.add(allFilter);
+        filtersList.add(rawFilter);
+        filtersList.add(encaseFilter);
+    }
+    
         
     /*
      * A no argument constructor is required for the NM lookup() method to create an object
@@ -68,7 +96,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     public ImageDSProcessor() {
         
         // Create the config panel
-        imageFilePanel =  ImageFilePanel.getDefault();
+        imageFilePanel =  ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
         
     }
     

@@ -24,12 +24,14 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import  org.sleuthkit.autopsy.casemodule.ImageFilePanel;
+import  org.sleuthkit.autopsy.casemodule.GeneralFilter;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -44,6 +46,16 @@ public class MissingImageDialog extends javax.swing.JDialog {
     
     
    
+    static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+
+    static final List<String> allExt = new ArrayList<String>();
+    static {
+        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+    }
+    static final String allDesc = "All Supported Types";
+    static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     
     private JFileChooser fc = new JFileChooser();
     
@@ -57,10 +69,9 @@ public class MissingImageDialog extends javax.swing.JDialog {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         
-        // borrow the filters from ImageFilePanel
-        fc.addChoosableFileFilter(ImageFilePanel.rawFilter);
-        fc.addChoosableFileFilter(ImageFilePanel.encaseFilter);
-        fc.setFileFilter(ImageFilePanel.allFilter);
+        fc.addChoosableFileFilter(rawFilter);
+        fc.addChoosableFileFilter(encaseFilter);
+        fc.setFileFilter(allFilter);
         
         
         customInit();

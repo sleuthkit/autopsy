@@ -31,6 +31,7 @@ import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -40,57 +41,52 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
     
-     
-    private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
+    private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
     
-    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
-    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
-    static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
-    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
-    static final String encaseDesc = "Encase Images (*.e01)";
-    static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
-    static final List<String> allExt = new ArrayList<String>();
-
-    static {
-        allExt.addAll(rawExt);
-        allExt.addAll(encaseExt);
-    }
-    static final String allDesc = "All Supported Types";
-    static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    
-    
-    
-    private static ImageFilePanel instance = null;
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
+    
+    // Externally supplied name is used to store settings 
+    private String contextName;
 
     /**
      * Creates new form ImageFilePanel
+     * @param context a string context name used to read/store last used settings
+     * @param fileChooserFilters a list of filters to be used with the FileChooser
      */
-    public ImageFilePanel() {
+    private ImageFilePanel(String context, List<FileFilter> fileChooserFilters) {
         initComponents();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(rawFilter);
-        fc.addChoosableFileFilter(encaseFilter);
-        fc.setFileFilter(allFilter);
         
+        boolean firstFilter = true;
+        for (FileFilter filter: fileChooserFilters ) {
+            if (firstFilter) {  // set the first on the list as the default selection
+                fc.setFileFilter(filter);
+                firstFilter = false;
+            } 
+            else {
+                fc.addChoosableFileFilter(filter);
+            }
+        }
         
+        this.contextName = context;
         pcs = new PropertyChangeSupport(this);
         
         createTimeZoneList();
     }
     
     /**
-     * Returns the default instance of a ImageFilePanel.
+     * Creates and returns an instance of a ImageFilePanel.
      */
-    public static synchronized ImageFilePanel getDefault() {
-        if (instance == null) {
-            instance = new ImageFilePanel();
-	    instance.postInit();
-        }
-        return instance;
+    public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
+        
+       ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters );
+       
+       instance.postInit();
+        
+       return instance;
     }
 
     //post-constructor initialization to properly initialize listener support
@@ -230,7 +226,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         
     }
     
-    boolean getNoFatOrphans() {
+    public boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
     }
      
@@ -263,12 +259,12 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         String imagePathName = getContentPaths();
         if (null != imagePathName ) {
             String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
-            ModuleSettings.setConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH, imagePath);
+            ModuleSettings.setConfigSetting(contextName, PROP_LASTIMAGE_PATH, imagePath);
         }
     }
     
     public void readSettings() {
-        String lastImagePath = ModuleSettings.getConfigSetting(ImageFilePanel.class.getName(), PROP_LASTIMAGE_PATH);
+        String lastImagePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTIMAGE_PATH);
         if (null != lastImagePath) {
             if (!lastImagePath.isEmpty())
                  pathTextField.setText(lastImagePath);  

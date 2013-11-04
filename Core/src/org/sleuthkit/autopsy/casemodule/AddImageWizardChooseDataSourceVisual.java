@@ -41,8 +41,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * visual component for the first panel of add image wizard. Allows user to pick
- * data source and timezone.
+ * visual component for the first panel of add image wizard. 
+ * Allows the user to choose the data source type and then select the data source
  *
  */
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
