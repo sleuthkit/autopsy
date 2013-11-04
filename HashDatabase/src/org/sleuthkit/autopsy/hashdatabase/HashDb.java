@@ -159,8 +159,7 @@ public class HashDb implements Comparable<HashDb> {
     }
         
     boolean hasLegacyLookupIndexOnly() throws TskCoreException {
-        // RJCTODO: Add SleuthkitJNI call
-        return false;
+        return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
     // TODO: This is a temporary expedient until HashDb becomes an inner class of HashDbXML.
