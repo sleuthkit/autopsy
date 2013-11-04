@@ -150,7 +150,7 @@ public class HashDb implements Comparable<HashDb> {
         
     boolean hasLookupIndex() {
         try {
-            return SleuthkitJNI.lookupIndexForHashDatabaseExists(handle);        
+            return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
         }
         catch (TskCoreException ex) {
             // RJCTODO
