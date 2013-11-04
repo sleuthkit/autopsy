@@ -90,10 +90,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             HashDbXML hdbxml = HashDbXML.getInstance();
             nsrlSet = null;
             knownBadSets.clear();
-            hdbxml.closeHashDatabases();
             nsrlIsSet = false;
             knownBadIsSet = false;
-            calcHashesIsSet = hdbxml.getCalculate();
+            calcHashesIsSet = hdbxml.shouldAlwaysCalculateHashes();
 
             HashDb nsrl = hdbxml.getNSRLSet();
             if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.getStatus())) {

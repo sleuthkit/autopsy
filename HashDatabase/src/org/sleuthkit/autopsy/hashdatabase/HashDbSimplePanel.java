@@ -26,6 +26,7 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class are used as a file ingest module configuration panel
@@ -60,11 +61,11 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         if (!nsrlUsed && !knownUsed ) {
             calcHashesButton.setEnabled(true);
             calcHashesButton.setSelected(true);
-            xmlHandle.setCalculate(true);
+            xmlHandle.setShouldAlwaysCalculateHashes(true);
         } else {
             calcHashesButton.setEnabled(false);
             calcHashesButton.setSelected(false);
-            xmlHandle.setCalculate(false);
+            xmlHandle.setShouldAlwaysCalculateHashes(false);
         }
     }
     
@@ -75,9 +76,9 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(calcHashesButton.isSelected()) {
-                    xmlHandle.setCalculate(true);
+                    xmlHandle.setShouldAlwaysCalculateHashes(true);
                 } else {
-                    xmlHandle.setCalculate(false);
+                    xmlHandle.setShouldAlwaysCalculateHashes(false);
                 }
             }            
         });
@@ -242,7 +243,14 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
                 HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
-                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(db.getStatus())) {
+                IndexStatus status = IndexStatus.NO_INDEX;
+                try {
+                    status = db.getStatus();
+                }
+                catch (TskCoreException ex) {
+                    // RJCTODO
+                }
+                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(status)) {
                         db.setUseForIngest((Boolean) aValue);
                 } else {
                         JOptionPane.showMessageDialog(HashDbSimplePanel.this, "Databases must be indexed before they can be used for ingest");

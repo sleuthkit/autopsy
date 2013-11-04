@@ -106,28 +106,26 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
             // one as a menu item.
             List<HashDb> hashDatabases = HashDbXML.getInstance().getKnownBadSets();
             if (!hashDatabases.isEmpty()) {
-                for (final HashDb database : HashDbXML.getInstance().getKnownBadSets()) {
-                    if (database.isUpdateable()) {
-                        JMenuItem databaseItem = add(database.getDisplayName());
-                        databaseItem.addActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-                                for (AbstractFile file : selectedFiles) {
-                                    String md5Hash = file.getMd5Hash();
-                                    if (null != md5Hash) {
-                                        try {
-                                            database.addToHashDatabase(file);
-                                        }
-                                        catch (TskCoreException ex) {                        
-                                            Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                
-                                            JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + " to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
-                                        }                    
-                                    }                
-                                }
+                for (final HashDb database : HashDbXML.getInstance().getUpdateableHashSets()) {
+                    JMenuItem databaseItem = add(database.getDisplayName());
+                    databaseItem.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+                            for (AbstractFile file : selectedFiles) {
+                                String md5Hash = file.getMd5Hash();
+                                if (null != md5Hash) {
+                                    try {
+                                        database.add(file);
+                                    }
+                                    catch (TskCoreException ex) {                        
+                                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                
+                                        JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + " to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                                    }                    
+                                }                
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
             else {

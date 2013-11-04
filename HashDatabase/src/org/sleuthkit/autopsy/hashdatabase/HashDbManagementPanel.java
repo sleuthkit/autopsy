@@ -91,7 +91,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private void initUI(HashDb db) {
         boolean useForIngestEnabled = db != null && !ingestRunning;
         boolean useForIngestSelected = db != null && db.getUseForIngest();
-        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getKnownType().equals(HashDb.KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD);
+        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD);
         boolean showInboxMessagesSelected = db != null && db.getShowInboxMessages();
         boolean deleteButtonEnabled = db != null && !ingestRunning;
         boolean importButtonEnabled = !ingestRunning;
@@ -104,7 +104,13 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         } else {
             //check if dn in indexing state
             String dbName = db.getDisplayName();
-            IndexStatus status = db.getStatus();
+            IndexStatus status = IndexStatus.NO_INDEX;
+            try {
+                status = db.getStatus();
+            }
+            catch (TskCoreException ex) {
+                // RJCTODO
+            }
             Boolean state = indexingState.get(dbName);
             if (state != null && state.equals(Boolean.TRUE) ) {
                 status = IndexStatus.INDEXING;
@@ -119,7 +125,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             }
             this.hashDbLocationLabel.setText(shortenPath);
             this.hashDbNameLabel.setText(db.getDisplayName());
-            this.hashDbTypeLabel.setText(db.getKnownType().getDisplayName());
+            this.hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
         }
         this.useForIngestCheckbox.setSelected(useForIngestSelected);
         this.useForIngestCheckbox.setEnabled(useForIngestEnabled);
@@ -401,23 +407,36 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.toString())) {
+                if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
                     //update tracking of indexing status
                     indexingState.put((String)evt.getNewValue(), Boolean.FALSE);
-                    
-                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, current.getStatus());
+                    IndexStatus status = IndexStatus.NO_INDEX;
+                    try {
+                        status = current.getStatus();
+                    }
+                    catch (TskCoreException ex) {
+                        // RJCTODO
+                    }
+                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, status);
                     resync();
                 }
             }
             
         });
-            indexingState.put(current.getDisplayName(), Boolean.TRUE);
-            ModalNoButtons singleMNB = new ModalNoButtons(this, new Frame(), current);  //Modal reference, to be removed later
-            singleMNB.setLocationRelativeTo(null);
-            singleMNB.setVisible(true);
-            singleMNB.setModal(true);                                                   //End Modal reference
-            indexingState.put(current.getDisplayName(), Boolean.FALSE);
-        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.getStatus());      
+        indexingState.put(current.getDisplayName(), Boolean.TRUE);
+        ModalNoButtons singleMNB = new ModalNoButtons(this, new Frame(), current);  //Modal reference, to be removed later
+        singleMNB.setLocationRelativeTo(null);
+        singleMNB.setVisible(true);
+        singleMNB.setModal(true);                                                   //End Modal reference
+        indexingState.put(current.getDisplayName(), Boolean.FALSE);
+        IndexStatus status = IndexStatus.NO_INDEX;
+        try {
+            status = current.getStatus();
+        }
+        catch (TskCoreException ex) {
+            // RJCTODO
+        }
+        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, status);      
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
@@ -634,16 +653,18 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     // End of variables declaration//GEN-END:variables
     
     private void importHashSet(java.awt.event.ActionEvent evt) {
-        HashDb hashDb = new HashDbImportDatabaseDialog().display();
+        HashDb hashDb = new HashDbImportDatabaseDialog().doDialog();
         if (hashDb != null) {
+            HashDbXML.getInstance().addSet(hashDb);
             hashSetTableModel.selectRowByName(hashDb.getDisplayName());
         }
         resync();
     }
     
     private void createHashSet(java.awt.event.ActionEvent evt) {
-        HashDb hashDb = new HashDbCreateDatabaseDialog().display();
+        HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
         if (null != hashDb) {
+            HashDbXML.getInstance().addSet(hashDb);
             hashSetTableModel.selectRowByName(hashDb.getDisplayName());
         }
         resync();

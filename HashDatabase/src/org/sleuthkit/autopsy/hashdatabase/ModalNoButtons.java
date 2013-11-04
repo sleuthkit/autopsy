@@ -250,7 +250,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * Displays the current count of indexing when one is completed, or kills this dialog if all indexing is complete.
      */
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.name())) {
+        if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
             if (currentcount >= length) {
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);

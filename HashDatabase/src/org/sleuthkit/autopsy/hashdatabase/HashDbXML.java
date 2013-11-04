@@ -33,7 +33,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.KNOWN_FILES_HASH_SET_TYPE;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
@@ -41,16 +41,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * This class is a singleton that handles the import and creation of known files
- * hash set databases, manages the instances of the databases, and provides a 
- * means for persisting the configuration of the hash sets. 
+ * This class is a singleton that manages the configuration of the hash databases
+ * that serve as hash sets for the identification of known files, known good files, 
+ * and known bad files. 
  */
-// TODO: The class needs to renamed to something like HashDbManager - its use of
-// XML as a configuration persistence mechanism should be an implementation detail
-// hidden from its clients. More importantly, this class should be rewritten into
-// full and true encapsulation of state and behavior rather than a mixture of a 
-// configuration manager with something that can be manipulated like a mere data 
-// structure by its clients.
 public class HashDbXML {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
@@ -63,71 +57,45 @@ public class HashDbXML {
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String XSDFILE = "HashsetsSchema.xsd";
     private static final String ENCODING = "UTF-8";
-    private static final String CUR_HASHSET_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
-    private static HashDbXML currentInstance;
-    
-    private List<HashDb> knownBadSets;
+    private static HashDbXML instance;
+    private List<HashDb> knownBadSets = new ArrayList<>();
     private HashDb nsrlSet;
-    private String xmlFile;
-    private boolean calculate;
+    private boolean alwaysCalculateHashes;
+    private String xmlFile = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     
     /**
      * Gets the singleton instance of this class.
      */
-    static synchronized HashDbXML getInstance() {
-        if (currentInstance == null) {
-            currentInstance = new HashDbXML(CUR_HASHSET_FILE);
-            currentInstance.reload();
+    public static synchronized HashDbXML getInstance() {
+        if (instance == null) {
+            instance = new HashDbXML();
+            instance.reload();
         }
-        return currentInstance;
+        return instance;
     }
 
-    private HashDbXML(String xmlFile) {
-        knownBadSets = new ArrayList<>();
-        this.xmlFile = xmlFile;
+    private HashDbXML() {
     }
-        
+     
     /**
-     * Imports an existing known files hash database. 
-     * @param displayName Name used to represent the database in user interface components. 
-     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
-     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
-     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
-     * @param type The known type of the database. 
-     * @return A HashDb object representation of the new hash database.
-     * @throws TskCoreException 
+     * Adds a hash database to the hash set configuration.
      */
-    // TODO: When this class is rewritten, this method should become private. It should add the HashDb object to the appropriate internal collection 
-    // and to the XML file, and should save the XML file.
-    HashDb importHashDatabase(String displayName, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) throws TskCoreException {
-        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), displayName, databasePath, useForIngest, showInboxMessages, type);
+    public void addSet(HashDb set) {
+        if (set.getKnownFilesType() == HashDb.KnownFilesType.NSRL) {
+            setNSRLSet(set);
+        }
+        else {
+            addKnownBadSet(set);
+        }
     }
     
-    /**
-     * Creates a new known files hash database. 
-     * @param displayName Name used to represent the database in user interface components. 
-     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
-     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
-     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
-     * @param type The known type of the database. 
-     * @return A HashDb object representation of the opened hash database.
-     * @throws TskCoreException 
-     */
-    // TODO: When this class is rewritten, this method should become private. It should add the HashDb object to the appropriate internal collection 
-    // and to the XML file, and should save the XML file.
-    HashDb createHashDatabase(String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) throws TskCoreException {
-        return new HashDb(SleuthkitJNI.createHashDatabase(databasePath), name, databasePath, useForIngest, showInboxMessages, type);
-    }
-
     /**
      * Sets the configured National Software Reference Library (NSRL) known 
      * files hash set. Does not save the configuration.
      */
-    // TODO: When this class is rewritten, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
     public void setNSRLSet(HashDb set) {
         this.nsrlSet = set;
     }
@@ -145,8 +113,6 @@ public class HashDbXML {
      * Removes the configured National Software Reference Library (NSRL) known 
      * files hash set. Does not save the configuration.
      */
-    // TODO: When this class is rewritten, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
     public void removeNSRLSet() {
         this.nsrlSet = null;
     }
@@ -155,8 +121,6 @@ public class HashDbXML {
      * Adds a known bad files hash set to the configuration. Does not save the
      * configuration.
      */
-    // TODO: When this class is rewritten, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
     public void addKnownBadSet(HashDb set) {
         knownBadSets.add(set);
     }
@@ -166,8 +130,6 @@ public class HashDbXML {
      * the internal known bad sets collection at the index specified by the 
      * caller. Note that this method does not save the configuration.
      */
-    // TODO: This method is an OO abomination that should be discarded when this 
-    // class is rewritten.
     public void addKnownBadSet(int index, HashDb set) {
         knownBadSets.add(index, set);
     }
@@ -185,9 +147,6 @@ public class HashDbXML {
      * Removes the known bad files hash set from the internal known bad files 
      * hash sets collection at the specified index. Does not save the configuration.
      */
-    // TODO: This method is an OO abomination that should be replaced by a proper 
-    // remove() when this class is rewritten. Also, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
     public void removeKnownBadSetAt(int index) {
         knownBadSets.remove(index);
     }
@@ -199,8 +158,13 @@ public class HashDbXML {
     public List<HashDb> getUpdateableHashSets() {
         ArrayList<HashDb> updateableDbs = new ArrayList<>();
         for (HashDb db : knownBadSets) {
-            if (db.isUpdateable()) {
-                updateableDbs.add(db);
+            try {
+                if (db.isUpdateable()) {
+                    updateableDbs.add(db);
+                }
+            }
+            catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking updateable status of " + db.getDatabasePath(), ex);
             }
         }
         return Collections.unmodifiableList(updateableDbs);
@@ -223,8 +187,6 @@ public class HashDbXML {
     /**
      * Reloads the configuration file if it exists, creates it otherwise.
      */
-    // TODO: When this class is rewritten, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
     public void reload() {
         // TODO: This does not look like it is correct. Revisit when time permits.
         boolean created = false;
@@ -244,30 +206,27 @@ public class HashDbXML {
     }
     
     /**
-     * Sets the local variable calculate to the given boolean.
-     * @param set the state to make calculate
+     * Sets the value for the flag indicates whether hashes should be calculated
+     * for content even if no hash databases are configured.
      */
-    // TODO: Does this have any use?
-    public void setCalculate(boolean set) {
-        this.calculate = set;
+    public void setShouldAlwaysCalculateHashes(boolean alwaysCalculateHashes) {
+        this.alwaysCalculateHashes = alwaysCalculateHashes;
     }
     
     /**
-     * Returns the value of the local boolean calculate.
-     * @return true if calculate is true, false otherwise
+     * Accesses the flag that indicates whether hashes should be calculated
+     * for content even if no hash databases are configured.
      */
-    // TODO: Does this have any use?
-    public boolean getCalculate() {
-        return this.calculate;
+    public boolean shouldAlwaysCalculateHashes() {
+        return alwaysCalculateHashes;
     }
     
     /**
-     * Saves the known files hash sets configuration to disk.
+     * Saves the known files hash sets configuration to disk. Note that the 
+     * configuration is only saved on demand to support cancellation of 
+     * configuration panels and dialogs.
      * @return True on success, false otherwise.
      */
-    // TODO: When this class is rewritten, the class should be responsible for saving
-    // the configuration rather than deferring this responsibility to its clients.
-    // It looks like there is code duplication here.
     public boolean save() {
         boolean success = false;
 
@@ -285,7 +244,7 @@ public class HashDbXML {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
                 String showInboxMessages = Boolean.toString(set.getShowInboxMessages());
                 List<String> paths = Collections.singletonList(set.getDatabasePath());
-                String type = KNOWN_FILES_HASH_SET_TYPE.KNOWN_BAD.toString();
+                String type = KnownFilesType.KNOWN_BAD.toString();
 
                 Element setEl = doc.createElement(SET_EL);
                 setEl.setAttribute(SET_NAME_ATTR, set.getDisplayName());
@@ -303,12 +262,12 @@ public class HashDbXML {
                 rootEl.appendChild(setEl);
             }
             
-            // TODO: Remove all the multiple database paths stuff, it was a mistake. 
+            // TODO: Remove all the multiple database paths stuff. 
             if(nsrlSet != null) {
                 String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
                 String showInboxMessages = Boolean.toString(nsrlSet.getShowInboxMessages());
                 List<String> paths = Collections.singletonList(nsrlSet.getDatabasePath());
-                String type = KNOWN_FILES_HASH_SET_TYPE.NSRL.toString();
+                String type = KnownFilesType.NSRL.toString();
 
                 Element setEl = doc.createElement(SET_EL);
                 setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getDisplayName());
@@ -326,8 +285,7 @@ public class HashDbXML {
                 rootEl.appendChild(setEl);
             }
 
-            // TODO: Does this have any use?
-            String calcValue = Boolean.toString(calculate);
+            String calcValue = Boolean.toString(alwaysCalculateHashes);
             Element setCalc = doc.createElement(SET_CALC);
             setCalc.setAttribute(SET_VALUE, calcValue);
             rootEl.appendChild(setCalc);
@@ -366,7 +324,8 @@ public class HashDbXML {
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
             List<String> paths = new ArrayList<>();
 
-            // TODO: Remove all the multiple database paths stuff, it was a mistake. 
+            // TODO: Remove all the multiple database paths stuff. 
+            // RJCTODO: Rework this to do a search a bit differently, or simply indicate the file is missing...
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
             for (int j = 0; j < numPaths; ++j) {
@@ -413,10 +372,10 @@ public class HashDbXML {
                 logger.log(Level.WARNING, "No paths were set for hash_set at index {0}. Removing the database.", i);
             } 
             else {
-                KNOWN_FILES_HASH_SET_TYPE typeDBType = KNOWN_FILES_HASH_SET_TYPE.valueOf(type);
+                KnownFilesType typeDBType = KnownFilesType.valueOf(type);
                 try {
-                    HashDb db = importHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);
-                    if (typeDBType == KNOWN_FILES_HASH_SET_TYPE.NSRL) {
+                    HashDb db = HashDb.openHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);
+                    if (typeDBType == KnownFilesType.NSRL) {
                         setNSRLSet(db);
                     }
                     else {
@@ -438,7 +397,7 @@ public class HashDbXML {
         for(int i=0; i<numCalc; i++) {
             Element calcEl = (Element) calcList.item(i);
             final String value = calcEl.getAttribute(SET_VALUE);
-            calculate = Boolean.parseBoolean(value);
+            alwaysCalculateHashes = Boolean.parseBoolean(value);
         }
         return true;
     }
@@ -459,47 +418,22 @@ public class HashDbXML {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Hash Database File", EXTENSION);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
         fc.setFileFilter(filter);
         fc.setMultiSelectionEnabled(false);
 
-        int retval = fc.showOpenDialog(null);
-        // If the user selects an appropriate file
-        if (retval == JFileChooser.APPROVE_OPTION) {
+        String filePath = null;
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File f = fc.getSelectedFile();
             try {
-                String filePath = f.getCanonicalPath();
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
-                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                // If the database has the same name as before, return it
-                if(derivedName.equals(name)) {
-                    return filePath;
-                } else {
-                    int tryAgain = JOptionPane.showConfirmDialog(null, "Database file cannot be added because it does not have the same name as the original.\n" +
-                            "Would you like to try a different database?", "Invalid File", JOptionPane.YES_NO_OPTION);
-                    if (tryAgain == JOptionPane.YES_OPTION) {
-                        return searchForFile(name);
-                    } else {
-                        return null;
-                    }
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
-            } catch (TskCoreException ex) {
-                int tryAgain = JOptionPane.showConfirmDialog(null, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database.\n" +
-                        "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
-                if (tryAgain == JOptionPane.YES_OPTION) {
-                    return searchForFile(name);
-                } else {
-                    return null;
-                }
-            }
+                filePath = f.getCanonicalPath();
+            } 
+            catch (IOException ex) {
+                logger.log(Level.WARNING, "Couldn't get selected file path", ex);
+            } 
         }
-        // Otherwise the user cancelled, so delete the missing entry
-        return null;
+        
+        return filePath;
     }
 
     private boolean setsFileExists() {
@@ -511,6 +445,9 @@ public class HashDbXML {
      * Closes all open hash databases.
      * @throws TskCoreException 
      */
+    // TODO: Think about whether this should be exposed, and if so, where it should be exposed.
+    // The ability to add to hash databases implies that the databases should generally not be closed
+    // until removal or application exit.  
     void closeHashDatabases() throws TskCoreException {
         SleuthkitJNI.closeHashDatabases();
     }            

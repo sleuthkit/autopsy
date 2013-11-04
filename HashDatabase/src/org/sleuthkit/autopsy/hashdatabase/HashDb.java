@@ -27,21 +27,24 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
- * Instances of this class represent known file hash set databases. 
+ * Instances of this class represent the hash databases underlying known files 
+ * hash sets. 
  */
-// TODO: Make this an inner class of a rewritten HashDbXML, and give it a private constructor.
 public class HashDb implements Comparable<HashDb> {
-    enum EVENT {INDEXING_DONE};
+    public enum Event {
+        INDEXING_DONE
+    }
     
-    enum KNOWN_FILES_HASH_SET_TYPE{
+    public enum KnownFilesType{
         NSRL("NSRL"), 
         KNOWN_BAD("Known Bad");
         
         private String displayName;
         
-        private KNOWN_FILES_HASH_SET_TYPE(String displayName) {
+        private KnownFilesType(String displayName) {
             this.displayName = displayName;
         }
         
@@ -50,20 +53,47 @@ public class HashDb implements Comparable<HashDb> {
         }
     }
     
+    /**
+     * Opens an existing hash database. 
+     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the hash database should be used during ingest.
+     * @param showInboxMessages A flag indicating whether hash set hit messages should be sent to the application inbox.
+     * @param knownType The known files type of the database. 
+     * @return A HashDb object representation of the new hash database.
+     * @throws TskCoreException 
+     */
+    public static HashDb openHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownType) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+    }
+    
+    /**
+     * Creates a new hash database. 
+     * @param hashSetName Name used to represent the database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
+     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
+     * @param knownType The known files type of the database. 
+     * @return A HashDb object representation of the opened hash database.
+     * @throws TskCoreException 
+     */
+    public static HashDb createHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.createHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, type);
+    }    
+    
     private static final String INDEX_FILE_EXTENSION = ".kdb";
     private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);    
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);    
     private String displayName;
     private String databasePath;
     private boolean useForIngest;
     private boolean showInboxMessages;
-    private KNOWN_FILES_HASH_SET_TYPE type;
+    private KnownFilesType type;
     private int handle;
     private boolean indexing;
-    private boolean acceptsUpdates = false;
     
-    HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) {
+    HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) {
         this.displayName = name;
         this.databasePath = databasePath;
         this.useForIngest = useForIngest;
@@ -71,14 +101,6 @@ public class HashDb implements Comparable<HashDb> {
         this.type = type;
         this.handle = handle;
         this.indexing = false;
-        
-        try {
-            acceptsUpdates = SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
-        }
-        catch (TskCoreException ex) {
-            // RJCTODO
-            acceptsUpdates = false;
-        }
     }
 
     @Override
@@ -86,38 +108,12 @@ public class HashDb implements Comparable<HashDb> {
         return this.displayName.compareTo(o.displayName);
     }
         
-    /**
-     * Indicates whether the hash database accepts updates.
-     * @return True if the database accepts updates, false otherwise.
-     */
-    boolean isUpdateable() {
-        return acceptsUpdates;
-    }
-    
-    /**
-     * Adds hashes of content (if calculated) to the hash database. 
-     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
-     * @throws TskCoreException 
-     */
-    public void addToHashDatabase(Content content) throws TskCoreException {
-        // TODO: This only works for AbstractFiles at present. Change when Content
-        // can be queried for hashes.
-        assert content instanceof AbstractFile;
-        if (content instanceof AbstractFile) {
-            AbstractFile file = (AbstractFile)content;
-            // TODO: Add support for SHA-1 and SHA-256 hashes.
-            if (null != file.getMd5Hash()) {
-                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
-            }
-        }
-    }
-    
     void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
+        propertyChangeSupport.addPropertyChangeListener(pcl);
     }
     
     void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
+        propertyChangeSupport.removePropertyChangeListener(pcl);
     }
 
     String getDisplayName() {
@@ -128,7 +124,7 @@ public class HashDb implements Comparable<HashDb> {
         return databasePath;
     }
     
-    KNOWN_FILES_HASH_SET_TYPE getKnownType() {
+    KnownFilesType getKnownFilesType() {
         return type;
     }
         
@@ -158,37 +154,55 @@ public class HashDb implements Comparable<HashDb> {
         }
     }
         
-    boolean hasLegacyLookupIndexOnly() throws TskCoreException {
+    boolean hasTextLookupIndexOnly() throws TskCoreException {
         return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
-    // TODO: This is a temporary expedient until HashDb becomes an inner class of HashDbXML.
-    void setAcceptsUpdates(boolean acceptsUpdates) {
-        this.acceptsUpdates = acceptsUpdates;
+    /**
+     * Indicates whether the hash database accepts updates.
+     * @return True if the database accepts updates, false otherwise.
+     */
+    public boolean isUpdateable() throws TskCoreException {
+        return SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
     }
     
     /**
-     * Determines if a path points to an index by checking the suffix
-     * @param path
-     * @return true if index
+     * Adds hashes of content (if calculated) to the hash database. 
+     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * @throws TskCoreException 
      */
-    static boolean isIndexPath(String path) {
-        return (path.endsWith(INDEX_FILE_EXTENSION) || path.endsWith(LEGACY_INDEX_FILE_EXTENSION));
-    }
-
-    /**
-     * Derives database path from an image path by removing the suffix.
-     * @param indexPath
-     * @return 
-     */
-    static String toDatabasePath(String indexPath) {
-        if (indexPath.endsWith(LEGACY_INDEX_FILE_EXTENSION)) {
-            return indexPath.substring(0, indexPath.lastIndexOf(LEGACY_INDEX_FILE_EXTENSION));
-        } else {
-            return indexPath.substring(0, indexPath.lastIndexOf(INDEX_FILE_EXTENSION));
+    public void add(Content content) throws TskCoreException {
+        // TODO: This only works for AbstractFiles at present. Change when Content
+        // can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
+            }
         }
     }
-
+        
+     public TskData.FileKnown lookUp(Content content) throws TskCoreException {         
+        TskData.FileKnown result = TskData.FileKnown.UKNOWN; 
+         // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                if (type == KnownFilesType.NSRL) {
+                    result = SleuthkitJNI.lookupInNSRLDatabase(file.getMd5Hash());
+                }
+                else {
+                    result = SleuthkitJNI.lookupInHashDatabase(file.getMd5Hash(), handle);
+                }
+            }
+        }         
+        return result;
+     }
+        
     /**
      * Derives index path from an database path by appending the suffix.
      * @param databasePath
@@ -202,43 +216,22 @@ public class HashDb implements Comparable<HashDb> {
         return indexing;
     }
 
-    IndexStatus getStatus() {
-        // RJCTODO: Fix this using new API
+    IndexStatus getStatus() throws TskCoreException {
+        IndexStatus status = IndexStatus.NO_INDEX;
         
         if (indexing) {
-            return IndexStatus.INDEXING;
+            status = IndexStatus.INDEXING;
+        }
+        else if (hasLookupIndex()) {
+            if (hasTextLookupIndexOnly()) {
+                status = IndexStatus.INDEX_ONLY;
+            }
+            else {
+                status = IndexStatus.INDEXED;
+            }
         }
         
-//        return new File(databasePath).exists();
-
-        
-//        return new File(toIndexPath(databasePath));
-        
-        
-//        if (SleuthkitJNI.hashDatabaseIsLookupIndexOnly(handle)) {
-//            return databaseExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
-//        }
-                
-//        return databasePath.concat(LEGACY_INDEX_FILE_EXTENSION);
-        
-        
-        // Outdated applies only to legacy databases where the legacy index file exists and is older
-//        File i = indexFile();
-//        File db = new File(databasePath);
-//
-//        return i.exists() && db.exists() && isOlderThan(i, db);
-//        
-//        if (indexExists()) {
-//            if (databaseSourceFileExists()) {
-//                return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
-//            } 
-//            else {
-//                return IndexStatus.NO_DB;
-//            }
-//        } else {
-//            return databaseSourceFileExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
-//        }
-        return IndexStatus.INDEXING;        
+        return status;        
     }
 
     // Tries to index the database (overwrites any existing index) using a 
@@ -268,7 +261,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            pcs.firePropertyChange(EVENT.INDEXING_DONE.toString(), null, displayName);
+            propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, displayName);
         }
     }
 }
