@@ -50,7 +50,8 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         
     HashDbConfigPanel() {
         initComponents();
-        customizeComponents();        
+        customizeComponents();
+        updateComponentsForNoSelection();
     }
     
     private void customizeComponents() {
@@ -67,104 +68,126 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
                     updateComponents();
                 }
             }
-        });
+        });        
     }
 
     private void updateComponents() {
         HashDb db = ((HashSetTable)hashSetTable).getSelection();
-        if (db == null) {
-            hashDbLocationLabel.setText("No database selected");
-            hashDbNameLabel.setText("No database selected");
-            hashDbIndexStatusLabel.setText("No database selected");
-            hashDbTypeLabel.setText("No database selected");
+        if (db != null) {
+            updateComponentsForSelection(db);
         } 
         else {
-            this.hashDbLocationLabel.setToolTipText(db.getDatabasePath());
-            if (db.getDatabasePath().length() > 50){
-                String shortenedPath = db.getDatabasePath();
-                shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
-                hashDbLocationLabel.setText(shortenedPath);
-            }
-            else {
-                hashDbLocationLabel.setText(db.getDatabasePath());
-            }
-            hashDbNameLabel.setText(db.getDisplayName());
-            hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
-        }
-        updateStatusComponents(db);
-        boolean ingestRunning = IngestManager.getDefault().isIngestRunning();
-        boolean useForIngestEnabled = db != null && !ingestRunning;
-        boolean useForIngestSelected = db != null && db.getUseForIngest();
-        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD);
-        boolean showInboxMessagesSelected = db != null && db.getShowInboxMessages();
-        boolean deleteButtonEnabled = db != null && !ingestRunning;
-        boolean importButtonEnabled = !ingestRunning;
-        useForIngestCheckbox.setSelected(useForIngestSelected);
-        useForIngestCheckbox.setEnabled(useForIngestEnabled);
-        showInboxMessagesCheckBox.setSelected(showInboxMessagesSelected);
-        showInboxMessagesCheckBox.setEnabled(showInboxMessagesEnabled);
-        deleteButton.setEnabled(deleteButtonEnabled);
-        importButton.setEnabled(importButtonEnabled);
-        optionsLabel.setEnabled(useForIngestEnabled || showInboxMessagesEnabled);
-        optionsSeparator.setEnabled(useForIngestEnabled || showInboxMessagesEnabled);
-        ingestWarningLabel.setVisible(ingestRunning);
-        importButton.setEnabled(!ingestRunning); // RJCTODO: What about the other buttons?
+            updateComponentsForNoSelection();
+        }            
     }
     
-   void updateStatusComponents(HashDb hashDb) {
-        if (hashDb == null) {
-            indexButton.setText("Index");
-            hashDbIndexStatusLabel.setForeground(Color.black);
-            indexButton.setEnabled(false);            
+    private void updateComponentsForNoSelection() {
+        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();        
+
+        // Update labels.
+        hashDbLocationLabel.setText("No database selected");
+        hashDbNameLabel.setText("No database selected");
+        hashDbIndexStatusLabel.setText("No database selected");
+        hashDbTypeLabel.setText("No database selected");
+
+        // Update indexing components.
+        indexButton.setText("Index");
+        hashDbIndexStatusLabel.setForeground(Color.black);
+        indexButton.setEnabled(false);            
+
+        // Update ingest options.
+        useForIngestCheckbox.setSelected(false);
+        useForIngestCheckbox.setEnabled(false);
+        showInboxMessagesCheckBox.setSelected(false);
+        showInboxMessagesCheckBox.setEnabled(false);
+        optionsLabel.setEnabled(false);
+        optionsSeparator.setEnabled(false);
+        
+        // Update database action buttons.
+        newDatabaseButton.setEnabled(!ingestIsRunning);
+        importDatabaseButton.setEnabled(!ingestIsRunning);
+        deleteDatabaseButton.setEnabled(false);
+        
+        // Update ingest in progress warning label.
+        ingestWarningLabel.setVisible(ingestIsRunning);        
+    }
+
+    private void updateComponentsForSelection(HashDb db) {                
+        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();        
+
+        // Update labels.
+        hashDbLocationLabel.setToolTipText(db.getDatabasePath());
+        if (db.getDatabasePath().length() > 50){
+            String shortenedPath = db.getDatabasePath();
+            shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
+            hashDbLocationLabel.setText(shortenedPath);
         }
         else {
-            IndexStatus status = IndexStatus.UNKNOWN;
-            try {
-                status = hashDb.getStatus();
-            }
-            catch (TskCoreException ex) {
-                // RJCTODO: Need a status unknown?
-                // Logger.getLogger(HashDbIngestModule.class.getName())
-            }            
-                        
-            hashDbIndexStatusLabel.setText(status.message());
-            switch (status) {
-                case NO_INDEX:
-                    indexButton.setText("Index");
-                    hashDbIndexStatusLabel.setForeground(Color.red);
-                    indexButton.setEnabled(true);
-                    break;
-                case INDEXING:
-                    indexButton.setText("Indexing");
-                    hashDbIndexStatusLabel.setForeground(Color.black);
-                    indexButton.setEnabled(false);
-                    break;
-                case UNKNOWN:
-                    indexButton.setText("Index");
-                    hashDbIndexStatusLabel.setForeground(Color.red);
-                    indexButton.setEnabled(false);
-                    break;
-                case INDEXED:
-                    // TODO: Restore ability to re-index an indexed                    
-                case INDEX_ONLY:
-                default:
-                    indexButton.setText("Index");
-                    hashDbIndexStatusLabel.setForeground(Color.black);
-                    indexButton.setEnabled(false);
-                    break;
-            }
+            hashDbLocationLabel.setText(db.getDatabasePath());
         }
-        
-        if (IngestManager.getDefault().isIngestRunning()) {
+        hashDbNameLabel.setText(db.getDisplayName());
+        hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
+
+        // Update indexing components.
+        IndexStatus status = IndexStatus.UNKNOWN;
+        try {
+            status = db.getStatus();
+        }
+        catch (TskCoreException ex) {
+            // RJCTODO
+            // Logger.getLogger(HashDbIngestModule.class.getName())
+        }            
+        hashDbIndexStatusLabel.setText(status.message());
+        switch (status) {
+            case NO_INDEX:
+                indexButton.setText("Index");
+                hashDbIndexStatusLabel.setForeground(Color.red);
+                indexButton.setEnabled(true);
+                break;
+            case INDEXING:
+                indexButton.setText("Indexing");
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                indexButton.setEnabled(false);
+                break;
+            case UNKNOWN:
+                indexButton.setText("Index");
+                hashDbIndexStatusLabel.setForeground(Color.red);
+                indexButton.setEnabled(false);
+                break;
+            case INDEXED:
+                // TODO: Restore ability to re-index an indexed database.                    
+            case INDEX_ONLY:
+            default:
+                indexButton.setText("Index");
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                indexButton.setEnabled(false);
+                break;
+        }
+        if (ingestIsRunning) {
             indexButton.setEnabled(false);
         }
+
+        // Update ingest option components.        
+        useForIngestCheckbox.setSelected(db.getUseForIngest());
+        useForIngestCheckbox.setEnabled(!ingestIsRunning);
+        showInboxMessagesCheckBox.setSelected(db.getShowInboxMessages());
+        showInboxMessagesCheckBox.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
+        optionsLabel.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
+        optionsSeparator.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
+          
+        // Update database action buttons.
+        deleteDatabaseButton.setEnabled(!ingestIsRunning);
+        importDatabaseButton.setEnabled(!ingestIsRunning);
+        importDatabaseButton.setEnabled(!ingestIsRunning);
+        
+        // Update ingest in progress warning label.
+        ingestWarningLabel.setVisible(ingestIsRunning);        
     }
         
     @Override
     public void load() {
         hashSetTable.clearSelection();
-        hashSetTableModel.refresh();         
-//        updateComponents(null);
+        hashSetTableModel.refreshModel();         
     }
 
     @Override
@@ -176,8 +199,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
                 unindexed.add(hashSet);
             }
         }
-        
-        // RJCTODO:Whaaaaat?
+
         //If unindexed ones are found, show a popup box that will either index them, or remove them.
         if (unindexed.size() == 1){
             showInvalidIndex(false, unindexed);
@@ -185,7 +207,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         else if (unindexed.size() > 1){
             showInvalidIndex(true, unindexed);
         }
-        
+
         hashSetManager.save();        
     }
     
@@ -198,7 +220,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashSet(hashDb);
         }
-        hashSetTableModel.refresh();        
+        hashSetTableModel.refreshModel();        
     }
     
     /**
@@ -225,7 +247,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
             indexingDialog.setLocationRelativeTo(null);
             indexingDialog.setVisible(true);
             indexingDialog.setModal(true);
-            hashSetTableModel.refresh();
+            hashSetTableModel.refreshModel();
         }
         if(res == JOptionPane.NO_OPTION){
             JOptionPane.showMessageDialog(this, "All unindexed databases will be removed the list");
@@ -340,9 +362,13 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
             return -1;
         }
         
-        void refresh() {
+        void refreshModel() {
             hashSets = HashDbManager.getInstance().getAllHashSets();
-            fireTableDataChanged();
+            refreshDisplay();
+        }
+        
+        void refreshDisplay() {
+            fireTableDataChanged();            
         }
     }
             
@@ -361,8 +387,8 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         ingestWarningLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         hashSetTable = new HashSetTable();
-        deleteButton = new javax.swing.JButton();
-        importButton = new javax.swing.JButton();
+        deleteDatabaseButton = new javax.swing.JButton();
+        importDatabaseButton = new javax.swing.JButton();
         hashDatabasesLabel = new javax.swing.JLabel();
         nameLabel = new javax.swing.JLabel();
         hashDbNameLabel = new javax.swing.JLabel();
@@ -379,7 +405,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         optionsLabel = new javax.swing.JLabel();
         informationSeparator = new javax.swing.JSeparator();
         optionsSeparator = new javax.swing.JSeparator();
-        importButton1 = new javax.swing.JButton();
+        newDatabaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.jLabel2.text")); // NOI18N
 
@@ -413,25 +439,25 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         });
         jScrollPane1.setViewportView(hashSetTable);
 
-        deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.deleteButton.text")); // NOI18N
-        deleteButton.setMaximumSize(new java.awt.Dimension(140, 25));
-        deleteButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        deleteButton.setPreferredSize(new java.awt.Dimension(140, 25));
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/delete16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.deleteDatabaseButton.text")); // NOI18N
+        deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        deleteDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
+        deleteDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteButtonActionPerformed(evt);
+                deleteDatabaseButtonActionPerformed(evt);
             }
         });
 
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/import16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.importButton.text")); // NOI18N
-        importButton.setMaximumSize(new java.awt.Dimension(140, 25));
-        importButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        importButton.setPreferredSize(new java.awt.Dimension(140, 25));
-        importButton.addActionListener(new java.awt.event.ActionListener() {
+        importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/import16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(importDatabaseButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.importDatabaseButton.text")); // NOI18N
+        importDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        importDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        importDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
+        importDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importButtonActionPerformed(evt);
+                importDatabaseButtonActionPerformed(evt);
             }
         });
 
@@ -479,14 +505,14 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
 
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.optionsLabel.text")); // NOI18N
 
-        importButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(importButton1, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.importButton1.text")); // NOI18N
-        importButton1.setMaximumSize(new java.awt.Dimension(140, 25));
-        importButton1.setMinimumSize(new java.awt.Dimension(140, 25));
-        importButton1.setPreferredSize(new java.awt.Dimension(140, 25));
-        importButton1.addActionListener(new java.awt.event.ActionListener() {
+        newDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newDatabaseButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.newDatabaseButton.text")); // NOI18N
+        newDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        newDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        newDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
+        newDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importButton1ActionPerformed(evt);
+                newDatabaseButtonActionPerformed(evt);
             }
         });
 
@@ -534,10 +560,10 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
                                     .addComponent(showInboxMessagesCheckBox)
                                     .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(importButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(newDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(40, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -585,10 +611,10 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(importButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(newDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -604,8 +630,9 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
                     if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
                         HashDb selectedHashDb = ((HashSetTable)hashSetTable).getSelection();
                         if (selectedHashDb != null && hashDbToBeIndexed != null && hashDbToBeIndexed.equals(selectedHashDb)) {
-                            updateStatusComponents(selectedHashDb);
+                            updateComponents();
                         }
+                        hashSetTableModel.refreshDisplay();
                     }
                 }            
             });
@@ -623,22 +650,22 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         }
     }//GEN-LAST:event_indexButtonActionPerformed
 
-    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+    private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases). Do you want to proceed? ", "Deleting a Hash Database Entry", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
                 hashSetManager.removeHashSet(hashDb);
-                hashSetTableModel.refresh();
+                hashSetTableModel.refreshModel();
             }
         }
-    }//GEN-LAST:event_deleteButtonActionPerformed
+    }//GEN-LAST:event_deleteDatabaseButtonActionPerformed
 
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
                 hashSetManager.removeHashSet(hashDb);
-                hashSetTableModel.refresh();
+                hashSetTableModel.refreshModel();
             }
         }                
     }//GEN-LAST:event_hashSetTableKeyPressed
@@ -658,34 +685,33 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
         }
     }//GEN-LAST:event_showInboxMessagesCheckBoxActionPerformed
 
-    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+    private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
         HashDb hashDb = new HashDbImportDatabaseDialog().doDialog();
         if (hashDb != null) {
             hashSetManager.addHashSet(hashDb);
-            hashSetTableModel.refresh();
+            hashSetTableModel.refreshModel();
             ((HashSetTable)hashSetTable).selectRowByName(hashDb.getDisplayName());
         }    
-    }//GEN-LAST:event_importButtonActionPerformed
+    }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
-    private void importButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButton1ActionPerformed
+    private void newDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newDatabaseButtonActionPerformed
         HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
         if (null != hashDb) {
             hashSetManager.addHashSet(hashDb);
-            hashSetTableModel.refresh();
+            hashSetTableModel.refreshModel();
             ((HashSetTable)hashSetTable).selectRowByName(hashDb.getDisplayName());
         }
-    }//GEN-LAST:event_importButton1ActionPerformed
+    }//GEN-LAST:event_newDatabaseButtonActionPerformed
            
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton deleteButton;
+    private javax.swing.JButton deleteDatabaseButton;
     private javax.swing.JLabel hashDatabasesLabel;
     private javax.swing.JLabel hashDbIndexStatusLabel;
     private javax.swing.JLabel hashDbLocationLabel;
     private javax.swing.JLabel hashDbNameLabel;
     private javax.swing.JLabel hashDbTypeLabel;
     private javax.swing.JTable hashSetTable;
-    private javax.swing.JButton importButton;
-    private javax.swing.JButton importButton1;
+    private javax.swing.JButton importDatabaseButton;
     private javax.swing.JButton indexButton;
     private javax.swing.JLabel indexLabel;
     private javax.swing.JLabel informationLabel;
@@ -698,6 +724,7 @@ final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel locationLabel;
     private javax.swing.JLabel nameLabel;
+    private javax.swing.JButton newDatabaseButton;
     private javax.swing.JLabel optionsLabel;
     private javax.swing.JSeparator optionsSeparator;
     private javax.swing.JCheckBox showInboxMessagesCheckBox;

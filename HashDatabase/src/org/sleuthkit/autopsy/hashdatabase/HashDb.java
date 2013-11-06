@@ -64,12 +64,7 @@ public class HashDb implements Comparable<HashDb> {
      * @throws TskCoreException 
      */
     public static HashDb openHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownType) throws TskCoreException {
-        if (knownType == HashDb.KnownFilesType.NSRL) {
-            return new HashDb(SleuthkitJNI.openNSRLDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
-        }
-        else {        
-            return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
-        }
+        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
     }
     
     /**
@@ -258,7 +253,7 @@ public class HashDb implements Comparable<HashDb> {
             progress = ProgressHandleFactory.createHandle("Indexing " + displayName);
             progress.start();
             progress.switchToIndeterminate();
-            SleuthkitJNI.createLookupIndexForHashDatabase(handle);
+            SleuthkitJNI.createLookupIndexForHashDatabase(handle); // RJCTODO: There is nobody to catch, fix this.
             return null;
         }
 
