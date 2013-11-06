@@ -42,8 +42,11 @@ enum IndexStatus {
     /**
      * The index is generated.
      */
-    INDEXED("Indexed");
-    
+    INDEXED("Indexed"),
+    /**
+     * An error occurred while determining status.
+     */
+    UNKNOWN("Error determining status");
     private String message;
 
     /**

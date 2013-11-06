@@ -64,7 +64,12 @@ public class HashDb implements Comparable<HashDb> {
      * @throws TskCoreException 
      */
     public static HashDb openHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownType) throws TskCoreException {
-        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+        if (knownType == HashDb.KnownFilesType.NSRL) {
+            return new HashDb(SleuthkitJNI.openNSRLDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+        }
+        else {        
+            return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+        }
     }
     
     /**

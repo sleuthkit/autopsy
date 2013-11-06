@@ -58,8 +58,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 }
                 super.approveSelection();
             }
-        };        
-        
+        };                
         initComponents();
         customizeComponents();
     }
@@ -75,9 +74,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     
     HashDb doDialog() {
         newHashDb = null;
+        
+        // Center and display the dialog.        
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
         this.setVisible(true);        
+        
         return newHashDb;
     }
 

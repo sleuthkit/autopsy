@@ -43,10 +43,10 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
     
     private void reloadCalc() {
-        final HashDbXML xmlHandle = HashDbXML.getInstance();
-        final HashDb nsrlDb = xmlHandle.getNSRLSet();
+        final HashSetsManager xmlHandle = HashSetsManager.getInstance();
+        final HashDb nsrlDb = xmlHandle.getNSRLHashSet();
         final boolean nsrlUsed = nsrlDb != null && nsrlDb.getUseForIngest()== true && nsrlDb.hasLookupIndex();
-        final List<HashDb> knowns = xmlHandle.getKnownBadSets();
+        final List<HashDb> knowns = xmlHandle.getKnownBadHashSets();
         final boolean knownExists = !knowns.isEmpty();
         boolean knownUsed = false;
         if (knownExists) {
@@ -70,7 +70,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
     
     private void customizeComponents() {
-        final HashDbXML xmlHandle = HashDbXML.getInstance();
+        final HashSetsManager xmlHandle = HashSetsManager.getInstance();
         calcHashesButton.addActionListener( new ActionListener() {
 
             @Override
@@ -104,7 +104,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
 
     private void reloadSets() {
-        nsrl = HashDbXML.getInstance().getNSRLSet();
+        nsrl = HashSetsManager.getInstance().getNSRLHashSet();
 
         if (nsrl == null || nsrl.getUseForIngest() == false) {
             nsrlDbLabelVal.setText("Disabled");
@@ -199,7 +199,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
     private class HashTableModel extends AbstractTableModel {
         
-        private HashDbXML xmlHandle = HashDbXML.getInstance();
+        private HashSetsManager xmlHandle = HashSetsManager.getInstance();
         
         private void resync() {
             fireTableDataChanged();
@@ -207,7 +207,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            int size = xmlHandle.getKnownBadSets().size();
+            int size = xmlHandle.getKnownBadHashSets().size();
             return size == 0 ? 1 : size;
         }
 
@@ -218,14 +218,14 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (xmlHandle.getKnownBadSets().isEmpty()) {
+            if (xmlHandle.getKnownBadHashSets().isEmpty()) {
                 if (columnIndex == 0) {
                     return "";
                 } else {
                     return "Disabled";
                 }
             } else {
-                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
                 if (columnIndex == 0) {
                     return db.getUseForIngest();
                 } else {
@@ -242,7 +242,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
-                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
                 IndexStatus status = IndexStatus.NO_INDEX;
                 try {
                     status = db.getStatus();

@@ -45,7 +45,7 @@ import org.w3c.dom.NodeList;
  * that serve as hash sets for the identification of known files, known good files, 
  * and known bad files. 
  */
-public class HashDbXML {
+public class HashSetsManager {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
     private static final String SET_NAME_ATTR = "name";
@@ -59,105 +59,115 @@ public class HashDbXML {
     private static final String ENCODING = "UTF-8";
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
-    private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
-    private static HashDbXML instance;
-    private List<HashDb> knownBadSets = new ArrayList<>();
-    private HashDb nsrlSet;
-    private boolean alwaysCalculateHashes;
+    private static final Logger logger = Logger.getLogger(HashSetsManager.class.getName());
+    private static HashSetsManager instance;
     private String xmlFile = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
-    
+    private List<HashDb> knownBadHashSets = new ArrayList<>();
+    private HashDb nsrlHashSet;
+    private boolean alwaysCalculateHashes;
+        
     /**
      * Gets the singleton instance of this class.
      */
-    public static synchronized HashDbXML getInstance() {
+    public static synchronized HashSetsManager getInstance() {
         if (instance == null) {
-            instance = new HashDbXML();
-            instance.reload();
+            instance = new HashSetsManager();
         }
         return instance;
     }
 
-    private HashDbXML() {
+    private HashSetsManager() {
+        if (hashSetsConfigurationFileExists()) {
+            readHashSetsConfigurationFromDisk();            
+        }
     }
      
     /**
-     * Adds a hash database to the hash set configuration.
-     */
-    public void addSet(HashDb set) {
-        if (set.getKnownFilesType() == HashDb.KnownFilesType.NSRL) {
-            setNSRLSet(set);
-        }
-        else {
-            addKnownBadSet(set);
-        }
-    }
-    
-    /**
-     * Sets the configured National Software Reference Library (NSRL) known 
-     * files hash set. Does not save the configuration.
-     */
-    public void setNSRLSet(HashDb set) {
-        this.nsrlSet = set;
-    }
-
-    /** 
-     * Gets the configured National Software Reference Library (NSRL) known files hash set.
-     * @return A HashDb object representing the hash set or null if an NSRL set 
-     * has not been added to the configuration.
-     */
-    public HashDb getNSRLSet() {
-        return nsrlSet;
-    }
-
-    /** 
-     * Removes the configured National Software Reference Library (NSRL) known 
-     * files hash set. Does not save the configuration.
-     */
-    public void removeNSRLSet() {
-        this.nsrlSet = null;
-    }
-
-    /**
-     * Adds a known bad files hash set to the configuration. Does not save the
+     * Adds a hash set to the configuration as the designated National Software
+     * Reference Library (NSRL) hash set. Assumes that the hash set previously 
+     * designated as NSRL set, if any, is not being indexed. Does not save the 
      * configuration.
      */
-    public void addKnownBadSet(HashDb set) {
-        knownBadSets.add(set);
+    public void setNSRLHashSet(HashDb set) {
+        if (nsrlHashSet != null) {
+            // RJCTODO: When the closeHashDatabase() API exists, close the existing database
+        }
+        nsrlHashSet = set;
     }
-        
-    /**
-     * Adds a known bad files hash set to the configuration. The set is added to
-     * the internal known bad sets collection at the index specified by the 
-     * caller. Note that this method does not save the configuration.
+
+    /** 
+     * Gets the hash set from the configuration, if any, that is designated as 
+     * the National Software Reference Library (NSRL) hash set.
+     * @return A HashDb object representing the hash set or null.
      */
-    public void addKnownBadSet(int index, HashDb set) {
-        knownBadSets.add(index, set);
+    public HashDb getNSRLHashSet() {
+        return nsrlHashSet;
     }
+
+    /** 
+     * Removes the hash set designated as the National Software Reference 
+     * Library (NSRL) hash set from the configuration. Does not save the 
+     * configuration.
+     */
+    public void removeNSRLHashSet() {
+        if (nsrlHashSet != null) {
+            // RJCTODO: When the closeHashDatabase() API exists, close the existing database
+        }
+        nsrlHashSet = null;
+    }    
+    
+    /**
+     * Adds a hash set to the configuration as a known bad files hash set. Does 
+     * not check for duplication of sets and does not save the configuration.
+     */
+    public void addKnownBadHashSet(HashDb set) {
+        knownBadHashSets.add(set);
+    }        
         
     /** 
      * Gets the configured known bad files hash sets.
-     * @return A list, possibly empty, of HashDb objects representing the hash 
-     * sets.
+     * @return A list, possibly empty, of HashDb objects.
      */
-    public List<HashDb> getKnownBadSets() {
-        return Collections.unmodifiableList(knownBadSets);
+    public List<HashDb> getKnownBadHashSets() {
+        return Collections.unmodifiableList(knownBadHashSets);
     }
     
-    /** 
-     * Removes the known bad files hash set from the internal known bad files 
-     * hash sets collection at the specified index. Does not save the configuration.
+    /**
+     * Adds a hash set to the configuration. If the hash set is designated as 
+     * the National Software Reference Library (NSRL) hash set, it is assumed 
+     * the the hash set previously designated as the NSRL set, if any, is not 
+     * being indexed. Does not check for duplication of sets and does not save 
+     * the configuration.
      */
-    public void removeKnownBadSetAt(int index) {
-        knownBadSets.remove(index);
+    public void addHashSet(HashDb hashSet) {
+        if (hashSet.getKnownFilesType() == HashDb.KnownFilesType.NSRL) {
+            setNSRLHashSet(hashSet);
+        }
+        else {
+            addKnownBadHashSet(hashSet);
+        }
     }
-        
+    
+    /**
+     * Removes a hash set from the hash sets configuration.
+     */
+    public void removeHashSet(HashDb hashSetToRemove) {
+        if (nsrlHashSet != null && nsrlHashSet.equals(hashSetToRemove)) {
+            removeNSRLHashSet();          
+        }
+        else {
+            knownBadHashSets.remove(hashSetToRemove);
+            // RJCTODO: Close HashDb
+        }
+    } 
+            
    /**
      * Gets the configured known files hash sets that accept updates. 
      * @return A list, possibly empty, of HashDb objects. 
      */
     public List<HashDb> getUpdateableHashSets() {
         ArrayList<HashDb> updateableDbs = new ArrayList<>();
-        for (HashDb db : knownBadSets) {
+        for (HashDb db : knownBadHashSets) {
             try {
                 if (db.isUpdateable()) {
                     updateableDbs.add(db);
@@ -171,38 +181,55 @@ public class HashDbXML {
     }
 
     /**
-     * Gets all of the configured known files hash sets.
+     * Gets all of the configured hash sets.
      * @return A list, possibly empty, of HashDb objects representing the hash 
      * sets.
      */
-    public List<HashDb> getAllSets() {
+    public List<HashDb> getAllHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
-        if (nsrlSet != null) {
-            hashDbs.add(nsrlSet);
+        if (nsrlHashSet != null) {
+            hashDbs.add(nsrlHashSet);
         }
-        hashDbs.addAll(knownBadSets);
+        hashDbs.addAll(knownBadHashSets);
         return Collections.unmodifiableList(hashDbs);
     }
     
+    /** Gets the configured hash set, if any, with a given name.
+     * @return A HashDb object or null. 
+     */    
+    public HashDb getHashSetByName(String name) {
+        if (nsrlHashSet != null && nsrlHashSet.getDisplayName().equals(name)) {
+            return nsrlHashSet;
+        }
+        
+        for (HashDb hashSet : knownBadHashSets) {
+            if (hashSet.getDisplayName().equals(name)) {
+                return hashSet;
+            }
+        }
+        
+        return null;
+    }
+    
+//    public HashDb getHashSetAt(int index)
+    
+    // RJCTODO: Get rid of this
     /**
-     * Reloads the configuration file if it exists, creates it otherwise.
+     * Adds a hash set to the configuration as a known bad files hash set. The 
+     * set is added to the internal known bad sets collection at the index 
+     * specified by the caller. Does not save the configuration.
      */
-    public void reload() {
-        // TODO: This does not look like it is correct. Revisit when time permits.
-        boolean created = false;
-        
-        nsrlSet = null;
-        knownBadSets.clear();
-        
-        if (!setsFileExists()) {
-            save();
-            created = true;
-        }
+    public void addKnownBadSet(int index, HashDb set) {
+        knownBadHashSets.add(index, set);
+    }
 
-        load();
-        if (!created) {
-            save();
-        }
+    // RJCTODO: Get rid of this
+    /** 
+     * Removes the known bad files hash set from the internal known bad files 
+     * hash sets collection at the specified index. Does not save the configuration.
+     */
+    public void removeKnownBadSetAt(int index) {
+        knownBadHashSets.remove(index);
     }
     
     /**
@@ -222,12 +249,39 @@ public class HashDbXML {
     }
     
     /**
-     * Saves the known files hash sets configuration to disk. Note that the 
-     * configuration is only saved on demand to support cancellation of 
-     * configuration panels and dialogs.
+     * Saves the hash sets configuration. Note that the configuration is only 
+     * saved on demand to support cancellation of configuration panels.
      * @return True on success, false otherwise.
      */
     public boolean save() {
+        return writeHashSetConfigurationToDisk();
+    }
+
+    /**
+     * Restores the last saved hash sets configuration. This supports 
+     * cancellation of configuration panels.
+     */
+    public void loadLastSavedConfiguration() {
+        try {
+            SleuthkitJNI.closeHashDatabases();                    
+        }
+        catch (TskCoreException ex) {
+            // RJCTODO: Log
+        }
+        
+        nsrlHashSet = null;
+        knownBadHashSets.clear();        
+        if (hashSetsConfigurationFileExists()) {
+            readHashSetsConfigurationFromDisk();            
+        }
+    }
+        
+    private boolean hashSetsConfigurationFileExists() {
+        File f = new File(xmlFile);
+        return f.exists() && f.canRead() && f.canWrite();
+    }    
+        
+    private boolean writeHashSetConfigurationToDisk() {
         boolean success = false;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -240,7 +294,7 @@ public class HashDbXML {
             doc.appendChild(rootEl);
 
             // TODO: Remove all the multiple database paths stuff, it was a mistake. 
-            for (HashDb set : knownBadSets) {
+            for (HashDb set : knownBadHashSets) {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
                 String showInboxMessages = Boolean.toString(set.getShowInboxMessages());
                 List<String> paths = Collections.singletonList(set.getDatabasePath());
@@ -263,14 +317,14 @@ public class HashDbXML {
             }
             
             // TODO: Remove all the multiple database paths stuff. 
-            if(nsrlSet != null) {
-                String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
-                String showInboxMessages = Boolean.toString(nsrlSet.getShowInboxMessages());
-                List<String> paths = Collections.singletonList(nsrlSet.getDatabasePath());
+            if(nsrlHashSet != null) {
+                String useForIngest = Boolean.toString(nsrlHashSet.getUseForIngest());
+                String showInboxMessages = Boolean.toString(nsrlHashSet.getShowInboxMessages());
+                List<String> paths = Collections.singletonList(nsrlHashSet.getDatabasePath());
                 String type = KnownFilesType.NSRL.toString();
 
                 Element setEl = doc.createElement(SET_EL);
-                setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getDisplayName());
+                setEl.setAttribute(SET_NAME_ATTR, nsrlHashSet.getDisplayName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
                 setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, showInboxMessages);
@@ -290,16 +344,16 @@ public class HashDbXML {
             setCalc.setAttribute(SET_VALUE, calcValue);
             rootEl.appendChild(setCalc);
 
-            success = XMLUtil.saveDoc(HashDbXML.class, xmlFile, ENCODING, doc);
+            success = XMLUtil.saveDoc(HashSetsManager.class, xmlFile, ENCODING, doc);
         } 
         catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving hash sets: can't initialize parser.", e);
         }
-        return success;
+        return success;        
     }
-
-    private boolean load() {
-        final Document doc = XMLUtil.loadDoc(HashDbXML.class, xmlFile, XSDFILE);
+    
+    private boolean readHashSetsConfigurationFromDisk() {
+        final Document doc = XMLUtil.loadDoc(HashSetsManager.class, xmlFile, XSDFILE);
         if (doc == null) {
             return false;
         }
@@ -376,14 +430,14 @@ public class HashDbXML {
                 try {
                     HashDb db = HashDb.openHashDatabase(name, paths.get(0), useForIngestBool, showInboxMessagesBool, typeDBType);
                     if (typeDBType == KnownFilesType.NSRL) {
-                        setNSRLSet(db);
+                        setNSRLHashSet(db);
                     }
                     else {
-                        addKnownBadSet(db);
+                        addKnownBadHashSet(db);
                     }
                 }
                 catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbXML.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
+                    Logger.getLogger(HashSetsManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
                     JOptionPane.showMessageDialog(null, "Unable to open " + paths.get(0) + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -434,21 +488,5 @@ public class HashDbXML {
         }
         
         return filePath;
-    }
-
-    private boolean setsFileExists() {
-        File f = new File(xmlFile);
-        return f.exists() && f.canRead() && f.canWrite();
     }    
-    
-    /**
-     * Closes all open hash databases.
-     * @throws TskCoreException 
-     */
-    // TODO: Think about whether this should be exposed, and if so, where it should be exposed.
-    // The ability to add to hash databases implies that the databases should generally not be closed
-    // until removal or application exit.  
-    void closeHashDatabases() throws TskCoreException {
-        SleuthkitJNI.closeHashDatabases();
-    }            
 }

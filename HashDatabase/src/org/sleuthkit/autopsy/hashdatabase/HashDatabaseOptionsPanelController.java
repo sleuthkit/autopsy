@@ -36,7 +36,7 @@ id = "HashDatabase")
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
 
-    private HashDbManagementPanel panel;
+    private HashSetsConfigurationPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
@@ -55,7 +55,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     @Override
     public void cancel() {
         // Reset the XML on cancel
-        HashDbXML.getInstance().reload();
+        HashSetsManager.getInstance().loadLastSavedConfiguration();
     }
 
     @Override
@@ -88,9 +88,9 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
         pcs.removePropertyChangeListener(l);
     }
 
-    private HashDbManagementPanel getPanel() {
+    private HashSetsConfigurationPanel getPanel() {
         if (panel == null) {
-            panel = new HashDbManagementPanel();
+            panel = new HashSetsConfigurationPanel();
         }
         return panel;
     }

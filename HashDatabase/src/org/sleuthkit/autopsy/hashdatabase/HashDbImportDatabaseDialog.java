@@ -216,10 +216,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        File currentDir = new File(databasePathTextField.getText());
-        if (currentDir.exists()) {
-            fileChooser.setCurrentDirectory(currentDir);
-        }        
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -256,7 +252,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Database display name cannot be empty.");
             return;
         }
-
+        
         File file = new File(databasePathTextField.getText());
         if (!file.exists()) {
             JOptionPane.showMessageDialog(this, "Selected database does not exist.");
@@ -282,7 +278,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         
         try {
-            selectedHashDb = HashDb.openHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+            selectedHashDb = HashDb.openHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);
+            
+            
+//            if (!selectedHashDb.hasTextLookupIndexOnly())
+            
         } 
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Failed to open hash database at " + filePath, ex);

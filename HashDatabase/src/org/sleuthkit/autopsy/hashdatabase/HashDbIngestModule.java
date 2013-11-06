@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -68,7 +67,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<>();
-    private HashDbManagementPanel panel;
+    private HashSetsConfigurationPanel panel;
     private final Hash hasher = new Hash();
 
     private HashDbIngestModule() {
@@ -83,25 +82,40 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
+    public String getName() {
+        return MODULE_NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return MODULE_DESCRIPTION;
+    }
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+        
+    @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
-            HashDbXML hdbxml = HashDbXML.getInstance();
+            HashSetsManager hdbxml = HashSetsManager.getInstance();
             nsrlSet = null;
             knownBadSets.clear();
             nsrlIsSet = false;
             knownBadIsSet = false;
             calcHashesIsSet = hdbxml.shouldAlwaysCalculateHashes();
 
-            HashDb nsrl = hdbxml.getNSRLSet();
+            HashDb nsrl = hdbxml.getNSRLHashSet();
             if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.getStatus())) {
                 nsrlIsSet = true;
                 this.nsrlSet = nsrl;
                 nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePath());
             }
 
-            for (HashDb db : hdbxml.getKnownBadSets()) {
+            for (HashDb db : hdbxml.getKnownBadHashSets()) {
                 IndexStatus status = db.getStatus();
                 if (db.getUseForIngest() && IndexStatus.isIngestible(status)) {
                     knownBadIsSet = true;
@@ -144,51 +158,13 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
             detailsSb.append("</ul>");
             services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Lookup Results", detailsSb.toString()));
-            clearHashDatabaseHandles();
         }
-    }
-
-    private void clearHashDatabaseHandles() {
-        try {
-            HashDbXML.getInstance().closeHashDatabases();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error clearing hash database handles. ", ex);
-        }
-        this.nsrlIsSet = false;
-        this.knownBadIsSet = false;
     }
     
-    /**
-     * notification from manager to stop processing due to some interruption
-     * (user, error, exception)
-     */
     @Override
     public void stop() {
-        clearHashDatabaseHandles();
     }
-
-    /**
-     * get specific name of the module should be unique across modules, a
-     * user-friendly name of the module shown in GUI
-     *
-     * @return The name of this Ingest Module
-     */
-    @Override
-    public String getName() {
-        return MODULE_NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return MODULE_DESCRIPTION;
-    }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-
+    
     @Override
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile file) {
         //skip unalloc
@@ -217,7 +193,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
-        HashDbXML.getInstance().reload();
+        HashSetsManager.getInstance().loadLastSavedConfiguration();
         return new HashDbSimplePanel();
     }
 
@@ -233,16 +209,16 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         getPanel().store();
     }
 
-    private HashDbManagementPanel getPanel() {
+    private HashSetsConfigurationPanel getPanel() {
         if (panel == null) {
-            panel = new HashDbManagementPanel();
+            panel = new HashSetsConfigurationPanel();
         }
         return panel;
     }
 
     @Override
     public void saveSimpleConfiguration() {
-        HashDbXML.getInstance().save();
+        HashSetsManager.getInstance().save();
     }
 
     private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
@@ -378,8 +354,8 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     
     public ArrayList<String> getKnownBadSetNames() {
         ArrayList<String> knownBadSetNames = new ArrayList<>();
-        HashDbXML hdbxml = HashDbXML.getInstance();
-        for (HashDb db : hdbxml.getKnownBadSets()) {
+        HashSetsManager hdbxml = HashSetsManager.getInstance();
+        for (HashDb db : hdbxml.getKnownBadHashSets()) {
             knownBadSetNames.add(db.getDisplayName());
         }
         return knownBadSetNames;
