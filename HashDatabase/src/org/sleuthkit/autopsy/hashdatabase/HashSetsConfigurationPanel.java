@@ -27,9 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -145,7 +143,9 @@ final class HashSetsConfigurationPanel extends javax.swing.JPanel implements Opt
                     indexButton.setText("Index");
                     hashDbIndexStatusLabel.setForeground(Color.red);
                     indexButton.setEnabled(false);
+                    break;
                 case INDEXED:
+                    // TODO: Restore ability to re-index an indexed                    
                 case INDEX_ONLY:
                 default:
                     indexButton.setText("Index");
