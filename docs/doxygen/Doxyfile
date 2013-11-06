@@ -663,6 +663,7 @@ WARN_LOGFILE           =
 
 INPUT                  = main.dox \
                          workflow.dox \
+			 services.dox \
                          modContent.dox \
                          modDev.dox \
                          modIngest.dox \

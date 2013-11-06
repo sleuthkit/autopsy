@@ -40,10 +40,11 @@ abstract public class Extract extends IngestModuleDataSource{
     public final Logger logger = Logger.getLogger(this.getClass().getName());
     protected final ArrayList<String> errorMessages = new ArrayList<>();
     protected String moduleName = "";
+    protected boolean dataFound = false;
     
     //hide public constructor to prevent from instantiation by ingest module loader
     Extract() {
-        
+        dataFound = false;
     }
     
     /**
@@ -103,6 +104,7 @@ abstract public class Extract extends IngestModuleDataSource{
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
+            errorMessages.add(getName() + ": Failed to query database.");
             return Collections.<HashMap<String,Object>>emptyList();
         }
         return list;
@@ -141,5 +143,9 @@ abstract public class Extract extends IngestModuleDataSource{
      */
     public String getName() {
         return moduleName;
+    }
+    
+    public boolean foundData() {
+        return dataFound;
     }
 }

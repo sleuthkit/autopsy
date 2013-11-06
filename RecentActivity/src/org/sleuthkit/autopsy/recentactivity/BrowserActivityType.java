@@ -24,8 +24,9 @@ import java.util.Map;
 
 /**
  *
- * @author arivera
+ * No one seems to be using this
  */
+@Deprecated
 public enum BrowserActivityType {
    Cookies(0),
    Url(1),

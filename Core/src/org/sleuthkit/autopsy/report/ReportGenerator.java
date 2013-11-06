@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -77,13 +78,14 @@ public class ReportGenerator {
     
     private Map<TableReportModule, ReportProgressPanel> tableProgress;
     private Map<GeneralReportModule, ReportProgressPanel> generalProgress;
+    private Map<FileReportModule, ReportProgressPanel> fileProgress;
     
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
     static final String REPORTS_DIR = "Reports";
         
-    ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
+    ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
@@ -100,7 +102,8 @@ public class ReportGenerator {
         // Initialize the progress panels
         generalProgress = new HashMap<>();
         tableProgress = new HashMap<>();
-        setupProgressPanels(tableModuleStates, generalModuleStates);
+        fileProgress = new HashMap<>();
+        setupProgressPanels(tableModuleStates, generalModuleStates, fileListModuleStates);
     }
     
     /**
@@ -109,7 +112,7 @@ public class ReportGenerator {
      * @param tableModuleStates the enabled/disabled state of each TableReportModule
      * @param generalModuleStates the enabled/disabled state of each GeneralReportModule
      */
-    private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates) {
+    private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         if (null != tableModuleStates) {
             for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
                 if (entry.getValue()) {
@@ -124,6 +127,15 @@ public class ReportGenerator {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
                     generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                }
+            }
+        }
+        
+        if (null != fileListModuleStates) {
+            for(Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
+                if (entry.getValue()) {
+                    FileReportModule module = entry.getKey();
+                    fileProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
                 }
             }
         }
@@ -184,6 +196,25 @@ public class ReportGenerator {
     }
     
     /**
+     * Generate the FileReportModule reports in a new SwingWorker.
+     * 
+     * @param enabledInfo the Information that should be included about each file
+     * in the report.
+     */
+    public void generateFileListReports(Map<FileReportDataTypes, Boolean> enabledInfo) {
+        if (!fileProgress.isEmpty() && null != enabledInfo) {
+            List<FileReportDataTypes> enabled = new ArrayList<>();
+            for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
+                if(e.getValue()) {
+                    enabled.add(e.getKey());
+                }
+            }
+            FileReportsWorker worker = new FileReportsWorker(enabled);
+            worker.execute();
+        }
+    }
+    
+    /**
      * SwingWorker to generate a report on all GeneralReportModules.
      */
     private class GeneralWorker extends SwingWorker<Integer, Integer> {
@@ -199,6 +230,91 @@ public class ReportGenerator {
             return 0;
         }
         
+    }
+    
+    /**
+     * SwingWorker to generate a FileReport.
+     */
+    private class FileReportsWorker extends SwingWorker<Integer, Integer> {
+        private List<FileReportDataTypes> enabledInfo = Arrays.asList(FileReportDataTypes.values());
+        private List<FileReportModule> fileModules = new ArrayList<>();
+        
+        FileReportsWorker(List<FileReportDataTypes> enabled) {
+            enabledInfo = enabled;
+            for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
+                fileModules.add(entry.getKey());
+            }
+        }
+        
+        @Override
+        protected Integer doInBackground() throws Exception {
+            for (FileReportModule module : fileModules) {
+                ReportProgressPanel progress = fileProgress.get(module);
+                if (progress.getStatus() != ReportStatus.CANCELED) {
+                    progress.start();
+                    progress.updateStatusLabel("Querying database...");
+                }
+            }
+            
+            List<AbstractFile> files = getFiles();
+            int numFiles = files.size();
+            for (FileReportModule module : fileModules) {
+                module.startReport(reportPath);
+                module.startTable(enabledInfo);
+                fileProgress.get(module).setIndeterminate(false);
+                fileProgress.get(module).setMaximumProgress(numFiles);
+            }
+            
+            int i = 0;
+            // Add files to report.
+            for (AbstractFile file : files) {
+                // Check to see if any reports have been cancelled.
+                if (fileModules.isEmpty()) {
+                    break;
+                }
+                // Remove cancelled reports, add files to report otherwise.
+                Iterator<FileReportModule> iter = fileModules.iterator();
+                while (iter.hasNext()) {
+                    FileReportModule module = iter.next();
+                    ReportProgressPanel progress = fileProgress.get(module);
+                    if (progress.getStatus() == ReportStatus.CANCELED) {
+                        iter.remove();
+                    } else {
+                        module.addRow(file, enabledInfo);
+                        progress.increment();
+                    }
+                    
+                    if ((i % 100) == 0) {
+                        progress.updateStatusLabel("Now processing " + file.getName());
+                    }
+                }
+                i++;
+            }
+            
+            for (FileReportModule module : fileModules) {
+                module.endTable();
+                module.endReport();
+                fileProgress.get(module).complete();
+            }
+            
+            return 0;
+        }
+        
+        /**
+         * Get all files in the image.
+         * @return 
+         */
+        private List<AbstractFile> getFiles() {
+            List<AbstractFile> absFiles;
+            try {
+                SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+                absFiles = skCase.findAllFilesWhere("NOT meta_type = 2");
+                return absFiles;
+            } catch (TskCoreException ex) {
+                // TODO
+                return Collections.EMPTY_LIST;
+            }
+        }
     }
     
     /**
@@ -276,27 +392,16 @@ public class ReportGenerator {
                     continue;
                 }
 
-                // Otherwise setup the unsorted list of artifacts, to later be sorted
-                ArtifactComparator c = new ArtifactComparator();
-                List<Entry<BlackboardArtifact, List<BlackboardAttribute>>> unsortedArtifacts = new ArrayList<>();
-                try {
-                    // For every artifact of the current type, add it and it's attributes to a list
-                    for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
-                        try {
-                            unsortedArtifacts.add(new ArtifactEntry<BlackboardArtifact, List<BlackboardAttribute>>(artifact, skCase.getBlackboardAttributes(artifact)));
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex);
-                        }
-                    }
-                } 
-                catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex);
-                }
+                List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
                 
+                if (unsortedArtifacts.isEmpty()) {
+                    // Don't report on this artifact type if there are no results
+                    continue;
+                }
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
-                Collections.sort(unsortedArtifacts, c);
+                Collections.sort(unsortedArtifacts);
 
                 // Get the column headers appropriate for the artifact type.
                 /* @@@ BC: Seems like a better design here woudl be to have a method that 
@@ -310,11 +415,10 @@ public class ReportGenerator {
                     MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
-                                                                
-                // For every module start a new data type and table for the current artifact type.
+                
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
-                                
+
                     // This is a temporary workaround to avoid modifying the TableReportModule interface.
                     if (module instanceof ReportHTML) {
                         ReportHTML htmlReportModule = (ReportHTML)module;
@@ -332,21 +436,18 @@ public class ReportGenerator {
                     }
                 }
                 
-                boolean msgSent = false;
-                // Add a row to the table for every artifact of the current type that satisfies the tags filter, if any.
-                for (Entry<BlackboardArtifact, List<BlackboardAttribute>> artifactEntry : unsortedArtifacts) {                    
-                    // Get any tags associated with the artifact and apply the tags filter, if any.
-                    HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(artifactEntry.getKey());
-                    if (failsTagFilter(tags, tagNamesFilter)) {
-                        continue;
-                    }                    
+                boolean msgSent = false;    
+                for(ArtifactData artifactData : unsortedArtifacts) {
+                    HashSet<String> tags = artifactData.getTags();
+                    
                     String tagsList = makeCommaSeparatedList(tags);
                     
                     // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
+                        
                         // Get the row data for this type of artifact.
                         List<String> rowData; 
-                        rowData = getArtifactRow(artifactEntry, module);   
+                        rowData = getArtifactRow(artifactData, module);   
                         if (rowData == null) {
                             if (msgSent == false) {
                                 MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
@@ -355,8 +456,8 @@ public class ReportGenerator {
                             continue;
                         }
                         // Add the list of tag names if the artifact is not itself as tag.
-                        if (artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
-                            artifactEntry.getKey().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
+                        if (artifactData.getArtifact().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID() &&
+                            artifactData.getArtifact().getArtifactTypeID() != ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID())
                         {
                             rowData.add(tagsList);
                         }
@@ -364,7 +465,7 @@ public class ReportGenerator {
                         // This is a temporary workaround to avoid modifying the TableReportModule interface.
                         if (module instanceof ReportHTML) {
                             ReportHTML htmlReportModule = (ReportHTML)module;
-                            htmlReportModule.addRow(rowData, artifactEntry.getKey());
+                            htmlReportModule.addRow(rowData, artifactData.getArtifact());
                         }
                         else {      
                             module.addRow(rowData);
@@ -399,6 +500,35 @@ public class ReportGenerator {
         HashSet<String> filteredTags = new HashSet<>(tags);
         filteredTags.retainAll(tagsFilter);
         return filteredTags.isEmpty();
+    }
+    
+    /**
+     * Get a List of the artifacts and data of the given type that pass the given Tag Filter.
+     * 
+     * @param type The artifact type to get
+     * @param tagNamesFilter The tag names that should be included.
+     * @return a list of the filtered tags.
+     */
+    private List<ArtifactData> getFilteredArtifacts(ARTIFACT_TYPE type, HashSet<String> tagNamesFilter) {
+        List<ArtifactData> artifacts = new ArrayList<>();
+        try {
+             // For every artifact of the current type, add it and it's attributes to a list
+             for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
+                 HashSet<String> tags = Tags.getUniqueTagNamesForArtifact(artifact);
+                 if(failsTagFilter(tags, tagNamesFilter)) {
+                     continue;
+                 }
+                 try {
+                     artifacts.add(new ArtifactData(artifact, skCase.getBlackboardAttributes(artifact), tags));
+                 } catch (TskCoreException ex) {
+                     logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex);
+                 }
+             }
+         } 
+         catch (TskCoreException ex) {
+             logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex);
+         }
+        return artifacts;
     }
             
     /**
@@ -712,7 +842,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
                 break;
             case TSK_RECENT_OBJECT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Date/Time", "Source File"}));
                 break;
             case TSK_INSTALLED_PROG: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
@@ -857,10 +987,10 @@ public class ReportGenerator {
      * @return List<String> row values
      * @throws TskCoreException 
      */
-    private List<String> getArtifactRow(Entry<BlackboardArtifact, List<BlackboardAttribute>> entry, TableReportModule module) throws TskCoreException {
-        Map<Integer, String> attributes = getMappedAttributes(entry.getValue(), module);
+    private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) throws TskCoreException {
+        Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
         
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(entry.getKey().getArtifactTypeID());
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());
         
         switch (type) {
             case TSK_WEB_BOOKMARK:
@@ -869,7 +999,7 @@ public class ReportGenerator {
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                bookmark.add(getFileUniquePath(entry.getKey().getObjectID()));
+                bookmark.add(getFileUniquePath(artifactData.getObjectID()));
                 return bookmark;
             case TSK_WEB_COOKIE:
                 List<String> cookie = new ArrayList<>();
@@ -878,7 +1008,7 @@ public class ReportGenerator {
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
                 cookie.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                cookie.add(getFileUniquePath(entry.getKey().getObjectID()));
+                cookie.add(getFileUniquePath(artifactData.getObjectID()));
                 return cookie;
             case TSK_WEB_HISTORY:
                 List<String> history = new ArrayList<>();
@@ -887,7 +1017,7 @@ public class ReportGenerator {
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                history.add(getFileUniquePath(entry.getKey().getObjectID()));
+                history.add(getFileUniquePath(artifactData.getObjectID()));
                 return history;
             case TSK_WEB_DOWNLOAD:
                 List<String> download = new ArrayList<>();
@@ -895,25 +1025,26 @@ public class ReportGenerator {
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 download.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                download.add(getFileUniquePath(entry.getKey().getObjectID()));
+                download.add(getFileUniquePath(artifactData.getObjectID()));
                 return download;
             case TSK_RECENT_OBJECT:
                 List<String> recent = new ArrayList<>();
                 recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                recent.add(getFileUniquePath(entry.getKey().getObjectID()));
+                recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                recent.add(getFileUniquePath(artifactData.getObjectID()));
                 return recent;
             case TSK_INSTALLED_PROG:
                 List<String> installed = new ArrayList<>();
                 installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 installed.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                installed.add(getFileUniquePath(entry.getKey().getObjectID()));
+                installed.add(getFileUniquePath(artifactData.getObjectID()));
                 return installed;
             case TSK_DEVICE_ATTACHED:
                 List<String> devices = new ArrayList<>();
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                 devices.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                devices.add(getFileUniquePath(entry.getKey().getObjectID()));
+                devices.add(getFileUniquePath(artifactData.getObjectID()));
                 return devices;
             case TSK_WEB_SEARCH_QUERY:
                 List<String> search = new ArrayList<>();
@@ -921,7 +1052,7 @@ public class ReportGenerator {
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 search.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                search.add(getFileUniquePath(entry.getKey().getObjectID()));
+                search.add(getFileUniquePath(artifactData.getObjectID()));
                 return search;
             case TSK_METADATA_EXIF: 
                 List<String> exif = new ArrayList<>();
@@ -930,11 +1061,11 @@ public class ReportGenerator {
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                 exif.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                exif.add(getFileUniquePath(entry.getKey().getObjectID()));
+                exif.add(getFileUniquePath(artifactData.getObjectID()));
                 return exif;
             case TSK_TAG_FILE:
                 List<String> taggedFileRow = new ArrayList<>();
-                AbstractFile taggedFile = getAbstractFile(entry.getKey().getObjectID());
+                AbstractFile taggedFile = getAbstractFile(artifactData.getObjectID());
                 if (taggedFile != null) {
                     taggedFileRow.add(taggedFile.getUniquePath());
                 } else {
@@ -946,7 +1077,7 @@ public class ReportGenerator {
             case TSK_TAG_ARTIFACT:
                 List<String> taggedArtifactRow = new ArrayList<>();
                 String taggedArtifactType = "";
-                for (BlackboardAttribute attr : entry.getValue()) {
+                for (BlackboardAttribute attr : artifactData.getAttributes()) {
                     if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact taggedArtifact = getArtifact(attr.getValueLong());
                         if (taggedArtifact != null) {
@@ -958,7 +1089,7 @@ public class ReportGenerator {
                 taggedArtifactRow.add(taggedArtifactType);
                 taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID()));
                 taggedArtifactRow.add(attributes.get(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
-                AbstractFile sourceFile = getAbstractFile(entry.getKey().getObjectID());
+                AbstractFile sourceFile = getAbstractFile(artifactData.getObjectID());
                 if (sourceFile != null) {
                     taggedArtifactRow.add(sourceFile.getUniquePath());
                 } else {
@@ -973,7 +1104,7 @@ public class ReportGenerator {
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
                 contact.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
-                contact.add(getFileUniquePath(entry.getKey().getObjectID()));
+                contact.add(getFileUniquePath(artifactData.getObjectID()));
                 return contact;
              case TSK_MESSAGE:
                 List<String> message = new ArrayList<>();
@@ -986,7 +1117,7 @@ public class ReportGenerator {
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
                 message.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                message.add(getFileUniquePath(entry.getKey().getObjectID()));
+                message.add(getFileUniquePath(artifactData.getObjectID()));
                 return message;
               case TSK_CALLLOG:
                 List<String> call_log = new ArrayList<>();
@@ -994,7 +1125,7 @@ public class ReportGenerator {
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 call_log.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                call_log.add(getFileUniquePath(entry.getKey().getObjectID()));
+                call_log.add(getFileUniquePath(artifactData.getObjectID()));
                 return call_log;
               case TSK_CALENDAR_ENTRY:
                 List<String> calEntry = new ArrayList<>();
@@ -1003,21 +1134,21 @@ public class ReportGenerator {
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
                 calEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                calEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                calEntry.add(getFileUniquePath(artifactData.getObjectID()));
                 return calEntry;
               case TSK_SPEED_DIAL_ENTRY:
                 List<String> speedDialEntry = new ArrayList<String>();
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                 speedDialEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                speedDialEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                speedDialEntry.add(getFileUniquePath(artifactData.getObjectID()));
                 return speedDialEntry;
               case TSK_BLUETOOTH_PAIRING:
                 List<String> bluetoothEntry = new ArrayList<String>();
                 bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
                 bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                 bluetoothEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                bluetoothEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                bluetoothEntry.add(getFileUniquePath(artifactData.getObjectID()));
                 return bluetoothEntry;
               case TSK_GPS_TRACKPOINT:
                 List<String> gpsTrackpoint = new ArrayList<String>();
@@ -1027,7 +1158,7 @@ public class ReportGenerator {
                 gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                 gpsTrackpoint.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsTrackpoint.add(getFileUniquePath(entry.getKey().getObjectID()));
+                gpsTrackpoint.add(getFileUniquePath(artifactData.getObjectID()));
                 return gpsTrackpoint;
               case TSK_GPS_BOOKMARK:
                 List<String> gpsBookmarkEntry = new ArrayList<String>();
@@ -1037,7 +1168,7 @@ public class ReportGenerator {
                 gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                 gpsBookmarkEntry.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsBookmarkEntry.add(getFileUniquePath(entry.getKey().getObjectID()));
+                gpsBookmarkEntry.add(getFileUniquePath(artifactData.getObjectID()));
                 return gpsBookmarkEntry;
               case TSK_GPS_LAST_KNOWN_LOCATION:
                 List<String> gpsLastLocation = new ArrayList<String>();
@@ -1047,7 +1178,7 @@ public class ReportGenerator {
                 gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                 gpsLastLocation.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsLastLocation.add(getFileUniquePath(entry.getKey().getObjectID()));
+                gpsLastLocation.add(getFileUniquePath(artifactData.getObjectID()));
                 return gpsLastLocation;
               case TSK_GPS_SEARCH:
                 List<String> gpsSearch = new ArrayList<String>();
@@ -1057,7 +1188,7 @@ public class ReportGenerator {
                 gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                 gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                 gpsSearch.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                gpsSearch.add(getFileUniquePath(entry.getKey().getObjectID()));
+                gpsSearch.add(getFileUniquePath(artifactData.getObjectID()));
                 return gpsSearch;
               case TSK_SERVICE_ACCOUNT:
                 List<String> appAccount = new ArrayList<String>();
@@ -1071,13 +1202,13 @@ public class ReportGenerator {
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
                 appAccount.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
-                appAccount.add(getFileUniquePath(entry.getKey().getObjectID()));
+                appAccount.add(getFileUniquePath(artifactData.getObjectID()));
                 return appAccount;
              case TSK_TOOL_OUTPUT: 
                 List<String> row = new ArrayList<>();
                 row.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 row.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                row.add(getFileUniquePath(entry.getKey().getObjectID()));
+                row.add(getFileUniquePath(artifactData.getObjectID()));
                 return row; 
         }
         return null;
@@ -1144,51 +1275,44 @@ public class ReportGenerator {
     }
     
     /**
-     * Map.Entry for BlackboardArtifacts and lists of BlackboardAttributes.
-     * 
-     * @param <K> BlackboardArtifact
-     * @param <V> List<BlackboardAttribute>
+     * Container class that holds data about an Artifact to eliminate duplicate
+     * calls to the Sleuthkit database.
      */
-    private class ArtifactEntry<K, V> implements Map.Entry<BlackboardArtifact, List<BlackboardAttribute>> {
-        BlackboardArtifact artifact;
-        List<BlackboardAttribute> attributes;
+    private class ArtifactData implements Comparable<ArtifactData> {
+        private BlackboardArtifact artifact;
+        private List<BlackboardAttribute> attributes;
+        private HashSet<String> tags;
         
-        private ArtifactEntry(BlackboardArtifact artifact, List<BlackboardAttribute> attributes) {
+        ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
-            this.attributes = attributes;
+            this.attributes = attrs;
+            this.tags = tags;
         }
+        
+        public BlackboardArtifact getArtifact() { return artifact; }
+        
+        public List<BlackboardAttribute> getAttributes() { return attributes; }
+        
+        public HashSet<String> getTags() { return tags; }
+        
+        public long getArtifactID() { return artifact.getArtifactID(); }
+        
+        public long getObjectID() { return artifact.getObjectID(); }
 
         @Override
-        public BlackboardArtifact getKey() {
-            return artifact;
-        }
-
-        @Override
-        public List<BlackboardAttribute> getValue() {
-            return attributes;
-        }
-
-        @Override
-        public List<BlackboardAttribute> setValue(List<BlackboardAttribute> value) {
-            List<BlackboardAttribute> old = attributes;
-            attributes = value;
-            return old;
-        }
-    }
-    
-    /**
-     * Compares entries of BlackboardArtifacts and lists of BlackboardAttributes, sorting by
-     * the first attribute both artifacts have in common. If all attributes are the same, they are
-     * assumed duplicates, and they are sorted on artifact ID. Should only be used on artifacts
-     * of similar types.
-     */
-    private class ArtifactComparator implements Comparator<Entry<BlackboardArtifact, List<BlackboardAttribute>>> {
-        @Override
-        public int compare(Entry<BlackboardArtifact, List<BlackboardAttribute>> art1, Entry<BlackboardArtifact, List<BlackboardAttribute>> art2) {
+        /**
+         * Compares ArtifactData objects by the first attribute they have in
+         * common in their List<BlackboardAttribute>. 
+         * 
+         * If all attributes are the same, they are assumed duplicates and are
+         * compared by their artifact id. Should only be used with attributes
+         * of the same type.
+         */
+        public int compareTo(ArtifactData data) {
             // Get all the attributes for each artifact
             int size = ATTRIBUTE_TYPE.values().length;
-            Map<Integer, String> att1 = getMappedAttributes(art1.getValue());
-            Map<Integer, String> att2 = getMappedAttributes(art2.getValue());
+            Map<Integer, String> att1 = getMappedAttributes(this.attributes);
+            Map<Integer, String> att2 = getMappedAttributes(data.getAttributes());
             // Compare the attributes one-by-one looking for differences
             for(int i=0; i < size; i++) {
                 String a1 = att1.get(i);
@@ -1198,7 +1322,7 @@ public class ReportGenerator {
                 }
             }
             // If all attributes are the same, they're most likely duplicates so sort by artifact ID
-            return ((Long)art1.getKey().getArtifactID()).compareTo((Long)art2.getKey().getArtifactID());
+            return ((Long)this.getArtifactID()).compareTo((Long)data.getArtifactID());
         }
     }
 }

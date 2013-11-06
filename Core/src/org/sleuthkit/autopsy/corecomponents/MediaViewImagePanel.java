@@ -106,6 +106,15 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
 
     }
 
+    public void reset() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                fxImageView.setImage(null);
+            }
+        });
+    }
+    
     /**
      * Show image
      *

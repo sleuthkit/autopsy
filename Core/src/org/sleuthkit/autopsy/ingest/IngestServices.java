@@ -110,7 +110,8 @@ public class IngestServices {
 
     
     /**
-     * Fire module data event to notify registered module data event listeners
+     * Fire module data event to notify registered module data event listeners that there
+     * is new data of a given type from a module
      * @param moduleDataEvent module data event, encapsulating blackboard artifact data
      */
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
@@ -120,6 +121,7 @@ public class IngestServices {
     
      /**
      * Fire module content event to notify registered module content event listeners
+     * that there is new content (from ZIP file contents, carving, etc.)
      * @param moduleContentEvent module content event, encapsulating content changed
      */
     public void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {

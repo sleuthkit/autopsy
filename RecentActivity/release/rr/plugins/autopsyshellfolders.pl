@@ -48,7 +48,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("<shellfolders>");
-		::rptMsg("<time>".gmtime($key->get_timestamp())."</time>");
+		::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime>");
 		
 		my @vals = $key->get_list_of_values();
 		::rptMsg("<artifacts>");

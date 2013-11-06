@@ -372,7 +372,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); 
 
         try {
-            QueryResponse response = solrServer.query(q);
+            QueryResponse response = solrServer.query(q, METHOD.POST);
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIDStr);
             if (responseHighlightID == null) {

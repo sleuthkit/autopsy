@@ -310,7 +310,7 @@ public class ReportExcel implements TableReportModule {
 
     @Override
     public String getName() {
-        return "Excel";
+        return "Results - Excel";
     }
 
     @Override

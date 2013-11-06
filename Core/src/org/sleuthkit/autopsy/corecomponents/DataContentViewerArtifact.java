@@ -257,19 +257,15 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         outputViewPane.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
+        currentNode = null;
     }
             
     @Override
     public void setNode(Node selectedNode) {
-        // @@@ Remove this when the redundant setNode() calls problem is fixed.
         if (currentNode == selectedNode) {
             return;
         }
         currentNode = selectedNode;
-
-        // @@@ resetComponent() is currently a no-op due to the redundant setNode() calls problem.
-        // For now, do the reset here. Remove this when the redundant setNode() calls problem is fixed.
-        resetComponents();
                 
         // Make sure there is a node. Null might be passed to reset the viewer.
         if (selectedNode == null) {
@@ -308,8 +304,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public void resetComponent() {
-        // @@@ Restore this when the redundant setNode() calls problem is fixed.
-        // resetComponents();
+        resetComponents();
     }
     
     @Override

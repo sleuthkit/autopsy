@@ -51,7 +51,7 @@ sub pluginmain {
 		#::rptMsg($key_path);
 		#::rptMsg("");
 		::rptMsg("<uninstall>");
-		::rptMsg("<time>".gmtime($key->get_timestamp())."</time>");
+		::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime>");
 		::rptMsg("<artifacts>");
 		my %uninst;
 		my @subkeys = $key->get_list_of_subkeys();
@@ -73,9 +73,9 @@ sub pluginmain {
 	 			push(@{$uninst{$lastwrite}},$display);
 	 		}
 	 		foreach my $t (reverse sort {$a <=> $b} keys %uninst) {
-				#::rptMsg("<item name=\"". gmtime($t)."\">");
+				#::rptMsg("<item mtime=\"". gmtime($t)."\">");
 				foreach my $item (@{$uninst{$t}}) {
-					::rptMsg("<item name=\"". gmtime($t)."\">" .$item."</item>");
+					::rptMsg("<item mtime=\"". gmtime($t)."\">" .$item."</item>");
 				}
 				#::rptMsg("");
 			}

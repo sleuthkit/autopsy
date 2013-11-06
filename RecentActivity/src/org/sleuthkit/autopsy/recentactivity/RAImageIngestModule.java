@@ -23,11 +23,12 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -49,7 +50,8 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     private static int messageId = 0;
     private StringBuilder subCompleted = new StringBuilder();
     private ArrayList<Extract> modules;
-    final public static String MODULE_VERSION = "1.0";
+    private List<Extract> browserModules;
+    final public static String MODULE_VERSION = Version.getVersion();
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -77,7 +79,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
-                errors.add(module.getName() + "had errors -- see log");
+                errors.add(module.getName() + " had errors -- see log");
             }
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
@@ -106,6 +108,17 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
+        
+        StringBuilder historyMsg = new StringBuilder();
+        historyMsg.append("<p>Browser Data on ").append(dataSource.getName()).append(":<ul>\n");
+        for (Extract module : browserModules) {
+            historyMsg.append("<li>").append(module.getName());
+            historyMsg.append(": ").append((module.foundData()) ? " Found." : " Not Found.");
+            historyMsg.append("</li>");
+        }
+        historyMsg.append("</ul>");
+        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, dataSource.getName() + " - Browser Results", historyMsg.toString());
+        services.postMessage(inboxMsg);
     }
 
     @Override
@@ -139,6 +152,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     @Override
     public void init(IngestModuleInit initContext) {
         modules = new ArrayList<>();
+        browserModules = new ArrayList();
         logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 
@@ -150,9 +164,16 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
 
         modules.add(chrome);
         modules.add(firefox);
-        modules.add(registry);
         modules.add(iexplore);
+        // this needs to run after the web browser modules
         modules.add(SEUQA);
+        
+        // this runs last because it is slowest
+        modules.add(registry);
+        
+        browserModules.add(chrome);
+        browserModules.add(firefox);
+        browserModules.add(iexplore);
 
         for (Extract module : modules) {
             try {
