@@ -32,18 +32,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this class are used as a file ingest module configuration panel
  * by the known files hash set lookup file ingest module.
  */
-public class HashDbSimplePanel extends javax.swing.JPanel {    
+public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
     private HashTableModel knownBadTableModel;
     private HashDb nsrl;
 
-    public HashDbSimplePanel() {
+    public HashDbSimpleConfigPanel() {
         knownBadTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
     }
     
     private void reloadCalc() {
-        final HashSetsManager xmlHandle = HashSetsManager.getInstance();
+        final HashDbManager xmlHandle = HashDbManager.getInstance();
         final HashDb nsrlDb = xmlHandle.getNSRLHashSet();
         final boolean nsrlUsed = nsrlDb != null && nsrlDb.getUseForIngest()== true && nsrlDb.hasLookupIndex();
         final List<HashDb> knowns = xmlHandle.getKnownBadHashSets();
@@ -70,7 +70,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
     
     private void customizeComponents() {
-        final HashSetsManager xmlHandle = HashSetsManager.getInstance();
+        final HashDbManager xmlHandle = HashDbManager.getInstance();
         calcHashesButton.addActionListener( new ActionListener() {
 
             @Override
@@ -104,7 +104,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
 
     private void reloadSets() {
-        nsrl = HashSetsManager.getInstance().getNSRLHashSet();
+        nsrl = HashDbManager.getInstance().getNSRLHashSet();
 
         if (nsrl == null || nsrl.getUseForIngest() == false) {
             nsrlDbLabelVal.setText("Disabled");
@@ -144,13 +144,13 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         notableHashTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(notableHashTable);
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel1.text")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.jLabel1.text")); // NOI18N
 
-        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabel.text")); // NOI18N
+        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabel.text")); // NOI18N
 
-        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.calcHashesButton.text")); // NOI18N
+        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.calcHashesButton.text")); // NOI18N
 
-        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabelVal.text")); // NOI18N
+        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabelVal.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -199,7 +199,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
     private class HashTableModel extends AbstractTableModel {
         
-        private HashSetsManager xmlHandle = HashSetsManager.getInstance();
+        private HashDbManager xmlHandle = HashDbManager.getInstance();
         
         private void resync() {
             fireTableDataChanged();
@@ -253,7 +253,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(status)) {
                         db.setUseForIngest((Boolean) aValue);
                 } else {
-                        JOptionPane.showMessageDialog(HashDbSimplePanel.this, "Databases must be indexed before they can be used for ingest");
+                        JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Databases must be indexed before they can be used for ingest");
                 }
                 reloadSets();
             }

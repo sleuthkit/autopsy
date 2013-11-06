@@ -42,7 +42,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     List<HashDb> unindexed;
     HashDb toIndex;
-    HashSetsConfigurationPanel hdbmp;
+    HashDbConfigPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -53,7 +53,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed the list of unindexed databases to index.
      */
-    ModalNoButtons(HashSetsConfigurationPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
+    ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
         super(parent, "Indexing databases", true);
         this.unindexed = unindexed;
         this.toIndex = null;
@@ -68,7 +68,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed The unindexed database to index.
      */
-     ModalNoButtons(HashSetsConfigurationPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
+     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
         super(parent, "Indexing database", true);
         this.unindexed = null;
         this.toIndex = unindexed;

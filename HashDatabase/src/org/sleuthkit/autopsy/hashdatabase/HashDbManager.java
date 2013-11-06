@@ -45,7 +45,7 @@ import org.w3c.dom.NodeList;
  * that serve as hash sets for the identification of known files, known good files, 
  * and known bad files. 
  */
-public class HashSetsManager {
+public class HashDbManager {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
     private static final String SET_NAME_ATTR = "name";
@@ -59,8 +59,8 @@ public class HashSetsManager {
     private static final String ENCODING = "UTF-8";
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
-    private static final Logger logger = Logger.getLogger(HashSetsManager.class.getName());
-    private static HashSetsManager instance;
+    private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
+    private static HashDbManager instance;
     private String xmlFile = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private HashDb nsrlHashSet;
@@ -69,14 +69,14 @@ public class HashSetsManager {
     /**
      * Gets the singleton instance of this class.
      */
-    public static synchronized HashSetsManager getInstance() {
+    public static synchronized HashDbManager getInstance() {
         if (instance == null) {
-            instance = new HashSetsManager();
+            instance = new HashDbManager();
         }
         return instance;
     }
 
-    private HashSetsManager() {
+    private HashDbManager() {
         if (hashSetsConfigurationFileExists()) {
             readHashSetsConfigurationFromDisk();            
         }
@@ -344,7 +344,7 @@ public class HashSetsManager {
             setCalc.setAttribute(SET_VALUE, calcValue);
             rootEl.appendChild(setCalc);
 
-            success = XMLUtil.saveDoc(HashSetsManager.class, xmlFile, ENCODING, doc);
+            success = XMLUtil.saveDoc(HashDbManager.class, xmlFile, ENCODING, doc);
         } 
         catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving hash sets: can't initialize parser.", e);
@@ -353,7 +353,7 @@ public class HashSetsManager {
     }
     
     private boolean readHashSetsConfigurationFromDisk() {
-        final Document doc = XMLUtil.loadDoc(HashSetsManager.class, xmlFile, XSDFILE);
+        final Document doc = XMLUtil.loadDoc(HashDbManager.class, xmlFile, XSDFILE);
         if (doc == null) {
             return false;
         }
@@ -437,7 +437,7 @@ public class HashSetsManager {
                     }
                 }
                 catch (TskCoreException ex) {
-                    Logger.getLogger(HashSetsManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
                     JOptionPane.showMessageDialog(null, "Unable to open " + paths.get(0) + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
