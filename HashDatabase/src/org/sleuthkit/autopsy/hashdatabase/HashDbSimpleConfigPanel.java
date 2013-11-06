@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,49 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * HashDbSimplePanel.java
- *
- * Created on May 7, 2012, 10:38:26 AM
- */
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author dfickling
+ * Instances of this class are used as a file ingest module configuration panel
+ * by the known files hash set lookup file ingest module.
  */
-public class HashDbSimplePanel extends javax.swing.JPanel {
-    
-    private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
+public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
     private HashTableModel knownBadTableModel;
     private HashDb nsrl;
 
-    /** Creates new form HashDbSimplePanel */
-    public HashDbSimplePanel() {
+    public HashDbSimpleConfigPanel() {
         knownBadTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
     }
     
     private void reloadCalc() {
-        final HashDbXML xmlHandle = HashDbXML.getCurrent();
-        final HashDb nsrlDb = xmlHandle.getNSRLSet();
-        final boolean nsrlUsed = 
-                nsrlDb != null 
-                && nsrlDb.getUseForIngest()== true
-                && nsrlDb.indexExists();
-        final List<HashDb> knowns = xmlHandle.getKnownBadSets();
+        final HashDbManager xmlHandle = HashDbManager.getInstance();
+        final HashDb nsrlDb = xmlHandle.getNSRLHashSet();
+        final boolean nsrlUsed = nsrlDb != null && nsrlDb.getUseForIngest()== true && nsrlDb.hasLookupIndex();
+        final List<HashDb> knowns = xmlHandle.getKnownBadHashSets();
         final boolean knownExists = !knowns.isEmpty();
         boolean knownUsed = false;
         if (knownExists) {
@@ -70,31 +58,29 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             }
         }
         
-        if(! nsrlUsed
-                && ! knownUsed ) {
+        if (!nsrlUsed && !knownUsed ) {
             calcHashesButton.setEnabled(true);
             calcHashesButton.setSelected(true);
-            xmlHandle.setCalculate(true);
+            xmlHandle.setShouldAlwaysCalculateHashes(true);
         } else {
             calcHashesButton.setEnabled(false);
             calcHashesButton.setSelected(false);
-            xmlHandle.setCalculate(false);
+            xmlHandle.setShouldAlwaysCalculateHashes(false);
         }
     }
     
     private void customizeComponents() {
-        final HashDbXML xmlHandle = HashDbXML.getCurrent();
+        final HashDbManager xmlHandle = HashDbManager.getInstance();
         calcHashesButton.addActionListener( new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(calcHashesButton.isSelected()) {
-                    xmlHandle.setCalculate(true);
+                    xmlHandle.setShouldAlwaysCalculateHashes(true);
                 } else {
-                    xmlHandle.setCalculate(false);
+                    xmlHandle.setShouldAlwaysCalculateHashes(false);
                 }
-            }
-            
+            }            
         });
         
         notableHashTable.setModel(knownBadTableModel);
@@ -104,7 +90,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         //customize column witdhs
         final int width1 = jScrollPane1.getPreferredSize().width;
         notableHashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-        TableColumn column1 = null;
+        TableColumn column1;
         for (int i = 0; i < notableHashTable.getColumnCount(); i++) {
             column1 = notableHashTable.getColumnModel().getColumn(i);
             if (i == 0) {
@@ -117,6 +103,24 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         reloadSets();
     }
 
+    private void reloadSets() {
+        nsrl = HashDbManager.getInstance().getNSRLHashSet();
+
+        if (nsrl == null || nsrl.getUseForIngest() == false) {
+            nsrlDbLabelVal.setText("Disabled");
+        }
+        else if (nsrl.hasLookupIndex() == false) {
+            nsrlDbLabelVal.setText("Disabled (No index)");
+        }
+        else {
+            nsrlDbLabelVal.setText("Enabled");
+        }
+        
+        reloadCalc();
+        
+        knownBadTableModel.resync();
+    }
+        
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -140,13 +144,13 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         notableHashTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(notableHashTable);
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel1.text")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.jLabel1.text")); // NOI18N
 
-        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabel.text")); // NOI18N
+        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabel.text")); // NOI18N
 
-        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.calcHashesButton.text")); // NOI18N
+        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.calcHashesButton.text")); // NOI18N
 
-        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabelVal.text")); // NOI18N
+        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabelVal.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -193,29 +197,9 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     private javax.swing.JLabel nsrlDbLabelVal;
     // End of variables declaration//GEN-END:variables
 
-    private void reloadSets() {
-        nsrl = HashDbXML.getCurrent().getNSRLSet();
-
-        if (nsrl == null || nsrl.getUseForIngest() == false) {
-            nsrlDbLabelVal.setText("Disabled");
-        }
-        else if (nsrl.indexExists() == false) {
-            nsrlDbLabelVal.setText("Disabled (No index)");
-        }
-        else {
-            nsrlDbLabelVal.setText("Enabled");
-        }
-        
-        reloadCalc();
-        
-        knownBadTableModel.resync();
-    }
-    
-   
-
     private class HashTableModel extends AbstractTableModel {
         
-        private HashDbXML xmlHandle = HashDbXML.getCurrent();
+        private HashDbManager xmlHandle = HashDbManager.getInstance();
         
         private void resync() {
             fireTableDataChanged();
@@ -223,7 +207,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            int size = xmlHandle.getKnownBadSets().size();
+            int size = xmlHandle.getKnownBadHashSets().size();
             return size == 0 ? 1 : size;
         }
 
@@ -234,18 +218,18 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (xmlHandle.getKnownBadSets().isEmpty()) {
+            if (xmlHandle.getKnownBadHashSets().isEmpty()) {
                 if (columnIndex == 0) {
                     return "";
                 } else {
                     return "Disabled";
                 }
             } else {
-                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
                 if (columnIndex == 0) {
                     return db.getUseForIngest();
                 } else {
-                    return db.getName();
+                    return db.getDisplayName();
                 }
             }
         }
@@ -258,11 +242,18 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
-                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
-                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(db.status())) {
+                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
+                IndexStatus status = IndexStatus.NO_INDEX;
+                try {
+                    status = db.getStatus();
+                }
+                catch (TskCoreException ex) {
+                    // RJCTODO
+                }
+                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(status)) {
                         db.setUseForIngest((Boolean) aValue);
                 } else {
-                        JOptionPane.showMessageDialog(HashDbSimplePanel.this, "Databases must be indexed before they can be used for ingest");
+                        JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Databases must be indexed before they can be used for ingest");
                 }
                 reloadSets();
             }
@@ -272,6 +263,5 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-        
     }
 }

@@ -35,6 +35,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
@@ -210,6 +211,7 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(AddContentTagAction.getInstance());
                     actions.add(AddBlackboardArtifactTagAction.getInstance());
+                    actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
@@ -226,6 +228,7 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(AddContentTagAction.getInstance());
                     actions.add(AddBlackboardArtifactTagAction.getInstance());
+                    actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -242,6 +245,7 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(AddContentTagAction.getInstance());
                     actions.add(AddBlackboardArtifactTagAction.getInstance());
+                    actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
@@ -257,6 +261,7 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(AddContentTagAction.getInstance());
                     actions.add(AddBlackboardArtifactTagAction.getInstance());
+                    actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
@@ -273,6 +278,7 @@ public class DataResultFilterNode extends FilterNode {
                     actions.add(null); // creates a menu separator
                     actions.add(AddContentTagAction.getInstance());
                     actions.add(AddBlackboardArtifactTagAction.getInstance());
+                    actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
 

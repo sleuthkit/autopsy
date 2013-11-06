@@ -42,7 +42,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     List<HashDb> unindexed;
     HashDb toIndex;
-    HashDbManagementPanel hdbmp;
+    HashDbConfigPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -53,7 +53,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed the list of unindexed databases to index.
      */
-    ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
+    ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
         super(parent, "Indexing databases", true);
         this.unindexed = unindexed;
         this.toIndex = null;
@@ -68,7 +68,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed The unindexed database to index.
      */
-     ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
+     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
         super(parent, "Indexing database", true);
         this.unindexed = null;
         this.toIndex = unindexed;
@@ -203,7 +203,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      */
     private void indexThis() {
         this.INDEXING_PROGBAR.setIndeterminate(true);
-        currentDb = this.toIndex.getName();
+        currentDb = this.toIndex.getDisplayName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
         this.length = 1;
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
@@ -224,7 +224,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         length = this.unindexed.size();
         this.INDEXING_PROGBAR.setIndeterminate(true);
         for (HashDb db : this.unindexed) {
-            currentDb = db.getName();
+            currentDb = db.getDisplayName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
             this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
             if (!db.isIndexing()) {
@@ -250,7 +250,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * Displays the current count of indexing when one is completed, or kills this dialog if all indexing is complete.
      */
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.name())) {
+        if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
             if (currentcount >= length) {
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -77,6 +78,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
+        actions.addAll(ContextMenuExtensionPoint.getActions());        
         return actions.toArray(new Action[0]);
     }
 

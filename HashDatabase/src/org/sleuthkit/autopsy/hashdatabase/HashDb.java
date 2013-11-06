@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,285 +20,248 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.util.List;
-import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Cancellable;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
- * Hash database representation of NSRL and Known Bad hash databases
- * with indexing capability
- * 
+ * Instances of this class represent the hash databases underlying known files 
+ * hash sets. 
  */
 public class HashDb implements Comparable<HashDb> {
-
-    enum EVENT {INDEXING_DONE };
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    public enum Event {
+        INDEXING_DONE
+    }
     
-    
-    public enum DBType{
-        NSRL("NSRL"), KNOWN_BAD("Known Bad");
+    public enum KnownFilesType{
+        NSRL("NSRL"), 
+        KNOWN_BAD("Known Bad");
         
         private String displayName;
         
-        private DBType(String displayName) {
+        private KnownFilesType(String displayName) {
             this.displayName = displayName;
         }
         
-        public String getDisplayName() {
+        String getDisplayName() {
             return this.displayName;
         }
     }
     
-    // Suffix added to the end of a database name to get its index file
-    private static final String INDEX_SUFFIX = "-md5.idx";
+    /**
+     * Opens an existing hash database. 
+     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the hash database should be used during ingest.
+     * @param showInboxMessages A flag indicating whether hash set hit messages should be sent to the application inbox.
+     * @param knownType The known files type of the database. 
+     * @return A HashDb object representation of the new hash database.
+     * @throws TskCoreException 
+     */
+    public static HashDb openHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownType) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+    }
     
-    private String name;
-    private List<String> databasePaths; // TODO: Length limited to one for now...
+    /**
+     * Creates a new hash database. 
+     * @param hashSetName Name used to represent the database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
+     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
+     * @param knownType The known files type of the database. 
+     * @return A HashDb object representation of the opened hash database.
+     * @throws TskCoreException 
+     */
+    public static HashDb createHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) throws TskCoreException {
+        return new HashDb(SleuthkitJNI.createHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, type);
+    }    
+    
+    private static final String INDEX_FILE_EXTENSION = ".kdb";
+    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
+    
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);    
+    private String displayName;
+    private String databasePath;
     private boolean useForIngest;
     private boolean showInboxMessages;
+    private KnownFilesType type;
+    private int handle;
     private boolean indexing;
-    private DBType type;
     
-    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
-        this.name = name;
-        this.databasePaths = databasePaths;
+    HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) {
+        this.displayName = name;
+        this.databasePath = databasePath;
         this.useForIngest = useForIngest;
         this.showInboxMessages = showInboxMessages;
         this.type = type;
+        this.handle = handle;
         this.indexing = false;
     }
-    
+
+    @Override
+    public int compareTo(HashDb o) {
+        return this.displayName.compareTo(o.displayName);
+    }
+        
     void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
+        propertyChangeSupport.addPropertyChangeListener(pcl);
     }
     
     void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
+        propertyChangeSupport.removePropertyChangeListener(pcl);
+    }
+
+    String getDisplayName() {
+        return displayName;
     }
     
+    String getDatabasePath() {
+        return databasePath;
+    }
+    
+    KnownFilesType getKnownFilesType() {
+        return type;
+    }
+        
     boolean getUseForIngest() {
         return useForIngest;
     }
-    
-    boolean getShowInboxMessages() {
-        return showInboxMessages;
-    }
-    
-    DBType getDbType() {
-        return type;
-    }
-    
-    String getName() {
-        return name;
-    }
-    
-    List<String> getDatabasePaths() {
-        return databasePaths;
-    }
-    
+
     void setUseForIngest(boolean useForIngest) {
         this.useForIngest = useForIngest;
+    }
+        
+    boolean getShowInboxMessages() {
+        return showInboxMessages;
     }
     
     void setShowInboxMessages(boolean showInboxMessages) {
         this.showInboxMessages = showInboxMessages;
     }
-    
-    void setName(String name) {
-        this.name = name;
-    }
-    
-    void setDatabasePaths(List<String> databasePaths) {
-        this.databasePaths = databasePaths;
-    }
-    
-    void setDbType(DBType type) {
-        this.type = type;
-    }
-    
-    /**
-     * Checks if the database exists.
-     * @return true if a file exists at the database path, else false
-     */
-    boolean databaseExists() {
-        return databaseFile().exists();
-    }
-    
-    /**
-     * Checks if Sleuth Kit can open the index for the database path.
-     * @return true if the index was found and opened successfully, else false
-     */
-    boolean indexExists() {
+        
+    boolean hasLookupIndex() {
         try {
-            return hasIndex(databasePaths.get(0)); // TODO: support multiple paths
-        } catch (TskException ex) {
-            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error checking if index exists.", ex);
+            return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
+        }
+        catch (TskCoreException ex) {
+            // RJCTODO
             return false;
         }
     }
-
-    /**
-     * Gets the database file.
-     * @return a File initialized with the database path
-     */
-    File databaseFile() {
-        return new File(databasePaths.get(0)); // TODO: support multiple paths
+        
+    boolean hasTextLookupIndexOnly() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
     /**
-     * Gets the index file
-     * @return a File initialized with an index path derived from the database
-     * path
+     * Indicates whether the hash database accepts updates.
+     * @return True if the database accepts updates, false otherwise.
      */
-    File indexFile() {
-        return new File(toIndexPath(databasePaths.get(0))); // TODO: support multiple paths
-    }
-
-    /**
-     * Checks if the index file is older than the database file
-     * @return true if there is are files at the index path and the database
-     * path, and the index file has an older modified-time than the database
-     * file, else false
-     */
-    boolean isOutdated() {
-        File i = indexFile();
-        File db = databaseFile();
-
-        return i.exists() && db.exists() && isOlderThan(i, db);
+    public boolean isUpdateable() throws TskCoreException {
+        return SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
     }
     
     /**
-     * Checks if the database is being indexed
+     * Adds hashes of content (if calculated) to the hash database. 
+     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * @throws TskCoreException 
      */
-    boolean isIndexing() {
-        return indexing;
-    }
-
-    /**
-     * Returns the status of the HashDb as determined from indexExists(),
-     * databaseExists(), and isOutdated()
-     * @return IndexStatus enum according to their definitions
-     */
-    IndexStatus status() {
-        boolean i = this.indexExists();
-        boolean db = this.databaseExists();
-
-        if(indexing)
-            return IndexStatus.INDEXING;
-        if (i) {
-            if (db) {
-                return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
-            } else {
-                return IndexStatus.NO_DB;
+    public void add(Content content) throws TskCoreException {
+        // TODO: This only works for AbstractFiles at present. Change when Content
+        // can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
             }
-        } else {
-            return db ? IndexStatus.NO_INDEX : IndexStatus.NONE;
         }
     }
-
+        
+     public TskData.FileKnown lookUp(Content content) throws TskCoreException {         
+        TskData.FileKnown result = TskData.FileKnown.UKNOWN; 
+         // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                if (type == KnownFilesType.NSRL) {
+                    result = SleuthkitJNI.lookupInNSRLDatabase(file.getMd5Hash());
+                }
+                else {
+                    result = SleuthkitJNI.lookupInHashDatabase(file.getMd5Hash(), handle);
+                }
+            }
+        }         
+        return result;
+     }
+        
     /**
-     * Tries to index the database (overwrites any existing index)
-     * @throws TskException if an error occurs in the SleuthKit bindings 
-     */
-    void createIndex() throws TskException {
-        indexing = true;
-        CreateIndex creator = new CreateIndex();
-        creator.execute();
-    }
-
-    /**
-     * Checks if one file is older than an other
-     * @param a first file
-     * @param b second file
-     * @return true if the first file's last modified data is before the second
-     * file's last modified date
-     */
-    private static boolean isOlderThan(File a, File b) {
-        return a.lastModified() < b.lastModified();
-    }
-
-    /**
-     * Determines if a path points to an index by checking the suffix
-     * @param path
-     * @return true if index
-     */
-    static boolean isIndexPath(String path) {
-        return path.endsWith(INDEX_SUFFIX);
-    }
-
-    /**
-     * Derives database path from an image path by removing the suffix.
-     * @param indexPath
-     * @return 
-     */
-    static String toDatabasePath(String indexPath) {
-        return indexPath.substring(0, indexPath.lastIndexOf(INDEX_SUFFIX));
-    }
-
-    /**
-     * Derives image path from an database path by appending the suffix.
+     * Derives index path from an database path by appending the suffix.
      * @param databasePath
      * @return 
      */
     static String toIndexPath(String databasePath) {
-        return databasePath.concat(INDEX_SUFFIX);
+        return databasePath.concat(INDEX_FILE_EXTENSION);
+    }
+            
+    boolean isIndexing() {
+        return indexing;
     }
 
-    /**
-     * Calls Sleuth Kit method via JNI to determine whether there is an
-     * index for the given path
-     * @param databasePath path Path for the database the index is of
-     * (database doesn't have to actually exist)'
-     * @return true if index exists
-     * @throws TskException if  there is an error in the JNI call 
-     */
-    static boolean hasIndex(String databasePath) throws TskException {
-        return SleuthkitJNI.lookupIndexExists(databasePath);
+    IndexStatus getStatus() throws TskCoreException {
+        IndexStatus status = IndexStatus.NO_INDEX;
+        
+        if (indexing) {
+            status = IndexStatus.INDEXING;
+        }
+        else if (hasLookupIndex()) {
+            if (hasTextLookupIndexOnly()) {
+                status = IndexStatus.INDEX_ONLY;
+            }
+            else {
+                status = IndexStatus.INDEXED;
+            }
+        }
+        
+        return status;        
     }
-    
-    @Override
-    public int compareTo(HashDb o) {
-        return this.name.compareTo(o.name);
+
+    // Tries to index the database (overwrites any existing index) using a 
+    // SwingWorker.
+    void createIndex() throws TskCoreException {
+        CreateIndex creator = new CreateIndex();
+        creator.execute();
     }
-    
-    /* Thread that creates a database's index */
+
     private class CreateIndex extends SwingWorker<Object,Void> {
-
         private ProgressHandle progress;
         
-        CreateIndex(){};
+        CreateIndex() {
+        };
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Indexing " + name);
-
-        /** We need proper cancel support in TSK to make the task cancellable
-         new Cancellable() {
-                Override
-                public boolean cancel() {
-                    return CreateIndex.this.cancel(true);
-                }
-            });
-            */
+            indexing = true;
+            progress = ProgressHandleFactory.createHandle("Indexing " + displayName);
             progress.start();
             progress.switchToIndeterminate();
-            SleuthkitJNI.createLookupIndex(databasePaths.get(0));
+            SleuthkitJNI.createLookupIndexForHashDatabase(handle); // RJCTODO: There is nobody to catch, fix this.
             return null;
         }
 
-        /* clean up or start the worker threads */
         @Override
         protected void done() {
             indexing = false;
             progress.finish();
-            pcs.firePropertyChange(EVENT.INDEXING_DONE.toString(), null, name);
+            propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, displayName);
         }
     }
 }
