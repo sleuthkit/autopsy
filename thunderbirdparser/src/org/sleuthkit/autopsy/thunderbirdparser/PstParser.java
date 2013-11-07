@@ -62,7 +62,7 @@ public class PstParser {
             processFolder(pstFile.getRootFolder(), "\\", true);
             return true;
         } catch (PSTException | IOException ex) {
-            String msg = "Failed to create internal java-libpst PST file to parse" + ex.getMessage();
+            String msg = "Failed to create internal java-libpst PST file to parse: " + ex.getMessage();
             logger.log(Level.WARNING, msg);
             return false;
         }
