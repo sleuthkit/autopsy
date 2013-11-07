@@ -108,27 +108,27 @@ public class HashDb implements Comparable<HashDb> {
         return this.displayName.compareTo(o.displayName);
     }
         
-    void addPropertyChangeListener(PropertyChangeListener pcl) {
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
         propertyChangeSupport.addPropertyChangeListener(pcl);
     }
     
-    void removePropertyChangeListener(PropertyChangeListener pcl) {
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
         propertyChangeSupport.removePropertyChangeListener(pcl);
     }
 
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName;
     }
     
-    String getDatabasePath() {
+    public String getDatabasePath() {
         return databasePath;
     }
     
-    KnownFilesType getKnownFilesType() {
+    public KnownFilesType getKnownFilesType() {
         return type;
     }
         
-    boolean getUseForIngest() {
+    public boolean getUseForIngest() {
         return useForIngest;
     }
 
@@ -136,7 +136,7 @@ public class HashDb implements Comparable<HashDb> {
         this.useForIngest = useForIngest;
     }
         
-    boolean getShowInboxMessages() {
+    public boolean getShowInboxMessages() {
         return showInboxMessages;
     }
     
@@ -144,7 +144,7 @@ public class HashDb implements Comparable<HashDb> {
         this.showInboxMessages = showInboxMessages;
     }
         
-    boolean hasLookupIndex() {
+    public boolean hasLookupIndex() {
         try {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
         }
@@ -154,7 +154,7 @@ public class HashDb implements Comparable<HashDb> {
         }
     }
         
-    boolean hasTextLookupIndexOnly() throws TskCoreException {
+    public boolean hasTextLookupIndexOnly() throws TskCoreException {
         return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
@@ -208,6 +208,7 @@ public class HashDb implements Comparable<HashDb> {
      * @param databasePath
      * @return 
      */
+     // RJCTODO: Thought I got rid of this...
     static String toIndexPath(String databasePath) {
         return databasePath.concat(INDEX_FILE_EXTENSION);
     }
@@ -216,7 +217,7 @@ public class HashDb implements Comparable<HashDb> {
         return indexing;
     }
 
-    IndexStatus getStatus() throws TskCoreException {
+    public IndexStatus getStatus() throws TskCoreException {
         IndexStatus status = IndexStatus.NO_INDEX;
         
         if (indexing) {
