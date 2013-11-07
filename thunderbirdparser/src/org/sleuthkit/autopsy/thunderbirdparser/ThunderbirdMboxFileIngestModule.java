@@ -18,19 +18,26 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import com.pff.PSTException;
+import com.pff.PSTMessage;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -106,10 +113,21 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.WARNING, null, ex);
         }
         
-        if (isMbox == false) {
-            return ProcessResult.OK;
+        if (isMbox) {
+            return processMBox(abstractFile);
         }
-
+        
+        int extIndex = abstractFile.getName().lastIndexOf(".");
+        String ext = (extIndex == -1 ? "" : abstractFile.getName().substring(extIndex));
+        if (ext.equals(".pst")) {
+            // TODO: better way to figure out if its a pst?
+            return processPst(abstractFile);
+        }
+        
+        return ProcessResult.OK;
+    }
+    
+    private ProcessResult processMBox(AbstractFile abstractFile) {
         logger.log(Level.INFO, "ThunderbirdMboxFileIngestModule: Parsing {0}", abstractFile.getName());
 
         String mboxFileName = abstractFile.getName();
@@ -232,6 +250,153 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         return ProcessResult.OK;
     }
 
+    /**
+     * Processes a pst/ost data file and extracts and adds email artifacts.
+     * 
+     * @param abstractFile The pst/ost data file to process.
+     * @return 
+     */
+    private ProcessResult processPst(AbstractFile abstractFile) {
+        String fileName = getTempPath() + File.separator + abstractFile.getName()
+                + "-" + String.valueOf(abstractFile.getId());
+        File file = new File(fileName);
+        
+        if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
+            logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
+            // TODO isn't there a skipped? shouldn't there be?
+            return ProcessResult.OK;
+        }
+        try {
+            ContentUtils.writeToFile(abstractFile, file);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed writing pst file to disk.", ex);
+            return ProcessResult.OK;
+        }
+        
+        PstParser parser = new PstParser();
+        if (parser.parse(file) == false) {
+            // TODO Add error message somehow?
+            logger.log(Level.INFO, "PSTParser failed to parse " + abstractFile.getName());
+            return ProcessResult.ERROR;
+        }
+        
+        for (Entry<PSTMessage, String> emailInfo : parser.getResults().entrySet()) {
+            addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
+        }
+        
+        if (parser.getResults().isEmpty() == false) {
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+        }
+        
+        if (file.delete() == false) {
+            logger.log(Level.INFO, "Failed to delete temp file: " + file.getName());
+        }
+
+        return ProcessResult.OK;
+    }
+    
+    /**
+     * Add an artifact to the AbstractFile representing the email message
+     * retrieved from an outlook data file.
+     * 
+     * @param abstractFile The outlook data file.
+     * @param email The email message.
+     * @param localPath The path to the email message within the data files directory structure.
+     * @return true if the artifact was created and added successfully.
+     */
+    private boolean addPstArtifact(AbstractFile abstractFile, PSTMessage email, String localPath) {
+        List<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        String to = email.getDisplayTo();
+        String cc = email.getDisplayCC();
+        String bcc = email.getDisplayBCC();
+        String from = getPstFromAttr(email.getSenderName(), email.getSenderEmailAddress());
+        Date date = email.getMessageDeliveryTime();
+        long dateL = ((date == null) ? -1 : date.getTime() / 1000);
+        String body = email.getBody();
+        String bodyHTML = email.getBodyHTML();
+        String rtf = "";
+        try {
+             rtf = email.getRTFBody();
+        } catch (PSTException | IOException ex) {
+            logger.log(Level.INFO, "Failed to get RTF content from pst email.");
+        }
+        String subject = email.getSubject();
+        
+        if (to.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), MODULE_NAME, to));
+        }
+        if (cc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), MODULE_NAME, cc));
+        }
+        if (bcc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), MODULE_NAME, bcc));
+        }
+        if (from.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), MODULE_NAME, from));
+        }
+        if (dateL > 0) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), MODULE_NAME, dateL));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), MODULE_NAME, dateL));
+        }
+        if (body.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), MODULE_NAME, body));
+        }
+        if (bodyHTML.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), MODULE_NAME, bodyHTML));
+        }
+        if (rtf.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID(), MODULE_NAME, rtf));
+        }
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), MODULE_NAME, email.getDescriptorNodeId()));
+        if (subject.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), MODULE_NAME, subject));
+        }
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), MODULE_NAME, localPath));
+        
+        try {
+            BlackboardArtifact bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
+            bbart.addAttributes(bbattributes);
+            return true;
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, null, ex);
+            return false;
+        }
+    }
+    
+    /**
+     * Helper to format the "From" attribute nicely.
+     * @param name Sender's Name
+     * @param addr Sender's Email address
+     * @return 
+     */
+    private String getPstFromAttr(String name, String addr) {
+        if (name.isEmpty() && addr.isEmpty()) {
+            return "";
+        } else if (name.isEmpty()) {
+            return addr;
+        } else if (addr.isEmpty()) {
+            return name;
+        } else {
+            return name + ": " + addr;
+        }
+     }
+    
+    /**
+     * Get a path to a temporary folder.
+     * @return 
+     */
+    private static String getTempPath() {
+        String tmpDir = Case.getCurrentCase().getTempDirectory() + File.separator
+                + "EmailParser";
+        File dir = new File(tmpDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpDir;
+    }
+    
+    
     @Override
     public void complete() {
     }
@@ -243,7 +408,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public String getDescription() {
-        return "This module detects and parses mbox Thunderbird files and populates email artifacts in the blackboard.";
+        return "This module detects and parses mbox and pst/ost files and populates email artifacts in the blackboard.";
     }
 
     @Override

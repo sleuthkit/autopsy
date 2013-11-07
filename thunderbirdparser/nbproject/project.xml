@@ -26,6 +26,10 @@
                 </dependency>
             </module-dependencies>
             <public-packages/>
+            <class-path-extension>
+                <runtime-relative-path>ext/java-libpst-1.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-1.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
