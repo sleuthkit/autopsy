@@ -99,6 +99,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 "Source File",
                 NO_DESCR,
                 associated.getName()));
+        
+        String sourceName = "";
+        try {
+            sourceName = associated.getImage().getName();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to get image.");
+        }
+        
+        if (sourceName.isEmpty() == false) {
+            ss.put(new NodeProperty("Data Source", "Data Source", 
+                    NO_DESCR, sourceName));
+        }
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty(entry.getKey(),
