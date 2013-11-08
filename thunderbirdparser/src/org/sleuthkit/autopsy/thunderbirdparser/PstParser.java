@@ -74,7 +74,7 @@ public class PstParser {
             logger.log(Level.WARNING, msg);
             return ParseResult.ERROR;
         } catch (IllegalArgumentException ex) {
-            logger.log(Level.INFO, "");
+            logger.log(Level.INFO, "Found encrypted PST file.");
             return ParseResult.ENCRYPT;
         }
     }
