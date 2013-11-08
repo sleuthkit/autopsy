@@ -119,7 +119,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         int extIndex = abstractFile.getName().lastIndexOf(".");
         String ext = (extIndex == -1 ? "" : abstractFile.getName().substring(extIndex));
-        if (ext.equals(".pst")) {
+//        if (ext.equals(".pst")) {
+        if (PstParser.isPstFile(abstractFile)) {
             // TODO: better way to figure out if its a pst?
             return processPst(abstractFile);
         }
@@ -274,18 +275,29 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         }
         
         PstParser parser = new PstParser();
-        if (parser.parse(file) == false) {
+        PstParser.ParseResult result = parser.parse(file);
+        if (result == PstParser.ParseResult.ERROR) {
             // TODO Add error message somehow?
             logger.log(Level.INFO, "PSTParser failed to parse " + abstractFile.getName());
             return ProcessResult.ERROR;
         }
         
-        for (Entry<PSTMessage, String> emailInfo : parser.getResults().entrySet()) {
-            addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
-        }
-        
-        if (parser.getResults().isEmpty() == false) {
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+        if (result == PstParser.ParseResult.OK) {
+            for (Entry<PSTMessage, String> emailInfo : parser.getResults().entrySet()) {
+                addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
+            }
+
+            if (parser.getResults().isEmpty() == false) {
+                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+            }
+        } else {
+            try {
+                BlackboardArtifact generalInfo = abstractFile.getGenInfoArtifact();
+                generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
+                        MODULE_NAME, "File-level Encryption"));
+            } catch (TskCoreException ex) {
+                logger.log(Level.INFO, "Failed to add encryption attribute to file: " + abstractFile.getName());
+            }
         }
         
         if (file.delete() == false) {

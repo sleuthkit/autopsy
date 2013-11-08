@@ -23,14 +23,16 @@ import com.pff.PSTFile;
 import com.pff.PSTFolder;
 import com.pff.PSTMessage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Parser for extracting emails from  pst/ost Mircosoft Outlook data files.
@@ -39,6 +41,7 @@ import java.util.logging.Logger;
  */
 public class PstParser {
     private static final Logger logger = Logger.getLogger(PstParser.class.getName());
+    private static int PST_HEADER = 0x2142444E;
     
     /**
      * A map of PSTMessages to their Local path within the file's internal 
@@ -50,21 +53,29 @@ public class PstParser {
         results = new HashMap<>();
     }
     
+    enum ParseResult {
+        OK, ERROR, ENCRYPT;
+    }
+    
     /**
      * Parse and extract email messages from the pst/ost file.
      * 
      * @param file A pst or ost file.
+     * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed because the file is encrypted.
      */
-    public boolean parse(File file) {
+    public ParseResult parse(File file) {
         PSTFile pstFile;
         try {
             pstFile = new PSTFile(file);
             processFolder(pstFile.getRootFolder(), "\\", true);
-            return true;
+            return ParseResult.OK;
         } catch (PSTException | IOException ex) {
-            String msg = "Failed to create internal java-libpst PST file to parse: " + ex.getMessage();
+            String msg = file.getName() + "Failed to create internal java-libpst PST file to parse: " + ex.getMessage();
             logger.log(Level.WARNING, msg);
-            return false;
+            return ParseResult.ERROR;
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.INFO, "");
+            return ParseResult.ENCRYPT;
         }
     }
     
@@ -113,6 +124,27 @@ public class PstParser {
             } catch (PSTException | IOException ex) {
                 logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: " + ex.getMessage());
             }
+        }
+    }
+    
+    /**
+     * Identify a file as a pst file by it's header.
+     * 
+     * @param file
+     * @return 
+     */
+    public static boolean isPstFile(AbstractFile file) {
+        byte[] buffer = new byte[4];
+        try {
+            int read = file.read(buffer, 0, 4);
+            if (read != 4) {
+                return false;
+            }
+            ByteBuffer bb = ByteBuffer.wrap(buffer);
+            return  bb.getInt() == PST_HEADER;
+        } catch (TskCoreException ex) {
+            System.out.println("Exception");
+            return false;
         }
     }
 }
