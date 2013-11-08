@@ -211,6 +211,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashSetManager.save();        
     }
     
+    public void discard() {
+        HashDbManager.getInstance().loadLastSavedConfiguration();                
+    }
+    
     /**
     * Removes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file. 
     * Occurs when user clicks "No" to the dialog popup box.
