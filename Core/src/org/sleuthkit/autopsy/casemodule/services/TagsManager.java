@@ -270,6 +270,21 @@ public class TagsManager implements Closeable {
     }
         
     /**
+     * Gets content tags count by content.
+     * @param [in] content The content of interest.
+     * @return A list, possibly empty, of the tags that have been applied to the artifact.
+     * @throws TskCoreException 
+     */
+    public synchronized List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+        
+        return tskCase.getContentTagsByContent(content);        
+    }
+        
+    /**
      * Tags a blackboard artifact object.
      * @param [in] artifact The blackboard artifact to tag.
      * @param [in] tagName The name to use for the tag.
