@@ -44,11 +44,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Instances of this class provide a UI for managing the hash sets configuration.
  */
-final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private HashDbManager hashSetManager = HashDbManager.getInstance();
     private HashSetTableModel hashSetTableModel = new HashSetTableModel();
         
-    HashDbConfigPanel() {
+    public HashDbConfigPanel() {
         initComponents();
         customizeComponents();
         updateComponentsForNoSelection();
