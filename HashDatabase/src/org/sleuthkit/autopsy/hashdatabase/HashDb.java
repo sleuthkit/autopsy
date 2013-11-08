@@ -265,4 +265,8 @@ public class HashDb implements Comparable<HashDb> {
             propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, displayName);
         }
     }
+    
+    public void close() throws TskCoreException {
+        SleuthkitJNI.closeHashDatabase(handle);
+    }
 }

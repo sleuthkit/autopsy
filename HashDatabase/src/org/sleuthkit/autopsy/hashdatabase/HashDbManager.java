@@ -262,15 +262,28 @@ public class HashDbManager {
      * cancellation of configuration panels.
      */
     public void loadLastSavedConfiguration() {
+        if (nsrlHashSet != null) {
+            try {                      
+                nsrlHashSet.close();                    
+            }
+            catch (TskCoreException ex) {
+                // RJCTODO: Log
+            }
+            nsrlHashSet = null;
+        }
+        
         try {
-            SleuthkitJNI.closeHashDatabases();                    
+            for (HashDb hashSet : knownBadHashSets) {
+                hashSet.close();
+            }
         }
         catch (TskCoreException ex) {
             // RJCTODO: Log
         }
         
-        nsrlHashSet = null;
-        knownBadHashSets.clear();        
+        knownBadHashSets.clear();    
+        
+        
         if (hashSetsConfigurationFileExists()) {
             readHashSetsConfigurationFromDisk();            
         }
