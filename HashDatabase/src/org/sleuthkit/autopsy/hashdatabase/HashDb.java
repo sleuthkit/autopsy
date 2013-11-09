@@ -192,12 +192,7 @@ public class HashDb implements Comparable<HashDb> {
             AbstractFile file = (AbstractFile)content;
             // TODO: Add support for SHA-1 and SHA-256 hashes.
             if (null != file.getMd5Hash()) {
-                if (type == KnownFilesType.NSRL) {
-                    result = SleuthkitJNI.lookupInNSRLDatabase(file.getMd5Hash());
-                }
-                else {
-                    result = SleuthkitJNI.lookupInHashDatabase(file.getMd5Hash(), handle);
-                }
+                result = SleuthkitJNI.lookupInHashDatabase(file.getMd5Hash(), handle);
             }
         }         
         return result;
