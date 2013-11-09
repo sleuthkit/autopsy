@@ -96,7 +96,7 @@ public class RegressionTest extends TestCase {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(RegressionTest.class).
                 clusters(".*").
                 enableModules(".*");
-        conf = conf.addTest("testHashDbJni",
+        conf = conf.addTest("testHashDbJni"
                 "testNewCaseWizardOpen",
                 "testNewCaseWizard",
                 "testStartAddDataSource",
@@ -135,12 +135,30 @@ public class RegressionTest extends TestCase {
         try
         {
             String hashfn = "regtestHash.kdb";
-            String md5hash = "b8c51089ebcdf9f11154a021438f5bd6";
+            //String md5hash = "b8c51089ebcdf9f11154a021438f5bd6";
+            String md5hash = "2c875b03541ffa970679986b48dca943";
             String md5hash2 = "cb4aca35f3fd54aacf96da9cd9acadb8";
             String md5hashBad = "35b299c6fcf47ece375b3221bdc16969";
-                    
+            
+//            logger.info("Opening existing kdb file...");
+//            int handle = SleuthkitJNI.openHashDatabase(hashfn);
+//            logger.info("handle = " + handle);
+            
             logger.info("Creating hash db " + hashfn);
             int handle = SleuthkitJNI.createHashDatabase(hashfn);
+            logger.info("handle = " + handle);
+            
+            logger.info("hashDatabaseCanBeReindexed?");
+            boolean retIndexable = SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
+            logger.info("return value = " + Boolean.toString(retIndexable));
+            
+            logger.info("getHashDatabasePath?");
+            String retDbpath = SleuthkitJNI.getHashDatabasePath(handle);
+            logger.info("return value = " + retDbpath);
+
+            logger.info("getHashDatabaseIndexPath?");
+            String retIndexDbpath = SleuthkitJNI.getHashDatabaseIndexPath(handle);
+            logger.info("return value = " + retIndexDbpath);
             
             logger.info("Adding hash " + md5hash);
             SleuthkitJNI.addToHashDatabase("", md5hash, "", "", handle);
@@ -155,6 +173,13 @@ public class RegressionTest extends TestCase {
             logger.info("Querying for unknown hash " + md5hashBad);
             TskData.FileKnown k2 = SleuthkitJNI.lookupInHashDatabase(md5hashBad, handle);
             logger.info("Query result: " + k2.toString());            
+
+            logger.info("Test: hashDatabaseHasLookupIndex() ");
+            boolean b = SleuthkitJNI.hashDatabaseHasLookupIndex(handle);
+            logger.info("Result: " + Boolean.toString(b));            
+            
+
+            
             
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Database creation error: ", ex);
