@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -41,6 +42,30 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  * This class provides methods for creating sets of actions for data model objects. 
  */
 class DataModelActionsFactory  {    
+    static List<Action> getActions(Content content) {
+        if (content instanceof File) {
+            return getActions((File)content);
+        }
+        else if (content instanceof LayoutFile) {
+            return getActions((LayoutFile)content);            
+        }
+        else if (content instanceof Directory) {
+            return getActions((Directory)content);            
+        }
+        else if (content instanceof VirtualDirectory) {
+            return getActions((VirtualDirectory)content);            
+        }
+        else if (content instanceof LocalFile) {
+            return getActions((LocalFile)content);            
+        }
+        else if (content instanceof DerivedFile) {
+            return getActions((DerivedFile)content);            
+        }
+        else {
+            return new ArrayList<>();
+        }
+    }
+    
     static List<Action> getActions(File file) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction("View File in Directory", file));                    
