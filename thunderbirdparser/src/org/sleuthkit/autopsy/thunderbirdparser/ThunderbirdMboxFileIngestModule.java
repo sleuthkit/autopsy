@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import com.pff.PSTAttachment;
 import com.pff.PSTException;
 import com.pff.PSTMessage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -335,6 +338,11 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         }
         String subject = email.getSubject();
         
+        if (email.hasAttachments()) {
+            System.out.println("Found attachment.");
+            handlePstAttachments(abstractFile, email);
+        }
+        
         if (to.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), MODULE_NAME, to));
         }
@@ -373,6 +381,44 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, null, ex);
             return false;
+        }
+    }
+    
+    /**
+     * 
+     */
+    private void handlePstAttachments(AbstractFile abstractFile, PSTMessage email) {
+        int numberOfAttachments = email.getNumberOfAttachments();
+        for (int x = 0; x < numberOfAttachments; x++) {
+            try {
+                PSTAttachment attach = email.getAttachment(x);
+                InputStream attachmentStream = attach.getFileInputStream();
+                // both long and short filenames can be used for attachments
+                String filename = attach.getLongFilename();
+                if (filename.isEmpty()) {
+                    System.out.println("Using short filename");
+                    filename = attach.getFilename();
+                }
+                System.out.println(filename);
+                String outPath = getTempPath() + File.separator + abstractFile.getId() + "-" + email.getDescriptorNodeId() + "-" + x + "-" + filename;
+                FileOutputStream out = new FileOutputStream(outPath);
+                // 8176 is the block size used internally and should give the best performance
+                int bufferSize = 8176;
+                byte[] buffer = new byte[bufferSize];
+                int count = attachmentStream.read(buffer);
+                while (count == bufferSize) {
+                    out.write(buffer);
+                    count = attachmentStream.read(buffer);
+                }
+                byte[] endBuffer = new byte[count];
+                System.arraycopy(buffer, 0, endBuffer, 0, count);
+                out.write(endBuffer);
+                out.close();
+                attachmentStream.close();
+            } catch (PSTException | IOException ex) {
+                System.out.println("Failed to extract attachment.");
+               logger.log(Level.WARNING, "Failed to extract attachment.");
+           }
         }
     }
     
