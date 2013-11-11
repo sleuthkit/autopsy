@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -68,6 +69,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     private static final String MODULE_NAME = "MBox Parser";
     private final String hashDBModuleName = "Hash Lookup";
     final public static String MODULE_VERSION = Version.getVersion();
+    private int messageId = 0;
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
@@ -86,6 +88,10 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         //skip unalloc
         if(abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return ProcessResult.OK;
+        }
+        
+        if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             return ProcessResult.OK;
         }
 
@@ -122,9 +128,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         int extIndex = abstractFile.getName().lastIndexOf(".");
         String ext = (extIndex == -1 ? "" : abstractFile.getName().substring(extIndex));
-//        if (ext.equals(".pst")) {
         if (PstParser.isPstFile(abstractFile)) {
-            // TODO: better way to figure out if its a pst?
             return processPst(abstractFile);
         }
         
@@ -267,7 +271,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
-            // TODO isn't there a skipped? shouldn't there be?
+            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), "Out of disk space. Can't copy " + abstractFile.getName() + " to parse.");
+            services.postMessage(msg);
             return ProcessResult.OK;
         }
         try {
@@ -280,17 +285,21 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         PstParser parser = new PstParser();
         PstParser.ParseResult result = parser.parse(file);
         if (result == PstParser.ParseResult.ERROR) {
-            // TODO Add error message somehow?
+            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), 
+                    "Failed to parse outlook data file: " + abstractFile.getName() + ".<br/>" + 
+                    "Only files from Outlook 2003 and later are supported.");
+            services.postMessage(msg);
             logger.log(Level.INFO, "PSTParser failed to parse " + abstractFile.getName());
             return ProcessResult.ERROR;
         }
         
         if (result == PstParser.ParseResult.OK) {
+            boolean added = false;
             for (Entry<PSTMessage, String> emailInfo : parser.getResults().entrySet()) {
-                addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
+                added = addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
             }
 
-            if (parser.getResults().isEmpty() == false) {
+            if (added) {
                 services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
             }
         } else {
@@ -339,7 +348,6 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         String subject = email.getSubject();
         
         if (email.hasAttachments()) {
-            System.out.println("Found attachment.");
             handlePstAttachments(abstractFile, email);
         }
         
@@ -385,7 +393,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     }
     
     /**
-     * 
+     * Extract attachments from the email to the temp folder.
      */
     private void handlePstAttachments(AbstractFile abstractFile, PSTMessage email) {
         int numberOfAttachments = email.getNumberOfAttachments();
@@ -396,10 +404,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                 // both long and short filenames can be used for attachments
                 String filename = attach.getLongFilename();
                 if (filename.isEmpty()) {
-                    System.out.println("Using short filename");
                     filename = attach.getFilename();
                 }
-                System.out.println(filename);
                 String outPath = getTempPath() + File.separator + abstractFile.getId() + "-" + email.getDescriptorNodeId() + "-" + x + "-" + filename;
                 FileOutputStream out = new FileOutputStream(outPath);
                 // 8176 is the block size used internally and should give the best performance
@@ -416,9 +422,10 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                 out.close();
                 attachmentStream.close();
             } catch (PSTException | IOException ex) {
-                System.out.println("Failed to extract attachment.");
-               logger.log(Level.WARNING, "Failed to extract attachment.");
-           }
+                IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), "Failed to extract attachment from " + abstractFile.getName());
+                services.postMessage(msg);
+                logger.log(Level.WARNING, "Failed to extract attachment.");
+            }
         }
     }
     
