@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,7 +75,7 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent()); // RJCTODO: Get extra stuff from Tags
+        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
         actions.add(null); // Adds a menu item separator.         
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);

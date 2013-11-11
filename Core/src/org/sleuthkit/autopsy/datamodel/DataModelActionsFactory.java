@@ -42,33 +42,33 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  * This class provides methods for creating sets of actions for data model objects. 
  */
 class DataModelActionsFactory  {    
-    static List<Action> getActions(Content content) {
+    static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
-            return getActions((File)content);
+            return getActions((File)content, isArtifactSource);
         }
         else if (content instanceof LayoutFile) {
-            return getActions((LayoutFile)content);            
+            return getActions((LayoutFile)content, isArtifactSource);            
         }
         else if (content instanceof Directory) {
-            return getActions((Directory)content);            
+            return getActions((Directory)content, isArtifactSource);            
         }
         else if (content instanceof VirtualDirectory) {
-            return getActions((VirtualDirectory)content);            
+            return getActions((VirtualDirectory)content, isArtifactSource);            
         }
         else if (content instanceof LocalFile) {
-            return getActions((LocalFile)content);            
+            return getActions((LocalFile)content, isArtifactSource);            
         }
         else if (content instanceof DerivedFile) {
-            return getActions((DerivedFile)content);            
+            return getActions((DerivedFile)content, isArtifactSource);            
         }
         else {
             return new ArrayList<>();
         }
     }
     
-    static List<Action> getActions(File file) {
+    static List<Action> getActions(File file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", file));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), file));                    
         final FileNode fileNode = new FileNode(file);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", fileNode));
@@ -78,14 +78,16 @@ class DataModelActionsFactory  {
         actions.add(new HashSearchAction("Search for files with the same MD5 hash", fileNode));
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }        
 
-    static List<Action> getActions(LayoutFile file) {
+    static List<Action> getActions(LayoutFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", file));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), file));                    
         LayoutFileNode layoutFileNode = new LayoutFileNode(file);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", layoutFileNode));
@@ -94,14 +96,16 @@ class DataModelActionsFactory  {
         actions.add(ExtractAction.getInstance());//
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }        
     
-    static List<Action> getActions(Directory directory) {
+    static List<Action> getActions(Directory directory, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();        
-        actions.add(new ViewContextAction("View File in Directory", directory));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), directory));                    
         DirectoryNode directoryNode = new DirectoryNode(directory);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", directoryNode));
@@ -110,14 +114,16 @@ class DataModelActionsFactory  {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions()); // RJCTODO: Separator should not be added by provider
         return actions;
     }        
     
-    static List<Action> getActions(VirtualDirectory directory) {
+    static List<Action> getActions(VirtualDirectory directory, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", directory));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), directory));                    
         VirtualDirectoryNode directoryNode = new VirtualDirectoryNode(directory);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", directoryNode));
@@ -126,14 +132,16 @@ class DataModelActionsFactory  {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }        
         
-    static List<Action> getActions(LocalFile file) {
+    static List<Action> getActions(LocalFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", file));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), file));                    
         final LocalFileNode localFileNode = new LocalFileNode(file);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", localFileNode));
@@ -142,14 +150,16 @@ class DataModelActionsFactory  {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }        
         
-    static List<Action> getActions(DerivedFile file) {
+    static List<Action> getActions(DerivedFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", file));                    
+        actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), file));                    
         final LocalFileNode localFileNode = new LocalFileNode(file);
         actions.add(null); // creates a menu separator
         actions.add(new NewWindowViewAction("View in New Window", localFileNode));
@@ -158,15 +168,10 @@ class DataModelActionsFactory  {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.add(AddBlackboardArtifactTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
         actions.addAll(ContextMenuExtensionPoint.getActions());
-        return actions;
-    }        
-        
-    static List<Action> getActions(AbstractFile file) {
-        List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction("View File in Directory", file));                    
-        // RJCTODO
         return actions;
     }                
 }

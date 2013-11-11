@@ -19,7 +19,6 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -75,7 +74,7 @@ public class ContentTagNode extends DisplayableItemNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent());
+        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), false);
         actions.add(null); // Adds a menu item separator. 
         actions.add(DeleteContentTagAction.getInstance());
         return actions.toArray(new Action[0]);
