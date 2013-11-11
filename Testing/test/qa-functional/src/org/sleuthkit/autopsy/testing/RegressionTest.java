@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public class RegressionTest extends TestCase {
                 clusters(".*").
                 enableModules(".*");
         conf = conf.addTest("testHashDbJni"
-                "testNewCaseWizardOpen",
+                , "testNewCaseWizardOpen",
                 "testNewCaseWizard",
                 "testStartAddDataSource",
                 "testConfigureIngest1",
@@ -143,6 +144,15 @@ public class RegressionTest extends TestCase {
 //            logger.info("Opening existing kdb file...");
 //            int handle = SleuthkitJNI.openHashDatabase(hashfn);
 //            logger.info("handle = " + handle);
+            
+            // Make sure we start with a clean slate
+                File f = new File(hashfn);
+                if (f.exists()) {
+                    if (!f.delete()) {
+                        // Probably a file permission issue
+                        logger.warning("Cleaning test file failed.");
+                    }
+                }
             
             logger.info("Creating hash db " + hashfn);
             int handle = SleuthkitJNI.createHashDatabase(hashfn);
