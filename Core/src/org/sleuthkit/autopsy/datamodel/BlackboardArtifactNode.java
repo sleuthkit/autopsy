@@ -100,16 +100,16 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NO_DESCR,
                 associated.getName()));
         
-        String sourceName = "";
+        String sourcePath = "";
         try {
-            sourceName = associated.getImage().getName();
+            sourcePath = associated.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get image.");
+            logger.log(Level.WARNING, "Failed to get unique path from: " + associated.getName());
         }
         
-        if (sourceName.isEmpty() == false) {
-            ss.put(new NodeProperty("Data Source", "Data Source", 
-                    NO_DESCR, sourceName));
+        if (sourcePath.isEmpty() == false) {
+            ss.put(new NodeProperty("File Path", "File Path", 
+                    NO_DESCR, sourcePath));
         }
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -119,30 +119,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     entry.getValue()));
         }
 
-        String path = "";
-        try {
-            path = associated.getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + associated);
-        }
-        final int artifactTypeID = artifact.getArtifactTypeID();
-
-        //custom additional properties
-        //TODO use addNodeProperty() instead of hardcoding here
-        if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            ss.put(new NodeProperty("File Path",
-                    "File Path",
-                    NO_DESCR,
-                    path));
-        }
-
         //append custom node properties
         if (customProperties != null) {
             for (NodeProperty np : customProperties) {
                 ss.put(np);
             }
-
         }
 
         return s;
