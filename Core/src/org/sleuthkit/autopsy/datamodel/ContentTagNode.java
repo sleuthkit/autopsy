@@ -75,7 +75,8 @@ public class ContentTagNode extends DisplayableItemNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = new ArrayList<>();
+        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent());
+        actions.add(null); // Adds a menu item separator. 
         actions.add(DeleteContentTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }    

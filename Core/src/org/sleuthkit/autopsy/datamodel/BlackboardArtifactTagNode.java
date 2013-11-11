@@ -76,7 +76,8 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = new ArrayList<>();
+        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent()); // RJCTODO: Get extra stuff from Tags
+        actions.add(null); // Adds a menu item separator.         
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }    

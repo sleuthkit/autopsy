@@ -171,6 +171,8 @@ public class DataResultFilterNode extends FilterNode {
             //set up actions for artifact node based on its Content object
             //TODO all actions need to be consolidated in single place!
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
+            // TODO UPDATE: There is now a DataModelActionsFactory utility; also tags are no longer artifacts so conditionals
+            // can be removed.
 
             List<Action> actions = new ArrayList<>();
 
