@@ -36,6 +36,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.apache.tika.parser.mbox.MboxParser;
 
 /**
  * Contains the logic to parse an MBOX file.  
@@ -319,8 +320,7 @@ public class ThunderbirdMboxParser  {
         // We're going to scan, line-by-line, for a line that starts with
         // "From "
         
-        while((curLine = reader.readLine()) != null)
-        {
+        while((curLine = reader.readLine()) != null) {
       
             boolean newMessage = curLine.startsWith(MBOX_RECORD_DIVIDER);
             if (newMessage) 
@@ -445,12 +445,11 @@ public class ThunderbirdMboxParser  {
         emailMetaContent.put("content", emailContent);
         emailMetaContent.put("date", metadata.get(ThunderbirdMetadata.DATE));
         emailMetaContent.put(Metadata.SUBJECT, metadata.get(ThunderbirdMetadata.SUBJECT));
-        if(metadata.get(ThunderbirdMetadata.IDENTIFIER) == null){
-             Random r = new Random();
-            this.emails.put(metadata.get(Metadata.AUTHOR)+Long.toString(Math.abs(r.nextLong()), 36), emailMetaContent);
-        }
-        else{
-        this.emails.put(metadata.get(ThunderbirdMetadata.IDENTIFIER), emailMetaContent);
+        if (metadata.get(ThunderbirdMetadata.IDENTIFIER) == null) {
+            Random r = new Random();
+            this.emails.put(metadata.get(Metadata.AUTHOR) + Long.toString(Math.abs(r.nextLong()), 36), emailMetaContent);
+        } else {
+            this.emails.put(metadata.get(ThunderbirdMetadata.IDENTIFIER), emailMetaContent);
         }
     }
     

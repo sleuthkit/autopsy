@@ -63,7 +63,7 @@ public class PstParser {
      * @param file A pst or ost file.
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed because the file is encrypted.
      */
-    public ParseResult parse(File file) {
+    ParseResult parse(File file) {
         PSTFile pstFile;
         try {
             pstFile = new PSTFile(file);
@@ -84,7 +84,7 @@ public class PstParser {
      * 
      * @return 
      */
-    public Map<PSTMessage, String> getResults() {
+    Map<PSTMessage, String> getResults() {
         return results;
     }
 
