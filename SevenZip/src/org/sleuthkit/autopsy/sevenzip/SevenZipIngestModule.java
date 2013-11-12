@@ -846,7 +846,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             Data(String fileName, Data parent) {
                 this.fileName = fileName;
                 this.parent = parent;
-                this.localRelPath = parent.localRelPath + "/" + fileName;
+                this.localRelPath = parent.localRelPath + File.separator + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
 

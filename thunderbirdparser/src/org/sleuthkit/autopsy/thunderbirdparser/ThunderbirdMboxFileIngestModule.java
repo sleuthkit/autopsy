@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -45,12 +47,14 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -66,10 +70,11 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestServices services;
-    private static final String MODULE_NAME = "MBox Parser";
+    private static final String MODULE_NAME = "Email Parser";
     private final String hashDBModuleName = "Hash Lookup";
     final public static String MODULE_VERSION = Version.getVersion();
     private int messageId = 0;
+    private FileManager fileManager;
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
@@ -129,7 +134,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         int extIndex = abstractFile.getName().lastIndexOf(".");
         String ext = (extIndex == -1 ? "" : abstractFile.getName().substring(extIndex));
         if (PstParser.isPstFile(abstractFile)) {
-            return processPst(abstractFile);
+            return processPst(ingestContext, abstractFile);
         }
         
         return ProcessResult.OK;
@@ -264,7 +269,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
      * @param abstractFile The pst/ost data file to process.
      * @return 
      */
-    private ProcessResult processPst(AbstractFile abstractFile) {
+    private ProcessResult processPst(PipelineContext<IngestModuleAbstractFile>ingestContext, AbstractFile abstractFile) {
         String fileName = getTempPath() + File.separator + abstractFile.getName()
                 + "-" + String.valueOf(abstractFile.getId());
         File file = new File(fileName);
@@ -275,6 +280,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             services.postMessage(msg);
             return ProcessResult.OK;
         }
+        
         try {
             ContentUtils.writeToFile(abstractFile, file);
         } catch (IOException ex) {
@@ -284,7 +290,21 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         PstParser parser = new PstParser();
         PstParser.ParseResult result = parser.parse(file);
-        if (result == PstParser.ParseResult.ERROR) {
+        
+        if (result == PstParser.ParseResult.OK) {
+            // parse success: Process email and add artifacts
+            processPstMessages(parser.getResults(), abstractFile, ingestContext);
+        } else if (result == PstParser.ParseResult.ENCRYPT) {
+            // encrypted pst: Add encrypted file artifact
+            try {
+                BlackboardArtifact generalInfo = abstractFile.getGenInfoArtifact();
+                generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
+                        MODULE_NAME, "File-level Encryption"));
+            } catch (TskCoreException ex) {
+                logger.log(Level.INFO, "Failed to add encryption attribute to file: " + abstractFile.getName());
+            }
+        } else {
+            // parsing error: log message
             IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), 
                     "Failed to parse outlook data file: " + abstractFile.getName() + ".<br/>" + 
                     "Only files from Outlook 2003 and later are supported.");
@@ -293,30 +313,42 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             return ProcessResult.ERROR;
         }
         
-        if (result == PstParser.ParseResult.OK) {
-            boolean added = false;
-            for (Entry<PSTMessage, String> emailInfo : parser.getResults().entrySet()) {
-                added = addPstArtifact(abstractFile, emailInfo.getKey(), emailInfo.getValue());
-            }
-
-            if (added) {
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
-            }
-        } else {
-            try {
-                BlackboardArtifact generalInfo = abstractFile.getGenInfoArtifact();
-                generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
-                        MODULE_NAME, "File-level Encryption"));
-            } catch (TskCoreException ex) {
-                logger.log(Level.INFO, "Failed to add encryption attribute to file: " + abstractFile.getName());
-            }
-        }
-        
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: " + file.getName());
         }
 
         return ProcessResult.OK;
+    }
+    
+    /**
+     * Process the results of the PstParser. Handles adding email artifacts and
+     * extracting and adding attachments as derived files.
+     * 
+     * @param parser
+     * @param abstractFile
+     * @param ingestContext 
+     */
+    private void processPstMessages(Map<PSTMessage, String> parseResults, AbstractFile abstractFile, PipelineContext<IngestModuleAbstractFile> ingestContext) {
+        boolean added = false;
+        List<AbstractFile> derivedFiles = new ArrayList<>();
+        for (Entry<PSTMessage, String> emailInfo : parseResults.entrySet()) {
+            PSTMessage email = emailInfo.getKey();
+            added = addPstArtifact(abstractFile, email, emailInfo.getValue());
+            if (email.hasAttachments()) {
+                handlePstAttachments(abstractFile, email, derivedFiles);
+            }
+        }
+
+        if (added) {
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+        }
+        
+        if (derivedFiles.isEmpty() == false) {
+            services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
+            for (AbstractFile derived : derivedFiles) {
+                services.scheduleFile(derived, ingestContext);
+            }
+        }
     }
     
     /**
@@ -346,10 +378,6 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.INFO, "Failed to get RTF content from pst email.");
         }
         String subject = email.getSubject();
-        
-        if (email.hasAttachments()) {
-            handlePstAttachments(abstractFile, email);
-        }
         
         if (to.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), MODULE_NAME, to));
@@ -393,44 +421,81 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     }
     
     /**
-     * Extract attachments from the email to the temp folder.
+     * Extracts attachments and creates derived files.
+     * 
+     * @param abstractFile
+     * @param email
+     * @param toPopulate derived files should be added to this list when created.
      */
-    private void handlePstAttachments(AbstractFile abstractFile, PSTMessage email) {
+    private void handlePstAttachments(AbstractFile abstractFile, PSTMessage email, List<AbstractFile> toPopulate) {
         int numberOfAttachments = email.getNumberOfAttachments();
+        String outputDirPath = getModuleOutputPath() + File.separator;
         for (int x = 0; x < numberOfAttachments; x++) {
             try {
                 PSTAttachment attach = email.getAttachment(x);
-                InputStream attachmentStream = attach.getFileInputStream();
+                long size = attach.getAttachSize();
+                if (size >= services.getFreeDiskSpace()) {
+                    continue;
+                }
                 // both long and short filenames can be used for attachments
                 String filename = attach.getLongFilename();
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String outPath = getTempPath() + File.separator + abstractFile.getId() + "-" + email.getDescriptorNodeId() + "-" + x + "-" + filename;
-                FileOutputStream out = new FileOutputStream(outPath);
-                // 8176 is the block size used internally and should give the best performance
-                int bufferSize = 8176;
-                byte[] buffer = new byte[bufferSize];
-                int count = attachmentStream.read(buffer);
-                while (count == bufferSize) {
-                    out.write(buffer);
-                    count = attachmentStream.read(buffer);
-                }
-                byte[] endBuffer = new byte[count];
-                System.arraycopy(buffer, 0, endBuffer, 0, count);
-                out.write(endBuffer);
-                out.close();
-                attachmentStream.close();
+                filename = email.getDescriptorNodeId() + "-" + filename;
+                String outPath = outputDirPath + filename;
+                extractPstAttachment(attach, outPath);
+                
+                long crTime = attach.getCreationTime().getTime() / 1000;
+                long mTime = attach.getModificationTime().getTime() / 1000;
+                String relPath = getRelModuleOutputPath() + File.separator + filename;
+                
+                DerivedFile df = fileManager.addDerivedFile(filename, relPath, 
+                        size, 0L, crTime, 0L, mTime, true, abstractFile, "", 
+                        MODULE_NAME, MODULE_VERSION, "");
+                
+                toPopulate.add(df);
             } catch (PSTException | IOException ex) {
                 IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), "Failed to extract attachment from " + abstractFile.getName());
                 services.postMessage(msg);
                 logger.log(Level.WARNING, "Failed to extract attachment.");
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to create derived file under abstract file: " + abstractFile.getName());
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }
     
     /**
-     * Helper to format the "From" attribute nicely.
+     * Extracts a PSTAttachment to the module output directory.
+     * 
+     * @param attach
+     * @param outPath
+     * @return
+     * @throws IOException
+     * @throws PSTException 
+     */
+    private void extractPstAttachment(PSTAttachment attach, String outPath) throws IOException, PSTException{
+        InputStream attachmentStream = attach.getFileInputStream();
+        FileOutputStream out = new FileOutputStream(outPath);
+        // 8176 is the block size used internally and should give the best performance
+        int bufferSize = 8176;
+        byte[] buffer = new byte[bufferSize];
+        int count = attachmentStream.read(buffer);
+        while (count == bufferSize) {
+            out.write(buffer);
+            count = attachmentStream.read(buffer);
+        }
+        byte[] endBuffer = new byte[count];
+        System.arraycopy(buffer, 0, endBuffer, 0, count);
+        out.write(endBuffer);
+        out.close();
+        attachmentStream.close();
+    }
+    
+    /**
+     * Pretty-Print "From" field of an outlook email message.
      * @param name Sender's Name
      * @param addr Sender's Email address
      * @return 
@@ -461,6 +526,20 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         return tmpDir;
     }
     
+    private static String getModuleOutputPath() {
+        String outDir = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + 
+                        MODULE_NAME;
+        File dir = new File(outDir);
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return outDir;
+    }
+    
+    private static String getRelModuleOutputPath() {
+        return Case.getModulesOutputDirRelPath() + File.separator + 
+                MODULE_NAME;
+    }
     
     @Override
     public void complete() {
@@ -485,6 +564,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
+        fileManager = Case.getCurrentCase().getServices().getFileManager();
     }
 
     @Override

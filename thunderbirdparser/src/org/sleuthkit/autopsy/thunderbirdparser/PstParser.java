@@ -70,7 +70,7 @@ public class PstParser {
             processFolder(pstFile.getRootFolder(), "\\", true);
             return ParseResult.OK;
         } catch (PSTException | IOException ex) {
-            String msg = file.getName() + "Failed to create internal java-libpst PST file to parse: " + ex.getMessage();
+            String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage();
             logger.log(Level.WARNING, msg);
             return ParseResult.ERROR;
         } catch (IllegalArgumentException ex) {
@@ -128,7 +128,7 @@ public class PstParser {
     }
     
     /**
-     * Identify a file as a pst file by it's header.
+     * Identify a file as a pst/ost file by it's header.
      * 
      * @param file
      * @return 
