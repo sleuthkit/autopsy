@@ -46,24 +46,34 @@ import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
 
 /**
- *
+ * A parser that extracts information about email messages and attachments from
+ * a mbox file.
+ * 
  * @author jwallace
  */
 public class MboxParser {
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private MessageBuilder messageBuilder;
-    
+    /**
+     * The mime type string for html text.
+     */
     private static final String HTML_TYPE = "text/html";
-    private String localPath = null;
-    MboxParser() {
+    
+    /**
+     * The local path of the mbox file.
+     */
+    private String localPath;
+    
+    MboxParser(String localPath) {
+        this.localPath = localPath;
         messageBuilder = new DefaultMessageBuilder();
     }
     
-    MboxParser(String localPath) {
-        this();
-        this.localPath = localPath;
-    }
-    
+    /**
+     * Parse the mbox file and get the email messages.
+     * @param mboxFile
+     * @return a list of the email messages in the mbox file.
+     */
     List<EmailMessage> parse(File mboxFile) {
         //JWTODO: detect charset
         CharsetEncoder encoder = StandardCharsets.ISO_8859_1.newEncoder();
@@ -86,6 +96,13 @@ public class MboxParser {
         return emails;
     }
     
+    /**
+     * Use the information stored in the given mime4j message to populate an
+     * EmailMessage.
+     * 
+     * @param msg
+     * @return 
+     */
     private EmailMessage extractEmail(Message msg) {
         EmailMessage email = new EmailMessage();
         // Basic Info
@@ -95,9 +112,7 @@ public class MboxParser {
         email.setCc(getAddresses(msg.getCc()));
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
-        if (localPath != null) {
-            email.setLocalPath(localPath);
-        }
+        email.setLocalPath(localPath);
         
         // Body
         if (msg.isMultipart()) {
@@ -109,6 +124,14 @@ public class MboxParser {
         return email;
     }
     
+    /**
+     * Handle a multipart mime message. 
+     * Recursively calls handleMultipart if one of the body parts is another
+     * multipart. Otherwise, calls the correct method to extract information out
+     * of each part of the body.
+     * @param email
+     * @param multi 
+     */
     private void handleMultipart(EmailMessage email, Multipart multi) {
         for (Entity e : multi.getBodyParts()) {
             if (e.isMultipart()) {
@@ -125,6 +148,15 @@ public class MboxParser {
         }
     }
     
+    /**
+     * Extract text out of a body part of the message.
+     * 
+     * Handles text and html mime types. Throws away all other types. (only other
+     * example I've seen is text/calendar)
+     * @param email
+     * @param tb
+     * @param type The Mime type of the body.
+     */
     private void handleTextBody(EmailMessage email, TextBody tb, String type) {
         BufferedReader r;
         try {
@@ -150,6 +182,12 @@ public class MboxParser {
         }
     }
     
+    /**
+     * Extract the attachment out of the given entity. 
+     * Should only be called if e.getDispositionType() == "attachment"
+     * @param email
+     * @param e 
+     */
     private void handleAttachment(EmailMessage email, Entity e) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
@@ -192,6 +230,12 @@ public class MboxParser {
         email.addAttachment(attach);
     }
 
+    /**
+     * Get a String representation of the MailboxList (which is a list of email
+     * addresses).
+     * @param mailboxList
+     * @return 
+     */
     private String getAddresses(MailboxList mailboxList) {
         if (mailboxList == null) {
             return "";
@@ -203,6 +247,12 @@ public class MboxParser {
         return addresses.toString();
     }
     
+    /**
+     * Get a String representation of the AddressList (which is a list of email
+     * addresses).
+     * @param addressList
+     * @return 
+     */
     private String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
     }

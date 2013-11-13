@@ -25,7 +25,8 @@ import java.util.List;
 
 
 /**
- * 
+ * A Record to hold generic information about email messages, regardless of 
+ * the original format or source.
  * @author jwallace
  */
 public class EmailMessage {
@@ -148,8 +149,11 @@ public class EmailMessage {
         this.localPath = localPath;
     }
 }
+
 /**
+ * A Record to hold generic information about attachments.
  * 
+ * Used to populate the fields of a derived file.
  * @author jwallace
  */
 class Attachment {
