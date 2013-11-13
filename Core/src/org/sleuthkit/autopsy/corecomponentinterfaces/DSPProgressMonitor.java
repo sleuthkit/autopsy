@@ -29,5 +29,5 @@ public interface DSPProgressMonitor {
     
     void setProgress(int progress);
     
-    void setText(String text);   
+    void setProgressText(String text);   
 }

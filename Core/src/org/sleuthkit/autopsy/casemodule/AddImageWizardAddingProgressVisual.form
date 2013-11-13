@@ -142,7 +142,7 @@
                       <Component id="subTitle2Label" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="progressLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="subTitle1Label" alignment="0" max="32767" attributes="1"/>
-                      <Component id="TextArea_CurrentDirectory" alignment="0" max="32767" attributes="0"/>
+                      <Component id="progressTextArea" alignment="0" max="32767" attributes="0"/>
                       <Component id="progressBar" alignment="0" max="32767" attributes="1"/>
                   </Group>
                   <EmptySpace min="0" pref="8" max="32767" attributes="0"/>
@@ -158,7 +158,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="progressBar" min="-2" pref="23" max="-2" attributes="1"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="TextArea_CurrentDirectory" min="-2" pref="91" max="-2" attributes="0"/>
+                  <Component id="progressTextArea" min="-2" pref="91" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
                   <Component id="progressLabel" min="-2" pref="23" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -185,7 +185,7 @@
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
           </AuxValues>
         </Component>
-        <Component class="javax.swing.JTextArea" name="TextArea_CurrentDirectory">
+        <Component class="javax.swing.JTextArea" name="progressTextArea">
           <Properties>
             <Property name="editable" type="boolean" value="false"/>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
@@ -196,11 +196,11 @@
             <Property name="wrapStyleWord" type="boolean" value="true"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Currently Adding:">
+                <TitledBorder title="Status">
                   <Border PropertyName="innerBorder" info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
                     <EtchetBorder/>
                   </Border>
-                  <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="AddImageWizardAddingProgressVisual.TextArea_CurrentDirectory.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="AddImageWizardAddingProgressVisual.progressTextArea.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </TitledBorder>
               </Border>
             </Property>

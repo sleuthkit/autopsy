@@ -83,12 +83,12 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
         }
         
         @Override
-        public void setText(final String text) {
+        public void setProgressText(final String text) {
             // update the progress UI asynchronously
               EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                         getComponent().setCurrentDirText(text);
+                         getComponent().setProgressMsgText(text);
                     }
                 });      
         }

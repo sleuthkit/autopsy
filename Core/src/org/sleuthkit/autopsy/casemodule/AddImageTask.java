@@ -93,9 +93,12 @@ public class AddImageTask implements Runnable {
             public void run() {
                 try {
                     while (!Thread.currentThread().isInterrupted()) { 
-                        
-                        progressMonitor.setText(process.currentDirectory()); 
-                            
+                        String currDir = process.currentDirectory();
+                        if (currDir != null) {
+                            if (!currDir.isEmpty() ) {
+                                progressMonitor.setProgressText("Adding: " + currDir);
+                            }
+                        }
                         Thread.sleep(2 * 1000);
                     }
                     return;

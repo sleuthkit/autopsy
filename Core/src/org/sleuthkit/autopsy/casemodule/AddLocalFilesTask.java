@@ -178,7 +178,7 @@ public class AddLocalFilesTask implements Runnable {
         @Override
         public void fileAdded(final AbstractFile newFile) {
             if (count++ % 10 == 0) {  
-                progressMonitor.setText(newFile.getParentPath() + "/" + newFile.getName()); 
+                progressMonitor.setProgressText("Adding: " + newFile.getParentPath() + "/" + newFile.getName()); 
             }
         }
     }
