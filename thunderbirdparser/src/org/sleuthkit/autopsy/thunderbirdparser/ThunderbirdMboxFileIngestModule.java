@@ -123,7 +123,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         }
         
         if (isMbox) {
-            return processMBox(abstractFile);
+            return processMBox(abstractFile, ingestContext);
         }
         
         int extIndex = abstractFile.getName().lastIndexOf(".");
@@ -134,8 +134,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         return ProcessResult.OK;
     }
-    
-    private ProcessResult processMBox(AbstractFile abstractFile) {
+
+    private ProcessResult processMBoxOld(AbstractFile abstractFile) {
         logger.log(Level.INFO, "ThunderbirdMboxFileIngestModule: Parsing {0}", abstractFile.getName());
 
         String mboxFileName = abstractFile.getName();
@@ -174,7 +174,6 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
 //        } catch (TskCoreException ex) {
 //            logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + msfName, ex);
 //        }
-        
         
         // use the local path to determine the e-mail folder structure
         String emailFolder = "";
@@ -511,7 +510,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
      * Get a path to a temporary folder.
      * @return 
      */
-    private static String getTempPath() {
+    public static String getTempPath() {
         String tmpDir = Case.getCurrentCase().getTempDirectory() + File.separator
                 + "EmailParser";
         File dir = new File(tmpDir);
@@ -521,7 +520,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         return tmpDir;
     }
     
-    private static String getModuleOutputPath() {
+    public static String getModuleOutputPath() {
         String outDir = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + 
                         MODULE_NAME;
         File dir = new File(outDir);
@@ -531,7 +530,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         return outDir;
     }
     
-    private static String getRelModuleOutputPath() {
+    public static String getRelModuleOutputPath() {
         return Case.getModulesOutputDirRelPath() + File.separator + 
                 MODULE_NAME;
     }
@@ -570,4 +569,147 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
+    
+        
+    private ProcessResult processMBox(AbstractFile abstractFile, PipelineContext<IngestModuleAbstractFile>ingestContext) {
+        String mboxFileName = abstractFile.getName();
+        String mboxParentDir = abstractFile.getParentPath();
+        // use the local path to determine the e-mail folder structure
+        String emailFolder = "";
+        // email folder is everything after "Mail" or ImapMail
+        if (mboxParentDir.contains("/Mail/")) {
+            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/Mail/") + 5);
+        } 
+        else if (mboxParentDir.contains("/ImapMail/")) {
+            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/ImapMail/") + 9);    
+        } 
+        emailFolder = emailFolder + mboxFileName;
+        emailFolder = emailFolder.replaceAll(".sbd", "");
+        
+        String fileName = getTempPath() + File.separator + abstractFile.getName()
+                + "-" + String.valueOf(abstractFile.getId());
+        File file = new File(fileName);
+        
+        if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
+            logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
+            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), "Out of disk space. Can't copy " + abstractFile.getName() + " to parse.");
+            services.postMessage(msg);
+            return ProcessResult.OK;
+        }
+        
+        try {
+            ContentUtils.writeToFile(abstractFile, file);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex);
+            return ProcessResult.OK;
+        }
+        
+        MboxParser parser = new MboxParser(emailFolder);
+        List<EmailMessage> emails = parser.parse(file);
+        
+        processEmails(emails, abstractFile, ingestContext);
+        
+        return ProcessResult.OK;
+    }
+    
+    private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile, PipelineContext<IngestModuleAbstractFile>ingestContext) {
+        List<AbstractFile> derivedFiles = new ArrayList<>();
+        for (EmailMessage email : emails) {
+            if (email.hasAttachment()) {
+                derivedFiles.addAll(handleAttachments(email.getAttachments(), abstractFile));
+            }
+            addArtifact(email, abstractFile);
+        }
+        
+        if (derivedFiles.isEmpty() == false) {
+            for (AbstractFile derived : derivedFiles) {
+                services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
+                services.scheduleFile(derived, ingestContext);
+            }
+        }
+        services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+    }
+    
+    private List<AbstractFile> handleAttachments(List<Attachment> attachments, AbstractFile abstractFile) {
+        List<AbstractFile> files = new ArrayList<>();
+        for (Attachment attach : attachments) {
+            String filename = attach.getName();
+            long crTime = attach.getCrTime();
+            long mTime = attach.getmTime();
+            long aTime = attach.getaTime();
+            long cTime = attach.getcTime();
+            String relPath = attach.getLocalPath();
+            long size = attach.getSize();
+
+            try {
+                DerivedFile df = fileManager.addDerivedFile(filename, relPath, 
+                        size, cTime, crTime, aTime, mTime, true, abstractFile, "", 
+                        MODULE_NAME, MODULE_VERSION, "");
+                files.add(df);
+            } catch (TskCoreException ex) {
+                // JWTODO
+                logger.log(Level.INFO, "", ex);
+            }
+        }
+        return files;
+    }
+    
+    private void addArtifact(EmailMessage email, AbstractFile abstractFile) {
+        List<BlackboardAttribute> bbattributes = new ArrayList<>();
+        String to = email.getRecipients();
+        String cc = email.getCc();
+        String bcc = email.getBcc();
+        String from = email.getSender();
+        long dateL = email.getSentDate();
+        String body = email.getTextBody();
+        String bodyHTML = email.getHtmlBody();
+        String rtf = email.getRtfBody();
+        String subject = email.getSubject();
+        long id = email.getId();
+        String localPath = email.getLocalPath();
+        
+        if (to.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), MODULE_NAME, to));
+        }
+        if (cc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), MODULE_NAME, cc));
+        }
+        if (bcc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), MODULE_NAME, bcc));
+        }
+        if (from.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), MODULE_NAME, from));
+        }
+        if (dateL > 0) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), MODULE_NAME, dateL));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), MODULE_NAME, dateL));
+        }
+        if (body.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), MODULE_NAME, body));
+        }
+        if (bodyHTML.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), MODULE_NAME, bodyHTML));
+        }
+        if (rtf.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID(), MODULE_NAME, rtf));
+        }
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), MODULE_NAME, ((id < 0L) ? "Not available" : String.valueOf(id))));
+        if (subject.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), MODULE_NAME, subject));
+        }
+        if (localPath.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), MODULE_NAME, localPath));
+        } else {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), MODULE_NAME, "/foo/bar"));
+        }
+        
+        try {
+            BlackboardArtifact bbart;
+            bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
+            bbart.addAttributes(bbattributes);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, null, ex);
+        }
+    }
+    
 }
