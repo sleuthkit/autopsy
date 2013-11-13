@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
@@ -29,96 +30,146 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this class are used as a file ingest module configuration panel
- * by the known files hash set lookup file ingest module.
+ * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
 public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
-    private HashTableModel knownBadTableModel;
-    private HashDb nsrl;
+    private HashDbsTableModel knownTableModel;
+    private HashDbsTableModel knownBadTableModel;
 
     public HashDbSimpleConfigPanel() {
-        knownBadTableModel = new HashTableModel();
+        knownTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownHashSets());
+        knownBadTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownBadHashSets());
         initComponents();
         customizeComponents();
     }
-    
-    private void reloadCalc() {
-        final HashDbManager xmlHandle = HashDbManager.getInstance();
-        final HashDb nsrlDb = xmlHandle.getNSRLHashSet();
-        final boolean nsrlUsed = nsrlDb != null && nsrlDb.getUseForIngest()== true && nsrlDb.hasLookupIndex();
-        final List<HashDb> knowns = xmlHandle.getKnownBadHashSets();
-        final boolean knownExists = !knowns.isEmpty();
-        boolean knownUsed = false;
-        if (knownExists) {
-            for (HashDb known : knowns) {
-                if (known.getUseForIngest() == true) {
-                    knownUsed = true;
-                    break;
-                }
-            }
-        }
         
-        if (!nsrlUsed && !knownUsed ) {
-            calcHashesButton.setEnabled(true);
-            calcHashesButton.setSelected(true);
-            xmlHandle.setShouldAlwaysCalculateHashes(true);
-        } else {
-            calcHashesButton.setEnabled(false);
-            calcHashesButton.setSelected(false);
-            xmlHandle.setShouldAlwaysCalculateHashes(false);
-        }
-    }
-    
     private void customizeComponents() {
-        final HashDbManager xmlHandle = HashDbManager.getInstance();
+        customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
+        customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
+        
+        // Add a listener to the always calculate hashes checkbox component.
+        // The listener passes the user's selection on to the hash database manager.
         calcHashesButton.addActionListener( new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(calcHashesButton.isSelected()) {
-                    xmlHandle.setShouldAlwaysCalculateHashes(true);
-                } else {
-                    xmlHandle.setShouldAlwaysCalculateHashes(false);
-                }
+                HashDbManager.getInstance().alwaysCalculateHashes(calcHashesButton.isSelected());
             }            
         });
         
-        notableHashTable.setModel(knownBadTableModel);
-        
-        notableHashTable.setTableHeader(null);
-        notableHashTable.setRowSelectionAllowed(false);
-        //customize column witdhs
-        final int width1 = jScrollPane1.getPreferredSize().width;
-        notableHashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-        TableColumn column1;
-        for (int i = 0; i < notableHashTable.getColumnCount(); i++) {
-            column1 = notableHashTable.getColumnModel().getColumn(i);
+        refreshComponents();
+    }
+
+    private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDbsTableModel tableModel) {
+        table.setModel(tableModel);        
+        table.setTableHeader(null);
+        table.setRowSelectionAllowed(false);
+
+        final int width1 = scrollPane.getPreferredSize().width;
+        knownHashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+        TableColumn column;
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            column = table.getColumnModel().getColumn(i);
             if (i == 0) {
-                column1.setPreferredWidth(((int) (width1 * 0.07)));
+                column.setPreferredWidth(((int) (width1 * 0.07)));
             } else {
-                column1.setPreferredWidth(((int) (width1 * 0.92)));
+                column.setPreferredWidth(((int) (width1 * 0.92)));
+            }
+        }        
+    }
+    
+    private void refreshComponents() {        
+        refreshAlwaysCalcHashesComponents();        
+        knownBadTableModel.refresh();
+    }
+
+    private void refreshAlwaysCalcHashesComponents() {        
+        boolean noHashDbsConfiguredForIngest = true; 
+        for (HashDb hashDb : HashDbManager.getInstance().getAllHashSets()) {
+            try {
+                if (hashDb.getUseForIngest()== true && hashDb.hasLookupIndex()) {
+                    noHashDbsConfiguredForIngest = false;
+                    break;
+                }
+            }
+            catch (TskCoreException ex) {
+                // RJCTODO
+            }            
+        }
+
+        // If there are no hash databases configured for use during file ingest,
+        // default to always calculating hashes of the files.
+        if (noHashDbsConfiguredForIngest) {
+            calcHashesButton.setEnabled(true);
+            calcHashesButton.setSelected(true);
+            HashDbManager.getInstance().alwaysCalculateHashes(true);
+        } else {
+            calcHashesButton.setEnabled(false);
+            calcHashesButton.setSelected(false);
+            HashDbManager.getInstance().alwaysCalculateHashes(false);
+        }
+    }
+        
+    private class HashDbsTableModel extends AbstractTableModel {        
+        private final List<HashDb> hashDbs;
+        
+        HashDbsTableModel(List<HashDb> hashDbs) {
+            this.hashDbs = hashDbs;
+        }
+        
+        private void refresh() {
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return hashDbs.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            HashDb db = hashDbs.get(rowIndex);
+            if (columnIndex == 0) {
+                return db.getUseForIngest();
+            } else {
+                return db.getHashSetName();
             }
         }
         
-        reloadSets();
-    }
-
-    private void reloadSets() {
-        nsrl = HashDbManager.getInstance().getNSRLHashSet();
-
-        if (nsrl == null || nsrl.getUseForIngest() == false) {
-            nsrlDbLabelVal.setText("Disabled");
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return !IngestManager.getDefault().isIngestRunning() && columnIndex == 0;
         }
-        else if (nsrl.hasLookupIndex() == false) {
-            nsrlDbLabelVal.setText("Disabled (No index)");
-        }
-        else {
-            nsrlDbLabelVal.setText("Enabled");
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            if(columnIndex == 0) {
+                HashDb db = hashDbs.get(rowIndex);
+                boolean dbHasIndex = false;
+                try {
+                    dbHasIndex = db.hasLookupIndex();
+                }
+                catch (TskCoreException ex) {
+                    // RJCTODO
+                }
+                if(((Boolean) getValueAt(rowIndex, columnIndex)) || dbHasIndex) {
+                    db.setUseForIngest((Boolean) aValue);
+                } 
+                else {
+                    JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Hash databases must be indexed before they can be used for ingest");
+                }
+                refreshComponents();
+            }
         }
         
-        reloadCalc();
-        
-        knownBadTableModel.resync();
+        @Override
+        public Class<?> getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
     }
         
     /** This method is called from within the constructor to
@@ -131,26 +182,40 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        notableHashTable = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
-        nsrlDbLabel = new javax.swing.JLabel();
+        knownHashTable = new javax.swing.JTable();
+        knownBadHashDbsLabel = new javax.swing.JLabel();
+        knownHashDbsLabel = new javax.swing.JLabel();
         calcHashesButton = new javax.swing.JCheckBox();
-        nsrlDbLabelVal = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        knownBadHashTable = new javax.swing.JTable();
 
         jScrollPane1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        notableHashTable.setBackground(new java.awt.Color(240, 240, 240));
-        notableHashTable.setShowHorizontalLines(false);
-        notableHashTable.setShowVerticalLines(false);
-        jScrollPane1.setViewportView(notableHashTable);
+        knownHashTable.setBackground(new java.awt.Color(240, 240, 240));
+        knownHashTable.setShowHorizontalLines(false);
+        knownHashTable.setShowVerticalLines(false);
+        jScrollPane1.setViewportView(knownHashTable);
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.jLabel1.text")); // NOI18N
+        knownBadHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.knownBadHashDbsLabel.text")); // NOI18N
 
-        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabel.text")); // NOI18N
+        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.knownHashDbsLabel.text")); // NOI18N
 
         calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.calcHashesButton.text")); // NOI18N
 
-        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.nsrlDbLabelVal.text")); // NOI18N
+        jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        knownBadHashTable.setBackground(new java.awt.Color(240, 240, 240));
+        knownBadHashTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        knownBadHashTable.setShowHorizontalLines(false);
+        knownBadHashTable.setShowVerticalLines(false);
+        jScrollPane2.setViewportView(knownBadHashTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -159,109 +224,40 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(nsrlDbLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(nsrlDbLabelVal, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(knownHashDbsLabel)
+                            .addComponent(knownBadHashDbsLabel))
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(calcHashesButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(calcHashesButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(nsrlDbLabel)
-                    .addComponent(nsrlDbLabelVal))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(knownHashDbsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(knownBadHashDbsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(calcHashesButton)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox calcHashesButton;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable notableHashTable;
-    private javax.swing.JLabel nsrlDbLabel;
-    private javax.swing.JLabel nsrlDbLabelVal;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel knownBadHashDbsLabel;
+    private javax.swing.JTable knownBadHashTable;
+    private javax.swing.JLabel knownHashDbsLabel;
+    private javax.swing.JTable knownHashTable;
     // End of variables declaration//GEN-END:variables
-
-    private class HashTableModel extends AbstractTableModel {
-        
-        private HashDbManager xmlHandle = HashDbManager.getInstance();
-        
-        private void resync() {
-            fireTableDataChanged();
-        }
-
-        @Override
-        public int getRowCount() {
-            int size = xmlHandle.getKnownBadHashSets().size();
-            return size == 0 ? 1 : size;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (xmlHandle.getKnownBadHashSets().isEmpty()) {
-                if (columnIndex == 0) {
-                    return "";
-                } else {
-                    return "Disabled";
-                }
-            } else {
-                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
-                if (columnIndex == 0) {
-                    return db.getUseForIngest();
-                } else {
-                    return db.getDisplayName();
-                }
-            }
-        }
-        
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return !IngestManager.getDefault().isIngestRunning() && columnIndex == 0;
-        }
-
-        @Override
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if(columnIndex == 0){
-                HashDb db = xmlHandle.getKnownBadHashSets().get(rowIndex);
-                IndexStatus status = IndexStatus.NO_INDEX;
-                try {
-                    status = db.getStatus();
-                }
-                catch (TskCoreException ex) {
-                    // RJCTODO
-                }
-                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(status)) {
-                        db.setUseForIngest((Boolean) aValue);
-                } else {
-                        JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Databases must be indexed before they can be used for ingest");
-                }
-                reloadSets();
-            }
-        }
-        
-        @Override
-        public Class<?> getColumnClass(int c) {
-            return getValueAt(0, c).getClass();
-        }
-    }
 }

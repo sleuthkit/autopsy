@@ -97,7 +97,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         databasePathTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
-        nsrlRadioButton = new javax.swing.JRadioButton();
+        knownRadioButton = new javax.swing.JRadioButton();
         knownBadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         databaseNameTextField = new javax.swing.JTextField();
@@ -130,12 +130,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        buttonGroup1.add(nsrlRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(nsrlRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.nsrlRadioButton.text")); // NOI18N
-        nsrlRadioButton.setEnabled(false);
-        nsrlRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(knownRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.knownRadioButton.text")); // NOI18N
+        knownRadioButton.setEnabled(false);
+        knownRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nsrlRadioButtonActionPerformed(evt);
+                knownRadioButtonActionPerformed(evt);
             }
         });
 
@@ -195,7 +195,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(knownBadRadioButton)
-                            .addComponent(nsrlRadioButton))
+                            .addComponent(knownRadioButton))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -217,7 +217,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(nsrlRadioButton)
+                .addComponent(knownRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -238,12 +238,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         try {
         fileChooser.setSelectedFile(new File("hash.kdb"));
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File databaseFile = fileChooser.getSelectedFile();
+                File databaseFile = fileChooser.getSelectedFile();                
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
                 databaseNameTextField.setText(FilenameUtils.removeExtension(databaseFile.getName()));
                 if (databaseNameTextField.getText().toLowerCase().contains("nsrl")) {
-                    nsrlRadioButton.setSelected(true);
-                    nsrlRadioButtonActionPerformed(null);
+                    knownRadioButton.setSelected(true);
+                    knownRadioButtonActionPerformed(null);
                 }
             } 
         }
@@ -252,10 +252,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
-    private void nsrlRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nsrlRadioButtonActionPerformed
+    private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(false);
         sendInboxMessagesCheckbox.setEnabled(false);
-    }//GEN-LAST:event_nsrlRadioButtonActionPerformed
+    }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(true);
@@ -277,8 +277,8 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         }
 
         KnownFilesType type;
-        if(nsrlRadioButton.isSelected()) {
-            type = KnownFilesType.NSRL;
+        if(knownRadioButton.isSelected()) {
+            type = KnownFilesType.KNOWN;
         } else {
             type = KnownFilesType.KNOWN_BAD;
         }
@@ -308,7 +308,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton knownBadRadioButton;
-    private javax.swing.JRadioButton nsrlRadioButton;
+    private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JCheckBox sendInboxMessagesCheckbox;
     private javax.swing.JCheckBox useForIngestCheckbox;

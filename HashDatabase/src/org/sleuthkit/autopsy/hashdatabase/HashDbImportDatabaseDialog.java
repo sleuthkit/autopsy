@@ -79,7 +79,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         databasePathTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
-        nsrlRadioButton = new javax.swing.JRadioButton();
+        knownRadioButton = new javax.swing.JRadioButton();
         knownBadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         databaseNameTextField = new javax.swing.JTextField();
@@ -112,11 +112,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        buttonGroup1.add(nsrlRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(nsrlRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.nsrlRadioButton.text")); // NOI18N
-        nsrlRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(knownRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.knownRadioButton.text")); // NOI18N
+        knownRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nsrlRadioButtonActionPerformed(evt);
+                knownRadioButtonActionPerformed(evt);
             }
         });
 
@@ -176,7 +176,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(knownBadRadioButton)
-                            .addComponent(nsrlRadioButton))
+                            .addComponent(knownRadioButton))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -198,7 +198,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(nsrlRadioButton)
+                .addComponent(knownRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -221,6 +221,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             try {
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
                 databaseNameTextField.setText(FilenameUtils.removeExtension(databaseFile.getName()));
+                if (databaseNameTextField.getText().toLowerCase().contains("nsrl")) {
+                    knownRadioButton.setSelected(true);
+                    knownRadioButtonActionPerformed(null);
+                }                
             } 
             catch (IOException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex);
@@ -228,10 +232,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
-    private void nsrlRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nsrlRadioButtonActionPerformed
+    private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(false);
         sendInboxMessagesCheckbox.setEnabled(false);
-    }//GEN-LAST:event_nsrlRadioButtonActionPerformed
+    }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(true);
@@ -244,18 +248,18 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         if(databasePathTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Database path cannot be empty.");
+            JOptionPane.showMessageDialog(this, "Hash database file path cannot be empty.");
             return;
         }
         
         if(databaseNameTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Database display name cannot be empty.");
+            JOptionPane.showMessageDialog(this, "Hash set name cannot be empty.");
             return;
         }
         
         File file = new File(databasePathTextField.getText());
         if (!file.exists()) {
-            JOptionPane.showMessageDialog(this, "Selected database does not exist.");
+            JOptionPane.showMessageDialog(this, "Selected hash database does not exist.");
             return;
         }
                 
@@ -270,8 +274,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         
         KnownFilesType type;
-        if (nsrlRadioButton.isSelected()) {
-            type = KnownFilesType.NSRL;
+        if (knownRadioButton.isSelected()) {
+            type = KnownFilesType.KNOWN;
         } 
         else {
             type = KnownFilesType.KNOWN_BAD;
@@ -279,10 +283,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         
         try {
             selectedHashDb = HashDb.openHashDatabase(databaseNameTextField.getText(), filePath, useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);
-            
-            
-//            if (!selectedHashDb.hasTextLookupIndexOnly())
-            
         } 
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Failed to open hash database at " + filePath, ex);
@@ -305,7 +305,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton knownBadRadioButton;
-    private javax.swing.JRadioButton nsrlRadioButton;
+    private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JCheckBox sendInboxMessagesCheckbox;
     private javax.swing.JCheckBox useForIngestCheckbox;

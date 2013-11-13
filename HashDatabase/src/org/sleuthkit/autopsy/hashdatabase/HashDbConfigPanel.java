@@ -27,6 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -37,16 +38,18 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.hashdatabase.IndexStatus.NO_INDEX;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this class provide a UI for managing the hash sets configuration.
+ * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
 public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+    private static final String NO_SELECTION_TEXT = "No database selected";
+    private static final String ERROR_GETTING_INDEX_STATUS = "Error occurred getting status";
+    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private HashDbManager hashSetManager = HashDbManager.getInstance();
-    private HashSetTableModel hashSetTableModel = new HashSetTableModel();
+    private HashSetTableModel hashSetTableModel = new HashSetTableModel();    
         
     public HashDbConfigPanel() {
         initComponents();
@@ -84,15 +87,16 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private void updateComponentsForNoSelection() {
         boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();        
 
-        // Update labels.
-        hashDbLocationLabel.setText("No database selected");
-        hashDbNameLabel.setText("No database selected");
-        hashDbIndexStatusLabel.setText("No database selected");
-        hashDbTypeLabel.setText("No database selected");
+        // Update descriptive labels.
+        hashDbNameLabel.setText(NO_SELECTION_TEXT);
+        hashDbTypeLabel.setText(NO_SELECTION_TEXT);
+        hashDbLocationLabel.setText(NO_SELECTION_TEXT);
+        indexPathLabel.setText(NO_SELECTION_TEXT);
 
         // Update indexing components.
-        indexButton.setText("Index");
+        hashDbIndexStatusLabel.setText(NO_SELECTION_TEXT);
         hashDbIndexStatusLabel.setForeground(Color.black);
+        indexButton.setText("Index");
         indexButton.setEnabled(false);            
 
         // Update ingest options.
@@ -115,54 +119,56 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private void updateComponentsForSelection(HashDb db) {                
         boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();        
 
-        // Update labels.
-        hashDbLocationLabel.setToolTipText(db.getDatabasePath());
-        if (db.getDatabasePath().length() > 50){
-            String shortenedPath = db.getDatabasePath();
-            shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
-            hashDbLocationLabel.setText(shortenedPath);
-        }
-        else {
-            hashDbLocationLabel.setText(db.getDatabasePath());
-        }
-        hashDbNameLabel.setText(db.getDisplayName());
+        // Update descriptive labels.        
+        hashDbNameLabel.setText(db.getHashSetName());
         hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
-
+        hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
+        indexPathLabel.setText(shortenPath(db.getIndexPath()));
+        
         // Update indexing components.
-        IndexStatus status = IndexStatus.UNKNOWN;
         try {
-            status = db.getStatus();
+            if (db.isIndexing()) {
+                indexButton.setText("Indexing");
+                hashDbIndexStatusLabel.setText("Index is currently being generated");
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                indexButton.setEnabled(false);
+            }         
+            else if (db.hasLookupIndex()) {
+                if (db.hasIndexOnly()) {
+                    hashDbIndexStatusLabel.setText("Index only");                
+                }
+                else if (db.getIndexPath().endsWith(LEGACY_INDEX_FILE_EXTENSION)) {
+                    hashDbIndexStatusLabel.setText("Indexed (old format)");                                    
+                }
+                else {
+                    hashDbIndexStatusLabel.setText("Indexed");
+                }
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                if (db.canBeReindexed()) {
+                    indexButton.setText("Re-Index");
+                    indexButton.setEnabled(true);
+                }
+                else {
+                    indexButton.setText("Index");
+                    indexButton.setEnabled(false);                    
+                }
+            }
+            else {
+                hashDbIndexStatusLabel.setText("No index");
+                hashDbIndexStatusLabel.setForeground(Color.red);
+                indexButton.setText("Index");
+                indexButton.setEnabled(true);
+            }
         }
         catch (TskCoreException ex) {
-            // RJCTODO
-            // Logger.getLogger(HashDbIngestModule.class.getName())
-        }            
-        hashDbIndexStatusLabel.setText(status.message());
-        switch (status) {
-            case NO_INDEX:
-                indexButton.setText("Index");
-                hashDbIndexStatusLabel.setForeground(Color.red);
-                indexButton.setEnabled(true);
-                break;
-            case INDEXING:
-                indexButton.setText("Indexing");
-                hashDbIndexStatusLabel.setForeground(Color.black);
-                indexButton.setEnabled(false);
-                break;
-            case UNKNOWN:
-                indexButton.setText("Index");
-                hashDbIndexStatusLabel.setForeground(Color.red);
-                indexButton.setEnabled(false);
-                break;
-            case INDEXED:
-                // TODO: Restore ability to re-index an indexed database.                    
-            case INDEX_ONLY:
-            default:
-                indexButton.setText("Index");
-                hashDbIndexStatusLabel.setForeground(Color.black);
-                indexButton.setEnabled(false);
-                break;
-        }
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex);                
+            hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS);
+            hashDbIndexStatusLabel.setForeground(Color.red);
+            indexButton.setText("Index");
+            indexButton.setEnabled(false);
+        }     
+        
+        // Diable the indexing button if ingest is in progress.
         if (ingestIsRunning) {
             indexButton.setEnabled(false);
         }
@@ -184,6 +190,14 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         ingestWarningLabel.setVisible(ingestIsRunning);        
     }
         
+    private static String shortenPath(String path) {
+        String shortenedPath = path;
+        if (shortenedPath.length() > 50){
+            shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
+        }
+        return shortenedPath;
+    }
+    
     @Override
     public void load() {
         hashSetTable.clearSelection();
@@ -195,8 +209,13 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         //Checking for for any unindexed databases
         List<HashDb> unindexed = new ArrayList<>();
         for (HashDb hashSet : hashSetManager.getAllHashSets()) {
-            if (!hashSet.hasLookupIndex()) {
-                unindexed.add(hashSet);
+            try {
+                if (!hashSet.hasLookupIndex()) {
+                    unindexed.add(hashSet);
+                }
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);                
             }
         }
 
@@ -237,7 +256,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         String total = "";
         String message;
         for(HashDb hdb : unindexed){
-            total+= "\n" + hdb.getDisplayName();
+            total+= "\n" + hdb.getHashSetName();
         }
         if(plural){
             message = "The following databases are not indexed, would you like to index them now? \n " + total;
@@ -326,11 +345,17 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return hashSets.get(rowIndex).getDisplayName();
+            return hashSets.get(rowIndex).getHashSetName();
         }
         
         private boolean indexExists(int rowIndex){
-            return hashSets.get(rowIndex).hasLookupIndex();
+            try {
+                return hashSets.get(rowIndex).hasLookupIndex();
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);                
+                return false;
+            }
         }
                                 
         @Override
@@ -359,7 +384,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         
         int getIndexByName(String name) {
             for (int i = 0; i < hashSets.size(); ++i) {
-                if (hashSets.get(i).getDisplayName().equals(name)) {
+                if (hashSets.get(i).getHashSetName().equals(name)) {
                     return i;                    
                 }                
             }                
@@ -410,6 +435,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         informationSeparator = new javax.swing.JSeparator();
         optionsSeparator = new javax.swing.JSeparator();
         newDatabaseButton = new javax.swing.JButton();
+        indexPathLabelLabel = new javax.swing.JLabel();
+        indexPathLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.jLabel2.text")); // NOI18N
 
@@ -520,6 +547,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(indexPathLabelLabel, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.indexPathLabelLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(indexPathLabel, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.indexPathLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -531,44 +562,44 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(informationLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(informationSeparator))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(optionsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(ingestWarningLabel)
-                            .addGroup(layout.createSequentialGroup()
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(nameLabel)
-                                                    .addComponent(locationLabel)
-                                                    .addComponent(typeLabel))
-                                                .addGap(40, 40, 40))
-                                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(18, 18, 18)))
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbNameLabel)))
+                                        .addComponent(nameLabel)
+                                        .addGap(53, 53, 53)
+                                        .addComponent(hashDbNameLabel))
                                     .addComponent(useForIngestCheckbox)
                                     .addComponent(showInboxMessagesCheckBox)
-                                    .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(locationLabel)
+                                            .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(typeLabel)
+                                            .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(indexPathLabelLabel))
+                                        .addGap(10, 10, 10)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                                            .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(optionsLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(newDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addGap(24, 24, 24))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -587,25 +618,29 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(nameLabel)
                             .addComponent(hashDbNameLabel))
-                        .addGap(5, 5, 5)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(locationLabel)
-                            .addComponent(hashDbLocationLabel))
-                        .addGap(5, 5, 5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(typeLabel)
                             .addComponent(hashDbTypeLabel))
-                        .addGap(5, 5, 5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(hashDbIndexStatusLabel)
-                            .addComponent(indexLabel))
-                        .addGap(5, 5, 5)
+                            .addComponent(locationLabel)
+                            .addComponent(hashDbLocationLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(indexPathLabelLabel)
+                            .addComponent(indexPathLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(indexLabel)
+                            .addComponent(hashDbIndexStatusLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(indexButton)
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(optionsLabel)
                             .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(useForIngestCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(showInboxMessagesCheckBox)
@@ -624,34 +659,33 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }// </editor-fold>//GEN-END:initComponents
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
-        final HashDb hashDbToBeIndexed = ((HashSetTable)hashSetTable).getSelection();
-        if (hashDbToBeIndexed != null) {
-            // Add a listener for the INDEXING_DONE event. The listener will update 
-            // the UI.
-            hashDbToBeIndexed.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
-                        HashDb selectedHashDb = ((HashSetTable)hashSetTable).getSelection();
-                        if (selectedHashDb != null && hashDbToBeIndexed != null && hashDbToBeIndexed.equals(selectedHashDb)) {
-                            updateComponents();
-                        }
-                        hashSetTableModel.refreshDisplay();
+        final HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
+        assert hashDb != null;        
+    
+        // Add a listener for the INDEXING_DONE event. This listener will update 
+        // the UI.
+        hashDb.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
+                    HashDb selectedHashDb = ((HashSetTable)hashSetTable).getSelection();
+                    if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
+                        updateComponents();
                     }
-                }            
-            });
-            
-            // Display a modal dialog box to kick off the indexing on a worker thread
-            // and try to persuade the user to wait for the indexing task to finish. 
-            // TODO: This defeats the purpose of doing the indexing on a worker thread.
-            // The user may also cancel the dialog and change the hash sets configuration.
-            // That should be fine, as long as the indexing DB is not deleted, which 
-            // shu;d be able to be controlled.
-            ModalNoButtons indexDialog = new ModalNoButtons(this, new Frame(), hashDbToBeIndexed);
-            indexDialog.setLocationRelativeTo(null);
-            indexDialog.setVisible(true);
-            indexDialog.setModal(true);    
-        }
+                    hashSetTableModel.refreshDisplay();
+                }
+            }            
+        });
+
+        // Display a modal dialog box to kick off the indexing on a worker thread
+        // and try to persuade the user to wait for the indexing task to finish. 
+        // TODO: If the user waits, this defeats the purpose of doing the indexing on a worker thread.
+        // But if the user cancels the dialog, other operations on the database 
+        // may be attempted when it is not in a suitable state.
+        ModalNoButtons indexDialog = new ModalNoButtons(this, new Frame(), hashDb);
+        indexDialog.setLocationRelativeTo(null);
+        indexDialog.setVisible(true);
+        indexDialog.setModal(true);    
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
@@ -694,7 +728,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (hashDb != null) {
             hashSetManager.addHashSet(hashDb);
             hashSetTableModel.refreshModel();
-            ((HashSetTable)hashSetTable).selectRowByName(hashDb.getDisplayName());
+            ((HashSetTable)hashSetTable).selectRowByName(hashDb.getHashSetName());
         }    
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
@@ -703,7 +737,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (null != hashDb) {
             hashSetManager.addHashSet(hashDb);
             hashSetTableModel.refreshModel();
-            ((HashSetTable)hashSetTable).selectRowByName(hashDb.getDisplayName());
+            ((HashSetTable)hashSetTable).selectRowByName(hashDb.getHashSetName());
         }
     }//GEN-LAST:event_newDatabaseButtonActionPerformed
            
@@ -718,6 +752,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JButton importDatabaseButton;
     private javax.swing.JButton indexButton;
     private javax.swing.JLabel indexLabel;
+    private javax.swing.JLabel indexPathLabel;
+    private javax.swing.JLabel indexPathLabelLabel;
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
     private javax.swing.JLabel ingestWarningLabel;

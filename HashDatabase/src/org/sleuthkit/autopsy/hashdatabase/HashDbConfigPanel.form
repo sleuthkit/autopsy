@@ -64,47 +64,45 @@
                   <Group type="102" attributes="0">
                       <Component id="jScrollPane1" min="-2" pref="275" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="informationLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="informationSeparator" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="ingestWarningLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
+                                      <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="indexButton" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
+                                          <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="indexLabel" alignment="0" min="-2" pref="66" max="-2" attributes="0"/>
+                                          <Component id="indexPathLabelLabel" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="hashDbTypeLabel" pref="241" max="32767" attributes="0"/>
+                                          <Component id="hashDbLocationLabel" alignment="0" max="32767" attributes="0"/>
+                                          <Component id="indexPathLabel" max="32767" attributes="0"/>
+                                          <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                              </Group>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="optionsSeparator" min="-2" pref="324" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="ingestWarningLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" attributes="0">
-                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              </Group>
-                                              <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Group type="102" alignment="1" attributes="0">
-                                              <Component id="indexLabel" min="-2" pref="66" max="-2" attributes="0"/>
-                                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                                          </Group>
-                                      </Group>
-                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                          <Component id="hashDbTypeLabel" max="32767" attributes="0"/>
-                                          <Component id="hashDbLocationLabel" max="32767" attributes="0"/>
-                                          <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="hashDbNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="indexButton" alignment="0" min="-2" pref="75" max="-2" attributes="0"/>
-                              </Group>
                           </Group>
                       </Group>
                   </Group>
@@ -115,7 +113,7 @@
                   </Group>
                   <Component id="deleteDatabaseButton" alignment="0" min="-2" pref="133" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="40" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -139,29 +137,34 @@
                           <Component id="nameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="hashDbNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="locationLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="hashDbLocationLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="typeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="hashDbTypeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="indexLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="locationLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="hashDbLocationLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="indexPathLabelLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="indexPathLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="indexLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="indexButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="optionsSeparator" min="-2" pref="6" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="useForIngestCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
@@ -401,6 +404,20 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newDatabaseButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="indexPathLabelLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.indexPathLabelLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="indexPathLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.indexPathLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

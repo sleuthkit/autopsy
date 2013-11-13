@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -30,16 +33,23 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Instances of this class represent the hash databases underlying known files 
- * hash sets. 
+ * Instances of this class represent hash databases used to classify files as
+ * known or know bad. 
  */
-public class HashDb implements Comparable<HashDb> {
+public class HashDb {
+    /**
+     * Property change events published by hash database objects.
+     */
     public enum Event {
         INDEXING_DONE
     }
     
+    /**
+     * The classification to apply to files whose hashes are stored in the 
+     * hash database.  
+     */
     public enum KnownFilesType{
-        NSRL("NSRL"), 
+        KNOWN("Known"), 
         KNOWN_BAD("Known Bad");
         
         private String displayName;
@@ -48,84 +58,90 @@ public class HashDb implements Comparable<HashDb> {
             this.displayName = displayName;
         }
         
-        String getDisplayName() {
+        public String getDisplayName() {
             return this.displayName;
         }
     }
-    
+
+    private int handle;
+    private KnownFilesType knownFilesType;
+    private String databasePath;
+    private String indexPath;
+    private String hashSetName;
+    private boolean useForIngest;
+    private boolean sendHitMessages;
+    private boolean indexing;
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);    
+        
     /**
      * Opens an existing hash database. 
-     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
-     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param hashSetName Name used to represent the hash database in user interface components. 
+     * @param selectedFilePath Full path to either a hash database file or a hash database index file.
      * @param useForIngest A flag indicating whether or not the hash database should be used during ingest.
-     * @param showInboxMessages A flag indicating whether hash set hit messages should be sent to the application inbox.
-     * @param knownType The known files type of the database. 
+     * @param sendHitMessages A flag indicating whether hash set hit messages should be sent to the application in box.
+     * @param knownFilesType The classification to apply to files whose hashes are stored in the hash database. 
      * @return A HashDb object representation of the new hash database.
      * @throws TskCoreException 
      */
-    public static HashDb openHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownType) throws TskCoreException {
-        return new HashDb(SleuthkitJNI.openHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, knownType);
+    public static HashDb openHashDatabase(String hashSetName, String selectedFilePath, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) throws TskCoreException {
+        int handle = SleuthkitJNI.openHashDatabase(selectedFilePath);
+        return new HashDb(handle, SleuthkitJNI.getHashDatabasePath(handle), SleuthkitJNI.getHashDatabaseIndexPath(handle), hashSetName, useForIngest, sendHitMessages, knownFilesType);
     }
     
     /**
      * Creates a new hash database. 
-     * @param hashSetName Name used to represent the database in user interface components. 
+     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
      * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
      * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
      * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
-     * @param knownType The known files type of the database. 
+     * @param hashSetType The type of hash set to associate with the database. 
      * @return A HashDb object representation of the opened hash database.
      * @throws TskCoreException 
      */
-    public static HashDb createHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) throws TskCoreException {
-        return new HashDb(SleuthkitJNI.createHashDatabase(databasePath), hashSetName, databasePath, useForIngest, showInboxMessages, type);
+    public static HashDb createHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownFilesType) throws TskCoreException {
+        int handle = SleuthkitJNI.createHashDatabase(databasePath);
+        return new HashDb(handle, SleuthkitJNI.getHashDatabasePath(handle), SleuthkitJNI.getHashDatabaseIndexPath(handle), hashSetName, useForIngest, showInboxMessages, knownFilesType);
     }    
-    
-    private static final String INDEX_FILE_EXTENSION = ".kdb";
-    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
-    
-    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);    
-    private String displayName;
-    private String databasePath;
-    private boolean useForIngest;
-    private boolean showInboxMessages;
-    private KnownFilesType type;
-    private int handle;
-    private boolean indexing;
-    
-    HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType type) {
-        this.displayName = name;
+
+    private HashDb(int handle, String databasePath, String indexPath, String name, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
         this.databasePath = databasePath;
+        this.indexPath = indexPath;
+        this.hashSetName = name;
         this.useForIngest = useForIngest;
-        this.showInboxMessages = showInboxMessages;
-        this.type = type;
+        this.sendHitMessages = sendHitMessages;
+        this.knownFilesType = knownFilesType;
         this.handle = handle;
         this.indexing = false;
     }
 
-    @Override
-    public int compareTo(HashDb o) {
-        return this.displayName.compareTo(o.displayName);
-    }
-        
+    /**
+     * Adds a listener for the events defined in HashDb.Event. 
+     */
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         propertyChangeSupport.addPropertyChangeListener(pcl);
     }
     
+    /**
+     * Removes a listener for the events defined in HashDb.Event. 
+     */
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
         propertyChangeSupport.removePropertyChangeListener(pcl);
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getHashSetName() {
+        return hashSetName;
     }
     
     public String getDatabasePath() {
         return databasePath;
     }
     
+    public String getIndexPath() {
+        return indexPath;
+    }
+        
     public KnownFilesType getKnownFilesType() {
-        return type;
+        return knownFilesType;
     }
         
     public boolean getUseForIngest() {
@@ -137,24 +153,23 @@ public class HashDb implements Comparable<HashDb> {
     }
         
     public boolean getShowInboxMessages() {
-        return showInboxMessages;
+        return sendHitMessages;
     }
     
     void setShowInboxMessages(boolean showInboxMessages) {
-        this.showInboxMessages = showInboxMessages;
+        this.sendHitMessages = showInboxMessages;
+    }
+
+    // RJCTODO: Add comments
+    public boolean hasLookupIndex() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
     }
         
-    public boolean hasLookupIndex() {
-        try {
-            return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
-        }
-        catch (TskCoreException ex) {
-            // RJCTODO
-            return false;
-        }
+    public boolean canBeReindexed() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
     }
-        
-    public boolean hasTextLookupIndexOnly() throws TskCoreException {
+    
+    public boolean hasIndexOnly() throws TskCoreException {
         return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
@@ -197,59 +212,40 @@ public class HashDb implements Comparable<HashDb> {
         }         
         return result;
      }
-        
-    /**
-     * Derives index path from an database path by appending the suffix.
-     * @param databasePath
-     * @return 
-     */
-     // RJCTODO: Thought I got rid of this...
-    static String toIndexPath(String databasePath) {
-        return databasePath.concat(INDEX_FILE_EXTENSION);
-    }
-            
+                    
     boolean isIndexing() {
         return indexing;
     }
 
-    public IndexStatus getStatus() throws TskCoreException {
-        IndexStatus status = IndexStatus.NO_INDEX;
-        
-        if (indexing) {
-            status = IndexStatus.INDEXING;
-        }
-        else if (hasLookupIndex()) {
-            if (hasTextLookupIndexOnly()) {
-                status = IndexStatus.INDEX_ONLY;
-            }
-            else {
-                status = IndexStatus.INDEXED;
-            }
-        }
-        
-        return status;        
-    }
-
     // Tries to index the database (overwrites any existing index) using a 
     // SwingWorker.
-    void createIndex() throws TskCoreException {
-        CreateIndex creator = new CreateIndex();
+    void createIndex(boolean deleteIndexFile) {
+        CreateIndex creator = new CreateIndex(deleteIndexFile);
         creator.execute();
     }
 
     private class CreateIndex extends SwingWorker<Object,Void> {
         private ProgressHandle progress;
+        private boolean deleteIndexFile;
         
-        CreateIndex() {
+        CreateIndex(boolean deleteIndexFile) {
+            this.deleteIndexFile = deleteIndexFile;
         };
 
         @Override
-        protected Object doInBackground() throws Exception {
+        protected Object doInBackground() {
             indexing = true;
-            progress = ProgressHandleFactory.createHandle("Indexing " + displayName);
+            progress = ProgressHandleFactory.createHandle("Indexing " + hashSetName);
             progress.start();
             progress.switchToIndeterminate();
-            SleuthkitJNI.createLookupIndexForHashDatabase(handle); // RJCTODO: There is nobody to catch, fix this.
+            try {
+                SleuthkitJNI.createLookupIndexForHashDatabase(handle, deleteIndexFile);
+                indexPath = SleuthkitJNI.getHashDatabaseIndexPath(handle);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
+                JOptionPane.showMessageDialog(null, "Error indexing hash database for " + getHashSetName() + ".", "Hash Database Index Error", JOptionPane.ERROR_MESSAGE);                
+            }
             return null;
         }
 
@@ -257,7 +253,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, displayName);
+            propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, hashSetName);
         }
     }
     
