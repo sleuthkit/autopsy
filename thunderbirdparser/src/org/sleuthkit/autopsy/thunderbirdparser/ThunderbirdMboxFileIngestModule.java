@@ -107,7 +107,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             if (abstractFile.getSize() > 64) {
                 int byteRead = abstractFile.read(t, 0, 64);
                 if (byteRead > 0) {
-                    isMbox = ThunderbirdEmailParser.isValidMimeTypeMbox(t);
+                    isMbox = MboxParser.isValidMimeTypeMbox(t);
                 }
             }
         } catch (TskException ex) {

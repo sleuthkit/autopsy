@@ -69,6 +69,10 @@ public class MboxParser {
         messageBuilder = new DefaultMessageBuilder();
     }
     
+    static boolean isValidMimeTypeMbox(byte[] buffer) {
+        return (new String(buffer)).startsWith("From ");
+    }
+    
     /**
      * Parse the mbox file and get the email messages.
      * @param mboxFile
