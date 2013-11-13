@@ -18,19 +18,23 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import com.pff.PSTAttachment;
 import com.pff.PSTException;
 import com.pff.PSTFile;
 import com.pff.PSTFolder;
 import com.pff.PSTMessage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -47,10 +51,11 @@ public class PstParser {
      * A map of PSTMessages to their Local path within the file's internal 
      * directory structure.
      */
-    private Map<PSTMessage, String> results;
-    
-    PstParser() {
-        results = new HashMap<>();
+    private List<EmailMessage> results;
+    private IngestServices services;
+    PstParser(IngestServices services) {
+        results = new ArrayList<>();
+        this.services = services;
     }
     
     enum ParseResult {
@@ -84,7 +89,7 @@ public class PstParser {
      * 
      * @return 
      */
-    Map<PSTMessage, String> getResults() {
+    List<EmailMessage> getResults() {
         return results;
     }
 
@@ -119,13 +124,133 @@ public class PstParser {
             // A folder's children are always emails, never other folders.
             try {
                 while ((email = (PSTMessage) folder.getNextChild()) != null) {
-                    results.put(email, newPath);
+                    results.add(extractEmailMessage(email, newPath));
                 }
             } catch (PSTException | IOException ex) {
                 logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: " + ex.getMessage());
             }
         }
     }
+    
+    /**
+     * Create an EmailMessage from a PSTMessage.
+     * 
+     * @param msg
+     * @param localPath
+     * @return 
+     */
+    private EmailMessage extractEmailMessage(PSTMessage msg, String localPath) {
+        EmailMessage email = new EmailMessage();
+        email.setRecipients(msg.getDisplayTo());
+        email.setCc(msg.getDisplayCC());
+        email.setBcc(msg.getDisplayBCC());
+        email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
+        email.setSentDate(msg.getMessageDeliveryTime());
+        email.setTextBody(msg.getBody());
+        email.setHtmlBody(msg.getBodyHTML());
+        String rtf = "";
+        try {
+             rtf = msg.getRTFBody();
+        } catch (PSTException | IOException ex) {
+            logger.log(Level.INFO, "Failed to get RTF content from pst email.");
+        }
+        email.setRtfBody(rtf);
+        email.setLocalPath(localPath);
+        email.setSubject(msg.getSubject());
+        email.setId(msg.getDescriptorNodeId());
+        
+        if (msg.hasAttachments()) {
+            extractAttachments(email, msg);
+        }
+        
+        return email;
+    }
+    
+    /**
+     * Add the attachments within the PSTMessage to the EmailMessage.
+     * @param email
+     * @param msg 
+     */
+    private void extractAttachments(EmailMessage email, PSTMessage msg) {
+        int numberOfAttachments = msg.getNumberOfAttachments();
+        String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
+        for (int x = 0; x < numberOfAttachments; x++) {
+            try {
+                PSTAttachment attach = msg.getAttachment(x);
+                long size = attach.getAttachSize();
+                if (size >= services.getFreeDiskSpace()) {
+                    continue;
+                }
+                // both long and short filenames can be used for attachments
+                String filename = attach.getLongFilename();
+                if (filename.isEmpty()) {
+                    filename = attach.getFilename();
+                }
+                filename = msg.getDescriptorNodeId() + "-" + filename;
+                String outPath = outputDirPath + filename;
+                saveAttachmentToDisk(attach, outPath);
+                
+                Attachment attachment = new Attachment();
+                
+                long crTime = attach.getCreationTime().getTime() / 1000;
+                long mTime = attach.getModificationTime().getTime() / 1000;
+                String relPath = getRelModuleOutputPath() + File.separator + filename;
+                attachment.setName(filename);
+                attachment.setCrTime(crTime);
+                attachment.setmTime(mTime);
+                attachment.setLocalPath(relPath);
+                attachment.setSize(attach.getFilesize());
+                email.addAttachment(attachment);
+            } catch (PSTException | IOException ex) {
+                logger.log(Level.WARNING, "Failed to extract attachment.", ex);
+            }
+        }
+    }
+    
+    /**
+     * Extracts a PSTAttachment to the module output directory.
+     * 
+     * @param attach
+     * @param outPath
+     * @return
+     * @throws IOException
+     * @throws PSTException 
+     */
+    private void saveAttachmentToDisk(PSTAttachment attach, String outPath) throws IOException, PSTException{
+        InputStream attachmentStream = attach.getFileInputStream();
+        FileOutputStream out = new FileOutputStream(outPath);
+        // 8176 is the block size used internally and should give the best performance
+        int bufferSize = 8176;
+        byte[] buffer = new byte[bufferSize];
+        int count = attachmentStream.read(buffer);
+        while (count == bufferSize) {
+            out.write(buffer);
+            count = attachmentStream.read(buffer);
+        }
+        byte[] endBuffer = new byte[count];
+        System.arraycopy(buffer, 0, endBuffer, 0, count);
+        out.write(endBuffer);
+        out.close();
+        attachmentStream.close();
+    }
+    
+    /**
+     * Pretty-Print "From" field of an outlook email message.
+     * @param name Sender's Name
+     * @param addr Sender's Email address
+     * @return 
+     */
+    private String getSender(String name, String addr) {
+        if (name.isEmpty() && addr.isEmpty()) {
+            return "";
+        } else if (name.isEmpty()) {
+            return addr;
+        } else if (addr.isEmpty()) {
+            return name;
+        } else {
+            return name + ": " + addr;
+        }
+     }
     
     /**
      * Identify a file as a pst/ost file by it's header.
