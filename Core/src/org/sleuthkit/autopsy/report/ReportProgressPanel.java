@@ -58,46 +58,48 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         processingLabel.setText("Queuing...");
         STATUS = ReportStatus.QUEUING;
         
-        // Add the "link" effect to the pathLabel
-        final String linkPath = reportPath;
-        pathLabel.addMouseListener(new MouseListener() {
+        if (reportPath != null) {
+            // Add the "link" effect to the pathLabel
+            final String linkPath = reportPath;
+            pathLabel.addMouseListener(new MouseListener() {
 
-            @Override
-            public void mouseClicked(MouseEvent e) {
-            }
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                }
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
+                @Override
+                public void mousePressed(MouseEvent e) {
+                }
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                File file = new File(linkPath);
-                try {
-                    Desktop.getDesktop().open(file);
-                } catch (IOException ex) {
-                } catch (IllegalArgumentException ex) {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    File file = new File(linkPath);
                     try {
-                        // try to open the parent path if the file doens't exist
-                        Desktop.getDesktop().open(file.getParentFile());
-                    } catch (IOException ex1) {
+                        Desktop.getDesktop().open(file);
+                    } catch (IOException ex) {
+                    } catch (IllegalArgumentException ex) {
+                        try {
+                            // try to open the parent path if the file doens't exist
+                            Desktop.getDesktop().open(file.getParentFile());
+                        } catch (IOException ex1) {
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                pathLabel.setForeground(Color.DARK_GRAY);
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    pathLabel.setForeground(Color.DARK_GRAY);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                pathLabel.setForeground(Color.BLACK);
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-            
-        });
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    pathLabel.setForeground(Color.BLACK);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+
+            });
+        }
     }
     
     /**

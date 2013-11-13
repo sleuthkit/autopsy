@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -41,31 +40,13 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 /**
  * This class provides methods for creating sets of actions for data model objects. 
  */
+// TODO: All of the methods below that deal with classes derived from AbstractFile are the same except for the creation of wrapper nodes to pass to actions.
+//   1. Do the types of the wrapper nodes really need to vary? If not, it would mean a single 
+//   static List<Action> getActions(AbstrctFile file, boolean isArtifactSource)
+//   method could be implemented. If the different nodes are necessary, is it merely because of some misuse of the Visitor pattern somewhere?
+//   2. All of this would be much improved by not constructing nodes with actions, but this might be necessary with pushing of nodes rather than use of lookups to 
+//   handle selections.
 class DataModelActionsFactory  {    
-    static List<Action> getActions(Content content, boolean isArtifactSource) {
-        if (content instanceof File) {
-            return getActions((File)content, isArtifactSource);
-        }
-        else if (content instanceof LayoutFile) {
-            return getActions((LayoutFile)content, isArtifactSource);            
-        }
-        else if (content instanceof Directory) {
-            return getActions((Directory)content, isArtifactSource);            
-        }
-        else if (content instanceof VirtualDirectory) {
-            return getActions((VirtualDirectory)content, isArtifactSource);            
-        }
-        else if (content instanceof LocalFile) {
-            return getActions((LocalFile)content, isArtifactSource);            
-        }
-        else if (content instanceof DerivedFile) {
-            return getActions((DerivedFile)content, isArtifactSource);            
-        }
-        else {
-            return new ArrayList<>();
-        }
-    }
-    
     static List<Action> getActions(File file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? "View Source File in Directory" : "View File in Directory"), file));                    
@@ -173,5 +154,29 @@ class DataModelActionsFactory  {
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
-    }                
+    }
+    
+    static List<Action> getActions(Content content, boolean isArtifactSource) {
+        if (content instanceof File) {
+            return getActions((File)content, isArtifactSource);
+        }
+        else if (content instanceof LayoutFile) {
+            return getActions((LayoutFile)content, isArtifactSource);            
+        }
+        else if (content instanceof Directory) {
+            return getActions((Directory)content, isArtifactSource);            
+        }
+        else if (content instanceof VirtualDirectory) {
+            return getActions((VirtualDirectory)content, isArtifactSource);            
+        }
+        else if (content instanceof LocalFile) {
+            return getActions((LocalFile)content, isArtifactSource);            
+        }
+        else if (content instanceof DerivedFile) {
+            return getActions((DerivedFile)content, isArtifactSource);            
+        }
+        else {
+            return new ArrayList<>();
+        }
+    }    
 }

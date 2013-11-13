@@ -115,7 +115,13 @@ public class ReportGenerator {
             for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     TableReportModule module = entry.getKey();
-                    tableProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                    String moduleFilePath = module.getFilePath();
+                    if (moduleFilePath != null) {
+                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    }
+                    else {
+                        tableProgress.put(module, panel.addReport(module.getName(), null));                        
+                    }
                 }
             }
         }
@@ -124,7 +130,13 @@ public class ReportGenerator {
             for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
-                    generalProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                    String moduleFilePath = module.getFilePath();
+                    if (moduleFilePath != null) {
+                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    }
+                    else {
+                        generalProgress.put(module, panel.addReport(module.getName(), null));                        
+                    }
                 }
             }
         }
@@ -133,7 +145,13 @@ public class ReportGenerator {
             for(Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     FileReportModule module = entry.getKey();
-                    fileProgress.put(module, panel.addReport(module.getName(), reportPath + module.getFilePath()));
+                    String moduleFilePath = module.getFilePath();
+                    if (moduleFilePath != null) {
+                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    }
+                    else {
+                        fileProgress.put(module, panel.addReport(module.getName(), null));                        
+                    }
                 }
             }
         }
