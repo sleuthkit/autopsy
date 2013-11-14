@@ -47,7 +47,7 @@ sub pluginmain {
 		
 		my @vals = $key->get_list_of_values();
 		::rptMsg("<runMRU>");
-		::rptMsg("<time>".gmtime($key->get_timestamp())."</time>");
+		::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime>");
 		::rptMsg("<artifacts>");
 		my %runvals;
 		my $mru;

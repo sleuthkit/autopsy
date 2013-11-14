@@ -68,22 +68,6 @@ class KeywordSearchFilterNode extends FilterNode {
         return snippet;
     }
 
-    Property<String> getSnippetProperty() {
-
-        Property<String> prop = new PropertySupport.ReadOnly<String>("snippet",
-                String.class, "Context", "Snippet of matching content.") {
-
-            @Override
-            public String getValue() {
-                return getSnippet();
-            }
-        };
-
-        prop.setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button
-
-        return prop;
-    }
-
     @Override
     public Node.PropertySet[] getPropertySets() {
         Node.PropertySet[] propertySets = super.getPropertySets();
@@ -101,9 +85,6 @@ class KeywordSearchFilterNode extends FilterNode {
 
                 int j = 0;
                 for (Property<?> p : oldProperties) {
-                    if (j++ == 1) {
-                        newPs.put(getSnippetProperty());
-                    }
                     newPs.put(p);
                 }
 

@@ -60,9 +60,8 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  *
  */
 class IngestScheduler {
-
     private static IngestScheduler instance;
-    private static Logger logger = Logger.getLogger(IngestScheduler.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();
     private final FileScheduler fileScheduler = new FileScheduler();
 
@@ -103,12 +102,14 @@ class IngestScheduler {
      */
     static class FileScheduler implements Iterator<FileScheduler.ProcessTask> {
         //root folders enqueued
-
         private TreeSet<ProcessTask> rootProcessTasks;
+        
         //stack of current dirs to be processed recursively
         private List<ProcessTask> curDirProcessTasks;
+        
         //list of files being processed in the currently processed directory
         private LinkedList<ProcessTask> curFileProcessTasks; //need to add to start and end quickly
+        
         //estimated total files to be enqueued for currently scheduled content objects
         private int filesEnqueuedEst;
         private int filesDequeued;
@@ -119,9 +120,13 @@ class IngestScheduler {
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
 
         private FileScheduler() {
-            rootProcessTasks = new TreeSet<ProcessTask>(new RootTaskComparator());
-            curDirProcessTasks = new ArrayList<ProcessTask>();
-            curFileProcessTasks = new LinkedList<ProcessTask>();
+            rootProcessTasks = new TreeSet<>(new RootTaskComparator());
+            curDirProcessTasks = new ArrayList<>();
+            curFileProcessTasks = new LinkedList<>();
+            resetCounters();
+        }
+        
+        private void resetCounters() {
             filesEnqueuedEst = 0;
             filesDequeued = 0;
         }
@@ -186,7 +191,7 @@ class IngestScheduler {
         }
 
         /**
-         * Get number of files dequeued so far This is reset after the same
+         * Get number of files dequeued so far. This is reset after the same
          * content is enqueued that is already in a queue
          *
          * @return number of files dequeued so far
@@ -269,7 +274,7 @@ class IngestScheduler {
                 ScheduledTask<IngestModuleAbstractFile> scheduledTask = context.getScheduledTask();
                 final Content scheduledContent = scheduledTask.getContent();
                 Collection<AbstractFile> rootObjects = scheduledContent.accept(new GetRootDirVisitor());
-                List<AbstractFile> firstLevelFiles = new ArrayList<AbstractFile>();
+                List<AbstractFile> firstLevelFiles = new ArrayList<>();
                 if (rootObjects.isEmpty() && scheduledContent instanceof AbstractFile) {
                     //add the root, which is a leaf itself
                     firstLevelFiles.add((AbstractFile) scheduledContent);
@@ -298,7 +303,7 @@ class IngestScheduler {
                     }
                 }
 
-                List<ProcessTask> processTasks = new ArrayList<ProcessTask>();
+                List<ProcessTask> processTasks = new ArrayList<>();
                 for (AbstractFile firstLevelFile : firstLevelFiles) {
                     ProcessTask newTask = new ProcessTask(firstLevelFile, context);
                     if (shouldEnqueueTask(newTask)) {
@@ -319,7 +324,7 @@ class IngestScheduler {
             final Content inputContent = task.getContent();
 
             //remove from root queue
-            List<ProcessTask> toRemove = new ArrayList<ProcessTask>();
+            List<ProcessTask> toRemove = new ArrayList<>();
             for (ProcessTask pt : rootProcessTasks) {
                 if (pt.context.getScheduledTask().getContent().equals(inputContent)) {
                     toRemove.add(pt);
@@ -328,7 +333,7 @@ class IngestScheduler {
             rootProcessTasks.removeAll(toRemove);
 
             //remove from dir stack
-            toRemove = new ArrayList<ProcessTask>();
+            toRemove = new ArrayList<>();
             for (ProcessTask pt : curDirProcessTasks) {
                 if (pt.context.getScheduledTask().getContent().equals(inputContent)) {
                     toRemove.add(pt);
@@ -337,7 +342,7 @@ class IngestScheduler {
             curDirProcessTasks.removeAll(toRemove);
 
             //remove from file queue
-            toRemove = new ArrayList<ProcessTask>();
+            toRemove = new ArrayList<>();
             for (ProcessTask pt : curFileProcessTasks) {
                 if (pt.context.getScheduledTask().getContent().equals(inputContent)) {
                     toRemove.add(pt);
@@ -419,15 +424,11 @@ class IngestScheduler {
 
         @Override
         public synchronized boolean hasNext() {
-            boolean hasNext = !this.curFileProcessTasks.isEmpty();
-
-            if (!hasNext) {
-                //reset counters
-                filesDequeued = 0;
-                filesEnqueuedEst = 0;
+            if (curFileProcessTasks.isEmpty()) {
+                resetCounters();
+                return false;
             }
-
-            return hasNext;
+            return true;
         }
 
         @Override
@@ -438,52 +439,48 @@ class IngestScheduler {
 
             //dequeue the last in the list
             final ProcessTask task = curFileProcessTasks.pollLast();
-
-            //continue shifting to file queue until not empty
-            while (curFileProcessTasks.isEmpty()
-                    && !(this.rootProcessTasks.isEmpty() && this.curDirProcessTasks.isEmpty())) {
-                updateQueues();
-            }
-
-            ++filesDequeued;
-
+            filesDequeued++;
+            updateQueues();
+            
             return task;
-
         }
 
+        /** 
+         * Shuffle the queues so that there are files in the files queue.
+         * @returns true if no more data in queue
+         */
         private synchronized void updateQueues() {
-            //if file queue is empty, grab the next one from the dir stack
-            //if dir stack is empty, grab one from root dir queue first
-            //when pop from dir stack, get children of popped, and push them back onto stack
-
-            if (!this.curFileProcessTasks.isEmpty()) {
-                return;
-            }
-
-            //no file queue tasks
-            //grab from dir stack, if available
-            if (this.curDirProcessTasks.isEmpty()) {
-                //grab from root dir sorted queue
-                if (!rootProcessTasks.isEmpty()) {
+            
+            // we loop because we could have a directory that has all files
+            // that do not get enqueued
+            while (true) {
+                // There are files in the queue, we're done
+                if (this.curFileProcessTasks.isEmpty() == false) {
+                    return;
+                }
+                
+                // fill in the directory queue if it is empty. 
+                if (this.curDirProcessTasks.isEmpty()) {
+                    // bail out if root is also empty -- we are done
+                    if (rootProcessTasks.isEmpty()) {
+                        return;
+                    }
                     ProcessTask rootTask = this.rootProcessTasks.pollFirst();
                     curDirProcessTasks.add(rootTask);
                 }
-            }
 
-            if (!this.curDirProcessTasks.isEmpty()) {
                 //pop and push AbstractFile directory children if any
                 //add the popped and its leaf children onto cur file list
                 ProcessTask parentTask = curDirProcessTasks.remove(curDirProcessTasks.size() - 1);
                 final AbstractFile parentFile = parentTask.file;
-                //add popped to file list
+
+                // add itself to the file list
                 if (shouldEnqueueTask(parentTask)) {
                     this.curFileProcessTasks.addLast(parentTask);
                 }
-                try {
-                    //get children, and if leafs, schedule to file queue
-                    //otherwise push to curDir stack
 
-                    //TODO use the new more specific method to get list of AbstractFile
+                // add its children to the file and directory lists
+                try {
                     List<Content> children = parentFile.getChildren();
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
@@ -492,24 +489,17 @@ class IngestScheduler {
 
                             if (childFile.isDir()) {
                                 this.curDirProcessTasks.add(childTask);
-                            } else {
-                                if (shouldEnqueueTask(childTask)) {
-                                    this.curFileProcessTasks.addLast(childTask);
-                                }
+                            } 
+                            else if (shouldEnqueueTask(childTask)) {
+                                this.curFileProcessTasks.addLast(childTask);
                             }
-
                         }
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Could not get children of file and update file queues: "
                             + parentFile.getName(), ex);
                 }
-
             }
-
-            //logger.info("\nAAA ROOTS " + this.rootProcessTasks);
-            //logger.info("\nAAA STACK " + this.curDirProcessTasks);
-            //logger.info("\nAAA CURFILES " + this.curFileProcessTasks);
         }
 
         @Override
@@ -518,8 +508,7 @@ class IngestScheduler {
         }
 
         /**
-         * Return list of input source contents associated with the file/dir
-         * objects in the queue scheduler to be processed.
+         * Return list of content objects that are in the queue to be processed. 
          *
          * Helpful to determine whether ingest for particular input Content is
          * active
@@ -543,6 +532,11 @@ class IngestScheduler {
             return new ArrayList<Content>(contentSet);
         }
 
+        /**
+         * Determine if a module is in a pipeline in the queue.
+         * @param module
+         * @return true if it is in the queue.
+         */
         synchronized boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
             for (ProcessTask task : rootProcessTasks) {
                 for (IngestModuleAbstractFile m : task.context.getScheduledTask().getModules()) {
@@ -578,8 +572,7 @@ class IngestScheduler {
         }
 
         /**
-         * Check if the file meets criteria to be enqueued, or is a special file
-         * that we should skip
+         * Check if the file is a special file that we should skip
          *
          * @param processTask a task whose file to check if should be queued of
          * skipped
@@ -639,7 +632,6 @@ class IngestScheduler {
                 }
 
             }
-
 
             return true;
         }

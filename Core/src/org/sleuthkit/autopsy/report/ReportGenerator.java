@@ -936,7 +936,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
                 break;
             case TSK_RECENT_OBJECT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Date/Time", "Source File"}));
                 break;
             case TSK_INSTALLED_PROG: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
@@ -1109,6 +1109,7 @@ public class ReportGenerator {
                 break;
             case TSK_RECENT_OBJECT:
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 rowData.add(getFileUniquePath(artifactData.getObjectID()));
                 break;
             case TSK_INSTALLED_PROG:

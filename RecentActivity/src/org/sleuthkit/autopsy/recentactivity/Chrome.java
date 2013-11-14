@@ -62,6 +62,7 @@ public class Chrome extends Extract {
     private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
     private static final String bookmarkQuery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
     private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads";
+    private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
@@ -81,6 +82,7 @@ public class Chrome extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        dataFound = false;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
@@ -116,10 +118,12 @@ public class Chrome extends Extract {
         
         // log a message if we don't have any allocated history files
         if (allocatedHistoryFiles.isEmpty()) {
-            logger.log(Level.INFO, "Could not find any allocated Chrome history files.");
+            String msg = "Could not find any allocated Chrome history files.";
+            logger.log(Level.INFO, msg);
             return;
         }
 
+        dataFound = true;
         int j = 0;
         while (j < historyFiles.size()) {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName().toString() + j + ".db";
@@ -181,6 +185,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (bookmarkFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
             
         while (j < bookmarkFiles.size()) {
@@ -265,10 +275,9 @@ public class Chrome extends Extract {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000000)));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", (date / 10000000)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", url));
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", EscapeUtil.decodeURL(url)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", name));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", (date / 10000000)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                     bbart.addAttributes(bbattributes);
@@ -301,6 +310,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome cookies files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         while (j < cookiesFiles.size()) {
             AbstractFile cookiesFile = cookiesFiles.get(j++);
@@ -325,15 +340,11 @@ public class Chrome extends Extract {
             logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                //TODO Revisit usage of deprecated constructor as per TSK-583
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", "Title", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_access_utc").toString())) / 10000000)));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "Recent Activity", ((Long.valueOf(result.get("last_access_utc").toString())) / 10000000)));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "Recent Activity", ((result.get("value").toString() != null) ? result.get("value").toString() : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : "")));
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("host_key").toString() != null) ? EscapeUtil.decodeURL(result.get("host_key").toString()) : "")));
                 String domain = result.get("host_key").toString();
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
@@ -354,9 +365,9 @@ public class Chrome extends Extract {
     private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> historyFiles = null;
+        List<AbstractFile> downloadFiles = null;
         try {
-            historyFiles = fileManager.findFiles(dataSource, "History", "Chrome");
+            downloadFiles = fileManager.findFiles(dataSource, "History", "Chrome");
         } catch (TskCoreException ex) {
             String msg = "Error when trying to get Chrome history files.";
             logger.log(Level.SEVERE, msg, ex);
@@ -364,18 +375,24 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (downloadFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome download files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
-        while (j < historyFiles.size()) {
-            AbstractFile historyFile = historyFiles.get(j++);
-            if (historyFile.getSize() == 0) {
+        while (j < downloadFiles.size()) {
+            AbstractFile downloadFile = downloadFiles.get(j++);
+            if (downloadFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFile.getName().toString() + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + downloadFile.getName().toString() + j + ".db";
             try {
-                ContentUtils.writeToFile(historyFile, new File(temps));
+                ContentUtils.writeToFile(downloadFile, new File(temps));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
-                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + historyFile.getName());
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + downloadFile.getName());
                 continue;
             }
             File dbFile = new File(temps);
@@ -384,7 +401,14 @@ public class Chrome extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
+            List<HashMap<String, Object>> tempList = null;
+            
+            if (isChromePreVersion30(temps)) {
+                tempList = this.dbConnect(temps, downloadQuery);
+            } else {
+                tempList = this.dbConnect(temps, downloadQueryVersion30);
+            }
+            
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -401,7 +425,7 @@ public class Chrome extends Extract {
                 String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, historyFile, bbattributes);
+                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
             }
 
             dbFile.delete();
@@ -428,6 +452,12 @@ public class Chrome extends Extract {
             return;
         }
 
+        if (signonFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome signon files.");
+            return;
+        }
+        
+        dataFound = true;
         int j = 0;
         while (j < signonFiles.size()) {
             AbstractFile signonFile = signonFiles.get(j++);
@@ -492,6 +522,18 @@ public class Chrome extends Extract {
 
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+
+    private boolean isChromePreVersion30(String temps) {
+        String query = "PRAGMA table_info(downloads)";
+        List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
+        for (HashMap<String, Object> col : columns) {
+            if (col.get("name").equals("url")) {
+                return true;
+            }
+        }
+        
         return false;
     }
 }

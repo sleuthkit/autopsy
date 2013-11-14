@@ -46,13 +46,12 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -71,7 +70,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     public static final String MODULE_NAME = "Archive Extractor";
     public static final String MODULE_DESCRIPTION = "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private IngestServices services;
     private volatile int messageID = 0;
     private boolean initialized = false;
@@ -134,7 +133,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 String details = "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage();
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-                return;
+                throw e;
             }
         }
 
@@ -148,7 +147,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             String details = "Could not initialize 7-ZIP library: " + e.getMessage();
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-            return;
+            throw new RuntimeException(e);
         }
 
         archiveDepthCountTree = new ArchiveDepthCountTree();

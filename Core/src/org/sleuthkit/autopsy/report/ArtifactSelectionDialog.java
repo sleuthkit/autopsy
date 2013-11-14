@@ -24,6 +24,8 @@ import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -67,11 +69,16 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
             
-            artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
+            artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();            
+            artifacts.removeAll(doNotReport);            
+            Collections.sort(artifacts, new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
+                @Override
+                public int compare(ARTIFACT_TYPE o1, ARTIFACT_TYPE o2) {
+                    return o1.getDisplayName().compareTo(o2.getDisplayName());
+                }
+            });
             
-            artifacts.removeAll(doNotReport);
-            
-            artifactStates = new EnumMap<>(BlackboardArtifact.ARTIFACT_TYPE.class);
+            artifactStates = new EnumMap<>(BlackboardArtifact.ARTIFACT_TYPE.class);                        
             for (BlackboardArtifact.ARTIFACT_TYPE type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
             }
