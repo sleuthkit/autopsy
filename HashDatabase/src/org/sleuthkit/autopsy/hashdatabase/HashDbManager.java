@@ -251,10 +251,22 @@ public class HashDbManager {
             setEl.setAttribute(SET_TYPE_ATTR, db.getKnownFilesType().toString());
             setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, Boolean.toString(db.getUseForIngest()));
             setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, Boolean.toString(db.getShowInboxMessages()));
-            Element pathEl = doc.createElement(PATH_EL);
-            pathEl.setTextContent(db.getDatabasePath());
-            setEl.appendChild(pathEl);            
-            rootEl.appendChild(setEl);
+            String path = null;
+            try {
+                if (db.hasIndexOnly()) {
+                    path = db.getIndexPath();
+                }
+                else {
+                    path = db.getDatabasePath();
+                }                
+                Element pathEl = doc.createElement(PATH_EL);
+                pathEl.setTextContent(path);
+                setEl.appendChild(pathEl);            
+                rootEl.appendChild(setEl);                
+            }
+            catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting path of hash database " + db.getHashSetName() + ", unable to save configuration", ex);                
+            }            
         }        
     }
     
