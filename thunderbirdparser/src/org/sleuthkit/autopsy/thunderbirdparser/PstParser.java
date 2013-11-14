@@ -45,14 +45,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class PstParser {
     private static final Logger logger = Logger.getLogger(PstParser.class.getName());
+    /**
+     * First four bytes of a pst file.
+     */
     private static int PST_HEADER = 0x2142444E;
-    
+    private IngestServices services;
     /**
      * A map of PSTMessages to their Local path within the file's internal 
      * directory structure.
      */
     private List<EmailMessage> results;
-    private IngestServices services;
+    
     PstParser(IngestServices services) {
         results = new ArrayList<>();
         this.services = services;
@@ -70,9 +73,11 @@ public class PstParser {
      */
     ParseResult parse(File file) {
         PSTFile pstFile;
+        long failures = 0L;
         try {
             pstFile = new PSTFile(file);
-            processFolder(pstFile.getRootFolder(), "\\", true);
+            failures = processFolder(pstFile.getRootFolder(), "\\", true);
+            //JWTODO: post ingest message if failures.
             return ParseResult.OK;
         } catch (PSTException | IOException ex) {
             String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage();
@@ -102,9 +107,9 @@ public class PstParser {
      * @throws PSTException
      * @throws IOException 
      */
-    private void processFolder(PSTFolder folder, String path, boolean root) {
+    private long processFolder(PSTFolder folder, String path, boolean root) {
         String newPath =  (root ? path : path + "\\" + folder.getDisplayName());
-        
+        long failCount = 0L; // Number of emails that failed
         if (folder.hasSubfolders()) {
             List<PSTFolder> subFolders;
             try {
@@ -115,7 +120,7 @@ public class PstParser {
             }
             
             for (PSTFolder f : subFolders) {
-                processFolder(f, newPath, false);
+                failCount += processFolder(f, newPath, false);
             }
         }
         
@@ -127,9 +132,12 @@ public class PstParser {
                     results.add(extractEmailMessage(email, newPath));
                 }
             } catch (PSTException | IOException ex) {
+                failCount++;
                 logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: " + ex.getMessage());
             }
         }
+        
+        return failCount;
     }
     
     /**
@@ -186,15 +194,15 @@ public class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                filename = msg.getDescriptorNodeId() + "-" + filename;
-                String outPath = outputDirPath + filename;
+                String uniqueFilename = msg.getDescriptorNodeId() + "-" + filename;
+                String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
                 
                 Attachment attachment = new Attachment();
                 
                 long crTime = attach.getCreationTime().getTime() / 1000;
                 long mTime = attach.getModificationTime().getTime() / 1000;
-                String relPath = getRelModuleOutputPath() + File.separator + filename;
+                String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
                 attachment.setmTime(mTime);
@@ -202,7 +210,8 @@ public class PstParser {
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
             } catch (PSTException | IOException ex) {
-                logger.log(Level.WARNING, "Failed to extract attachment.", ex);
+                //JWTODO post ingest message
+                logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex);
             }
         }
     }
@@ -268,7 +277,7 @@ public class PstParser {
             ByteBuffer bb = ByteBuffer.wrap(buffer);
             return  bb.getInt() == PST_HEADER;
         } catch (TskCoreException ex) {
-            System.out.println("Exception");
+            logger.log(Level.WARNING, "Exception while detecting if a file is a pst file.");
             return false;
         }
     }

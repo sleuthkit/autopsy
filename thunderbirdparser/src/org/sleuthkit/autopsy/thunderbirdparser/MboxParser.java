@@ -18,22 +18,29 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.CharConversionException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.dom.BinaryBody;
+import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.james.mime4j.dom.MessageBuilder;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.dom.address.AddressList;
@@ -44,6 +51,10 @@ import org.apache.james.mime4j.dom.field.ContentTypeField;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
+import org.apache.james.mime4j.stream.MimeConfig;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 
 /**
  * A parser that extracts information about email messages and attachments from
@@ -53,7 +64,9 @@ import org.apache.james.mime4j.message.DefaultMessageBuilder;
  */
 public class MboxParser {
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
-    private MessageBuilder messageBuilder;
+    private DefaultMessageBuilder messageBuilder;
+    private IngestServices services;
+    
     /**
      * The mime type string for html text.
      */
@@ -64,9 +77,13 @@ public class MboxParser {
      */
     private String localPath;
     
-    MboxParser(String localPath) {
+    MboxParser(IngestServices services, String localPath) {
+        this.services = services;
         this.localPath = localPath;
         messageBuilder = new DefaultMessageBuilder();
+        MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).build();
+        // disable line length checks.
+        messageBuilder.setMimeEntityConfig(config);
     }
     
     static boolean isValidMimeTypeMbox(byte[] buffer) {
@@ -79,24 +96,50 @@ public class MboxParser {
      * @return a list of the email messages in the mbox file.
      */
     List<EmailMessage> parse(File mboxFile) {
-        //JWTODO: detect charset
-        CharsetEncoder encoder = StandardCharsets.ISO_8859_1.newEncoder();
-        List<EmailMessage> emails = new ArrayList<>();
-        try {
-            for (CharBufferWrapper message : MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build()) {
-                try {
-                    Message msg = messageBuilder.parseMessage(message.asInputStream(encoder.charset()));
-                    emails.add(extractEmail(msg));
-                } catch (MimeException ex) {
-                    logger.log(Level.WARNING, "Failed to get message from mbox.", ex);
-                }
+        // Detect possible charsets
+        List<CharsetEncoder> encoders = getPossibleEncoders(mboxFile);
+        
+        CharsetEncoder theEncoder = null;
+        Iterable<CharBufferWrapper> mboxIterator = null;
+        // Loop through the possible encoders and find the first one that works.
+        // That will usually be one of the first ones.
+        for (CharsetEncoder encoder : encoders) {
+            try {
+                mboxIterator = MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build();
+                theEncoder = encoder;
+                break;
+            } catch (CharConversionException | UnsupportedCharsetException ex) {
+                // Not the right encoder
+            } catch (IllegalArgumentException ex) {
+                // Not the right encoder
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "couldn't find mbox file.", ex);
+                //JWTODO: post inbox message
+                return Collections.EMPTY_LIST;
             }
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "couldn't find mbox file.", ex);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error getting messsages from mbox file.");
         }
         
+        // If no encoders work, post an error message and return.
+        if (mboxIterator == null || theEncoder == null) {
+            //JWTODO: post inbox message
+            return Collections.EMPTY_LIST;
+        }
+        
+        List<EmailMessage> emails = new ArrayList<>();
+        long failCount = 0;
+        
+        // Parse each message and extract an EmailMessage structure
+        for (CharBufferWrapper message : mboxIterator) {
+            try {
+                Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
+                emails.add(extractEmail(msg));
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to get message from mbox: " + ex.getMessage());
+                failCount++;
+            }
+        }
+        
+        //JWTODO: post inbox message w/ fail count
         return emails;
     }
     
@@ -133,6 +176,7 @@ public class MboxParser {
      * Recursively calls handleMultipart if one of the body parts is another
      * multipart. Otherwise, calls the correct method to extract information out
      * of each part of the body.
+     * 
      * @param email
      * @param multi 
      */
@@ -147,7 +191,7 @@ public class MboxParser {
                     e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType());
             } else {
-                logger.log(Level.INFO, "Found unrecognized entity: " + e); 
+                // Ignore other types.
             }
         }
     }
@@ -179,7 +223,8 @@ public class MboxParser {
                     email.setHtmlBody(bodyString.toString());
                     break;
                 default:
-                    logger.log(Level.INFO, "Found unrecognized mime type: " + type);
+                    // Not interested in other text types.
+                    break;
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error getting text body of mbox message", ex);
@@ -195,21 +240,30 @@ public class MboxParser {
     private void handleAttachment(EmailMessage email, Entity e) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
-        String outPath = outputDirPath + filename;
+        String uniqueFilename = filename + "-" + email.getSentDate();
+        String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
         BinaryBody bb;
         try {
             fos = new FileOutputStream(outPath);
         } catch (FileNotFoundException ex) {
-            logger.log(Level.INFO, "", ex);
+            //JWTODO: post ingest message
+            logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex);
             return;
         }
         
         try {
-            bb = (BinaryBody) e.getBody();
-            bb.writeTo(fos);
+            Body b = e.getBody();
+            if (b instanceof BinaryBody) {
+                bb = (BinaryBody) b;
+                bb.writeTo(fos);
+            } else {
+                // This could potentially be other types. Only seen this once.
+            }
+            
         } catch (IOException ex) {
-            logger.log(Level.INFO, "", ex);
+            logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex);
+            //JWTODO: post ingest message.
             return;
         } finally {
             try {
@@ -222,15 +276,8 @@ public class MboxParser {
         Attachment attach = new Attachment();
         attach.setName(filename);
         attach.setLocalPath(ThunderbirdMboxFileIngestModule.getRelModuleOutputPath() 
-                + File.separator + filename);
-        // JWTODO: find appropriate constant or make one.
-//        ContentDispositionField disposition = (ContentDispositionField) e.getHeader().getField("Content-Disposition");
-//        if (disposition != null) {
-//            attach.setSize(disposition.getSize());
-//            attach.setCrTime(disposition.getCreationDate());
-//            attach.setmTime(disposition.getModificationDate());
-//            attach.setaTime(disposition.getReadDate());
-//        }
+                + File.separator + uniqueFilename);
+        attach.setSize(new File(outPath).length());
         email.addAttachment(attach);
     }
 
@@ -259,5 +306,53 @@ public class MboxParser {
      */
     private String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
+    }
+
+    /**
+     * Get a list of the possible encoders for the given mboxFile using Tika's
+     * CharsetDetector. At a minimum, returns the standard built in charsets.
+     * @param mboxFile
+     * @return 
+     */
+    private List<CharsetEncoder> getPossibleEncoders(File mboxFile) {
+        InputStream is;
+        List<CharsetEncoder> possibleEncoders = new ArrayList<>();
+        
+        possibleEncoders.add(StandardCharsets.ISO_8859_1.newEncoder());
+        possibleEncoders.add(StandardCharsets.US_ASCII.newEncoder());
+        possibleEncoders.add(StandardCharsets.UTF_16.newEncoder());
+        possibleEncoders.add(StandardCharsets.UTF_16BE.newEncoder());
+        possibleEncoders.add(StandardCharsets.UTF_16LE.newEncoder());
+        possibleEncoders.add(StandardCharsets.UTF_8.newEncoder());
+        
+        try {
+            is = new BufferedInputStream(new FileInputStream(mboxFile));
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.WARNING, "Failed to find mbox file while detecting charset");
+            return possibleEncoders;
+        }
+        
+        try {
+            CharsetDetector detector = new CharsetDetector();
+            detector.setText(is);
+            CharsetMatch[] matches = detector.detectAll();
+            for (CharsetMatch match : matches) {
+                try {
+                    possibleEncoders.add(Charset.forName(match.getName()).newEncoder());
+                } catch (UnsupportedCharsetException | IllegalCharsetNameException ex) {
+                    // Don't add unsupported charsets to the list
+                }
+            }
+            return possibleEncoders;
+        } catch (IOException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, "Failed to detect charset of mbox file.", ex);
+            return possibleEncoders;
+        } finally {
+            try {
+                is.close();
+            } catch (IOException ex) {
+                logger.log(Level.INFO, "Failed to close input stream");
+            }
+        }
     }
 }

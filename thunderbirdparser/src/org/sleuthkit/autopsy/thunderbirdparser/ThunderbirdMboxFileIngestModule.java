@@ -215,7 +215,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             return ProcessResult.OK;
         }
         
-        MboxParser parser = new MboxParser(emailFolder);
+        MboxParser parser = new MboxParser(services, emailFolder);
         List<EmailMessage> emails = parser.parse(file);
         
         processEmails(emails, abstractFile, ingestContext);

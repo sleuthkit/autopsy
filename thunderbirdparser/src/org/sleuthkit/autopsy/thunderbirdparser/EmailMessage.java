@@ -53,7 +53,9 @@ public class EmailMessage {
     }
 
     void setRecipients(String recipients) {
-        this.recipients = recipients;
+        if (recipients != null) {
+            this.recipients = recipients;
+        }
     }
 
     String getSender() {
@@ -61,7 +63,9 @@ public class EmailMessage {
     }
 
     void setSender(String sender) {
-        this.sender = sender;
+        if (sender != null) {
+            this.sender = sender;
+        }
     }
 
     String getSubject() {
@@ -69,7 +73,9 @@ public class EmailMessage {
     }
 
     void setSubject(String subject) {
-        this.subject = subject;
+        if (subject != null) {
+            this.subject = subject;
+        }
     }
 
     String getTextBody() {
@@ -77,7 +83,9 @@ public class EmailMessage {
     }
 
     void setTextBody(String textBody) {
-        this.textBody = textBody;
+        if (textBody != null) {
+            this.textBody = textBody;
+        }
     }
 
     String getHtmlBody() {
@@ -85,7 +93,9 @@ public class EmailMessage {
     }
 
     void setHtmlBody(String htmlBody) {
-        this.htmlBody = htmlBody;
+        if (htmlBody != null) {
+            this.htmlBody = htmlBody;
+        }
     }
 
     String getRtfBody() {
@@ -93,7 +103,9 @@ public class EmailMessage {
     }
 
     void setRtfBody(String rtfBody) {
-        this.rtfBody = rtfBody;
+        if (rtfBody != null) {
+            this.rtfBody = rtfBody;
+        }
     }
 
     long getSentDate() {
@@ -101,7 +113,9 @@ public class EmailMessage {
     }
 
     void setSentDate(Date sentDate) {
-        this.sentDate = sentDate.getTime() / 1000;
+        if (sentDate != null) {
+            this.sentDate = sentDate.getTime() / 1000;
+        }
     }
     
     void setSentDate(long sentDate) {
@@ -113,7 +127,9 @@ public class EmailMessage {
     }
 
     void setBcc(String bcc) {
-        this.bcc = bcc;
+        if (bcc != null) {
+            this.bcc = bcc;
+        }
     }
 
     String getCc() {
@@ -121,7 +137,9 @@ public class EmailMessage {
     }
 
     void setCc(String cc) {
-        this.cc = cc;
+        if (cc != null) {
+            this.cc = cc;
+        }
     }
     
     void addAttachment(Attachment a) {
@@ -146,7 +164,9 @@ public class EmailMessage {
     }
 
     void setLocalPath(String localPath) {
-        this.localPath = localPath;
+        if (localPath != null) {
+            this.localPath = localPath;
+        }
     }
 }
 
@@ -170,7 +190,9 @@ class Attachment {
     }
 
     void setName(String name) {
-        this.name = name;
+        if (name != null) {
+            this.name = name;
+        }
     }
 
     String getLocalPath() {
@@ -178,7 +200,9 @@ class Attachment {
     }
 
     void setLocalPath(String localPath) {
-        this.localPath = localPath;
+        if (localPath != null) {
+            this.localPath = localPath;
+        }
     }
 
     long getSize() {
@@ -198,7 +222,9 @@ class Attachment {
     }
     
     void setCrTime(Date crTime) {
-        this.crTime = crTime.getTime() / 1000;
+        if (crTime != null) {
+            this.crTime = crTime.getTime() / 1000;
+        }
     }
 
     long getcTime() {
@@ -210,7 +236,9 @@ class Attachment {
     }
     
     void setcTime(Date cTime) {
-        this.cTime = cTime.getTime() / 1000;
+        if (cTime != null) {
+            this.cTime = cTime.getTime() / 1000;
+        }
     }
 
     long getaTime() {
@@ -222,7 +250,9 @@ class Attachment {
     }
     
     void setaTime(Date aTime) {
-        this.aTime = aTime.getTime() / 1000;
+        if (aTime != null) {
+            this.aTime = aTime.getTime() / 1000;
+        }
     }
 
     long getmTime() {
@@ -234,6 +264,8 @@ class Attachment {
     }
     
     void setmTime(Date mTime) {
-        this.mTime = mTime.getTime() / 1000;
+        if (mTime != null) {
+            this.mTime = mTime.getTime() / 1000;
+        }
     }
 }
