@@ -100,6 +100,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
             });
         }
+        else {
+            pathLabel.setText("<html><u>No report file</u></html>");            
+        }
     }
     
     /**
