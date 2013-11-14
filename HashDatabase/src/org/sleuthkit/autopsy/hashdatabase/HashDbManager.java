@@ -254,16 +254,6 @@ public class HashDbManager {
             Element pathEl = doc.createElement(PATH_EL);
             pathEl.setTextContent(db.getDatabasePath());
             setEl.appendChild(pathEl);            
-            
-            // TODO: Multiple database paths stuff. 
-//            List<String> paths = Collections.singletonList(db.getDatabasePath());
-//            for (int i = 0; i < paths.size(); i++) {
-//                String path = paths.get(i);
-//                Element pathEl = doc.createElement(PATH_EL);
-//                pathEl.setAttribute(PATH_NUMBER_ATTR, Integer.toString(i));
-//                pathEl.setTextContent(path);
-//                setEl.appendChild(pathEl);
-//            }
             rootEl.appendChild(setEl);
         }        
     }
@@ -308,27 +298,6 @@ public class HashDbManager {
                 }
             }
             
-//            for (int j = 0; j < numPaths; ++j) {
-//                Element pathEl = (Element) pathsNList.item(j);
-//                String path = pathEl.getTextContent();
-//                
-//                File database = new File(path);
-//                if(database.exists()) {
-//                    paths.add(path);
-//                } else {
-//                    // Ask for new path
-//                    int ret = JOptionPane.showConfirmDialog(null, "Database " + name + " could not be found at location\n"
-//                            + path + "\n"
-//                            + " Would you like to search for the file?", "Missing Database", JOptionPane.YES_NO_OPTION);
-//                    if (ret == JOptionPane.YES_OPTION) {
-//                        String filePath = searchForFile();
-//                        if(filePath!=null) {
-//                            paths.add(filePath);
-//                        }
-//                    }
-//                }
-//            }
-//            
             if(name.isEmpty()) {
                 logger.log(Level.WARNING, "Name was not set for hash_set at index {0}.", i);
             }
