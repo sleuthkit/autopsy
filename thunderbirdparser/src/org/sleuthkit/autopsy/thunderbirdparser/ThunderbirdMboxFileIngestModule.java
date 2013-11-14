@@ -161,16 +161,19 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             }
         } else {
             // parsing error: log message
-            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), 
-                    "Failed to parse outlook data file: " + abstractFile.getName() + ".<br/>" + 
+            postErrorMessage("Error while processing " + abstractFile.getName(),
                     "Only files from Outlook 2003 and later are supported.");
-            services.postMessage(msg);
             logger.log(Level.INFO, "PSTParser failed to parse " + abstractFile.getName());
             return ProcessResult.ERROR;
         }
         
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: " + file.getName());
+        }
+        
+        String errors = parser.getErrors();
+        if (errors.isEmpty() == false) {
+            postErrorMessage("Error while processing " + abstractFile.getName(), errors);
         }
 
         return ProcessResult.OK;
@@ -203,8 +206,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
-            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, this, getName(), "Out of disk space. Can't copy " + abstractFile.getName() + " to parse.");
-            services.postMessage(msg);
+            postErrorMessage("Error while processing " + abstractFile.getName(),
+                    "Out of disk space. Can't copy file to parse.");
             return ProcessResult.OK;
         }
         
@@ -219,6 +222,15 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         List<EmailMessage> emails = parser.parse(file);
         
         processEmails(emails, abstractFile, ingestContext);
+        
+        if (file.delete() == false) {
+            logger.log(Level.INFO, "Failed to delete temp file: " + file.getName());
+        }
+        
+        String errors = parser.getErrors();
+        if (errors.isEmpty() == false) {
+            postErrorMessage("Error while processing " + abstractFile.getName(), errors);
+        }
         
         return ProcessResult.OK;
     }
@@ -335,7 +347,8 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                         MODULE_NAME, MODULE_VERSION, "");
                 files.add(df);
             } catch (TskCoreException ex) {
-                // JWTODO
+                postErrorMessage("Error processing " + abstractFile.getName(), 
+                        "Failed to add attachment named " + filename + " to the case.");
                 logger.log(Level.INFO, "", ex);
             }
         }
@@ -405,4 +418,12 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
         }
     }
     
+    void postErrorMessage(String subj, String details) {
+        IngestMessage ingestMessage = IngestMessage.createErrorMessage(messageId++, this, subj, details);
+        services.postMessage(ingestMessage);
+    }
+    
+    IngestServices getServices() {
+        return services;
+    }
 }

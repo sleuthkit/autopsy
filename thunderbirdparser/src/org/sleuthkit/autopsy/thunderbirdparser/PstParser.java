@@ -55,10 +55,12 @@ public class PstParser {
      * directory structure.
      */
     private List<EmailMessage> results;
+    private StringBuilder errors;
     
     PstParser(IngestServices services) {
         results = new ArrayList<>();
         this.services = services;
+        errors = new StringBuilder();
     }
     
     enum ParseResult {
@@ -77,7 +79,9 @@ public class PstParser {
         try {
             pstFile = new PSTFile(file);
             failures = processFolder(pstFile.getRootFolder(), "\\", true);
-            //JWTODO: post ingest message if failures.
+            if (failures > 0) {
+                addErrorMessage("Failed to extract " + failures + " email messages.");
+            }
             return ParseResult.OK;
         } catch (PSTException | IOException ex) {
             String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage();
@@ -96,6 +100,10 @@ public class PstParser {
      */
     List<EmailMessage> getResults() {
         return results;
+    }
+    
+    String getErrors() {
+        return errors.toString();
     }
 
     /**
@@ -183,6 +191,7 @@ public class PstParser {
         int numberOfAttachments = msg.getNumberOfAttachments();
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         for (int x = 0; x < numberOfAttachments; x++) {
+            String filename = "";
             try {
                 PSTAttachment attach = msg.getAttachment(x);
                 long size = attach.getAttachSize();
@@ -190,7 +199,7 @@ public class PstParser {
                     continue;
                 }
                 // both long and short filenames can be used for attachments
-                String filename = attach.getLongFilename();
+                filename = attach.getLongFilename();
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
@@ -210,7 +219,7 @@ public class PstParser {
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
             } catch (PSTException | IOException ex) {
-                //JWTODO post ingest message
+                addErrorMessage("Failed to extract attachment to disk: " + filename);
                 logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex);
             }
         }
@@ -280,5 +289,9 @@ public class PstParser {
             logger.log(Level.WARNING, "Exception while detecting if a file is a pst file.");
             return false;
         }
+    }
+    
+    private void addErrorMessage(String msg) {
+        errors.append("<li>").append(msg).append("</li>");
     }
 }

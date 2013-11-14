@@ -66,6 +66,7 @@ public class MboxParser {
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private DefaultMessageBuilder messageBuilder;
     private IngestServices services;
+    private StringBuilder errors;
     
     /**
      * The mime type string for html text.
@@ -84,6 +85,7 @@ public class MboxParser {
         MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).build();
         // disable line length checks.
         messageBuilder.setMimeEntityConfig(config);
+        errors = new StringBuilder();
     }
     
     static boolean isValidMimeTypeMbox(byte[] buffer) {
@@ -114,14 +116,14 @@ public class MboxParser {
                 // Not the right encoder
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "couldn't find mbox file.", ex);
-                //JWTODO: post inbox message
+                addErrorMessage("Failed to read mbox file from disk.");
                 return Collections.EMPTY_LIST;
             }
         }
         
         // If no encoders work, post an error message and return.
         if (mboxIterator == null || theEncoder == null) {
-            //JWTODO: post inbox message
+            addErrorMessage("Couldn't find appropriate charset encoder.");
             return Collections.EMPTY_LIST;
         }
         
@@ -139,8 +141,14 @@ public class MboxParser {
             }
         }
         
-        //JWTODO: post inbox message w/ fail count
+        if (failCount > 0) {
+            addErrorMessage("Failed to extract " + failCount + " email messages.");
+        }
         return emails;
+    }
+    
+    String getErrors() {
+        return errors.toString();
     }
     
     /**
@@ -247,7 +255,7 @@ public class MboxParser {
         try {
             fos = new FileOutputStream(outPath);
         } catch (FileNotFoundException ex) {
-            //JWTODO: post ingest message
+            addErrorMessage("Failed to extract attachment to disk: " + filename);
             logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex);
             return;
         }
@@ -260,10 +268,9 @@ public class MboxParser {
             } else {
                 // This could potentially be other types. Only seen this once.
             }
-            
         } catch (IOException ex) {
             logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex);
-            //JWTODO: post ingest message.
+            addErrorMessage("Failed to extract attachment to disk: " + filename);
             return;
         } finally {
             try {
@@ -354,5 +361,9 @@ public class MboxParser {
                 logger.log(Level.INFO, "Failed to close input stream");
             }
         }
+    }
+    
+    private void addErrorMessage(String msg) {
+        errors.append("<li>").append(msg).append("</li>");
     }
 }
