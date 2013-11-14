@@ -28,6 +28,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -179,13 +180,23 @@ public class HashDb {
     public boolean isUpdateable() throws TskCoreException {
         return SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
     }
-    
+
     /**
      * Adds hashes of content (if calculated) to the hash database. 
      * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
      * @throws TskCoreException 
      */
     public void add(Content content) throws TskCoreException {
+        add(content, "");
+    }    
+    
+    /**
+     * Adds hashes of content (if calculated) to the hash database. 
+     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * @param comment A comment to associate with the hashes, e.g., the name of the case in which the content was encountered.
+     * @throws TskCoreException 
+     */
+    public void add(Content content, String comment) throws TskCoreException {
         // TODO: This only works for AbstractFiles at present. Change when Content
         // can be queried for hashes.
         assert content instanceof AbstractFile;
@@ -193,13 +204,13 @@ public class HashDb {
             AbstractFile file = (AbstractFile)content;
             // TODO: Add support for SHA-1 and SHA-256 hashes.
             if (null != file.getMd5Hash()) {
-                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", comment, handle);
             }
         }
     }
         
-     public TskData.FileKnown lookUp(Content content) throws TskCoreException {         
-        TskData.FileKnown result = TskData.FileKnown.UKNOWN; 
+     public boolean lookUp(Content content) throws TskCoreException {         
+        boolean result = false; 
          // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
         assert content instanceof AbstractFile;
         if (content instanceof AbstractFile) {
@@ -211,7 +222,21 @@ public class HashDb {
         }         
         return result;
      }
-                    
+
+    public HashInfo lookUpVerbose(Content content) throws TskCoreException {
+        HashInfo result = null;
+        // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
+            }
+        }             
+        return result;
+    }         
+          
     boolean isIndexing() {
         return indexing;
     }

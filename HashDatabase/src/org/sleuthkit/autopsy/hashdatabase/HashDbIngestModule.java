@@ -197,13 +197,15 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         }
 
         // look up in known bad first
-        TskData.FileKnown status = TskData.FileKnown.UKNOWN;
+        TskData.FileKnown status = TskData.FileKnown.UNKNOWN;
         boolean foundBad = false;
         ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
-                status = db.lookUp(file);
+                if (db.lookUp(file)) {
+                    status = TskData.FileKnown.BAD;
+                }
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
@@ -235,7 +237,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             for (HashDb db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();
-                    status = db.lookUp(file);
+                    if (db.lookUp(file)) {
+                        status = TskData.FileKnown.KNOWN;
+                    }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);

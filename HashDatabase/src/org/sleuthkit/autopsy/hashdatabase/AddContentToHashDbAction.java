@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import org.openide.util.Utilities;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -146,7 +147,7 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
                     try {
-                        hashSet.add(file);
+                        hashSet.add(file, Case.getCurrentCase().getName());
                     }
                     catch (TskCoreException ex) {                        
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                
