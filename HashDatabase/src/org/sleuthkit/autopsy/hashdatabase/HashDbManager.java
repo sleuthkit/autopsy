@@ -159,7 +159,7 @@ public class HashDbManager {
                 logger.log(Level.SEVERE, "Error checking updateable status of hash database at " + db.getDatabasePath(), ex);
             }
         }   
-        return Collections.unmodifiableList(updateableDbs);        
+        return updateableDbs;        
     }
     
     /**
