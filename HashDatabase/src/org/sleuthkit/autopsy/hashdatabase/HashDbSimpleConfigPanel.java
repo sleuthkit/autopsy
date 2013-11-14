@@ -21,11 +21,13 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -92,7 +94,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                 }
             }
             catch (TskCoreException ex) {
-                // RJCTODO
+                Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for hash database at " + hashDb.getDatabasePath(), ex);            
             }            
         }
 
@@ -154,7 +156,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                     dbHasIndex = db.hasLookupIndex();
                 }
                 catch (TskCoreException ex) {
-                    // RJCTODO
+                    Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for hash database at " + db.getDatabasePath(), ex);            
                 }
                 if(((Boolean) getValueAt(rowIndex, columnIndex)) || dbHasIndex) {
                     db.setUseForIngest((Boolean) aValue);

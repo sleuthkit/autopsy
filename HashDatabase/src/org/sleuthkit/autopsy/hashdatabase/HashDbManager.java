@@ -51,7 +51,6 @@ public class HashDbManager {
     private static final String SET_USE_FOR_INGEST_ATTR = "use_for_ingest";
     private static final String SET_SHOW_INBOX_MESSAGES = "show_inbox_messages";
     private static final String PATH_EL = "hash_set_path";
-    private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String XSDFILE = "HashsetsSchema.xsd";
     private static final String ENCODING = "UTF-8";
@@ -62,7 +61,6 @@ public class HashDbManager {
     private String xmlFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
     private List<HashDb> knownBadHashSets = new ArrayList<>();
-    private HashDb nsrlHashSet;
     private boolean alwaysCalculateHashes;
         
     /**

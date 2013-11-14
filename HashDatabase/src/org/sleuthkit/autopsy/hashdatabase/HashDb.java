@@ -160,7 +160,6 @@ public class HashDb {
         this.sendHitMessages = showInboxMessages;
     }
 
-    // RJCTODO: Add comments
     public boolean hasLookupIndex() throws TskCoreException {
         return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
     }

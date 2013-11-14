@@ -98,7 +98,7 @@ class DataModelActionsFactory  {
         if (isArtifactSource) {
             actions.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        actions.addAll(ContextMenuExtensionPoint.getActions()); // RJCTODO: Separator should not be added by provider
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }        
     
