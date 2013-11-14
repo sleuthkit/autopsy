@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.SwingUtilities;
 import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
@@ -63,12 +64,18 @@ public class NewWindowViewAction extends AbstractAction{
             }
         }
 
-        DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, this.contentNode);
+        final DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, null);
 
         Mode m = WindowManager.getDefault().findMode("outputFloat");
         m.dockInto(dctc);
         dctc.open();
         
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                dctc.setNode(contentNode);
+            }
+        });
     }
 
     
