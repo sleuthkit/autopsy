@@ -70,6 +70,8 @@ public class NewWindowViewAction extends AbstractAction{
         m.dockInto(dctc);
         dctc.open();
         
+        // Queue setting the node on the EDT thread to be done later so the dctc
+        // can completely initialize.
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
