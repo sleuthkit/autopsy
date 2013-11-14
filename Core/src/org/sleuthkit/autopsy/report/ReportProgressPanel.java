@@ -48,18 +48,18 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     }
     
     private void customInit(String reportName, String reportPath) {
-        reportLabel.setText(reportName);
-        pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
-        pathLabel.setToolTipText(reportPath);
-        
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-        
+
+        reportLabel.setText(reportName);        
         processingLabel.setText("Queuing...");
         STATUS = ReportStatus.QUEUING;
         
         if (reportPath != null) {
-            // Add the "link" effect to the pathLabel
+            pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
+            pathLabel.setToolTipText(reportPath);
+
+        // Add the "link" effect to the pathLabel
             final String linkPath = reportPath;
             pathLabel.addMouseListener(new MouseListener() {
 
