@@ -79,9 +79,10 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }        
     }
     
-    private void refreshComponents() {        
-        refreshAlwaysCalcHashesComponents();        
+    public void refreshComponents() {        
+        knownTableModel.refresh();
         knownBadTableModel.refresh();
+        refreshAlwaysCalcHashesComponents(); 
     }
 
     private void refreshAlwaysCalcHashesComponents() {        
@@ -164,7 +165,6 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                 else {
                     JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Hash databases must be indexed before they can be used for ingest");
                 }
-                refreshComponents();
             }
         }
         

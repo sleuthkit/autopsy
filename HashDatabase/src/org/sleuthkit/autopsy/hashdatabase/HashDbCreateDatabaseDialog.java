@@ -132,7 +132,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
         buttonGroup1.add(knownRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.knownRadioButton.text")); // NOI18N
-        knownRadioButton.setEnabled(false);
         knownRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 knownRadioButtonActionPerformed(evt);
