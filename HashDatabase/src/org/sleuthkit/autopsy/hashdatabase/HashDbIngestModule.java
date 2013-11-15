@@ -271,7 +271,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                 detailsSb.append("</table>");
 
                 services.postMessage(IngestMessage.createDataMessage(++messageId, this,
-                        "Notable: " + abstractFile.getName(),
+                        "Known Bad: " + abstractFile.getName(),
                         detailsSb.toString(),
                         abstractFile.getName() + md5Hash,
                         badFile));
@@ -280,7 +280,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
         }
-
     }
 
     private ProcessResult processFile(AbstractFile file) {
