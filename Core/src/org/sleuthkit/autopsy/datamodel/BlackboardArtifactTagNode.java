@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * either content or blackboard artifact tag nodes.
  */
 public class BlackboardArtifactTagNode  extends DisplayableItemNode {  
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png";
     private final BlackboardArtifactTag tag; 
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
