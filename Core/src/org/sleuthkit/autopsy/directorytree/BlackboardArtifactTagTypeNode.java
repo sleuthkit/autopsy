@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactTagNode;
@@ -45,7 +46,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
 
     public BlackboardArtifactTagTypeNode(TagName tagName) {
-        super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true));
+        super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + DISPLAY_NAME));
 
         long tagsCount = 0;
         try {

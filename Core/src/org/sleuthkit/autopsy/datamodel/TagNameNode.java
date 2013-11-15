@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
@@ -41,7 +42,7 @@ public class TagNameNode  extends DisplayableItemNode {
     private final TagName tagName;
 
     public TagNameNode(TagName tagName) {
-        super(Children.create(new TagTypeNodeFactory(tagName), true));
+        super(Children.create(new TagTypeNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " Tags"));
         this.tagName = tagName;
         
         long tagsCount = 0;

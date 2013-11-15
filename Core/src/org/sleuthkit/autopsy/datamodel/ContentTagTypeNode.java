@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
@@ -40,7 +41,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
 
     public ContentTagTypeNode(TagName tagName) {
-        super(Children.create(new ContentTagNodeFactory(tagName), true));
+        super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + DISPLAY_NAME));
         
         long tagsCount = 0;
         try {
