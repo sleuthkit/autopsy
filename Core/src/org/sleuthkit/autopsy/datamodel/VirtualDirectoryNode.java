@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskData;
 
@@ -82,7 +81,6 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(AddContentTagAction.getInstance());        
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
