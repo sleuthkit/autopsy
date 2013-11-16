@@ -194,7 +194,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
-        map.put(AbstractFilePropertyType.HASHSETS.toString(), "");
+        map.put(AbstractFilePropertyType.HASHSETS.toString(), HashsetHits.getList(content.getSleuthkitCase(), content.getId()));
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
 
