@@ -146,6 +146,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 return "Known";
             }
         },
+        HASHSETS {
+            @Override
+            public String toString() {
+                return "In Hashsets";
+            }           
+        },
         MD5HASH {
             @Override
             public String toString() {
@@ -188,6 +194,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
+        map.put(AbstractFilePropertyType.HASHSETS.toString(), "");
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
 
