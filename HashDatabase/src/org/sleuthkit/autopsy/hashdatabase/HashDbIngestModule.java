@@ -49,7 +49,8 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
-    private HashDbConfigPanel panel;
+    private HashDbSimpleConfigPanel simpleConfigPanel;
+    private HashDbConfigPanel advancedConfigPanel;
     private IngestServices services;
     private SleuthkitCase skCase;
     private static int messageId = 0;
@@ -93,7 +94,11 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
-        return new HashDbSimpleConfigPanel();
+        if (simpleConfigPanel == null) {
+           simpleConfigPanel = new HashDbSimpleConfigPanel();  
+        }
+        
+        return simpleConfigPanel;
     }
 
     @Override
@@ -108,18 +113,22 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     
     @Override
     public javax.swing.JPanel getAdvancedConfiguration(String context) {
-        if (panel == null) {
-            panel = new HashDbConfigPanel();
+        if (advancedConfigPanel == null) {
+            advancedConfigPanel = new HashDbConfigPanel();
         }
         
-        panel.load();
-        return panel;
+        advancedConfigPanel.load();
+        return advancedConfigPanel;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
-        if (panel != null) {
-            panel.store();
+        if (advancedConfigPanel != null) {
+            advancedConfigPanel.store();
+        }
+        
+        if (simpleConfigPanel != null) {
+            simpleConfigPanel.refreshComponents();
         }
     }
     

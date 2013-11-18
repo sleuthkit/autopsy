@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
@@ -40,7 +41,7 @@ public class TagsNode extends DisplayableItemNode {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
         
     public TagsNode() {
-        super(Children.create(new TagNameNodeFactory(), true));
+        super(Children.create(new TagNameNodeFactory(), true), Lookups.singleton(DISPLAY_NAME));
         super.setName(DISPLAY_NAME);
         super.setDisplayName(DISPLAY_NAME);
         this.setIconBaseWithExtension(ICON_PATH);

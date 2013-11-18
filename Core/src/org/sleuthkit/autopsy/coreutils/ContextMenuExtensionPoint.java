@@ -42,6 +42,7 @@ public class ContextMenuExtensionPoint {
             if (!providerActions.isEmpty()) {
                 actions.add(null); // Separator to set off this provider's actions.
                 actions.addAll(provider.getActions());
+                actions.add(null); // Separator to set off this provider's actions.
             }
         }
         return actions;

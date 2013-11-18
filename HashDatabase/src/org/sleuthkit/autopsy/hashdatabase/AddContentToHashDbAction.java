@@ -105,9 +105,9 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
             
             // Get the current set of updateable hash databases and add each
             // one as a menu item.
-            List<HashDb> hashDatabases = HashDbManager.getInstance().getKnownBadHashSets();
+            List<HashDb> hashDatabases = HashDbManager.getInstance().getUpdateableHashSets();
             if (!hashDatabases.isEmpty()) {
-                for (final HashDb database : HashDbManager.getInstance().getUpdateableHashSets()) {
+                for (final HashDb database : hashDatabases) {
                     JMenuItem databaseItem = add(database.getHashSetName());
                     databaseItem.addActionListener(new ActionListener() {
                         @Override

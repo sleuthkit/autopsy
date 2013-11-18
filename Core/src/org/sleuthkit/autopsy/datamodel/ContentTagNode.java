@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * type, then by tag name.
  */
 public class ContentTagNode extends DisplayableItemNode {
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png";
     private final ContentTag tag;
 
     public ContentTagNode(ContentTag tag) {

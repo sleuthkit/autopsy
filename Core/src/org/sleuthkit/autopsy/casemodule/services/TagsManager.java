@@ -165,7 +165,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException 
      */
     public ContentTag addContentTag(Content content, TagName tagName) throws TskCoreException {
-        return addContentTag(content, tagName, "", 0, content.getSize() - 1);
+        return addContentTag(content, tagName, "", -1, -1);
     }    
     
     /**
@@ -177,7 +177,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException 
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment) throws TskCoreException {
-        return addContentTag(content, tagName, comment, 0, content.getSize() - 1);
+        return addContentTag(content, tagName, comment, -1, -1);
     }    
     
     /**
@@ -196,16 +196,18 @@ public class TagsManager implements Closeable {
             getExistingTagNames();
         }
         
-        if (beginByteOffset < 0 || beginByteOffset > content.getSize() - 1) {
-            throw new IllegalArgumentException("beginByteOffset = " + beginByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
-        }
+        if (beginByteOffset >= 0 && endByteOffset >= 1) {
+            if (beginByteOffset > content.getSize() - 1) {
+                throw new IllegalArgumentException("beginByteOffset = " + beginByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+            }
 
-        if (endByteOffset < 0 || endByteOffset > content.getSize() - 1) {
-            throw new IllegalArgumentException("endByteOffset = " + endByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
-        }
-                
-        if (endByteOffset < beginByteOffset) {
-            throw new IllegalArgumentException("endByteOffset < beginByteOffset");            
+            if (endByteOffset > content.getSize() - 1) {
+                throw new IllegalArgumentException("endByteOffset = " + endByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+            }
+
+            if (endByteOffset < beginByteOffset) {
+                throw new IllegalArgumentException("endByteOffset < beginByteOffset");            
+            }
         }
             
         return tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
