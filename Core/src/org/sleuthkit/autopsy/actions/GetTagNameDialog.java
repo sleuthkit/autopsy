@@ -299,6 +299,9 @@ public class GetTagNameDialog extends JDialog {
                     tagName = null;
                 }
             }
+            else {
+                dispose();
+            }
         }
     }//GEN-LAST:event_okButtonActionPerformed
 
