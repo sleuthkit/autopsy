@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -84,7 +85,8 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction("Search for files with the same MD5 hash", this));
         actionsList.add(null); // creates a menu separator        
-        actionsList.add(TagAbstractFileAction.getInstance());
+        actionsList.add(AddContentTagAction.getInstance());
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());        
         return actionsList.toArray(new Action[0]);
     }
 
@@ -169,12 +171,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
-        return true; //false;
+        return true;
     }
 }
