@@ -187,7 +187,7 @@ public class HashDb {
      * @throws TskCoreException 
      */
     public void add(Content content) throws TskCoreException {
-        add(content, "");
+        add(content, null);
     }    
     
     /**
@@ -204,7 +204,7 @@ public class HashDb {
             AbstractFile file = (AbstractFile)content;
             // TODO: Add support for SHA-1 and SHA-256 hashes.
             if (null != file.getMd5Hash()) {
-                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", comment, handle);
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), null, null, comment, handle);
             }
         }
     }
