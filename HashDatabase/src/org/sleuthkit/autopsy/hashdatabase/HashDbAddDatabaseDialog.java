@@ -55,7 +55,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
     void customizeComponents() {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash", "hsh"};
+        String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 "Hash Database File", EXTENSION);
         fc.setFileFilter(filter);
@@ -285,8 +285,9 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         }
         try {
             File db = new File(databasePathTextField.getText());
-            File idx = new File(databasePathTextField.getText() + "-md5.idx");
-            if (!db.exists() && !idx.exists()) {
+            File idx = new File(databasePathTextField.getText() + ".kdb");
+            File idx_old = new File(databasePathTextField.getText() + "-md5.idx");
+            if (!db.exists() && !idx.exists() && !idx_old.exists()) {
                 JOptionPane.showMessageDialog(this, "Selected file does not exist");
                 return;
             }
