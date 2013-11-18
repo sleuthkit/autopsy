@@ -59,7 +59,7 @@ public class AddContentTagAction extends AddTagAction {
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
         for (AbstractFile file : selectedFiles) {
             try {
-                // Handle the special cases of "." and ".." directory entries.
+                // Handle the special cases of current (".") and parent ("..") directory entries.
                 if (file.getName().equals(".")) {
                     Content parentFile = file.getParent();                   
                     if (parentFile instanceof AbstractFile) {
@@ -95,5 +95,5 @@ public class AddContentTagAction extends AddTagAction {
                 JOptionPane.showMessageDialog(null, "Unable to tag " + file.getName() + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
             }                    
         }                             
-    }    
+    }
 }
