@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -651,7 +652,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        dataResult.setNode(new TableFilterNode(drfn, true));
+                        Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
+                        dataResult.setNode(new TableFilterNode(kffn, true));
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
@@ -688,7 +690,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // update the back and forward list
         updateHistory(em.getSelectedNodes());
     }
-    
+   
     private void updateHistory(Node[] selectedNodes) {
         if (selectedNodes.length == 0) {
             return;
