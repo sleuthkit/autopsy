@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,57 +23,64 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskException;
+import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.KnownFilesType;
+import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author dfickling
- */
-final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
-
-    private JFileChooser fc = new JFileChooser();
-    private String databaseName;
-    private static final Logger logger = Logger.getLogger(HashDbAddDatabaseDialog.class.getName());
-    /**
-     * Creates new form HashDbAddDatabaseDialog
-     */
-    HashDbAddDatabaseDialog() {
-        super(new javax.swing.JFrame(), "Add Hash Database", true);
-        setResizable(false);
+final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
+    private JFileChooser fileChooser;            
+    private HashDb newHashDb = null;
+    
+    HashDbCreateDatabaseDialog() {
+        super(new javax.swing.JFrame(), "Create Hash Database", true);
+        setResizable(false);    
+        fileChooser = new JFileChooser() {
+            @Override
+            public void approveSelection() {
+                File selectedFile = getSelectedFile();                
+                if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase("kdb")) {
+                    if (JOptionPane.showConfirmDialog(this, "The file must have a .kdb extension.", "File Name Error", JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();                       
+                    }
+                    return;                    
+                }                        
+                if (selectedFile.exists()) {
+                    int r = JOptionPane.showConfirmDialog(this, "A file with this name already exists. Please enter a new filename.", "Existing File", JOptionPane.OK_CANCEL_OPTION);
+                    if (r == JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();                       
+                    }
+                    return;                    
+                }
+                super.approveSelection();
+            }
+        };                
         initComponents();
         customizeComponents();
     }
     
     void customizeComponents() {
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"};
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Hash Database File", EXTENSION);
-        fc.setFileFilter(filter);
-        fc.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
+        fileChooser.setFileFilter(filter);
+        fileChooser.setMultiSelectionEnabled(false);
     }
     
-    String display() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-
-        // set the popUp window / JFrame
-        int w = this.getSize().width;
-        int h = this.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+    HashDb doDialog() {
+        newHashDb = null;
         
-        this.setVisible(true);
-        return databaseName;
+        // Center and display the dialog.        
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        this.setVisible(true);        
+        
+        return newHashDb;
     }
 
     /**
@@ -90,7 +97,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         databasePathTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
-        nsrlRadioButton = new javax.swing.JRadioButton();
+        knownRadioButton = new javax.swing.JRadioButton();
         knownBadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         databaseNameTextField = new javax.swing.JTextField();
@@ -100,54 +107,54 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.databasePathTextField.text")); // NOI18N
+        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.databasePathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
             }
         });
 
-        buttonGroup1.add(nsrlRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(nsrlRadioButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.nsrlRadioButton.text")); // NOI18N
-        nsrlRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(knownRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.knownRadioButton.text")); // NOI18N
+        knownRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nsrlRadioButtonActionPerformed(evt);
+                knownRadioButtonActionPerformed(evt);
             }
         });
 
         buttonGroup1.add(knownBadRadioButton);
         knownBadRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.knownBadRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.knownBadRadioButton.text")); // NOI18N
         knownBadRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 knownBadRadioButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.jLabel1.text")); // NOI18N
 
-        databaseNameTextField.setText(org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.databaseNameTextField.text")); // NOI18N
+        databaseNameTextField.setText(org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.databaseNameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.jLabel2.text")); // NOI18N
 
         useForIngestCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
         useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 useForIngestCheckboxActionPerformed(evt);
@@ -155,7 +162,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         });
 
         sendInboxMessagesCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -187,7 +194,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(knownBadRadioButton)
-                            .addComponent(nsrlRadioButton))
+                            .addComponent(knownRadioButton))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -209,7 +216,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(nsrlRadioButton)
+                .addComponent(knownRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -227,43 +234,27 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        String oldText = databasePathTextField.getText();
-        // set the current directory of the FileChooser if the databasePath Field is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
+        try {
+        fileChooser.setSelectedFile(new File("hash.kdb"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File databaseFile = fileChooser.getSelectedFile();                
+                databasePathTextField.setText(databaseFile.getCanonicalPath());
+                databaseNameTextField.setText(FilenameUtils.removeExtension(databaseFile.getName()));
+                if (databaseNameTextField.getText().toLowerCase().contains("nsrl")) {
+                    knownRadioButton.setSelected(true);
+                    knownRadioButtonActionPerformed(null);
+                }
+            } 
         }
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
-            try {
-                String filePath = f.getCanonicalPath();
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
-                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                databasePathTextField.setText(filePath);
-                databaseNameTextField.setText(derivedName);
-                if (derivedName.toLowerCase().contains("nsrl")) {
-                    nsrlRadioButton.setSelected(true);
-                    nsrlRadioButtonActionPerformed(null);
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Invalid database: ", ex);
-                int tryAgain = JOptionPane.showConfirmDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database.\n" + "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
-                if (tryAgain == JOptionPane.YES_OPTION) {
-                    browseButtonActionPerformed(evt);
-                }
-            }
+        catch (IOException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
-    private void nsrlRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nsrlRadioButtonActionPerformed
+    private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(false);
         sendInboxMessagesCheckbox.setEnabled(false);
-    }//GEN-LAST:event_nsrlRadioButtonActionPerformed
+    }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
         sendInboxMessagesCheckbox.setSelected(true);
@@ -283,42 +274,28 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Database name cannot be empty");
             return;
         }
-        try {
-            File db = new File(databasePathTextField.getText());
-            File idx = new File(databasePathTextField.getText() + ".kdb");
-            File idx_old = new File(databasePathTextField.getText() + "-md5.idx");
-            if (!db.exists() && !idx.exists() && !idx_old.exists()) {
-                JOptionPane.showMessageDialog(this, "Selected file does not exist");
-                return;
-            }
-            String path = db.getCanonicalPath();
-            SleuthkitJNI.getDatabaseName(path);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database");
-            return;
-        }
-        DBType type;
-        if(nsrlRadioButton.isSelected()) {
-            type = DBType.NSRL;
+
+        KnownFilesType type;
+        if(knownRadioButton.isSelected()) {
+            type = KnownFilesType.KNOWN;
         } else {
-            type = DBType.KNOWN_BAD;
+            type = KnownFilesType.KNOWN_BAD;
         }
-        HashDb db = new HashDb(databaseNameTextField.getText(), 
-                Arrays.asList(new String[] {databasePathTextField.getText()}), 
-                useForIngestCheckbox.isSelected(),
-                sendInboxMessagesCheckbox.isSelected(),
-                type);
-        if(type == DBType.KNOWN_BAD) {
-            HashDbXML.getCurrent().addKnownBadSet(db);
-        } else if(type == DBType.NSRL) {
-            HashDbXML.getCurrent().setNSRLSet(db);
-        }
-        databaseName = databaseNameTextField.getText();
+               
+        try
+        {
+            newHashDb = HashDb.createHashDatabase(databaseNameTextField.getText(), databasePathTextField.getText(), useForIngestCheckbox.isSelected(), sendInboxMessagesCheckbox.isSelected(), type);       
+        } 
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, "Hash database creation error", ex);
+            JOptionPane.showMessageDialog(this, "Failed to create hash database.");
+            return;
+        }             
+        
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -330,7 +307,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton knownBadRadioButton;
-    private javax.swing.JRadioButton nsrlRadioButton;
+    private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JCheckBox sendInboxMessagesCheckbox;
     private javax.swing.JCheckBox useForIngestCheckbox;

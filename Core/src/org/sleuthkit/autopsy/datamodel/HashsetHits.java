@@ -150,10 +150,10 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -198,11 +198,6 @@ public class HashsetHits implements AutopsyVisitableItem {
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
 
         @Override

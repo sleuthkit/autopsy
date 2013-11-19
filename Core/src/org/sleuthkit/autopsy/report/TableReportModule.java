@@ -47,12 +47,13 @@ public interface TableReportModule extends ReportModule {
     
     /**
      * Start a new data type for the report. This is how the report will differentiate between
-     * the start and end of a certain type of data, such as a Blackboard Artifact Type.
+     * the start and end of a certain type of data, such as a blackboard artifact Type.
      * It is up to the report how the differentiation is shown.
      * 
      * @param title String name of the data type
+     * @param description Description of the data type
      */
-    public void startDataType(String title);
+    public void startDataType(String title, String description);
     
     /**
      * End the current data type and prepare for either the end of the report
