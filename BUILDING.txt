@@ -11,8 +11,7 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install 32-bit version of JDK version 1.7 (32-bit is currently
-needed even if you have a 64-bit system).
+1a) Download and install JDK version 1.7.  You can now use 32-bit or 64-bit, but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 32-bit is easier. 
 
 Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
 (http://www.oracle.com/technetwork/java/javase/downloads/index.html).
@@ -26,7 +25,8 @@ Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 
 1d) (optional) If you are going to package Autopsy, then you'll also
-need to set JRE_HOME to the root JRE directory. 
+need to set JRE_HOME_32 to the root 32-bit JRE directory and/or JRE_HOME_64
+to the root 64-bit JRE directory. 
 
 1e) (optional) For some Autopsy features to be functional, you need to add java executable to the system PATH.
 
@@ -37,6 +37,9 @@ need to set JRE_HOME to the root JRE directory.
 later).  All you need is the dll file.  Note that you will get a
 launching error if you use libewf 1.
 - http://sourceforge.net/projects/libewf/
+If you want to build the 64-bit version of The Sleuth Kit, download
+our 64-bit version of libewf:
+- https://github.com/sleuthkit/libewf_64bit
 
 2b) Set LIBEWF_HOME environment variable to root directory of LIBEWF
 
@@ -97,13 +100,13 @@ BACKGROUND:
 Here are some notes to shed some light on what is going on during
 the build process.
 
-- NetBeans uses ant to build Autopsy.  The build target locates TSK
-(and LIBEWF) based on the environment variables and copies the
-needed JAR and library files into the DataModel module in the Autopsy
-project (see build-unix.xml and build-windows.xml in the root
-directory for details).   If you want to use the debug version of
-the TSK dll, then edit the copy line in the build-windows.xml file
-to copy from the Debug folder.
+- The Sleuth Kit Java datamodel JAR file has native libraries
+that are copied into it. 
+
+- NetBeans uses ant to build Autopsy.  The build target copies the
+TSK datamodel JAR file into the project.  If you want to use the
+debug version of the TSK dll, then there is a different ant target
+in TSK to copy the debug versions of the dlls. 
 
 - On a Windows system, the ant target copies all needed libraries
 to the autopsy folder.  On a Unix system, the ant taget copies only

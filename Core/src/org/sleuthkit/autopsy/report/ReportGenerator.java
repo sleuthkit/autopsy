@@ -830,19 +830,19 @@ public class ReportGenerator {
         
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Created", "Program", "Source File"}));
                 break;
             case TSK_WEB_COOKIE: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
                 break;
             case TSK_WEB_HISTORY: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Title", "Program", "Source File"}));
                 break;
             case TSK_WEB_DOWNLOAD: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
                 break;
             case TSK_RECENT_OBJECT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Date/Time", "Source File"}));
                 break;
             case TSK_INSTALLED_PROG: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
@@ -997,7 +997,7 @@ public class ReportGenerator {
                 List<String> bookmark = new ArrayList<>();
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
                 bookmark.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 bookmark.add(getFileUniquePath(artifactData.getObjectID()));
                 return bookmark;
@@ -1015,7 +1015,7 @@ public class ReportGenerator {
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                history.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
                 history.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 history.add(getFileUniquePath(artifactData.getObjectID()));
                 return history;
@@ -1030,6 +1030,7 @@ public class ReportGenerator {
             case TSK_RECENT_OBJECT:
                 List<String> recent = new ArrayList<>();
                 recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                recent.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 recent.add(getFileUniquePath(artifactData.getObjectID()));
                 return recent;
             case TSK_INSTALLED_PROG:

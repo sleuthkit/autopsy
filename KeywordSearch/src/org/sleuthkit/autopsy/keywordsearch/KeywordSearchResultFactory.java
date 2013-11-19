@@ -79,13 +79,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
             }
         },
-        MATCH {
-
-            @Override
-            public String toString() {
-                return "File Name";
-            }
-        },
         CONTEXT {
 
             @Override
@@ -242,6 +235,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 return false;
             }
 
+            List<KeyValueQuery> tempList = new ArrayList<>();
+            
             //execute the query and get fscontents matching
             Map<String, List<ContentHit>> tcqRes;
             try {
@@ -266,7 +261,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final int previewChunk = hitContents.get(f);
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<>();
-                setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
 
                 try {
                     String snippet;
@@ -311,8 +305,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
 
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
+                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
             }
+            
+            // Add all the nodes to toPopulate at once. Minimizes node creation
+            // EDT threads, which can slow and/or hang the UI on large queries.
+            toPopulate.addAll(tempList);
+            
             //write to bb
             //cannot reuse snippet in ResultWriter
             //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
@@ -449,15 +448,22 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 int resID = 0;
 
                 final KeywordSearchQuery origQuery = thing.getQuery();
-
+                
+                List<KeyValueQuery> tempList = new ArrayList<>();
+                
                 for (final AbstractFile f : uniqueMatches.keySet()) {
                     final int previewChunkId = uniqueMatches.get(f);
                     Map<String, Object> resMap = new LinkedHashMap<>();
                     if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
                         AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
                     }
-                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
+                    tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
                 }
+                
+                // Add all the nodes to toPopulate at once. Minimizes node creation
+                // EDT threads, which can slow and/or hang the UI on large queries.
+                toPopulate.addAll(tempList);
+                
                 //write to bb
                 new ResultWriter(matchesRes, origQuery, "").execute();
 

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -56,7 +57,7 @@ public class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { /
     private static ScalpelCarverIngestModule instance;
     private final String MODULE_NAME = "Scalpel Carver";
     private final String MODULE_DESCRIPTION = "Carves files from unallocated space at ingest time.\nCarved files are reanalyzed and displayed in the directory tree.";
-    private final String MODULE_VERSION = "1.0";
+    private final String MODULE_VERSION = Version.getVersion();
     private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver";
     private String moduleOutputDirPath;
     private String configFileName = "scalpel.conf";

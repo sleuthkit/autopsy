@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
@@ -57,10 +58,11 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
     final public static String MODULE_NAME = "Exif Parser";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
     private int filesProcessed = 0;
+    private boolean filesToFire = false;
 
     //file ingest modules require a private constructor
     //to ensure singleton instances
@@ -88,6 +90,13 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             return IngestModuleAbstractFile.ProcessResult.OK;
         }
 
+        // update the tree every 1000 files if we have EXIF data that is not being being displayed 
+        filesProcessed++;
+        if ((filesToFire) && (filesProcessed % 1000 == 0)) {
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            filesToFire = false;
+        }
+        
         //skip unsupported
         if (!parsableFormat(content)) {
             return IngestModuleAbstractFile.ProcessResult.OK;
@@ -112,15 +121,13 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             if (exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), MODULE_NAME, date.getTime() / 1000));
                 }
             }
 
             // GPS Stuff
             GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
-
             if (gpsDir != null) {
-                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
                 GeoLocation loc = gpsDir.getGeoLocation();
                 if (loc != null) {
                     double latitude = loc.getLatitude();
@@ -128,21 +135,22 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude));
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude));
                 }
+                
+                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
                 if (altitude != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude.doubleValue()));
                 }
             }
 
-
             // Device info
             ExifIFD0Directory devDir = metadata.getDirectory(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-
                 if (model != null && !model.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, model));
                 }
+                
+                String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, make));
                 }
@@ -152,10 +160,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                ++filesProcessed;
-                if (filesProcessed % 100 == 0) {
-                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-                }
+                filesToFire = true;
             }
 
             return IngestModuleAbstractFile.ProcessResult.OK;
@@ -232,12 +237,10 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     @Override
     public void complete() {
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
-
-        if (filesProcessed > 0) {
+        if (filesToFire) {
             //send the final new data event
             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
         }
-        //module specific cleanup due to completion here
     }
 
     @Override
@@ -252,7 +255,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public String getDescription() {
-        return "Ingests .jpg and .jpeg files and retrieves their metadata.";
+        return "Ingests JPEG files and retrieves their EXIF metadata.";
     }
 
     @Override
@@ -261,13 +264,11 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
         logger.log(Level.INFO, "init() " + this.toString());
 
         filesProcessed = 0;
+        filesToFire = false;
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "stop()");
-
-        //module specific cleanup due to interruption here
     }
 
     @Override

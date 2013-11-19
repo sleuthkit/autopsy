@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,15 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private Content associated;
     private List<NodeProperty> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    /**
+     * Artifact types which should have the associated content's full unique path
+     * as a property.
+     */
+    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[] { 
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID(),
+    };
 
     /**
      * Construct blackboard artifact node from an artifact and using provided
@@ -107,30 +117,38 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     entry.getValue()));
         }
 
-        String path = "";
-        try {
-            path = associated.getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + associated);
-        }
-        final int artifactTypeID = artifact.getArtifactTypeID();
-
-        //custom additional properties
-        //TODO use addNodeProperty() instead of hardcoding here
-        if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            ss.put(new NodeProperty("File Path",
-                    "File Path",
-                    NO_DESCR,
-                    path));
-        }
-
         //append custom node properties
         if (customProperties != null) {
             for (NodeProperty np : customProperties) {
                 ss.put(np);
             }
+        }
+        final int artifactTypeId = artifact.getArtifactTypeID();
+        
+        if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
+            String sourcePath = "";
+            try {
+                sourcePath = associated.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to get unique path from: " + associated.getName());
+            }
 
+            if (sourcePath.isEmpty() == false) {
+                ss.put(new NodeProperty("File Path", "File Path", 
+                        NO_DESCR, sourcePath));
+            }
+        } else {
+            String dataSource = "";
+            try {
+                dataSource = associated.getImage().getName();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to get image name from " + associated.getName());
+            }
+            
+            if (dataSource.isEmpty() == false) {
+                ss.put(new NodeProperty("Data Source", "Data Source",
+                        NO_DESCR, dataSource));
+            }
         }
 
         return s;
