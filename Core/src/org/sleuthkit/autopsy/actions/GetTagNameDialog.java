@@ -16,72 +16,130 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.actions;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
-import org.sleuthkit.autopsy.datamodel.Tags;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
-public class CreateTagDialog extends JDialog {
+public class GetTagNameDialog extends JDialog {
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
-    private static String newTagName;
+    private final HashMap<String, TagName> tagNames = new HashMap<>();
+    private TagName tagName = null;
 
-    /**
-     * Creates new form CreateTagDialog
-     */
-    private CreateTagDialog(JFrame parent) {
-        super(parent, true);
-        init();
-    }
+    public static TagName doDialog() {
+        GetTagNameDialog dialog = new GetTagNameDialog();
+        return dialog.tagName;
+    }    
     
-    public static String getNewTagNameDialog(JFrame parent) {
-        new CreateTagDialog(parent);
-        return newTagName;
-    }
-    
-    private void init() {
-        
-        setTitle("Create a new tag");
-        
+    private GetTagNameDialog() {
+        super((JFrame)WindowManager.getDefault().getMainWindow(), "Create Tag", true);   
+        setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
         
-        tagsTable.setModel(new TagsTableModel());
+        // Set up the dialog to close when Esc is pressed.
+        String cancelName = "cancel";
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        ActionMap actionMap = getRootPane().getActionMap();
+        actionMap.put(cancelName, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+                                
+        // Get the current set of tag names and hash them for a speedy lookup in
+        // case the user chooses an existing tag name from the tag names table.
+        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+        List<TagName> currentTagNames = null;
+        try {
+            currentTagNames = tagsManager.getAllTagNames();        
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+        }         
+        if (null != currentTagNames) {
+            for (TagName name : currentTagNames) {
+                this.tagNames.put(name.getDisplayName(), name);
+            }                    
+        }
+        else {
+            currentTagNames = new ArrayList<>();
+        }
+        
+        // Populate the tag names table.
+        tagsTable.setModel(new TagsTableModel(currentTagNames));
         tagsTable.setTableHeader(null);
-
-        //completely disable selections
         tagsTable.setCellSelectionEnabled(false);
         tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
-        
-        setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
-        
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        // set the popUp window / JFrame
-        int w = this.getSize().width;
-        int h = this.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        setVisible(true); //blocks
+                
+        // Center and show the dialog box. 
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());        
+        setVisible(true);
     }
     
     private boolean containsIllegalCharacters(String content) {
-        if ((content.contains("\\") || content.contains(":") || content.contains("*")
-                || content.contains("?") || content.contains("\"") || content.contains("<")
-                || content.contains(">") || content.contains("|"))) {
-            return true;
-        }
-        return false;
+        return (content.contains("\\")|| 
+                content.contains(":") || 
+                content.contains("*") ||
+                content.contains("?") || 
+                content.contains("\"")|| 
+                content.contains("<") ||
+                content.contains(">") || 
+                content.contains("|"));
     }
 
+    private class TagsTableModel extends AbstractTableModel {        
+        private final ArrayList<TagName> tagNames = new ArrayList<>();
+        
+        TagsTableModel(List<TagName> tagNames) {
+            for (TagName tagName : tagNames) {
+                this.tagNames.add(tagName);
+            }
+        }
+
+        @Override
+        public int getRowCount() {
+            return tagNames.size();
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @Override
+        public String getValueAt(int rowIndex, int columnIndex) {
+            return tagNames.get(rowIndex).getDisplayName();
+        }
+    }
+            
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -107,14 +165,14 @@ public class CreateTagDialog extends JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
@@ -137,13 +195,13 @@ public class CreateTagDialog extends JDialog {
         tagsTable.setTableHeader(null);
         jScrollPane1.setViewportView(tagsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(preexistingLabel, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.preexistingLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(preexistingLabel, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.preexistingLabel.text")); // NOI18N
 
-        newTagPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.newTagPanel.border.title"))); // NOI18N
+        newTagPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.newTagPanel.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(tagNameLabel, org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tagNameLabel, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.tagNameLabel.text")); // NOI18N
 
-        tagNameField.setText(org.openide.util.NbBundle.getMessage(CreateTagDialog.class, "CreateTagDialog.tagNameField.text")); // NOI18N
+        tagNameField.setText(org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.tagNameField.text")); // NOI18N
         tagNameField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 tagNameFieldKeyReleased(evt);
@@ -211,20 +269,39 @@ public class CreateTagDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        newTagName = null;
+        tagName = null;
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String tagName = tagNameField.getText();
-        if (tagName.isEmpty()) {
+        String tagDisplayName = tagNameField.getText();
+        if (tagDisplayName.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Must supply a tag name to continue.", "Tag Name", JOptionPane.ERROR_MESSAGE);
-        } else if (containsIllegalCharacters(tagName)) {
-            JOptionPane.showMessageDialog(null, "The tag name contains illegal characters.\nCannot contain any of the following symbols: \\ : * ? \" < > |",
-                    "Illegal Characters", JOptionPane.ERROR_MESSAGE);
-        } else {
-            newTagName = tagName;
-            dispose();
+        } 
+        else if (containsIllegalCharacters(tagDisplayName)) {
+            JOptionPane.showMessageDialog(null, "The tag name contains illegal characters.\nCannot contain any of the following symbols: \\ : * ? \" < > |", "Illegal Characters", JOptionPane.ERROR_MESSAGE);
+        } 
+        else {
+            tagName = tagNames.get(tagDisplayName);
+            if (tagName == null) {
+                try {
+                    tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
+                    dispose();
+                }
+                catch (TskCoreException ex) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
+                    JOptionPane.showMessageDialog(null, "Unable to add the " + tagDisplayName + " tag name to the case.", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+                    tagName = null;
+                }        
+                catch (TagsManager.TagNameAlreadyExistsException ex) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
+                    JOptionPane.showMessageDialog(null, "A " + tagDisplayName + " tag name has already been defined.", "Duplicate Tag Error", JOptionPane.ERROR_MESSAGE);
+                    tagName = null;
+                }
+            }
+            else {
+                dispose();
+            }
         }
     }//GEN-LAST:event_okButtonActionPerformed
 
@@ -251,32 +328,5 @@ public class CreateTagDialog extends JDialog {
     private javax.swing.JTable tagsTable;
     // End of variables declaration//GEN-END:variables
 
-    private class TagsTableModel extends AbstractTableModel {
-        List<String> tagNames;
-        
-        TagsTableModel() {
-            tagNames = new ArrayList<>(Tags.getAllTagNames());
-        }
-
-        @Override
-        public int getRowCount() {
-            return tagNames.size();
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return false;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 1;
-        }
-
-        @Override
-        public String getValueAt(int rowIndex, int columnIndex) {
-            return tagNames.get(rowIndex);
-        }
-    }
 }
 
