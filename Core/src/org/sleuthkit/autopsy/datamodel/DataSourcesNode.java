@@ -39,10 +39,10 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
+    public boolean isLeafTypeNode() {
+        return false;
     }
-
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
