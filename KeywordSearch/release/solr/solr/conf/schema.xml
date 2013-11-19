@@ -510,12 +510,13 @@
    <!-- use image_id to easily search a specific image only -->
    <field name="image_id" type="string" indexed="true" stored="false" required="true" /> 
    
-    <!-- Autopsy pushes text to the content field and gets the text to display from it.  It is copied to other places -->
+    <!-- Autopsy pushes text to this field and gets the text to display from it.  It is copied to other places -->
    <field name="content" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" />
    
    <!-- The strings field holds strings extracted from files that SolrCell doesn't support -->
    <!--<field name="strings" type="text_general" indexed="true" stored="true"/>-->
    
+   <!-- NOTE: file_name gets copied later to other fields for searching -->
    <field name="file_name" type="text_general" indexed="false" stored="true"/>
    <field name="ctime" type="tdate" indexed="false" stored="false"/>
    <field name="atime" type="tdate" indexed="false" stored="false"/>
@@ -555,7 +556,7 @@
    <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
 		also be useful for Lucene based queries containing special characters-->
    <!-- populated via copyField -->
-   <field name="content_ws" type="text_ws" indexed="true" stored="false" /> 
+   <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" /> 
 	
    <!-- Uncommenting the following will create a "timestamp" field using
         a default value of "NOW" to indicate when each document was indexed.
@@ -628,7 +629,10 @@
    <copyField source="file_name" dest="text"/>
    <copyField source="meta" dest="text"/>
    <!--<copyField source="strings" dest="text"/>-->
+   
    <copyField source="content" dest="content_ws"/>
+   <copyField source="file_name" dest="content_ws"/>
+   <copyField source="meta" dest="content_ws"/>
 	
    <!-- Above, multiple source fields are copied to the [text] field. 
 	  Another way to map multiple source fields to the same 

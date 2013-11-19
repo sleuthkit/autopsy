@@ -1,3 +1,16 @@
+
+---------------- VERSION 3.0.9  --------------
+Bug Fixes:
+- Regular expression keyword search works on file names.
+
+Improvements:
+- Enhanced reporting on keyword search module errors
+
+
+---------------- VERSION 3.0.8  --------------
+Bug Fixes:
+- Fixed installer bug on Windows. No other code changes. 
+
 ---------------- VERSION 3.0.7  --------------
 
 New features:

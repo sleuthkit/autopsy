@@ -358,6 +358,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
+            dummyNodeListener.reset();
             this.rootNode.addNodeListener(dummyNodeListener);
         }
         
@@ -606,25 +607,57 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Set number of matches to be displayed in the top right
      * @param numMatches
      */
-    public void setNumMatches(int numMatches) {
-        this.numberMatchLabel.setText(Integer.toString(numMatches));
+    public void setNumMatches(Integer numMatches) {
+        if (this.numberMatchLabel != null) {
+            this.numberMatchLabel.setText(Integer.toString(numMatches));
+        }
     }
     
     private class DummyNodeListener implements NodeListener {
         private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+        private volatile boolean load = true;
+        
+        public void reset() {
+            load = true;
+        }
         
         @Override
-        public void childrenAdded(final NodeMemberEvent nme) {
-            Node added = nme.getNode();
-            if (added.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
-                // don't set up tabs if the new node is a waiting node
-                return;
+        public void childrenAdded(NodeMemberEvent nme) {
+            Node[] delta = nme.getDelta();
+            if (load && containsReal(delta)) {
+                load = false;
+                setupTabs(nme.getNode());
+                updateMatches();
             }
-            setupTabs(nme.getNode());
+        }
+        
+        private boolean containsReal(Node[] delta) {
+            for (Node n : delta) {
+                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        /**
+         * Updates the Number of Matches label on the DataResultPanel.
+         * 
+         */
+        private void updateMatches() {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (rootNode != null && rootNode.getChildren() != null) {
+                        setNumMatches(rootNode.getChildren().getNodesCount());
+                    }
+                }
+            });
         }
 
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
+            updateMatches();
         }
 
         @Override

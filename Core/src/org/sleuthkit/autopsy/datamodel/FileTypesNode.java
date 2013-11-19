@@ -53,6 +53,11 @@ public class FileTypesNode extends DisplayableItemNode {
     }
 
     @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
@@ -71,10 +76,5 @@ public class FileTypesNode extends DisplayableItemNode {
                 "no description",
                 getName()));
         return s;
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
     }
 }

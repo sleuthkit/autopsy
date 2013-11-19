@@ -28,9 +28,10 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Content;
@@ -67,22 +68,6 @@ class KeywordSearchFilterNode extends FilterNode {
         return snippet;
     }
 
-    Property<String> getSnippetProperty() {
-
-        Property<String> prop = new PropertySupport.ReadOnly<String>("snippet",
-                String.class, "Context", "Snippet of matching content.") {
-
-            @Override
-            public String getValue() {
-                return getSnippet();
-            }
-        };
-
-        prop.setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button
-
-        return prop;
-    }
-
     @Override
     public Node.PropertySet[] getPropertySets() {
         Node.PropertySet[] propertySets = super.getPropertySets();
@@ -100,9 +85,6 @@ class KeywordSearchFilterNode extends FilterNode {
 
                 int j = 0;
                 for (Property<?> p : oldProperties) {
-                    if (j++ == 1) {
-                        newPs.put(getSnippetProperty());
-                    }
                     newPs.put(p);
                 }
 
@@ -151,7 +133,8 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(ExtractAction.getInstance());
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             actions.add(null); // creates a menu separator
-            actions.add(TagAbstractFileAction.getInstance());
+            actions.add(AddContentTagAction.getInstance());
+            actions.addAll(ContextMenuExtensionPoint.getActions());
             return actions;            
         }
 

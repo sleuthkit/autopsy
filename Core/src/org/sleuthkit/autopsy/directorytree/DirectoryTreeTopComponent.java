@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -528,9 +529,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } // changed current case
         else if (changed.equals(Case.CASE_CURRENT_CASE)) {
-
-            // case opened
-            if (newValue != null) {
+            // When a case is closed, the old value of this property is the 
+            // closed Case object and the new value is null. When a case is 
+            // opened, the old value is null and the new value is the new Case
+            // object.
+            // @@@ This needs to be revisited. Perhaps case closed and case
+            // opened events instead of property change events would be a better
+            // solution. Either way, more probably needs to be done to clean up
+            // data model objects when a case is closed.
+            if (oldValue != null && newValue == null) {
+                // The current case has been closed. Reset the ExplorerManager.
+                Node emptyNode = new AbstractNode(Children.LEAF);
+                em.setRootContext(emptyNode);
+            }
+            else if (newValue != null) {
+                // A new case has been opened. Reset the forward and back 
+                // buttons. Note that a call to CoreComponentControl.openCoreWindows()
+                // by the new Case object will lead to a componentOpened() call
+                // that will repopulate the tree.
+                // @@@ The repopulation of the tree in this fashion also merits
+                // reconsideration.
                 resetHistory();
             }
         } // if the image is added to the case
@@ -787,7 +805,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
-    void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
         //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
@@ -839,38 +857,53 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Set selected node using the previously saved selection path to the
-     * selected node
+     * Set the selected node using a path to a previously selected node.
      *
-     * @param path node path with node names
-     * @param rootNodeName name of the root node to match or null if any
+     * @param previouslySelectedNodePath Path to a previously selected node. 
+     * @param rootNodeName Name of the root node to match, may be null.
      */
-    private void setSelectedNode(final String[] path, final String rootNodeName) {
-        if (path == null) {
+    private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
+        if (previouslySelectedNodePath == null) {
             return;
         }
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-
-                if (path.length > 0 && (rootNodeName == null || path[0].equals(rootNodeName))) {
-                    try {
-                        Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                        
-                        if (newSelection != null) {
-                            if (rootNodeName != null) {
-                                //called from tree auto refresh context
-                                //remove last from backlist, because auto select will result in duplication
-                                backList.pollLast();
-                            }
-                            em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                if (previouslySelectedNodePath.length > 0 && (rootNodeName == null || previouslySelectedNodePath[0].equals(rootNodeName))) {
+                    Node selectedNode = null;                    
+                    ArrayList<String> selectedNodePath = new ArrayList<>(Arrays.asList(previouslySelectedNodePath));
+                    while (null == selectedNode && !selectedNodePath.isEmpty()) {
+                        try {
+                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));                        
                         }
-                        
-                        // We need to set the selection, which will refresh dataresult and get rid of the oob exception
-                    } catch (NodeNotFoundException ex) {
-                        logger.log(Level.WARNING, "Node not found", ex);
-                    } catch (PropertyVetoException ex) {
-                        logger.log(Level.WARNING, "Property Veto", ex);
+                        catch (NodeNotFoundException ex) {
+                            // The selected node may have been deleted (e.g., a deleted tag), so truncate the path and try again. 
+                            if (selectedNodePath.size() > 1) {
+                                selectedNodePath.remove(selectedNodePath.size() - 1);
+                            }                            
+                            else {
+                                StringBuilder nodePath = new StringBuilder();
+                                for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
+                                    nodePath.append(previouslySelectedNodePath[i]).append("/");
+                                }
+                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex);
+                                break; 
+                            }
+                        } 
+                    }
+                    
+                    if (null != selectedNode) {
+                        if (rootNodeName != null) {
+                            //called from tree auto refresh context
+                            //remove last from backlist, because auto select will result in duplication
+                            backList.pollLast();
+                        }
+                        try {
+                            em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});                                                    
+                        }
+                        catch (PropertyVetoException ex) {
+                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex);
+                        }
                     }
                 }
             }
