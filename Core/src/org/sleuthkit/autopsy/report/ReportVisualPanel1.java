@@ -238,7 +238,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         boolean generalModuleSelected = false;
         if (module instanceof GeneralReportModule) {
             JPanel generalPanel = ((GeneralReportModule) module).getConfigurationPanel();
-            panel = (generalPanel == null) ? new JPanel() : panel;
+            panel = (generalPanel == null) ? new JPanel() : generalPanel;
             generalModuleSelected = true;
         }
 

@@ -335,11 +335,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.ARTIFACT;
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return true;
     }

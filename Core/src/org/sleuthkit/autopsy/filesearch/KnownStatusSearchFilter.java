@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
         String expr = "0";
         if (unknown) {
-            expr += " or " + predicateHelper(FileKnown.UKNOWN);
+            expr += " or " + predicateHelper(FileKnown.UNKNOWN);
         }
         if (known) {
             expr += " or " + predicateHelper(FileKnown.KNOWN);

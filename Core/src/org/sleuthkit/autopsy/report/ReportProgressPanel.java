@@ -48,56 +48,61 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     }
     
     private void customInit(String reportName, String reportPath) {
-        reportLabel.setText(reportName);
-        pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
-        pathLabel.setToolTipText(reportPath);
-        
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-        
+
+        reportLabel.setText(reportName);        
         processingLabel.setText("Queuing...");
         STATUS = ReportStatus.QUEUING;
         
+        if (reportPath != null) {
+            pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
+            pathLabel.setToolTipText(reportPath);
+
         // Add the "link" effect to the pathLabel
-        final String linkPath = reportPath;
-        pathLabel.addMouseListener(new MouseListener() {
+            final String linkPath = reportPath;
+            pathLabel.addMouseListener(new MouseListener() {
 
-            @Override
-            public void mouseClicked(MouseEvent e) {
-            }
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                }
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
+                @Override
+                public void mousePressed(MouseEvent e) {
+                }
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                File file = new File(linkPath);
-                try {
-                    Desktop.getDesktop().open(file);
-                } catch (IOException ex) {
-                } catch (IllegalArgumentException ex) {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    File file = new File(linkPath);
                     try {
-                        // try to open the parent path if the file doens't exist
-                        Desktop.getDesktop().open(file.getParentFile());
-                    } catch (IOException ex1) {
+                        Desktop.getDesktop().open(file);
+                    } catch (IOException ex) {
+                    } catch (IllegalArgumentException ex) {
+                        try {
+                            // try to open the parent path if the file doens't exist
+                            Desktop.getDesktop().open(file.getParentFile());
+                        } catch (IOException ex1) {
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                pathLabel.setForeground(Color.DARK_GRAY);
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    pathLabel.setForeground(Color.DARK_GRAY);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                pathLabel.setForeground(Color.BLACK);
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-            
-        });
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    pathLabel.setForeground(Color.BLACK);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+
+            });
+        }
+        else {
+            pathLabel.setText("<html><u>No report file</u></html>");            
+        }
     }
     
     /**
