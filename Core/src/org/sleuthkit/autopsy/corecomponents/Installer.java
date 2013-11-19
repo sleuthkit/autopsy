@@ -105,11 +105,7 @@ public class Installer extends ModuleInstall {
         }
         
         final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",
-                                                        "MenuUI",
-                                                        "MenuItemUI",
-                                                        "CheckBoxMenuItemUI",
-                                                        "RadioButtonMenuItemUI",
-                                                        "PopupMenuUI"};
+                                                        };
                 
         Map<Object, Object> uiEntries = new TreeMap<Object, Object>();
         
