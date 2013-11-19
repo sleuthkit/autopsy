@@ -25,6 +25,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -58,6 +59,35 @@ public class AddContentTagAction extends AddTagAction {
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
         for (AbstractFile file : selectedFiles) {
             try {
+                // Handle the special cases of current (".") and parent ("..") directory entries.
+                if (file.getName().equals(".")) {
+                    Content parentFile = file.getParent();                   
+                    if (parentFile instanceof AbstractFile) {
+                        file = (AbstractFile)parentFile;
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                        continue;
+                    }
+                }
+                else if (file.getName().equals("..")) {
+                    Content parentFile = file.getParent();                   
+                    if (parentFile instanceof AbstractFile) {
+                        parentFile = (AbstractFile)((AbstractFile)parentFile).getParent();
+                        if (parentFile instanceof AbstractFile) {
+                            file = (AbstractFile)parentFile;
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                            continue;
+                        }
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                        continue;
+                    }                    
+                }
+                
                 Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
             }
             catch (TskCoreException ex) {                        
@@ -65,5 +95,5 @@ public class AddContentTagAction extends AddTagAction {
                 JOptionPane.showMessageDialog(null, "Unable to tag " + file.getName() + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
             }                    
         }                             
-    }    
+    }
 }
