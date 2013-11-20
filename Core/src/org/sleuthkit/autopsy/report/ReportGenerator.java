@@ -924,13 +924,13 @@ public class ReportGenerator {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId);        
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Created", "Program", "Source File"}));
                 break;
             case TSK_WEB_COOKIE: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
                 break;
             case TSK_WEB_HISTORY: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Name", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Title", "Program", "Source File"}));
                 break;
             case TSK_WEB_DOWNLOAD: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
@@ -1080,7 +1080,7 @@ public class ReportGenerator {
             case TSK_WEB_BOOKMARK:
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 rowData.add(getFileUniquePath(artifactData.getObjectID()));
                 break;
@@ -1096,7 +1096,7 @@ public class ReportGenerator {
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 rowData.add(getFileUniquePath(artifactData.getObjectID()));
                 break;
