@@ -94,6 +94,43 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
     }
 
+    static public String getList(SleuthkitCase skCase, long objId) {
+        ResultSet rs = null;
+        String strList = "";
+        
+        try {
+            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
+                    + "attribute_type_id=" + setNameId
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId
+                    + " AND blackboard_artifacts.obj_id=" + objId;
+            rs = skCase.runQuery(query);
+            int i = 0;
+            while (rs.next()) {
+                if (i++ > 0) {
+                    strList += ", ";
+                }
+                strList += rs.getString("value_text");
+            }
+           
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                }
+            }
+        }
+        return strList;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
@@ -113,10 +150,10 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -161,11 +198,6 @@ public class HashsetHits implements AutopsyVisitableItem {
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
 
         @Override

@@ -227,6 +227,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
         q.setTermsLimit(MAX_TERMS_RESULTS); 
+        logger.log(Level.INFO, "Query: " + q.toString());
         terms = executeQuery(q);
 
         int resultSize = 0;

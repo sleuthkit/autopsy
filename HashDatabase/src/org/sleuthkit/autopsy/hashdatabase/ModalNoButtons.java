@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,13 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class exists as a stop-gap measure to force users to have an indexed database.
@@ -40,9 +41,10 @@ import org.sleuthkit.datamodel.TskException;
  */
 class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListener {
 
+    private static final String INDEX_FILE_EXTENSION = ".kdb";
     List<HashDb> unindexed;
     HashDb toIndex;
-    HashDbManagementPanel hdbmp;
+    HashDbConfigPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -53,7 +55,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed the list of unindexed databases to index.
      */
-    ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
+    ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
         super(parent, "Indexing databases", true);
         this.unindexed = unindexed;
         this.toIndex = null;
@@ -68,7 +70,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed The unindexed database to index.
      */
-     ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
+     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
         super(parent, "Indexing database", true);
         this.unindexed = null;
         this.toIndex = unindexed;
@@ -165,7 +167,6 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param evt mouse click event
      */
     private void CANCEL_BUTTONMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_CANCEL_BUTTONMouseClicked
-        // TODO add your handling code here:
         String message = "You are about to exit out of indexing your hash databases. \n"
                 + "The generated index will be left unusable. If you choose to continue,\n "
                 + "please delete the corresponding -md5.idx file in the hash folder.\n"
@@ -173,7 +174,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
         int res = JOptionPane.showConfirmDialog(this, message, "Unfinished Indexing", JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
-            List<HashDb> remove = new ArrayList<HashDb>();
+            List<HashDb> remove = new ArrayList<>();
             if(this.toIndex == null){
                 remove = this.unindexed;
             }
@@ -203,17 +204,13 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      */
     private void indexThis() {
         this.INDEXING_PROGBAR.setIndeterminate(true);
-        currentDb = this.toIndex.getDisplayName();
+        currentDb = this.toIndex.getHashSetName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
         this.length = 1;
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
         if (!this.toIndex.isIndexing()) {
             this.toIndex.addPropertyChangeListener(this);
-            try {
-                this.toIndex.createIndex();
-            } catch (TskException se) {
-                Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", se);
-            }
+            this.toIndex.createIndex(okToDeleteOldIndexFile(toIndex));
         }
     }
     
@@ -224,16 +221,12 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         length = this.unindexed.size();
         this.INDEXING_PROGBAR.setIndeterminate(true);
         for (HashDb db : this.unindexed) {
-            currentDb = db.getDisplayName();
+            currentDb = db.getHashSetName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
             this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
             if (!db.isIndexing()) {
                 db.addPropertyChangeListener(this);
-                try {
-                    db.createIndex();
-                } catch (TskException e) {
-                    Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
-                }
+                db.createIndex(okToDeleteOldIndexFile(db));
             }
         }
     }
@@ -250,7 +243,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * Displays the current count of indexing when one is completed, or kills this dialog if all indexing is complete.
      */
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.name())) {
+        if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
             if (currentcount >= length) {
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);
@@ -262,5 +255,23 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 
             }
         }
+    }
+    
+    private boolean okToDeleteOldIndexFile(HashDb hashDb) {
+        boolean deleteOldIndexFile =  true;        
+        try {
+            if (hashDb.hasLookupIndex()) {
+                String indexPath = hashDb.getIndexPath();
+                File indexFile = new File(indexPath);
+                if (!indexPath.endsWith(INDEX_FILE_EXTENSION)) {
+                    deleteOldIndexFile = JOptionPane.showConfirmDialog(this, "Updating index file format, delete " + indexFile.getName() + " file that uses the old file format?", "Delete Obsolete Index File", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                }
+            }
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);                
+            JOptionPane.showMessageDialog(null, "Error gettting index information for " + hashDb.getHashSetName() + " hash database. Cannot perform indexing operation.", "Hash Database Index Status Error", JOptionPane.ERROR_MESSAGE);                                 
+        }
+        return deleteOldIndexFile;
     }
 }

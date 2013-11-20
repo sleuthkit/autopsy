@@ -20,119 +20,132 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
- * Instances of this class represent known file hash set databases. 
+ * Instances of this class represent hash databases used to classify files as
+ * known or know bad. 
  */
-// TODO: Make this an inner class of a rewritten HashDbXML, and give it a private constructor.
-public class HashDb implements Comparable<HashDb> {
-    enum EVENT {INDEXING_DONE};
+public class HashDb {
+    /**
+     * Property change events published by hash database objects.
+     */
+    public enum Event {
+        INDEXING_DONE
+    }
     
-    enum KNOWN_FILES_HASH_SET_TYPE{
-        NSRL("NSRL"), 
+    /**
+     * The classification to apply to files whose hashes are stored in the 
+     * hash database.  
+     */
+    public enum KnownFilesType{
+        KNOWN("Known"), 
         KNOWN_BAD("Known Bad");
         
         private String displayName;
         
-        private KNOWN_FILES_HASH_SET_TYPE(String displayName) {
+        private KnownFilesType(String displayName) {
             this.displayName = displayName;
         }
         
-        String getDisplayName() {
+        public String getDisplayName() {
             return this.displayName;
         }
     }
-    
-    private static final String INDEX_FILE_EXTENSION = ".kdb";
-    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
-    
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);    
-    private String displayName;
-    private String databasePath;
-    private boolean useForIngest;
-    private boolean showInboxMessages;
-    private KNOWN_FILES_HASH_SET_TYPE type;
-    private int handle;
-    private boolean indexing;
-    private boolean acceptsUpdates = false;
-    
-    HashDb(int handle, String name, String databasePath, boolean useForIngest, boolean showInboxMessages, KNOWN_FILES_HASH_SET_TYPE type) {
-        this.displayName = name;
-        this.databasePath = databasePath;
-        this.useForIngest = useForIngest;
-        this.showInboxMessages = showInboxMessages;
-        this.type = type;
-        this.handle = handle;
-        this.indexing = false;
-        
-        try {
-            acceptsUpdates = SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
-        }
-        catch (TskCoreException ex) {
-            // RJCTODO
-            acceptsUpdates = false;
-        }
-    }
 
-    @Override
-    public int compareTo(HashDb o) {
-        return this.displayName.compareTo(o.displayName);
-    }
+    private int handle;
+    private KnownFilesType knownFilesType;
+    private String databasePath;
+    private String indexPath;
+    private String hashSetName;
+    private boolean useForIngest;
+    private boolean sendHitMessages;
+    private boolean indexing;
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);    
         
     /**
-     * Indicates whether the hash database accepts updates.
-     * @return True if the database accepts updates, false otherwise.
-     */
-    boolean isUpdateable() {
-        return acceptsUpdates;
-    }
-    
-    /**
-     * Adds hashes of content (if calculated) to the hash database. 
-     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * Opens an existing hash database. 
+     * @param hashSetName Name used to represent the hash database in user interface components. 
+     * @param selectedFilePath Full path to either a hash database file or a hash database index file.
+     * @param useForIngest A flag indicating whether or not the hash database should be used during ingest.
+     * @param sendHitMessages A flag indicating whether hash set hit messages should be sent to the application in box.
+     * @param knownFilesType The classification to apply to files whose hashes are stored in the hash database. 
+     * @return A HashDb object representation of the new hash database.
      * @throws TskCoreException 
      */
-    public void addToHashDatabase(Content content) throws TskCoreException {
-        // TODO: This only works for AbstractFiles at present. Change when Content
-        // can be queried for hashes.
-        assert content instanceof AbstractFile;
-        if (content instanceof AbstractFile) {
-            AbstractFile file = (AbstractFile)content;
-            // TODO: Add support for SHA-1 and SHA-256 hashes.
-            if (null != file.getMd5Hash()) {
-                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), "", "", handle);
-            }
-        }
+    public static HashDb openHashDatabase(String hashSetName, String selectedFilePath, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) throws TskCoreException {
+        int handle = SleuthkitJNI.openHashDatabase(selectedFilePath);
+        return new HashDb(handle, SleuthkitJNI.getHashDatabasePath(handle), SleuthkitJNI.getHashDatabaseIndexPath(handle), hashSetName, useForIngest, sendHitMessages, knownFilesType);
     }
     
-    void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-    
-    void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
+    /**
+     * Creates a new hash database. 
+     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
+     * @param databasePath Full path to the database file to be created. The file name component of the path must have a ".kdb" extension.
+     * @param useForIngest A flag indicating whether or not the data base should be used during the file ingest process.
+     * @param showInboxMessages A flag indicating whether messages indicating lookup hits should be sent to the application in box.
+     * @param hashSetType The type of hash set to associate with the database. 
+     * @return A HashDb object representation of the opened hash database.
+     * @throws TskCoreException 
+     */
+    public static HashDb createHashDatabase(String hashSetName, String databasePath, boolean useForIngest, boolean showInboxMessages, KnownFilesType knownFilesType) throws TskCoreException {
+        int handle = SleuthkitJNI.createHashDatabase(databasePath);
+        return new HashDb(handle, SleuthkitJNI.getHashDatabasePath(handle), SleuthkitJNI.getHashDatabaseIndexPath(handle), hashSetName, useForIngest, showInboxMessages, knownFilesType);
+    }    
+
+    private HashDb(int handle, String databasePath, String indexPath, String name, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
+        this.databasePath = databasePath;
+        this.indexPath = indexPath;
+        this.hashSetName = name;
+        this.useForIngest = useForIngest;
+        this.sendHitMessages = sendHitMessages;
+        this.knownFilesType = knownFilesType;
+        this.handle = handle;
+        this.indexing = false;
     }
 
-    String getDisplayName() {
-        return displayName;
+    /**
+     * Adds a listener for the events defined in HashDb.Event. 
+     */
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        propertyChangeSupport.addPropertyChangeListener(pcl);
     }
     
-    String getDatabasePath() {
+    /**
+     * Removes a listener for the events defined in HashDb.Event. 
+     */
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        propertyChangeSupport.removePropertyChangeListener(pcl);
+    }
+
+    public String getHashSetName() {
+        return hashSetName;
+    }
+    
+    public String getDatabasePath() {
         return databasePath;
     }
     
-    KNOWN_FILES_HASH_SET_TYPE getKnownType() {
-        return type;
+    public String getIndexPath() {
+        return indexPath;
     }
         
-    boolean getUseForIngest() {
+    public KnownFilesType getKnownFilesType() {
+        return knownFilesType;
+    }
+        
+    public boolean getUseForIngest() {
         return useForIngest;
     }
 
@@ -140,128 +153,123 @@ public class HashDb implements Comparable<HashDb> {
         this.useForIngest = useForIngest;
     }
         
-    boolean getShowInboxMessages() {
-        return showInboxMessages;
+    public boolean getShowInboxMessages() {
+        return sendHitMessages;
     }
     
     void setShowInboxMessages(boolean showInboxMessages) {
-        this.showInboxMessages = showInboxMessages;
+        this.sendHitMessages = showInboxMessages;
+    }
+
+    public boolean hasLookupIndex() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
     }
         
-    boolean hasLookupIndex() {
-        try {
-            return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
-        }
-        catch (TskCoreException ex) {
-            // RJCTODO
-            return false;
-        }
-    }
-        
-    boolean hasLegacyLookupIndexOnly() throws TskCoreException {
-        // RJCTODO: Add SleuthkitJNI call
-        return false;
+    public boolean canBeReindexed() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
     }
     
-    // TODO: This is a temporary expedient until HashDb becomes an inner class of HashDbXML.
-    void setAcceptsUpdates(boolean acceptsUpdates) {
-        this.acceptsUpdates = acceptsUpdates;
+    public boolean hasIndexOnly() throws TskCoreException {
+        return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
     }
     
     /**
-     * Determines if a path points to an index by checking the suffix
-     * @param path
-     * @return true if index
+     * Indicates whether the hash database accepts updates.
+     * @return True if the database accepts updates, false otherwise.
      */
-    static boolean isIndexPath(String path) {
-        return (path.endsWith(INDEX_FILE_EXTENSION) || path.endsWith(LEGACY_INDEX_FILE_EXTENSION));
+    public boolean isUpdateable() throws TskCoreException {
+        return SleuthkitJNI.isUpdateableHashDatabase(this.handle);        
     }
 
     /**
-     * Derives database path from an image path by removing the suffix.
-     * @param indexPath
-     * @return 
+     * Adds hashes of content (if calculated) to the hash database. 
+     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * @throws TskCoreException 
      */
-    static String toDatabasePath(String indexPath) {
-        if (indexPath.endsWith(LEGACY_INDEX_FILE_EXTENSION)) {
-            return indexPath.substring(0, indexPath.lastIndexOf(LEGACY_INDEX_FILE_EXTENSION));
-        } else {
-            return indexPath.substring(0, indexPath.lastIndexOf(INDEX_FILE_EXTENSION));
+    public void add(Content content) throws TskCoreException {
+        add(content, null);
+    }    
+    
+    /**
+     * Adds hashes of content (if calculated) to the hash database. 
+     * @param content The content for which the calculated hashes, if any, are to be added to the hash database.
+     * @param comment A comment to associate with the hashes, e.g., the name of the case in which the content was encountered.
+     * @throws TskCoreException 
+     */
+    public void add(Content content, String comment) throws TskCoreException {
+        // TODO: This only works for AbstractFiles at present. Change when Content
+        // can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), null, null, comment, handle);
+            }
         }
     }
+        
+     public boolean lookUp(Content content) throws TskCoreException {         
+        boolean result = false; 
+         // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                result = SleuthkitJNI.lookupInHashDatabase(file.getMd5Hash(), handle);
+            }
+        }         
+        return result;
+     }
 
-    /**
-     * Derives index path from an database path by appending the suffix.
-     * @param databasePath
-     * @return 
-     */
-    static String toIndexPath(String databasePath) {
-        return databasePath.concat(INDEX_FILE_EXTENSION);
-    }
-            
+    public HashInfo lookUpVerbose(Content content) throws TskCoreException {
+        HashInfo result = null;
+        // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+        assert content instanceof AbstractFile;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // TODO: Add support for SHA-1 and SHA-256 hashes.
+            if (null != file.getMd5Hash()) {
+                result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
+            }
+        }             
+        return result;
+    }         
+          
     boolean isIndexing() {
         return indexing;
     }
 
-    IndexStatus getStatus() {
-        // RJCTODO: Fix this using new API
-        
-        if (indexing) {
-            return IndexStatus.INDEXING;
-        }
-        
-//        return new File(databasePath).exists();
-
-        
-//        return new File(toIndexPath(databasePath));
-        
-        
-//        if (SleuthkitJNI.hashDatabaseIsLookupIndexOnly(handle)) {
-//            return databaseExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
-//        }
-                
-//        return databasePath.concat(LEGACY_INDEX_FILE_EXTENSION);
-        
-        
-        // Outdated applies only to legacy databases where the legacy index file exists and is older
-//        File i = indexFile();
-//        File db = new File(databasePath);
-//
-//        return i.exists() && db.exists() && isOlderThan(i, db);
-//        
-//        if (indexExists()) {
-//            if (databaseSourceFileExists()) {
-//                return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
-//            } 
-//            else {
-//                return IndexStatus.NO_DB;
-//            }
-//        } else {
-//            return databaseSourceFileExists() ? IndexStatus.NO_INDEX : IndexStatus.NONE;
-//        }
-        return IndexStatus.INDEXING;        
-    }
-
     // Tries to index the database (overwrites any existing index) using a 
     // SwingWorker.
-    void createIndex() throws TskCoreException {
-        CreateIndex creator = new CreateIndex();
+    void createIndex(boolean deleteIndexFile) {
+        CreateIndex creator = new CreateIndex(deleteIndexFile);
         creator.execute();
     }
 
     private class CreateIndex extends SwingWorker<Object,Void> {
         private ProgressHandle progress;
+        private boolean deleteIndexFile;
         
-        CreateIndex() {
+        CreateIndex(boolean deleteIndexFile) {
+            this.deleteIndexFile = deleteIndexFile;
         };
 
         @Override
-        protected Object doInBackground() throws Exception {
+        protected Object doInBackground() {
             indexing = true;
-            progress = ProgressHandleFactory.createHandle("Indexing " + displayName);
+            progress = ProgressHandleFactory.createHandle("Indexing " + hashSetName);
             progress.start();
             progress.switchToIndeterminate();
-            SleuthkitJNI.createLookupIndexForHashDatabase(handle);
+            try {
+                SleuthkitJNI.createLookupIndexForHashDatabase(handle, deleteIndexFile);
+                indexPath = SleuthkitJNI.getHashDatabaseIndexPath(handle);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
+                JOptionPane.showMessageDialog(null, "Error indexing hash database for " + getHashSetName() + ".", "Hash Database Index Error", JOptionPane.ERROR_MESSAGE);                
+            }
             return null;
         }
 
@@ -269,7 +277,11 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            pcs.firePropertyChange(EVENT.INDEXING_DONE.toString(), null, displayName);
+            propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, hashSetName);
         }
+    }
+    
+    public void close() throws TskCoreException {
+        SleuthkitJNI.closeHashDatabase(handle);
     }
 }

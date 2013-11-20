@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -38,6 +40,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.ContentTagTypeNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
@@ -62,8 +65,7 @@ import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
+import org.sleuthkit.autopsy.datamodel.TagNameNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -169,6 +171,8 @@ public class DataResultFilterNode extends FilterNode {
             //set up actions for artifact node based on its Content object
             //TODO all actions need to be consolidated in single place!
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
+            // TODO UPDATE: There is now a DataModelActionsFactory utility; also tags are no longer artifacts so conditionals
+            // can be removed.
 
             List<Action> actions = new ArrayList<>();
 
@@ -206,9 +210,9 @@ public class DataResultFilterNode extends FilterNode {
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator                    
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(null); // creates a menu separator
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                     actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
@@ -224,8 +228,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                     actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
@@ -241,8 +245,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                     actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
@@ -257,8 +261,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                     actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
@@ -274,8 +278,8 @@ public class DataResultFilterNode extends FilterNode {
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
                         && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
                     actions.add(null); // creates a menu separator
-                    actions.add(TagAbstractFileAction.getInstance());
-                    actions.add(TagBlackboardArtifactAction.getInstance());
+                    actions.add(AddContentTagAction.getInstance());
+                    actions.add(AddBlackboardArtifactTagAction.getInstance());
                     actions.addAll(ContextMenuExtensionPoint.getActions());
                 }
             }
@@ -410,15 +414,20 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(TagNodeRoot tnr) {
-            return openChild(tnr);
+        public AbstractAction visit(TagNameNode node) {
+            return openChild(node);
         }
 
         @Override
-        public AbstractAction visit(TagsNodeRoot tnr) {
-            return openChild(tnr);
+        public AbstractAction visit(ContentTagTypeNode node) {
+            return openChild(node);
         }
 
+        @Override
+        public AbstractAction visit(BlackboardArtifactTagTypeNode node) {
+            return openChild(node);
+        }
+                
         @Override
         public AbstractAction visit(DirectoryNode dn) {
             if (dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR)) {

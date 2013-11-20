@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -102,7 +103,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Directory d) {
         List<Action> actions = new ArrayList<>();
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
@@ -111,7 +112,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
@@ -120,7 +120,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
@@ -129,7 +129,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final LocalFile d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
@@ -138,7 +138,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
-        actions.add(TagAbstractFileAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }

@@ -133,10 +133,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             //return v.visit(this);
@@ -173,6 +173,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
             //flatten all emails            
+            List<BlackboardArtifact> tempList = new ArrayList<>();
             for (String account : accounts.keySet()) {
                 Map<String, List<Long>> folders = accounts.get(account);
                 for (String folder : folders.keySet()) {
@@ -180,7 +181,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     for (long l : messages) {
                         try {
                             //TODO: bulk artifact gettings
-                            list.add(skCase.getBlackboardArtifact(l));
+                            tempList.add(skCase.getBlackboardArtifact(l));
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
                         }
@@ -189,7 +190,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             }
 
 
-
+            list.addAll(tempList);
             return true;
         }
 
@@ -214,10 +215,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -272,11 +273,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -293,6 +289,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             return s;
         }
 
+        @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -337,11 +338,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
         public boolean isLeafTypeNode() {
             return true;
         }
@@ -383,14 +379,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
+            List<BlackboardArtifact> tempList = new ArrayList<>();
             for (long l : messages) {
                 try {
                     //TODO: bulk artifact gettings
-                    list.add(skCase.getBlackboardArtifact(l));
+                    tempList.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
                 }
             }
+            list.addAll(tempList);
             return true;
         }
 

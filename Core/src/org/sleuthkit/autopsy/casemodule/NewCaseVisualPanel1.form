@@ -30,7 +30,7 @@
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="caseNameLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                               <Component id="caseNameTextField" min="-2" pref="296" max="-2" attributes="0"/>
                           </Group>
                           <Component id="caseDirTextField" alignment="0" min="-2" pref="380" max="-2" attributes="1"/>
@@ -51,7 +51,7 @@
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="caseNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="caseNameTextField" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                  <Component id="caseNameTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
