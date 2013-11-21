@@ -290,9 +290,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
 
-	if (ov == null) {
-	    return;
-	}
+        if (ov == null) {
+            return;
+        }
         
 	propertiesAcc.clear();
 

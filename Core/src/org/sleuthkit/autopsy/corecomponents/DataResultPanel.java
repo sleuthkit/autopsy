@@ -613,14 +613,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 load = false;
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTabs(nme.getNode());
-		    updateMatches(); 	
+                    updateMatches(); 	
                 } else {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             setupTabs(nme.getNode());
                 	    updateMatches();
-	    		}
+                        }
                     });
                 }
             }
