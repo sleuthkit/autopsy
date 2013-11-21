@@ -132,21 +132,26 @@ public class ViewContextAction extends AbstractAction {
         });
     }
     
-    class SelectionWorker extends SwingWorker<Node[], Integer> {
+    /**
+     * Thread that waits for a Node's children to completely be generated (they
+     * may be lazily loaded), then sets the correct selection in a 
+     * DataResultTopComponent.
+     */
+    private class SelectionWorker extends SwingWorker<Node[], Integer> {
 
         DataResultTopComponent dataResult;
-        String nameToSelect;
-        Node originalRoot;
+        String nameOfNodeToSelect;
+        Node originalRootNode;
         
         SelectionWorker(DataResultTopComponent dataResult, String nameToSelect, Node originalRoot) {
             this.dataResult = dataResult;
-            this.nameToSelect = nameToSelect;
-            this.originalRoot = originalRoot;
+            this.nameOfNodeToSelect = nameToSelect;
+            this.originalRootNode = originalRoot;
         }
         
         @Override
         protected Node[] doInBackground() throws Exception {
-            return originalRoot.getChildren().getNodes(true);
+            return originalRootNode.getChildren().getNodes(true);
         }
         
         @Override
@@ -159,12 +164,14 @@ public class ViewContextAction extends AbstractAction {
                 return;
             } 
             
-            if (dataResult.getRootNode().equals(originalRoot) == false) {
+            // If the root node of the data result viewer has changed, don't
+            // set the selection.
+            if (dataResult.getRootNode().equals(originalRootNode) == false) {
                 return;
             }
             
             for (Node current : nodes) {
-                if (nameToSelect.equals(current.getName())) {
+                if (nameOfNodeToSelect.equals(current.getName())) {
                     dataResult.requestActive();
                     dataResult.setSelectedNodes(new Node[]{current});
                     DirectoryTreeTopComponent.getDefault().fireViewerComplete();
