@@ -44,49 +44,34 @@ public class Installer extends ModuleInstall {
     }
     
     private static void loadDynLibraries() {
-         if (PlatformUtil.isWindowsOS()) {
-             try {
-                 //on windows force loading ms crt dependencies first
-                 //in case linker can't find them on some systems
-                 //Note: if shipping with a different CRT version, this will only print a warning
-                //and try to use linker mechanism to find the correct versions of libs.
-                 //We should update this if we officially switch to a new version of CRT/compiler
-                 System.loadLibrary("msvcr100");
-                 System.loadLibrary("msvcp100");
-                 logger.log(Level.INFO, "MS CRT libraries loaded");
-             } catch (UnsatisfiedLinkError e) {
-                 logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e);
-             }
+        if (PlatformUtil.isWindowsOS()) {
+            try {
+                //on windows force loading ms crt dependencies first
+                //in case linker can't find them on some systems
+                //Note: if shipping with a different CRT version, this will only print a warning
+               //and try to use linker mechanism to find the correct versions of libs.
+                //We should update this if we officially switch to a new version of CRT/compiler
+                System.loadLibrary("msvcr100");
+                System.loadLibrary("msvcp100");
+                logger.log(Level.INFO, "MS CRT libraries loaded");
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e);
+            }
+
+            try {
+               System.loadLibrary("zlib");
+               logger.log(Level.INFO, "ZLIB library loaded loaded");
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e);
+            }
+
+            try {
+               System.loadLibrary("libewf");
+               logger.log(Level.INFO, "EWF library loaded");
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading EWF library, ", e);
+            }
          }
- 
-         try {
-             System.loadLibrary("zlib");
-             logger.log(Level.INFO, "ZLIB library loaded loaded");
-         } catch (UnsatisfiedLinkError e) {
-             logger.log(Level.SEVERE, "Error loading ZLIB library, ", e);
-         }
- 
-         try {
-             System.loadLibrary("libewf");
-             logger.log(Level.INFO, "EWF library loaded");
-         } catch (UnsatisfiedLinkError e) {
-             logger.log(Level.SEVERE, "Error loading EWF library, ", e);
-         }
- 
-         /* We should rename the Windows dll, to remove the lib prefix.
-          */
-//         try {
-//             String tskLibName = null;
-//             if (PlatformUtil.isWindowsOS()) {
-//                 tskLibName = "libtsk_jni";
-//             } else {
-//                 tskLibName = "tsk_jni";
-//             }
-//             System.loadLibrary(tskLibName);
-//             logger.log(Level.INFO, "TSK_JNI library loaded");
-//         } catch (UnsatisfiedLinkError e) {
-//             logger.log(Level.SEVERE, "Error loading tsk_jni library", e);
-//         }
      }
     
     public Installer() {
