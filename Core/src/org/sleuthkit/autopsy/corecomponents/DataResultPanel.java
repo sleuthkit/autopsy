@@ -362,6 +362,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.rootNode.addNodeListener(dummyNodeListener);
         }
         
+        resetTabs(selectedNode);
         setupTabs(selectedNode);
         
         if (selectedNode != null) {
@@ -369,58 +370,42 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
         this.numberMatchLabel.setVisible(true);
-        
-
-        resetTabs(selectedNode);
-        
-        // set the display on the current active tab
-        int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
-        if (currentActiveTab != -1) {
-            UpdateWrapper drv = viewers.get(currentActiveTab);
-            drv.setNode(selectedNode);
-        }
     }
     
-    private void setupTabs(final Node selectedNode) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                //update/disable tabs based on if supported for this node
-                int drvC = 0;
-                for (UpdateWrapper drv : viewers) {
+    private void setupTabs(Node selectedNode) {
+        //update/disable tabs based on if supported for this node
+        int drvC = 0;
+        for (UpdateWrapper drv : viewers) {
 
-                    if (drv.isSupported(selectedNode)) {
-                        dataResultTabbedPanel.setEnabledAt(drvC, true);
-                    } else {
-                        dataResultTabbedPanel.setEnabledAt(drvC, false);
-                    }
-                    ++drvC;
-                }
+            if (drv.isSupported(selectedNode)) {
+                dataResultTabbedPanel.setEnabledAt(drvC, true);
+            } else {
+                dataResultTabbedPanel.setEnabledAt(drvC, false);
+            }
+            ++drvC;
+        }
 
-                // if the current tab is no longer enabled, then find one that is
-                boolean hasViewerEnabled = true;
-                int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
-                if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
-                    hasViewerEnabled = false;
-                    for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
-                        if (dataResultTabbedPanel.isEnabledAt(i)) {
-                            currentActiveTab = i;
-                            hasViewerEnabled = true;
-                            break;
-                        }
-                    }
-
-                    if (hasViewerEnabled) {
-                        dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
-                    }
-                }
-
-                if (hasViewerEnabled) {
-                    viewers.get(currentActiveTab).setNode(selectedNode);
+        // if the current tab is no longer enabled, then find one that is
+        boolean hasViewerEnabled = true;
+        int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
+        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
+            hasViewerEnabled = false;
+            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+                if (dataResultTabbedPanel.isEnabledAt(i)) {
+                    currentActiveTab = i;
+                    hasViewerEnabled = true;
+                    break;
                 }
             }
-        });
-        
+
+            if (hasViewerEnabled) {
+                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+            }
+        }
+
+        if (hasViewerEnabled) {
+            viewers.get(currentActiveTab).setNode(selectedNode);
+        }
     }
 
     @Override
@@ -620,11 +605,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
         
         @Override
-        public void childrenAdded(NodeMemberEvent nme) {
+        public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
             if (load && containsReal(delta)) {
                 load = false;
-                setupTabs(nme.getNode());
+                if (SwingUtilities.isEventDispatchThread()) {
+                    setupTabs(nme.getNode());
+                } else {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            setupTabs(nme.getNode());
+                        }
+                    });
+                }
             }
         }
         

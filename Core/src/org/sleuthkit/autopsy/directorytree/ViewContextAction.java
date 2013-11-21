@@ -25,11 +25,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import javafx.scene.control.TreeView;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
-import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.view.TreeView;
+import javax.swing.SwingWorker;
 import org.openide.nodes.AbstractNode;
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -120,21 +121,50 @@ public class ViewContextAction extends AbstractAction {
                     public void run() {
                         DataResultTopComponent dataResult = directoryTree.getDirectoryListing();
                         Node resultRoot = dataResult.getRootNode();
-                        Children resultChilds = resultRoot.getChildren();
                         Node generated = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
-                        for (int i = 0; i < resultChilds.getNodesCount(); i++) {
-                            Node current = resultChilds.getNodeAt(i);
-                            if (generated.getName().equals(current.getName())) {
-                                dataResult.requestActive();
-                                dataResult.setSelectedNodes(new Node[]{current});
-                                DirectoryTreeTopComponent.getDefault().fireViewerComplete();
-                                break;
-                            }
-                        }
+                        new SelectionWorker(dataResult, generated.getName(), resultRoot).execute();
+                        
                     }
                 });
             }
         });
+    }
+    
+    class SelectionWorker extends SwingWorker<Node[], Integer> {
+
+        DataResultTopComponent dataResult;
+        String nameToSelect;
+        Node originalRoot;
+        
+        SelectionWorker(DataResultTopComponent dataResult, String nameToSelect, Node originalRoot) {
+            this.dataResult = dataResult;
+            this.nameToSelect = nameToSelect;
+            this.originalRoot = originalRoot;
+        }
+        
+        @Override
+        protected Node[] doInBackground() throws Exception {
+            return originalRoot.getChildren().getNodes(true);
+        }
+        
+        @Override
+        protected void done() {
+            Node[] nodes = get();
+            
+            if (dataResult.getRootNode().equals(originalRoot) == false) {
+                return;
+            }
+            
+            for (Node current : nodes) {
+                if (nameToSelect.equals(current.getName())) {
+                    dataResult.requestActive();
+                    dataResult.setSelectedNodes(new Node[]{current});
+                    DirectoryTreeTopComponent.getDefault().fireViewerComplete();
+                    break;
+                }
+            }
+        }
+        
     }
 
     /**
