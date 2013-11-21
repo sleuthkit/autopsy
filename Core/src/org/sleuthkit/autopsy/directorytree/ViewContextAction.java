@@ -24,15 +24,17 @@ import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javafx.scene.control.TreeView;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.SwingWorker;
 import org.openide.nodes.AbstractNode;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -149,7 +151,13 @@ public class ViewContextAction extends AbstractAction {
         
         @Override
         protected void done() {
-            Node[] nodes = get();
+            Node[] nodes;
+            try {
+                nodes = get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Failed to get nodes in selection worker.");
+                return;
+            } 
             
             if (dataResult.getRootNode().equals(originalRoot) == false) {
                 return;
