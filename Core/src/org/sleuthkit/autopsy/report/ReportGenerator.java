@@ -1080,7 +1080,7 @@ public class ReportGenerator {
             case TSK_WEB_BOOKMARK:
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 rowData.add(getFileUniquePath(artifactData.getObjectID()));
                 break;
@@ -1096,7 +1096,7 @@ public class ReportGenerator {
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
                 rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 rowData.add(getFileUniquePath(artifactData.getObjectID()));
                 break;
