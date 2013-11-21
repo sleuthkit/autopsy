@@ -290,7 +290,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
 
-        propertiesAcc.clear();
+	if (ov == null) {
+	    return;
+	}
+        
+	propertiesAcc.clear();
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
         List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
@@ -332,12 +336,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // show the horizontal scroll panel and show all the content & header
 
         int totalColumns = props.size();
-
-        //int scrollWidth = ttv.getWidth();
-        int margin = 4;
-        int startColumn = 1;
-        ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-
+	
+	//int scrollWidth = ttv.getWidth();
+       	int margin = 4;
+       	int startColumn = 1;
+                
+       	// If there is only one column (which was removed from props above)
+       	// Just let the table resize itself.
+       	ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+                
 
 
         // get first 100 rows values for the table

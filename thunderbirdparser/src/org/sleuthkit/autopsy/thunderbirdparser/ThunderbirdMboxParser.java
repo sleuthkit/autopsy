@@ -37,6 +37,9 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+/**
+ * Contains the logic to parse an MBOX file.  
+ */
 public class ThunderbirdMboxParser  {
 
     /** Serial version UID */
@@ -242,8 +245,8 @@ public class ThunderbirdMboxParser  {
             }
             metadata.add(property, headerContent);
         } else if (headerTag.equalsIgnoreCase("Subject")) {
-            metadata.add(ThunderbirdMetadata.SUBJECT.toString(), headerContent);
-            metadata.add(ThunderbirdMetadata.TITLE.toString(), headerContent);
+            metadata.set(ThunderbirdMetadata.SUBJECT, headerContent);
+            metadata.set(ThunderbirdMetadata.TITLE, headerContent);
         } else if (headerTag.equalsIgnoreCase("Date")) {
             try {
                 Date date = parseDate(headerContent);
@@ -440,8 +443,8 @@ public class ThunderbirdMboxParser  {
         emailMetaContent.put(Metadata.MESSAGE_BCC, metadata.get(Metadata.MESSAGE_BCC));
         emailMetaContent.put(Metadata.AUTHOR, metadata.get(Metadata.AUTHOR));
         emailMetaContent.put("content", emailContent);
-        emailMetaContent.put("date", metadata.get("date"));
-        emailMetaContent.put(Metadata.SUBJECT, metadata.get(Metadata.SUBJECT));
+        emailMetaContent.put("date", metadata.get(ThunderbirdMetadata.DATE));
+        emailMetaContent.put(Metadata.SUBJECT, metadata.get(ThunderbirdMetadata.SUBJECT));
         if(metadata.get(ThunderbirdMetadata.IDENTIFIER) == null){
              Random r = new Random();
             this.emails.put(metadata.get(Metadata.AUTHOR)+Long.toString(Math.abs(r.nextLong()), 36), emailMetaContent);

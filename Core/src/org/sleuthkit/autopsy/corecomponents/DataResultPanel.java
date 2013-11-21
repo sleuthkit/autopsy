@@ -592,8 +592,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Set number of matches to be displayed in the top right
      * @param numMatches
      */
-    public void setNumMatches(int numMatches) {
-        this.numberMatchLabel.setText(Integer.toString(numMatches));
+    public void setNumMatches(Integer numMatches) {
+        if (this.numberMatchLabel != null) {
+            this.numberMatchLabel.setText(Integer.toString(numMatches));
+        }
     }
     
     private class DummyNodeListener implements NodeListener {
@@ -611,12 +613,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 load = false;
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTabs(nme.getNode());
+		    updateMatches(); 	
                 } else {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             setupTabs(nme.getNode());
-                        }
+                	    updateMatches();
+	    		}
                     });
                 }
             }
@@ -630,9 +634,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
             return false;
         }
+        
+        /**
+         * Updates the Number of Matches label on the DataResultPanel.
+         * 
+         */
+        private void updateMatches() {
+       	    if (rootNode != null && rootNode.getChildren() != null) {
+                setNumMatches(rootNode.getChildren().getNodesCount());
+            }
+        }
 
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
+            updateMatches();
         }
 
         @Override

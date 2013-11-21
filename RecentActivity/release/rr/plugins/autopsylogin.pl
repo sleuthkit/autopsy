@@ -48,7 +48,7 @@ sub pluginmain {
 			#::rptMsg("Logon User Name");
 			#::rptMsg($key_path);
 			::rptMsg("<logon>");
-			::rptMsg("<time>".gmtime($key->get_timestamp())."</time><artifacts>");
+			::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime><artifacts>");
 			foreach my $v (@vals) {
 				if ($v->get_name() eq $logon_name) {
 					::rptMsg("<user name=\"".$logon_name."\"> ".$v->get_data() ."</user>");

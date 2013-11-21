@@ -49,7 +49,7 @@ sub pluginmain {
 		#::rptMsg("RecentDocs");
 		#::rptMsg("**All values printed in MRUList\\MRUListEx order.");
 		#::rptMsg($key_path);
-		::rptMsg("<recentdocs><time>".gmtime($key->get_timestamp())."</time><artifacts>");
+		::rptMsg("<recentdocs><mtime>".gmtime($key->get_timestamp())."</mtime><artifacts>");
 # Get RecentDocs values		
 		my %rdvals = getRDValues($key);
 		if (%rdvals) {

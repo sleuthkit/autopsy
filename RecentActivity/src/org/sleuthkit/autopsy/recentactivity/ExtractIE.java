@@ -48,6 +48,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
+import org.sleuthkit.autopsy.coreutils.JLnkParserException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -72,9 +73,6 @@ public class ExtractIE extends Extract {
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;
     
-    // List of Pasco result files for this data source
-    private List<String> pascoResults;
-    boolean pascoFound = false;
     final public static String MODULE_VERSION = "1.0";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
@@ -95,27 +93,41 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-            this.extractAndRunPasco(dataSource, controller);
-            this.getBookmark(dataSource, controller);
-            this.getCookie(dataSource, controller);
-            this.getRecentDocuments(dataSource, controller);
-            this.getHistory(pascoResults);
+        dataFound = false;
+        this.getBookmark(dataSource, controller);
+        this.getCookie(dataSource, controller);
+        this.getRecentDocuments(dataSource, controller);
+        this.getHistory(dataSource, controller);
     }
 
-    //Favorites section
-    // This gets the favorite info
+    /**
+     * Finds the files storing bookmarks and creates artifacts
+     * @param dataSource
+     * @param controller 
+     */
     private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {       
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> favoritesFiles = null;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.", ex);
+            logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex);
             this.addErrorMessage(this.getName() + ": Error getting Internet Explorer Bookmarks.");
             return;
         }
 
+        if (favoritesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile favoritesFile : favoritesFiles) {
+            if (favoritesFile.getSize() == 0) {
+                continue;
+            }
+         
+            // @@@ WHY DON"T WE PARSE THIS FILE more intelligently. It's text-based
             if (controller.isCancelled()) {
                 break;
             }
@@ -144,42 +156,49 @@ public class ExtractIE extends Extract {
             String domain = Util.extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-            //TODO revisit usage of deprecated constructor as per TSK-583
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), "RecentActivity", name));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, favoritesFile, bbattributes);
-
-            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
 
-    //Cookies section
-    // This gets the cookies info
-    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
-        
+    /**
+     * Finds files that store cookies and adds artifacts for them. 
+     * @param dataSource
+     * @param controller 
+     */
+    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) { 
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles = null;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            logger.log(Level.WARNING, "Error getting cookie files for IE");
             this.addErrorMessage(this.getName() + ": " + "Error getting Internet Explorer cookie files.");
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE cookies files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = cookiesFile;
-            byte[] t = new byte[(int) fav.getSize()];
+            if (cookiesFile.getSize() == 0) {
+                continue;
+            }
+
+            byte[] t = new byte[(int) cookiesFile.getSize()];
             try {
-                final int bytesRead = fav.read(t, 0, fav.getSize());
+                final int bytesRead = cookiesFile.read(t, 0, cookiesFile.getSize());
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex);
                 this.addErrorMessage(this.getName() + ": Error reading Internet Explorer cookie " + cookiesFile.getName());
@@ -197,24 +216,21 @@ public class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
-            //TODO Revisit usage of deprecated Constructor as of TSK-583
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-            //TODO Revisit usage of deprecated Constructor as of TSK-583
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
         }
-
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
-    //Recent Documents section
-    // This gets the recent object info
+    /**
+     * Find the documents that Windows stores about recent documents and make artifacts.
+     * @param dataSource
+     * @param controller 
+     */
     private void getRecentDocuments(Content dataSource, IngestDataSourceWorkerController controller) {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
@@ -222,61 +238,66 @@ public class ExtractIE extends Extract {
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
-            this.addErrorMessage(this.getName() + ": Error getting Recent Files.");
+            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
             return;
         }
 
+        if (recentFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE recent files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = recentFile;
-            if (fav.getSize() == 0) {
+            
+            if (recentFile.getSize() == 0) {
                 continue;
             }
             JLNK lnk = null;
-            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize());
+            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(recentFile), (int) recentFile.getSize());
             try {
                 lnk = lnkParser.parse();
-            } catch (Exception e) {
+            } catch (JLnkParserException e) {
                 //TODO should throw a specific checked exception
-                logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
-                this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
+                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+                if (unalloc == false) {
+                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
+                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                }
                 continue;
             }
-            String path = lnk.getBestPath();
-            Long datetime = recentFile.getCrtime();
-
+           
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            String path = lnk.getBestPath();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
-            long id = Util.findID(dataSource, path);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", id));
-            //TODO Revisit usage of deprecated constructor as per TSK-583
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, path)));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", recentFile.getCrtime()));
             this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
         }
-
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
     }
-
-
-    private void extractAndRunPasco(Content dataSource, IngestDataSourceWorkerController controller) {
-        pascoResults = new ArrayList<String>();
-
+            
+    /**
+     * Locates index.dat files, runs Pasco on them, and creates artifacts. 
+     * @param dataSource
+     * @param controller 
+     */
+    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
         logger.log(Level.INFO, "Pasco results path: " + moduleTempResultsDir);
+        boolean foundHistory = false;
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
         if (pascoRoot == null) {
-            logger.log(Level.SEVERE, "Pasco2 not found");
-            pascoFound = false;
+            this.addErrorMessage(this.getName() + ": Unable to get IE History: pasco not found");
+            logger.log(Level.SEVERE, "Error finding pasco program ");
             return;
-        } else {
-            pascoFound = true;
-        }
-
+        } 
+       
         final String pascoHome = pascoRoot.getAbsolutePath();
         logger.log(Level.INFO, "Pasco2 home: " + pascoHome);
 
@@ -286,7 +307,6 @@ public class ExtractIE extends Extract {
         File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
      
- 
         // get index.dat files
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> indexFiles = null;
@@ -298,6 +318,13 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (indexFiles.isEmpty()) {
+            String msg = "No InternetExplorer history files found.";
+            logger.log(Level.INFO, msg);
+            return;
+        }
+        
+        dataFound = true;
         String temps;
         String indexFileName;
         for (AbstractFile indexFile : indexFiles) {
@@ -311,7 +338,6 @@ public class ExtractIE extends Extract {
             temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName;
             File datFile = new File(temps);
             if (controller.isCancelled()) {
-                datFile.delete();
                 break;
             }
             try {
@@ -328,29 +354,36 @@ public class ExtractIE extends Extract {
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
-                pascoResults.add(filename);
+                parsePascoOutput(indexFile, filename);
+                foundHistory = true;
+                
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
             } else {
+                logger.log(Level.WARNING, "pasco execution failed on: " + this.getName());
                 this.addErrorMessage(this.getName() + ": Error processing Internet Explorer history.");
             }
         }
+        
+        if (foundHistory) {
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        }
     }
 
-    //Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
-    // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
-    // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-    private boolean executePasco(String indexFilePath, String filename) {
-        if (pascoFound == false) {
-            return false;
-        }
+    /**
+     * Execute pasco on a single file that has been saved to disk. 
+     * @param indexFilePath Path to local index.dat file to analyze
+     * @param outputFileName Name of file to save output to
+     * @return false on error
+     */
+    private boolean executePasco(String indexFilePath, String outputFileName) {
         boolean success = true;
 
         Writer writer = null;
         try {
-            final String pascoOutFile = moduleTempResultsDir + File.separator + filename;
-            logger.log(Level.INFO, "Writing pasco results to: " + pascoOutFile);
-            writer = new FileWriter(pascoOutFile);
+            final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
+            logger.log(Level.INFO, "Writing pasco results to: " + outputFileFullPath);
+            writer = new FileWriter(outputFileFullPath);
             execPasco = new ExecUtil();
             execPasco.execute(writer, JAVA_PATH, 
                     "-cp", PASCO_LIB_PATH, 
@@ -373,124 +406,117 @@ public class ExtractIE extends Extract {
                 }
             }
         }
-
         return success;
     }
 
-    private void getHistory(List<String> filenames) {
-        // Make sure pasco and the results exist
-        File rFile = new File(moduleTempResultsDir);
-        if (pascoFound == false || ! rFile.exists()) {
+    /**
+     * parse Pasco output and create artifacts
+     * @param origFile Original index.dat file that was analyzed to get this output
+     * @param pascoOutputFileName name of pasco output file
+     */
+    private void parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
+        
+        String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
+
+        File file = new File(fnAbs);
+        if (file.exists() == false) {
+            this.addErrorMessage(this.getName() + ": Pasco output not found: " + file.getName());
+            logger.log(Level.WARNING, "Pasco Output not found: " + file.getPath());
             return;
         }
 
-        //Give me a list of pasco results in that directory
-        File[] pascoFiles = rFile.listFiles();
-        for (File file : pascoFiles) {
-            String fileName = file.getName();
-            if (!filenames.contains(fileName)) {
-                logger.log(Level.INFO, "Found a temp Pasco result file not in the list: {0}", fileName);
-                continue;
-            }
-
-            // Make sure the file the is not empty or the Scanner will
-            // throw a "No Line found" Exception
-            if (file.length() == 0) {
-                continue;
-            }
-
-            long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".") + 1, fileName.lastIndexOf(".")));
-            Scanner fileScanner;
-            try {
-                fileScanner = new Scanner(new FileInputStream(file.toString()));
-            } catch (FileNotFoundException ex) {
-                this.addErrorMessage(this.getName() + ": Error parsing IE history entry " + file.getName());
-                logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex);
-                continue;
-            }
-            
-            while (fileScanner.hasNext()) {
-                String line = fileScanner.nextLine();
-                if (!line.startsWith("URL")) {  
-                    continue;
-                }
-
-                String[] lineBuff = line.split("\\t");
-
-                if (lineBuff.length < 4) {
-                    logger.log(Level.INFO, "Found unrecognized IE history format.");
-                    continue;
-                }
-
-                String ddtime = lineBuff[2];
-                String actime = lineBuff[3];
-                Long ftime = (long) 0;
-                String user = "";
-                String realurl = "";
-                String domain = "";
-
-                /* We've seen two types of lines: 
-                 * URL  http://XYZ.com ....
-                 * URL  Visited: Joe@http://XYZ.com ....
-                 */
-                if (lineBuff[1].contains("@")) {
-                    String url[] = lineBuff[1].split("@", 2);
-                    user = url[0];
-                    user = user.replace("Visited:", "");
-                    user = user.replace(":Host:", "");
-                    user = user.replaceAll("(:)(.*?)(:)", "");
-                    user = user.trim();
-                    realurl = url[1];
-                    realurl = realurl.replace("Visited:", "");
-                    realurl = realurl.replaceAll(":(.*?):", "");
-                    realurl = realurl.replace(":Host:", "");
-                    realurl = realurl.trim();
-                } else {
-                    user = "";
-                    realurl = lineBuff[1].trim();
-                }
-
-                domain = Util.extractDomain(realurl);
-
-                if (!ddtime.isEmpty()) {
-                    ddtime = ddtime.replace("T", " ");
-                    ddtime = ddtime.substring(ddtime.length() - 5);
-                }
-
-                if (!actime.isEmpty()) {
-                    try {
-                        Long epochtime = dateFormatter.parse(actime).getTime();
-                        ftime = epochtime.longValue();
-                        ftime = ftime / 1000;
-                    } catch (ParseException e) {
-                        this.addErrorMessage(this.getName() + ": Error parsing Internet Explorer History entry.");
-                        logger.log(Level.SEVERE, "Error parsing Pasco results.", e);
-                    }
-                }
-
-                try {
-                    BlackboardArtifact bbart = tskCase.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
-
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
-
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", ""));
-
-                    //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ddtime));
-
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(), "RecentActivity", user));
-                    bbart.addAttributes(bbattributes);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
-                }                                    
-            }
-            fileScanner.close();
+        // Make sure the file the is not empty or the Scanner will
+        // throw a "No Line found" Exception
+        if (file.length() == 0) {
+            return;
         }
-        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+
+        Scanner fileScanner;
+        try {
+            fileScanner = new Scanner(new FileInputStream(file.toString()));
+        } catch (FileNotFoundException ex) {
+            this.addErrorMessage(this.getName() + ": Error parsing IE history entry " + file.getName());
+            logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex);
+            return;
+        }
+
+        while (fileScanner.hasNext()) {
+            String line = fileScanner.nextLine();
+            if (!line.startsWith("URL")) {  
+                continue;
+            }
+
+            String[] lineBuff = line.split("\\t");
+
+            if (lineBuff.length < 4) {
+                logger.log(Level.INFO, "Found unrecognized IE history format.");
+                continue;
+            }
+
+            String ddtime = lineBuff[2];
+            String actime = lineBuff[3];
+            Long ftime = (long) 0;
+            String user = "";
+            String realurl = "";
+            String domain = "";
+
+            /* We've seen two types of lines: 
+             * URL  http://XYZ.com ....
+             * URL  Visited: Joe@http://XYZ.com ....
+             */
+            if (lineBuff[1].contains("@")) {
+                String url[] = lineBuff[1].split("@", 2);
+                user = url[0];
+                user = user.replace("Visited:", "");
+                user = user.replace(":Host:", "");
+                user = user.replaceAll("(:)(.*?)(:)", "");
+                user = user.trim();
+                realurl = url[1];
+                realurl = realurl.replace("Visited:", "");
+                realurl = realurl.replaceAll(":(.*?):", "");
+                realurl = realurl.replace(":Host:", "");
+                realurl = realurl.trim();
+            } else {
+                user = "";
+                realurl = lineBuff[1].trim();
+            }
+
+            domain = Util.extractDomain(realurl);
+
+            if (!ddtime.isEmpty()) {
+                ddtime = ddtime.replace("T", " ");
+                ddtime = ddtime.substring(ddtime.length() - 5);
+            }
+
+            if (!actime.isEmpty()) {
+                try {
+                    Long epochtime = dateFormatter.parse(actime).getTime();
+                    ftime = epochtime.longValue();
+                    ftime = ftime / 1000;
+                } catch (ParseException e) {
+                    this.addErrorMessage(this.getName() + ": Error parsing Internet Explorer History entry.");
+                    logger.log(Level.SEVERE, "Error parsing Pasco results.", e);
+                }
+            }
+
+            try {
+                BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", ""));
+                // @@@ NOte that other browser modules are adding TITLE in hre for the title
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(), "RecentActivity", user));
+                bbart.addAttributes(bbattributes);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
+            }                                    
+        }
+        fileScanner.close();        
     }
 
     @Override
@@ -500,23 +526,6 @@ public class ExtractIE extends Extract {
 
     @Override
     public void complete() {
-        // Delete all the results when complete
-        /*for (String file : pascoResults) {
-            String filePath = moduleTempResultsDir + File.separator + file;
-            try {
-                File f = new File(filePath);
-                if (f.exists() && f.canWrite()) {
-                    f.delete();
-                } else {
-                    logger.log(Level.WARNING, "Unable to delete file " + filePath);
-                }
-            } catch (SecurityException ex) {
-                logger.log(Level.WARNING, "Incorrect permission to delete file " + filePath, ex);
-            }
-        }
-        */
-        pascoResults.clear();
-        logger.info("Internet Explorer extract has completed.");
     }
 
     @Override

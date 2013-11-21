@@ -23,8 +23,9 @@ import java.util.Map;
 
 /**
  *
- * @author arivera
+ * No one is using this.  It should go away
  */
+@Deprecated
 public enum BrowserType {
    IE(0), //Internet Explorer
    FF(1), //Firefox

@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
@@ -38,10 +38,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -53,7 +49,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
-    final public static String MODULE_VERSION = "1.0";
+    final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private IngestServices services;
     private SleuthkitCase skCase;
@@ -63,8 +59,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     private boolean nsrlIsSet;
     private boolean knownBadIsSet;
     private boolean calcHashesIsSet;
-    private HashDb nsrlSet;
-    private int nsrlPointer;
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<>();
@@ -88,7 +82,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbXML hdbxml = HashDbXML.getCurrent();
-            nsrlSet = null;
             knownBadSets.clear();
             skCase.clearLookupDatabases();
             nsrlIsSet = false;
@@ -98,8 +91,8 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             HashDb nsrl = hdbxml.getNSRLSet();
             if (nsrl != null && nsrl.getUseForIngest() && IndexStatus.isIngestible(nsrl.status())) {
                 nsrlIsSet = true;
-                this.nsrlSet = nsrl;
-                nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
+                // @@@ Unchecked return value
+                skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
             }
 
             for (HashDb db : hdbxml.getKnownBadSets()) {
@@ -278,7 +271,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                 detailsSb.append("</table>");
 
                 services.postMessage(IngestMessage.createDataMessage(++messageId, this,
-                        "Notable: " + abstractFile.getName(),
+                        "Known Bad: " + abstractFile.getName(),
                         detailsSb.toString(),
                         abstractFile.getName() + md5Hash,
                         badFile));
@@ -287,7 +280,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
         }
-
     }
 
     private ProcessResult processFile(AbstractFile file) {
@@ -311,7 +303,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                 return ProcessResult.ERROR;
             }
         }
-
+        
 
         // look up in known bad first
         TskData.FileKnown status = TskData.FileKnown.UKNOWN;
@@ -320,7 +312,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
         if (knownBadIsSet) {
             for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
-
                 try {
                     long lookupstart = System.currentTimeMillis();
                     status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
