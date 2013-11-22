@@ -124,7 +124,7 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                         
             // Add a "New Hash Set..." menu item.
             addSeparator();
-            JMenuItem newHashSetItem = new JMenuItem("New Hash Set...");
+            JMenuItem newHashSetItem = new JMenuItem("Create database...");
             newHashSetItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -150,9 +150,13 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                     }
                     catch (TskCoreException ex) {                        
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                
-                        JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + " to hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "Unable to add " + file.getName() + " to the hash database.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
                     }                    
-                }                
+                }  
+                else {
+                    JOptionPane.showMessageDialog(null, "Unable to add the " + (selectedFiles.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);                    
+                    break;
+                }
             }            
         }
     }    
