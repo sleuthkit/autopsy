@@ -65,8 +65,9 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
         for (String moduleName : enabledModuleNames) {
-            if (moduleName.equals("Thunderbird Parser")) {
-                moduleName = "MBox Parser";
+            if (moduleName.equals("Thunderbird Parser") 
+                    || moduleName.equals("MBox Parser")) {
+                moduleName = "Email Parser";
             }
             IngestModuleAbstract moduleFound =  null;
             for (IngestModuleAbstract module : allModules) {
