@@ -3,7 +3,128 @@
     <!-- Need a way to specify TSK Debug versus Release -->
     <property name="TSK_BUILD_TYPE">Release</property>
     
+    <!-- Directory paths -->
+    <property name="amd64" location="${basedir}/Core/release/modules/lib/amd64" />
+    <property name="x86" location="${basedir}/Core/release/modules/lib/x86" />
+    <property name="x86_64" location="${basedir}/Core/release/modules/lib/x86_64" />
+    <property name="i386" location="${basedir}/Core/release/modules/lib/i386" />
+    <property name="i586" location="${basedir}/Core/release/modules/lib/i586" />
+    <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
+    <property name="crt" location="${basedir}/thirdparty/crt" />
+        
+    <!-- NATIVE LIB TARGETS -->
+    <target name="copyLibs" depends="copyWinLibs64,copyWinLibs32" description="Copy windows dlls to the correct location." />
+
+    <target name="init-lib-path" description="Set up folder hierarchy under release/modules/lib">
+        <mkdir dir="${amd64}"/>
+        <mkdir dir="${x86_64}"/>
+        <mkdir dir="${x86}"/>
+        <mkdir dir="${i386}"/>
+        <mkdir dir="${i586}"/>
+        <mkdir dir="${i686}"/>
+    </target>
     
+    <target name="checkLibDirs" depends="init-lib-path">
+        <property environment="env"/>
+        <condition property="ewfFound">
+            <isset property="env.LIBEWF_HOME"/>
+        </condition>
+        <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
+        
+        <property name="win64.lib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
+        <property name="win32.lib.path" value="${env.TSK_HOME}/win32/Release" />
+        <available property="win64.exists" type="dir" file="${win64.lib.path}" />
+        <available property="win32.exists" type="dir" file="${win32.lib.path}" />
+    </target>
+
+    <target name="copyWinLibs64" depends="checkLibDirs" if="win64.exists">
+        <property name="win64dir" location="${win64.lib.path}" />
+
+        <fileset dir="${win64dir}" id="win64dlls">
+            <include name="libewf.dll" />
+            <include name="zlib.dll"/>
+        </fileset>
+
+        <copy todir="${amd64}" overwrite="true">
+            <fileset refid="win64dlls" />
+        </copy>
+        
+        <copy todir="${x86_64}" overwrite="true">
+            <fileset refid="win64dlls" />
+        </copy>		
+        
+    </target>
+
+    <target name="copyWinLibs32" depends="checkLibDirs" if="win32.exists">
+        <property name="win32dir" location="${win32.lib.path}" />
+        <fileset dir="${win32dir}" id="win32dlls">
+            <include name="zlib.dll" />
+            <include name="libewf.dll"/>
+        </fileset>
+
+        <copy todir="${i386}" overwrite="true">
+            <fileset refid="win32dlls" />
+        </copy>
+
+        <copy todir="${x86}" overwrite="true">
+            <fileset refid="win32dlls" />
+        </copy>
+
+        <copy todir="${i586}" overwrite="true">
+            <fileset refid="win32dlls" />
+        </copy>	
+
+        <copy todir="${i686}" overwrite="true">
+            <fileset refid="win32dlls" />
+        </copy>
+    </target>
+    
+    <!-- CRT LIBS TO ZIP -->
+    <target name="copyExternalLibsToZip" depends="copyCRT32,copyCRT64"/>
+    
+    <target name="copyCRT32">
+        <property name="CRT.path" value="${thirdparty.dir}/crt/win32/crt.zip"/>
+        <available file="${CRT.path}"  property="crtFound"/>
+        
+        <fail unless="crtFound" message="CRT not found in the thirdparty repo in path: ${CRT.path}"/>
+
+        <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
+        <unzip src="${CRT.path}" dest="${zip-lib-path}/x86" overwrite="true"/>
+        <fileset dir="${zip-lib-path}/x86" id="crt32dlls">
+            <include name="*.dll"/>
+        </fileset>
+        
+        <copy todir="${zip-lib-path}/i386" overwrite="true">
+            <fileset refid="crt32dlls"/>
+        </copy>
+        
+        <copy todir="${zip-lib-path}/i586" overwrite="true">
+            <fileset refid="crt32dlls"/>
+        </copy>
+        
+        <copy todir="${zip-lib-path}/i686" overwrite="true">
+            <fileset refid="crt32dlls"/>
+        </copy>
+    </target>
+    
+    <target name="copyCRT64">
+        <property name="CRT.path" value="${thirdparty.dir}/crt/win64/crt.zip"/>
+        <available file="${CRT.path}"  property="crtFound"/>
+        
+        <fail unless="crtFound" message="CRT not found in the thirdparty repo in path: ${CRT.path}"/>
+
+        <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
+        <unzip src="${CRT.path}" dest="${zip-lib-path}/x86_64" overwrite="true"/>
+        <fileset dir="${zip-lib-path}/x86_64" id="crt32dlls">
+            <include name="*.dll"/>
+        </fileset>
+        
+        <copy todir="${zip-lib-path}/amd64" overwrite="true">
+            <fileset refid="crt32dlls"/>
+        </copy>
+    </target>
+    
+    <!-- ADVANCED INSTALLER TARGETS -->
     <target name="build-installer-windows" depends="init-advanced-installer"
             description="Makes an installer from the opened ZIP file">
         <antcall target="run-advanced-installer" /> 
