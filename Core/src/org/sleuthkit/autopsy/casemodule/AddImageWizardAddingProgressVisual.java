@@ -71,7 +71,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         donePanel.setVisible(false);
         viewLogButton.setVisible(false);
         //match visual background of panel
-        this.TextArea_CurrentDirectory.setBackground(this.getBackground());
+        this.progressTextArea.setBackground(this.getBackground());
 
     }
 
@@ -95,10 +95,10 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
     /**
      * Updates the currently processing directory
      *
-     * @param dir the text to update with
+     * @param msg the text to update with
      */
-    public void setCurrentDirText(String dir) {
-        this.TextArea_CurrentDirectory.setText(dir);
+    public void setProgressMsgText(String msg) {
+        this.progressTextArea.setText(msg);
     }
 
     /**
@@ -140,7 +140,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         inProgressPanel = new javax.swing.JPanel();
         progressBar = new javax.swing.JProgressBar();
         progressLabel = new javax.swing.JLabel();
-        TextArea_CurrentDirectory = new javax.swing.JTextArea();
+        progressTextArea = new javax.swing.JTextArea();
         subTitle2Label = new javax.swing.JLabel();
         subTitle1Label = new javax.swing.JLabel();
 
@@ -193,14 +193,14 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.progressLabel.text")); // NOI18N
         progressLabel.setPreferredSize(null);
 
-        TextArea_CurrentDirectory.setEditable(false);
-        TextArea_CurrentDirectory.setBackground(new java.awt.Color(240, 240, 240));
-        TextArea_CurrentDirectory.setLineWrap(true);
-        TextArea_CurrentDirectory.setRows(5);
-        TextArea_CurrentDirectory.setWrapStyleWord(true);
-        TextArea_CurrentDirectory.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.TextArea_CurrentDirectory.border.title"))); // NOI18N
-        TextArea_CurrentDirectory.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        TextArea_CurrentDirectory.setFocusable(false);
+        progressTextArea.setEditable(false);
+        progressTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        progressTextArea.setLineWrap(true);
+        progressTextArea.setRows(5);
+        progressTextArea.setWrapStyleWord(true);
+        progressTextArea.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.progressTextArea.border.title"))); // NOI18N
+        progressTextArea.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        progressTextArea.setFocusable(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(subTitle2Label, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.subTitle2Label.text")); // NOI18N
 
@@ -216,7 +216,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
                     .addComponent(subTitle2Label)
                     .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(subTitle1Label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(TextArea_CurrentDirectory)
+                    .addComponent(progressTextArea)
                     .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(0, 8, Short.MAX_VALUE))
         );
@@ -229,7 +229,7 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(TextArea_CurrentDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(progressTextArea, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -268,12 +268,12 @@ public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
         dialog.setVisible(true);
     }//GEN-LAST:event_viewLogButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    protected javax.swing.JTextArea TextArea_CurrentDirectory;
     protected javax.swing.JPanel donePanel;
     protected javax.swing.JPanel inProgressPanel;
     private javax.swing.JPanel loadingPanel;
     private javax.swing.JProgressBar progressBar;
     protected javax.swing.JLabel progressLabel;
+    protected javax.swing.JTextArea progressTextArea;
     protected javax.swing.JLabel statusLabel;
     protected javax.swing.JLabel subTitle1Label;
     protected javax.swing.JLabel subTitle2Label;
