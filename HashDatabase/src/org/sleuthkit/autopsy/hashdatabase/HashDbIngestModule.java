@@ -206,14 +206,24 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         }
 
         // look up in known bad first
-        TskData.FileKnown status = TskData.FileKnown.UNKNOWN;
         boolean foundBad = false;
         ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
-                if (db.lookUp(file)) {
-                    status = TskData.FileKnown.BAD;
+                if (db.hasHashOfContent(file)) {
+                    foundBad = true;
+                    knownBadCount += 1;
+                    try {
+                        skCase.setKnown(file, TskData.FileKnown.BAD);
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
+                        services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                                "Error encountered while setting known bad state for " + name + "."));
+                        ret = ProcessResult.ERROR;
+                    }
+                    String hashSetName = db.getHashSetName();
+                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, db.getShowInboxMessages());
                 }
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
@@ -221,21 +231,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                 services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
                         "Error encountered while looking up known bad hash value for " + name + "."));
                 ret = ProcessResult.ERROR;
-            }
-
-            if (status.equals(TskData.FileKnown.BAD)) {
-                foundBad = true;
-                knownBadCount += 1;
-                try {
-                    skCase.setKnown(file, TskData.FileKnown.BAD);
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
-                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
-                            "Error encountered while setting known bad state for " + name + "."));
-                    ret = ProcessResult.ERROR;
-                }
-                String hashSetName = db.getHashSetName();
-                processBadFile(file, md5Hash, hashSetName, db.getShowInboxMessages());
             }
         }
 
@@ -246,8 +241,16 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             for (HashDb db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();
-                    if (db.lookUp(file)) {
-                        status = TskData.FileKnown.KNOWN;
+                    if (db.hasHashOfContent(file)) {
+                        try {
+                            skCase.setKnown(file, TskData.FileKnown.KNOWN);
+                            break;
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
+                            services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                                    "Error encountered while setting known state for " + name + "."));
+                            ret = ProcessResult.ERROR;
+                        }
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
                 } catch (TskException ex) {
@@ -256,25 +259,13 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                             "Error encountered while looking up known hash value for " + name + "."));
                     ret = ProcessResult.ERROR;
                 }
-
-                if (status.equals(TskData.FileKnown.KNOWN)) {
-                    try {
-                        skCase.setKnown(file, TskData.FileKnown.KNOWN);
-                        break;
-                    } catch (TskException ex) {
-                        logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
-                        services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
-                                "Error encountered while setting known state for " + name + "."));
-                        ret = ProcessResult.ERROR;
-                    }
-                }
             }
         }
 
         return ret;
     }
 
-    private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
+    private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
         try {
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             //TODO Revisit usage of deprecated constructor as per TSK-583

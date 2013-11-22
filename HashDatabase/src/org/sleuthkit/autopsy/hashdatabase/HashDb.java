@@ -31,7 +31,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this class represent hash databases used to classify files as
@@ -209,7 +208,7 @@ public class HashDb {
         }
     }
         
-     public boolean lookUp(Content content) throws TskCoreException {         
+     public boolean hasHashOfContent(Content content) throws TskCoreException {         
         boolean result = false; 
          // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
         assert content instanceof AbstractFile;
@@ -223,7 +222,7 @@ public class HashDb {
         return result;
      }
 
-    public HashInfo lookUpVerbose(Content content) throws TskCoreException {
+    public HashInfo lookUp(Content content) throws TskCoreException {
         HashInfo result = null;
         // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
         assert content instanceof AbstractFile;
