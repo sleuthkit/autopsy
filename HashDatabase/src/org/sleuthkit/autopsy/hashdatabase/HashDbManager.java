@@ -56,6 +56,7 @@ public class HashDbManager {
     private static final String ENCODING = "UTF-8";
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
+    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     private static HashDbManager instance;
     private String xmlFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
@@ -272,89 +273,137 @@ public class HashDbManager {
     
     // TODO: The return value from this function is never checked. Failure is not indicated to the user. Is this desired?
     private boolean readHashSetsConfigurationFromDisk() {
+        // Open the XML document that implements the configuration file.
         final Document doc = XMLUtil.loadDoc(HashDbManager.class, xmlFilePath, XSDFILE);
         if (doc == null) {
             return false;
         }
 
+        // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
             logger.log(Level.SEVERE, "Error loading hash sets: invalid file format.");
             return false;
         }
         
+        // Get the hash set elements.
         NodeList setsNList = root.getElementsByTagName(SET_EL);
         int numSets = setsNList.getLength();
         if(numSets == 0) {
             logger.log(Level.WARNING, "No element hash_set exists.");
         }
         
+        // Create HashDb objects for each hash set element.
+        // TODO: Does this code implement the correct policy for handling a malformed config file?
+        String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class";
+        String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class";
         for (int i = 0; i < numSets; ++i) {
             Element setEl = (Element) setsNList.item(i);
-            final String name = setEl.getAttribute(SET_NAME_ATTR);
-            final String type = setEl.getAttribute(SET_TYPE_ATTR);
+                                   
+            final String hashSetName = setEl.getAttribute(SET_NAME_ATTR);
+            if (hashSetName.isEmpty()) {
+                logger.log(Level.SEVERE, SET_NAME_ATTR + attributeErrorMessage, i);
+                continue;
+            }                                 
+            
+            String knownFilesType = setEl.getAttribute(SET_TYPE_ATTR);
+            if(knownFilesType.isEmpty()) {
+                logger.log(Level.SEVERE, SET_TYPE_ATTR + attributeErrorMessage, i);
+                continue;
+            }
+            if (knownFilesType.equals("NSRL")) {
+                knownFilesType = KnownFilesType.KNOWN.toString();
+            }                                    
+            
             final String useForIngest = setEl.getAttribute(SET_USE_FOR_INGEST_ATTR);
-            final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
-            Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
-            Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
+            if (useForIngest.isEmpty()) {
+                logger.log(Level.SEVERE, SET_USE_FOR_INGEST_ATTR + attributeErrorMessage, i);
+                continue;                
+            }
+            Boolean useForIngestFlag = Boolean.parseBoolean(useForIngest);
 
-            String path = null;
+            final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
+            if (useForIngest.isEmpty()) {
+                logger.log(Level.SEVERE, SET_SHOW_INBOX_MESSAGES + attributeErrorMessage, i);
+                continue;                
+            }
+            Boolean showInboxMessagesFlag = Boolean.parseBoolean(showInboxMessages);
+
+            String dbPath;
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
-            if (pathsNList.getLength() > 0) {
-                // Shouldn't be more than 1
-                Element pathEl = (Element) pathsNList.item(0);
-                path = pathEl.getTextContent();                
-                File database = new File(path);
-                if(!database.exists() && JOptionPane.showConfirmDialog(null, "Database " + name + " could not be found at location\n" + path + "\nWould you like to search for the file?", "Missing Database", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    path = searchForFile();
-                }
+            if (pathsNList.getLength() > 0) {                
+                Element pathEl = (Element) pathsNList.item(0); // Shouldn't be more than one.
+                dbPath = pathEl.getTextContent();
+                if (dbPath.isEmpty()) {
+                    logger.log(Level.SEVERE, PATH_EL + elementErrorMessage, i);
+                    continue;                                                    
+                }                                
             }
-            
-            if(name.isEmpty()) {
-                logger.log(Level.WARNING, "Name was not set for hash_set at index {0}.", i);
-            }
-            
-            if(type.isEmpty()) {
-                logger.log(Level.SEVERE, "Type was not set for hash_set at index {0}, cannot make instance of HashDb class.", i);
-                return false;
-            }
-            
-            if(useForIngest.isEmpty()) {
-                logger.log(Level.WARNING, "UseForIngest was not set for hash_set at index {0}.", i);
-            }
-            
-            if(showInboxMessages.isEmpty()) {
-                logger.log(Level.WARNING, "ShowInboxMessages was not set for hash_set at index {0}.", i);
-            }
-            
-            if(path == null) {
-                logger.log(Level.WARNING, "No path for hash_set at index {0}, cannot make instance of HashDb class.", i);
-            } 
             else {
+                logger.log(Level.SEVERE, PATH_EL + elementErrorMessage, i);
+                continue;                                
+            }
+            dbPath = getValidFilePath(hashSetName, dbPath);
+                        
+            if (null != dbPath) {
                 try {
-                    addHashSet(HashDb.openHashDatabase(name, path, useForIngestBool, showInboxMessagesBool, KnownFilesType.valueOf(type)));
+                    addHashSet(HashDb.openHashDatabase(hashSetName, dbPath, useForIngestFlag, showInboxMessagesFlag, KnownFilesType.valueOf(knownFilesType)));
                 }
                 catch (TskCoreException ex) {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
-                    JOptionPane.showMessageDialog(null, "Unable to open " + path + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Unable to open " + dbPath + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
                 }
+            } 
+            else {
+                logger.log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i);
             }
         }
         
+        // Get the element that stores the always calculate hashes flag.
         NodeList calcList = root.getElementsByTagName(SET_CALC);
         if (calcList.getLength() > 0) {
-            Element calcEl = (Element) calcList.item(0); // Shouldn't be more than 1
+            Element calcEl = (Element) calcList.item(0); // Shouldn't be more than one.
             final String value = calcEl.getAttribute(SET_VALUE);
             alwaysCalculateHashes = Boolean.parseBoolean(value);            
         }
         else {
-            logger.log(Level.WARNING, "No element hash_calculate exists.");
+            logger.log(Level.WARNING, " element ");
+            alwaysCalculateHashes = false;
         }
 
         return true;
     }
+
+    private String getValidFilePath(String hashSetName, String configuredPath) {
+        // Check the configured path.
+        File database = new File(configuredPath);
+        if (database.exists()) {
+            return configuredPath;
+        }
+
+        // Try a path that could be in an older version of the configuration file.
+        String legacyPath = configuredPath + LEGACY_INDEX_FILE_EXTENSION;
+        database = new File(legacyPath); 
+        if (database.exists()) {
+            return legacyPath;
+        }
+        
+        // Give the user an opportunity to find the desired file.
+        String newPath = null;
+        if (JOptionPane.showConfirmDialog(null, "Database " + hashSetName + " could not be found at location\n" + configuredPath + "\nWould you like to search for the file?", "Missing Database", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            newPath = searchForFile();
+            if (null != newPath && !newPath.isEmpty()) {                
+                database = new File(newPath); 
+                if (!database.exists()) {
+                    newPath =  null;
+                } 
+            }
+        }
+        return newPath;
+    }
     
     private String searchForFile() {
+        String filePath = null;
         JFileChooser fc = new JFileChooser();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -362,8 +411,6 @@ public class HashDbManager {
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
         fc.setFileFilter(filter);
         fc.setMultiSelectionEnabled(false);
-
-        String filePath = null;
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File f = fc.getSelectedFile();
             try {
@@ -372,8 +419,7 @@ public class HashDbManager {
             catch (IOException ex) {
                 logger.log(Level.WARNING, "Couldn't get selected file path", ex);
             } 
-        }
-        
+        }        
         return filePath;
     }    
 }
