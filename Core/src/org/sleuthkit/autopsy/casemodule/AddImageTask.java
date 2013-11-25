@@ -150,7 +150,7 @@ public class AddImageTask implements Runnable {
                 addImageProcess.run(new String[]{this.imagePath});
                 
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
+                logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
                 hasCritError = true;
                 errorList.add(ex.getMessage());
@@ -221,12 +221,14 @@ public class AddImageTask implements Runnable {
             // attempt actions that might fail and force the process to stop
             
             if (cancelled || hasCritError) {
-                logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
+                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be comitted.");
                 revert();
             }
+            
             if (!errorList.isEmpty()) {
-                logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
+                logger.log(Level.INFO, "There were errors that occured in add image process");
             }
+            
             
             // When everything happens without an error:
             if (!(cancelled || hasCritError)) {
