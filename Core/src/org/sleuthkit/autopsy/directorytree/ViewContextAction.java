@@ -34,7 +34,6 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -47,7 +46,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * View the directory content associated with the given Artifact
+ * View the directory content associated with the given Artifact in the DataResultViewer.
+ * 
+ * 1.   Expands the Directory Tree to the location of the parent Node of the 
+ *      associated Content.
+ * 2.   Selects the parent Node of the associated Content in the Directory Tree,
+ *      which causes the parent Node's Children to be visible in the DataResultViewer.
+ * 3.   Waits for all the Children to be contentNode in the DataResultViewer and
+ *      selects the Node that represents the Content.
  */
 public class ViewContextAction extends AbstractAction {
 
@@ -84,48 +90,48 @@ public class ViewContextAction extends AbstractAction {
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
 
-                final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
-                TreeView tree = directoryTree.getTree();
-                ExplorerManager man = directoryTree.getExplorerManager();
-                Node dirRoot = man.getRootContext();
-                Children dirChilds = dirRoot.getChildren();
-                Node imagesRoot = dirChilds.findChild(DataSourcesNode.NAME);
-                dirChilds = imagesRoot.getChildren();
+                final DirectoryTreeTopComponent dirTree = DirectoryTreeTopComponent.findInstance();
+                TreeView dirTreeView = dirTree.getTree();
+                ExplorerManager dirTreeExplorerManager = dirTree.getExplorerManager();
+                Node dirTreeRootNode = dirTreeExplorerManager.getRootContext();
+                Children dirChilds = dirTreeRootNode.getChildren();
+                Children currentChildren = dirChilds.findChild(DataSourcesNode.NAME).getChildren();
 
                 Node dirExplored = null;
 
+                // Find the parent node of the content in the directory tree
                 for (int i = 0; i < genChilds.getNodesCount() - 1; i++) {
                     Node currentGeneratedNode = genChilds.getNodeAt(i);
-                    for (int j = 0; j < dirChilds.getNodesCount(); j++) {
-                        Node currentDirectoryTreeNode = dirChilds.getNodeAt(j);
+                    for (int j = 0; j < currentChildren.getNodesCount(); j++) {
+                        Node currentDirectoryTreeNode = currentChildren.getNodeAt(j);
                         if (currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())) {
                             dirExplored = currentDirectoryTreeNode;
-                            tree.expandNode(dirExplored);
-                            dirChilds = currentDirectoryTreeNode.getChildren();
+                            dirTreeView.expandNode(dirExplored);
+                            currentChildren = currentDirectoryTreeNode.getChildren();
                             break;
                         }
                     }
                 }
 
+                // Set the parent node of the content as the selection in the
+                // directory tree
                 try {
                     if (dirExplored != null) {
-                        tree.expandNode(dirExplored);
-                        man.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
+                        dirTreeView.expandNode(dirExplored);
+                        dirTreeExplorerManager.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
                     }
-
                 } catch (PropertyVetoException ex) {
                     logger.log(Level.WARNING, "Couldn't set selected node", ex);
                 }
 
-                // Another thread is needed because we have to wait for dataResult to populate
+                
                 EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        DataResultTopComponent dataResult = directoryTree.getDirectoryListing();
-                        Node resultRoot = dataResult.getRootNode();
-                        Node generated = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
-                        new SelectionWorker(dataResult, generated.getName(), resultRoot).execute();
-                        
+                        DataResultTopComponent dataResultTC = dirTree.getDirectoryListing();
+                        Node currentRootNodeOfDataResultTC = dataResultTC.getRootNode();
+                        Node contentNode = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
+                        new SelectionWorker(dataResultTC, contentNode.getName(), currentRootNodeOfDataResultTC).execute();
                     }
                 });
             }
@@ -133,47 +139,60 @@ public class ViewContextAction extends AbstractAction {
     }
     
     /**
-     * Thread that waits for a Node's children to completely be generated (they
-     * may be lazily loaded), then sets the correct selection in a 
+     * Waits for a Node's children to be generated, regardless of whether they
+     * are lazily loaded, then sets the correct selection in a specified
      * DataResultTopComponent.
      */
     private class SelectionWorker extends SwingWorker<Node[], Integer> {
 
-        DataResultTopComponent dataResult;
+        DataResultTopComponent dataResultTC;
         String nameOfNodeToSelect;
-        Node originalRootNode;
+        Node originalRootNodeOfDataResultTC;
         
         SelectionWorker(DataResultTopComponent dataResult, String nameToSelect, Node originalRoot) {
-            this.dataResult = dataResult;
+            this.dataResultTC = dataResult;
             this.nameOfNodeToSelect = nameToSelect;
-            this.originalRootNode = originalRoot;
+            this.originalRootNodeOfDataResultTC = originalRoot;
         }
         
         @Override
         protected Node[] doInBackground() throws Exception {
-            return originalRootNode.getChildren().getNodes(true);
+            // Calls to Children::getNodes(true) block until all child Nodes have
+            // been created, regardless of whether they are created lazily. 
+            // This means that this call will return the actual child Nodes
+            // and will *NEVER* return a proxy wait Node. This is done on the 
+            // background thread to ensure we are not hanging the ui as it could
+            // be a lengthy operation. 
+            return originalRootNodeOfDataResultTC.getChildren().getNodes(true);
         }
         
         @Override
         protected void done() {
-            Node[] nodes;
+            Node[] nodesDisplayedInDataResultViewer;
             try {
-                nodes = get();
+                nodesDisplayedInDataResultViewer = get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Failed to get nodes in selection worker.");
+                logger.log(Level.WARNING, "Failed to get nodes in selection worker.", ex);
                 return;
             } 
             
-            // If the root node of the data result viewer has changed, don't
-            // set the selection.
-            if (dataResult.getRootNode().equals(originalRootNode) == false) {
+            // It is possible the user selected a different Node to be displayed
+            // in the DataResultViewer while the child Nodes were being generated.
+            // In that case, we don't want to set the selection because it the
+            // nodes returned from get() won't be in the DataResultTopComponent's
+            // ExplorerManager. If we did call setSelectedNodes, it would clear
+            // the current selection, which is not good.
+            if (dataResultTC.getRootNode().equals(originalRootNodeOfDataResultTC) == false) {
                 return;
             }
             
-            for (Node current : nodes) {
-                if (nameOfNodeToSelect.equals(current.getName())) {
-                    dataResult.requestActive();
-                    dataResult.setSelectedNodes(new Node[]{current});
+            // Find the correct node to select from the nodes that are displayed
+            // in the data result viewer and set it as the selection of the 
+            // DataResultTopComponent.
+            for (Node node : nodesDisplayedInDataResultViewer) {
+                if (nameOfNodeToSelect.equals(node.getName())) {
+                    dataResultTC.requestActive();
+                    dataResultTC.setSelectedNodes(new Node[]{node});
                     DirectoryTreeTopComponent.getDefault().fireViewerComplete();
                     break;
                 }
