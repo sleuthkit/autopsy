@@ -168,7 +168,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             indexButton.setEnabled(false);
         }     
         
-        // Diable the indexing button if ingest is in progress.
+        // Disable the indexing button if ingest is in progress.
         if (ingestIsRunning) {
             indexButton.setEnabled(false);
         }
@@ -228,10 +228,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }
 
         hashSetManager.save();        
-    }
-    
-    public void discard() {
-        HashDbManager.getInstance().loadLastSavedConfiguration();                
     }
     
     /**
@@ -571,12 +567,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(nameLabel)
-                                        .addGap(53, 53, 53)
-                                        .addComponent(hashDbNameLabel))
-                                    .addComponent(useForIngestCheckbox)
-                                    .addComponent(showInboxMessagesCheckBox)
-                                    .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(locationLabel)
                                             .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -588,7 +578,18 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                             .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
                                             .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                             .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(nameLabel)
+                                                .addGap(53, 53, 53)
+                                                .addComponent(hashDbNameLabel))
+                                            .addComponent(useForIngestCheckbox)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGap(21, 21, 21)
+                                                .addComponent(showInboxMessagesCheckBox)))
+                                        .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(optionsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -693,7 +694,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases). Do you want to proceed? ", "Deleting a Hash Database Entry", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database for all cases. Do you want to proceed? ", "Delete Hash Database from Configuration", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
                 hashSetManager.removeHashSet(hashDb);

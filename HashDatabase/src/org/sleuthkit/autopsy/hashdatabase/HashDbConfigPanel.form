@@ -74,13 +74,6 @@
                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
-                                      <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="indexButton" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
@@ -95,6 +88,21 @@
                                           <Component id="indexPathLabel" max="32767" attributes="0"/>
                                           <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
                                       </Group>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
+                                              <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                                              <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
