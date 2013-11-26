@@ -312,7 +312,7 @@ public class ReportGenerator {
                 return absFiles;
             } catch (TskCoreException ex) {
                 // TODO
-                return Collections.EMPTY_LIST;
+                return Collections.<AbstractFile>emptyList();
             }
         }
     }

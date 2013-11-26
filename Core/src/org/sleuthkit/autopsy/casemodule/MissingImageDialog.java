@@ -148,7 +148,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
         selectButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         containerPanel = new javax.swing.JPanel();
-        typeComboBox = new javax.swing.JComboBox();
+        typeComboBox = new javax.swing.JComboBox<>();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
         titleLabel = new javax.swing.JLabel();
@@ -288,7 +288,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
     private javax.swing.JButton selectButton;
     private javax.swing.JLabel titleLabel;
     private javax.swing.JSeparator titleSeparator;
-    private javax.swing.JComboBox typeComboBox;
+    private javax.swing.JComboBox<ContentTypePanel> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
@@ -309,7 +309,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
     /**
      * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
      */
-    private class ImageTypeModel implements ComboBoxModel {
+    private class ImageTypeModel implements ComboBoxModel<ContentTypePanel> {
         ContentTypePanel selected;
         ContentTypePanel[] types = ContentTypePanel.getPanels();
 
@@ -320,7 +320,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
         }
 
         @Override
-        public Object getSelectedItem() {
+        public ContentTypePanel getSelectedItem() {
             return selected;
         }
 
@@ -330,7 +330,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public ContentTypePanel getElementAt(int index) {
             return types[index];
         }
 

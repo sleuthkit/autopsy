@@ -68,6 +68,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle("Generate Report");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
+            @SuppressWarnings("unchecked")
             ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), 
                     (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
                     (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates"));

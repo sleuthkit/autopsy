@@ -75,6 +75,7 @@ class ScheduledTask<T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
+        @SuppressWarnings("unchecked")
         final ScheduledTask<T> other = (ScheduledTask<T>) obj;
         if (this.input != other.input && (this.input == null || !this.input.equals(other.input))) {
             return false;

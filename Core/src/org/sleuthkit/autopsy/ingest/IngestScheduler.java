@@ -390,7 +390,7 @@ class IngestScheduler {
          */
         synchronized void schedule(PipelineContext<IngestModuleAbstractFile> context) {
 
-            final ScheduledTask task = context.getScheduledTask();
+            final ScheduledTask<? extends IngestModuleAbstractFile> task = context.getScheduledTask();
 
             //skip if task contains no modules
             if (task.getModules().isEmpty()) {

@@ -90,7 +90,7 @@ public final class ReportVisualPanel2 extends JPanel {
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                String value = (String) tagsModel.getElementAt(index);
+                String value = tagsModel.getElementAt(index);
                 tagStates.put(value, !tagStates.get(value));
                 list.repaint();
                 updateFinishButton();
@@ -103,7 +103,7 @@ public final class ReportVisualPanel2 extends JPanel {
     private void initArtifactTypes() {
         
         try {
-             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
             
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
@@ -189,7 +189,7 @@ public final class ReportVisualPanel2 extends JPanel {
         selectAllButton = new javax.swing.JButton();
         deselectAllButton = new javax.swing.JButton();
         tagsScrollPane = new javax.swing.JScrollPane();
-        tagsList = new javax.swing.JList();
+        tagsList = new javax.swing.JList<>();
         advancedButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
@@ -315,11 +315,11 @@ public final class ReportVisualPanel2 extends JPanel {
     private javax.swing.ButtonGroup optionsButtonGroup;
     private javax.swing.JButton selectAllButton;
     private javax.swing.JRadioButton taggedResultsRadioButton;
-    private javax.swing.JList tagsList;
+    private javax.swing.JList<String> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
     // End of variables declaration//GEN-END:variables
     
-    private class TagsListModel implements ListModel {
+    private class TagsListModel implements ListModel<String> {
 
         @Override
         public int getSize() {
@@ -327,7 +327,7 @@ public final class ReportVisualPanel2 extends JPanel {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return tags.get(index);
         }
 
@@ -341,10 +341,10 @@ public final class ReportVisualPanel2 extends JPanel {
     }
     
     // Render the Tags as JCheckboxes
-    private class TagsListRenderer extends JCheckBox implements ListCellRenderer {
+    private class TagsListRenderer extends JCheckBox implements ListCellRenderer<String> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagStates.get(value.toString()));

@@ -154,7 +154,7 @@ public class XMLUtil {
      * @param doc the document to save
      * 
      */
-    public static  boolean saveDoc(Class clazz, String xmlPath, String encoding, final Document doc) {
+    public static boolean saveDoc(Class clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
         xf.setAttribute("indent-number", new Integer(1));
         boolean success = false;

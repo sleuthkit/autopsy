@@ -1237,7 +1237,7 @@ public class IngestManager {
 
                 //queue to file-level ingest pipeline
                 final ScheduledTask<IngestModuleAbstractFile> fTask = 
-                        new ScheduledTask(input, fileMods);
+                        new ScheduledTask<>(input, fileMods);
                 final PipelineContext<IngestModuleAbstractFile> filepipelineContext 
                         = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
