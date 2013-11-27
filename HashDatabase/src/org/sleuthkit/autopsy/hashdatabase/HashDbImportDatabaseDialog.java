@@ -87,7 +87,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         databasePathTextField = new javax.swing.JTextField();
-        browseButton = new javax.swing.JButton();
+        openButton = new javax.swing.JButton();
         knownRadioButton = new javax.swing.JRadioButton();
         knownBadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
@@ -116,10 +116,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         databasePathTextField.setEditable(false);
         databasePathTextField.setText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.databasePathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.browseButton.text")); // NOI18N
-        browseButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(openButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.openButton.text")); // NOI18N
+        openButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                browseButtonActionPerformed(evt);
+                openButtonActionPerformed(evt);
             }
         });
 
@@ -171,9 +171,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(21, 21, 21)
                                 .addComponent(sendIngestMessagesCheckbox))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(searchDuringIngestCheckbox)
-                                .addGap(29, 29, 29)))
+                            .addComponent(searchDuringIngestCheckbox))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -185,20 +183,20 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGap(19, 19, 19)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
-                                    .addComponent(knownBadRadioButton)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(hashSetNameTextField))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel3)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(databasePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(knownBadRadioButton))))
+                        .addGap(0, 307, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(browseButton)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addComponent(hashSetNameTextField))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(databasePathTextField)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(openButton)))
                 .addContainerGap())
         );
 
@@ -209,7 +207,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(browseButton)
+                    .addComponent(openButton)
                     .addComponent(databasePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -240,7 +238,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+    private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -257,7 +255,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, "Failed to get the path of the selected database.");
             } 
         }
-    }//GEN-LAST:event_browseButtonActionPerformed
+    }//GEN-LAST:event_openButtonActionPerformed
 
     private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
         sendIngestMessagesCheckbox.setSelected(false);
@@ -318,7 +316,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_searchDuringIngestCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton browseButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JTextField databasePathTextField;
@@ -329,6 +326,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JButton okButton;
+    private javax.swing.JButton openButton;
     private javax.swing.JCheckBox searchDuringIngestCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     // End of variables declaration//GEN-END:variables
