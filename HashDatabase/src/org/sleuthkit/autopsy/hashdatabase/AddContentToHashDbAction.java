@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -37,92 +36,94 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to content to a hash database.  
+ * Instances of this Action allow users to content to a hash database.
  */
-public class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup { 
-    // This class is a singleton to support multi-selection of nodes, since 
-    // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
-    // node in the array returns a reference to the same action object from Node.getActions(boolean).    
+final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup { 
     private static AddContentToHashDbAction instance;
-    private static String SINGLE_SELECTION_NAME = "Add file to hash database"; 
-    private static String MULTIPLE_SELECTION_NAME = "Add files to hash database";
-    private String menuText;
-    
+
+    /**
+     * AddContentToHashDbAction is a singleton to support multi-selection of nodes, since 
+     * org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action from a node
+     * if every node in the nodes array returns a reference to the same action object from 
+     * Node.getActions(boolean).
+     */
     public static synchronized AddContentToHashDbAction getInstance() {
         if (null == instance) {
             instance = new AddContentToHashDbAction();
-        }
-        
-        instance.setEnabled(true);
-        instance.putValue(Action.NAME, SINGLE_SELECTION_NAME);
-        instance.menuText = SINGLE_SELECTION_NAME;
-        
-        // Disable the action if file ingest is in progress.
-        IngestConfigurator ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
-        if (null != ingestConfigurator && ingestConfigurator.isIngestRunning()) {
-            instance.setEnabled(false);
-        }
-        
-        // Set the name of the action based on the selected content and disable the action if there is
-        // selected content without an MD5 hash.
-        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        if (selectedFiles.size() > 1) {
-            instance.putValue(Action.NAME, MULTIPLE_SELECTION_NAME);
-            instance.menuText = MULTIPLE_SELECTION_NAME;
-        }
-        if (selectedFiles.isEmpty()) {
-            instance.setEnabled(false);
-        }
-        else {
-            for (AbstractFile file : selectedFiles) {
-                if (null == file.getMd5Hash()) {
-                    instance.setEnabled(false);
-                    break;
-                }
-            }
-        }
-                
+        }        
         return instance;
     }
 
     private AddContentToHashDbAction() {
-        super(SINGLE_SELECTION_NAME);
     }
     
     @Override
     public JMenuItem getPopupPresenter() {            
-        return new AddContentToHashDbMenu(menuText);
+        return new AddContentToHashDbMenu();
     }
     
     @Override
     public void actionPerformed(ActionEvent event) {
     }  
     
-    private class AddContentToHashDbMenu extends JMenu { 
-        AddContentToHashDbMenu(String menuText) {
-            super(menuText);
+    // Instances of this class are used to implement the a pop up menu for this
+    // action.
+    private final class AddContentToHashDbMenu extends JMenu { 
+        private final static String SINGLE_SELECTION_NAME = "Add file to hash database"; 
+        private final static String MULTIPLE_SELECTION_NAME = "Add files to hash database";
+
+        AddContentToHashDbMenu() {
+            super(SINGLE_SELECTION_NAME);
+                        
+            // Disable the menu if file ingest is in progress.
+            IngestConfigurator ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
+            if (null != ingestConfigurator && ingestConfigurator.isIngestRunning()) {
+                setEnabled(false);
+                return;
+            }
             
+            // Get any AbstractFile objects from the lookup of the currently focused top component. 
+            final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+            if (selectedFiles.isEmpty()) {
+                setEnabled(false);
+                return;
+            }
+            else if (selectedFiles.size() > 1) {
+                setText(MULTIPLE_SELECTION_NAME);
+            }
+                        
+            // Disable the menu if hashes have not been calculated.
+            for (AbstractFile file : selectedFiles) {
+                if (null == file.getMd5Hash()) {
+                    setEnabled(false);
+                    return;
+                }
+            }
+                                    
             // Get the current set of updateable hash databases and add each
-            // one as a menu item.
-            List<HashDb> hashDatabases = HashDbManager.getInstance().getUpdateableHashSets();
+            // one to the menu as a separate menu item. Selecting a hash database
+            // adds the selected files to the selected database.
+            final List<HashDb> hashDatabases = HashDbManager.getInstance().getUpdateableHashSets();
             if (!hashDatabases.isEmpty()) {
                 for (final HashDb database : hashDatabases) {
                     JMenuItem databaseItem = add(database.getHashSetName());
                     databaseItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            addContentToHashSet(database);
+                            addFilesToHashSet(selectedFiles, database);
                         }
                     });
                 }
             }
             else {
-                JMenuItem empty = new JMenuItem("No hash databases");
+                JMenuItem empty = new JMenuItem("No hash databases configured");
                 empty.setEnabled(false);
                 add(empty);                
             }
                         
-            // Add a "New Hash Set..." menu item.
+            // Add a "New Hash Set..." menu item. Selecting this item invokes a
+            // a hash database creation dialog and adds the selected files to the 
+            // the new database.
             addSeparator();
             JMenuItem newHashSetItem = new JMenuItem("Create database...");
             newHashSetItem.addActionListener(new ActionListener() {
@@ -133,16 +134,15 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                         HashDbManager hashSetManager = HashDbManager.getInstance();
                         hashSetManager.addHashSet(hashDb);
                         hashSetManager.save();
-                        addContentToHashSet(hashDb);
+                        addFilesToHashSet(selectedFiles, hashDb);
                     }                    
                 }
             });
             add(newHashSetItem);        
         }
         
-        private void addContentToHashSet(HashDb hashSet) {
-            Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-            for (AbstractFile file : selectedFiles) {
+        private void addFilesToHashSet(final Collection<? extends AbstractFile> files, HashDb hashSet) {
+            for (AbstractFile file : files) {
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
                     try {
@@ -154,7 +154,7 @@ public class AddContentToHashDbAction extends AbstractAction implements Presente
                     }                    
                 }  
                 else {
-                    JOptionPane.showMessageDialog(null, "Unable to add the " + (selectedFiles.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);                    
+                    JOptionPane.showMessageDialog(null, "Unable to add the " + (files.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);                    
                     break;
                 }
             }            
