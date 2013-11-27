@@ -307,7 +307,7 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFile(AbstractFile file, PipelineContext pipelineContext) {
+    void scheduleFile(AbstractFile file, PipelineContext<IngestModuleAbstractFile> pipelineContext) {
         scheduler.getFileScheduler().schedule(file, pipelineContext);
     }
 

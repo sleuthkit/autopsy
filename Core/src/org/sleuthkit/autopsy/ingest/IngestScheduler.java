@@ -320,7 +320,7 @@ class IngestScheduler {
          *
          * @param task tasks similar to this one should be removed
          */
-        private void removeDupTasks(ScheduledTask task) {
+        private <T extends IngestModuleAbstract> void removeDupTasks(ScheduledTask<T> task) {
             final Content inputContent = task.getContent();
 
             //remove from root queue
@@ -365,8 +365,8 @@ class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
-            ScheduledTask originalTask = originalContext.getScheduledTask();
+        synchronized void schedule(AbstractFile file, PipelineContext<IngestModuleAbstractFile> originalContext) {
+            ScheduledTask<IngestModuleAbstractFile> originalTask = originalContext.getScheduledTask();
 
             //skip if task contains no modules
             if (originalTask.getModules().isEmpty()) {
