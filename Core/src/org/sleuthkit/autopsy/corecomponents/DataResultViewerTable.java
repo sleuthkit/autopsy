@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = "Name";
+    @SuppressWarnings("rawtypes")
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
