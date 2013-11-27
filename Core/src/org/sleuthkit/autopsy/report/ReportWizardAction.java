@@ -63,6 +63,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
      * When the wizard is finished, create a ReportGenerator with the wizard information,
      * and start all necessary reports.
      */
+    @SuppressWarnings("unchecked")
     public static void doReportWizard() {
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
