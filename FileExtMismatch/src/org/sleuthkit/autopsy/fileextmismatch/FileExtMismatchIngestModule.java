@@ -20,8 +20,13 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -60,6 +65,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private int attrId = -1;    
     //private FileTypeIdSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
+    private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     
     // Private to ensure Singleton status
     private FileExtMismatchIngestModule() {
@@ -80,7 +86,9 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         
-        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        // Add a new attribute type
+        
+        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();        
         
         // see if the type already exists in the blackboard.
         try {
@@ -95,6 +103,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             }
         }        
         
+        // Set up default mapping (eventually this will be loaded from a config file)
+        String[] exts = {"doc", "docx", "dot", "dotx", "xls", "xlsx", "ppt", "pot", "pptx", "potx"};
+        SigTypeToExtMap.put("application/x-msoffice", exts);
+        String[] exts2 = {"jpg","jpeg"};
+        SigTypeToExtMap.put("image/jpeg", exts2);
     }
     
     @Override
@@ -119,14 +132,14 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             processTime += (System.currentTimeMillis() - startTime);
             numFiles++;
                         
-            //if () {
+            if (flag) {
                 // add artifact
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
                 BlackboardAttribute batt = new BlackboardAttribute(attrId, MODULE_NAME, "", ATTR_VALUE_WRONG);
                 bart.addAttribute(batt);
 
                 services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_GEN_INFO, Collections.singletonList(bart)));
-            //}
+            }
             return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
@@ -135,7 +148,37 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     }
     
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
-        
+        try {
+            int i = abstractFile.getName().lastIndexOf(".");
+            if ((i > -1) && ((i + 1) < abstractFile.getName().length())) {
+                String extStr = abstractFile.getName().substring(i + 1);
+            
+                // find file_sig value.
+                ArrayList<BlackboardArtifact> artList = abstractFile.getArtifacts(ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID());
+                for (BlackboardArtifact art : artList) {
+                    List<BlackboardAttribute> atrList = art.getAttributes();
+                    for (BlackboardAttribute att : atrList) {
+                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
+                                
+                            //get known allowed values from the map for this type
+                            List<String> allowedExtList = Arrays.asList(SigTypeToExtMap.get(att.getValueString()));
+                            
+                            // see if the filename ext is in the allowed list
+                            if (allowedExtList != null) {
+                                for (String e : allowedExtList) {
+                                    if (e.equals(extStr)) {
+                                        return false;
+                                    }
+                                }
+                                return true; //potential mismatch
+                            }
+                        }
+                    }                
+                }
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         return false;
     }
     
