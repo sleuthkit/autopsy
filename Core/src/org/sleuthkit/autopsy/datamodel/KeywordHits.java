@@ -190,7 +190,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -245,13 +245,13 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
             
-            ss.put(new NodeProperty("List Name",
+            ss.put(new NodeProperty<>("List Name",
                     "List Name",
                     "no description",
                     name));
 
 
-            ss.put(new NodeProperty("Number of Children",
+            ss.put(new NodeProperty<>("Number of Children",
                     "Number of Children",
                     "no description",
                     children.size()));
@@ -326,13 +326,13 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
             
-            ss.put(new NodeProperty("List Name",
+            ss.put(new NodeProperty<>("List Name",
                     "List Name",
                     "no description",
                     getDisplayName()));
 
 
-            ss.put(new NodeProperty("Files with Hits",
+            ss.put(new NodeProperty<>("Files with Hits",
                     "Files with Hits",
                     "no description",
                     children.size()));
@@ -376,15 +376,15 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return n;
             }
             
-            n.addNodeProperty(new NodeProperty("ModifiedTime",
+            n.addNodeProperty(new NodeProperty<>("ModifiedTime",
                     "Modified Time",
                     "Modified Time",
                     ContentUtils.getStringTime(file.getMtime(), file)));
-            n.addNodeProperty(new NodeProperty("AccessTime",
+            n.addNodeProperty(new NodeProperty<>("AccessTime",
                     "Access Time",
                     "Access Time",
                     ContentUtils.getStringTime(file.getAtime(), file)));
-            n.addNodeProperty(new NodeProperty("ChangeTime",
+            n.addNodeProperty(new NodeProperty<>("ChangeTime",
                     "Change Time",
                     "Change Time",
                     ContentUtils.getStringTime(file.getCtime(), file)));

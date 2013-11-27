@@ -61,7 +61,7 @@ public class FileTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
+        ss.put(new NodeProperty<>("Filter Type",
                 "Filter Type",
                 "no description",
                 filter.getDisplayName()));
@@ -70,7 +70,7 @@ public class FileTypeNode extends DisplayableItemNode {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty("File Extensions",
+        ss.put(new NodeProperty<>("File Extensions",
                 "File Extensions",
                 "no description",
                 extensions));
