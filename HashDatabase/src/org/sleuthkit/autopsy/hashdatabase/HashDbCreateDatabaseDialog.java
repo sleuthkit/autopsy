@@ -28,15 +28,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.KnownFilesType;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class allow a user to create a new hash database.
  */
 final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {    
     
-    private static String HASH_DATABASE_FILE_EXTENSON = ".kdb"; 
     private JFileChooser fileChooser = null;            
     private HashDb newHashDb = null;
     
@@ -45,15 +45,18 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         fileChooser = new JFileChooser() {
             @Override
             public void approveSelection() {
-                // The hash database file the user chooses must be a new file with a hash database file extension.
                 File selectedFile = getSelectedFile();                
-                if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase("kdb") && JOptionPane.showConfirmDialog(this, "The hash database file must have a .kdb extension.", "File Name Error", JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
-                    cancelSelection();                       
-                    return;                    
+                if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase(HashDbManager.getHashDatabaseFileExtension())) {
+                    if (JOptionPane.showConfirmDialog(this, "The hash database file must have a ." + HashDbManager.getHashDatabaseFileExtension() + " extension.", "File Name Error", JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();                       
+                        return;                    
+                    }
                 }                        
-                if (selectedFile.exists() && JOptionPane.showConfirmDialog(this, "A file with this name already exists. Please enter a new filename.", "Existing File", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
-                    cancelSelection();                       
-                    return;                    
+                if (selectedFile.exists()) {
+                    if (JOptionPane.showConfirmDialog(this, "A file with this name already exists. Please choose a new file name.", "File Already Exists Error", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();                       
+                        return;                    
+                    }
                 }
                 super.approveSelection();
             }
@@ -222,7 +225,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_knownBadRadioButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        this.dispose();
+        dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
@@ -231,7 +234,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             return;
         }
                 
-        fileChooser.setSelectedFile(new File(hashSetNameTextField.getText() + HASH_DATABASE_FILE_EXTENSON));
+        fileChooser.setSelectedFile(new File(hashSetNameTextField.getText() + "." + HashDbManager.getHashDatabaseFileExtension()));
         if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
             return;
         }
@@ -244,18 +247,39 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             type = KnownFilesType.KNOWN_BAD;
         }
                         
+        String errorMessage = "Hash database creation error";
         try
         {
-            newHashDb = HashDb.createHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);       
+            newHashDb = HashDbManager.getInstance().addNewHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);       
         } 
         catch (IOException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Hash database creation error", ex);
-            JOptionPane.showMessageDialog(this, "Cannot create hash database file at the selected location.");
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, "Cannot create a hash database file at the selected location.");
             return; 
         }
+        catch (HashDbManager.FileAlreadyExistsException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+            return;            
+        }
+        catch (HashDbManager.DuplicateHashSetNameException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+            return;                        
+        }
+        catch (HashDbManager.HashDatabaseAlreadyAddedException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+            return;                        
+        }
+        catch (HashDbManager.IllegalHashDatabaseFileNameExtensionException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+            return;                        
+        }
         catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, "Hash database creation error", ex);
-            JOptionPane.showMessageDialog(this, "Failed to create hash database.");
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, "Failed to create the hash database.");
             return;
         }             
 

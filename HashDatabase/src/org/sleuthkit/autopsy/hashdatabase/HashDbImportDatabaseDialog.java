@@ -27,14 +27,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.KnownFilesType;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class allow a user to select a hash database for import.
  */
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
+    
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
     private HashDb selectedHashDb;

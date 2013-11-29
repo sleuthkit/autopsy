@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this Action allow users to content to a hash database.
@@ -131,9 +132,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 public void actionPerformed(ActionEvent e) {
                     HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
                     if (null != hashDb) {
-                        HashDbManager hashSetManager = HashDbManager.getInstance();
-                        hashSetManager.addHashSet(hashDb);
-                        hashSetManager.save();
+                        HashDbManager.getInstance().save();
                         addFilesToHashSet(selectedFiles, hashDb);
                     }                    
                 }
