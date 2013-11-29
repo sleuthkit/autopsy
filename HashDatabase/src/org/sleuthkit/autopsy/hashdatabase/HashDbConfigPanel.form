@@ -74,13 +74,6 @@
                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
-                                      <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="indexButton" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
@@ -95,6 +88,21 @@
                                           <Component id="indexPathLabel" max="32767" attributes="0"/>
                                           <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
                                       </Group>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
+                                              <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                                              <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -111,7 +119,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="1" max="-2" attributes="0">
                                   <Component id="deleteDatabaseButton" alignment="0" pref="0" max="32767" attributes="0"/>
-                                  <Component id="newDatabaseButton" min="-2" pref="137" max="-2" attributes="0"/>
+                                  <Component id="createDatabaseButton" min="-2" pref="137" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="importDatabaseButton" min="-2" pref="133" max="-2" attributes="0"/>
@@ -184,7 +192,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="importDatabaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="newDatabaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="createDatabaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="deleteDatabaseButton" min="-2" max="-2" attributes="0"/>
@@ -390,13 +398,13 @@
     </Component>
     <Component class="javax.swing.JSeparator" name="optionsSeparator">
     </Component>
-    <Component class="javax.swing.JButton" name="newDatabaseButton">
+    <Component class="javax.swing.JButton" name="createDatabaseButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/sleuthkit/autopsy/hashdatabase/new16.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.newDatabaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.createDatabaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[140, 25]"/>
@@ -409,7 +417,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newDatabaseButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="createDatabaseButtonActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="indexPathLabelLabel">

@@ -55,8 +55,19 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         initComponents();
         customizeComponents();
         updateComponentsForNoSelection();
+        
+        // Listen to the ingest modules to refresh the enabled/disabled state of 
+        // the components in sync with file ingest.
+        IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (isFileIngestStatusChangeEvent(evt)) {
+                    updateComponents();
+                }
+            }
+        });                
     }
-    
+        
     private void customizeComponents() {
         setName("Hash Set Configuration");
         this.ingestWarningLabel.setVisible(false);
@@ -108,8 +119,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         optionsSeparator.setEnabled(false);
         
         // Update database action buttons.
-        newDatabaseButton.setEnabled(!ingestIsRunning);
-        importDatabaseButton.setEnabled(!ingestIsRunning);
+        createDatabaseButton.setEnabled(true);
+        importDatabaseButton.setEnabled(true);
         deleteDatabaseButton.setEnabled(false);
         
         // Update ingest in progress warning label.
@@ -168,7 +179,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             indexButton.setEnabled(false);
         }     
         
-        // Diable the indexing button if ingest is in progress.
+        // Disable the indexing button if ingest is in progress.
         if (ingestIsRunning) {
             indexButton.setEnabled(false);
         }
@@ -182,9 +193,9 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         optionsSeparator.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
           
         // Update database action buttons.
+        createDatabaseButton.setEnabled(true);
+        importDatabaseButton.setEnabled(true);
         deleteDatabaseButton.setEnabled(!ingestIsRunning);
-        importDatabaseButton.setEnabled(!ingestIsRunning);
-        importDatabaseButton.setEnabled(!ingestIsRunning);
         
         // Update ingest in progress warning label.
         ingestWarningLabel.setVisible(ingestIsRunning);        
@@ -196,6 +207,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
         }
         return shortenedPath;
+    }
+    
+    private boolean isFileIngestStatusChangeEvent(PropertyChangeEvent evt) {        
+        return evt.getPropertyName().equals(IngestManager.IngestModuleEvent.STARTED.toString()) || evt.getPropertyName().equals(IngestManager.IngestModuleEvent.COMPLETED.toString()) || evt.getPropertyName().equals(IngestManager.IngestModuleEvent.STOPPED.toString());         
     }
     
     @Override
@@ -230,13 +245,9 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashSetManager.save();        
     }
     
-    public void discard() {
-        HashDbManager.getInstance().loadLastSavedConfiguration();                
-    }
-    
     /**
     * Removes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file. 
-    * Occurs when user clicks "No" to the dialog popup box.
+    * Occurs when user clicks "No" to the dialog pop up box.
     * @param toRemove a list of HashDbs that are unindexed
     */
     void removeThese(List<HashDb> toRemove) {
@@ -434,7 +445,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         optionsLabel = new javax.swing.JLabel();
         informationSeparator = new javax.swing.JSeparator();
         optionsSeparator = new javax.swing.JSeparator();
-        newDatabaseButton = new javax.swing.JButton();
+        createDatabaseButton = new javax.swing.JButton();
         indexPathLabelLabel = new javax.swing.JLabel();
         indexPathLabel = new javax.swing.JLabel();
 
@@ -536,14 +547,14 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
 
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.optionsLabel.text")); // NOI18N
 
-        newDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(newDatabaseButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.newDatabaseButton.text")); // NOI18N
-        newDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
-        newDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        newDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
-        newDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.createDatabaseButton.text")); // NOI18N
+        createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        createDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
+        createDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newDatabaseButtonActionPerformed(evt);
+                createDatabaseButtonActionPerformed(evt);
             }
         });
 
@@ -571,12 +582,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(nameLabel)
-                                        .addGap(53, 53, 53)
-                                        .addComponent(hashDbNameLabel))
-                                    .addComponent(useForIngestCheckbox)
-                                    .addComponent(showInboxMessagesCheckBox)
-                                    .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(locationLabel)
                                             .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -588,7 +593,18 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                             .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
                                             .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                             .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(nameLabel)
+                                                .addGap(53, 53, 53)
+                                                .addComponent(hashDbNameLabel))
+                                            .addComponent(useForIngestCheckbox)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGap(21, 21, 21)
+                                                .addComponent(showInboxMessagesCheckBox)))
+                                        .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(optionsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -599,7 +615,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                    .addComponent(newDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -655,7 +671,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(newDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -693,7 +709,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases). Do you want to proceed? ", "Deleting a Hash Database Entry", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database for all cases. Do you want to proceed? ", "Delete Hash Database from Configuration", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
                 hashSetManager.removeHashSet(hashDb);
@@ -736,16 +752,17 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }    
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
-    private void newDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newDatabaseButtonActionPerformed
+    private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
         HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
         if (null != hashDb) {
             hashSetManager.addHashSet(hashDb);
             hashSetTableModel.refreshModel();
             ((HashSetTable)hashSetTable).selectRowByName(hashDb.getHashSetName());
         }
-    }//GEN-LAST:event_newDatabaseButtonActionPerformed
+    }//GEN-LAST:event_createDatabaseButtonActionPerformed
            
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton createDatabaseButton;
     private javax.swing.JButton deleteDatabaseButton;
     private javax.swing.JLabel hashDatabasesLabel;
     private javax.swing.JLabel hashDbIndexStatusLabel;
@@ -768,7 +785,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel locationLabel;
     private javax.swing.JLabel nameLabel;
-    private javax.swing.JButton newDatabaseButton;
     private javax.swing.JLabel optionsLabel;
     private javax.swing.JSeparator optionsSeparator;
     private javax.swing.JCheckBox showInboxMessagesCheckBox;
