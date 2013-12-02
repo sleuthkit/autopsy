@@ -116,7 +116,7 @@ public class JerichoParserWrapper {
                 }
             }
 
-            out.append(text).append("\n");
+            out.append(text).append("\n\n");
 
             out.append("----------NONVISIBLE TEXT----------\n\n");
             if(numScripts>1) {
