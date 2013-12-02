@@ -137,7 +137,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         SigTypeToExtMap.put("image/x-icon", new String[]{"ico"});
 
         SigTypeToExtMap.put("video/mp4", new String[]{"mp4"});
-        SigTypeToExtMap.put("video/quicktime", new String[]{"mov"});
+        SigTypeToExtMap.put("video/quicktime", new String[]{"mov", "qt", "mp4"});
         SigTypeToExtMap.put("video/3gpp", new String[]{"3gp"});
         SigTypeToExtMap.put("video/x-msvideo", new String[]{"avi"});
         SigTypeToExtMap.put("video/x-ms-wmv", new String[]{"wmv"});
