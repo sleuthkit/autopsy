@@ -206,7 +206,7 @@ public class HashDbManager {
         // and the same database is not added to the configuration more than once.
         hashSetNames.add(hashDb.getHashSetName());
         hashSetPaths.add(indexPath);
-        if (hasIndexOnly) {
+        if (!hasIndexOnly) {
             hashSetPaths.add(databasePath);
         }
         
