@@ -63,7 +63,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static boolean skipKnown = false;
     
     private int attrId = -1;    
-    //private FileTypeIdSimpleConfigPanel simpleConfigPanel;
+    private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     
@@ -262,17 +262,17 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
 
     @Override
     public boolean hasSimpleConfiguration() {
-        return false;
+        return true;
     }
     
-//    @Override
-//    public javax.swing.JPanel getSimpleConfiguration(String context) {
-//        if (simpleConfigPanel == null) {
-//           simpleConfigPanel = new FileTypeIdSimpleConfigPanel();  
-//        }
-//        
-//        return simpleConfigPanel;
-//    }    
+    @Override
+    public javax.swing.JPanel getSimpleConfiguration(String context) {
+        if (simpleConfigPanel == null) {
+           simpleConfigPanel = new FileExtMismatchSimpleConfigPanel();  
+        }
+        
+        return simpleConfigPanel;
+    }    
     
     @Override
     public boolean hasBackgroundJobsRunning() {
