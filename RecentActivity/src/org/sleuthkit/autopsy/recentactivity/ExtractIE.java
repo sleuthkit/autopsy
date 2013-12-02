@@ -134,11 +134,13 @@ public class ExtractIE extends Extract {
             if (controller.isCancelled()) {
                 break;
             }
-            
+               
             BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
             String line, url = "";
             try {
                 while ((line = reader.readLine()) != null) {
+                    // The actual shortcut line we are interested in is of the
+                    // form URL=http://path/to/website
                     if (line.startsWith("URL")) {
                         url = line.substring(line.indexOf("=") + 1);
                         break;
