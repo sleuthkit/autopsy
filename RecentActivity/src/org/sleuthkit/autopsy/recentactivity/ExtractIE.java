@@ -134,33 +134,8 @@ public class ExtractIE extends Extract {
             if (controller.isCancelled()) {
                 break;
             }
-               
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
-            String line, url = "";
-            try {
-                while ((line = reader.readLine()) != null) {
-                    // The actual shortcut line we are interested in is of the
-                    // form URL=http://path/to/website
-                    if (line.startsWith("URL")) {
-                        url = line.substring(line.indexOf("=") + 1);
-                        break;
-                    }
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex);
-                this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
-                continue;
-            } catch (IndexOutOfBoundsException ex) {
-                logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
-                this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
-                continue;
-            } finally {
-                try {
-                    reader.close();
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Failed to close reader.", ex);
-                }
-            }
+            
+            String url = getURLFromIEBookmarkFile(fav);
 
             String name = fav.getName();
             Long datetime = fav.getCrtime();
@@ -177,6 +152,35 @@ public class ExtractIE extends Extract {
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+    }
+    
+    private String getURLFromIEBookmarkFile(AbstractFile fav) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
+        String line, url = "";
+        try {
+            while ((line = reader.readLine()) != null) {
+                // The actual shortcut line we are interested in is of the
+                // form URL=http://path/to/website
+                if (line.startsWith("URL")) {
+                    url = line.substring(line.indexOf("=") + 1);
+                    break;
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex);
+            this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
+        } catch (IndexOutOfBoundsException ex) {
+            logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
+            this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to close reader.", ex);
+            }
+        }
+        
+        return url;
     }
 
     /**
