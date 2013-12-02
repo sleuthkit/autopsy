@@ -23,12 +23,16 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
+import java.io.BufferedReader;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.Writer;
 
 //Util Imports
@@ -122,35 +126,36 @@ public class ExtractIE extends Extract {
         }
         
         dataFound = true;
-        for (AbstractFile favoritesFile : favoritesFiles) {
-            if (favoritesFile.getSize() == 0) {
+        for (AbstractFile fav : favoritesFiles) {
+            if (fav.getSize() == 0) {
                 continue;
             }
          
-            // @@@ WHY DON"T WE PARSE THIS FILE more intelligently. It's text-based
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = favoritesFile;
-            byte[] t = new byte[(int) fav.getSize()];
+            
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
+            String line, url = "";
             try {
-                final int bytesRead = fav.read(t, 0, fav.getSize());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer favorite.", ex);
-                this.addErrorMessage(this.getName() + ": Error reading Internet Explorer Bookmark file " + favoritesFile.getName());
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("URL")) {
+                        url = line.substring(line.indexOf("=") + 1);
+                        break;
+                    }
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex);
+                this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
+                continue;
+            } catch (IndexOutOfBoundsException ex) {
+                logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
+                this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
                 continue;
             }
-            String bookmarkString = new String(t);
-            String re1 = ".*?";	// Non-greedy match on filler
-            String re2 = "((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
-            String url = "";
-            Pattern p = Pattern.compile(re1 + re2, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-            Matcher m = p.matcher(bookmarkString);
-            if (m.find()) {
-                url = m.group(1);
-            }
-            String name = favoritesFile.getName();
-            Long datetime = favoritesFile.getCrtime();
+
+            String name = fav.getName();
+            Long datetime = fav.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
@@ -161,7 +166,7 @@ public class ExtractIE extends Extract {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, favoritesFile, bbattributes);
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
