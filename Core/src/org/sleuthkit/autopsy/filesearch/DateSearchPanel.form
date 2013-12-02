@@ -181,7 +181,7 @@
         </Property>
       </Properties>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JComboBox&lt;&gt;((String[]) this.timeZones.toArray())"/>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JComboBox&lt;&gt;(this.timeZones.toArray(new String[this.timeZones.size()]))"/>
         <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="timeZoneComboBox.setRenderer(new DateSearchFilter.ComboBoxRenderer());"/>
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>

@@ -132,7 +132,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         dateCheckBox = new javax.swing.JCheckBox();
-        timeZoneComboBox = new JComboBox<>((String[]) this.timeZones.toArray());
+        timeZoneComboBox = new JComboBox<>(this.timeZones.toArray(new String[this.timeZones.size()]));
         timeZoneComboBox.setRenderer(new DateSearchFilter.ComboBoxRenderer());
         jLabel3 = new javax.swing.JLabel();
         dateFromTextField = new JFormattedTextField(this.dateFormat);
