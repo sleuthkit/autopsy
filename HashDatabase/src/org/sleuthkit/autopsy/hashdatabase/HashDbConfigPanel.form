@@ -96,10 +96,10 @@
                                               <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
                                               <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
                                           </Group>
-                                          <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="searchDuringIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Group type="102" attributes="0">
                                               <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
-                                              <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                                              <Component id="sendIngestMessagesCheckBox" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                       </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -180,9 +180,9 @@
                           <Component id="optionsSeparator" min="-2" pref="6" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="useForIngestCheckbox" min="-2" max="-2" attributes="0"/>
+                      <Component id="searchDuringIngestCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="sendIngestMessagesCheckBox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="ingestWarningLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -360,24 +360,24 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="indexButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="useForIngestCheckbox">
+    <Component class="javax.swing.JCheckBox" name="searchDuringIngestCheckbox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.useForIngestCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.searchDuringIngestCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useForIngestCheckboxActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="searchDuringIngestCheckboxActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="showInboxMessagesCheckBox">
+    <Component class="javax.swing.JCheckBox" name="sendIngestMessagesCheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.showInboxMessagesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/hashdatabase/Bundle.properties" key="HashDbConfigPanel.sendIngestMessagesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showInboxMessagesCheckBoxActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sendIngestMessagesCheckBoxActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="informationLabel">

@@ -40,13 +40,16 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
 public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private static final String NO_SELECTION_TEXT = "No database selected";
-    private static final String ERROR_GETTING_INDEX_STATUS = "Error occurred getting status";
+    private static final String ERROR_GETTING_PATH_TEXT = "Error occurred getting path";
+    private static final String ERROR_GETTING_INDEX_STATUS_TEXT = "Error occurred getting status";
     private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private HashDbManager hashSetManager = HashDbManager.getInstance();
     private HashSetTableModel hashSetTableModel = new HashSetTableModel();    
@@ -111,10 +114,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         indexButton.setEnabled(false);            
 
         // Update ingest options.
-        useForIngestCheckbox.setSelected(false);
-        useForIngestCheckbox.setEnabled(false);
-        showInboxMessagesCheckBox.setSelected(false);
-        showInboxMessagesCheckBox.setEnabled(false);
+        searchDuringIngestCheckbox.setSelected(false);
+        searchDuringIngestCheckbox.setEnabled(false);
+        sendIngestMessagesCheckBox.setSelected(false);
+        sendIngestMessagesCheckBox.setEnabled(false);
         optionsLabel.setEnabled(false);
         optionsSeparator.setEnabled(false);
         
@@ -133,8 +136,22 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         // Update descriptive labels.        
         hashDbNameLabel.setText(db.getHashSetName());
         hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
-        hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
-        indexPathLabel.setText(shortenPath(db.getIndexPath()));
+        
+        try {
+            hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex);                            
+            hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
+        }
+        
+        try {
+            indexPathLabel.setText(shortenPath(db.getIndexPath()));
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex);                            
+            indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
+        }
         
         // Update indexing components.
         try {
@@ -155,7 +172,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                     hashDbIndexStatusLabel.setText("Indexed");
                 }
                 hashDbIndexStatusLabel.setForeground(Color.black);
-                if (db.canBeReindexed()) {
+                if (db.canBeReIndexed()) {
                     indexButton.setText("Re-Index");
                     indexButton.setEnabled(true);
                 }
@@ -173,7 +190,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex);                
-            hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS);
+            hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
             hashDbIndexStatusLabel.setForeground(Color.red);
             indexButton.setText("Index");
             indexButton.setEnabled(false);
@@ -185,12 +202,12 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }
 
         // Update ingest option components.        
-        useForIngestCheckbox.setSelected(db.getUseForIngest());
-        useForIngestCheckbox.setEnabled(!ingestIsRunning);
-        showInboxMessagesCheckBox.setSelected(db.getShowInboxMessages());
-        showInboxMessagesCheckBox.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
-        optionsLabel.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
-        optionsSeparator.setEnabled(!ingestIsRunning && db.getUseForIngest() && db.getKnownFilesType().equals(HashDb.KnownFilesType.KNOWN_BAD));
+        searchDuringIngestCheckbox.setSelected(db.getSearchDuringIngest());
+        searchDuringIngestCheckbox.setEnabled(!ingestIsRunning);
+        sendIngestMessagesCheckBox.setSelected(db.getSendIngestMessages());
+        sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getSearchDuringIngest() && db.getKnownFilesType().equals(KnownFilesType.KNOWN_BAD));
+        optionsLabel.setEnabled(!ingestIsRunning);
+        optionsSeparator.setEnabled(!ingestIsRunning);
           
         // Update database action buttons.
         createDatabaseButton.setEnabled(true);
@@ -245,14 +262,9 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashSetManager.save();        
     }
     
-    /**
-    * Removes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file. 
-    * Occurs when user clicks "No" to the dialog pop up box.
-    * @param toRemove a list of HashDbs that are unindexed
-    */
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashSet(hashDb);
+            hashSetManager.removeHashDatabase(hashDb);
         }
         hashSetTableModel.refreshModel();        
     }
@@ -290,7 +302,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }
 
     boolean valid() {
-        // TODO check whether form is consistent and complete
         return true;
     }
         
@@ -439,8 +450,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashDbIndexStatusLabel = new javax.swing.JLabel();
         indexLabel = new javax.swing.JLabel();
         indexButton = new javax.swing.JButton();
-        useForIngestCheckbox = new javax.swing.JCheckBox();
-        showInboxMessagesCheckBox = new javax.swing.JCheckBox();
+        searchDuringIngestCheckbox = new javax.swing.JCheckBox();
+        sendIngestMessagesCheckBox = new javax.swing.JCheckBox();
         informationLabel = new javax.swing.JLabel();
         optionsLabel = new javax.swing.JLabel();
         informationSeparator = new javax.swing.JSeparator();
@@ -529,17 +540,17 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.useForIngestCheckbox.text")); // NOI18N
-        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(searchDuringIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.searchDuringIngestCheckbox.text")); // NOI18N
+        searchDuringIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useForIngestCheckboxActionPerformed(evt);
+                searchDuringIngestCheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(showInboxMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.showInboxMessagesCheckBox.text")); // NOI18N
-        showInboxMessagesCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(sendIngestMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.sendIngestMessagesCheckBox.text")); // NOI18N
+        sendIngestMessagesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showInboxMessagesCheckBoxActionPerformed(evt);
+                sendIngestMessagesCheckBoxActionPerformed(evt);
             }
         });
 
@@ -600,10 +611,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
                                                 .addComponent(hashDbNameLabel))
-                                            .addComponent(useForIngestCheckbox)
+                                            .addComponent(searchDuringIngestCheckbox)
                                             .addGroup(layout.createSequentialGroup()
                                                 .addGap(21, 21, 21)
-                                                .addComponent(showInboxMessagesCheckBox)))
+                                                .addComponent(sendIngestMessagesCheckBox)))
                                         .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(optionsLabel)
@@ -661,9 +672,9 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                             .addComponent(optionsLabel)
                             .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addComponent(useForIngestCheckbox)
+                        .addComponent(searchDuringIngestCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(showInboxMessagesCheckBox)
+                        .addComponent(sendIngestMessagesCheckBox)
                         .addGap(18, 18, 18)
                         .addComponent(ingestWarningLabel)
                         .addGap(0, 0, Short.MAX_VALUE))
@@ -712,7 +723,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (JOptionPane.showConfirmDialog(null, "This will remove the hash database for all cases. Do you want to proceed? ", "Delete Hash Database from Configuration", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashSet(hashDb);
+                hashSetManager.removeHashDatabase(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }
@@ -722,40 +733,41 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashSet(hashDb);
+                hashSetManager.removeHashDatabase(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }                
     }//GEN-LAST:event_hashSetTableKeyPressed
 
-    private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
+    private void searchDuringIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchDuringIngestCheckboxActionPerformed
         HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
         if (hashDb != null) {
-            hashDb.setUseForIngest(useForIngestCheckbox.isSelected());
-            showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
+            hashDb.setSearchDuringIngest(searchDuringIngestCheckbox.isSelected());
+            if (!searchDuringIngestCheckbox.isSelected()) {
+                sendIngestMessagesCheckBox.setSelected(false);
+            }
+            hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());            
         }
-    }//GEN-LAST:event_useForIngestCheckboxActionPerformed
+    }//GEN-LAST:event_searchDuringIngestCheckboxActionPerformed
 
-    private void showInboxMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showInboxMessagesCheckBoxActionPerformed
+    private void sendIngestMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIngestMessagesCheckBoxActionPerformed
         HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
         if (hashDb != null) {
-            hashDb.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
+            hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());
         }
-    }//GEN-LAST:event_showInboxMessagesCheckBoxActionPerformed
+    }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
-        HashDb hashDb = new HashDbImportDatabaseDialog().doDialog();
-        if (hashDb != null) {
-            hashSetManager.addHashSet(hashDb);
+        HashDb hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
+        if (null != hashDb) {
             hashSetTableModel.refreshModel();
             ((HashSetTable)hashSetTable).selectRowByName(hashDb.getHashSetName());
         }    
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
     private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
-        HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
+        HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
-            hashSetManager.addHashSet(hashDb);
             hashSetTableModel.refreshModel();
             ((HashSetTable)hashSetTable).selectRowByName(hashDb.getHashSetName());
         }
@@ -787,8 +799,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JLabel nameLabel;
     private javax.swing.JLabel optionsLabel;
     private javax.swing.JSeparator optionsSeparator;
-    private javax.swing.JCheckBox showInboxMessagesCheckBox;
+    private javax.swing.JCheckBox searchDuringIngestCheckbox;
+    private javax.swing.JCheckBox sendIngestMessagesCheckBox;
     private javax.swing.JLabel typeLabel;
-    private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
 }

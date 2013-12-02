@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 public class HashDbIngestModule extends IngestModuleAbstractFile {
     private static HashDbIngestModule instance = null;
@@ -138,9 +139,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
         HashDbManager hashDbManager = HashDbManager.getInstance();
-        getHashSetsUsableForIngest(hashDbManager.getKnownBadHashSets(), knownBadHashSets);
-        getHashSetsUsableForIngest(hashDbManager.getKnownHashSets(), knownHashSets);        
-        calcHashesIsSet = hashDbManager.shouldAlwaysCalculateHashes();
+        getHashSetsUsableForIngest(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
+        getHashSetsUsableForIngest(hashDbManager.getKnownFileHashSets(), knownHashSets);        
+        calcHashesIsSet = hashDbManager.getAlwaysCalculateHashes();
 
         if (knownHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known hash database set", "Known file search will not be executed."));
@@ -155,14 +156,14 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         assert hashDbsForIngest != null;
         hashDbsForIngest.clear();
         for (HashDb db : hashDbs) {
-            if (db.getUseForIngest()) {
+            if (db.getSearchDuringIngest()) {
                 try {
                     if (db.hasLookupIndex()) {
                         hashDbsForIngest.add(db);
                     }
                 }
                 catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error get index status for hash database at " +db.getDatabasePath(), ex);
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getHashSetName() +" hash database", ex);
                 }
             }
         }        
@@ -211,7 +212,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
-                if (db.hasHashOfContent(file)) {
+                if (db.hasMd5HashOf(file)) {
                     foundBad = true;
                     knownBadCount += 1;
                     try {
@@ -223,7 +224,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                         ret = ProcessResult.ERROR;
                     }
                     String hashSetName = db.getHashSetName();
-                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, db.getShowInboxMessages());
+                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, db.getSendIngestMessages());
                 }
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
@@ -241,7 +242,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             for (HashDb db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();
-                    if (db.hasHashOfContent(file)) {
+                    if (db.hasMd5HashOf(file)) {
                         try {
                             skCase.setKnown(file, TskData.FileKnown.KNOWN);
                             break;
