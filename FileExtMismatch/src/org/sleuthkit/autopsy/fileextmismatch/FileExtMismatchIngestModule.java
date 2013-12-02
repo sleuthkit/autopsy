@@ -154,23 +154,28 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
                 String extStr = abstractFile.getName().substring(i + 1);
             
                 // find file_sig value.
-                ArrayList<BlackboardArtifact> artList = abstractFile.getArtifacts(ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID());
+                // getArtifacts by type doesn't seem to work, so get all artifacts
+                ArrayList<BlackboardArtifact> artList = abstractFile.getAllArtifacts();
+                             
                 for (BlackboardArtifact art : artList) {
                     List<BlackboardAttribute> atrList = art.getAttributes();
                     for (BlackboardAttribute att : atrList) {
                         if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
                                 
                             //get known allowed values from the map for this type
-                            List<String> allowedExtList = Arrays.asList(SigTypeToExtMap.get(att.getValueString()));
-                            
-                            // see if the filename ext is in the allowed list
-                            if (allowedExtList != null) {
-                                for (String e : allowedExtList) {
-                                    if (e.equals(extStr)) {
-                                        return false;
+                            String[] slist = SigTypeToExtMap.get(att.getValueString());
+                            if (slist != null) {
+                                List<String> allowedExtList = Arrays.asList(slist);
+
+                                // see if the filename ext is in the allowed list
+                                if (allowedExtList != null) {
+                                    for (String e : allowedExtList) {
+                                        if (e.equals(extStr)) {
+                                            return false;
+                                        }
                                     }
+                                    return true; //potential mismatch
                                 }
-                                return true; //potential mismatch
                             }
                         }
                     }                
