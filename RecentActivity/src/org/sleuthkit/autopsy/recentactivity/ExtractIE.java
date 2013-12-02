@@ -154,6 +154,12 @@ public class ExtractIE extends Extract {
                 logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
                 this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
                 continue;
+            } finally {
+                try {
+                    reader.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed to close reader.", ex);
+                }
             }
 
             String name = fav.getName();
