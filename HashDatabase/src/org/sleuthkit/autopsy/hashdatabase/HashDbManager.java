@@ -70,13 +70,13 @@ public class HashDbManager {
     private static final String VALUE_ATTRIBUTE = "value";
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; 
     private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
-    private static HashDbManager instance;        
+    private static HashDbManager instance = null;        
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
-    private boolean alwaysCalculateHashes;            
+    private boolean alwaysCalculateHashes = false;            
     
     /**
      * Gets the singleton instance of this class.
@@ -96,37 +96,38 @@ public class HashDbManager {
 
     /**
      * Gets the extension, without the dot separator, that the SleuthKit requires
-     * for hash database files that combine the database and the index.
+     * for the hash database files that combine a database and an index and can 
+     * therefore be updated.
      */
-    public static String getHashDatabaseFileExtension() {
+    static String getHashDatabaseFileExtension() {
         return HASH_DATABASE_FILE_EXTENSON;
     }
     
-    public class DuplicateHashSetNameException extends Exception {  
+    class DuplicateHashSetNameException extends Exception {  
         private DuplicateHashSetNameException(String hashSetName) {
             super("The hash set name '"+ hashSetName +"' has already been used for another hash database.");
         }
     }
     
-    public class HashDatabaseDoesNotExistException extends Exception {        
+    class HashDatabaseDoesNotExistException extends Exception {        
         private HashDatabaseDoesNotExistException(String path) {
             super("No hash database found at\n" + path);
         }
     }
     
-    public class HashDatabaseFileAlreadyExistsException extends Exception {
+    class HashDatabaseFileAlreadyExistsException extends Exception {
         private HashDatabaseFileAlreadyExistsException(String path) {
             super("A file already exists at\n" + path);
         }
     }
     
-    public class HashDatabaseAlreadyAddedException extends Exception {
+    class HashDatabaseAlreadyAddedException extends Exception {
         private HashDatabaseAlreadyAddedException(String path) {
             super("The hash database at\n" + path + "\nhas already been created or imported.");
         }
     }
     
-    public class IllegalHashDatabaseFileNameExtensionException extends Exception {
+    class IllegalHashDatabaseFileNameExtensionException extends Exception {
         private IllegalHashDatabaseFileNameExtensionException() {
             super("The hash database file name must have a ." + getHashDatabaseFileExtension() + " extension.");
         }
@@ -144,7 +145,7 @@ public class HashDbManager {
      * @return A HashDb representing the hash database.
      * @throws HashDatabaseDoesNotExistException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException 
      */
-    public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseDoesNotExistException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
+    synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseDoesNotExistException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
         if (!new File(path).exists()) {
             throw new HashDatabaseDoesNotExistException(path);
         }
@@ -172,7 +173,7 @@ public class HashDbManager {
      * @return A HashDb representing the hash database.
      * @throws TskCoreException 
      */
-    public synchronized HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseFileAlreadyExistsException, IllegalHashDatabaseFileNameExtensionException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
+    synchronized HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseFileAlreadyExistsException, IllegalHashDatabaseFileNameExtensionException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
         File file = new File(path);
         if (file.exists()) {
             throw new HashDatabaseFileAlreadyExistsException(path);
@@ -195,16 +196,17 @@ public class HashDbManager {
     private HashDb addHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
         HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
         
-        // Get the paths before updating the collections since the path
-        // getting methods may throw. 
+        // Get the indentity data before updating the collections since the 
+        // accessor methods may throw. 
         String databasePath = hashDb.getDatabasePath();
         String indexPath = hashDb.getIndexPath();
+        boolean hasIndexOnly = hashDb.hasIndexOnly();
 
         // Update the collections used to ensure that hash set names are unique 
         // and the same database is not added to the configuration more than once.
         hashSetNames.add(hashDb.getHashSetName());
         hashSetPaths.add(indexPath);
-        if (!hashDb.hasIndexOnly()) {
+        if (hasIndexOnly) {
             hashSetPaths.add(databasePath);
         }
         
@@ -226,16 +228,16 @@ public class HashDbManager {
      * configuration panels.
      * @throws TskCoreException
      */
-    public synchronized void removeHashDatabase(HashDb hashDb) {
-        // First remove the database from whichever hash set list it occupies,
+    synchronized void removeHashDatabase(HashDb hashDb) {
+        // Remove the database from whichever hash set list it occupies,
         // and remove its hash set name from the hash set used to ensure unique
-        // hash set names are used. These operations will succeed and constitute
+        // hash set names are used, before undertaking These operations will succeed and constitute
         // a mostly effective removal, even if the subsequent operations fail.
         knownHashSets.remove(hashDb);
         knownBadHashSets.remove(hashDb);
         hashSetNames.remove(hashDb.getHashSetName());
 
-        // Now undertake the operations that could fail.
+        // Now undertake the operations that could throw.
         try {
             hashSetPaths.remove(hashDb.getIndexPath());
         }
@@ -318,7 +320,7 @@ public class HashDbManager {
      * Sets the value for the flag that indicates whether hashes should be calculated
      * for content even if no hash databases are configured.
      */
-    public synchronized void setAlwaysCalculateHashes(boolean alwaysCalculateHashes) {
+    synchronized void setAlwaysCalculateHashes(boolean alwaysCalculateHashes) {
         this.alwaysCalculateHashes = alwaysCalculateHashes;
     }
     
@@ -326,7 +328,7 @@ public class HashDbManager {
      * Gets the flag that indicates whether hashes should be calculated
      * for content even if no hash databases are configured.
      */
-    public synchronized boolean getAlwaysCalculateHashes() {
+    synchronized boolean getAlwaysCalculateHashes() {
         return alwaysCalculateHashes;
     }
     
@@ -354,18 +356,16 @@ public class HashDbManager {
         }
     }
 
-    private void closeHashDatabases(List<HashDb> hashDbs) {
-        String dbPath = "";
-        try {
-            for (HashDb db : hashDbs) {
-                dbPath = db.getDatabasePath();
-                db.close();
+    private void closeHashDatabases(List<HashDb> hashDatabases) {
+        for (HashDb database : hashDatabases) {
+            try {
+                database.close();
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex);
             }
         }
-        catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing hash database at " + dbPath, ex);
-        }        
-        hashDbs.clear();            
+        hashDatabases.clear();            
     }
     
     private boolean writeHashSetConfigurationToDisk() {
@@ -387,8 +387,8 @@ public class HashDbManager {
 
             success = XMLUtil.saveDoc(HashDbManager.class, configFilePath, ENCODING, doc);
         } 
-        catch (ParserConfigurationException e) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error saving hash databases", e);
+        catch (ParserConfigurationException ex) {
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error saving hash databases", ex);
         }
         return success;        
     }
@@ -449,8 +449,8 @@ public class HashDbManager {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists.");
         }
         
-        // Create HashDb objects for each hash set element.
-        // TODO: Does this code implement the correct policy for handling a malformed config file?
+        // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
+        // a particular hash database is not well-formed.
         String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class";
         String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class";
         for (int i = 0; i < numSets; ++i) {
@@ -594,6 +594,17 @@ public class HashDbManager {
         return filePath;
     }    
     
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            closeHashDatabases(knownHashSets);
+            closeHashDatabases(knownBadHashSets);
+        }
+        finally {
+            super.finalize();
+        }
+    }
+    
     /**
      * Instances of this class represent hash databases used to classify files as known or know bad. 
      */
@@ -724,14 +735,12 @@ public class HashDbManager {
          * @throws TskCoreException 
          */
         public void addHashes(Content content, String comment) throws TskCoreException {
-            // TODO: This only works for AbstractFiles at present. Change when Content
-            // can be queried for hashes.
+            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
-                // TODO: Add support for SHA-1 and SHA-256 hashes.
                 if (null != file.getMd5Hash()) {
-                    SleuthkitJNI.addToHashDatabase(file.getName(), file.getMd5Hash(), null, null, comment, handle);
+                    SleuthkitJNI.addToHashDatabase(null, file.getMd5Hash(), null, null, comment, handle);
                 }
             }
         }
