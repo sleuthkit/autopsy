@@ -104,16 +104,27 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         }        
         
         // Set up default mapping (eventually this will be loaded from a config file)  
-        // For now, since we don't detect specific MS office openxml formats, we just assume that 
+        
+        // MS Office: For now, since we don't detect specific MS office openxml formats, we just assume that 
         // those will get caught under "application/x-msoffice". 
         SigTypeToExtMap.put("application/x-msoffice", new String[] {"doc", "docx", "docm", "dotm", "dot", "dotx", "xls", "xlt", "xla", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "ppt", "pot", "pps","ppa", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
+        SigTypeToExtMap.put("application/x-ooxml", new String[]{"docx", "dotx", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
         SigTypeToExtMap.put("application/msword", new String[]{"doc","dot"});
         SigTypeToExtMap.put("application/vnd.ms-excel", new String[]{"xls","xlt","xla"});
         SigTypeToExtMap.put("application/vnd.ms-powerpoint", new String[]{"ppt","pot","pps","ppa"});
         
+        // Zip can get triggered both by archive zips and sometimes the newer PKZIP'ed OOXML MS office files
+        SigTypeToExtMap.put("application/zip", new String[]{"zip", "docx", "dotx", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
+        
+        // Open / Libre Office:
+        SigTypeToExtMap.put("application/vnd.oasis.opendocument.text", new String[]{"odt"});
+        SigTypeToExtMap.put("application/vnd.oasis.opendocument.spreadsheet", new String[]{"ods"});
+        SigTypeToExtMap.put("application/vnd.oasis.opendocument.presentation", new String[]{"odp"});
+        ////@todo less-used open office formats
+        
         SigTypeToExtMap.put("application/pdf", new String[]{"pdf"});      
         SigTypeToExtMap.put("application/rtf", new String[]{"rtf"});
-        SigTypeToExtMap.put("text/plain", new String[]{"txt"});
+        SigTypeToExtMap.put("text/plain", new String[]{"txt", "htm", "html", "ini"});
         SigTypeToExtMap.put("text/html", new String[]{"htm", "html", "htx", "htmls"});
         //todo application/xhtml+xml
         
@@ -133,7 +144,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         SigTypeToExtMap.put("video/mpeg", new String[]{"mpeg","mpg"});
         SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
 
-        SigTypeToExtMap.put("application/zip", new String[]{"zip"});
+        
     }
     
     @Override
