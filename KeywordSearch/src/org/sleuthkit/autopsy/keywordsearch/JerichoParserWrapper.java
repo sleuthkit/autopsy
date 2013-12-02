@@ -47,6 +47,15 @@ public class JerichoParserWrapper {
     }
     
     /**
+     * Returns the reader, initialized in parse(), which will be
+     * null if parse() is not called or if parse() throws an error.
+     * @return Reader
+     */
+    public Reader getReader() {
+        return reader;
+    }
+    
+    /**
      * Initialize the reader by parsing the InputStream, adding it to StringBuilder,
      * and creating a StringReader from it.
      */
@@ -133,15 +142,6 @@ public class JerichoParserWrapper {
         }
     }
     
-    /**
-     * Returns the reader, initialized in parse(), which will be
-     * null if parse() is not called or if parse() throws an error.
-     * @return Reader
-     */
-    public Reader getReader() {
-        return reader;
-    }
-
     // Extract text from the source, nicely formatted with whitespace and
     // newlines where appropriate.
     private String renderHTMLAsPlainText(Source source) {
