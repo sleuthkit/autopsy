@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this Action allow users to content to a hash database.
@@ -129,11 +130,9 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             newHashSetItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    HashDb hashDb = new HashDbCreateDatabaseDialog().doDialog();
+                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
                     if (null != hashDb) {
-                        HashDbManager hashSetManager = HashDbManager.getInstance();
-                        hashSetManager.addHashSet(hashDb);
-                        hashSetManager.save();
+                        HashDbManager.getInstance().save();
                         addFilesToHashSet(selectedFiles, hashDb);
                     }                    
                 }
@@ -146,7 +145,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
                     try {
-                        hashSet.add(file);
+                        hashSet.addHashes(file);
                     }
                     catch (TskCoreException ex) {                        
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);                

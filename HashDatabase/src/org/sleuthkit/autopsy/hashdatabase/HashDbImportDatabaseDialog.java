@@ -27,45 +27,61 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.KnownFilesType;
+import javax.swing.JFrame;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseDoesNotExistException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.DuplicateHashSetNameException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseAlreadyAddedException;
 
 /**
- * Instances of this class allow a user to select a hash database for import.
+ * Instances of this class allow a user to select an existing  hash database and 
+ * add it to the set of hash databases used to classify files as unknown, known, 
+ * or known bad.
  */
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
+    
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
-    private HashDb selectedHashDb;
-
-    HashDbImportDatabaseDialog() {
-        super(new javax.swing.JFrame(), "Import Hash Database", true);
-        setResizable(false);
-        initComponents();
-        customizeComponents();
-    }
+    private HashDb selectedHashDb = null;
     
-    void customizeComponents() {
+    /**
+     * Displays a dialog that allows a user to select an existing  hash database
+     * and add it to the set of hash databases used to classify files as unknown, 
+     * known, or known bad.
+     */    
+    HashDbImportDatabaseDialog() {
+        super(new JFrame(), "Import Hash Database", true);
+        initFileChooser();
+        initComponents();
+        display();
+    }
+        
+    /**
+     * Get the hash database imported by the user, if any.
+     * @return A HashDb object or null.
+     */
+    HashDb getHashDatabase() {
+        return selectedHashDb;
+    }
+        
+    private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
         fileChooser.setFileFilter(filter);
-        fileChooser.setMultiSelectionEnabled(false);
-    }
-    
-    HashDb doDialog() {
-        selectedHashDb =  null;
-        
-        // Center and display the dialog.
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
-        this.setVisible(true);
-        
-        return selectedHashDb;
+        fileChooser.setMultiSelectionEnabled(false);        
     }
 
+    private void display() {
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        setVisible(true);                        
+    }
+        
     private static String shortenPath(String path) {
         String shortenedPath = path;
         if (shortenedPath.length() > 50){
@@ -258,11 +274,13 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_openButtonActionPerformed
 
     private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
+        searchDuringIngestCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setSelected(false);
         sendIngestMessagesCheckbox.setEnabled(false);
     }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
+        searchDuringIngestCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setEnabled(true);
     }//GEN-LAST:event_knownBadRadioButtonActionPerformed
@@ -272,19 +290,21 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        if(selectedFilePath.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "A hash database file path must be selected.");
-            return;
-        }
+        // Note that the error handlers in this method call return without disposing of the 
+        // dialog to allow the user to try again, if desired.
         
         if(hashSetNameTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "A hash set name must be entered..");
+            JOptionPane.showMessageDialog(this, "A hash set name must be entered.", "Import Hash Database Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
+        if(selectedFilePath.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "A hash database file path must be selected.", "Import Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }        
         File file = new File(selectedFilePath);
         if (!file.exists()) {
-            JOptionPane.showMessageDialog(this, "The selected hash database does not exist.");
+            JOptionPane.showMessageDialog(this, "The selected hash database does not exist.", "Import Hash Database Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
                         
@@ -296,16 +316,22 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             type = KnownFilesType.KNOWN_BAD;
         }
         
+        String errorMessage = "Failed to open hash database at " + selectedFilePath + ".";
         try {
-            selectedHashDb = HashDb.openHashDatabase(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabase(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
         } 
-        catch (TskCoreException ex) {
-            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, "Failed to open hash database at " + selectedFilePath, ex);
-            JOptionPane.showMessageDialog(this, "Failed to import the selected database.\nPlease verify that the selected file is a hash database.");
+        catch (HashDatabaseDoesNotExistException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException ex) {
+            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Import Hash Database Error", JOptionPane.ERROR_MESSAGE);
             return;
-        }        
+        }    
+        catch (TskCoreException ex) {
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
+            JOptionPane.showMessageDialog(this, errorMessage, "Import Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }             
         
-        this.dispose();
+        dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void searchDuringIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchDuringIngestCheckboxActionPerformed
