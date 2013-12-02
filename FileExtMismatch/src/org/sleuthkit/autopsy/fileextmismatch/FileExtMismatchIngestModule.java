@@ -103,11 +103,37 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             }
         }        
         
-        // Set up default mapping (eventually this will be loaded from a config file)
-        String[] exts = {"doc", "docx", "dot", "dotx", "xls", "xlsx", "ppt", "pot", "pptx", "potx"};
-        SigTypeToExtMap.put("application/x-msoffice", exts);
-        String[] exts2 = {"jpg","jpeg"};
-        SigTypeToExtMap.put("image/jpeg", exts2);
+        // Set up default mapping (eventually this will be loaded from a config file)  
+        // For now, since we don't detect specific MS office openxml formats, we just assume that 
+        // those will get caught under "application/x-msoffice". 
+        SigTypeToExtMap.put("application/x-msoffice", new String[] {"doc", "docx", "docm", "dotm", "dot", "dotx", "xls", "xlt", "xla", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "ppt", "pot", "pps","ppa", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
+        SigTypeToExtMap.put("application/msword", new String[]{"doc","dot"});
+        SigTypeToExtMap.put("application/vnd.ms-excel", new String[]{"xls","xlt","xla"});
+        SigTypeToExtMap.put("application/vnd.ms-powerpoint", new String[]{"ppt","pot","pps","ppa"});
+        
+        SigTypeToExtMap.put("application/pdf", new String[]{"pdf"});      
+        SigTypeToExtMap.put("application/rtf", new String[]{"rtf"});
+        SigTypeToExtMap.put("text/plain", new String[]{"txt"});
+        SigTypeToExtMap.put("text/html", new String[]{"htm", "html", "htx", "htmls"});
+        //todo application/xhtml+xml
+        
+        SigTypeToExtMap.put("image/jpeg", new String[]{"jpg","jpeg"});
+        SigTypeToExtMap.put("image/tiff", new String[]{"tiff", "tif"});
+        SigTypeToExtMap.put("image/png", new String[]{"png"});
+        SigTypeToExtMap.put("image/gif", new String[]{"gif"});
+        SigTypeToExtMap.put("image/x-ms-bmp", new String[]{"bmp"});
+        SigTypeToExtMap.put("image/bmp", new String[]{"bmp", "bm"});
+        SigTypeToExtMap.put("image/x-icon", new String[]{"ico"});
+
+        SigTypeToExtMap.put("video/mp4", new String[]{"mp4"});
+        SigTypeToExtMap.put("video/quicktime", new String[]{"mov"});
+        SigTypeToExtMap.put("video/3gpp", new String[]{"3gp"});
+        SigTypeToExtMap.put("video/x-msvideo", new String[]{"avi"});
+        SigTypeToExtMap.put("video/x-ms-wmv", new String[]{"wmv"});
+        SigTypeToExtMap.put("video/mpeg", new String[]{"mpeg","mpg"});
+        SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
+
+        SigTypeToExtMap.put("application/zip", new String[]{"zip"});
     }
     
     @Override
@@ -149,37 +175,38 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
         try {
+            String extStr = "";
             int i = abstractFile.getName().lastIndexOf(".");
             if ((i > -1) && ((i + 1) < abstractFile.getName().length())) {
-                String extStr = abstractFile.getName().substring(i + 1);
+                extStr = abstractFile.getName().substring(i + 1).toLowerCase();
+            }
             
-                // find file_sig value.
-                // getArtifacts by type doesn't seem to work, so get all artifacts
-                ArrayList<BlackboardArtifact> artList = abstractFile.getAllArtifacts();
-                             
-                for (BlackboardArtifact art : artList) {
-                    List<BlackboardAttribute> atrList = art.getAttributes();
-                    for (BlackboardAttribute att : atrList) {
-                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
-                                
-                            //get known allowed values from the map for this type
-                            String[] slist = SigTypeToExtMap.get(att.getValueString());
-                            if (slist != null) {
-                                List<String> allowedExtList = Arrays.asList(slist);
+            // find file_sig value.
+            // getArtifacts by type doesn't seem to work, so get all artifacts
+            ArrayList<BlackboardArtifact> artList = abstractFile.getAllArtifacts();
 
-                                // see if the filename ext is in the allowed list
-                                if (allowedExtList != null) {
-                                    for (String e : allowedExtList) {
-                                        if (e.equals(extStr)) {
-                                            return false;
-                                        }
+            for (BlackboardArtifact art : artList) {
+                List<BlackboardAttribute> atrList = art.getAttributes();
+                for (BlackboardAttribute att : atrList) {
+                    if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
+
+                        //get known allowed values from the map for this type
+                        String[] slist = SigTypeToExtMap.get(att.getValueString());
+                        if (slist != null) {
+                            List<String> allowedExtList = Arrays.asList(slist);
+
+                            // see if the filename ext is in the allowed list
+                            if (allowedExtList != null) {
+                                for (String e : allowedExtList) {
+                                    if (e.equals(extStr)) {
+                                        return false;
                                     }
-                                    return true; //potential mismatch
                                 }
+                                return true; //potential mismatch
                             }
                         }
-                    }                
-                }
+                    }
+                }                
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
