@@ -281,9 +281,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
        
         
         //if errors, display them on the progress panel
+        boolean critErr = false;
+        if (result == DSPCallback.DSP_Result.CRITICAL_ERRORS) {
+            critErr = true;
+        }
         for ( String err: errList ) {
             //  TBD: there probably should be an error level for each error
-            progressPanel.addErrors(err, false);
+            progressPanel.addErrors(err, critErr);
         }
       
         newContents.clear();
