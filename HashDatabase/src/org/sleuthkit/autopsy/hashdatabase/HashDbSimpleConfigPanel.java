@@ -36,12 +36,12 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
 public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
-    private HashDbsTableModel knownTableModel;
-    private HashDbsTableModel knownBadTableModel;
+    private HashDatabasesTableModel knownTableModel;
+    private HashDatabasesTableModel knownBadTableModel;
 
-    public HashDbSimpleConfigPanel() {
-        knownTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownFileHashSets());
-        knownBadTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownBadFileHashSets());
+    HashDbSimpleConfigPanel() {
+        knownTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN);
+        knownBadTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN_BAD);
         initComponents();
         customizeComponents();
     }
@@ -59,10 +59,10 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
             }            
         });
         
-        refreshComponents();
+        load();
     }
 
-    private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDbsTableModel tableModel) {
+    private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDatabasesTableModel tableModel) {
         table.setModel(tableModel);        
         table.setTableHeader(null);
         table.setRowSelectionAllowed(false);
@@ -80,12 +80,16 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }        
     }
     
-    public void refreshComponents() {        
+    void load() {        
         knownTableModel.refresh();
         knownBadTableModel.refresh();
         refreshAlwaysCalcHashesCheckbox(); 
     }
 
+    void save() {
+        HashDbManager.getInstance().save();        
+    }
+    
     private void refreshAlwaysCalcHashesCheckbox() {        
         boolean noHashDbsConfiguredForIngest = true; 
         for (HashDb hashDb : HashDbManager.getInstance().getAllHashSets()) {
@@ -113,20 +117,32 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }
     }
         
-    private class HashDbsTableModel extends AbstractTableModel {        
-        private final List<HashDb> hashDbs;
+    private class HashDatabasesTableModel extends AbstractTableModel {        
+        private final HashDbManager.HashDb.KnownFilesType hashDatabasesType;  
+        private List<HashDb> hashDatabases;
         
-        HashDbsTableModel(List<HashDb> hashDbs) {
-            this.hashDbs = hashDbs;
+        HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType hashDatabasesType) {
+            this.hashDatabasesType = hashDatabasesType;
+            getHashDatabases();
         }
+            
+        private void getHashDatabases() {
+            if (HashDbManager.HashDb.KnownFilesType.KNOWN == hashDatabasesType) {
+                hashDatabases = HashDbManager.getInstance().getKnownFileHashSets();
+            }
+            else {
+                hashDatabases = HashDbManager.getInstance().getKnownBadFileHashSets();
+            }            
+        }    
         
         private void refresh() {
+            getHashDatabases();
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return hashDbs.size();
+            return hashDatabases.size();
         }
 
         @Override
@@ -136,7 +152,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb db = hashDbs.get(rowIndex);
+            HashDb db = hashDatabases.get(rowIndex);
             if (columnIndex == 0) {
                 return db.getSearchDuringIngest();
             } else {
@@ -152,7 +168,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0) {
-                HashDb db = hashDbs.get(rowIndex);
+                HashDb db = hashDatabases.get(rowIndex);
                 boolean dbHasIndex = false;
                 try {
                     dbHasIndex = db.hasLookupIndex();

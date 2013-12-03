@@ -95,8 +95,11 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
-        if (simpleConfigPanel == null) {
+        if (null == simpleConfigPanel) {
            simpleConfigPanel = new HashDbSimpleConfigPanel();  
+        }
+        else {
+            simpleConfigPanel.load();
         }
         
         return simpleConfigPanel;
@@ -104,7 +107,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public void saveSimpleConfiguration() {
-        HashDbManager.getInstance().save();
+        if (simpleConfigPanel != null) {
+            simpleConfigPanel.save();
+        }
     }
     
     @Override
@@ -129,7 +134,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         }
         
         if (simpleConfigPanel != null) {
-            simpleConfigPanel.refreshComponents();
+            simpleConfigPanel.load();
         }
     }
     
