@@ -95,5 +95,9 @@
                 <package>org.sleuthkit.autopsy.hashdatabase</package>
             </public-packages>
         </data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>openide</word>
+            <word>org</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>
