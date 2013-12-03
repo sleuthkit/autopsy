@@ -620,18 +620,7 @@ public class HashDbManager implements PropertyChangeListener {
         }        
         return filePath;
     }    
-    
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            closeHashDatabases(knownHashSets);
-            closeHashDatabases(knownBadHashSets);
-        }
-        finally {
-            super.finalize();
-        }
-    }
-    
+        
     /**
      * Instances of this class represent hash databases used to classify files as known or know bad. 
      */
