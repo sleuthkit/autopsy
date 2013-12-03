@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class implements a singleton that manages the set of hash databases
  * used to classify files as unknown, known or known bad. 
  */
-public class HashDbManager {
+public class HashDbManager implements PropertyChangeListener {
     
     private static final String ROOT_ELEMENT = "hash_sets";
     private static final String SET_ELEMENT = "hash_set";
@@ -194,20 +195,22 @@ public class HashDbManager {
     }    
 
     private HashDb addHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
+        // Wrap an object around the handle.
         HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
         
         // Get the indentity data before updating the collections since the 
         // accessor methods may throw. 
         String databasePath = hashDb.getDatabasePath();
         String indexPath = hashDb.getIndexPath();
-        boolean hasIndexOnly = hashDb.hasIndexOnly();
 
         // Update the collections used to ensure that hash set names are unique 
         // and the same database is not added to the configuration more than once.
         hashSetNames.add(hashDb.getHashSetName());
-        hashSetPaths.add(indexPath);
-        if (!hasIndexOnly) {
-            hashSetPaths.add(databasePath);
+        if (!databasePath.equals("None")) {
+            hashSetPaths.add(databasePath);            
+        }
+        if (!indexPath.equals("None")) {
+            hashSetPaths.add(indexPath);            
         }
         
         // Add the hash database to the appropriate collection for its type.
@@ -219,6 +222,30 @@ public class HashDbManager {
         }      
         
         return hashDb;
+    }
+        
+    synchronized void indexHashDatabase(HashDb hashDb, boolean deleteIndexFile) {
+        hashDb.addPropertyChangeListener(this);
+        HashDbIndexer creator = new HashDbIndexer(hashDb, deleteIndexFile);
+        creator.execute();        
+    }
+    
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        if (event.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
+            HashDb hashDb = (HashDb)event.getNewValue();
+            if (null != hashDb) {
+                try {
+                    String indexPath = hashDb.getIndexPath();
+                    if (!indexPath.equals("None")) {
+                        hashSetPaths.add(indexPath);            
+                    }                
+                }
+                catch (TskCoreException ex) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database after indexing", ex);                            
+                }
+            }
+        }
     }
         
     /**
@@ -699,18 +726,6 @@ public class HashDbManager {
             this.sendIngestMessages = showInboxMessages;
         }
 
-        public boolean hasLookupIndex() throws TskCoreException {
-            return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
-        }
-
-        public boolean hasIndexOnly() throws TskCoreException {
-            return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
-        }
-        
-        public boolean canBeReIndexed() throws TskCoreException {
-            return SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
-        }
-
         /**
          * Indicates whether the hash database accepts updates.
          * @return True if the database accepts updates, false otherwise.
@@ -759,11 +774,10 @@ public class HashDbManager {
 
         public HashInfo lookUp(Content content) throws TskCoreException {
             HashInfo result = null;
-            // TODO: This only works for AbstractFiles at present. Change when Content can be queried for hashes.
+            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
-                // TODO: Add support for SHA-1 and SHA-256 hashes.
                 if (null != file.getMd5Hash()) {
                     result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
                 }
@@ -771,51 +785,58 @@ public class HashDbManager {
             return result;
         }         
 
+        boolean hasLookupIndex() throws TskCoreException {
+            return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
+        }
+
+        boolean hasIndexOnly() throws TskCoreException {
+            return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
+        }
+        
+        boolean canBeReIndexed() throws TskCoreException {
+            return SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
+        }
+        
         boolean isIndexing() {
             return indexing;
-        }
-
-        // Tries to index the database (overwrites any existing index) using a 
-        // SwingWorker.
-        void createIndex(boolean deleteIndexFile) {
-            CreateIndex creator = new CreateIndex(deleteIndexFile);
-            creator.execute();
-        }
-
-        private class CreateIndex extends SwingWorker<Object,Void> {
-            private ProgressHandle progress;
-            private boolean deleteIndexFile;
-
-            CreateIndex(boolean deleteIndexFile) {
-                this.deleteIndexFile = deleteIndexFile;
-            };
-
-            @Override
-            protected Object doInBackground() {
-                indexing = true;
-                progress = ProgressHandleFactory.createHandle("Indexing " + hashSetName);
-                progress.start();
-                progress.switchToIndeterminate();
-                try {
-                    SleuthkitJNI.createLookupIndexForHashDatabase(handle, deleteIndexFile);
-                }
-                catch (TskCoreException ex) {
-                    Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
-                    JOptionPane.showMessageDialog(null, "Error indexing hash database for " + getHashSetName() + ".", "Hash Database Index Error", JOptionPane.ERROR_MESSAGE);                
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                indexing = false;
-                progress.finish();
-                propertyChangeSupport.firePropertyChange(Event.INDEXING_DONE.toString(), null, hashSetName);
-            }
         }
 
         private void close() throws TskCoreException {
             SleuthkitJNI.closeHashDatabase(handle);
         }
     }
+    
+    private class HashDbIndexer extends SwingWorker<Object, Void> {
+        private ProgressHandle progress = null;
+        private HashDb hashDb = null;
+        private boolean deleteIndexFile = false;
+
+        HashDbIndexer(HashDb hashDb, boolean deleteIndexFile) {
+            this.hashDb = hashDb;
+            this.deleteIndexFile = deleteIndexFile;
+        };
+
+        @Override
+        protected Object doInBackground() {
+            hashDb.indexing = true;
+            progress = ProgressHandleFactory.createHandle("Indexing " + hashDb.hashSetName);
+            progress.start();
+            progress.switchToIndeterminate();
+            try {
+                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle, deleteIndexFile);
+            }
+            catch (TskCoreException ex) {
+                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
+                JOptionPane.showMessageDialog(null, "Error indexing " + hashDb.getHashSetName() + " hash database.", "Hash Database Indexing Error", JOptionPane.ERROR_MESSAGE);                
+            }
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            hashDb.indexing = false;
+            progress.finish();
+            hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+        }
+    }    
 }
