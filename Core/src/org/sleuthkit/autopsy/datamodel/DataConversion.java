@@ -20,79 +20,106 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.awt.Font;
 import java.util.Arrays;
+import java.util.Formatter;
 
 /**
  * Helper methods for converting data.
  */
 public class DataConversion {
 
-    public static String byteArrayToHex(byte[] array, int length, long offset, Font font) {
+    final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    
+    /**
+     * Return the hex-dump layout of the passed in byte array.
+     * Deprecated because we don't need font
+     * @param array Data to display
+     * @param length Amount of data in array to display
+     * @param arrayOffset Offset of where data in array begins as part of a bigger file (used for arrayOffset column)
+     * @param font Font that will be used to display the text
+     * @return  
+     */
+    @Deprecated
+    public static String byteArrayToHex(byte[] array, int length, long arrayOffset, Font font) {
+        return byteArrayToHex(array, length, arrayOffset);
+    }
+    
+    /**
+     * Return the hex-dump layout of the passed in byte array.
+     * @param array Data to display
+     * @param length Amount of data in array to display
+     * @param arrayOffset Offset of where data in array begins as part of a bigger file (used for arrayOffset column)
+     * @return  
+     */
+    public static String byteArrayToHex(byte[] array, int length, long arrayOffset) {
         if (array == null) {
             return "";
-        } else {
-            String base = new String(array, 0, length);
+        } 
+        else {
+            StringBuilder outputStringBuilder = new StringBuilder();
+            
+            // loop through the file in 16-byte increments 
+            for (int curOffset = 0; curOffset < length; curOffset += 16) {
+                // how many bytes are we displaying on this line
+                int lineLen = 16;
+                if (length - curOffset < 16) {
+                    lineLen = length - curOffset;
+                }
+                
+                // print the offset column
+                //outputStringBuilder.append("0x");
+                outputStringBuilder.append(String.format("0x%08x: ", arrayOffset + curOffset));
+                //outputStringBuilder.append(": ");
 
-            StringBuilder buff = new StringBuilder();
-            int count = 0;
-            int extra = base.length() % 16;
-            String sub = "";
-            char subchar;
-
-            //commented out code can be used as a base for generating hex length based on
-            //offset/length/file size
-            //String hex = Long.toHexString(length + offset);
-            //double hexMax = Math.pow(16, hex.length());
-            double hexMax = Math.pow(16, 6);
-            while (count < base.length() - extra) {
-                buff.append("0x");
-                buff.append(Long.toHexString((long) (offset + count + hexMax)).substring(1));
-                buff.append(": ");
+                // print the hex columns                
                 for (int i = 0; i < 16; i++) {
-                    buff.append(Integer.toHexString((((int) base.charAt(count + i)) & 0xff) + 256).substring(1).toUpperCase());
-                    buff.append("  ");
-                    if (i == 7) {
-                        buff.append("  ");
+                    if (i < lineLen) {        
+                        int v = array[curOffset + i] & 0xFF;
+                        outputStringBuilder.append(hexArray[v >>> 4]);
+                        outputStringBuilder.append(hexArray[v & 0x0F]);
+                    }
+                    else {
+                        outputStringBuilder.append("  ");
+                    }
+                    
+                    // someday we'll offer the option of these two styles...
+                    if (true) {
+                        outputStringBuilder.append(" ");
+                        if (i % 4 == 3) {
+                            outputStringBuilder.append(" ");
+                        }
+                        if (i == 7) {
+                            outputStringBuilder.append(" ");
+                        }
+                    }
+                    // xxd style
+                    else {
+                        if (i % 2 == 1) {
+                            outputStringBuilder.append(" ");
+                        }
                     }
                 }
-                sub = base.substring(count, count + 16);
+                
+                outputStringBuilder.append("  ");
+
+                // print the ascii columns
+                String ascii = new String(array, curOffset, lineLen);                
                 for (int i = 0; i < 16; i++) {
-                    subchar = sub.charAt(i);
-                    if (!font.canDisplay(subchar)) {
-                        sub.replace(subchar, '.');
+                    char c = ' ';
+                    if (i < lineLen) {
+                        c = ascii.charAt(i);
+                        int dec = (int) c;
+                        
+                        if (dec < 32 || dec > 126) {
+                            c = '.';
+                        }
                     }
-
-                    // replace all unprintable characters with "."
-                    int dec = (int) subchar;
-                    if (dec < 32 || dec > 126) {
-                        sub = sub.replace(subchar, '.');
-                    }
+                    outputStringBuilder.append(c);    
                 }
-                buff.append("  " + sub + "\n");
-                count += 16;
-
+                
+                outputStringBuilder.append("\n");
             }
-            if (base.length() % 16 != 0) {
-                buff.append("0x" + Long.toHexString((long) (offset + count + hexMax)).substring(1) + ": ");
-            }
-            for (int i = 0; i < 16; i++) {
-                if (i < extra) {
-                    buff.append(Integer.toHexString((((int) base.charAt(count + i)) & 0xff) + 256).substring(1) + "  ");
-                } else {
-                    buff.append("    ");
-                }
-                if (i == 7) {
-                    buff.append("  ");
-                }
-            }
-            sub = base.substring(count, count + extra);
-            for (int i = 0; i < extra; i++) {
-                subchar = sub.charAt(i);
-                if (!font.canDisplay(subchar)) {
-                    sub.replace(subchar, '.');
-                }
-            }
-            buff.append("  " + sub);
-            return buff.toString();
+           
+            return outputStringBuilder.toString();
         }
     }
 
