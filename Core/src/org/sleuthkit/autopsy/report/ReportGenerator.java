@@ -398,7 +398,6 @@ public class ReportGenerator {
                     break;
                 }
                 
-                System.out.println("----------- " + type.getDisplayName() + " ------------");
                 Iterator<TableReportModule> iter = tableModules.iterator();
                 while (iter.hasNext()) {
                     TableReportModule module = iter.next();
