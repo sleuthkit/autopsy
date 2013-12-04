@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,6 +50,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -58,7 +58,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -375,12 +374,18 @@ public class ReportGenerator {
                 if (tableModules.isEmpty()) {
                     break;
                 }
+                
+                System.out.println("----------- " + type.getDisplayName() + " ------------");
                 Iterator<TableReportModule> iter = tableModules.iterator();
                 while (iter.hasNext()) {
                     TableReportModule module = iter.next();
                     if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
                         iter.remove();
                     }
+                }
+                
+                for (TableReportModule module : tableModules) {
+                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");  
                 }
                 
                 // If the type is keyword hit or hashset hit, use the helper
@@ -392,7 +397,12 @@ public class ReportGenerator {
                     continue;
                 }
 
+                StopWatch stopwatch = new StopWatch();
+                stopwatch.start();
                 List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
+                stopwatch.stop();
+                System.out.println("Number of Artifacts:\t" + unsortedArtifacts.size());
+                System.out.println("getFilteredArtifacts:\t" + stopwatch.getElapsedTime());
                 
                 if (unsortedArtifacts.isEmpty()) {
                     // Don't report on this artifact type if there are no results
@@ -401,7 +411,11 @@ public class ReportGenerator {
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
+                stopwatch.reset();
+                stopwatch.start();
                 Collections.sort(unsortedArtifacts);
+                stopwatch.stop();
+                System.out.println("Collections.sort:\t" + stopwatch.getElapsedTime());
 
                 // Get the column headers appropriate for the artifact type.
                 /* @@@ BC: Seems like a better design here woudl be to have a method that 
@@ -416,8 +430,7 @@ public class ReportGenerator {
                     continue;
                 }
                 
-                for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
+                for (TableReportModule module : tableModules) {                  
 
                     // This is a temporary workaround to avoid modifying the TableReportModule interface.
                     if (module instanceof ReportHTML) {
@@ -988,7 +1001,12 @@ public class ReportGenerator {
      * @throws TskCoreException 
      */
     private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) throws TskCoreException {
-        Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
+        Map<Integer, String> attributes;
+        if (module != null) {
+            attributes = getMappedAttributes(artifactData.getAttributes(), module);
+        } else {
+            attributes = artifactData.getMappedAttributes();
+        }
         
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());
         
@@ -1282,6 +1300,7 @@ public class ReportGenerator {
         private BlackboardArtifact artifact;
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
+        private Map<Integer,String> mappedAttributes;
         
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -1299,7 +1318,7 @@ public class ReportGenerator {
         
         public long getObjectID() { return artifact.getObjectID(); }
 
-        @Override
+        
         /**
          * Compares ArtifactData objects by the first attribute they have in
          * common in their List<BlackboardAttribute>. 
@@ -1308,21 +1327,34 @@ public class ReportGenerator {
          * compared by their artifact id. Should only be used with attributes
          * of the same type.
          */
+        @Override
         public int compareTo(ArtifactData data) {
-            // Get all the attributes for each artifact
-            int size = ATTRIBUTE_TYPE.values().length;
-            Map<Integer, String> att1 = getMappedAttributes(this.attributes);
-            Map<Integer, String> att2 = getMappedAttributes(data.getAttributes());
-            // Compare the attributes one-by-one looking for differences
-            for(int i=0; i < size; i++) {
-                String a1 = att1.get(i);
-                String a2 = att2.get(i);
-                if((!a1.equals("") && !a2.equals("")) && a1.compareTo(a2) != 0) {
-                    return a1.compareTo(a2);
+            List<String> thisRow = getRow();
+            List<String> dataRow = data.getRow();
+            for (int i = 0; i < thisRow.size(); i++) {
+                int compare = thisRow.get(i).compareTo(dataRow.get(i));
+                if (compare != 0) {
+                    return compare;
                 }
             }
             // If all attributes are the same, they're most likely duplicates so sort by artifact ID
             return ((Long)this.getArtifactID()).compareTo((Long)data.getArtifactID());
+        }
+        
+        public Map<Integer,String> getMappedAttributes() {
+            if (mappedAttributes == null) {
+                mappedAttributes = ReportGenerator.this.getMappedAttributes(attributes);
+            }
+            return mappedAttributes;
+        }
+        
+        public List<String> getRow() {
+            try {
+                return ReportGenerator.this.getArtifactRow(this, null);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Core exception while generating row data for artifact report.");
+                return Collections.<String>emptyList();
+            }
         }
     }
 }
