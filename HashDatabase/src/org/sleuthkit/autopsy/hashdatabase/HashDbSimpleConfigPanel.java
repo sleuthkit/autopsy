@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
@@ -35,7 +36,8 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
+public class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
+    
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
 
@@ -49,6 +51,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
         customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
+        alwaysCalcHashesCheckbox.setSelected(HashDbManager.getInstance().getAlwaysCalculateHashes());
         
         // Add a listener to the always calculate hashes checkbox component.
         // The listener passes the user's selection on to the hash database manager.
@@ -81,42 +84,14 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     }
     
     void load() {        
-        knownTableModel.refresh();
-        knownBadTableModel.refresh();
-        refreshAlwaysCalcHashesCheckbox(); 
+        knownTableModel.load();
+        knownBadTableModel.load();
     }
 
     void save() {
         HashDbManager.getInstance().save();        
     }
-    
-    private void refreshAlwaysCalcHashesCheckbox() {        
-        boolean noHashDbsConfiguredForIngest = true; 
-        for (HashDb hashDb : HashDbManager.getInstance().getAllHashSets()) {
-            try {
-                if (hashDb.getSearchDuringIngest()== true && hashDb.hasLookupIndex()) {
-                    noHashDbsConfiguredForIngest = false;
-                    break;
-                }
-            }
-            catch (TskCoreException ex) {
-                Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + hashDb.getHashSetName() + " hash database", ex);            
-            }            
-        }
-
-        // If there are no hash databases configured for use during file ingest,
-        // default to always calculating hashes of the files.
-        if (noHashDbsConfiguredForIngest) {
-            alwaysCalcHashesCheckbox.setEnabled(true);
-            alwaysCalcHashesCheckbox.setSelected(true);
-            HashDbManager.getInstance().setAlwaysCalculateHashes(true);
-        } else {
-            alwaysCalcHashesCheckbox.setEnabled(false);
-            alwaysCalcHashesCheckbox.setSelected(false);
-            HashDbManager.getInstance().setAlwaysCalculateHashes(false);
-        }
-    }
-        
+            
     private class HashDatabasesTableModel extends AbstractTableModel {        
         private final HashDbManager.HashDb.KnownFilesType hashDatabasesType;  
         private List<HashDb> hashDatabases;
@@ -135,7 +110,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
             }            
         }    
         
-        private void refresh() {
+        private void load() {
             getHashDatabases();
             fireTableDataChanged();
         }
