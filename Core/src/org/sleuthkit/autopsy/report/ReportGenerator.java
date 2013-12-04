@@ -420,12 +420,7 @@ public class ReportGenerator {
                     continue;
                 }
 
-                StopWatch stopwatch = new StopWatch();
-                stopwatch.start();
                 List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
-                stopwatch.stop();
-                System.out.println("Number of Artifacts:\t" + unsortedArtifacts.size());
-                System.out.println("getFilteredArtifacts:\t" + stopwatch.getElapsedTime());
                 
                 if (unsortedArtifacts.isEmpty()) {
                     continue;
@@ -434,11 +429,7 @@ public class ReportGenerator {
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
-                stopwatch.reset();
-                stopwatch.start();
                 Collections.sort(unsortedArtifacts);
-                stopwatch.stop();
-                System.out.println("Collections.sort:\t" + stopwatch.getElapsedTime());
 
                 // Get the column headers appropriate for the artifact type.
                 /* @@@ BC: Seems like a better design here would be to have a method that 
@@ -458,8 +449,6 @@ public class ReportGenerator {
                     module.startTable(columnHeaders);                    
                 }
                 
-                stopwatch.reset();
-                stopwatch.start();
                 boolean msgSent = false;    
                 for(ArtifactData artifactData : unsortedArtifacts) {
                     // Add the row data to all of the reports.
@@ -478,7 +467,7 @@ public class ReportGenerator {
                         module.addRow(rowData);
                     }
                 }
-
+                
                 // Finish up this data type
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).increment();
