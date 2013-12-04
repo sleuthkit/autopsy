@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -405,8 +406,12 @@ public class ReportGenerator {
                 if (tableModules.isEmpty()) {
                     return;
                 }
-                        
-                // Keyword hits and hashset hit artifacts get sepcial handling.
+                                                        
+                for (TableReportModule module : tableModules) {
+                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");  
+                }
+                
+                // Keyword hits and hashset hit artifacts get sepcial handling.                
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
                     writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
@@ -415,7 +420,13 @@ public class ReportGenerator {
                     continue;
                 }
 
+                StopWatch stopwatch = new StopWatch();
+                stopwatch.start();
                 List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
+                stopwatch.stop();
+                System.out.println("Number of Artifacts:\t" + unsortedArtifacts.size());
+                System.out.println("getFilteredArtifacts:\t" + stopwatch.getElapsedTime());
+                
                 if (unsortedArtifacts.isEmpty()) {
                     continue;
                 }
@@ -423,7 +434,11 @@ public class ReportGenerator {
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
+                stopwatch.reset();
+                stopwatch.start();
                 Collections.sort(unsortedArtifacts);
+                stopwatch.stop();
+                System.out.println("Collections.sort:\t" + stopwatch.getElapsedTime());
 
                 // Get the column headers appropriate for the artifact type.
                 /* @@@ BC: Seems like a better design here would be to have a method that 
@@ -437,9 +452,8 @@ public class ReportGenerator {
                     MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
-
+                
                 for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
                     module.startDataType(type.getDisplayName(), comment.toString());                                            
                     module.startTable(columnHeaders);                    
                 }
@@ -1072,7 +1086,12 @@ public class ReportGenerator {
      * @throws TskCoreException 
      */
     private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) {
-        Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
+        Map<Integer, String> attributes;
+        if (module != null) {
+            attributes = getMappedAttributes(artifactData.getAttributes(), module);
+        } else {
+            attributes = artifactData.getMappedAttributes();
+        }
         
         List<String> rowData = new ArrayList<>();
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());        
@@ -1269,6 +1288,7 @@ public class ReportGenerator {
         private BlackboardArtifact artifact;
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
+        private Map<Integer,String> mappedAttributes;
         
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -1286,7 +1306,7 @@ public class ReportGenerator {
         
         public long getObjectID() { return artifact.getObjectID(); }
 
-        @Override
+        
         /**
          * Compares ArtifactData objects by the first attribute they have in
          * common in their List<BlackboardAttribute>. 
@@ -1295,21 +1315,29 @@ public class ReportGenerator {
          * compared by their artifact id. Should only be used with attributes
          * of the same type.
          */
+        @Override
         public int compareTo(ArtifactData data) {
-            // Get all the attributes for each artifact
-            int size = ATTRIBUTE_TYPE.values().length;
-            Map<Integer, String> att1 = getMappedAttributes(this.attributes);
-            Map<Integer, String> att2 = getMappedAttributes(data.getAttributes());
-            // Compare the attributes one-by-one looking for differences
-            for(int i=0; i < size; i++) {
-                String a1 = att1.get(i);
-                String a2 = att2.get(i);
-                if((!a1.equals("") && !a2.equals("")) && a1.compareTo(a2) != 0) {
-                    return a1.compareTo(a2);
+            List<String> thisRow = getRow();
+            List<String> dataRow = data.getRow();
+            for (int i = 0; i < thisRow.size(); i++) {
+                int compare = thisRow.get(i).compareTo(dataRow.get(i));
+                if (compare != 0) {
+                    return compare;
                 }
             }
             // If all attributes are the same, they're most likely duplicates so sort by artifact ID
             return ((Long)this.getArtifactID()).compareTo((Long)data.getArtifactID());
+        }
+        
+        public Map<Integer,String> getMappedAttributes() {
+            if (mappedAttributes == null) {
+                mappedAttributes = ReportGenerator.this.getMappedAttributes(attributes);
+            }
+            return mappedAttributes;
+        }
+        
+        public List<String> getRow() {
+                return ReportGenerator.this.getArtifactRow(this, null);
         }
     }
 }
