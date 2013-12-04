@@ -77,7 +77,7 @@ public class HashDbManager implements PropertyChangeListener {
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
-    private boolean alwaysCalculateHashes = false;            
+    private boolean alwaysCalculateHashes = true;            
     
     /**
      * Gets the singleton instance of this class.
@@ -566,7 +566,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
         else {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, " element ");
-            alwaysCalculateHashes = false;
+            alwaysCalculateHashes = true;
         }
 
         return true;
