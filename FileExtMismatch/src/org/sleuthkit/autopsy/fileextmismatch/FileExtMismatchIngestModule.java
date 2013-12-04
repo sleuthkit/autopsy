@@ -20,6 +20,12 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,6 +63,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static final String ATTR_NAME = "TSK_FILE_TYPE_EXT_WRONG";
     private static final byte[] ATTR_VALUE_WRONG = {1};
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
+    private static final String TEXT_PLAIN_CONFIG_PATH = "src/org/sleuthkit/autopsy/fileextmismatch/extensions_text-plain.txt";
     private static long processTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
@@ -124,7 +131,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         
         SigTypeToExtMap.put("application/pdf", new String[]{"pdf"});      
         SigTypeToExtMap.put("application/rtf", new String[]{"rtf"});
-        SigTypeToExtMap.put("text/plain", new String[]{"txt", "htm", "html", "ini"});
         SigTypeToExtMap.put("text/html", new String[]{"htm", "html", "htx", "htmls"});
         //todo application/xhtml+xml
         
@@ -144,7 +150,13 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         SigTypeToExtMap.put("video/mpeg", new String[]{"mpeg","mpg"});
         SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
 
-        
+        try {
+            List<String> textPlainExts = Files.readAllLines(Paths.get(TEXT_PLAIN_CONFIG_PATH), StandardCharsets.UTF_8);
+            String[] sarray = (String[])textPlainExts.toArray(new String[0]);
+            SigTypeToExtMap.put("text/plain", sarray);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }        
     }
     
     @Override
