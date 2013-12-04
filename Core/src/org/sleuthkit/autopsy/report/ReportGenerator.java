@@ -50,7 +50,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -467,7 +466,6 @@ public class ReportGenerator {
                     HashSet<String> tags = artifactData.getTags();
                     
                     String tagsList = makeCommaSeparatedList(tags);
-                    
                     
                     // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
