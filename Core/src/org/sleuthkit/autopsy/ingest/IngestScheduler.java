@@ -487,7 +487,7 @@ class IngestScheduler {
                             AbstractFile childFile = (AbstractFile) c;
                             ProcessTask childTask = new ProcessTask(parentTask, childFile);
 
-                            if (childFile.isDir()) {
+                            if (childFile.hasChildren()) {
                                 this.curDirProcessTasks.add(childTask);
                             } 
                             else if (shouldEnqueueTask(childTask)) {
