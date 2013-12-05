@@ -102,7 +102,7 @@ public class DataConversion {
                 outputStringBuilder.append("  ");
 
                 // print the ascii columns
-                String ascii = new String(array, curOffset, lineLen);                
+                String ascii = new String(array, curOffset, lineLen, java.nio.charset.StandardCharsets.US_ASCII);                
                 for (int i = 0; i < 16; i++) {
                     char c = ' ';
                     if (i < lineLen) {
