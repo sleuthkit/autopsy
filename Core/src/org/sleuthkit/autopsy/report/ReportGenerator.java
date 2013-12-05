@@ -904,8 +904,8 @@ public class ReportGenerator {
             case TSK_TOOL_OUTPUT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
                 break;
-            case TSK_ENCRYPTED_FILE:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Entropy", "Encryption Type", "Source File"}));
+            case TSK_ENCRYPTION_DETECTED:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Entropy", "Source File"}));
                 break;
             default:
                 return null;
@@ -1213,11 +1213,11 @@ public class ReportGenerator {
                 row.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                 row.add(getFileUniquePath(artifactData.getObjectID()));
                 return row; 
-             case TSK_ENCRYPTED_FILE:
+             case TSK_ENCRYPTION_DETECTED:
                 List<String> encryptedFile = new ArrayList<>();
                 encryptedFile.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                 encryptedFile.add(attributes.get(ATTRIBUTE_TYPE.TSK_ENTROPY.getTypeID()));
-                encryptedFile.add(attributes.get(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()));
+//                encryptedFile.add(attributes.get(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()));
                 encryptedFile.add(getFileUniquePath(artifactData.getObjectID()));
                 return encryptedFile;
         }

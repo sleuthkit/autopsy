@@ -124,7 +124,7 @@ public class ArtifactTypeNode extends DisplayableItemNode {
                 return "gps-search.png";
             case TSK_SERVICE_ACCOUNT:
                 return "account-icon-16.png";
-            case TSK_ENCRYPTED_FILE:
+            case TSK_ENCRYPTION_DETECTED:
                 return "encrypted-file.png";
         }
         return "artifact-icon.png";
