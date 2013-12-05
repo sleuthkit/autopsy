@@ -157,7 +157,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
 
     @Override
     public String getToolTip() {
-        return "";
+        return "Displays metadata about the file.";
     }
 
     @Override

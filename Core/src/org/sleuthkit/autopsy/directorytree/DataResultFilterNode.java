@@ -187,10 +187,13 @@ public class DataResultFilterNode extends FilterNode {
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actions.add(new ViewContextAction("View File in Directory", ban));
             } else {
+                // if the artifact links to another file, add an action to go to
+                // that file
                 Content c = findLinked(ban);
                 if (c != null) {
                     actions.add(new ViewContextAction("View File in Directory", c));
                 }
+                // action to go to the source file of the artifact
                 actions.add(new ViewContextAction("View Source File in Directory", ban));
             }
             File f = ban.getLookup().lookup(File.class);
