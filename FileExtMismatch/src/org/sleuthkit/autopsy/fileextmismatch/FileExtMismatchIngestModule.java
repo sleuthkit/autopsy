@@ -20,8 +20,11 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,7 +66,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static final String ATTR_NAME = "TSK_FILE_TYPE_EXT_WRONG";
     private static final byte[] ATTR_VALUE_WRONG = {1};
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
-    private static final String TEXT_PLAIN_CONFIG_PATH = "src/org/sleuthkit/autopsy/fileextmismatch/extensions_text-plain.txt";
+    private static final String TEXT_PLAIN_CONFIG_PATH = "/org/sleuthkit/autopsy/fileextmismatch/extensions_text-plain.txt";
     private static long processTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
@@ -151,7 +154,15 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
 
         try {
-            List<String> textPlainExts = Files.readAllLines(Paths.get(TEXT_PLAIN_CONFIG_PATH), StandardCharsets.UTF_8);
+            List<String> textPlainExts = new ArrayList<>();
+            InputStream inputStream = FileExtMismatchIngestModule.class.getResourceAsStream(TEXT_PLAIN_CONFIG_PATH);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            
+            String ext;
+            while ((ext = reader.readLine()) != null) {
+                textPlainExts.add(ext);
+            }
+            
             String[] sarray = (String[])textPlainExts.toArray(new String[0]);
             SigTypeToExtMap.put("text/plain", sarray);
         } catch (IOException ex) {
