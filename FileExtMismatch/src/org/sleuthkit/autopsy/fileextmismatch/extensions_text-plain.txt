@@ -38,6 +38,7 @@ c
 java
 cs
 asp
+aspx
 properties
 mak
 cmake
@@ -54,3 +55,7 @@ lisp
 rb
 rbw
 ps
+json
+mof
+mfl
+inc
