@@ -152,7 +152,10 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         SigTypeToExtMap.put("video/x-ms-wmv", new String[]{"wmv"});
         SigTypeToExtMap.put("video/mpeg", new String[]{"mpeg","mpg"});
         SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
-
+        SigTypeToExtMap.put("application/vnd.rn-realmedia", new String[]{"rm"});
+        SigTypeToExtMap.put("application/vnd.rn-realvideo", new String[]{"rv"});
+        SigTypeToExtMap.put("application/x-shockwave-flash", new String[]{"swf"});
+                
         try {
             List<String> textPlainExts = new ArrayList<>();
             InputStream inputStream = FileExtMismatchIngestModule.class.getResourceAsStream(TEXT_PLAIN_CONFIG_PATH);
