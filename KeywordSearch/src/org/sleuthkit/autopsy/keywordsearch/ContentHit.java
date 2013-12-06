@@ -59,10 +59,9 @@ public class ContentHit {
         return chunkID != 0;
     }
 
-    ContentHit setSnippet(String snippet) {
+    void setSnippet(String snippet) {
         this.snippet = snippet;
         this.snippetSet = true;
-        return this;
     }
     
     String getSnippet() {
