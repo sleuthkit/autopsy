@@ -245,7 +245,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 logger.log(Level.WARNING, "Could not perform the query. ", ex);
                 return false;
             }
-            final Map<AbstractFile, Integer> hitContents = ContentHit.flattenResults(tcqRes);
+//            final Map<AbstractFile, Integer> hitContents = ContentHit.flattenResults(tcqRes);
 
             //get listname
             String listName = "";
@@ -257,55 +257,64 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final boolean literal_query = tcq.isEscaped();
 
             int resID = 0;
-            for (final AbstractFile f : hitContents.keySet()) {
-                final int previewChunk = hitContents.get(f);
+//            for (final AbstractFile f : hitContents.keySet()) {
+            for(ContentHit chit : tcqRes.get(tcq.getQueryString())) {
+                AbstractFile f = chit.getContent();
+//                final int previewChunk = hitContents.get(f);
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<>();
 
-                try {
-                    String snippet;
-                    
-                    String snippetQuery = null;
-
-                    if (literal_query) {
-                        snippetQuery = tcq.getEscapedQueryString();
-                    } else {
-                        //in regex, to generate the preview snippet
-                        //just pick any term that hit that file (since we are compressing result view)
-                        String hit = null;
-                        //find the first hit for this file 
-                        for (String hitKey : tcqRes.keySet()) {
-                            List<ContentHit> chits = tcqRes.get(hitKey);
-                            for (ContentHit chit : chits) {
-                                if (chit.getContent().equals(f)) {
-                                    hit = hitKey;
-                                    break;
-                                }
-                            }
-                            if (hit != null) {
-                                break;
-                            }
-                        }
-                        if (hit != null) {
-                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
-                        }
-                    }
-
-                    if (snippetQuery != null) {
-                        snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), previewChunk, !literal_query, true);
-                        setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
-                    }
-                } catch (NoOpenCoreException ex) {
-                    logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
-                    return false;
+                if (chit.hasSnippet()) {
+                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, chit.getSnippet());
                 }
+                
+//                if (f.getSize() < 10000000) {
+//                    try {
+//                        String snippet;
+//
+//                        String snippetQuery = null;
+//
+//                        if (literal_query) {
+//                            snippetQuery = tcq.getEscapedQueryString();
+//                        } else {
+//                            //in regex, to generate the preview snippet
+//                            //just pick any term that hit that file (since we are compressing result view)
+//                            String hit = null;
+//                            //find the first hit for this file 
+//                            for (String hitKey : tcqRes.keySet()) {
+//                                List<ContentHit> chits = tcqRes.get(hitKey);
+//                                for (ContentHit chit : chits) {
+//                                    if (chit.getContent().equals(f)) {
+//                                        hit = hitKey;
+//                                        break;
+//                                    }
+//                                }
+//                                if (hit != null) {
+//                                    break;
+//                                }
+//                            }
+//                            if (hit != null) {
+//                                snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
+//                            }
+//                        }
+//
+//                        if (snippetQuery != null) {
+//                            snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), previewChunk, !literal_query, true);
+//                            setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+//                        }
+//                    } catch (NoOpenCoreException ex) {
+//                        logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
+//                        return false;
+//                    }
+//                }
 
                 if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
                     AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
                 }
 
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
+//                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
+                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, chit.getChunkId(), tcqRes));
             }
             
             // Add all the nodes to toPopulate at once. Minimizes node creation

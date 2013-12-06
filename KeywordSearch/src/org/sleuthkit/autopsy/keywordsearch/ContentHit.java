@@ -31,6 +31,8 @@ public class ContentHit {
 
     private AbstractFile content;
     private int chunkID = 0;
+    private String snippet = "";
+    private boolean snippetSet = false;
 
     ContentHit(AbstractFile content) {
         this.content = content;
@@ -57,6 +59,20 @@ public class ContentHit {
         return chunkID != 0;
     }
 
+    ContentHit setSnippet(String snippet) {
+        this.snippet = snippet;
+        this.snippetSet = true;
+        return this;
+    }
+    
+    String getSnippet() {
+        return snippet;
+    }
+    
+    boolean hasSnippet() {
+        return snippetSet;
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
