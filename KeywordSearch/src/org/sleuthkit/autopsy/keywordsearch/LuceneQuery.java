@@ -305,11 +305,10 @@ public class LuceneQuery implements KeywordSearchQuery {
         final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
         String snippet = "";
         if (snippets) {
-            try {
-                snippet = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString()).get(0);
-                snippet = EscapeUtil.unEscapeHtml(snippet).trim();
-            } catch (NullPointerException ex) {
-                snippet = "";
+            List<String> snippetList = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString());
+            // list is null if there wasn't a snippet
+            if (snippetList != null) {
+                snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
         if (sepIndex != -1) {
