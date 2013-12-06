@@ -105,7 +105,7 @@ public class DataConversion {
                 String ascii = new String(array, curOffset, lineLen, java.nio.charset.StandardCharsets.US_ASCII);                
                 for (int i = 0; i < 16; i++) {
                     char c = ' ';
-                    if (i < lineLen) {
+                    if (i < ascii.length()) {
                         c = ascii.charAt(i);
                         int dec = (int) c;
                         
