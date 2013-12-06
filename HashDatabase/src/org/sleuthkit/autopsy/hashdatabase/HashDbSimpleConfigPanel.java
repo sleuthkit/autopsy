@@ -41,7 +41,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
 
-    HashDbSimpleConfigPanel() {
+    public HashDbSimpleConfigPanel() {
         knownTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN);
         knownBadTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN_BAD);
         initComponents();
@@ -83,12 +83,12 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }        
     }
     
-    void load() {        
+    public void load() {        
         knownTableModel.load();
         knownBadTableModel.load();
     }
 
-    void save() {
+    public void store() {
         HashDbManager.getInstance().save();        
     }
             
