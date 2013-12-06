@@ -34,6 +34,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -132,7 +133,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
         //in case of single term literal query there is only 1 term
-        results.put(keywordString, performLuceneQuery(false));
+        results.put(keywordString, performLuceneQuery(true));
 
         return results;
     }
@@ -197,15 +198,55 @@ public class LuceneQuery implements KeywordSearchQuery {
      */
     private List<ContentHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
 
-        List<ContentHit> matches = new ArrayList<ContentHit>();
-
+        List<ContentHit> matches = new ArrayList<>();
         boolean allMatchesFetched = false;
-
         final Server solrServer = KeywordSearch.getServer();
+        
+        SolrQuery q = createAndConfigureSolrQuery(snippets);
 
+        for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
+            q.setStart(start);
+
+            try {
+                QueryResponse response = solrServer.query(q, METHOD.POST);
+                SolrDocumentList resultList = response.getResults();
+                Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
+                Set<SolrDocument> solrDocumentsWithMatches = filterDuplicateSolrDocuments(resultList);
+                
+                allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
+                
+                SleuthkitCase sleuthkitCase;
+                try {
+                    sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+                } catch (IllegalStateException ex) {
+                    //no case open, must be just closed
+                    return matches;
+                }
+
+                for (SolrDocument resultDoc : solrDocumentsWithMatches) {
+                    ContentHit contentHit;
+                    try {
+                        contentHit = createContentHitFromQueryResults(resultDoc, highlightResponse, snippets, sleuthkitCase);
+                    } catch (TskException ex) {
+                        return matches;
+                    }
+                    matches.add(contentHit);
+                }
+                
+            } catch (NoOpenCoreException ex) {
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
+                throw ex;
+            } catch (KeywordSearchModuleException ex) {
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
+            }
+
+        }
+        return matches;
+    }
+    
+    private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
-
         //set query, force quotes/grouping around all literal queries
         final String groupedQuery = KeywordSearchUtil.quoteQuery(keywordStringEscaped);
         String theQueryStr = groupedQuery;
@@ -215,14 +256,15 @@ public class LuceneQuery implements KeywordSearchQuery {
             sb.append(field).append(":").append(groupedQuery);
             theQueryStr = sb.toString();
         }
-        
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
+        
         if (snippets) {
             q.setFields(Server.Schema.ID.toString(), Server.Schema.CONTENT.toString());
         } else {
             q.setFields(Server.Schema.ID.toString());
         }
+        
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
@@ -247,109 +289,63 @@ public class LuceneQuery implements KeywordSearchQuery {
             //analyze all content SLOW! consider lowering
             q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
         }
+        
+        return q;
+    }
 
-        for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
-            q.setStart(start);
+    private Set<SolrDocument> filterDuplicateSolrDocuments(SolrDocumentList resultList) {
+        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparator());
+        solrDocumentsWithMatches.addAll(resultList);
+        return solrDocumentsWithMatches;
+    }
+
+    private ContentHit createContentHitFromQueryResults(SolrDocument resultDoc, Map<String, Map<String, List<String>>> highlightResponse, boolean snippets, SleuthkitCase sc) throws TskException {
+        ContentHit chit;
+        final String resultID = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+        final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
+        String snippet = "";
+        if (snippets) {
+            try {
+                snippet = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString()).get(0);
+                snippet = EscapeUtil.unEscapeHtml(snippet).trim();
+            } catch (NullPointerException ex) {
+                snippet = "";
+            }
+        }
+        if (sepIndex != -1) {
+            //file chunk result
+            final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
+            final int chunkId = Integer.parseInt(resultID.substring(sepIndex + 1));
+            //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
 
             try {
-                QueryResponse response = solrServer.query(q, METHOD.POST);
-                SolrDocumentList resultList = response.getResults();
-                Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
-                long results = resultList.getNumFound();
-                Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>( 
-                        new Comparator<SolrDocument>() {
-                            @Override
-                            public int compare(SolrDocument left, SolrDocument right) {
-                                String idName = Server.Schema.ID.toString();
-                                String leftID = left.getFieldValue(idName).toString();
-                                int index = leftID.indexOf(Server.ID_CHUNK_SEP);
-                                if (index != -1) {
-                                    leftID = leftID.substring(0, index);
-                                }
-                                
-                                String rightID = right.getFieldValue(idName).toString();
-                                index = rightID.indexOf(Server.ID_CHUNK_SEP);
-                                if (index != -1) {
-                                    rightID = rightID.substring(0, index);
-                                }
-                                
-                                return leftID.compareTo(rightID);
-                            }
-                });
-                solrDocumentsWithMatches.addAll(resultList);
-                allMatchesFetched = start + MAX_RESULTS >= results;
-                
-                SleuthkitCase sc = null;
-                try {
-                    sc = Case.getCurrentCase().getSleuthkitCase();
-                } catch (IllegalStateException ex) {
-                    //no case open, must be just closed
-                    return matches;
+                AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                chit = new ContentHit(resultAbstractFile, chunkId);
+                if (snippet.isEmpty() == false) {
+                    chit.setSnippet(snippet);
                 }
-
-                for (SolrDocument resultDoc : solrDocumentsWithMatches) {
-                    final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
-
-                    final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
-
-                    String snippet = "";
-                    if (snippets) {
-                        try {
-                            snippet = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString()).get(0);
-                            snippet = EscapeUtil.unEscapeHtml(snippet).trim();
-                        } catch (NullPointerException ex) {
-                            snippet = "";
-                        }
-                    }
-                            
-                    if (sepIndex != -1) {
-                        //file chunk result
-                        final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
-                        final int chunkId = Integer.parseInt(resultID.substring(sepIndex + 1));
-                        //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
-
-                        try {
-                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                            ContentHit chit = new ContentHit(resultAbstractFile, chunkId);
-                            if (snippet.isEmpty() == false) {
-                                chit.setSnippet(snippet);
-                            }
-                            matches.add(chit);
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
-                            //something wrong with case/db
-                            return matches;
-                        }
-
-                    } else {
-                        final long fileID = Long.parseLong(resultID);
-
-                        try {
-                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                            ContentHit chit = new ContentHit(resultAbstractFile);
-                            if (snippet.isEmpty() == false) {
-                                chit.setSnippet(snippet);
-                            }
-                            matches.add(chit);
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
-                            //something wrong with case/db
-                            return matches;
-                        }
-                    }
-
-                }
-
-
-            } catch (NoOpenCoreException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                //something wrong with case/db
                 throw ex;
-            } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
             }
 
+        } else {
+            final long fileID = Long.parseLong(resultID);
+
+            try {
+                AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                chit = new ContentHit(resultAbstractFile);
+                if (snippet.isEmpty() == false) {
+                    chit.setSnippet(snippet);
+                }
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                //something wrong with case/db
+                throw ex;
+            }
         }
-        return matches;
+        return chit;
     }
 
     /**
@@ -459,6 +455,30 @@ public class LuceneQuery implements KeywordSearchQuery {
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
             return "";
+        }
+    }
+    
+    /**
+     * Compares SolrDocuments based on their ID's. Two SolrDocuments with
+     * different chunk numbers are considered equal.
+     */
+    private class SolrDocumentComparator implements Comparator<SolrDocument> {
+        @Override
+        public int compare(SolrDocument left, SolrDocument right) {
+            String idName = Server.Schema.ID.toString();
+            String leftID = left.getFieldValue(idName).toString();
+            int index = leftID.indexOf(Server.ID_CHUNK_SEP);
+            if (index != -1) {
+                leftID = leftID.substring(0, index);
+            }
+
+            String rightID = right.getFieldValue(idName).toString();
+            index = rightID.indexOf(Server.ID_CHUNK_SEP);
+            if (index != -1) {
+                rightID = rightID.substring(0, index);
+            }
+
+            return leftID.compareTo(rightID);
         }
     }
 }
