@@ -38,6 +38,8 @@ public class KeywordSearchSettings {
     static final String PROPERTIES_OPTIONS = MODULE_NAME+"_Options";
     static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";
     static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
+    static final String SHOW_SNIPPETS = "showSnippets";
+    static final boolean DEFAULT_SHOW_SNIPPETS = false;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
@@ -123,6 +125,18 @@ public class KeywordSearchSettings {
         stringExtractOptions.put(key, val);
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, key, val);
     }
+     
+     static void setShowSnippets(boolean showSnippets) {
+         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS, (showSnippets ? "true" : "false"));
+     }
+     
+     static boolean getShowSnippets() {
+         if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, SHOW_SNIPPETS)) {
+            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS).equals("true");
+         } else {
+             return DEFAULT_SHOW_SNIPPETS;
+         }
+     }
      
      /**
      * gets the currently set scripts to use

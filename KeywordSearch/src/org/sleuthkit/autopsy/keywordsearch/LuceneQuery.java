@@ -133,7 +133,8 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
         //in case of single term literal query there is only 1 term
-        results.put(keywordString, performLuceneQuery(true));
+        boolean showSnippets = KeywordSearchSettings.getShowSnippets();
+        results.put(keywordString, performLuceneQuery(showSnippets));
 
         return results;
     }
