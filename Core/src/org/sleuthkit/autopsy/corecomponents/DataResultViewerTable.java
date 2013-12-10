@@ -215,18 +215,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         Children children = parent.getChildren();
-        int total = Math.min(rows, children.getNodesCount());
-        for (int i = 0; i < total; i++) {
-            Node child = children.getNodeAt(i);
+        int childCount = 0;
+        for (Node child : children.getNodes()) {            
+            if (++childCount > rows) {
+                break;
+            }
             for (PropertySet ps : child.getPropertySets()) {
-                //if (ps.getName().equals(Sheet.PROPERTIES)) {
-                //return ps.getProperties();
                 final Property[] props = ps.getProperties();
                 final int propsNum = props.length;
                 for (int j = 0; j < propsNum; ++j) {
                     propertiesAcc.add(props[j]);
                 }
-                //}
             }
             getAllChildPropertyHeadersRec(child, rows);
         }
@@ -377,33 +376,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    private static Object[][] getRowValues(Node node, int rows) {
-        // how many rows are we returning
-        int maxRows = Math.min(rows, node.getChildren().getNodesCount());
-
-        Object[][] objs = new Object[maxRows][];
-
-        for (int i = 0; i < maxRows; i++) {
-            PropertySet[] props = node.getChildren().getNodeAt(i).getPropertySets();
-            if (props.length == 0) //rare special case
+    // Populate a two-dimensional array with rows of property values for up 
+    // to maxRows children of the node passed in. 
+    private static Object[][] getRowValues(Node node, int maxRows) {
+        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];        
+        int rowCount = 0;
+        for (Node child : node.getChildren().getNodes()) {
+            if (rowCount >= maxRows) {
+                break;
+            }                
+            PropertySet[] propertySets = child.getPropertySets();
+            if (propertySets.length > 0)
             {
-                continue;
-            }
-            Property[] property = props[0].getProperties();
-            objs[i] = new Object[property.length];
-
-
-            for (int j = 0; j < property.length; j++) {
-                try {
-                    objs[i][j] = property[j].getValue();
-                } catch (IllegalAccessException ignore) {
-                    objs[i][j] = "n/a";
-                } catch (InvocationTargetException ignore) {
-                    objs[i][j] = "n/a";
+                Property[] properties = propertySets[0].getProperties();
+                rowValues[rowCount] = new Object[properties.length];
+                for (int j = 0; j < properties.length; ++j) {
+                    try {
+                        rowValues[rowCount][j] = properties[j].getValue();
+                    } 
+                    catch (IllegalAccessException | InvocationTargetException ignore) {
+                        rowValues[rowCount][j] = "n/a";
+                    }
                 }
-            }
-        }
-        return objs;
+            }                        
+            ++rowCount;
+        }        
+        return rowValues;
     }
 
     @Override
