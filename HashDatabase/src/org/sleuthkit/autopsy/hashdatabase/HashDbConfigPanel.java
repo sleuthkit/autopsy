@@ -262,6 +262,10 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashSetManager.save();        
     }
     
+    public void cancel() {
+        HashDbManager.getInstance().loadLastSavedConfiguration();                        
+    }
+    
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashDatabase(hashDb);

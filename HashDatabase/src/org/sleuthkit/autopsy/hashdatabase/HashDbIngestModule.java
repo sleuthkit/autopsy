@@ -108,7 +108,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     @Override
     public void saveSimpleConfiguration() {
         if (simpleConfigPanel != null) {
-            simpleConfigPanel.save();
+            simpleConfigPanel.store();
         }
     }
     
