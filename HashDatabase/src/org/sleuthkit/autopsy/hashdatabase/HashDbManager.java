@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -64,6 +65,7 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String SEARCH_DURING_INGEST_ATTRIBUTE = "use_for_ingest";
     private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages";
     private static final String PATH_ELEMENT = "hash_set_path";
+    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number";    
     private static final String CONFIG_FILE_NAME = "hashsets.xml";
     private static final String XSD_FILE_NAME = "HashsetsSchema.xsd";
     private static final String ENCODING = "UTF-8";
@@ -456,6 +458,8 @@ public class HashDbManager implements PropertyChangeListener {
     }                    
     
     private boolean readHashSetsConfigurationFromDisk() {
+        boolean updatedSchema = false;
+        
         // Open the XML document that implements the configuration file.
         final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath, XSD_FILE_NAME);
         if (doc == null) {
@@ -511,6 +515,7 @@ public class HashDbManager implements PropertyChangeListener {
             // Handle legacy known files types.
             if (knownFilesType.equals("NSRL")) {
                 knownFilesType = HashDb.KnownFilesType.KNOWN.toString();
+                updatedSchema = true;
             }                                    
             
             final String searchDuringIngest = setEl.getAttribute(SEARCH_DURING_INGEST_ATTRIBUTE);
@@ -531,6 +536,13 @@ public class HashDbManager implements PropertyChangeListener {
             NodeList pathsNList = setEl.getElementsByTagName(PATH_ELEMENT);
             if (pathsNList.getLength() > 0) {                
                 Element pathEl = (Element) pathsNList.item(0); // Shouldn't be more than one.
+                
+                // Check for legacy path number attribute.
+                String legacyPathNumber = pathEl.getAttribute(LEGACY_PATH_NUMBER_ATTRIBUTE); 
+                if (null != legacyPathNumber && !legacyPathNumber.isEmpty()) {
+                    updatedSchema =  true;
+                }
+                
                 dbPath = pathEl.getTextContent();
                 if (dbPath.isEmpty()) {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, PATH_ELEMENT + elementErrorMessage, i);
@@ -569,6 +581,22 @@ public class HashDbManager implements PropertyChangeListener {
             alwaysCalculateHashes = true;
         }
 
+        if (updatedSchema) {    
+            String backupFilePath = configFilePath + ".v1_backup";
+            String messageBoxTitle = "Configuration File Format Changed";
+            String baseMessage = "The format of the hash database configuration file has been updated.";
+            try {
+                FileUtils.copyFile(new File(configFilePath), new File (backupFilePath));
+                JOptionPane.showMessageDialog(null, baseMessage + "\nA backup copy of the old configuration has been saved as\n" + backupFilePath, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
+            }
+            catch (IOException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex);
+                JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);                                
+            }
+                        
+            writeHashSetConfigurationToDisk();
+        }
+        
         return true;
     }
 
