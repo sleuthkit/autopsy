@@ -45,7 +45,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private static final int MAX_SIZE = 10000000;
+    private static final int MAX_SIZE = 50000000;
     private KeywordSearchIngestModule module;
     private Ingester ingester;
     private AbstractFile sourceFile;
