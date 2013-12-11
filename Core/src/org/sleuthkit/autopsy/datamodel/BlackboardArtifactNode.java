@@ -55,6 +55,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
     };
 
     /**
