@@ -45,6 +45,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
+    private static final int MAX_SIZE = 10000000;
     private KeywordSearchIngestModule module;
     private Ingester ingester;
     private AbstractFile sourceFile;
@@ -224,7 +225,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         if (detectedFormat == null) {
             return false;
-        } else if (WEB_MIME_TYPES.contains(detectedFormat)) {
+        } else if (WEB_MIME_TYPES.contains(detectedFormat) && file.getSize() <= MAX_SIZE) {
             return true;
         } else {
             return false;
