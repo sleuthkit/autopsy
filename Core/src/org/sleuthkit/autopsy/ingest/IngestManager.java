@@ -206,7 +206,13 @@ public class IngestManager {
     }
 
     static synchronized void fireModuleEvent(String eventType, String moduleName) {
-        pcs.firePropertyChange(eventType, moduleName, null);
+        try {
+            pcs.firePropertyChange(eventType, moduleName, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
     
     
@@ -215,7 +221,13 @@ public class IngestManager {
      * @param objId ID of file that is done
      */
     static synchronized void fireFileDone(long objId) {
-        pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     
@@ -224,7 +236,13 @@ public class IngestManager {
      * @param moduleDataEvent 
      */
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     /**
@@ -232,7 +250,13 @@ public class IngestManager {
      * @param moduleContentEvent 
      */
     static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     /**

@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -140,7 +141,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         } else {
             String dataSource = "";
             try {
-                dataSource = associated.getImage().getName();
+                Image image = associated.getImage();
+                if (image != null) {
+                    dataSource = image.getName();
+                } else {
+                    dataSource = getRootParentName();
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to get image name from " + associated.getName());
             }
@@ -152,6 +158,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
 
         return s;
+    }
+    
+    private String getRootParentName() {
+        String parentName = associated.getName();
+        Content parent = associated;
+        try {
+            while ((parent = parent.getParent()) != null) {
+                parentName = parent.getName();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to get parent name from " + associated.getName());
+            return "";
+        }
+        return parentName;
     }
 
     /**
@@ -332,11 +352,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 
         }
         return "artifact-icon.png";
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.ARTIFACT;
     }
 
     @Override

@@ -69,6 +69,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                     || moduleName.equals("MBox Parser")) {
                 moduleName = "Email Parser";
             }
+            
             IngestModuleAbstract moduleFound =  null;
             for (IngestModuleAbstract module : allModules) {
                 if (moduleName.equals(module.getName())) {
@@ -80,7 +81,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add("Unable to enable ingest module: " + moduleName);
+                messages.add(moduleName + " was previously enabled, but could not be found");
             }
         }        
         ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
