@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -56,12 +57,14 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 public class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
+    private static final String THUMBS_REL_PATH = "thumbs" + File.separator;
     private static ReportHTML instance;
     private Case currentCase;
     private SleuthkitCase skCase;
     
     private Map<String, Integer> dataTypes;
     private String path;
+    private String thumbsPath;
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
@@ -90,6 +93,7 @@ public class ReportHTML implements TableReportModule {
         dataTypes = new TreeMap<>();
         
         path = "";
+        thumbsPath = "";
         currentDataType = "";
         rowCount = 0;
         
@@ -266,8 +270,10 @@ public class ReportHTML implements TableReportModule {
         refresh();
         // Setup the path for the HTML report
         this.path = path + "HTML Report" + File.separator;
+        this.thumbsPath = this.path + "thumbs" + File.separator;
         try {
             FileUtil.createFolder(new File(this.path));
+            FileUtil.createFolder(new File(this.thumbsPath));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to make HTML report folder.");
         }
@@ -496,10 +502,46 @@ public class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
+    
+    /**
+     * Adds a row with a thumbnail image as the last column.
+     * 
+     * @param row
+     * @param thumbFile 
+     */
+    public void addRow(List<String> row, File thumbFile) {
+        try {
+            File to = new File(thumbsPath);
+            FileUtil.copyFile(FileUtil.toFileObject(thumbFile), FileUtil.toFileObject(to), thumbFile.getName(), "");
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.");
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("\t<tr>\n");
+        for (String cell : row) {
+            builder.append("\t\t<td>").append(cell).append("</td>\n");
+        }
+        
+        builder.append("\t\t<td><img src=\"")
+                .append(THUMBS_REL_PATH)
+                .append(thumbFile.getName())
+                .append("\"/></td>\n")
+                .append("\t</tr>\n");
+        rowCount++;
+        
+        try {
+            out.write(builder.toString());
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
+        }
+    }
 
     /**
      * Saves a local copy of a tagged file and adds a row with a hyper link to 
-     * the file.
+     * the file. The hyper link will be a thumbnail if the Content associated
+     * with the given ContentTag is an image.
      * 
      * @param row Values for each data cell in the row.
      * @param contentTag A content tag to use to make the hyper link. 
@@ -554,11 +596,20 @@ public class ReportHTML implements TableReportModule {
             ExtractFscContentVisitor.extract(file, localFile, null, null);
         }
 
+        StringBuilder linkContent = new StringBuilder();
+        if (ImageUtils.thumbnailSupported(file)) {
+            linkContent.append("<img src=\"").append(prepareThumbnail(file)).append("\" />");
+        } else {
+            linkContent.append("View File");
+        }
+        
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\"file:///");
         localFileLink.append(localFilePath.toString());
-        localFileLink.append("\">View File</a>");
+        localFileLink.append("\">");
+        localFileLink.append(linkContent);
+        localFileLink.append("</a>");
         row.add(localFileLink.toString());              
         
         StringBuilder builder = new StringBuilder();
@@ -892,4 +943,17 @@ public class ReportHTML implements TableReportModule {
             }
         }
     }
+
+    private String prepareThumbnail(AbstractFile file) {
+        File thumbFile = ImageUtils.getIconFile(file, ImageUtils.ICON_SIZE_SMALL);
+        try {
+            File to = new File(thumbsPath);
+            FileUtil.copyFile(FileUtil.toFileObject(thumbFile), FileUtil.toFileObject(to), thumbFile.getName(), "");
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.");
+        }
+        
+        return THUMBS_REL_PATH + thumbFile.getName();
+    }
+
 }

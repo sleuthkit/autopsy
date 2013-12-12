@@ -48,6 +48,7 @@ import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
@@ -57,9 +58,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and 
@@ -462,7 +465,7 @@ public class ReportGenerator {
                             }
                             continue;
                         }
-
+                        
                         module.addRow(rowData);
                     }
                 }
@@ -565,15 +568,35 @@ public class ReportGenerator {
                     comment.append("This report only includes results tagged with: ");
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }                        
-                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());                        
-                module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
+                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());  
+                String[] tableHeaders;
+                if (module instanceof ReportHTML) {
+                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File", "Thumbnail"};
+                } else {
+                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File"};
+                }
+                module.startTable(new ArrayList<>(Arrays.asList(tableHeaders)));
             }
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
                 if (passesTagNamesFilter(tag.getName().getDisplayName())) {                               
+                    List<String> row;
+                    File thumbFile;
                     for (TableReportModule module : tableModules) {
-                        module.addRow(new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()))); 
+                        // We have specific behavior if the module is a ReportHTML.
+                        // We add a thumbnail if the artifact is associated with an
+                        // image file.
+                        row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+                        if (module instanceof ReportHTML == false) {
+                            module.addRow(row); 
+                        } else if ((thumbFile = getImageContent(tag.getArtifact())) != null) {
+                            ((ReportHTML) module).addRow(row, thumbFile);
+                        } else {
+                            // Add an extra cell so the row extends the proper amount of columns
+                            row.add("");
+                            module.addRow(row);
+                        }
                     }
                 }
             }                
@@ -599,6 +622,31 @@ public class ReportGenerator {
                 }
             }            
         }        
+
+        /**
+         * Get a thumbnail of the content associated with the artifact if the 
+         * content is an image.
+         * 
+         * Returns null if the content is not an image.
+         * 
+         * @param artifact
+         * @return 
+         */
+        private File getImageContent(BlackboardArtifact artifact) {
+            Content c;
+            try {
+                c = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Getting file failed", ex);
+                return null;
+            }
+            
+            if (c == null || ImageUtils.thumbnailSupported(c) == false) {
+                return null;
+            }
+            
+            return ImageUtils.getIconFile(c, ImageUtils.ICON_SIZE_SMALL);
+        }
     }
         
     /// @@@ Should move the methods specific to TableReportsWorker into that scope.
@@ -1333,21 +1381,6 @@ public class ReportGenerator {
          */
         private Map<Integer,String> getMappedAttributes() {
             return ReportGenerator.this.getMappedAttributes(attributes);
-        }
-       
-        /**
-         * Get a BlackboardArtifact.
-         * 
-         * @param long artifactId An artifact id
-         * @return The BlackboardArtifact associated with the artifact id
-         */
-        private BlackboardArtifact getArtifactByID(long artifactId) {
-            try {
-                return skCase.getBlackboardArtifact(artifactId);
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get blackboard artifact by ID.", ex);
-            }
-            return null;
         }
     }
 }

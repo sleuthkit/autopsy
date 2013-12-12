@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Utilities for creating and manipulating thumbnails.
+ * Utilities for creating and manipulating thumbnail and icon images.
  * @author jwallace
  */
 public class ImageUtils {
@@ -51,10 +51,20 @@ public class ImageUtils {
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
     
+    /**
+     * Get the default Icon, which is the icon for a file.
+     * @return 
+     */
     public static Image getDefaultIcon() {
         return DEFAULT_ICON;
     }
     
+    /**
+     * Can a thumbnail be generated for the content?
+     * 
+     * @param content
+     * @return 
+     */
     public static boolean thumbnailSupported(Content content) {
         if (content instanceof AbstractFile == false) {
             return false;
@@ -74,6 +84,13 @@ public class ImageUtils {
                 && SUPP_EXTENSIONS.contains(ext));
     }
    
+    /**
+     * Get an icon of a specified size.
+     * 
+     * @param content
+     * @param iconSize
+     * @return 
+     */
     public static Image getIcon(Content content, int iconSize) {
         Image icon;
         // If a thumbnail file is already saved locally
@@ -97,6 +114,32 @@ public class ImageUtils {
         }
         return icon;
     }
+    
+    /**
+     * Get the cached file of the icon. Generates the icon and its file if it 
+     * doesn't already exist, so this method guarantees to return a file that
+     * exists.
+     * @param content
+     * @param iconSize
+     * @return 
+     */
+    public static File getIconFile(Content content, int iconSize) {
+        getIcon(content, iconSize);
+        return getFile(content.getId());
+    }
+    
+    /**
+     * Get the cached file of the content object with the given id. 
+     * 
+     * The returned file may not exist.
+     * 
+     * @param id
+     * @return 
+     */
+    public static File getFile(long id) {
+        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
+    }
+    
     
     private static Image generateAndSaveIcon(Content content, int iconSize) { 
         Image icon = null;
@@ -149,9 +192,5 @@ public class ImageUtils {
             }
 
         }
-    }
-    
-    private static File getFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
     }
 }
