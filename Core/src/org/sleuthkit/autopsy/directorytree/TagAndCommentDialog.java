@@ -242,7 +242,7 @@ public class TagAndCommentDialog extends JDialog {
     private javax.swing.JTextField commentText;
     private javax.swing.JButton newTagButton;
     private javax.swing.JButton okButton;
-    private javax.swing.JComboBox tagCombo;
+    private javax.swing.JComboBox<String> tagCombo;
     private javax.swing.JLabel tagLabel;
     // End of variables declaration//GEN-END:variables
 }

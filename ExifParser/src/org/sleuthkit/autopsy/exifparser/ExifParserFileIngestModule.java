@@ -208,6 +208,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
      *
      * @return true if jpeg file, false otherwise
      */
+    @SuppressWarnings("unchecked")
     public static boolean isJpegFileHeader(AbstractFile file) {
         if (file.getSize() < 100) {
             return false;

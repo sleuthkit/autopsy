@@ -85,12 +85,12 @@ public class VolumeNode extends AbstractContentNode<Volume> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name", "Name", "no description", this.getDisplayName()));
-        ss.put(new NodeProperty("ID", "ID", "no description", content.getAddr()));
-        ss.put(new NodeProperty("Starting Sector", "Starting Sector", "no description", content.getStart()));
-        ss.put(new NodeProperty("Length in Sectors", "Length in Sectors", "no description", content.getLength()));
-        ss.put(new NodeProperty("Description", "Description", "no description", content.getDescription()));
-        ss.put(new NodeProperty("Flags", "Flags", "no description", content.getFlagsAsString()));
+        ss.put(new NodeProperty<>("Name", "Name", "no description", this.getDisplayName()));
+        ss.put(new NodeProperty<>("ID", "ID", "no description", content.getAddr()));
+        ss.put(new NodeProperty<>("Starting Sector", "Starting Sector", "no description", content.getStart()));
+        ss.put(new NodeProperty<>("Length in Sectors", "Length in Sectors", "no description", content.getLength()));
+        ss.put(new NodeProperty<>("Description", "Description", "no description", content.getDescription()));
+        ss.put(new NodeProperty<>("Flags", "Flags", "no description", content.getFlagsAsString()));
 
         return s;
     }

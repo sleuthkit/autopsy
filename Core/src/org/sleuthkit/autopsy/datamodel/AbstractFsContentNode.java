@@ -77,10 +77,10 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         for (int i = 0; i < FS_PROPS_LEN; ++i) {
             final AbstractFilePropertyType propType = AbstractFilePropertyType.values()[i];
             final String propString = propType.toString();
-            ss.put(new NodeProperty(propString, propString, NO_DESCR, map.get(propString)));
+            ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
         if (directoryBrowseMode) {
-            ss.put(new NodeProperty(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
+            ss.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 
         return s;

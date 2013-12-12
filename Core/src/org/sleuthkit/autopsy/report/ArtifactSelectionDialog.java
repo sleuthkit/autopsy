@@ -66,7 +66,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
      */
     private void populateList() {
         try {
-            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
             
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
@@ -80,7 +80,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                 }
             });
                         
-            artifactStates = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
+            artifactStates = new EnumMap<>(BlackboardArtifact.ARTIFACT_TYPE.class);
             for (BlackboardArtifact.ARTIFACT_TYPE type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
             }
@@ -102,7 +102,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                BlackboardArtifact.ARTIFACT_TYPE type = (BlackboardArtifact.ARTIFACT_TYPE) model.getElementAt(index);
+                BlackboardArtifact.ARTIFACT_TYPE type = model.getElementAt(index);
                 artifactStates.put(type, !artifactStates.get(type));
                 list.repaint();
             }
@@ -157,7 +157,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         artifactScrollPane = new javax.swing.JScrollPane();
-        artifactList = new javax.swing.JList();
+        artifactList = new javax.swing.JList<>();
         okButton = new javax.swing.JButton();
         titleLabel = new javax.swing.JLabel();
         selectAllButton = new javax.swing.JButton();
@@ -253,7 +253,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList artifactList;
+    private javax.swing.JList<ARTIFACT_TYPE> artifactList;
     private javax.swing.JScrollPane artifactScrollPane;
     private javax.swing.JButton deselectAllButton;
     private javax.swing.JButton okButton;
@@ -261,7 +261,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 
-    private class ArtifactModel implements ListModel {
+    private class ArtifactModel implements ListModel<ARTIFACT_TYPE> {
 
         @Override
         public int getSize() {
@@ -269,7 +269,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public ARTIFACT_TYPE getElementAt(int index) {
             return artifacts.get(index);
         }
 
@@ -285,7 +285,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     private class ArtifactRenderer extends JCheckBox implements ListCellRenderer<BlackboardArtifact.ARTIFACT_TYPE> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, BlackboardArtifact.ARTIFACT_TYPE  value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends ARTIFACT_TYPE> list, ARTIFACT_TYPE value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(artifactStates.get(value));
@@ -295,7 +295,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                 setText(value.getDisplayName());
                 return this;
             }
-            return new JLabel();
+            return new JLabel();        
         }
         
     }
