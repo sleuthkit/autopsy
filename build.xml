@@ -72,6 +72,12 @@
          
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
+        <if>
+            <equals arg1="${os.family}" arg2="windows"/>
+            <then>
+                <antcall target="copyExternalLibsToZip"/>
+            </then>
+        </if>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
@@ -126,7 +132,16 @@
         <property name="app.version" value="${DSTAMP}"/>
     </target>
     
-    <target name="-init" depends="-taskdefs,-convert-old-project,getProps,getJunit">
+    <target name="getExternals">
+       <if>
+            <equals arg1="${os.family}" arg2="windows"/>
+            <then>
+                <antcall target="copyLibs"/>
+            </then>
+        </if>
+    </target>
+    
+    <target name="-init" depends="-taskdefs,-convert-old-project,getProps,getJunit,getExternals">
         <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>

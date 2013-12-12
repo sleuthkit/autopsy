@@ -60,9 +60,6 @@ import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.*;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * This test expects the following system properties to be set: img_path: The
@@ -96,8 +93,7 @@ public class RegressionTest extends TestCase {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(RegressionTest.class).
                 clusters(".*").
                 enableModules(".*");
-        conf = conf.addTest("testHashDbJni",
-                "testNewCaseWizardOpen",
+        conf = conf.addTest("testNewCaseWizardOpen",
                 "testNewCaseWizard",
                 "testStartAddDataSource",
                 "testConfigureIngest1",
@@ -107,8 +103,7 @@ public class RegressionTest extends TestCase {
                 "testAddSourceWizard1",
                 "testIngest",
                 "testGenerateReportToolbar",
-                "testGenerateReportButton"
-                );
+                "testGenerateReportButton");
         return NbModuleSuite.create(conf);
 
 
@@ -130,39 +125,6 @@ public class RegressionTest extends TestCase {
     public void tearDown() {
     }
 
-    public void testHashDbJni() {
-        logger.info("HashDb JNI");
-        try
-        {
-            String hashfn = "regtestHash.kdb";
-            String md5hash = "b8c51089ebcdf9f11154a021438f5bd6";
-            String md5hash2 = "cb4aca35f3fd54aacf96da9cd9acadb8";
-            String md5hashBad = "35b299c6fcf47ece375b3221bdc16969";
-                    
-            logger.info("Creating hash db " + hashfn);
-            int handle = SleuthkitJNI.createHashDatabase(hashfn);
-            
-            logger.info("Adding hash " + md5hash);
-            SleuthkitJNI.addToHashDatabase("", md5hash, "", "", handle);
-            
-            logger.info("Adding hash " + md5hash2);
-            SleuthkitJNI.addToHashDatabase("", md5hash2, "", "", handle);   
-            
-            logger.info("Querying for known hash " + md5hash);
-            TskData.FileKnown k = SleuthkitJNI.lookupInHashDatabase(md5hash, handle);
-            logger.info("Query result: " + k.toString());
-            
-            logger.info("Querying for unknown hash " + md5hashBad);
-            TskData.FileKnown k2 = SleuthkitJNI.lookupInHashDatabase(md5hashBad, handle);
-            logger.info("Query result: " + k2.toString());            
-            
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Database creation error: ", ex);
-            logger.info("A TskException occurred.");
-            return;
-        }           
-    }
-    
     public void testNewCaseWizardOpen() {
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");

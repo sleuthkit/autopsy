@@ -215,18 +215,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         Children children = parent.getChildren();
-        int total = Math.min(rows, children.getNodesCount());
-        for (int i = 0; i < total; i++) {
-            Node child = children.getNodeAt(i);
+        int childCount = 0;
+        for (Node child : children.getNodes()) {            
+            if (++childCount > rows) {
+                break;
+            }
             for (PropertySet ps : child.getPropertySets()) {
-                //if (ps.getName().equals(Sheet.PROPERTIES)) {
-                //return ps.getProperties();
                 final Property[] props = ps.getProperties();
                 final int propsNum = props.length;
                 for (int j = 0; j < propsNum; ++j) {
                     propertiesAcc.add(props[j]);
                 }
-                //}
             }
             getAllChildPropertyHeadersRec(child, rows);
         }
@@ -278,137 +277,131 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                //wrap to filter out children
-                //note: this breaks the tree view mode in this generic viewer,
-                //so wrap nodes earlier if want 1 level view
-                //if (!(root instanceof TableFilterNode)) {
-                ///    root = new TableFilterNode(root, true);
-                //}
+        //wrap to filter out children
+        //note: this breaks the tree view mode in this generic viewer,
+        //so wrap nodes earlier if want 1 level view
+        //if (!(root instanceof TableFilterNode)) {
+        ///    root = new TableFilterNode(root, true);
+        //}
 
-                em.setRootContext(root);
+        em.setRootContext(root);
 
 
-                final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
+        final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
+
+        if (ov == null) {
+            return;
+        }
+        
+	propertiesAcc.clear();
+
+        DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
+        List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
+        if (props.size() > 0) {
+            Node.Property prop = props.remove(0);
+            ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
+        }
+
+
+        // *********** Make the TreeTableView to be sortable ***************
+
+        //First property column is sortable, but also sorted initially, so
+        //initially this one will have the arrow icon:
+        if (props.size() > 0) {
+            props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
+            props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
+        }
+
+        // The rest of the columns are sortable, but not initially sorted,
+        // so initially will have no arrow icon:
+        String[] propStrings = new String[props.size() * 2];
+        for (int i = 0; i < props.size(); i++) {
+            props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE);
+            propStrings[2 * i] = props.get(i).getName();
+            propStrings[2 * i + 1] = props.get(i).getDisplayName();
+        }
+
+        ov.setPropertyColumns(propStrings);
+        // *****************************************************************
+
+        //            // set the first entry
+        //            Children test = root.getChildren();
+        //            Node firstEntryNode = test.getNodeAt(0);
+        //            try {
+        //                this.getExplorerManager().setSelectedNodes(new Node[]{firstEntryNode});
+        //            } catch (PropertyVetoException ex) {}
+
+
+        // show the horizontal scroll panel and show all the content & header
+
+        int totalColumns = props.size();
+	
+	//int scrollWidth = ttv.getWidth();
+       	int margin = 4;
+       	int startColumn = 1;
                 
-                if (ov == null) {
-                    return;
-                }
-                
-                propertiesAcc.clear();
-
-                DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-                List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
-                if (props.size() > 0) {
-                    Node.Property prop = props.remove(0);
-                    ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
-                }
-
-
-                // *********** Make the TreeTableView to be sortable ***************
-
-                //First property column is sortable, but also sorted initially, so
-                //initially this one will have the arrow icon:
-                if (props.size() > 0) {
-                    props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
-                    props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
-                }
-
-                // The rest of the columns are sortable, but not initially sorted,
-                // so initially will have no arrow icon:
-                String[] propStrings = new String[props.size() * 2];
-                for (int i = 0; i < props.size(); i++) {
-                    props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE);
-                    propStrings[2 * i] = props.get(i).getName();
-                    propStrings[2 * i + 1] = props.get(i).getDisplayName();
-                }
-
-                ov.setPropertyColumns(propStrings);
-                // *****************************************************************
-
-                //            // set the first entry
-                //            Children test = root.getChildren();
-                //            Node firstEntryNode = test.getNodeAt(0);
-                //            try {
-                //                this.getExplorerManager().setSelectedNodes(new Node[]{firstEntryNode});
-                //            } catch (PropertyVetoException ex) {}
-
-
-                // show the horizontal scroll panel and show all the content & header
-
-                int totalColumns = props.size();
-
-                //int scrollWidth = ttv.getWidth();
-                int margin = 4;
-                int startColumn = 1;
-                
-                // If there is only one column (which was removed from props above)
-                // Just let the table resize itself.
-                ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+       	// If there is only one column (which was removed from props above)
+       	// Just let the table resize itself.
+       	ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
                 
 
 
-                // get first 100 rows values for the table
-                Object[][] content = null;
-                content = getRowValues(root, 100);
+        // get first 100 rows values for the table
+        Object[][] content = null;
+        content = getRowValues(root, 100);
 
 
-                if (content != null) {
-                    // get the fontmetrics
-                    final Graphics graphics = ov.getGraphics();
-                    if (graphics != null) {
-                        final FontMetrics metrics = graphics.getFontMetrics();
+        if (content != null) {
+            // get the fontmetrics
+            final Graphics graphics = ov.getGraphics();
+            if (graphics != null) {
+                final FontMetrics metrics = graphics.getFontMetrics();
 
-                        // for the "Name" column
-                        int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
-                        ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
+                // for the "Name" column
+                int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
+                ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
 
-                        // get the max for each other column
-                        for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
-                            int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
-                            ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
-                        }
-                    }
-                }
-
-                // if there's no content just auto resize all columns
-                if (!(content.length > 0)) {
-                    // turn on the auto resize
-                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                }
-            }
-        });
-    }
-
-    private static Object[][] getRowValues(Node node, int rows) {
-        // how many rows are we returning
-        int maxRows = Math.min(rows, node.getChildren().getNodesCount());
-
-        Object[][] objs = new Object[maxRows][];
-
-        for (int i = 0; i < maxRows; i++) {
-            PropertySet[] props = node.getChildren().getNodeAt(i).getPropertySets();
-            if (props.length == 0) //rare special case
-            {
-                continue;
-            }
-            Property[] property = props[0].getProperties();
-            objs[i] = new Object[property.length];
-
-
-            for (int j = 0; j < property.length; j++) {
-                try {
-                    objs[i][j] = property[j].getValue();
-                } catch (IllegalAccessException ignore) {
-                    objs[i][j] = "n/a";
-                } catch (InvocationTargetException ignore) {
-                    objs[i][j] = "n/a";
+                // get the max for each other column
+                for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
+                    int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
+                    ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                 }
             }
         }
-        return objs;
+
+        // if there's no content just auto resize all columns
+        if (!(content.length > 0)) {
+            // turn on the auto resize
+            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        }
+    }
+
+    // Populate a two-dimensional array with rows of property values for up 
+    // to maxRows children of the node passed in. 
+    private static Object[][] getRowValues(Node node, int maxRows) {
+        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];        
+        int rowCount = 0;
+        for (Node child : node.getChildren().getNodes()) {
+            if (rowCount >= maxRows) {
+                break;
+            }                
+            PropertySet[] propertySets = child.getPropertySets();
+            if (propertySets.length > 0)
+            {
+                Property[] properties = propertySets[0].getProperties();
+                rowValues[rowCount] = new Object[properties.length];
+                for (int j = 0; j < properties.length; ++j) {
+                    try {
+                        rowValues[rowCount][j] = properties[j].getValue();
+                    } 
+                    catch (IllegalAccessException | InvocationTargetException ignore) {
+                        rowValues[rowCount][j] = "n/a";
+                    }
+                }
+            }                        
+            ++rowCount;
+        }        
+        return rowValues;
     }
 
     @Override
@@ -492,11 +485,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
         
         @Override
-        public void childrenAdded(NodeMemberEvent nme) {
+        public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
             if (load && containsReal(delta)) {
                 load = false;
-                setupTable(nme.getNode());
+                if (SwingUtilities.isEventDispatchThread()) {
+                    setupTable(nme.getNode());
+                } else {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            setupTable(nme.getNode());
+                        }
+                    });
+                }
             }
         }
         
