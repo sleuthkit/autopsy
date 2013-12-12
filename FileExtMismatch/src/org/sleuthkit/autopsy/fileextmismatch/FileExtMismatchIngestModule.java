@@ -63,6 +63,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public final static String MODULE_NAME = "File Extension Mismatch Detection";
     public final static String MODULE_DESCRIPTION = "Flags mismatched filename extensions based on file signature.";
     public final static String MODULE_VERSION = Version.getVersion();    
+    private static final String ART_NAME = "TSK_MISMATCH";
     private static final String ATTR_NAME = "TSK_FILE_TYPE_EXT_WRONG";
     private static final byte[] ATTR_VALUE_WRONG = {1};
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
@@ -72,7 +73,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long numFiles = 0;
     private static boolean skipKnown = false;
     
-    private int attrId = -1;    
+    private int artId = -1;
+    private int attrId = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
@@ -96,7 +98,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         
-        // Add a new attribute type
+        // Add a new artifact and attribute type
         
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();        
         
@@ -106,13 +108,14 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         } catch (TskCoreException ex) {
             // create it if not
             try {
+                artId = sleuthkitCase.addArtifactType(ART_NAME, "A filename extension mismatch detection hit.");
                 attrId = sleuthkitCase.addAttrType(ATTR_NAME, "Flag for detected mismatch between filename extension and file signature.");
             } catch (TskCoreException ex1) {
-                logger.log(Level.SEVERE, "Error adding attribute type: " + ex1.getLocalizedMessage());
+                logger.log(Level.SEVERE, "Error adding artifact and attribute types: " + ex1.getLocalizedMessage());
                 attrId = -1;
             }
         }        
-        
+
         // Set up default mapping (eventually this will be loaded from a config file)  
         
         // MS Office: For now, since we don't detect specific MS office openxml formats, we just assume that 
@@ -197,11 +200,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
                         
             if (flag) {
                 // add artifact
-                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
+                BlackboardArtifact bart = abstractFile.newArtifact(artId);
                 BlackboardAttribute batt = new BlackboardAttribute(attrId, MODULE_NAME, "", ATTR_VALUE_WRONG);
                 bart.addAttribute(batt);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_GEN_INFO, Collections.singletonList(bart)));
+                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.fromID(artId), Collections.singletonList(bart)));
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
