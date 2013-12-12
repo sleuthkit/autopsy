@@ -82,7 +82,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
-        modulesJList.setListData(modules.toArray());
+        modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
         selectedIndex = 0;
         modulesJList.setSelectedIndex(selectedIndex);
     }
@@ -151,7 +151,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         descriptionScrollPane = new javax.swing.JScrollPane();
         descriptionTextPane = new javax.swing.JTextPane();
         modulesScrollPane = new javax.swing.JScrollPane();
-        modulesJList = new javax.swing.JList();
+        modulesJList = new javax.swing.JList<>();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
 
@@ -177,10 +177,10 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         descriptionScrollPane.setViewportView(descriptionTextPane);
 
         modulesJList.setBackground(new java.awt.Color(240, 240, 240));
-        modulesJList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        modulesJList.setModel(new javax.swing.AbstractListModel<ReportModule>() {
+            ReportModule[] modules = {};
+            public int getSize() { return modules.length; }
+            public ReportModule getElementAt(int i) { return modules[i]; }
         });
         modulesScrollPane.setViewportView(modulesJList);
 
@@ -218,7 +218,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
     private javax.swing.JPanel configurationPanel;
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextPane descriptionTextPane;
-    private javax.swing.JList modulesJList;
+    private javax.swing.JList<ReportModule> modulesJList;
     private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JLabel reportModulesLabel;
     // End of variables declaration//GEN-END:variables
@@ -238,7 +238,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         boolean generalModuleSelected = false;
         if (module instanceof GeneralReportModule) {
             JPanel generalPanel = ((GeneralReportModule) module).getConfigurationPanel();
-            panel = (generalPanel == null) ? new JPanel() : panel;
+            panel = (generalPanel == null) ? new JPanel() : generalPanel;
             generalModuleSelected = true;
         }
 
@@ -253,7 +253,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
     private class ModuleCellRenderer extends JRadioButton implements ListCellRenderer<ReportModule> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, ReportModule value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends ReportModule> list, ReportModule value, int index, boolean isSelected, boolean cellHasFocus) {
             this.setText(value.getName());
             this.setEnabled(true);
             this.setSelected(isSelected);

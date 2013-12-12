@@ -33,6 +33,19 @@ splitToken:
 		<SearchEngine engine="Yahoo" domainSubstring=".yahoo." >
 			<splitToken plainToken="?p=" regexToken="\\?p=" />
 		</SearchEngine>
+                
+               <SearchEngine engine="Twitter" domainSubstring="twitter." >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+			<splitToken plainToken="&amp;q=" regexToken="&amp;q="/> 
+               </SearchEngine>
+               
+                <SearchEngine engine="LinkedIn" domainSubstring=".linkedin." >
+			<splitToken plainToken="&amp;keywords=" regexToken="&amp;keywords="/> 
+               </SearchEngine>
+               
+                <SearchEngine engine="Facebook" domainSubstring=".facebook." >
+			<splitToken plainToken="?value=" regexToken="\\?value="/> 
+               </SearchEngine>
 
 		<SearchEngine engine="Bing" domainSubstring=".bing" >
 			<splitToken plainToken="?q=" regexToken="\\?q=" />

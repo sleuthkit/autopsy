@@ -23,12 +23,16 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
+import java.io.BufferedReader;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.Writer;
 
 //Util Imports
@@ -93,6 +97,7 @@ public class ExtractIE extends Extract {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+        dataFound = false;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
         this.getRecentDocuments(dataSource, controller);
@@ -115,48 +120,67 @@ public class ExtractIE extends Extract {
             return;
         }
 
-        for (AbstractFile favoritesFile : favoritesFiles) {
-            if (favoritesFile.getSize() == 0) {
+        if (favoritesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE bookmark files.");
+            return;
+        }
+        
+        dataFound = true;
+        for (AbstractFile fav : favoritesFiles) {
+            if (fav.getSize() == 0) {
                 continue;
             }
          
-            // @@@ WHY DON"T WE PARSE THIS FILE more intelligently. It's text-based
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = favoritesFile;
-            byte[] t = new byte[(int) fav.getSize()];
-            try {
-                final int bytesRead = fav.read(t, 0, fav.getSize());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer favorite.", ex);
-                this.addErrorMessage(this.getName() + ": Error reading Internet Explorer Bookmark file " + favoritesFile.getName());
-                continue;
-            }
-            String bookmarkString = new String(t);
-            String re1 = ".*?";	// Non-greedy match on filler
-            String re2 = "((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
-            String url = "";
-            Pattern p = Pattern.compile(re1 + re2, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-            Matcher m = p.matcher(bookmarkString);
-            if (m.find()) {
-                url = m.group(1);
-            }
-            String name = favoritesFile.getName();
-            Long datetime = favoritesFile.getCrtime();
+            
+            String url = getURLFromIEBookmarkFile(fav);
+
+            String name = fav.getName();
+            Long datetime = fav.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), "RecentActivity", name));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, favoritesFile, bbattributes);
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+    }
+    
+    private String getURLFromIEBookmarkFile(AbstractFile fav) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
+        String line, url = "";
+        try {
+            while ((line = reader.readLine()) != null) {
+                // The actual shortcut line we are interested in is of the
+                // form URL=http://path/to/website
+                if (line.startsWith("URL")) {
+                    url = line.substring(line.indexOf("=") + 1);
+                    break;
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex);
+            this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
+        } catch (IndexOutOfBoundsException ex) {
+            logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
+            this.addErrorMessage(this.getName() + ": Error parsing IE bookmark File " + fav.getName());
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to close reader.", ex);
+            }
+        }
+        
+        return url;
     }
 
     /**
@@ -170,11 +194,17 @@ public class ExtractIE extends Extract {
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error finding cookie files for IE");
+            logger.log(Level.WARNING, "Error getting cookie files for IE");
             this.addErrorMessage(this.getName() + ": " + "Error getting Internet Explorer cookie files.");
             return;
         }
 
+        if (cookiesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE cookies files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
@@ -230,6 +260,12 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (recentFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any IE recent files.");
+            return;
+        }
+        
+        dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
             if (controller.isCancelled()) {
                 break;
@@ -299,6 +335,13 @@ public class ExtractIE extends Extract {
             return;
         }
 
+        if (indexFiles.isEmpty()) {
+            String msg = "No InternetExplorer history files found.";
+            logger.log(Level.INFO, msg);
+            return;
+        }
+        
+        dataFound = true;
         String temps;
         String indexFileName;
         for (AbstractFile indexFile : indexFiles) {
@@ -481,7 +524,7 @@ public class ExtractIE extends Extract {
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", ""));
-                // @@@ NOte that other browser modules are adding NAME in hre for the title
+                // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(), "RecentActivity", user));

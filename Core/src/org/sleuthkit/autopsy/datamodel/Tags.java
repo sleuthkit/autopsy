@@ -169,7 +169,7 @@ public class Tags implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -233,7 +233,7 @@ public class Tags implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -312,7 +312,7 @@ public class Tags implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -408,7 +408,7 @@ public class Tags implements AutopsyVisitableItem {
                 BlackboardArtifact sourceResult = Tags.getArtifactFromTag(artifact.getArtifactID());
                 String resultType = sourceResult.getDisplayName();
 
-                NodeProperty resultTypeProp = new NodeProperty("Source Result Type",
+                NodeProperty<String> resultTypeProp = new NodeProperty<>("Source Result Type",
                         "Result Type",
                         NO_DESCR,
                         resultType);
@@ -416,20 +416,6 @@ public class Tags implements AutopsyVisitableItem {
 
                 tagNode.addNodeProperty(resultTypeProp);
 
-            }
-            try {
-                //add source path property
-                 final AbstractFile sourceFile = skCase.getAbstractFileById(artifact.getObjectID());
-                 final String sourcePath = sourceFile.getUniquePath();
-                 NodeProperty sourcePathProp = new NodeProperty("Source File Path",
-                        "Source File Path",
-                        NO_DESCR,
-                        sourcePath);
-
-
-                tagNode.addNodeProperty(sourcePathProp);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting a file from artifact to get source file path for a tag, ", ex);
             }
             
             return tagNode;

@@ -20,7 +20,7 @@ def compile(errore, attachli, parsedin):
     global to
     global server
     global subj
-    global email_enabled 
+    global email_enabled
     global redo
     global tryredo
     global failedbool
@@ -40,7 +40,7 @@ def compile(errore, attachli, parsedin):
             gitPull("sleuthkit")
         if(passed):
             vsBuild()
-            print("TSK") 
+            print("TSK")
         if(passed):
             gitPull("autopsy")
         if(passed):
@@ -60,7 +60,7 @@ def compile(errore, attachli, parsedin):
     if(tryredo):
         errorem = ""
         errorem += "Rebuilt properly.\n"
-        if email_enabled: 
+        if email_enabled:
             Emailer.send_email(to, server, subj, errorem, attachl)
         attachl = []
         passed = True
@@ -82,7 +82,6 @@ def gitPull(TskOrAutopsy):
         ccwd = os.path.join("..", "..")
     subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
     gpout.close()
-
 
 #Builds TSK as a win32 applicatiion
 def vsBuild():
@@ -115,13 +114,11 @@ def vsBuild():
         if(not tryredo):
             errorem += "LIBTSK C++ failed to build.\n"
             attachl.append(VSpth)
-            if email_enabled: 
+            if email_enabled:
                 Emailer.send_email(parsed, errorem, attachl, False)
         tryredo = True
         passed = False
         redo = True
-
-
 
 #Builds Autopsy or the Datamodel
 def antBuild(which, Build):
@@ -160,7 +157,7 @@ def antBuild(which, Build):
             if(not tryredo):
                 errorem += "DataModel Java build failed.\n"
                 attachl.append(antpth)
-                if email_enabled: 
+                if email_enabled:
                     Emailer.send_email(to, server, subj, errorem, attachl)
             passed = False
             tryredo = True
@@ -177,7 +174,7 @@ def main():
     global email_enabled
     global to
     global server
-    global subj 
+    global subj
     errore = ""
     attachli = []
     config_file = ""
@@ -191,8 +188,8 @@ def main():
         subj = parsedin.getElementsByTagName("subject")[0].getAttribute("value").encode().decode("utf_8")
     except Exception:
         email_enabled = False
-    # email_enabled = (to is not None) and (server is not None) and (subj is not None) 
-    email_enabled = False 
+    # email_enabled = (to is not None) and (server is not None) and (subj is not None)
+    email_enabled = False
     compile(errore, attachli, parsedin)
 
 class OS:
@@ -212,3 +209,4 @@ if __name__ == "__main__":
         main()
     else:
         print("We only support Windows and Cygwin at this time.")
+

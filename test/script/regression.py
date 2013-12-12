@@ -165,9 +165,9 @@ class TestRunner(object):
             Errors.add_email_attachment(html.name)
             html.close()
 
-        if test_config.email_enabled:
-            Emailer.send_email(test_config.mail_to, test_config.mail_server,
-            test_config.mail_subject, Errors.email_body, Errors.email_attachs)
+            if test_config.email_enabled:
+                Emailer.send_email(test_config.mail_to, test_config.mail_server,
+                test_config.mail_subject, Errors.email_body, Errors.email_attachs)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.

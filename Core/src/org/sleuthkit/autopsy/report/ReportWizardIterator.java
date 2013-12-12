@@ -49,6 +49,7 @@ public final class ReportWizardIterator implements WizardDescriptor.Iterator<Wiz
     private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
     private String[] fileConfigIndex;
     
+    @SuppressWarnings({"rawtypes", "unchecked"})
     ReportWizardIterator() {
         firstPanel = new ReportWizardPanel1();
         tableConfigPanel = new ReportWizardPanel2();

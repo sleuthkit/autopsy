@@ -105,13 +105,9 @@ public class Installer extends ModuleInstall {
         }
         
         final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",
-                                                        "MenuUI",
-                                                        "MenuItemUI",
-                                                        "CheckBoxMenuItemUI",
-                                                        "RadioButtonMenuItemUI",
-                                                        "PopupMenuUI"};
+                                                        };
                 
-        Map<Object, Object> uiEntries = new TreeMap<Object, Object>();
+        Map<Object, Object> uiEntries = new TreeMap<>();
         
         // Store the keys that deal with menu items
         for(String key : UI_MENU_ITEM_KEYS) {
@@ -133,7 +129,7 @@ public class Installer extends ModuleInstall {
         }
         
         // Overwrite the Metal menu item keys to use the Aqua versions
-        for(Map.Entry entry : uiEntries.entrySet()) {
+        for(Map.Entry<Object,Object> entry : uiEntries.entrySet()) {
             UIManager.put(entry.getKey(), entry.getValue());
         }
         

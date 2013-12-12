@@ -126,7 +126,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -190,7 +190,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -261,7 +261,7 @@ public class Bookmarks implements AutopsyVisitableItem {
                 //add custom property
                 final String NO_DESCR = "no description";
                 String resultType = sourceResult.getDisplayName();
-                NodeProperty resultTypeProp = new NodeProperty("Source Result Type",
+                NodeProperty<String> resultTypeProp = new NodeProperty<>("Source Result Type",
                         "Result Type",
                         NO_DESCR,
                         resultType);

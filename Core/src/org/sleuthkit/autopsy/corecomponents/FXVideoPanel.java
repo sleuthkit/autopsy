@@ -404,6 +404,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          */
         public void reset() {
             if (mediaPlayer != null) {
+                setInfoLabelText("");
                 if (mediaPlayer.getStatus() == Status.PLAYING) {
                     mediaPlayer.stop();
                 }

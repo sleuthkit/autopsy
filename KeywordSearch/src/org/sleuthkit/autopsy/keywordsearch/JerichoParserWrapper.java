@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import net.htmlparser.jericho.Attributes;
+import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
-import net.htmlparser.jericho.TextExtractor;
 
 /**
  * Uses Jericho HTML Parser to create a Reader for output, consisting of
@@ -47,6 +47,15 @@ public class JerichoParserWrapper {
     }
     
     /**
+     * Returns the reader, initialized in parse(), which will be
+     * null if parse() is not called or if parse() throws an error.
+     * @return Reader
+     */
+    public Reader getReader() {
+        return reader;
+    }
+    
+    /**
      * Initialize the reader by parsing the InputStream, adding it to StringBuilder,
      * and creating a StringReader from it.
      */
@@ -57,7 +66,7 @@ public class JerichoParserWrapper {
             Source source = new Source(in);
             source.fullSequentialParse();
             
-            StringBuilder text = new StringBuilder();
+            String text;
             StringBuilder scripts = new StringBuilder();
             StringBuilder links = new StringBuilder();
             StringBuilder images = new StringBuilder();
@@ -68,14 +77,8 @@ public class JerichoParserWrapper {
             int numImages = 1;
             int numComments = 1;
             int numOthers = 1;
-
-            // Extract text from the source
-            TextExtractor extractor = new TextExtractor(source);
-            // Split it at every ". " but keep the .
-            String[] lines = extractor.toString().split("(?<=\\. )");
-            for(String s : lines) {
-                text.append(s).append("\n");
-            }
+            
+            text = renderHTMLAsPlainText(source);
 
             // Get all the tags in the source
             List<StartTag> tags = source.getAllStartTags();
@@ -113,7 +116,7 @@ public class JerichoParserWrapper {
                 }
             }
 
-            out.append(text.toString()).append("\n");
+            out.append(text).append("\n\n");
 
             out.append("----------NONVISIBLE TEXT----------\n\n");
             if(numScripts>1) {
@@ -139,13 +142,14 @@ public class JerichoParserWrapper {
         }
     }
     
-    /**
-     * Returns the reader, initialized in parse(), which will be
-     * null if parse() is not called or if parse() throws an error.
-     * @return Reader
-     */
-    public Reader getReader() {
-        return reader;
+    // Extract text from the source, nicely formatted with whitespace and
+    // newlines where appropriate.
+    private String renderHTMLAsPlainText(Source source) {
+        Renderer renderer = source.getRenderer();
+        renderer.setNewLine("\n");
+        renderer.setIncludeHyperlinkURLs(false);
+        renderer.setDecorateFontStyles(false);
+        renderer.setIncludeAlternateText(false);
+        return renderer.toString();
     }
-    
 }

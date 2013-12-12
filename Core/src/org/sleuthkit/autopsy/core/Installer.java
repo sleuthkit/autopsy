@@ -26,8 +26,8 @@ import javafx.embed.swing.JFXPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Wrapper over Installers in packages in Core module This is the main
@@ -39,6 +39,41 @@ public class Installer extends ModuleInstall {
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static volatile boolean javaFxInit = false;
 
+    static {
+        loadDynLibraries();
+    }
+    
+    private static void loadDynLibraries() {
+        if (PlatformUtil.isWindowsOS()) {
+            try {
+                //on windows force loading ms crt dependencies first
+                //in case linker can't find them on some systems
+                //Note: if shipping with a different CRT version, this will only print a warning
+               //and try to use linker mechanism to find the correct versions of libs.
+                //We should update this if we officially switch to a new version of CRT/compiler
+                System.loadLibrary("msvcr100");
+                System.loadLibrary("msvcp100");
+                logger.log(Level.INFO, "MS CRT libraries loaded");
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e);
+            }
+
+            try {
+               System.loadLibrary("zlib");
+               logger.log(Level.INFO, "ZLIB library loaded loaded");
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e);
+            }
+
+            try {
+               System.loadLibrary("libewf");
+               logger.log(Level.INFO, "EWF library loaded");
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading EWF library, ", e);
+            }
+         }
+     }
+    
     public Installer() {
         logger.log(Level.INFO, "core installer created");
         javaFxInit = false;

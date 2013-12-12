@@ -78,12 +78,12 @@ public class KeyValueNode extends AbstractNode {
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty("Name", "Name", "n/a", data.getName()));
+        ss.put(new NodeProperty<>("Name", "Name", "n/a", data.getName()));
 
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty(key, key, "n/a", value));
+            ss.put(new NodeProperty<>(key, key, "n/a", value));
         }
 
         return s;

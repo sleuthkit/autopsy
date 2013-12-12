@@ -152,7 +152,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -173,6 +173,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
             //flatten all emails            
+            List<BlackboardArtifact> tempList = new ArrayList<>();
             for (String account : accounts.keySet()) {
                 Map<String, List<Long>> folders = accounts.get(account);
                 for (String folder : folders.keySet()) {
@@ -180,7 +181,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     for (long l : messages) {
                         try {
                             //TODO: bulk artifact gettings
-                            list.add(skCase.getBlackboardArtifact(l));
+                            tempList.add(skCase.getBlackboardArtifact(l));
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
                         }
@@ -189,7 +190,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             }
 
 
-
+            list.addAll(tempList);
             return true;
         }
 
@@ -233,7 +234,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -285,7 +286,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -355,7 +356,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     getName()));
@@ -383,14 +384,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
+            List<BlackboardArtifact> tempList = new ArrayList<>();
             for (long l : messages) {
                 try {
                     //TODO: bulk artifact gettings
-                    list.add(skCase.getBlackboardArtifact(l));
+                    tempList.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
                 }
             }
+            list.addAll(tempList);
             return true;
         }
 

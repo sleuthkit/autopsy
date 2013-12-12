@@ -37,6 +37,7 @@ public class Utilities {
      *
      * @return true if jpeg file, false otherwise
      */
+    @SuppressWarnings("cast")
     public static boolean isJpegFileHeader(AbstractFile file) {
         if (file.getSize() < 100) {
             return false;

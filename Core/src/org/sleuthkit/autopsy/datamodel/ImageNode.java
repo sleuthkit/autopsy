@@ -87,7 +87,7 @@ public class ImageNode extends AbstractContentNode<Image> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
+        ss.put(new NodeProperty<>("Name", "Name", "no description", getName()));
         // @@@ add more properties here...
 
         return s;
