@@ -739,7 +739,7 @@ class TestResultsDiffer(object):
             output_dir = test_data.output_path
             gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            test_data.db_diff_pass = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
+            test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
             gold_dump=gold_dump).run_diff())
 
             # Compare Exceptions
