@@ -39,7 +39,7 @@ public class KeywordSearchSettings {
     static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";
     static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
     static final String SHOW_SNIPPETS = "showSnippets";
-    static final boolean DEFAULT_SHOW_SNIPPETS = false;
+    static final boolean DEFAULT_SHOW_SNIPPETS = true;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
