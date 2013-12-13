@@ -38,6 +38,7 @@ import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
@@ -60,14 +61,15 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileExtMismatchIngestModule defaultInstance = null;
-    public final static String MODULE_NAME = "File Extension Mismatch Detection";
-    public final static String MODULE_DESCRIPTION = "Flags mismatched filename extensions based on file signature.";
-    public final static String MODULE_VERSION = Version.getVersion();    
+    private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
+    public static final String MODULE_NAME = "File Extension Mismatch Detection";
+    public static final String MODULE_DESCRIPTION = "Flags mismatched filename extensions based on file signature.";
+    public static final String MODULE_VERSION = Version.getVersion();    
     private static final String ART_NAME = "TSK_MISMATCH";
     private static final String ATTR_NAME = "TSK_FILE_TYPE_EXT_WRONG";
     private static final byte[] ATTR_VALUE_WRONG = {1};
-    private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
-    private static final String TEXT_PLAIN_CONFIG_PATH = "/org/sleuthkit/autopsy/fileextmismatch/extensions_text-plain.txt";
+    private static final String CONFIG_FILENAME = "mismatch_config.xml";
+
     private static long processTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
@@ -116,64 +118,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             }
         }        
 
-        // Set up default mapping (eventually this will be loaded from a config file)  
-        
-        // MS Office: For now, since we don't detect specific MS office openxml formats, we just assume that 
-        // those will get caught under "application/x-msoffice". 
-        SigTypeToExtMap.put("application/x-msoffice", new String[] {"doc", "docx", "docm", "dotm", "dot", "dotx", "xls", "xlt", "xla", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "ppt", "pot", "pps","ppa", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
-        SigTypeToExtMap.put("application/x-ooxml", new String[]{"docx", "dotx", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
-        SigTypeToExtMap.put("application/msword", new String[]{"doc","dot"});
-        SigTypeToExtMap.put("application/vnd.ms-excel", new String[]{"xls","xlt","xla"});
-        SigTypeToExtMap.put("application/vnd.ms-powerpoint", new String[]{"ppt","pot","pps","ppa"});
-        
-        // Zip can get triggered both by archive zips and sometimes the newer PKZIP'ed OOXML MS office files
-        SigTypeToExtMap.put("application/zip", new String[]{"zip", "docx", "dotx", "xlsx", "xlsm", "xltm", "xlam", "xlsb", "pptx", "potx", "ppam", "pptm", "potm", "ppsm"});
-        
-        // Open / Libre Office:
-        SigTypeToExtMap.put("application/vnd.oasis.opendocument.text", new String[]{"odt"});
-        SigTypeToExtMap.put("application/vnd.oasis.opendocument.spreadsheet", new String[]{"ods"});
-        SigTypeToExtMap.put("application/vnd.oasis.opendocument.presentation", new String[]{"odp"});
-        ////@todo less-used open office formats
-        
-        SigTypeToExtMap.put("application/pdf", new String[]{"pdf"});      
-        SigTypeToExtMap.put("application/rtf", new String[]{"rtf"});
-        SigTypeToExtMap.put("text/html", new String[]{"htm", "html", "htx", "htmls"});
-        //todo application/xhtml+xml
-        
-        SigTypeToExtMap.put("image/jpeg", new String[]{"jpg","jpeg"});
-        SigTypeToExtMap.put("image/tiff", new String[]{"tiff", "tif"});
-        SigTypeToExtMap.put("image/png", new String[]{"png"});
-        SigTypeToExtMap.put("image/gif", new String[]{"gif"});
-        SigTypeToExtMap.put("image/x-ms-bmp", new String[]{"bmp"});
-        SigTypeToExtMap.put("image/bmp", new String[]{"bmp", "bm"});
-        SigTypeToExtMap.put("image/x-icon", new String[]{"ico"});
+        // Load mapping
+        final String FILTER_CONFIG_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILENAME;
+        FileExtMismatchXML xmlLoader = new FileExtMismatchXML(FILTER_CONFIG_FILE);
+        SigTypeToExtMap = xmlLoader.load();
 
-        SigTypeToExtMap.put("video/mp4", new String[]{"mp4"});
-        SigTypeToExtMap.put("video/quicktime", new String[]{"mov", "qt", "mp4"});
-        SigTypeToExtMap.put("video/3gpp", new String[]{"3gp"});
-        SigTypeToExtMap.put("video/x-msvideo", new String[]{"avi"});
-        SigTypeToExtMap.put("video/x-ms-wmv", new String[]{"wmv"});
-        SigTypeToExtMap.put("video/mpeg", new String[]{"mpeg","mpg"});
-        SigTypeToExtMap.put("video/x-flv", new String[]{"flv"});
-        SigTypeToExtMap.put("application/vnd.rn-realmedia", new String[]{"rm"});
-        SigTypeToExtMap.put("application/vnd.rn-realvideo", new String[]{"rv"});
-        SigTypeToExtMap.put("application/x-shockwave-flash", new String[]{"swf"});
-                
-        try {
-            List<String> textPlainExts = new ArrayList<>();
-            InputStream inputStream = FileExtMismatchIngestModule.class.getResourceAsStream(TEXT_PLAIN_CONFIG_PATH);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            
-            String ext;
-            while ((ext = reader.readLine()) != null) {
-                textPlainExts.add(ext);
-            }
-            
-            String[] sarray = (String[])textPlainExts.toArray(new String[0]);
-            SigTypeToExtMap.put("text/plain", sarray);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }        
     }
     
     @Override

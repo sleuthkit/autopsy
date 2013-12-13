@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<mismatch_config>
+    <signature mimetype="text/plain">
+        <ext>txt</ext>
+        <ext>ini</ext>
+        <ext>inf</ext>
+        <ext>url</ext>
+        <ext>reg</ext>
+        <ext>cfg</ext>
+        <ext>log</ext>
+        <ext>dat</ext>
+        <ext>lst</ext>
+        <ext>xml</ext>
+        <ext>dtd</ext>
+        <ext>xsd</ext>
+        <ext>xdr</ext>
+        <ext>xsl</ext>
+        <ext>xsml</ext>
+        <ext>kml</ext>
+        <ext>wsdl</ext>
+        <ext>rdf</ext>
+        <ext>manifest</ext>
+        <ext>htm</ext>
+        <ext>html</ext>
+        <ext>shtml</ext>
+        <ext>shtm</ext>
+        <ext>xhtml</ext>
+        <ext>hta</ext>
+        <ext>css</ext>
+        <ext>js</ext>
+        <ext>vbs</ext>
+        <ext>vb</ext>
+        <ext>php</ext>
+        <ext>php3</ext>
+        <ext>phtml</ext>
+        <ext>h</ext>
+        <ext>hpp</ext>
+        <ext>hxx</ext>
+        <ext>cpp</ext>
+        <ext>cxx</ext>
+        <ext>cc</ext>
+        <ext>c</ext>
+        <ext>java</ext>
+        <ext>cs</ext>
+        <ext>asp</ext>
+        <ext>aspx</ext>
+        <ext>axd</ext>
+        <ext>properties</ext>
+        <ext>mak</ext>
+        <ext>cmake</ext>
+        <ext>la</ext>
+        <ext>pl</ext>
+        <ext>pm</ext>
+        <ext>plx</ext>
+        <ext>py</ext>
+        <ext>pyw</ext>
+        <ext>bat</ext>
+        <ext>lua</ext>
+        <ext>tex</ext>
+        <ext>lsp</ext>
+        <ext>lisp</ext>
+        <ext>rb</ext>
+        <ext>rbw</ext>
+        <ext>ps</ext>
+        <ext>json</ext>
+        <ext>mof</ext>
+        <ext>mfl</ext>
+        <ext>inc</ext>
+        <ext>milk</ext>
+        <ext>acro</ext>
+        <ext>adm</ext>
+        <ext>dun</ext>
+        <ext>obe</ext>
+        <ext>pro</ext>
+        <ext>sam</ext>
+        <ext>cmd</ext>
+        <ext>rat</ext>
+        <ext>htt</ext>
+        <ext>iem</ext>
+        <ext>policy</ext>
+        <ext>pc</ext>
+        <ext>catalog</ext>
+        <ext>hlp</ext>
+        <ext>cnt</ext>        
+    </signature>
+    <signature mimetype="application/x-msoffice">
+        <ext>doc</ext>
+        <ext>docx</ext>
+        <ext>docm</ext>
+        <ext>dotm</ext>
+        <ext>dot</ext>
+        <ext>dotx</ext>
+        <ext>xls</ext>
+        <ext>xlt</ext>
+        <ext>xla</ext>
+        <ext>xlsx</ext>
+        <ext>xlsm</ext>
+        <ext>xltm</ext>
+        <ext>xlam</ext>
+        <ext>xlsb</ext>
+        <ext>ppt</ext>
+        <ext>pot</ext>
+        <ext>pps</ext>
+        <ext>ppa</ext>
+        <ext>pptx</ext>
+        <ext>potx</ext>
+        <ext>ppam</ext>
+        <ext>pptm</ext>
+        <ext>potm</ext>
+        <ext>ppsm</ext>
+        <ext>msi</ext>  
+    </signature>
+    <signature mimetype="application/x-ooxml">
+        <ext>docx</ext>
+        <ext>dotx</ext>
+        <ext>xlsx</ext>
+        <ext>xlsm</ext>
+        <ext>xltm</ext>
+        <ext>xlam</ext>
+        <ext>xlsb</ext>
+        <ext>pptx</ext>
+        <ext>potx</ext>
+        <ext>ppam</ext>
+        <ext>pptm</ext>
+        <ext>potm</ext>
+        <ext>ppsm</ext>    
+    </signature>
+    <signature mimetype="application/msword">
+        <ext>doc</ext>
+        <ext>dot</ext>
+    </signature>
+    <signature mimetype="application/vnd.ms-excel">
+        <ext>xls</ext>
+        <ext>xlt</ext>
+        <ext>xla</ext>
+    </signature>
+    <signature mimetype="application/vnd.ms-powerpoint">
+        <ext>ppt</ext>
+        <ext>pot</ext>
+        <ext>pps</ext>
+        <ext>ppa</ext>
+    </signature>
+    <signature mimetype="application/zip">
+        <ext>zip</ext>
+        <ext>docx</ext>
+        <ext>dotx</ext>
+        <ext>xlsx</ext>
+        <ext>xlsm</ext>
+        <ext>xltm</ext>
+        <ext>xlam</ext>
+        <ext>xlsb</ext>
+        <ext>pptx</ext>
+        <ext>potx</ext>
+        <ext>ppam</ext>        
+        <ext>pptm</ext>
+        <ext>potm</ext>
+        <ext>ppsm</ext>
+    </signature>
+    <signature mimetype="application/vnd.oasis.opendocument.text">
+        <ext>odt</ext>
+    </signature>
+    <signature mimetype="application/vnd.oasis.opendocument.spreadsheet">
+        <ext>ods</ext>        
+    </signature>
+    <signature mimetype="application/vnd.oasis.opendocument.presentation">
+        <ext>odp</ext>        
+    </signature>
+    <signature mimetype="application/pdf">
+        <ext>pdf</ext>        
+    </signature>
+    <signature mimetype="application/rtf">
+        <ext>rtf</ext>        
+    </signature>
+    <signature mimetype="text/html">
+        <ext>htm</ext>
+        <ext>html</ext>
+        <ext>htx</ext>
+        <ext>htmls</ext>                                
+    </signature>
+    <signature mimetype="image/jpeg">
+        <ext>jpg</ext>        
+        <ext>jpeg</ext>        
+    </signature>
+    <signature mimetype="image/tiff">
+        <ext>tif</ext>
+        <ext>tiff</ext>        
+    </signature>
+    <signature mimetype="image/png">
+        <ext>png</ext>        
+    </signature>                        
+    <signature mimetype="image/gif">
+        <ext>gif</ext>        
+    </signature>     
+    <signature mimetype="image/x-ms-bmp">
+        <ext>bmp</ext>        
+    </signature>     
+    <signature mimetype="image/bmp">
+        <ext>bmp</ext>        
+        <ext>bm</ext>                
+    </signature>                 
+    <signature mimetype="image/x-icon">
+        <ext>ico</ext>        
+    </signature>     
+    <signature mimetype="video/mp4">
+        <ext>mp4</ext>        
+    </signature>     
+    <signature mimetype="video/quicktime">
+        <ext>mov</ext>        
+        <ext>qt</ext>        
+        <ext>mp4</ext>                        
+    </signature>     
+    <signature mimetype="video/3gpp">
+        <ext>3gp</ext>        
+    </signature>     
+    <signature mimetype="video/x-msvideo">
+        <ext>avi</ext>        
+    </signature>                         
+    <signature mimetype="video/x-ms-wmv">
+        <ext>wmv</ext>        
+    </signature>                         
+    <signature mimetype="video/mpeg">
+        <ext>mpg</ext>                
+        <ext>mpeg</ext>        
+    </signature>                         
+    <signature mimetype="video/x-flv">
+        <ext>flv</ext>        
+    </signature>                         
+    <signature mimetype="application/vnd.rn-realmedia">
+        <ext>rm</ext>        
+    </signature>                                         
+    <signature mimetype="application/vnd.rn-realvideo">
+        <ext>rv</ext>        
+    </signature>                         
+    <signature mimetype="application/x-shockwave-flash">
+        <ext>swf</ext>        
+    </signature>                                                                            
+</mismatch_config>
