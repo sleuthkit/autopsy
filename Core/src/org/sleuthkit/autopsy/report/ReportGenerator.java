@@ -588,14 +588,10 @@ public class ReportGenerator {
                         // We add a thumbnail if the artifact is associated with an
                         // image file.
                         row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
-                        if (module instanceof ReportHTML == false) {
-                            module.addRow(row); 
-                        } else if ((thumbFile = getImageContent(tag.getArtifact())) != null) {
-                            ((ReportHTML) module).addRow(row, thumbFile);
+                        if (module instanceof ReportHTML) {
+                            ((ReportHTML) module).addRowWithTaggedContentHyperlink(row, tag);
                         } else {
-                            // Add an extra cell so the row extends the proper amount of columns
-                            row.add("");
-                            module.addRow(row);
+                            module.addRow(row); 
                         }
                     }
                 }
@@ -621,31 +617,6 @@ public class ReportGenerator {
                     iter.remove();
                 }
             }            
-        }        
-
-        /**
-         * Get a thumbnail of the content associated with the artifact if the 
-         * content is an image.
-         * 
-         * Returns null if the content is not an image.
-         * 
-         * @param artifact
-         * @return 
-         */
-        private File getImageContent(BlackboardArtifact artifact) {
-            Content c;
-            try {
-                c = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Getting file failed", ex);
-                return null;
-            }
-            
-            if (c == null || ImageUtils.thumbnailSupported(c) == false) {
-                return null;
-            }
-            
-            return ImageUtils.getIconFile(c, ImageUtils.ICON_SIZE_SMALL);
         }
     }
         
