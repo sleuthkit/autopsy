@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.directorytree.TagAbstractFileAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -63,11 +64,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
-    }
-
-    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -96,19 +92,25 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actionsList = new ArrayList<Action>();
+        List<Action> actionsList = new ArrayList<>();
         actionsList.add(new NewWindowViewAction("View in New Window", this));
         actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
-        actionsList.add(TagAbstractFileAction.getInstance());
+        actionsList.add(AddContentTagAction.getInstance());
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
     }
 

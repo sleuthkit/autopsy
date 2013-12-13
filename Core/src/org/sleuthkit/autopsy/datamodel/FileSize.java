@@ -111,10 +111,10 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-            return DisplayableItemNode.TYPE.META;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -199,11 +199,6 @@ public class FileSize implements AutopsyVisitableItem {
                         filter.getDisplayName()));
 
                 return s;
-            }
-
-            @Override
-            public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-                return DisplayableItemNode.TYPE.META;
             }
 
             @Override

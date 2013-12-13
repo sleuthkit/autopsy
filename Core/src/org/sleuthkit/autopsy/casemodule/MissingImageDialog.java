@@ -18,49 +18,71 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
+
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
-import javax.swing.ComboBoxModel;
-import javax.swing.JDialog;
+import java.io.File;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.event.ListDataListener;
-import org.openide.util.Exceptions;
+import  org.sleuthkit.autopsy.casemodule.GeneralFilter;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+
+ 
 public class MissingImageDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
     long obj_id;
     SleuthkitCase db;
-    ContentTypePanel currentPanel;
-    ImageTypeModel model;
+    
+    
+   
+    static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+
+    static final List<String> allExt = new ArrayList<String>();
+    static {
+        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+    }
+    static final String allDesc = "All Supported Types";
+    static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    
+    private JFileChooser fc = new JFileChooser();
     
     private MissingImageDialog(long obj_id, SleuthkitCase db) {
         super(new JFrame(), true);
         this.obj_id = obj_id;
         this.db = db;
         initComponents();
+        
+        fc.setDragEnabled(false);
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setMultiSelectionEnabled(false);
+        
+        fc.addChoosableFileFilter(rawFilter);
+        fc.addChoosableFileFilter(encaseFilter);
+        fc.setFileFilter(allFilter);
+        
+        
         customInit();
     }
     
-    /**
-     * Client call to create a MissingImageDialog.
-     * 
-     * @param obj_id obj_id of the missing image
-     * @param db the current SleuthkitCase connected to a db
-     */
+//    
+//     * Client call to create a MissingImageDialog.
+//     * 
+//     * @param obj_id obj_id of the missing image
+//     * @param db the current SleuthkitCase connected to a db
+//     
     static void makeDialog(long obj_id, SleuthkitCase db) {
         final MissingImageDialog dialog = new MissingImageDialog(obj_id, db);
         dialog.addWindowListener(new WindowAdapter() {
@@ -73,11 +95,8 @@ public class MissingImageDialog extends javax.swing.JDialog {
     }
     
     private void customInit() {
-        model = new ImageTypeModel();
-        typeComboBox.setModel(model);
-        typeComboBox.setSelectedIndex(0);
-        typePanel.setLayout(new BorderLayout());
-        updateCurrentPanel(ImageFilePanel.getDefault());
+      
+       selectButton.setEnabled(false);
     }
     
     private void display() {
@@ -92,54 +111,31 @@ public class MissingImageDialog extends javax.swing.JDialog {
         this.setVisible(true);
     }
     
-    /**
-     * Refresh this panel.
-     * @param panel current typepanel
-     */
-    private void updateCurrentPanel(ContentTypePanel panel) {
-        currentPanel = panel;
-        typePanel.removeAll();
-        typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
-        typePanel.validate();
-        typePanel.repaint();
-        this.validate();
-        this.repaint();
-        currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
-                    updateSelectButton();
-                }
-                if(evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
-                    moveFocusToSelect();
-                }
-            }
-            
-        });
-        currentPanel.select();
-        updateSelectButton();
-    }
-    
-    /**
-     * Focuses the select button for easy enter-pressing access.
-     */
+//    
+//     * Focuses the select button for easy enter-pressing access.
+//     
     private void moveFocusToSelect() {
         this.selectButton.requestFocusInWindow();
     }
     
-    /**
-     * Enables/disables the select button based off the current panel.
-     */
+//    
+//     * Enables/disables the select button based off the current panel.
+//     
     private void updateSelectButton() {
-        this.selectButton.setEnabled(currentPanel.enableNext());
+        
+        // Enable this based on whether there is a valid path
+        if (!pathNameTextField.getText().isEmpty()) {
+            String filePath = pathNameTextField.getText();
+            boolean isExist = Case.pathExists(filePath) || Case.driveExists(filePath);
+            selectButton.setEnabled(isExist);   
+        }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
+//    
+//     * This method is called from within the constructor to initialize the form.
+//     * WARNING: Do NOT modify this code. The content of this method is always
+//     * regenerated by the Form Editor.
+//     
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -148,9 +144,8 @@ public class MissingImageDialog extends javax.swing.JDialog {
         selectButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         containerPanel = new javax.swing.JPanel();
-        typeComboBox = new javax.swing.JComboBox();
-        typeTabel = new javax.swing.JLabel();
-        typePanel = new javax.swing.JPanel();
+        pathNameTextField = new javax.swing.JTextField();
+        browseButton = new javax.swing.JButton();
         titleLabel = new javax.swing.JLabel();
         titleSeparator = new javax.swing.JSeparator();
 
@@ -191,43 +186,39 @@ public class MissingImageDialog extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.typeTabel.text")); // NOI18N
+        pathNameTextField.setText(org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.pathNameTextField.text")); // NOI18N
+        pathNameTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pathNameTextFieldActionPerformed(evt);
+            }
+        });
 
-        javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
-        typePanel.setLayout(typePanelLayout);
-        typePanelLayout.setHorizontalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        typePanelLayout.setVerticalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 57, Short.MAX_VALUE)
-        );
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.browseButton.text")); // NOI18N
+        browseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                browseButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
         containerPanel.setLayout(containerPanelLayout);
         containerPanelLayout.setHorizontalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(containerPanelLayout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(containerPanelLayout.createSequentialGroup()
-                        .addComponent(typeTabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(typeComboBox, 0, 298, Short.MAX_VALUE)))
-                .addContainerGap())
+                .addContainerGap()
+                .addComponent(pathNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(browseButton)
+                .addContainerGap(83, Short.MAX_VALUE))
         );
         containerPanelLayout.setVerticalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(containerPanelLayout.createSequentialGroup()
-                .addGap(0, 0, 0)
+                .addGap(18, 18, 18)
                 .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(typeTabel)
-                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                    .addComponent(pathNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(browseButton))
+                .addContainerGap(62, Short.MAX_VALUE))
         );
 
         titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
@@ -268,7 +259,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
         try {
-            String newPath = currentPanel.getContentPaths();
+            String newPath = pathNameTextField.getText();
             //TODO handle local files
             db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
         } catch (TskCoreException ex) {
@@ -281,21 +272,48 @@ public class MissingImageDialog extends javax.swing.JDialog {
         cancel();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    private void pathNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pathNameTextFieldActionPerformed
+        // TODO add your handling code here:
+        
+         updateSelectButton();
+    }//GEN-LAST:event_pathNameTextFieldActionPerformed
+
+    private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+        
+        
+       
+        String oldText = pathNameTextField.getText();
+        
+        // set the current directory of the FileChooser if the ImagePath Field is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
+
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            pathNameTextField.setText(path);
+        }
+        //pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
+        
+         updateSelectButton();
+    }//GEN-LAST:event_browseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton browseButton;
     private javax.swing.JPanel buttonPanel;
     private javax.swing.JButton cancelButton;
     private javax.swing.JPanel containerPanel;
+    private javax.swing.JTextField pathNameTextField;
     private javax.swing.JButton selectButton;
     private javax.swing.JLabel titleLabel;
     private javax.swing.JSeparator titleSeparator;
-    private javax.swing.JComboBox typeComboBox;
-    private javax.swing.JPanel typePanel;
-    private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
     
-    /**
-     * Verify the user wants to cancel searching for the image.
-     */
+//    
+//     * Verify the user wants to cancel searching for the image.
+//     
     void cancel() {
         int ret = JOptionPane.showConfirmDialog(null,
                 "No image file has been selected, are you sure you\n" + 
@@ -306,40 +324,5 @@ public class MissingImageDialog extends javax.swing.JDialog {
         }
     }
     
-    /**
-     * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
-     */
-    private class ImageTypeModel implements ComboBoxModel {
-        ContentTypePanel selected;
-        ContentTypePanel[] types = ContentTypePanel.getPanels();
 
-        @Override
-        public void setSelectedItem(Object anItem) {
-            selected = (ContentTypePanel) anItem;
-            updateCurrentPanel(selected);
-        }
-
-        @Override
-        public Object getSelectedItem() {
-            return selected;
-        }
-
-        @Override
-        public int getSize() {
-            return types.length;
-        }
-
-        @Override
-        public Object getElementAt(int index) {
-            return types[index];
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener l) {
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener l) {
-        }
-    }
 }

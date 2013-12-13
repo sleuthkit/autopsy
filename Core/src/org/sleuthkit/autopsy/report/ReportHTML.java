@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -36,7 +35,6 @@ import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -45,17 +43,15 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 public class ReportHTML implements TableReportModule {
@@ -91,7 +87,7 @@ public class ReportHTML implements TableReportModule {
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
         
-        dataTypes = new TreeMap<String, Integer>();
+        dataTypes = new TreeMap<>();
         
         path = "";
         currentDataType = "";
@@ -129,10 +125,10 @@ public class ReportHTML implements TableReportModule {
     {
         String iconFilePath;
         String iconFileName;
-        InputStream in = null;
+        InputStream in;
         OutputStream output = null;
         
-        logger.log(Level.INFO, "useDataTypeIcon: dataType = " + dataType);
+        logger.log(Level.INFO, "useDataTypeIcon: dataType = {0}", dataType);
         
         // find the artifact with matching display name
         BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
@@ -296,39 +292,6 @@ public class ReportHTML implements TableReportModule {
             }
         }
     }
-
-    /**
-     * Start a new HTML page for the given data type. Update the output stream to this page,
-     * and setup the web page header.
-     * @param title title of the data type
-     */
-    @Override
-    public void startDataType(String title) {        
-        String fTitle = dataTypeToFileName(title);
-        // Make a new out for this page
-        try {
-            //escape out slashes tha that appear in title
-            
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + fTitle + getExtension()), "UTF-8"));
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "File not found: {0}", ex);
-        } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Unrecognized encoding");
-        }
-        
-        // Write the beginnings of a page
-        // Like <html>, header, title, any content divs
-        try {
-            StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(title).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
-            page.append("<div id=\"header\">").append(title).append("</div>\n<div id=\"content\">\n");
-            out.write(page.toString());
-            currentDataType = title;
-            rowCount = 0;
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write page head: {0}", ex);
-        }
-    }
     
     /**
      * Start a new HTML page for the given data type. Update the output stream to this page,
@@ -338,7 +301,8 @@ public class ReportHTML implements TableReportModule {
      * @param name Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
-    public void startDataType(String name, String comment) {
+    @Override
+    public void startDataType(String name, String description) {
         String title = dataTypeToFileName(name);
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
@@ -352,9 +316,9 @@ public class ReportHTML implements TableReportModule {
             StringBuilder page = new StringBuilder();
             page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
             page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n");
-            if (!comment.isEmpty()) {
+            if (!description.isEmpty()) {
                 page.append("<p><strong>");
-                page.append(comment);
+                page.append(description);
                 page.append("</string></p>\n");
             }
             out.write(page.toString());
@@ -477,17 +441,17 @@ public class ReportHTML implements TableReportModule {
      * @param columnHeaders column headers
      * @param sourceArtifact source blackboard artifact for the table data 
      */
-    public void startTable(List<String> columnHeaders, ARTIFACT_TYPE artifactType) {
+    public void startContentTagsTable(List<String> columnHeaders) {
         StringBuilder htmlOutput = new StringBuilder();        
         htmlOutput.append("<table>\n<thead>\n\t<tr>\n");
+       
+        // Add the specified columns.
         for(String columnHeader : columnHeaders) {
             htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n");
         }
         
-        // For file tag artifacts, add a column for a hyperlink to a local copy of the tagged file.            
-        if (artifactType.equals(ARTIFACT_TYPE.TSK_TAG_FILE)) {
-            htmlOutput.append("\t\t<th></th>\n");        
-        }
+        // Add a column for a hyperlink to a local copy of the tagged content.
+        htmlOutput.append("\t\t<th></th>\n");        
         
         htmlOutput.append("\t</tr>\n</thead>\n");
         
@@ -527,20 +491,75 @@ public class ReportHTML implements TableReportModule {
         try {
             out.write(builder.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write row to out.");
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
         } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.");
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
 
     /**
-     * Add a row to the current table.
+     * Saves a local copy of a tagged file and adds a row with a hyper link to 
+     * the file.
      * 
-     * @param row values for each cell in the row
-     * @param sourceArtifact source blackboard artifact for the table data 
+     * @param row Values for each data cell in the row.
+     * @param contentTag A content tag to use to make the hyper link. 
      */
-    public void addRow(List<String> row, BlackboardArtifact sourceArtifact) {
-        addRowDataForSourceArtifact(row, sourceArtifact);
+    public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
+        // Only handling AbstractFiles at present.
+        AbstractFile file;
+        if (contentTag.getContent() instanceof AbstractFile) {
+            file = (AbstractFile)contentTag.getContent();
+        }
+        else {
+            return;
+        }
+        
+        // Don't make a local copy of the file if it is a directory or unallocated space.
+        if (file.isDir() ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+            row.add("");
+            return;
+        }
+
+        // Make a folder for the local file with the same name as the tag.
+        StringBuilder localFilePath = new StringBuilder();
+        localFilePath.append(path);            
+        localFilePath.append(contentTag.getName().getDisplayName());
+        File localFileFolder = new File(localFilePath.toString());
+        if (!localFileFolder.exists()) { 
+            localFileFolder.mkdirs();
+        }
+
+        // Construct a file name for the local file that incorporates the file id to ensure uniqueness.
+        String fileName = file.getName();
+        String objectIdSuffix = "_" + file.getId();
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex != -1 && lastDotIndex != 0) {
+            // The file name has a conventional extension. Insert the object id before the '.' of the extension.
+            fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+        }
+        else {
+            // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
+            // Add the object id to the end of the file name.
+            fileName += objectIdSuffix;
+        }                                
+        localFilePath.append(File.separator);
+        localFilePath.append(fileName);
+
+        // If the local file doesn't already exist, create it now. 
+        // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
+        File localFile = new File(localFilePath.toString());
+        if (!localFile.exists()) {
+            ExtractFscContentVisitor.extract(file, localFile, null, null);
+        }
+
+        // Add the hyperlink to the row. A column header for it was created in startTable().
+        StringBuilder localFileLink = new StringBuilder();
+        localFileLink.append("<a href=\"file:///");
+        localFileLink.append(localFilePath.toString());
+        localFileLink.append("\">View File</a>");
+        row.add(localFileLink.toString());              
         
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n");
@@ -561,90 +580,6 @@ public class ReportHTML implements TableReportModule {
         }
     }
         
-    /**
-     * Add cells particular to a type of artifact associated with the row. Assumes that the overload of startTable() that takes an artifact type was called.
-     * 
-     * @param row The row.
-     * @param sourceArtifact The artifact associated with the row. 
-     */
-    private void addRowDataForSourceArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        int artifactTypeID = sourceArtifact.getArtifactTypeID();
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
-        switch (type) {
-            case TSK_TAG_FILE:
-                addRowDataForFileTagArtifact(row, sourceArtifact);                
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * Saves a local copy of a tagged file and adds a hyper link to the file to the row.
-     * 
-     * @param row The row.
-     * @param sourceArtifact The artifact associated with the row. 
-     */
-    private void addRowDataForFileTagArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        try {
-            AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
-
-            // Don't make a local copy of the file if it is a directory or unallocated space.
-            if (file.isDir() ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-                row.add("");
-                return;
-            }
-            
-            // Make a folder for the local file with the same name as the tag.
-            StringBuilder localFilePath = new StringBuilder();
-            localFilePath.append(path);
-            HashSet<String> tagNames = Tags.getUniqueTagNamesForArtifact(sourceArtifact);
-            if (!tagNames.isEmpty()) {
-                localFilePath.append(tagNames.iterator().next());
-            }
-            File localFileFolder = new File(localFilePath.toString());
-            if (!localFileFolder.exists()) { 
-                localFileFolder.mkdirs();
-            }
-
-            // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
-            String fileName = file.getName();
-            String objectIdSuffix = "_" + sourceArtifact.getObjectID();
-            int lastDotIndex = fileName.lastIndexOf(".");
-            if (lastDotIndex != -1 && lastDotIndex != 0) {
-                // The file name has a conventional extension. Insert the object id before the '.' of the extension.
-                fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
-            }
-            else {
-                // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
-                // Add the object id to the end of the file name.
-                fileName += objectIdSuffix;
-            }                                
-            localFilePath.append(File.separator);
-            localFilePath.append(fileName);
-
-            // If the local file doesn't already exist, create it now. 
-            // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
-            File localFile = new File(localFilePath.toString());
-            if (!localFile.exists()) {
-                ExtractFscContentVisitor.extract(file, localFile, null, null);
-            }
-
-            // Add the hyperlink to the row. A column header for it was created in startTable().
-            StringBuilder localFileLink = new StringBuilder();
-            localFileLink.append("<a href=\"file:///");
-            localFileLink.append(localFilePath.toString());
-            localFileLink.append("\">View File</a>");
-            row.add(localFileLink.toString());              
-        } 
-        catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get AbstractFile by ID.", ex);
-            row.add("");
-        }                                    
-    }
-    
     /**
      * Return a String date for the long date given.
      * @param date date as a long
@@ -704,11 +639,11 @@ public class ReportHTML implements TableReportModule {
                          "table tr:nth-child(even) td {background: #f3f3f3;}";
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find index.css file to write to.");
+            logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex);
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.");
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.", ex);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for index.css.");
+            logger.log(Level.SEVERE, "Error creating Writer for index.css.", ex);
         } finally {
             try {
                 if(cssOut != null) {

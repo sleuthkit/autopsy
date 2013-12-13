@@ -432,7 +432,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
             }
             if (msg == null) {
-                 msg = "<p style='font-style:italic'>" + name + "does not have text in the index.<br/>It may have no text, not been analyzed yet, or keyword search was not enabled during ingest.</p>";
+                 msg = "<p style='font-style:italic'>" + name + " does not have text in the index.<br/>It may have no text, not been analyzed yet, or keyword search was not enabled during ingest.</p>";
             }
             String htmlMsg = "<span style='font-style:italic'>" + msg + "</span>";
             return htmlMsg;
