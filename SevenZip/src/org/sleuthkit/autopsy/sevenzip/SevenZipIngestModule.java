@@ -555,11 +555,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
-                        MODULE_NAME, encryptionType));
-                //artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), MODULE_NAME, ...);
-                //artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENTROPY.getTypeID(), MODULE_NAME, ...);
-                //@@@ We don't fire here because GEN_INFO isn't displayed in the tree....  Need to address how these should be displayed
+                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), MODULE_NAME, encryptionType));
                 services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);

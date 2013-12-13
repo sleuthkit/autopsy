@@ -998,7 +998,7 @@ public class ReportGenerator {
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
                 break;
             case TSK_ENCRYPTION_DETECTED:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Entropy", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Source File"}));
                 break;
             default:
                 return null;
@@ -1324,6 +1324,10 @@ public class ReportGenerator {
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
+                 case TSK_ENCRYPTION_DETECTED:
+                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                     orderedRowData.add(getFileUniquePath(getObjectID()));
+                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
 
