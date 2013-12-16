@@ -19,7 +19,7 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,12 +46,17 @@ public class FileExtMismatchXML {
     private static final String SIG_MIMETYPE_ATTR = "mimetype";
     
     private static final String CUR_CONFIG_FILE_NAME = "mismatch_config.xml";
-    private static String CUR_CONFIG_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_CONFIG_FILE_NAME;    
     
     protected String filePath;
     
     FileExtMismatchXML(String filePath) {
         this.filePath = filePath;
+        
+        try {
+            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, CUR_CONFIG_FILE_NAME);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex);
+        }        
     }
 
     /**
