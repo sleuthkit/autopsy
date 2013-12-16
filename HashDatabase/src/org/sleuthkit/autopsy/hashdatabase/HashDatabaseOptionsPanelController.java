@@ -54,8 +54,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
 
     @Override
     public void cancel() {
-        // Reset the XML on cancel
-        HashDbManager.getInstance().loadLastSavedConfiguration();
+        getPanel().cancel();
     }
 
     @Override

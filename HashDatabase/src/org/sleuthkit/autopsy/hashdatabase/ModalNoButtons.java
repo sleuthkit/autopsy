@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * This class exists as a stop-gap measure to force users to have an indexed database.
@@ -210,7 +211,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
         if (!this.toIndex.isIndexing()) {
             this.toIndex.addPropertyChangeListener(this);
-            this.toIndex.createIndex(okToDeleteOldIndexFile(toIndex));
+            HashDbManager.getInstance().indexHashDatabase(toIndex, okToDeleteOldIndexFile(toIndex));
         }
     }
     
@@ -226,7 +227,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
             this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
             if (!db.isIndexing()) {
                 db.addPropertyChangeListener(this);
-                db.createIndex(okToDeleteOldIndexFile(db));
+                HashDbManager.getInstance().indexHashDatabase(db, okToDeleteOldIndexFile(db));
             }
         }
     }
@@ -251,8 +252,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.dispose();
             } else {
                 currentcount++;
-                this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);
-                
+                this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);                
             }
         }
     }

@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
@@ -30,17 +31,19 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends javax.swing.JPanel {    
-    private HashDbsTableModel knownTableModel;
-    private HashDbsTableModel knownBadTableModel;
+public class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
+    
+    private HashDatabasesTableModel knownTableModel;
+    private HashDatabasesTableModel knownBadTableModel;
 
     public HashDbSimpleConfigPanel() {
-        knownTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownHashSets());
-        knownBadTableModel = new HashDbsTableModel(HashDbManager.getInstance().getKnownBadHashSets());
+        knownTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN);
+        knownBadTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN_BAD);
         initComponents();
         customizeComponents();
     }
@@ -48,20 +51,21 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
         customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
+        alwaysCalcHashesCheckbox.setSelected(HashDbManager.getInstance().getAlwaysCalculateHashes());
         
         // Add a listener to the always calculate hashes checkbox component.
         // The listener passes the user's selection on to the hash database manager.
-        calcHashesButton.addActionListener( new ActionListener() {
+        alwaysCalcHashesCheckbox.addActionListener( new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                HashDbManager.getInstance().alwaysCalculateHashes(calcHashesButton.isSelected());
+                HashDbManager.getInstance().setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
             }            
         });
         
-        refreshComponents();
+        load();
     }
 
-    private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDbsTableModel tableModel) {
+    private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDatabasesTableModel tableModel) {
         table.setModel(tableModel);        
         table.setTableHeader(null);
         table.setRowSelectionAllowed(false);
@@ -79,53 +83,41 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }        
     }
     
-    public void refreshComponents() {        
-        knownTableModel.refresh();
-        knownBadTableModel.refresh();
-        refreshAlwaysCalcHashesComponents(); 
+    public void load() {        
+        knownTableModel.load();
+        knownBadTableModel.load();
     }
 
-    private void refreshAlwaysCalcHashesComponents() {        
-        boolean noHashDbsConfiguredForIngest = true; 
-        for (HashDb hashDb : HashDbManager.getInstance().getAllHashSets()) {
-            try {
-                if (hashDb.getUseForIngest()== true && hashDb.hasLookupIndex()) {
-                    noHashDbsConfiguredForIngest = false;
-                    break;
-                }
+    public void store() {
+        HashDbManager.getInstance().save();        
+    }
+            
+    private class HashDatabasesTableModel extends AbstractTableModel {        
+        private final HashDbManager.HashDb.KnownFilesType hashDatabasesType;  
+        private List<HashDb> hashDatabases;
+        
+        HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType hashDatabasesType) {
+            this.hashDatabasesType = hashDatabasesType;
+            getHashDatabases();
+        }
+            
+        private void getHashDatabases() {
+            if (HashDbManager.HashDb.KnownFilesType.KNOWN == hashDatabasesType) {
+                hashDatabases = HashDbManager.getInstance().getKnownFileHashSets();
             }
-            catch (TskCoreException ex) {
-                Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for hash database at " + hashDb.getDatabasePath(), ex);            
+            else {
+                hashDatabases = HashDbManager.getInstance().getKnownBadFileHashSets();
             }            
-        }
-
-        // If there are no hash databases configured for use during file ingest,
-        // default to always calculating hashes of the files.
-        if (noHashDbsConfiguredForIngest) {
-            calcHashesButton.setEnabled(true);
-            calcHashesButton.setSelected(true);
-            HashDbManager.getInstance().alwaysCalculateHashes(true);
-        } else {
-            calcHashesButton.setEnabled(false);
-            calcHashesButton.setSelected(false);
-            HashDbManager.getInstance().alwaysCalculateHashes(false);
-        }
-    }
+        }    
         
-    private class HashDbsTableModel extends AbstractTableModel {        
-        private final List<HashDb> hashDbs;
-        
-        HashDbsTableModel(List<HashDb> hashDbs) {
-            this.hashDbs = hashDbs;
-        }
-        
-        private void refresh() {
+        private void load() {
+            getHashDatabases();
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return hashDbs.size();
+            return hashDatabases.size();
         }
 
         @Override
@@ -135,9 +127,9 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb db = hashDbs.get(rowIndex);
+            HashDb db = hashDatabases.get(rowIndex);
             if (columnIndex == 0) {
-                return db.getUseForIngest();
+                return db.getSearchDuringIngest();
             } else {
                 return db.getHashSetName();
             }
@@ -151,16 +143,16 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0) {
-                HashDb db = hashDbs.get(rowIndex);
+                HashDb db = hashDatabases.get(rowIndex);
                 boolean dbHasIndex = false;
                 try {
                     dbHasIndex = db.hasLookupIndex();
                 }
                 catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for hash database at " + db.getDatabasePath(), ex);            
+                    Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + db.getHashSetName() + " hash database", ex);            
                 }
                 if(((Boolean) getValueAt(rowIndex, columnIndex)) || dbHasIndex) {
-                    db.setUseForIngest((Boolean) aValue);
+                    db.setSearchDuringIngest((Boolean) aValue);
                 } 
                 else {
                     JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Hash databases must be indexed before they can be used for ingest");
@@ -187,7 +179,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         knownHashTable = new javax.swing.JTable();
         knownBadHashDbsLabel = new javax.swing.JLabel();
         knownHashDbsLabel = new javax.swing.JLabel();
-        calcHashesButton = new javax.swing.JCheckBox();
+        alwaysCalcHashesCheckbox = new javax.swing.JCheckBox();
         jScrollPane2 = new javax.swing.JScrollPane();
         knownBadHashTable = new javax.swing.JTable();
 
@@ -202,7 +194,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
 
         knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.knownHashDbsLabel.text")); // NOI18N
 
-        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.calcHashesButton.text")); // NOI18N
+        alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
 
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -233,7 +225,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                             .addComponent(knownBadHashDbsLabel))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(calcHashesButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(alwaysCalcHashesCheckbox, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -248,13 +240,13 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(calcHashesButton)
+                .addComponent(alwaysCalcHashesCheckbox)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox calcHashesButton;
+    private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel knownBadHashDbsLabel;

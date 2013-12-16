@@ -65,9 +65,15 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
         for (String moduleName : enabledModuleNames) {
+            // if no modules were enabled, we get an empty string in here
+            if (moduleName.trim().equals("")) {
+                continue;
+            }
+            // we renamed this module in 3.0.9 -> update it to prevent an error message
             if (moduleName.equals("Thunderbird Parser")) {
                 moduleName = "MBox Parser";
             }
+            
             IngestModuleAbstract moduleFound =  null;
             for (IngestModuleAbstract module : allModules) {
                 if (moduleName.equals(module.getName())) {
@@ -79,7 +85,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add("Unable to enable ingest module: " + moduleName);
+                messages.add(moduleName + " was previously enabled, but could not be found");
             }
         }        
         ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
