@@ -75,7 +75,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long numFiles = 0;
     private static boolean skipKnown = false;
     
-    private int artId = -1;
     private int attrId = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
@@ -110,7 +109,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         } catch (TskCoreException ex) {
             // create it if not
             try {
-                artId = sleuthkitCase.addArtifactType(ART_NAME, "A filename extension mismatch detection hit.");
                 attrId = sleuthkitCase.addAttrType(ATTR_NAME, "Flag for detected mismatch between filename extension and file signature.");
             } catch (TskCoreException ex1) {
                 logger.log(Level.SEVERE, "Error adding artifact and attribute types: " + ex1.getLocalizedMessage());
@@ -148,12 +146,12 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             numFiles++;
                         
             if (flag) {
-                // add artifact
-                BlackboardArtifact bart = abstractFile.newArtifact(artId);
+                // add artifact               
+                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_MISMATCH_DETECTED);
                 BlackboardAttribute batt = new BlackboardAttribute(attrId, MODULE_NAME, "", ATTR_VALUE_WRONG);
                 bart.addAttribute(batt);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.fromID(artId), Collections.singletonList(bart)));
+                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
