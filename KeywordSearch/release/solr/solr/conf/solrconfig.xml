@@ -1510,6 +1510,10 @@
        http://wiki.apache.org/solr/HighlightingParameters
     -->
   <searchComponent class="solr.HighlightComponent" name="highlight">
+     <highlighting class="org.apache.solr.highlight.PostingsSolrHighlighter" />
+   </searchComponent>
+    
+  <searchComponent class="solr.HighlightComponent" name="highlight-old">
     <highlighting>
       <!-- Configure the standard fragmenter -->
       <!-- This could most likely be commented out in the "default" case -->

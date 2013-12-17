@@ -351,21 +351,12 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setShowDebugInfo(DEBUG); //debug
         q.addFilterQuery(idQuery);
         q.addHighlightField(highlightField);
-        //q.setHighlightSimplePre("&laquo;"); //original highlighter only
-        //q.setHighlightSimplePost("&raquo;");  //original highlighter only
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
         
-        
-        
         //tune the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
-        q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
-        
-         //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
-        q.setParam("hl.fragCharSize", Integer.toString(queryStr.length())); //makes sense for FastVectorHighlighter only
+        q.setHighlightSimplePre("&laquo;");
+        q.setHighlightSimplePost("&laquo;");
         
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
