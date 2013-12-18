@@ -22,12 +22,18 @@ package org.sleuthkit.autopsy.fileextmismatch;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -127,4 +133,46 @@ public class FileExtMismatchXML {
         return sigTypeToExtMap;
     }
     
+    
+    /**
+     * Save XML to filePath, overwriting it if it already exists
+     * 
+     * @param sigTypeToExtMap String arrays of extensions mapped to each string mimetype.
+     * @return Loaded hash map or null on error or null if data does not exist
+     */
+    public boolean save(HashMap<String, String[]> sigTypeToExtMap) {    
+        boolean success = false;
+
+        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+
+        try {
+            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
+            Document doc = docBuilder.newDocument();
+
+            Element rootEl = doc.createElement(ROOT_EL);
+            doc.appendChild(rootEl);
+            
+            Iterator<String> keyIt = sigTypeToExtMap.keySet().iterator();
+            
+            while (keyIt.hasNext()) {
+                String key = keyIt.next();
+                Element sigEl = doc.createElement(SIG_EL);
+                sigEl.setAttribute(SIG_MIMETYPE_ATTR, key);
+                
+                ArrayList<String> extList = new ArrayList<>(Arrays.asList(sigTypeToExtMap.get(key)));
+                for (String ext : extList) {
+                    Element extEl = doc.createElement(EXT_EL);
+                    extEl.setTextContent(ext);
+                    sigEl.appendChild(extEl);
+                }
+                
+                rootEl.appendChild(sigEl);
+            }
+
+            success = XMLUtil.saveDoc(FileExtMismatchXML.class, filePath, ENCODING, doc);
+        } catch (ParserConfigurationException e) {
+            logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
+        }
+        return success;        
+    }
 }

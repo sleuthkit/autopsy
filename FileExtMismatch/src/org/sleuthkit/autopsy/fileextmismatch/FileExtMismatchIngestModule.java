@@ -237,7 +237,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
 
     @Override
     public boolean hasSimpleConfiguration() {
-        return true;
+        return false;
     }
     
     @Override

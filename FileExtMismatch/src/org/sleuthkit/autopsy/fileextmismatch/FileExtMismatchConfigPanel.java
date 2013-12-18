@@ -19,8 +19,11 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -38,7 +41,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     private String[] currentExtensions = null;
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
-    private final String EXT_HEADER_LABEL = "Allowed Extensions for  ";
+    private final String EXT_HEADER_LABEL = "Allowed Extensions for ";
+    private String selectedMime;
     
     public FileExtMismatchConfigPanel() {
         mimeTableModel = new MimeTableModel();
@@ -60,10 +64,10 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
                     
-                    String selectedMime = mimeList[index];
+                    selectedMime = mimeList[index];
                     String labelStr = EXT_HEADER_LABEL + selectedMime + ":";
-                    if (labelStr.length() > 40) {
-                        labelStr = labelStr.substring(0, 40);
+                    if (labelStr.length() > 80) {
+                        labelStr = labelStr.substring(0, 80);
                     }
                     extHeaderLabel.setText(labelStr);
                     currentExtensions = editableMap.get(selectedMime);
@@ -72,6 +76,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     extTableModel.resync();
                     //initButtons();
                 } else {
+                    selectedMime = "";
                     currentExtensions = null;
                     extTableModel.resync();
                     //initButtons();
@@ -107,6 +112,11 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveButton.text")); // NOI18N
         saveButton.setEnabled(false);
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveButtonActionPerformed(evt);
+            }
+        });
 
         jSplitPane1.setDividerLocation(300);
 
@@ -118,6 +128,11 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         userTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userTypeTextField.text")); // NOI18N
 
         addTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addTypeButton.text")); // NOI18N
+        addTypeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addTypeButtonActionPerformed(evt);
+            }
+        });
 
         removeTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.removeTypeButton.text")); // NOI18N
 
@@ -161,6 +176,11 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         userExtTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userExtTextField.text")); // NOI18N
 
         addExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addExtButton.text")); // NOI18N
+        addExtButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addExtButtonActionPerformed(evt);
+            }
+        });
 
         extTable.setModel(extTableModel);
         jScrollPane3.setViewportView(extTable);
@@ -179,13 +199,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(extensionPanelLayout.createSequentialGroup()
                         .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(removeExtButton)
                             .addGroup(extensionPanelLayout.createSequentialGroup()
                                 .addComponent(userExtTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(addExtButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(extHeaderLabel)
-                            .addComponent(removeExtButton))
-                        .addGap(0, 31, Short.MAX_VALUE)))
+                                .addComponent(addExtButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGap(0, 31, Short.MAX_VALUE))
+                    .addComponent(extHeaderLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         extensionPanelLayout.setVerticalGroup(
@@ -224,25 +244,73 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jSplitPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(0, 0, 0)
                 .addComponent(saveButton)
                 .addGap(15, 15, 15))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    // Add a user-provided filename extension string to the selecte mimetype
+    private void addExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addExtButtonActionPerformed
+        String newExt = userExtTextField.getText();
+        if (newExt.isEmpty()) {
+            return;
+        }
+        
+        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));        
+        editedExtensions.add(newExt);
+        
+        // Old array will be replaced by new array for this key
+        editableMap.put(selectedMime, editedExtensions.toArray(new String[0])); 
+
+        // Refresh table
+        currentExtensions = editableMap.get(selectedMime);                
+        extTableModel.resync();
+        ///@todo user feedback for successful add
+        userExtTextField.setText("");
+    }//GEN-LAST:event_addExtButtonActionPerformed
+
+    private void addTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTypeButtonActionPerformed
+        String newMime = userTypeTextField.getText();
+        if (newMime.isEmpty()) {
+            return;
+        }
+               
+        editableMap.put(newMime, new String[0]); 
+
+        // Refresh table
+        updateMimeList();
+        mimeTableModel.resync();
+               
+        ///@todo user feedback for successful add
+        userTypeTextField.setText("");
+        saveButton.setEnabled(true);
+    }//GEN-LAST:event_addTypeButtonActionPerformed
+
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+        store();
+    }//GEN-LAST:event_saveButtonActionPerformed
+
+    private void updateMimeList() {
+        mimeList = editableMap.keySet().toArray(new String[0]);
+    }
+    
     @Override
     public void load() {
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
         editableMap = FileExtMismatchXML.getDefault().load();
-        mimeList = editableMap.keySet().toArray(new String[0]);
+        updateMimeList();
     }
 
     @Override
     public void store() {
-        //FileExtMismatchXML.getDefault().save(editableMap);
-        //refresh the list viewer/searcher panel
-        //FileExtMismatchXML.getDefault().resync();
+        if (FileExtMismatchXML.getDefault().save(editableMap)) {
+            saveButton.setEnabled(false);
+        } else {
+            //error
+            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void cancel() {
@@ -368,7 +436,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
             
-            if ((currentExtensions == null) || (rowIndex > currentExtensions.length)) {
+            if ((currentExtensions == null) || (currentExtensions.length == 0) || (rowIndex > currentExtensions.length)) {
                 return "";
             }
             String word = currentExtensions[rowIndex];

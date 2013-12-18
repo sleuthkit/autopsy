@@ -34,7 +34,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSplitPane1" max="32767" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
               <Component id="saveButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
           </Group>
@@ -49,6 +49,9 @@
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveButtonActionPerformed"/>
+      </Events>
     </Component>
     <Container class="javax.swing.JSplitPane" name="jSplitPane1">
       <Properties>
@@ -141,6 +144,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.addTypeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addTypeButtonActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="removeTypeButton">
               <Properties>
@@ -167,16 +173,16 @@
                           <Component id="jScrollPane3" pref="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Group type="102" attributes="0">
+                                  <Component id="removeExtButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Component id="userExtTextField" min="-2" pref="48" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="addExtButton" max="32767" attributes="0"/>
                                   </Group>
-                                  <Component id="extHeaderLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="removeExtButton" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="31" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="extHeaderLabel" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -215,6 +221,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.addExtButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addExtButtonActionPerformed"/>
+              </Events>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane3">
 
