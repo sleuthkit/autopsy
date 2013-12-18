@@ -357,6 +357,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         extErrorLabel.setText("Extension " + newExt + " added.");  
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
+        saveButton.setEnabled(true);
     }//GEN-LAST:event_addExtButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
