@@ -170,8 +170,10 @@ public class FileExtMismatchXML {
             }
 
             success = XMLUtil.saveDoc(FileExtMismatchXML.class, filePath, ENCODING, doc);
+            
         } catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
+            success = false;
         }
         return success;        
     }
