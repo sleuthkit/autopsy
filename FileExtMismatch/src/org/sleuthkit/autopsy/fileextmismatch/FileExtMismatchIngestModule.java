@@ -68,7 +68,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static final String ART_NAME = "TSK_MISMATCH";
     private static final String ATTR_NAME = "TSK_FILE_TYPE_EXT_WRONG";
     private static final byte[] ATTR_VALUE_WRONG = {1};
-    private static final String CONFIG_FILENAME = "mismatch_config.xml";
 
     private static long processTime = 0;
     private static int messageId = 0;
@@ -77,6 +76,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     
     private int attrId = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
+    private FileExtMismatchConfigPanel advancedConfigPanel;
     private IngestServices services;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     
@@ -117,8 +117,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         }        
 
         // Load mapping
-        final String FILTER_CONFIG_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILENAME;
-        FileExtMismatchXML xmlLoader = new FileExtMismatchXML(FILTER_CONFIG_FILE);
+        FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
 
     }
@@ -242,12 +241,35 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     }
     
     @Override
+    public boolean hasAdvancedConfiguration() {
+        return true;
+    }
+    
+    @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
         if (simpleConfigPanel == null) {
            simpleConfigPanel = new FileExtMismatchSimpleConfigPanel();  
         }
         
         return simpleConfigPanel;
+    }    
+    
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration(String context) {
+        getPanel().load();
+        return getPanel();
+    }
+
+    private FileExtMismatchConfigPanel getPanel() {
+        if (advancedConfigPanel == null) {
+            advancedConfigPanel = new FileExtMismatchConfigPanel();
+        }
+        return advancedConfigPanel;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        getPanel().store();
     }    
     
     @Override
