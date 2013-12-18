@@ -21,7 +21,7 @@ def make_path(*dirs):
 
 # Fix a standard os.path by making it Windows format
 def path_fix(path):
-	return path.replace("/", "\\")
+	return os.path.normcase(os.path.normpath(path))
 
 # Gets the true current working directory instead of Cygwin's
 def wgetcwd():

@@ -48,6 +48,7 @@ import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
+import org.netbeans.jemmy.Timeouts;
 import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
@@ -117,6 +118,7 @@ public class RegressionTest extends TestCase {
     public void setUp() {
 
         logger.info("########  " + System.getProperty("img_path") + "  #######");
+        Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
     }
 
     /**
