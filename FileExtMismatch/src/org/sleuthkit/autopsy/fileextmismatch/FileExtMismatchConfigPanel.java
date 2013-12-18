@@ -101,7 +101,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         jButton1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton1.text")); // NOI18N
         jButton1.setEnabled(false);
 
-        jSplitPane1.setDividerLocation(400);
+        jSplitPane1.setDividerLocation(300);
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jLabel1.text")); // NOI18N
 
@@ -115,10 +115,10 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             .addGroup(mimePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 252, Short.MAX_VALUE)
                     .addGroup(mimePanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addGap(0, 264, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mimePanelLayout.setVerticalGroup(
@@ -154,28 +154,32 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(extensionPanelLayout.createSequentialGroup()
                         .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(extensionPanelLayout.createSequentialGroup()
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton2))
-                            .addComponent(jButton3)
+                            .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addGroup(extensionPanelLayout.createSequentialGroup()
+                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(jButton3))
                             .addComponent(jLabel2))
-                        .addGap(0, 105, Short.MAX_VALUE)))
+                        .addGap(0, 151, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         extensionPanelLayout.setVerticalGroup(
             extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton2)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
+                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(2, 2, 2)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton3)
-                .addGap(19, 19, 19))
+                .addGap(25, 25, 25))
         );
 
         jSplitPane1.setRightComponent(extensionPanel);
