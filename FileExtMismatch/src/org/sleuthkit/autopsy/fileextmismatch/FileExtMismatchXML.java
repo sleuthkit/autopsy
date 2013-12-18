@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,8 @@ import org.w3c.dom.NodeList;
  */
 public class FileExtMismatchXML {
     private static final Logger logger = Logger.getLogger(FileExtMismatchXML.class.getName());    
+    private static FileExtMismatchXML defaultInstance = null;
+            
     private static final String ENCODING = "UTF-8";
     private static final String XSDFILE = "MismatchConfigSchema.xsd";
     
@@ -45,20 +48,32 @@ public class FileExtMismatchXML {
     private static final String EXT_EL = "ext";    
     private static final String SIG_MIMETYPE_ATTR = "mimetype";
     
-    private static final String CUR_CONFIG_FILE_NAME = "mismatch_config.xml";
-    
+    private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";
+        
     protected String filePath;
     
     FileExtMismatchXML(String filePath) {
         this.filePath = filePath;
-        
+               
         try {
-            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, CUR_CONFIG_FILE_NAME);
+            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, DEFAULT_CONFIG_FILE_NAME);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex);
         }        
     }
 
+    /**
+     * Singleton provides default configuration from user's directory; user CAN
+     * modify this file.
+     */
+    public static FileExtMismatchXML getDefault() {
+        if (defaultInstance == null) {
+            final String FILTER_CONFIG_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_CONFIG_FILE_NAME;
+            defaultInstance = new FileExtMismatchXML(FILTER_CONFIG_FILE);
+        }
+        return defaultInstance;
+    }
+    
     /**
      * Load and parse XML
      * 
