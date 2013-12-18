@@ -19,9 +19,7 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Level;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -40,6 +38,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     private String[] currentExtensions = null;
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
+    private final String EXT_HEADER_LABEL = "Allowed Extensions for  ";
     
     public FileExtMismatchConfigPanel() {
         mimeTableModel = new MimeTableModel();
@@ -62,6 +61,11 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     listSelectionModel.setSelectionInterval(index, index);
                     
                     String selectedMime = mimeList[index];
+                    String labelStr = EXT_HEADER_LABEL + selectedMime + ":";
+                    if (labelStr.length() > 40) {
+                        labelStr = labelStr.substring(0, 40);
+                    }
+                    extHeaderLabel.setText(labelStr);
                     currentExtensions = editableMap.get(selectedMime);
                     //listSelectionModel.setSelectionInterval(index, index);
              
@@ -84,22 +88,25 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         mimePanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         mimeTable = new javax.swing.JTable();
+        userTypeTextField = new javax.swing.JTextField();
+        addTypeButton = new javax.swing.JButton();
+        removeTypeButton = new javax.swing.JButton();
         extensionPanel = new javax.swing.JPanel();
-        jTextField1 = new javax.swing.JTextField();
-        jButton2 = new javax.swing.JButton();
+        userExtTextField = new javax.swing.JTextField();
+        addExtButton = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         extTable = new javax.swing.JTable();
-        jButton3 = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
+        removeExtButton = new javax.swing.JButton();
+        extHeaderLabel = new javax.swing.JLabel();
 
-        jButton1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton1.text")); // NOI18N
-        jButton1.setEnabled(false);
+        saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveButton.text")); // NOI18N
+        saveButton.setEnabled(false);
 
         jSplitPane1.setDividerLocation(300);
 
@@ -107,6 +114,12 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         mimeTable.setModel(mimeTableModel);
         jScrollPane2.setViewportView(mimeTable);
+
+        userTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userTypeTextField.text")); // NOI18N
+
+        addTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addTypeButton.text")); // NOI18N
+
+        removeTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.removeTypeButton.text")); // NOI18N
 
         javax.swing.GroupLayout mimePanelLayout = new javax.swing.GroupLayout(mimePanel);
         mimePanel.setLayout(mimePanelLayout);
@@ -117,8 +130,14 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(mimePanelLayout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addGroup(mimePanelLayout.createSequentialGroup()
+                                .addComponent(userTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(addTypeButton))
+                            .addComponent(removeTypeButton))
+                        .addGap(0, 66, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mimePanelLayout.setVerticalGroup(
@@ -127,22 +146,28 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(userTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addTypeButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(removeTypeButton)
                 .addContainerGap())
         );
 
         jSplitPane1.setLeftComponent(mimePanel);
 
-        jTextField1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jTextField1.text")); // NOI18N
+        userExtTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userExtTextField.text")); // NOI18N
 
-        jButton2.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton2.text")); // NOI18N
+        addExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addExtButton.text")); // NOI18N
 
         extTable.setModel(extTableModel);
         jScrollPane3.setViewportView(extTable);
 
-        jButton3.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton3.text")); // NOI18N
+        removeExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.removeExtButton.text")); // NOI18N
 
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jLabel2.text")); // NOI18N
+        extHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.extHeaderLabel.text")); // NOI18N
 
         javax.swing.GroupLayout extensionPanelLayout = new javax.swing.GroupLayout(extensionPanel);
         extensionPanel.setLayout(extensionPanelLayout);
@@ -151,34 +176,32 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             .addGroup(extensionPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(extensionPanelLayout.createSequentialGroup()
-                        .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addGroup(extensionPanelLayout.createSequentialGroup()
-                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addComponent(jButton3))
-                            .addComponent(jLabel2))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(extensionPanelLayout.createSequentialGroup()
+                                .addComponent(userExtTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(addExtButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(extHeaderLabel)
+                            .addComponent(removeExtButton))
+                        .addGap(0, 31, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         extensionPanelLayout.setVerticalGroup(
             extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel2)
+                .addComponent(extHeaderLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton2)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(2, 2, 2)))
-                .addComponent(jButton3)
-                .addGap(25, 25, 25))
+                .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(userExtTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addExtButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(removeExtButton)
+                .addContainerGap())
         );
 
         jSplitPane1.setRightComponent(extensionPanel);
@@ -187,13 +210,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jButton1)
-                .addGap(20, 20, 20))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSplitPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(saveButton)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -202,7 +225,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addComponent(jSplitPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
+                .addComponent(saveButton)
                 .addGap(15, 15, 15))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -232,19 +255,22 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addExtButton;
+    private javax.swing.JButton addTypeButton;
+    private javax.swing.JLabel extHeaderLabel;
     private javax.swing.JTable extTable;
     private javax.swing.JPanel extensionPanel;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JPanel mimePanel;
     private javax.swing.JTable mimeTable;
+    private javax.swing.JButton removeExtButton;
+    private javax.swing.JButton removeTypeButton;
+    private javax.swing.JButton saveButton;
+    private javax.swing.JTextField userExtTextField;
+    private javax.swing.JTextField userTypeTextField;
     // End of variables declaration//GEN-END:variables
 
     private class MimeTableModel extends AbstractTableModel {
