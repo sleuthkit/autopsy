@@ -20,9 +20,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jSplitPane1" max="32767" attributes="0"/>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="saveButton" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="saveButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -44,6 +44,9 @@
   <SubComponents>
     <Component class="javax.swing.JButton" name="saveButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/sleuthkit/autopsy/fileextmismatch/save16.png"/>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.saveButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -84,6 +87,7 @@
                                   </Group>
                                   <Component id="removeTypeButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="mimeErrLabel" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="mimeRemoveErrLabel" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="66" max="32767" attributes="0"/>
                           </Group>
@@ -108,7 +112,9 @@
                       <Component id="mimeErrLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="removeTypeButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="54" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="mimeRemoveErrLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="73" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -160,6 +166,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.removeTypeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeTypeButtonActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="mimeErrLabel">
               <Properties>
@@ -168,6 +177,13 @@
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.mimeErrLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="mimeRemoveErrLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.mimeRemoveErrLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -197,6 +213,7 @@
                                       <Component id="addExtButton" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="extErrorLabel" max="32767" attributes="0"/>
+                                  <Component id="extRemoveErrLabel" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="31" max="32767" attributes="0"/>
                           </Group>
@@ -211,7 +228,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="extHeaderLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" pref="305" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" min="-2" pref="313" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="userExtTextField" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -221,6 +238,9 @@
                       <Component id="extErrorLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="removeExtButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="extRemoveErrLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -265,6 +285,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.removeExtButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeExtButtonActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="extHeaderLabel">
               <Properties>
@@ -280,6 +303,13 @@
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.extErrorLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="extRemoveErrLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchConfigPanel.extRemoveErrLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
