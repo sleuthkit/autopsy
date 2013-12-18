@@ -130,8 +130,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             
             return ProcessResult.OK;
         }
-       
-        if (skipKnown && ((abstractFile.getKnown() == FileKnown.KNOWN) || (abstractFile.getKnown() == FileKnown.BAD))) {
+
+        if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
         
