@@ -808,6 +808,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * be called in the gui thread
      */
     public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+        ArrayList<BlackboardArtifact.ARTIFACT_TYPE> typeList = new ArrayList<>(Arrays.asList((BlackboardArtifact.ARTIFACT_TYPE[])types));
+        while (typeList.contains(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO)) {
+            typeList.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+        }
+        if (typeList.isEmpty()) {
+            return;
+        }
+        
         //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
@@ -826,7 +834,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         OriginalNode original = results.getLookup().lookup(OriginalNode.class);
         ResultsNode resultsNode = (ResultsNode) original.getNode();
         RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
-        resultsNodeChilds.refreshKeys(types);
+        resultsNodeChilds.refreshKeys(typeList.toArray(new BlackboardArtifact.ARTIFACT_TYPE[typeList.size()]));
 
         final TreeView tree = getTree();
 
