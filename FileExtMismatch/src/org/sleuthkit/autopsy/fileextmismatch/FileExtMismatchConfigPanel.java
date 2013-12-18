@@ -59,6 +59,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
+                    listSelectionModel.setSelectionInterval(index, index);
+                    
                     String selectedMime = mimeList[index];
                     currentExtensions = editableMap.get(selectedMime);
                     //listSelectionModel.setSelectionInterval(index, index);
