@@ -19,22 +19,59 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Level;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
 public final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
-
+    private String[] mimeList = null;
+    private String[] currentExtensions = null;
+    private MimeTableModel mimeTableModel;
+    private ExtTableModel extTableModel;
+    
     public FileExtMismatchConfigPanel() {
+        mimeTableModel = new MimeTableModel();
+        extTableModel = new ExtTableModel();
+        
         initComponents();
         customizeComponents();
     }
     
     private void customizeComponents() {
-        setName("Advanced File Extension Mismatch Configuration");
+        setName("Advanced File Extension Mismatch Configuration");  
+        final ListSelectionModel lsm = mimeTable.getSelectionModel();
+        lsm.addListSelectionListener(new ListSelectionListener() {        
+
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+                if (!listSelectionModel.isSelectionEmpty()) {
+                    int index = listSelectionModel.getMinSelectionIndex();
+                    String selectedMime = mimeList[index];
+                    currentExtensions = editableMap.get(selectedMime);
+                    //listSelectionModel.setSelectionInterval(index, index);
+             
+                    extTableModel.resync();
+                    //initButtons();
+                } else {
+                    currentExtensions = null;
+                    extTableModel.resync();
+                    //initButtons();
+                }
+            }        
+        });
     }
 
     /**
@@ -50,12 +87,12 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         mimePanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        mimeTable = new javax.swing.JTable();
         extensionPanel = new javax.swing.JPanel();
         jTextField1 = new javax.swing.JTextField();
         jButton2 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        extTable = new javax.swing.JTable();
         jButton3 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
 
@@ -66,18 +103,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jLabel1.text")); // NOI18N
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane2.setViewportView(jTable2);
+        mimeTable.setModel(mimeTableModel);
+        jScrollPane2.setViewportView(mimeTable);
 
         javax.swing.GroupLayout mimePanelLayout = new javax.swing.GroupLayout(mimePanel);
         mimePanel.setLayout(mimePanelLayout);
@@ -86,10 +113,10 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             .addGroup(mimePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
                     .addGroup(mimePanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addGap(0, 144, Short.MAX_VALUE)))
+                        .addGap(0, 264, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mimePanelLayout.setVerticalGroup(
@@ -98,7 +125,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jSplitPane1.setLeftComponent(mimePanel);
@@ -107,18 +135,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton2.text")); // NOI18N
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane3.setViewportView(jTable1);
+        extTable.setModel(extTableModel);
+        jScrollPane3.setViewportView(extTable);
 
         jButton3.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jButton3.text")); // NOI18N
 
@@ -140,7 +158,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                                 .addComponent(jButton2))
                             .addComponent(jButton3)
                             .addComponent(jLabel2))
-                        .addGap(0, 121, Short.MAX_VALUE)))
+                        .addGap(0, 105, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         extensionPanelLayout.setVerticalGroup(
@@ -148,7 +166,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -170,15 +188,15 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addGap(20, 20, 20))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
+                .addComponent(jSplitPane1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton1)
                 .addGap(15, 15, 15))
         );
@@ -189,6 +207,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
         editableMap = FileExtMismatchXML.getDefault().load();
+        mimeList = editableMap.keySet().toArray(new String[0]);
     }
 
     @Override
@@ -208,6 +227,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable extTable;
     private javax.swing.JPanel extensionPanel;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -217,9 +237,138 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JPanel mimePanel;
+    private javax.swing.JTable mimeTable;
     // End of variables declaration//GEN-END:variables
+
+    private class MimeTableModel extends AbstractTableModel {
+
+        @Override
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @Override
+        public int getRowCount() {
+            return editableMap == null ? 0 : editableMap.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+
+            switch (column) {
+                case 0:
+                    colName = "Mime Type";
+                    break;
+                default:
+                    ;
+
+            }
+            return colName;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            if ((mimeList == null) || (rowIndex > mimeList.length)) {
+                return "";
+            }
+            String word = mimeList[rowIndex];
+            switch (columnIndex) {
+                case 0:
+                    ret = (Object) word;
+                    break;
+                default:
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    break;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        }
+
+        @Override
+        public Class<?> getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
+
+        void resync() {
+            fireTableDataChanged();
+        }
+    }
+    
+    private class ExtTableModel extends AbstractTableModel {
+
+        @Override
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @Override
+        public int getRowCount() {
+            return currentExtensions == null ? 0 : currentExtensions.length;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+
+            switch (column) {
+                case 0:
+                    colName = "Extension";
+                    break;
+                default:
+                    ;
+
+            }
+            return colName;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            
+            if ((currentExtensions == null) || (rowIndex > currentExtensions.length)) {
+                return "";
+            }
+            String word = currentExtensions[rowIndex];
+            switch (columnIndex) {
+                case 0:
+                    ret = (Object) word;
+                    break;
+                default:
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    break;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        }
+
+        @Override
+        public Class<?> getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
+
+        void resync() {
+            fireTableDataChanged();
+        }
+    }    
+
 }
