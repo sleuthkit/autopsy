@@ -48,7 +48,9 @@ import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
+import org.netbeans.jemmy.Timeouts;
 import org.netbeans.jemmy.operators.JButtonOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
@@ -116,6 +118,7 @@ public class RegressionTest extends TestCase {
     public void setUp() {
 
         logger.info("########  " + System.getProperty("img_path") + "  #######");
+        Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
     }
 
     /**
@@ -232,7 +235,7 @@ public class RegressionTest extends TestCase {
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
         if (!jcbo.isSelected()) {
             jcbo.doClick();
         }
@@ -299,10 +302,13 @@ public class RegressionTest extends TestCase {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
+        JListOperator listOperator = new JListOperator(reportDialogOperator); 
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
+        listOperator.clickOnItem(2, 1); 
+        new Timeout("pausing", 1000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
