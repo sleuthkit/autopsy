@@ -8,6 +8,7 @@
         <ext>reg</ext>
         <ext>cfg</ext>
         <ext>log</ext>
+        <ext>lo_</ext>
         <ext>dat</ext>
         <ext>lst</ext>
         <ext>xml</ext>
@@ -18,6 +19,7 @@
         <ext>xsml</ext>
         <ext>kml</ext>
         <ext>wsdl</ext>
+        <ext>box</ext>
         <ext>rdf</ext>
         <ext>manifest</ext>
         <ext>htm</ext>
@@ -28,6 +30,7 @@
         <ext>hta</ext>
         <ext>css</ext>
         <ext>js</ext>
+        <ext>jsm</ext>
         <ext>vbs</ext>
         <ext>vb</ext>
         <ext>php</ext>
@@ -81,7 +84,29 @@
         <ext>pc</ext>
         <ext>catalog</ext>
         <ext>hlp</ext>
-        <ext>cnt</ext>        
+        <ext>cnt</ext>
+        <ext>sql</ext>
+        <ext>rbf</ext>
+        <ext>rsp</ext>
+        <ext>wpl</ext>
+        <ext>dic</ext>
+        <ext>aff</ext>
+        <ext>iqy</ext>
+        <ext>ecf</ext>
+        <ext>elm</ext>
+        <ext>ent</ext>
+        <ext>gdl</ext>
+        <ext>gpd</ext>
+        <ext>isp</ext>
+        <ext>theme</ext>
+        <ext>nt</ext>
+        <ext>cty</ext>
+        <ext>icw</ext>
+        <ext>man</ext>
+        <ext>ppd</ext>
+        <ext>cpx</ext>
+        <ext>scp</ext>
+        <ext>ver</ext>
     </signature>
     <signature mimetype="application/x-msoffice">
         <ext>doc</ext>
@@ -108,7 +133,11 @@
         <ext>pptm</ext>
         <ext>potm</ext>
         <ext>ppsm</ext>
-        <ext>msi</ext>  
+        <ext>msi</ext>
+        <ext>mst</ext>
+        <ext>db</ext>
+        <ext>wiz</ext>
+        <ext>gra</ext>
     </signature>
     <signature mimetype="application/x-ooxml">
         <ext>docx</ext>
@@ -155,6 +184,9 @@
         <ext>pptm</ext>
         <ext>potm</ext>
         <ext>ppsm</ext>
+        <ext>wmz</ext>
+        <ext>jar</ext>
+        <ext>amo</ext>
     </signature>
     <signature mimetype="application/vnd.oasis.opendocument.text">
         <ext>odt</ext>
@@ -175,7 +207,10 @@
         <ext>htm</ext>
         <ext>html</ext>
         <ext>htx</ext>
-        <ext>htmls</ext>                                
+        <ext>htmls</ext>
+        <ext>hhk</ext>
+        <ext>hta</ext>
+        <ext>wpl</ext>
     </signature>
     <signature mimetype="image/jpeg">
         <ext>jpg</ext>        
