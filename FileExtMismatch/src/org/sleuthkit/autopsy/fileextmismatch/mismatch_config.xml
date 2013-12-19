@@ -136,6 +136,7 @@
         <ext>msi</ext>
         <ext>mst</ext>
         <ext>db</ext>
+        <ext>db.keep</ext>
         <ext>wiz</ext>
         <ext>gra</ext>
     </signature>
@@ -211,6 +212,7 @@
         <ext>hhk</ext>
         <ext>hta</ext>
         <ext>wpl</ext>
+        <ext>htt</ext>
     </signature>
     <signature mimetype="image/jpeg">
         <ext>jpg</ext>        

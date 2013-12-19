@@ -58,7 +58,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     
     private void customizeComponents() {
         setName("Advanced File Extension Mismatch Configuration");  
-        
+               
         // Handle selections on the left table
         lsm = mimeTable.getSelectionModel();
         lsm.addListSelectionListener(new ListSelectionListener() {        
@@ -86,10 +86,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     extTableModel.resync();
                 }
                 
-                mimeErrLabel.setText(" ");
-                mimeRemoveErrLabel.setText(" ");
-                extRemoveErrLabel.setText(" ");
-                extErrorLabel.setText(" ");
+                clearErrLabels();
             }        
         });
         
@@ -116,6 +113,14 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         
     }
 
+    private void clearErrLabels() {
+        mimeErrLabel.setText(" ");
+        mimeRemoveErrLabel.setText(" ");
+        extRemoveErrLabel.setText(" ");
+        extErrorLabel.setText(" ");
+        saveMsgLabel.setText(" ");    
+    }            
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -144,6 +149,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         extHeaderLabel = new javax.swing.JLabel();
         extErrorLabel = new javax.swing.JLabel();
         extRemoveErrLabel = new javax.swing.JLabel();
+        saveMsgLabel = new javax.swing.JLabel();
 
         saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/fileextmismatch/save16.png"))); // NOI18N
         saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveButton.text")); // NOI18N
@@ -304,6 +310,9 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         jSplitPane1.setRightComponent(extensionPanel);
 
+        saveMsgLabel.setForeground(new java.awt.Color(0, 0, 255));
+        saveMsgLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveMsgLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -314,7 +323,9 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     .addComponent(jSplitPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(saveButton)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(saveMsgLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -324,7 +335,9 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 460, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(saveButton)
-                .addGap(4, 4, 4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(saveMsgLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -358,7 +371,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         extErrorLabel.setText("Extension " + newExt + " added.");  
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
-        saveButton.setEnabled(true);
+        setIsModified();
     }//GEN-LAST:event_addExtButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
@@ -385,7 +398,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         mimeErrLabel.setText("MIME type " + newMime + " added.");
         mimeRemoveErrLabel.setText(" ");
         userTypeTextField.setText("");
-        saveButton.setEnabled(true);
+        setIsModified();
     }//GEN-LAST:event_addTypeButtonActionPerformed
 
     private void userExtTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userExtTextFieldFocusGained
@@ -413,7 +426,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         // user feedback for successful add
         mimeRemoveErrLabel.setForeground(Color.blue);
         mimeRemoveErrLabel.setText("MIME type " + deadMime + " deleted.");        
-        saveButton.setEnabled(true);
+        setIsModified();
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
@@ -437,13 +450,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));         
         
         // Refresh tables        
-        //mimeTableModel.resync();
+        updateExtList();
         extTableModel.resync();             
         
         // user feedback for successful add
         extRemoveErrLabel.setForeground(Color.blue);
         extRemoveErrLabel.setText("Extension " + deadExt + " deleted.");        
-        saveButton.setEnabled(true);                    
+        setIsModified();
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
     private void updateMimeList() {
@@ -466,7 +479,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
     @Override
     public void store() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {
+        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
+            mimeErrLabel.setText(" ");
+            mimeRemoveErrLabel.setText(" ");
+            extRemoveErrLabel.setText(" ");
+            extErrorLabel.setText(" ");
+            
+            saveMsgLabel.setText("Saved.");
             saveButton.setEnabled(false);
         } else {
             //error
@@ -474,8 +493,25 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         }
     }
 
+    private void setIsModified() {
+        saveButton.setEnabled(true);
+        saveMsgLabel.setText(" ");
+    }
+    
     public void cancel() {
-        //FileExtMismatchXML.getDefault().reload();        
+        //FileExtMismatchXML.getDefault().reload();       
+        clearErrLabels();
+    }
+    
+    public void ok() {
+        // if data is unsaved
+        if (saveButton.isEnabled()) {
+           int choice = JOptionPane.showConfirmDialog(this, "Would you like to save configuration changes?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+           if (choice == JOptionPane.YES_OPTION) {
+               store();
+           }
+        }
+        clearErrLabels();   
     }
     
     boolean valid() {
@@ -502,6 +538,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     private javax.swing.JButton removeExtButton;
     private javax.swing.JButton removeTypeButton;
     private javax.swing.JButton saveButton;
+    private javax.swing.JLabel saveMsgLabel;
     private javax.swing.JTextField userExtTextField;
     private javax.swing.JTextField userTypeTextField;
     // End of variables declaration//GEN-END:variables

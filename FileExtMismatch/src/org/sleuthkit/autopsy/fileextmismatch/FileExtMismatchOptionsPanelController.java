@@ -32,7 +32,8 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
 
     @Override
     public void applyChanges() {
-        getPanel().store();
+        //getPanel().store();
+        getPanel().ok();
         changed = false;
     }
 
