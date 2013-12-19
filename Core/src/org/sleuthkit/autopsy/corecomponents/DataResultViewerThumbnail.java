@@ -41,6 +41,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -63,7 +64,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;    
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;    
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
@@ -240,13 +241,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
         
-        iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        iconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
         switch(thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
-                iconSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                iconSize = ImageUtils.ICON_SIZE_SMALL;
                 break;
             case 2:
-                iconSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                iconSize = ImageUtils.ICON_SIZE_LARGE;
                 break;
         }                    
 
