@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -198,7 +198,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return Utilities.isJpegFileHeader(f);
+        return ImageUtils.isJpegFileHeader(f);
     }
 
     @Override

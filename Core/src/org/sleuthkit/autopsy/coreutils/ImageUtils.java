@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utilities for creating and manipulating thumbnail and icon images.
@@ -74,7 +75,7 @@ public class ImageUtils {
         final String fName = f.getName();
         final int dotIdx = fName.lastIndexOf('.');
         if (dotIdx == -1 || dotIdx == (fName.length() - 1)) {
-            return Utilities.isJpegFileHeader(f);
+            return isJpegFileHeader(f);
         }
 
         final String ext = fName.substring(dotIdx + 1).toLowerCase();
@@ -138,6 +139,39 @@ public class ImageUtils {
      */
     public static File getFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
+    }
+    
+    /**
+     * Check if is jpeg file based on header
+     *
+     * @param file
+     *
+     * @return true if jpeg file, false otherwise
+     */
+    public static boolean isJpegFileHeader(AbstractFile file) {
+        if (file.getSize() < 100) {
+            return false;
+        }
+
+        byte[] fileHeaderBuffer = new byte[2];
+        int bytesRead;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, 2);
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not a JPEG
+            return false;
+        }
+        if (bytesRead != 2) {
+            return false;
+        }
+        /*
+         * Check for the JPEG header. Since Java bytes are signed, we cast them
+         * to an int first.
+         */
+        if (((int) (fileHeaderBuffer[0] & 0xff) == 0xff) && ((int) (fileHeaderBuffer[1] & 0xff) == 0xd8)) {
+            return true;
+        }
+        return false;
     }
     
     
