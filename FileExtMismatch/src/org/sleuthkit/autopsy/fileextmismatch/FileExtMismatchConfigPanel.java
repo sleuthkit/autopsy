@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.fileextmismatch;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -38,8 +39,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
-    private String[] mimeList = null;
-    private String[] currentExtensions = null;
+    private ArrayList<String> mimeList = null;
+    private ArrayList<String> currentExtensions = null;
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
     private final String EXT_HEADER_LABEL = "Allowed Extensions for ";
@@ -69,13 +70,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
                     
-                    selectedMime = mimeList[index];
+                    selectedMime = mimeList.get(index);
                     String labelStr = EXT_HEADER_LABEL + selectedMime + ":";
                     if (labelStr.length() > 80) {
                         labelStr = labelStr.substring(0, 80);
                     }
                     extHeaderLabel.setText(labelStr);
-                    currentExtensions = editableMap.get(selectedMime);
+                    updateExtList();
              
                     extTableModel.resync();
                     //initButtons();
@@ -103,7 +104,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
                     
-                    selectedExt = currentExtensions[index];
+                    selectedExt = currentExtensions.get(index);
                 } else {
                     selectedExt = "";
                 }
@@ -224,7 +225,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addComponent(removeTypeButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(mimeRemoveErrLabel)
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addContainerGap(77, Short.MAX_VALUE))
         );
 
         jSplitPane1.setLeftComponent(mimePanel);
@@ -298,7 +299,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
                 .addComponent(removeExtButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(extRemoveErrLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         jSplitPane1.setRightComponent(extensionPanel);
@@ -320,8 +321,8 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 460, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(saveButton)
                 .addGap(4, 4, 4))
         );
@@ -349,7 +350,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         editableMap.put(selectedMime, editedExtensions.toArray(new String[0])); 
 
         // Refresh table
-        currentExtensions = editableMap.get(selectedMime);                
+        updateExtList();       
         extTableModel.resync();
         
         // user feedback for successful add
@@ -446,7 +447,13 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
     private void updateMimeList() {
-        mimeList = editableMap.keySet().toArray(new String[0]);
+        mimeList = new ArrayList<>(editableMap.keySet());
+        Collections.sort(mimeList);
+    }
+    
+    private void updateExtList() {
+        currentExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));
+        Collections.sort(currentExtensions);
     }
     
     @Override
@@ -529,10 +536,10 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
-            if ((mimeList == null) || (rowIndex > mimeList.length)) {
+            if ((mimeList == null) || (rowIndex > mimeList.size())) {
                 return "";
             }
-            String word = mimeList[rowIndex];
+            String word = mimeList.get(rowIndex);
             switch (columnIndex) {
                 case 0:
                     ret = (Object) word;
@@ -572,7 +579,7 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
 
         @Override
         public int getRowCount() {
-            return currentExtensions == null ? 0 : currentExtensions.length;
+            return currentExtensions == null ? 0 : currentExtensions.size();
         }
 
         @Override
@@ -594,10 +601,10 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
             
-            if ((currentExtensions == null) || (currentExtensions.length == 0) || (rowIndex > currentExtensions.length)) {
+            if ((currentExtensions == null) || (currentExtensions.size() == 0) || (rowIndex > currentExtensions.size())) {
                 return "";
             }
-            String word = currentExtensions[rowIndex];
+            String word = currentExtensions.get(rowIndex);
             switch (columnIndex) {
                 case 0:
                     ret = (Object) word;
