@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -573,13 +574,7 @@ public class ReportGenerator {
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }                        
                 module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());  
-                String[] tableHeaders;
-                if (module instanceof ReportHTML) {
-                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File", "Thumbnail"};
-                } else {
-                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File"};
-                }
-                module.startTable(new ArrayList<>(Arrays.asList(tableHeaders)));
+                module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
             }
                         
             // Give the modules the rows for the content tags. 
@@ -588,15 +583,8 @@ public class ReportGenerator {
                     checkIfTagHasImage(tag);
                     List<String> row;
                     for (TableReportModule module : tableModules) {
-                        // We have specific behavior if the module is a ReportHTML.
-                        // We add a thumbnail if the artifact is associated with an
-                        // image file.
                         row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
-                        if (module instanceof ReportHTML) {
-                            ((ReportHTML) module).addRowWithTaggedContentHyperlink(row, tag);
-                        } else {
-                            module.addRow(row); 
-                        }
+                        module.addRow(row);
                     }
                 }
             }                
@@ -622,9 +610,11 @@ public class ReportGenerator {
                 }
             }            
         }
-
+// update status label.
         private void makeThumbnailTable() {
             for (TableReportModule module : tableModules) {
+                tableProgress.get(module).updateStatusLabel("Now processing Tagged Images..."); 
+                
                 if (module instanceof ReportHTML) {
                     ReportHTML htmlModule = (ReportHTML) module;
                     htmlModule.startDataType("Tagged Images", "Tagged Results and Contents that contain images.");
@@ -648,6 +638,12 @@ public class ReportGenerator {
                 logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
                 return;
             }
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
 
             // Only include content for images
             if (ImageUtils.thumbnailSupported(file)) {
@@ -657,6 +653,17 @@ public class ReportGenerator {
         
         private void checkIfTagHasImage(ContentTag contentTag) {
             Content c = contentTag.getContent();
+            if (c instanceof AbstractFile == false) {
+                return;
+            }
+            AbstractFile file = (AbstractFile) c;
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
+            
             if (ImageUtils.thumbnailSupported(c)) {
                 images.add(c);
             }

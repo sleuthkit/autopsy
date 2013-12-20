@@ -125,8 +125,10 @@ public class ImageUtils {
      * @return 
      */
     public static File getIconFile(Content content, int iconSize) {
-        getIcon(content, iconSize);
-        return getFile(content.getId());
+        if (getIcon(content, iconSize) != null) {
+            return getFile(content.getId());
+        }
+        return null;
     }
     
     /**
