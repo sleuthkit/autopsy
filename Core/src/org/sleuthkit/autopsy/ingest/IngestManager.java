@@ -445,9 +445,16 @@ public class IngestManager {
             //init all fs modules, everytime new worker starts
 
             for (IngestModuleAbstractFile s : abstractFileModules) {
-                if (fileScheduler.hasModuleEnqueued(s) == false) {
-                    continue;
-                } 
+                // This was added at one point to remove the message about non-configured HashDB even 
+                // when HashDB was not enabled.  However, it adds some problems if a second ingest is
+                // kicked off whiel the first is ongoing. If the 2nd ingest has a module enabled that 
+                // was not initially enabled, it will never have init called. We also need to call 
+                // complete and need a similar way of passing down data to that thread to tell it which 
+                // it shoudl call complete on (otherwise it could call complete on a module that never
+                // had init() called. 
+                //if (fileScheduler.hasModuleEnqueued(s) == false) {
+                //    continue;
+                //} 
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
                     s.init(moduleInit);
@@ -1080,8 +1087,13 @@ public class IngestManager {
                 //notify modules of completion
                 if (!this.isCancelled()) {
                     for (IngestModuleAbstractFile s : abstractFileModules) {
-                        s.complete();
-                        IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
+                        try {
+                            s.complete();
+                            IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
+                        }
+                        catch (Exception ex) {   
+                            logger.log(Level.SEVERE, "Module " + s.getName() + " threw exception during call to complete()", ex);
+                        }
                     }
                 }
 
@@ -1093,13 +1105,11 @@ public class IngestManager {
             } catch (CancellationException e) {
                 //task was cancelled
                 handleInterruption();
-
             } catch (InterruptedException ex) {
                 handleInterruption();
             } catch (ExecutionException ex) {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
-
             } catch (Exception ex) {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
