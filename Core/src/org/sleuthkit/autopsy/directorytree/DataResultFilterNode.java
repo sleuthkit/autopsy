@@ -56,8 +56,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.InterestingItems.InterestingItemsRootNode;
-import org.sleuthkit.autopsy.datamodel.InterestingItems.InterestingItemsSetNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
@@ -369,12 +369,12 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(InterestingItemsRootNode iarn) {
+        public AbstractAction visit(InterestingHitsRootNode iarn) {
             return openChild(iarn);
         }
 
         @Override
-        public AbstractAction visit(InterestingItemsSetNode iasn) {
+        public AbstractAction visit(InterestingHitsSetNode iasn) {
             return openChild(iasn);
         }
         

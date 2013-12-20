@@ -35,7 +35,7 @@ public class ResultsNode extends DisplayableItemNode {
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new InterestingItems(sleuthkitCase),
+                new InterestingHits(sleuthkitCase),
                 new TagsNodeKey()
                 )), Lookups.singleton(NAME));
         setName(NAME);

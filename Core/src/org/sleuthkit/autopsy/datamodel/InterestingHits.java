@@ -39,15 +39,15 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 
-public class InterestingItems implements AutopsyVisitableItem {
+public class InterestingHits implements AutopsyVisitableItem {
     
     private static final String INTERESTING_ITEMS = "INTERESTING ITEMS";
     private static final String DISPLAY_NAME = "Interesting Items";
-    private static final Logger logger = Logger.getLogger(InterestingItems.class.getName());
+    private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private SleuthkitCase skCase;
     private Map<String, Set<Long>> interestingItemsMap;
    
-    public InterestingItems(SleuthkitCase skCase) {
+    public InterestingHits(SleuthkitCase skCase) {
         this.skCase = skCase;
         interestingItemsMap = new LinkedHashMap<>();
     }
@@ -56,7 +56,7 @@ public class InterestingItems implements AutopsyVisitableItem {
     private void initArtifacts() {
         interestingItemsMap.clear();
         loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-        loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT);
+        loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
     
     /*
@@ -103,10 +103,10 @@ public class InterestingItems implements AutopsyVisitableItem {
      /**
      * Node for the interesting items
      */
-    public class InterestingItemsRootNode extends DisplayableItemNode {
+    public class InterestingHitsRootNode extends DisplayableItemNode {
 
-        public InterestingItemsRootNode() {
-            super(Children.create(new InterestingItemsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
+        public InterestingHitsRootNode() {
+            super(Children.create(new InterestingHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(INTERESTING_ITEMS);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png");
@@ -141,7 +141,7 @@ public class InterestingItems implements AutopsyVisitableItem {
         }
     }
     
-     private class InterestingItemsRootChildren extends ChildFactory<String> {
+     private class InterestingHitsRootChildren extends ChildFactory<String> {
 
         @Override
         protected boolean createKeys(List<String> list) {
@@ -151,14 +151,14 @@ public class InterestingItems implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new InterestingItemsSetNode(key, interestingItemsMap.get(key));
+            return new InterestingHitsSetNode(key, interestingItemsMap.get(key));
         }
     }
      
-    public class InterestingItemsSetNode extends DisplayableItemNode {
+    public class InterestingHitsSetNode extends DisplayableItemNode {
 
-        public InterestingItemsSetNode(String name, Set<Long> children) {
-            super(Children.create(new InterestingItemsSetChildren(children), true), Lookups.singleton(name));
+        public InterestingHitsSetNode(String name, Set<Long> children) {
+            super(Children.create(new InterestingHitsSetChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png");
@@ -192,11 +192,11 @@ public class InterestingItems implements AutopsyVisitableItem {
         }
     }
      
-    private class InterestingItemsSetChildren extends ChildFactory<BlackboardArtifact> {
+    private class InterestingHitsSetChildren extends ChildFactory<BlackboardArtifact> {
 
         private Set<Long> children;
 
-        private InterestingItemsSetChildren(Set<Long> children) {
+        private InterestingHitsSetChildren(Set<Long> children) {
             super();
             this.children = children;
         }
@@ -205,7 +205,6 @@ public class InterestingItems implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact> list) {
             for (long l : children) {
                 try {
-                    //TODO: bulk artifact gettings
                     list.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "TSK Exception occurred", ex);

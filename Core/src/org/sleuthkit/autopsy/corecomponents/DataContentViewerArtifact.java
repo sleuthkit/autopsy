@@ -476,14 +476,18 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 if (index == -1) {
                     index = 0;
                 } else {
-                     SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
                     // if the artifact has an ASSOCIATED ARTIFACT, then we display the associated artifact instead
                     try {
                         for (BlackboardAttribute attr : artifact.getAttributes()) {
                            if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                                long assocArtifactId = attr.getValueLong();
-                               BlackboardArtifact assocArtifact = skCase.getBlackboardArtifact(assocArtifactId);
-                               int assocArtifactIndex = artifacts.indexOf(assocArtifact);
+                               int assocArtifactIndex = -1;
+                               for (BlackboardArtifact art: artifacts) {
+                                   if (assocArtifactId == art.getArtifactID()) {
+                                       assocArtifactIndex = artifacts.indexOf(art);
+                                       break;
+                                   }
+                               }
                                if (assocArtifactIndex >= 0) {
                                     index = assocArtifactIndex;
                                 }

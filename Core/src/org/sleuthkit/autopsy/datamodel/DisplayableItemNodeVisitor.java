@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.InterestingItems.InterestingItemsRootNode;
-import org.sleuthkit.autopsy.datamodel.InterestingItems.InterestingItemsSetNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
@@ -87,9 +87,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(TagsNode node);
     
-    T visit(InterestingItemsRootNode iarn);
+    T visit(InterestingHitsRootNode ihrn);
 
-    T visit(InterestingItemsSetNode iasn);
+    T visit(InterestingHitsSetNode ihsn);
     
     T visit(TagNameNode node);
 
@@ -245,13 +245,13 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
          @Override
-        public T visit(InterestingItemsRootNode iarn) {
-            return defaultVisit(iarn);
+        public T visit(InterestingHitsRootNode ihrn) {
+            return defaultVisit(ihrn);
         }
 
         @Override
-        public T visit(InterestingItemsSetNode iasn) {
-            return defaultVisit(iasn);
+        public T visit(InterestingHitsSetNode ihsn) {
+            return defaultVisit(ihsn);
         }
         
         @Override

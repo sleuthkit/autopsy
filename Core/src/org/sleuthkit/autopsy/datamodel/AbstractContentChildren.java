@@ -151,8 +151,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
         
         @Override
-        public AbstractNode visit(InterestingItems ii) {
-            return ii.new InterestingItemsRootNode();
+        public AbstractNode visit(InterestingHits ih) {
+            return ih.new InterestingHitsRootNode();
         }
          
         @Override

@@ -970,7 +970,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }
         } else if ( type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT) || 
-                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT) )   { 
+                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) )   { 
             Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
              try {
