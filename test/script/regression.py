@@ -144,6 +144,8 @@ class TestRunner(object):
                 logres.append(TestRunner._run_test(test_data))
             test_data.printout = Errors.printout
             test_data.printerror = Errors.printerror
+            # give solr process time to die.
+            time.sleep(10)
 
         Reports.write_html_foot(test_config.html_log)
         # TODO: move this elsewhere
