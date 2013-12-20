@@ -146,11 +146,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
                         
             if (flag) {
                 // add artifact               
-                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_MISMATCH_DETECTED);
+                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
                 BlackboardAttribute batt = new BlackboardAttribute(attrId, MODULE_NAME, "", ATTR_VALUE_WRONG);
                 bart.addAttribute(batt);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_MISMATCH_DETECTED, Collections.singletonList(bart)));                
+                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
