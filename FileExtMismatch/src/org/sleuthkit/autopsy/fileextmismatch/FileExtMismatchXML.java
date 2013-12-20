@@ -123,6 +123,8 @@ public class FileExtMismatchXML {
                     }
                     String[] sarray = (String[])extStrings.toArray(new String[0]);
                     sigTypeToExtMap.put(mimetype, sarray);
+                } else {
+                    sigTypeToExtMap.put(mimetype, null); //ok to have an empty type (the ingest module will not use it)
                 }
             }
             
@@ -159,13 +161,15 @@ public class FileExtMismatchXML {
                 Element sigEl = doc.createElement(SIG_EL);
                 sigEl.setAttribute(SIG_MIMETYPE_ATTR, key);
                 
-                ArrayList<String> extList = new ArrayList<>(Arrays.asList(sigTypeToExtMap.get(key)));
-                for (String ext : extList) {
-                    Element extEl = doc.createElement(EXT_EL);
-                    extEl.setTextContent(ext);
-                    sigEl.appendChild(extEl);
+                String[] extArray = sigTypeToExtMap.get(key);
+                if (extArray != null) {
+                    ArrayList<String> extList = new ArrayList<>(Arrays.asList(extArray));
+                    for (String ext : extList) {
+                        Element extEl = doc.createElement(EXT_EL);
+                        extEl.setTextContent(ext);
+                        sigEl.appendChild(extEl);
+                    }
                 }
-                
                 rootEl.appendChild(sigEl);
             }
 

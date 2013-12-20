@@ -36,7 +36,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jSplitPane1" min="-2" pref="460" max="-2" attributes="0"/>
+              <Component id="jSplitPane1" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="saveButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -63,7 +63,7 @@
     </Component>
     <Container class="javax.swing.JSplitPane" name="jSplitPane1">
       <Properties>
-        <Property name="dividerLocation" type="int" value="300"/>
+        <Property name="dividerLocation" type="int" value="430"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
@@ -83,7 +83,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jScrollPane2" pref="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="userTypeTextField" min="-2" pref="128" max="-2" attributes="0"/>
@@ -91,11 +91,11 @@
                                       <Component id="addTypeButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="removeTypeButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="mimeErrLabel" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="mimeRemoveErrLabel" max="32767" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="66" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="196" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="mimeErrLabel" alignment="0" max="32767" attributes="0"/>
+                          <Component id="mimeRemoveErrLabel" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -119,7 +119,7 @@
                       <Component id="removeTypeButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="mimeRemoveErrLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="77" max="32767" attributes="0"/>
+                      <EmptySpace pref="45" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -217,11 +217,11 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="addExtButton" max="32767" attributes="0"/>
                                   </Group>
-                                  <Component id="extErrorLabel" max="32767" attributes="0"/>
-                                  <Component id="extRemoveErrLabel" max="32767" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="31" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="66" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="extErrorLabel" alignment="0" max="32767" attributes="0"/>
+                          <Component id="extRemoveErrLabel" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -233,7 +233,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="extHeaderLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" min="-2" pref="313" max="-2" attributes="0"/>
+                      <Component id="jScrollPane3" min="-2" pref="285" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="userExtTextField" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -245,7 +245,7 @@
                       <Component id="removeExtButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="extRemoveErrLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="15" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
