@@ -345,6 +345,8 @@ public class ReportGenerator {
         private List<ARTIFACT_TYPE> artifactTypes  = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
         
+        private List<Content> images = new ArrayList<>();
+        
         TableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
             // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
@@ -384,6 +386,7 @@ public class ReportGenerator {
             makeBlackboardArtifactTables();
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
+            makeThumbnailTable();
             
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).complete();
@@ -520,7 +523,8 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (ContentTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                                                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) { 
+                    checkIfTagHasImage(tag);
                     ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
                     for (TableReportModule module : tableModules) {                                                                                       
                         // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
@@ -580,9 +584,9 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) {          
+                    checkIfTagHasImage(tag);
                     List<String> row;
-                    File thumbFile;
                     for (TableReportModule module : tableModules) {
                         // We have specific behavior if the module is a ReportHTML.
                         // We add a thumbnail if the artifact is associated with an
@@ -617,6 +621,45 @@ public class ReportGenerator {
                     iter.remove();
                 }
             }            
+        }
+
+        private void makeThumbnailTable() {
+            for (TableReportModule module : tableModules) {
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlModule = (ReportHTML) module;
+                    htmlModule.startDataType("Tagged Images", "Tagged Results and Contents that contain images.");
+                    List<String> emptyHeaders = new ArrayList<>();
+                    for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
+                        emptyHeaders.add("");
+                    }
+                    htmlModule.startTable(emptyHeaders);
+                    htmlModule.addThumbnailRows(images);
+                    htmlModule.endTable();
+                    htmlModule.endDataType();
+                }
+            }
+        }
+        
+        private void checkIfTagHasImage(BlackboardArtifactTag artifactTag) {
+            AbstractFile file;
+            try {
+                file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
+                return;
+            }
+
+            // Only include content for images
+            if (ImageUtils.thumbnailSupported(file)) {
+                images.add(file);
+            }
+        }
+        
+        private void checkIfTagHasImage(ContentTag contentTag) {
+            Content c = contentTag.getContent();
+            if (ImageUtils.thumbnailSupported(c)) {
+                images.add(c);
+            }
         }
     }
         
