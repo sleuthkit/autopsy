@@ -588,6 +588,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             respondSelection((Node[]) oldValue, (Node[]) newValue);
         } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
+            if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
+                return;
+            }
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
