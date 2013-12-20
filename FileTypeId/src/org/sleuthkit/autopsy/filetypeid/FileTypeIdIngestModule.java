@@ -19,7 +19,6 @@
 
 package org.sleuthkit.autopsy.filetypeid;
 
-import java.util.Collections;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -27,11 +26,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskData;
@@ -39,7 +36,8 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * File Type Identification
+ * Detects the type of a file based on signature (magic) values.
+ * Posts results to the blackboard.
  */
 public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileTypeIdIngestModule defaultInstance = null;
@@ -90,7 +88,7 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
             return ProcessResult.OK;
         }
        
-        if (skipKnown && ((abstractFile.getKnown() == FileKnown.KNOWN) || (abstractFile.getKnown() == FileKnown.BAD))) {
+        if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
         
@@ -103,11 +101,11 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
             
             if (!fileId.type.isEmpty()) {
                 // add artifact
-                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_GEN_INFO);
+                BlackboardArtifact bart = abstractFile.getGenInfoArtifact();
                 BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), MODULE_NAME, fileId.type);
                 bart.addAttribute(batt);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_GEN_INFO, Collections.singletonList(bart)));
+                // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
             }
             return ProcessResult.OK;
         } catch (TskException ex) {

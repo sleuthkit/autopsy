@@ -21,21 +21,13 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import javax.imageio.ImageIO;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
@@ -49,13 +41,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ThumbnailViewChildren extends Children.Keys<Integer> {
 
-    private static final IsSupportedContentVisitor isSupportedVisitor = new IsSupportedContentVisitor();
     static final int IMAGES_PER_PAGE = 200;
     private Node parent;
     private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
     private int totalImages = 0;
     private int totalPages = 0;
-    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     /**
@@ -152,7 +143,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         if (node != null) {
             Content content = node.getLookup().lookup(Content.class);
             if (content != null) {
-                return content.accept(isSupportedVisitor);
+                return ImageUtils.thumbnailSupported(content);
             }
         }
         return false;
@@ -160,59 +151,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
-    }
-
-    private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
-
-        private final List<String> SUPP_EXTENSIONS;
-
-        IsSupportedContentVisitor() {
-            String[] supportedImagesSuffixes = ImageIO.getReaderFileSuffixes();
-
-            SUPP_EXTENSIONS = new ArrayList<String>(supportedImagesSuffixes.length);
-            for (int i = 0; i < supportedImagesSuffixes.length; ++i) {
-                String suffix = supportedImagesSuffixes[i];
-                SUPP_EXTENSIONS.add("." + suffix);
-            }
-        }
-
-        @Override
-        public Boolean visit(DerivedFile f) {
-            return isSupported(f);
-        }
-
-        @Override
-        public Boolean visit(LocalFile f) {
-            return isSupported(f);
-        }
-
-        public Boolean visit(LayoutFile f) {
-            return isSupported(f);
-        }
-
-        @Override
-        public Boolean visit(File f) {
-            return isSupported(f);
-        }
-
-        public Boolean isSupported(AbstractFile f) {
-            final String fName = f.getName();
-            final int dotIdx = fName.lastIndexOf('.');
-            if (dotIdx == -1) {
-                return Utilities.isJpegFileHeader(f);
-            }
-
-            final String ext = fName.substring(dotIdx).toLowerCase();
-
-            // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-            return (f.getSize() > 0
-                    && SUPP_EXTENSIONS.contains(ext));
-        }
-
-        @Override
-        protected Boolean defaultVisit(Content cntnt) {
-            return false;
-        }
     }
 
     /**
