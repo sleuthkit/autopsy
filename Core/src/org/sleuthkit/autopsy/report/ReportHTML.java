@@ -1026,13 +1026,7 @@ public class ReportHTML implements TableReportModule {
         try {
             File to = new File(thumbsPath);
             FileObject from = FileUtil.toFileObject(thumbFile);
-            if (from == null) {
-                System.out.println("from");
-            }
             FileObject dest = FileUtil.toFileObject(to);
-            if (dest == null) {
-                System.out.println("dest");
-            }
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex);
