@@ -28,8 +28,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -133,7 +133,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
-            } else if (imagePanelInited && Utilities.isJpegFileHeader(file)) {
+            } else if (imagePanelInited && ImageUtils.isJpegFileHeader(file)) {
 
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
@@ -208,7 +208,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (containsExt(name, imageExtensions)) {
                 return true;
             }
-            else if (Utilities.isJpegFileHeader(file)) {
+            else if (ImageUtils.isJpegFileHeader(file)) {
                 return true;
             }
             //for gstreamer formats, check if initialized first, then

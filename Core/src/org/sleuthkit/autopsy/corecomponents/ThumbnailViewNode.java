@@ -18,30 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.MediaTracker;
-import java.awt.Toolkit;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.util.logging.Level;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Node that wraps around original node and adds the bitmap icon representing
@@ -50,12 +32,7 @@ import org.sleuthkit.datamodel.TskException;
 class ThumbnailViewNode extends FilterNode {
 
     private SoftReference<Image> iconCache = null;
-    private static final Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
-    private static final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
-    static final int ICON_SIZE_SMALL = 50;
-    static final int ICON_SIZE_MEDIUM = 100;
-    static final int ICON_SIZE_LARGE = 200;
-    private int iconSize = ICON_SIZE_MEDIUM;
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     //private final BufferedImage defaultIconBI;
 
     /**
@@ -87,89 +64,15 @@ class ThumbnailViewNode extends FilterNode {
             Content content = this.getLookup().lookup(Content.class);
 
             if (content != null) {
-                // If a thumbnail file is already saved locally
-                if (getFile(content.getId()).exists()) {
-                    try {
-                        BufferedImage bicon = ImageIO.read(getFile(content.getId()));
-                        if (bicon == null) {
-                            icon = ThumbnailViewNode.defaultIcon;
-                        } else if (bicon.getWidth() != iconSize) {
-                            icon = generateAndSaveIcon(content);    
-                        } else {
-                            icon = bicon;    
-                        }
-                    } catch (IOException ex) {
-                        icon = ThumbnailViewNode.defaultIcon;
-                    }
-                } else { // Make a new icon
-                    icon = generateAndSaveIcon(content);
-                }
+                icon = ImageUtils.getIcon(content, iconSize);
             } else {
-                icon = ThumbnailViewNode.defaultIcon;
+                icon = ImageUtils.getDefaultIcon();
             }
 
-            iconCache = new SoftReference<Image>(icon);
+            iconCache = new SoftReference<>(icon);
         }
         
         return icon;
-    }
-
-    private Image generateAndSaveIcon(Content content) { 
-        Image icon = null;
-        try {
-            icon = generateIcon(content);
-            if (icon == null) {
-                icon = ThumbnailViewNode.defaultIcon;
-            } else {
-                File f = getFile(content.getId());
-                if (f.exists()) {
-                    f.delete();
-                }
-                ImageIO.write((BufferedImage) icon, "jpg", getFile(content.getId()));
-            }         
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
-        }   
-        return icon;        
-    }
-    
-    /*
-     * Generate a scaled image
-     */
-    private BufferedImage generateIcon(Content content) {
-
-        InputStream inputStream = null;
-        try {
-            inputStream = new ReadContentInputStream(content);
-            BufferedImage bi = ImageIO.read(inputStream);
-            if (bi == null) {
-                logger.log(Level.WARNING, "No image reader for file: " + content.getName());
-                return null;
-            }
-            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
-
-            return biScaled;
-        }catch (OutOfMemoryError e) {
-            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e);
-            return null;
-        } 
-        catch (Exception e) {
-            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
-            return null;
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex);
-                }
-            }
-
-        }
-    }
-
-    private static File getFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
     }
     
     public void setIconSize(int iconSize) {
