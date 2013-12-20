@@ -511,7 +511,7 @@
    <field name="image_id" type="string" indexed="true" stored="false" required="true" /> 
    
     <!-- Autopsy pushes text to this field and gets the text to display from it.  It is copied to other places -->
-   <field name="content" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" />
+   <field name="content" type="text_general" indexed="true" stored="true" storeOffsetsWithPositions="true"/>
    
    <!-- The strings field holds strings extracted from files that SolrCell doesn't support -->
    <!--<field name="strings" type="text_general" indexed="true" stored="true"/>-->
