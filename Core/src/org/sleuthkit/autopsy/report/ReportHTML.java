@@ -591,6 +591,10 @@ public class ReportHTML implements TableReportModule {
         }
     }
     
+    /**
+     * Add the body of the thumbnails table.
+     * @param images 
+     */
     public void addThumbnailRows(List<Content> images) {
         List<String> currentRow = new ArrayList<>();
         int totalCount = 0;
@@ -602,6 +606,9 @@ public class ReportHTML implements TableReportModule {
             }
             
             if (totalCount == MAX_THUMBS_PER_PAGE) {
+                // manually set the row count so the count of items shown in the 
+                // navigation page reflects the number of thumbnails instead of
+                // the number of rows.
                 rowCount = totalCount;
                 totalCount = 0;
                 pages++;

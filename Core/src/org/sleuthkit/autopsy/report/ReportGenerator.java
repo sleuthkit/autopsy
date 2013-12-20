@@ -610,7 +610,7 @@ public class ReportGenerator {
                 }
             }            
         }
-// update status label.
+
         private void makeThumbnailTable() {
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).updateStatusLabel("Now processing Tagged Images..."); 
