@@ -50,6 +50,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
+    private static final int MAX_COMMENT_SIZE = 500;
     private HashDbSimpleConfigPanel simpleConfigPanel;
     private HashDbConfigPanel advancedConfigPanel;
     private IngestServices services;
@@ -227,9 +228,20 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                         services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
                                 "Error encountered while setting known bad state for " + name + "."));
                         ret = ProcessResult.ERROR;
-                    }
+                    }                    
                     String hashSetName = db.getHashSetName();
-                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, db.getSendIngestMessages());
+                    
+                    String comment = "";
+                    ArrayList<String> comments = db.lookUp(file).getComments();
+                    for (String c : comments) {
+                        comment += c + ". ";
+                        if (comment.length() > MAX_COMMENT_SIZE) {
+                            comment = comment.substring(0, MAX_COMMENT_SIZE) + "...";
+                            break;
+                        }                        
+                    }
+
+                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                 }
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
@@ -271,7 +283,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         return ret;
     }
 
-    private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
+    private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             //TODO Revisit usage of deprecated constructor as per TSK-583
@@ -280,6 +292,9 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
             badFile.addAttribute(att2);
             BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, md5Hash);
             badFile.addAttribute(att3);
+            BlackboardAttribute att4 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(), MODULE_NAME, comment);
+            badFile.addAttribute(att4);
+            
             if (showInboxMessage) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details
