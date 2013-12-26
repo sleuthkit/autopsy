@@ -231,10 +231,14 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                     }                    
                     String hashSetName = db.getHashSetName();
                     
-                    String comment = "";
+                    String comment = "";                    
                     ArrayList<String> comments = db.lookUp(file).getComments();
+                    int i = 0;
                     for (String c : comments) {
-                        comment += c + ". ";
+                        comment += c;
+                        if (++i > 1) {
+                            c += ". ";
+                        }
                         if (comment.length() > MAX_COMMENT_SIZE) {
                             comment = comment.substring(0, MAX_COMMENT_SIZE) + "...";
                             break;
