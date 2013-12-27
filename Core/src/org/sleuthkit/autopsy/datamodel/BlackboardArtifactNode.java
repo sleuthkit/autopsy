@@ -126,6 +126,32 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         final int artifactTypeId = artifact.getArtifactTypeID();
         
+        // If mismatch, add props for extension and file type
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
+            String actualExt = "";
+            int i = associated.getName().lastIndexOf(".");
+            if ((i > -1) && ((i + 1) < associated.getName().length())) {
+                actualExt = associated.getName().substring(i + 1).toLowerCase();
+            }                    
+            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, actualExt));        
+        
+            try {
+                String actualMimeType = "";
+                ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
+                for (BlackboardArtifact art : artList) {
+                    List<BlackboardAttribute> atrList = art.getAttributes();
+                    for (BlackboardAttribute att : atrList) {
+                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
+                            actualMimeType = att.getValueString();
+                        }
+                    }                
+                }
+                ss.put(new NodeProperty("MIME Type", "MIME Type", NO_DESCR, actualMimeType));
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex);
+            }            
+        }        
+        
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
             String sourcePath = "";
             try {
