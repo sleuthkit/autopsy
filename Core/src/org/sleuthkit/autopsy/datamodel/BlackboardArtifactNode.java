@@ -146,7 +146,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         }
                     }                
                 }
-                ss.put(new NodeProperty("MIME Type", "MIME Type", NO_DESCR, actualMimeType));
+                if (actualMimeType.isEmpty()) {
+                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute.");
+                } else {
+                    ss.put(new NodeProperty("MIME Type", "MIME Type", NO_DESCR, actualMimeType));
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex);
             }            
