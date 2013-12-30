@@ -173,4 +173,14 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     public static void setSkipKnown(boolean flag) {
         skipKnown = flag;
     }
+    
+    /**
+     * Validate if a given mime type is in the detector's registry.
+     * @param mimeType Full string of mime type, e.g. "text/html"
+     * @return true if detectable
+     */
+    public static boolean isMimeTypeDetectable(String mimeType) {
+        return detector.isMimeTypeDetectable(mimeType);
+    }    
+    
 }
