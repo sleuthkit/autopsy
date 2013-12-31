@@ -180,6 +180,7 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
      * @return true if detectable
      */
     public static boolean isMimeTypeDetectable(String mimeType) {
+        FileTypeDetectionInterface detector = new TikaFileTypeDetector();         
         return detector.isMimeTypeDetectable(mimeType);
     }    
     
