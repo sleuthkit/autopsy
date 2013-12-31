@@ -64,13 +64,17 @@ public class TikaFileTypeDetector implements FileTypeDetectionInterface {
      */
     @Override
     public boolean isMimeTypeDetectable(String mimeType) {
-        SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
-
+        boolean ret = false;
+        
+        SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();        
         String[] split = mimeType.split("/");
-        String type = split[0];
-        String subtype = split[1];
-        MediaType mediaType = new MediaType(type, subtype);
-        boolean ret = m.contains(mediaType);
+        
+        if (split.length == 2) {
+            String type = split[0];
+            String subtype = split[1];
+            MediaType mediaType = new MediaType(type, subtype);
+            ret = m.contains(mediaType);
+        }
 
         return ret;        
     }
