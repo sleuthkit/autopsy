@@ -48,7 +48,7 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     private static long matchTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
-    private static boolean skipKnown = false;
+    private static boolean skipKnown = true;
     
     private FileTypeIdSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
