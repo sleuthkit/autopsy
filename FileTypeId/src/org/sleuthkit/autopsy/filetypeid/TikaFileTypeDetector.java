@@ -18,8 +18,11 @@
  */
 
 package org.sleuthkit.autopsy.filetypeid;
+import java.util.SortedSet;
 import org.openide.util.Exceptions;
 import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypes;
 
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -52,4 +55,27 @@ public class TikaFileTypeDetector implements FileTypeDetectionInterface {
         }        
     }
 
+    /**
+     * Validate if a given mime type is in the registry.
+     * For Tika, we remove the string "tika" from all MIME names, 
+     * e.g. use "application/x-msoffice" NOT "application/x-tika-msoffice"
+     * @param mimeType Full string of mime type, e.g. "text/html"
+     * @return true if detectable
+     */
+    @Override
+    public boolean isMimeTypeDetectable(String mimeType) {
+        boolean ret = false;
+        
+        SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();        
+        String[] split = mimeType.split("/");
+        
+        if (split.length == 2) {
+            String type = split[0];
+            String subtype = split[1];
+            MediaType mediaType = new MediaType(type, subtype);
+            ret = m.contains(mediaType);
+        }
+
+        return ret;        
+    }
 }
