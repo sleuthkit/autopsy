@@ -66,35 +66,39 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         ArrayList<String> enabledList = new ArrayList<>(Arrays.asList(enabledModuleNames));
         
         // Check for modules that are missing from the config file
+        
+        String[] disabledModuleNames = null;
+        // Older config files won't have the disabled list, so don't assume it exists
         if (ModuleSettings.settingExists(moduleContext, DISABLED_INGEST_MODULES_KEY)) {
-            String[] disabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY).split(", ");
-            for (IngestModuleAbstract module : allModules) {
-                boolean found = false;
+            disabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY).split(", ");
+        }
+        
+        for (IngestModuleAbstract module : allModules) {
+            boolean found = false;
 
-                // Check enabled first
-                for (String moduleName : enabledModuleNames) {
+            // Check enabled first
+            for (String moduleName : enabledModuleNames) {
+                if (module.getName().equals(moduleName)) {
+                    found = true;
+                    break;
+                }
+            }                
+
+            // Then check disabled
+            if (!found && (disabledModuleNames != null)) {
+                for (String moduleName : disabledModuleNames) {
                     if (module.getName().equals(moduleName)) {
                         found = true;
                         break;
                     }
-                }                
-                
-                // Then check disabled
-                if (!found) {
-                    for (String moduleName : disabledModuleNames) {
-                        if (module.getName().equals(moduleName)) {
-                            found = true;
-                            break;
-                        }
-                    }
                 }
-                
-                if (!found) {
-                    enabledList.add(module.getName());
-                    //it will get saved to file later
-                }
-            }            
-        }
+            }
+
+            if (!found) {
+                enabledList.add(module.getName());
+                // It will get saved to file later
+            }
+        }            
         
         // Get the enabled ingest modules setting, check for missing modules, and pass the setting to
         // the UI component.
