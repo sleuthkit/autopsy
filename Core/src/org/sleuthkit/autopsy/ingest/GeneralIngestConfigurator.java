@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
@@ -29,6 +30,7 @@ import org.sleuthkit.datamodel.Content;
 public class GeneralIngestConfigurator implements IngestConfigurator { 
    
     public static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules";
+    public static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules";
     public static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
     private List<Content> contentToIngest;
     private IngestManager manager;
@@ -51,20 +53,53 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
 
     private List<String> loadSettingsForContext() {        
         List<String> messages = new ArrayList<>();  
+        List<IngestModuleAbstract> allModules = IngestManager.getDefault().enumerateAllModules();
         
         // If there is no enabled ingest modules setting for this user, default to enabling all
         // of the ingest modules the IngestManager has loaded.
         if (ModuleSettings.settingExists(moduleContext, ENABLED_INGEST_MODULES_KEY) == false) {
-            String defaultSetting = moduleListToCsv(IngestManager.getDefault().enumerateAllModules());
+            String defaultSetting = moduleListToCsv(allModules);
             ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, defaultSetting);
         }        
         
+        String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
+        ArrayList<String> enabledList = new ArrayList<>(Arrays.asList(enabledModuleNames));
+        
+        // Check for modules that are missing from the config file
+        if (ModuleSettings.settingExists(moduleContext, DISABLED_INGEST_MODULES_KEY)) {
+            String[] disabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY).split(", ");
+            for (IngestModuleAbstract module : allModules) {
+                boolean found = false;
+
+                // Check enabled first
+                for (String moduleName : enabledModuleNames) {
+                    if (module.getName().equals(moduleName)) {
+                        found = true;
+                        break;
+                    }
+                }                
+                
+                // Then check disabled
+                if (!found) {
+                    for (String moduleName : disabledModuleNames) {
+                        if (module.getName().equals(moduleName)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!found) {
+                    enabledList.add(module.getName());
+                    //it will get saved to file later
+                }
+            }            
+        }
+        
         // Get the enabled ingest modules setting, check for missing modules, and pass the setting to
         // the UI component.
-        List<IngestModuleAbstract> allModules = IngestManager.getDefault().enumerateAllModules();
-        String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
-        for (String moduleName : enabledModuleNames) {
+        for (String moduleName : enabledList) {
             if (moduleName.equals("Thunderbird Parser") 
                     || moduleName.equals("MBox Parser")) {
                 moduleName = "Email Parser";
@@ -111,6 +146,10 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         // Save the user's configuration of the set of enabled ingest modules.
         String enabledModulesCsvList = moduleListToCsv(ingestDialogPanel.getModulesToStart());
         ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, enabledModulesCsvList);
+        
+        // Save the user's configuration of the set of disabled ingest modules.
+        String disabledModulesCsvList = moduleListToCsv(ingestDialogPanel.getDisabledModules());
+        ModuleSettings.setConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY, disabledModulesCsvList);        
         
         // Save the user's setting for the process unallocated space flag.
         String processUnalloc = Boolean.toString(ingestDialogPanel.processUnallocSpaceEnabled());
