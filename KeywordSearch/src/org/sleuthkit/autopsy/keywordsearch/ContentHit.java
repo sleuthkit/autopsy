@@ -83,6 +83,11 @@ public class ContentHit {
         return hash;
     }
 
+    /**
+     * Identify the list of files with the first chunk that has a hit
+     * @param hits
+     * @return 
+     */
     static Map<AbstractFile, Integer> flattenResults(List<ContentHit> hits) {
         Map<AbstractFile, Integer> ret = new LinkedHashMap<AbstractFile, Integer>();
         for (ContentHit h : hits) {

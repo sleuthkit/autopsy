@@ -56,6 +56,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
@@ -184,13 +186,16 @@ public class DataResultFilterNode extends FilterNode {
             final int artifactTypeID = ba.getArtifactTypeID();
 
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() ) {
                 actions.add(new ViewContextAction("View File in Directory", ban));
             } else {
+                // if the artifact links to another file, add an action to go to
+                // that file
                 Content c = findLinked(ban);
                 if (c != null) {
                     actions.add(new ViewContextAction("View File in Directory", c));
                 }
+                // action to go to the source file of the artifact
                 actions.add(new ViewContextAction("View Source File in Directory", ban));
             }
             File f = ban.getLookup().lookup(File.class);
@@ -362,7 +367,17 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(HashsetHitsSetNode hhsn) {
             return openChild(hhsn);
         }
+        
+        @Override
+        public AbstractAction visit(InterestingHitsRootNode iarn) {
+            return openChild(iarn);
+        }
 
+        @Override
+        public AbstractAction visit(InterestingHitsSetNode iasn) {
+            return openChild(iasn);
+        }
+        
         @Override
         public AbstractAction visit(EmailExtractedRootNode eern) {
             return openChild(eern);
@@ -497,36 +512,31 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         /**
-         * Tell the originating ExplorerManager to display the given node. 
-         * @param node Original (non-filtered) node to open
+         * Tell the originating ExplorerManager to display the given dataModelNode. 
+         * @param dataModelNode Original (non-filtered) dataModelNode to open
          * @return 
          */
-        private AbstractAction openChild(AbstractNode node) {
-            // get the parent node from sourceEm because that will get us the filtered version of it. 
-            // node.getParentNode() returns the low-level datamodel node.
-            final Node[] parentFilterNodes = sourceEm.getSelectedNodes();
-            final Node parentFilterNode = parentFilterNodes[0];
-            final Node originalNode = node;
+        private AbstractAction openChild(final AbstractNode dataModelNode) {
+            // get the current selection from the directory tree explorer manager,
+            // which is a DirectoryTreeFilterNode. One of that node's children
+            // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
+            // to set that wrapped node as the selection and root context of the 
+            // directory tree explorer manager (sourceEm)
+            final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];
 
             return new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if (parentFilterNode != null) {
-                        
-                        // Find the filter version of the passed in node. 
-                        final int childrenNodesCount = parentFilterNode.getChildren().getNodesCount();
-                        for (int i = 0; i < childrenNodesCount; i++) {
-                            Node childFilterNode = parentFilterNode.getChildren().getNodeAt(i);
-                            if (childFilterNode != null && childFilterNode.getName().equals(originalNode.getName())) {
-                                try {
-                                    sourceEm.setExploredContextAndSelection(childFilterNode, new Node[]{childFilterNode});
-                                    break;
-                                } catch (PropertyVetoException ex) {
-                                    // throw an error here
-                                    Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                                    logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
-                                }
-                            }
+                    if (currentSelectionInDirectoryTree != null) {
+                        // Find the filter version of the passed in dataModelNode. 
+                        final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
+                        // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
+                        Node newSelection = children.findChild(dataModelNode.getName());
+                        try {
+                            sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        } catch (PropertyVetoException ex) {
+                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
                         }
                     }
                 }

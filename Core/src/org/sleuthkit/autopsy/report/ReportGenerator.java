@@ -48,6 +48,7 @@ import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
@@ -57,9 +58,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and 
@@ -342,6 +346,8 @@ public class ReportGenerator {
         private List<ARTIFACT_TYPE> artifactTypes  = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
         
+        private List<Content> images = new ArrayList<>();
+        
         TableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
             // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
@@ -381,6 +387,7 @@ public class ReportGenerator {
             makeBlackboardArtifactTables();
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
+            makeThumbnailTable();
             
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).complete();
@@ -405,8 +412,12 @@ public class ReportGenerator {
                 if (tableModules.isEmpty()) {
                     return;
                 }
-                        
-                // Keyword hits and hashset hit artifacts get sepcial handling.
+                                                        
+                for (TableReportModule module : tableModules) {
+                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");  
+                }
+                
+                // Keyword hits and hashset hit artifacts get sepcial handling.                
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
                     writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
@@ -416,6 +427,7 @@ public class ReportGenerator {
                 }
 
                 List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
+                
                 if (unsortedArtifacts.isEmpty()) {
                     continue;
                 }
@@ -429,7 +441,7 @@ public class ReportGenerator {
                 /* @@@ BC: Seems like a better design here would be to have a method that 
                  * takes in the artifact as an argument and returns the attributes. We then use that
                  * to make the headers and to make each row afterwards so that we don't have artifact-specific
-                 * logic in both getArtifactTableCoumnHeaders and getArtifactRow()
+                 * logic in both getArtifactTableCoumnHeaders and ArtifactData.getRow()
                  */
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
                 if (columnHeaders == null) {
@@ -437,19 +449,19 @@ public class ReportGenerator {
                     MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
-
+                
                 for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");                    
                     module.startDataType(type.getDisplayName(), comment.toString());                                            
                     module.startTable(columnHeaders);                    
                 }
-
+                
                 boolean msgSent = false;    
-                for(ArtifactData artifactData : unsortedArtifacts) {                    
+                for(ArtifactData artifactData : unsortedArtifacts) {
                     // Add the row data to all of the reports.
-                    for (TableReportModule module : tableModules) {                        
-                        List<String> rowData; 
-                        rowData = getArtifactRow(artifactData, module);   
+                    for (TableReportModule module : tableModules) {
+                        
+                        // Get the row data for this type of artifact.
+                        List<String> rowData = artifactData.getRow();
                         if (rowData.isEmpty()) {
                             if (msgSent == false) {
                                 MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
@@ -457,11 +469,11 @@ public class ReportGenerator {
                             }
                             continue;
                         }
-
+                        
                         module.addRow(rowData);
                     }
                 }
-
+                
                 // Finish up this data type
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).increment();
@@ -512,7 +524,8 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (ContentTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                                                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) { 
+                    checkIfTagHasImage(tag);
                     ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
                     for (TableReportModule module : tableModules) {                                                                                       
                         // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
@@ -560,15 +573,18 @@ public class ReportGenerator {
                     comment.append("This report only includes results tagged with: ");
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }                        
-                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());                        
+                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());  
                 module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
             }
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) {          
+                    checkIfTagHasImage(tag);
+                    List<String> row;
                     for (TableReportModule module : tableModules) {
-                        module.addRow(new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()))); 
+                        row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+                        module.addRow(row);
                     }
                 }
             }                
@@ -593,7 +609,65 @@ public class ReportGenerator {
                     iter.remove();
                 }
             }            
-        }        
+        }
+
+        private void makeThumbnailTable() {
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).updateStatusLabel("Now processing Tagged Images..."); 
+                
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlModule = (ReportHTML) module;
+                    htmlModule.startDataType("Tagged Images", "Tagged Results and Contents that contain images.");
+                    List<String> emptyHeaders = new ArrayList<>();
+                    for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
+                        emptyHeaders.add("");
+                    }
+                    htmlModule.startTable(emptyHeaders);
+                    htmlModule.addThumbnailRows(images);
+                    htmlModule.endTable();
+                    htmlModule.endDataType();
+                }
+            }
+        }
+        
+        private void checkIfTagHasImage(BlackboardArtifactTag artifactTag) {
+            AbstractFile file;
+            try {
+                file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
+                return;
+            }
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
+
+            // Only include content for images
+            if (ImageUtils.thumbnailSupported(file)) {
+                images.add(file);
+            }
+        }
+        
+        private void checkIfTagHasImage(ContentTag contentTag) {
+            Content c = contentTag.getContent();
+            if (c instanceof AbstractFile == false) {
+                return;
+            }
+            AbstractFile file = (AbstractFile) c;
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
+            
+            if (ImageUtils.thumbnailSupported(c)) {
+                images.add(c);
+            }
+        }
     }
         
     /// @@@ Should move the methods specific to TableReportsWorker into that scope.
@@ -992,6 +1066,9 @@ public class ReportGenerator {
             case TSK_TOOL_OUTPUT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
                 break;
+            case TSK_ENCRYPTION_DETECTED:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Source File"}));
+                break;
             default:
                 return null;
         }
@@ -1061,190 +1138,6 @@ public class ReportGenerator {
         }
         return list;
     }
-        
-    /**
-     * Get a list of Strings with all the row values for a given BlackboardArtifact and 
-     * list of BlackboardAttributes Entry, basing the date/time field on the given TableReportModule.
-     * 
-     * @param entry BlackboardArtifact and list of BlackboardAttributes
-     * @param module TableReportModule for which the row is desired
-     * @return List<String> row values
-     * @throws TskCoreException 
-     */
-    private List<String> getArtifactRow(ArtifactData artifactData, TableReportModule module) {
-        Map<Integer, String> attributes = getMappedAttributes(artifactData.getAttributes(), module);
-        
-        List<String> rowData = new ArrayList<>();
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactData.getArtifact().getArtifactTypeID());        
-        switch (type) {
-            case TSK_WEB_BOOKMARK:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_WEB_COOKIE:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_WEB_HISTORY:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_WEB_DOWNLOAD:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_RECENT_OBJECT:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_INSTALLED_PROG:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_DEVICE_ATTACHED:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_WEB_SEARCH_QUERY:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-            case TSK_METADATA_EXIF: 
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-             case TSK_CONTACT:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-             case TSK_MESSAGE:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_CALLLOG:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_CALENDAR_ENTRY:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_SPEED_DIAL_ENTRY:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_BLUETOOTH_PAIRING:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_GPS_TRACKPOINT:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_GPS_BOOKMARK:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_GPS_LAST_KNOWN_LOCATION:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_GPS_SEARCH:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-              case TSK_SERVICE_ACCOUNT:
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-             case TSK_TOOL_OUTPUT: 
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                rowData.add(attributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                rowData.add(getFileUniquePath(artifactData.getObjectID()));
-                break;
-        }
-        rowData.add(makeCommaSeparatedList(artifactData.getTags()));
-        
-        return rowData;
-    }
     
     /**
      * Given a tsk_file's obj_id, return the unique path of that file.
@@ -1260,7 +1153,7 @@ public class ReportGenerator {
         }
         return "";
     }
-        
+
     /**
      * Container class that holds data about an Artifact to eliminate duplicate
      * calls to the Sleuthkit database.
@@ -1269,6 +1162,7 @@ public class ReportGenerator {
         private BlackboardArtifact artifact;
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
+        private List<String> rowData = null;
         
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -1286,7 +1180,7 @@ public class ReportGenerator {
         
         public long getObjectID() { return artifact.getObjectID(); }
 
-        @Override
+        
         /**
          * Compares ArtifactData objects by the first attribute they have in
          * common in their List<BlackboardAttribute>. 
@@ -1295,21 +1189,226 @@ public class ReportGenerator {
          * compared by their artifact id. Should only be used with attributes
          * of the same type.
          */
-        public int compareTo(ArtifactData data) {
-            // Get all the attributes for each artifact
-            int size = ATTRIBUTE_TYPE.values().length;
-            Map<Integer, String> att1 = getMappedAttributes(this.attributes);
-            Map<Integer, String> att2 = getMappedAttributes(data.getAttributes());
-            // Compare the attributes one-by-one looking for differences
-            for(int i=0; i < size; i++) {
-                String a1 = att1.get(i);
-                String a2 = att2.get(i);
-                if((!a1.equals("") && !a2.equals("")) && a1.compareTo(a2) != 0) {
-                    return a1.compareTo(a2);
+        @Override
+        public int compareTo(ArtifactData otherArtifactData) {
+            List<String> thisRow = getRow();
+            List<String> otherRow = otherArtifactData.getRow();
+            for (int i = 0; i < thisRow.size(); i++) {
+                int compare = thisRow.get(i).compareTo(otherRow.get(i));
+                if (compare != 0) {
+                    return compare;
                 }
             }
             // If all attributes are the same, they're most likely duplicates so sort by artifact ID
-            return ((Long)this.getArtifactID()).compareTo((Long)data.getArtifactID());
+            return ((Long) this.getArtifactID()).compareTo((Long) otherArtifactData.getArtifactID());
+        }
+        
+        /**
+         * Get the values for each row in the table report.
+         */
+        public List<String> getRow() {
+            if (rowData == null) {
+                try {
+                    rowData = getOrderedRowDataAsStrings();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Core exception while generating row data for artifact report.", ex);
+                    rowData = Collections.<String>emptyList();
+                }
+            }
+            return rowData;
+        }
+        
+       /**
+        * Get a list of Strings with all the row values for the Artifact in the
+        * correct order to be written to the report.
+        * 
+        * @return List<String> row values
+        * @throws TskCoreException 
+        */
+       private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
+            Map<Integer, String> mappedAttributes = getMappedAttributes();            
+            List<String> orderedRowData = new ArrayList<>();
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());        
+            switch (type) {
+                case TSK_WEB_BOOKMARK:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_WEB_COOKIE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_WEB_HISTORY:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_WEB_DOWNLOAD:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_RECENT_OBJECT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_INSTALLED_PROG:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_DEVICE_ATTACHED:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_WEB_SEARCH_QUERY:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_METADATA_EXIF: 
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                 case TSK_CONTACT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                 case TSK_MESSAGE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_CALLLOG:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_CALENDAR_ENTRY:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_SPEED_DIAL_ENTRY:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_BLUETOOTH_PAIRING:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_GPS_TRACKPOINT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_GPS_BOOKMARK:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_GPS_LAST_KNOWN_LOCATION:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_GPS_SEARCH:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                  case TSK_SERVICE_ACCOUNT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                 case TSK_TOOL_OUTPUT: 
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                 case TSK_ENCRYPTION_DETECTED:
+                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                     orderedRowData.add(getFileUniquePath(getObjectID()));
+                     break;
+            }
+            orderedRowData.add(makeCommaSeparatedList(getTags()));
+
+            return orderedRowData;
+        }
+       
+        /**
+         * Returns a mapping of Attribute Type ID to the String representation
+         * of an Attribute Value.
+         */
+        private Map<Integer,String> getMappedAttributes() {
+            return ReportGenerator.this.getMappedAttributes(attributes);
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.Long;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -128,7 +127,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
     private boolean initialized = false;
-    private KeywordSearchConfigurationPanel panel;
+    private KeywordSearchIngestSimplePanel simpleConfigPanel;
+    private KeywordSearchConfigurationPanel advancedConfigPanel;
     private Tika tikaFormatDetector;
     
 
@@ -302,7 +302,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         commitTimer.stop();
         searchTimer.stop();
         commitTimer = null;
-        searchTimer = null;
+        //searchTimer = null; // do not collect, final searcher might still be running, in which case it throws an exception
 
         textExtractors.clear();
         textExtractors = null;
@@ -436,26 +436,36 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
         KeywordSearchListsXML.getCurrent().reload();
-        return new KeywordSearchIngestSimplePanel();
+        
+        if (null == simpleConfigPanel) {
+           simpleConfigPanel = new KeywordSearchIngestSimplePanel();  
+        }
+        else {
+            simpleConfigPanel.load();
+        }
+        
+        return simpleConfigPanel;
     }
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration(String context) {
-        //return KeywordSearchConfigurationPanel.getDefault();
-        getPanel().load();
-        return getPanel();
-    }
-
-    private KeywordSearchConfigurationPanel getPanel() {
-        if (panel == null) {
-            panel = new KeywordSearchConfigurationPanel();
+        if (advancedConfigPanel == null) {
+            advancedConfigPanel = new KeywordSearchConfigurationPanel();
         }
-        return panel;
+        
+        advancedConfigPanel.load();
+        return advancedConfigPanel;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
-        getPanel().store();
+        if (advancedConfigPanel != null) {
+            advancedConfigPanel.store();
+        }
+        
+        if (simpleConfigPanel != null) {
+            simpleConfigPanel.load();
+        }
     }
 
     @Override
@@ -955,11 +965,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     KeywordSearchQuery del = null;
 
                     boolean isRegex = !keywordQuery.isLiteral();
-                    if (!isRegex) {
-                        del = new LuceneQuery(keywordQuery);
-                        del.escape();
-                    } else {
+                    if (isRegex) {
                         del = new TermComponentQuery(keywordQuery);
+                    } 
+                    else {
+                        del = new LuceneQuery(keywordQuery);
+                        del.escape();    
                     }
 
                     //limit search to currently ingested data sources
@@ -985,7 +996,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         continue;
                     }
 
-                    //calculate new results but substracting results already obtained in this ingest
+                    // calculate new results but substracting results already obtained in this ingest
+                    // this creates a map of each keyword to the list of unique files that have that hit.  
                     Map<Keyword, List<ContentHit>> newResults = filterResults(queryResult, isRegex);
 
                     if (!newResults.isEmpty()) {
@@ -1006,16 +1018,27 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
 
 
+                        /* cycle through the keywords returned -- only one unless it was a regexp */
                         for (final Keyword hitTerm : newResults.keySet()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
                                 logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: " + keywordQuery.getQuery());
                                 return null;
                             }
+                            
+                            // update progress display
+                            String hitDisplayStr = hitTerm.getQuery();
+                            if (hitDisplayStr.length() > 50) {
+                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
+                            }
+                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
+                            //subProgresses[keywordsSearched].progress(unitProgress);
 
-                            List<ContentHit> contentHitsAll = newResults.get(hitTerm);
-                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
+                            // this returns the unique files in the set with the first chunk that has a hit
+                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
+                                
+                                // get the snippet for the first hit in the file
                                 String snippet = null;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
                                 int chunkId = contentHitsFlattened.get(hitFile);
@@ -1030,8 +1053,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                                     continue;
                                 }
 
+                                // write the blackboard artifact for this keyword in this file
                                 KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
-
                                 if (written == null) {
                                     logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: " + hitFile + ", hit: " + hitTerm.toString());
                                     continue;
@@ -1039,100 +1062,82 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
                                 newArtifacts.add(written.getArtifact());
 
-                                //send notify every 250 results
-                                if (newArtifacts.size() % 250 == 0) {
-                                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
-                                }
+                                //generate an ingest inbox message for this keyword in this file
+                                if (list.getIngestMessages()) {
+                                    StringBuilder subjectSb = new StringBuilder();
+                                    StringBuilder detailsSb = new StringBuilder();
+                                    //final int hitFiles = newResults.size();
 
-                                //generate a data message for each artifact
-                                StringBuilder subjectSb = new StringBuilder();
-                                StringBuilder detailsSb = new StringBuilder();
-                                //final int hitFiles = newResults.size();
+                                    if (!keywordQuery.isLiteral()) {
+                                        subjectSb.append("RegExp hit: ");
+                                    } else {
+                                        subjectSb.append("Keyword hit: ");
+                                    }
+                                    //subjectSb.append("<");
+                                    String uniqueKey = null;
+                                    BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+                                    if (attr != null) {
+                                        final String keyword = attr.getValueString();
+                                        subjectSb.append(keyword);
+                                        uniqueKey = keyword.toLowerCase();
+                                    }
 
-                                if (!keywordQuery.isLiteral()) {
-                                    subjectSb.append("RegExp hit: ");
-                                } else {
-                                    subjectSb.append("Keyword hit: ");
-                                }
-                                //subjectSb.append("<");
-                                String uniqueKey = null;
-                                BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
-                                if (attr != null) {
-                                    final String keyword = attr.getValueString();
-                                    subjectSb.append(keyword);
-                                    uniqueKey = keyword.toLowerCase();
-                                }
+                                    //subjectSb.append(">");
+                                    //String uniqueKey = queryStr;
 
-                                //subjectSb.append(">");
-                                //String uniqueKey = queryStr;
-
-                                //details
-                                detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-                                //hit
-                                detailsSb.append("<tr>");
-                                detailsSb.append("<th>Keyword hit</th>");
-                                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
-                                detailsSb.append("</tr>");
-
-                                //preview
-                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
-                                if (attr != null) {
+                                    //details
+                                    detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+                                    //hit
                                     detailsSb.append("<tr>");
-                                    detailsSb.append("<th>Preview</th>");
+                                    detailsSb.append("<th>Keyword hit</th>");
                                     detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
-                                }
-
-                                //file
-                                detailsSb.append("<tr>");
-                                detailsSb.append("<th>File</th>");
-                                detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
-
-                                detailsSb.append("</tr>");
-
-
-                                //list
-                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-                                detailsSb.append("<tr>");
-                                detailsSb.append("<th>List</th>");
-                                detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
-                                detailsSb.append("</tr>");
-
-                                //regex
-                                if (!keywordQuery.isLiteral()) {
-                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                    //preview
+                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                     if (attr != null) {
                                         detailsSb.append("<tr>");
-                                        detailsSb.append("<th>RegEx</th>");
-                                        detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                        detailsSb.append("<th>Preview</th>");
+                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                         detailsSb.append("</tr>");
 
                                     }
-                                }
-                                detailsSb.append("</table>");
 
-                                //check if should send messages on hits on this list
-                                if (list.getIngestMessages()) //post ingest inbox msg
-                                {
+                                    //file
+                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<th>File</th>");
+                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
+
+                                    detailsSb.append("</tr>");
+
+
+                                    //list
+                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<th>List</th>");
+                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                    detailsSb.append("</tr>");
+
+                                    //regex
+                                    if (!keywordQuery.isLiteral()) {
+                                        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                        if (attr != null) {
+                                            detailsSb.append("<tr>");
+                                            detailsSb.append("<th>RegEx</th>");
+                                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                            detailsSb.append("</tr>");
+
+                                        }
+                                    }
+                                    detailsSb.append("</table>");
+                                
                                     services.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
-
-
                             } //for each file hit
 
                             ++unitProgress;
 
-                            String hitDisplayStr = hitTerm.getQuery();
-                            if (hitDisplayStr.length() > 50) {
-                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
-                            }
-                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
-                            //subProgresses[keywordsSearched].progress(unitProgress);
-
-
                         }//for each hit term
-
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {

@@ -206,7 +206,13 @@ public class IngestManager {
     }
 
     static synchronized void fireModuleEvent(String eventType, String moduleName) {
-        pcs.firePropertyChange(eventType, moduleName, null);
+        try {
+            pcs.firePropertyChange(eventType, moduleName, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
     
     
@@ -215,7 +221,13 @@ public class IngestManager {
      * @param objId ID of file that is done
      */
     static synchronized void fireFileDone(long objId) {
-        pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     
@@ -224,7 +236,13 @@ public class IngestManager {
      * @param moduleDataEvent 
      */
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     /**
@@ -232,7 +250,13 @@ public class IngestManager {
      * @param moduleContentEvent 
      */
     static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+        try {
+            pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     /**
@@ -421,9 +445,16 @@ public class IngestManager {
             //init all fs modules, everytime new worker starts
 
             for (IngestModuleAbstractFile s : abstractFileModules) {
-                if (fileScheduler.hasModuleEnqueued(s) == false) {
-                    continue;
-                } 
+                // This was added at one point to remove the message about non-configured HashDB even 
+                // when HashDB was not enabled.  However, it adds some problems if a second ingest is
+                // kicked off whiel the first is ongoing. If the 2nd ingest has a module enabled that 
+                // was not initially enabled, it will never have init called. We also need to call 
+                // complete and need a similar way of passing down data to that thread to tell it which 
+                // it shoudl call complete on (otherwise it could call complete on a module that never
+                // had init() called. 
+                //if (fileScheduler.hasModuleEnqueued(s) == false) {
+                //    continue;
+                //} 
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
                     s.init(moduleInit);
@@ -1056,8 +1087,13 @@ public class IngestManager {
                 //notify modules of completion
                 if (!this.isCancelled()) {
                     for (IngestModuleAbstractFile s : abstractFileModules) {
-                        s.complete();
-                        IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
+                        try {
+                            s.complete();
+                            IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
+                        }
+                        catch (Exception ex) {   
+                            logger.log(Level.SEVERE, "Module " + s.getName() + " threw exception during call to complete()", ex);
+                        }
                     }
                 }
 
@@ -1069,13 +1105,11 @@ public class IngestManager {
             } catch (CancellationException e) {
                 //task was cancelled
                 handleInterruption();
-
             } catch (InterruptedException ex) {
                 handleInterruption();
             } catch (ExecutionException ex) {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
-
             } catch (Exception ex) {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);

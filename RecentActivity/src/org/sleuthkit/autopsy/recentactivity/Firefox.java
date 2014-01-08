@@ -357,15 +357,22 @@ public class Firefox extends Extract {
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", (Long.valueOf(result.get("startTime").toString()))));
                 
-                try {
-                    String urldecodedtarget = URLDecoder.decode(result.get("source").toString().replaceAll("file:///", ""), "UTF-8");
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, urldecodedtarget)));
-                } catch (UnsupportedEncodingException ex) {
-                    logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
-                    errors++;
+                String target = result.get("target").toString();
+                
+                if (target != null) {
+                    try {
+                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8");
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", decodedTarget));
+                        long pathID = Util.findID(dataSource, decodedTarget);
+                        if (pathID != -1) {
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", pathID));
+                        }
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
+                        errors++;
+                    }
                 }
                     
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", ((result.get("target").toString() != null) ? result.get("target").toString() : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
@@ -440,8 +447,22 @@ public class Firefox extends Extract {
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
+                
+                String target = result.get("target").toString();
+                if (target != null) {
+                    try {
+                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8");
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", decodedTarget));
+                        long pathID = Util.findID(dataSource, decodedTarget);
+                        if (pathID != -1) {
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", pathID));
+                        }
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
+                        errors++;
+                    }
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", Long.valueOf(result.get("lastModified").toString())));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", ((result.get("target").toString() != null) ? result.get("target").toString().replaceAll("file:///", "") : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);

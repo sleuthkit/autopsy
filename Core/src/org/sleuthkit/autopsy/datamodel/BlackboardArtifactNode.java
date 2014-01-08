@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -54,6 +55,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
     };
 
     /**
@@ -125,6 +127,36 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         final int artifactTypeId = artifact.getArtifactTypeID();
         
+        // If mismatch, add props for extension and file type
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
+            String actualExt = "";
+            int i = associated.getName().lastIndexOf(".");
+            if ((i > -1) && ((i + 1) < associated.getName().length())) {
+                actualExt = associated.getName().substring(i + 1).toLowerCase();
+            }                    
+            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, actualExt));        
+        
+            try {
+                String actualMimeType = "";
+                ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
+                for (BlackboardArtifact art : artList) {
+                    List<BlackboardAttribute> atrList = art.getAttributes();
+                    for (BlackboardAttribute att : atrList) {
+                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
+                            actualMimeType = att.getValueString();
+                        }
+                    }                
+                }
+                if (actualMimeType.isEmpty()) {
+                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute.");
+                } else {
+                    ss.put(new NodeProperty("MIME Type", "MIME Type", NO_DESCR, actualMimeType));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex);
+            }            
+        }        
+        
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
             String sourcePath = "";
             try {
@@ -140,7 +172,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         } else {
             String dataSource = "";
             try {
-                dataSource = associated.getImage().getName();
+                Image image = associated.getImage();
+                if (image != null) {
+                    dataSource = image.getName();
+                } else {
+                    dataSource = getRootParentName();
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to get image name from " + associated.getName());
             }
@@ -152,6 +189,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
 
         return s;
+    }
+    
+    private String getRootParentName() {
+        String parentName = associated.getName();
+        Content parent = associated;
+        try {
+            while ((parent = parent.getParent()) != null) {
+                parentName = parent.getName();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to get parent name from " + associated.getName());
+            return "";
+        }
+        return parentName;
     }
 
     /**
@@ -182,7 +233,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 final int attributeTypeID = attribute.getAttributeTypeID();
                 //skip some internal attributes that user shouldn't see
                 if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()) {
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                     continue;
                 } else {
                     switch (attribute.getValueType()) {
@@ -329,6 +381,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "gps-search.png";
             case TSK_SERVICE_ACCOUNT:
                 return "account-icon-16.png";
+            case TSK_ENCRYPTION_DETECTED:
+                return "encrypted-file.png";
                 
         }
         return "artifact-icon.png";

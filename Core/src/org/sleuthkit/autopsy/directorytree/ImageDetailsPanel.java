@@ -55,6 +55,10 @@ class ImageDetailsPanel extends javax.swing.JPanel {
         imgTypeValue = new javax.swing.JLabel();
         imgSectorSizeValue = new javax.swing.JLabel();
         OKButton = new javax.swing.JButton();
+        imgTotalSizeLabel = new javax.swing.JLabel();
+        imgTotalSizeValue = new javax.swing.JLabel();
+        imgHashLabel = new javax.swing.JLabel();
+        imgHashValue = new javax.swing.JLabel();
 
         imageInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         imageInfoLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imageInfoLabel.text")); // NOI18N
@@ -73,30 +77,42 @@ class ImageDetailsPanel extends javax.swing.JPanel {
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.OKButton.text")); // NOI18N
 
+        imgTotalSizeLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgTotalSizeLabel.text")); // NOI18N
+
+        imgTotalSizeValue.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgTotalSizeValue.text")); // NOI18N
+
+        imgHashLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgHashLabel.text")); // NOI18N
+
+        imgHashValue.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgHashValue.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(0, 68, Short.MAX_VALUE)
+                .addComponent(imageInfoLabel)
+                .addContainerGap(78, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(89, 89, 89)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(imgNameLabel)
-                            .addComponent(imgTypeLabel)
-                            .addComponent(imgSectorSizeLabel))
-                        .addGap(29, 29, 29)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(imgNameValue)
-                            .addComponent(imgTypeValue)
-                            .addComponent(imgSectorSizeValue)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(118, 118, 118)
-                        .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(71, 71, 71)
-                        .addComponent(imageInfoLabel)))
-                .addContainerGap(75, Short.MAX_VALUE))
+                    .addComponent(imgNameLabel)
+                    .addComponent(imgTypeLabel)
+                    .addComponent(imgSectorSizeLabel)
+                    .addComponent(imgTotalSizeLabel)
+                    .addComponent(imgHashLabel))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imgNameValue)
+                    .addComponent(imgTypeValue)
+                    .addComponent(imgSectorSizeValue)
+                    .addComponent(imgTotalSizeValue)
+                    .addComponent(imgHashValue))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -106,20 +122,32 @@ class ImageDetailsPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(imgNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(imgTypeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(imgSectorSizeLabel))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(imgNameValue)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(imgTypeValue)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(imgSectorSizeValue)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                        .addComponent(imgSectorSizeValue)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(imgTotalSizeValue)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(imgHashValue))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(imgNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(imgTypeLabel)
+                                .addGap(25, 25, 25))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(50, 50, 50)
+                                .addComponent(imgSectorSizeLabel)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(imgTotalSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(imgHashLabel)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
                 .addComponent(OKButton)
-                .addGap(22, 22, 22))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -127,10 +155,14 @@ class ImageDetailsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton OKButton;
     private javax.swing.JLabel imageInfoLabel;
+    private javax.swing.JLabel imgHashLabel;
+    private javax.swing.JLabel imgHashValue;
     private javax.swing.JLabel imgNameLabel;
     private javax.swing.JLabel imgNameValue;
     private javax.swing.JLabel imgSectorSizeLabel;
     private javax.swing.JLabel imgSectorSizeValue;
+    private javax.swing.JLabel imgTotalSizeLabel;
+    private javax.swing.JLabel imgTotalSizeValue;
     private javax.swing.JLabel imgTypeLabel;
     private javax.swing.JLabel imgTypeValue;
     // End of variables declaration//GEN-END:variables
@@ -155,14 +187,36 @@ class ImageDetailsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Sets the image size value on this panel.
+     * Sets the image sector size value on this panel.
      * 
      * @param arg  the new image size value
      */
     public void setImgSectorSizeValue(String arg){
         imgSectorSizeValue.setText(arg);
     }
+    
+    /**
+     * Sets the image size value on this panel.
+     * 
+     * @param arg  the new image size value
+     */
+    public void setImgTotalSizeValue(String arg) {
+        imgTotalSizeValue.setText(arg);
+    }
+    
+    /**
+     * Sets the image hash value on this panel.
+     * 
+     * @param arg  the new image size value
+     */
+    public void setImgHashValue(String arg) {
+        imgHashValue.setText(arg);
+    }
 
+    public void setVisibleHashInfo(boolean visible) {
+        imgHashLabel.setVisible(visible);
+        imgHashValue.setVisible(visible);
+    }
     /**
      * Sets the OK button action listener.
      *

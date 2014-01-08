@@ -299,7 +299,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentPage = page;
         long offset = (currentPage - 1) * pageLength;
         
-        
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -344,13 +343,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         // set the output view
         if (errorText == null) {
             int showLength = bytesRead < pageLength ? bytesRead : (int) pageLength;
-            outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset, outputViewPane.getFont()));
+            outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset));
         }
         else {
             outputViewPane.setText(errorText);
         }
 
-        outputViewPane.moveCaretPosition(0);
+        outputViewPane.setCaretPosition(0);
         this.setCursor(null);
     }
 
