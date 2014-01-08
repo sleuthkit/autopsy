@@ -302,7 +302,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         commitTimer.stop();
         searchTimer.stop();
         commitTimer = null;
-        searchTimer = null;
+        //searchTimer = null; // do not collect, final searcher might still be running, in which case it throws an exception
 
         textExtractors.clear();
         textExtractors = null;
