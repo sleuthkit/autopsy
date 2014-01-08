@@ -70,10 +70,12 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         reloadEncodings();
     }
 
-    public void load() {        
+    public void load() {  
+        KeywordSearchListsXML.getCurrent().reload();                
         reloadLists();
         reloadLangs();
         reloadEncodings();
+        tableModel.fireTableDataChanged();
     }
 
     public void store() {

@@ -91,7 +91,9 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>org.sleuthkit.autopsy.filetypeid</package>
+            </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
