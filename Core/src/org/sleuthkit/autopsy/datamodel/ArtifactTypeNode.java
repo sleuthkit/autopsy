@@ -126,6 +126,8 @@ public class ArtifactTypeNode extends DisplayableItemNode {
                 return "account-icon-16.png";
             case TSK_ENCRYPTION_DETECTED:
                 return "encrypted-file.png";
+            case TSK_EXT_MISMATCH_DETECTED:
+                return "mismatch-16.png";                
         }
         return "artifact-icon.png";
     }
