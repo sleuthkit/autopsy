@@ -118,6 +118,14 @@ public class IngestServices {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
     
+    /**
+     * Fire module configuration data event to notify registered event listeners 
+     * that module input data has changed.
+     * @param ModuleConfigDataEvent module configuration data event object
+     */
+    public void fireModuleConfigDataEvent(ModuleConfigDataEvent moduleDataEvent) {
+        IngestManager.fireModuleConfigDataEvent(moduleDataEvent);
+    }    
     
      /**
      * Fire module content event to notify registered module content event listeners

@@ -46,6 +46,8 @@ import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleConfigDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashInfo;
@@ -223,6 +225,9 @@ public class HashDbManager implements PropertyChangeListener {
             knownBadHashSets.add(hashDb);
         }      
         
+        // Let any listeners know that the hash sets have changed
+        IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(HashDbIngestModule.MODULE_NAME));
+        
         return hashDb;
     }
         
@@ -287,6 +292,9 @@ public class HashDbManager implements PropertyChangeListener {
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex);                        
         }
+        
+        // Let any listeners know that the hash sets have changed
+        IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(HashDbIngestModule.MODULE_NAME));
     }     
 
     /**
