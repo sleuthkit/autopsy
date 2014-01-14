@@ -20,7 +20,7 @@ def compile(errore, attachli, parsedin):
     global to
     global server
     global subj
-    global email_enabled
+    global email_enabled 
     global redo
     global tryredo
     global failedbool
@@ -40,7 +40,7 @@ def compile(errore, attachli, parsedin):
             gitPull("sleuthkit")
         if(passed):
             vsBuild()
-            print("TSK")
+            print("TSK") 
         if(passed):
             gitPull("autopsy")
         if(passed):
@@ -60,7 +60,7 @@ def compile(errore, attachli, parsedin):
     if(tryredo):
         errorem = ""
         errorem += "Rebuilt properly.\n"
-        if email_enabled:
+        if email_enabled: 
             Emailer.send_email(to, server, subj, errorem, attachl)
         attachl = []
         passed = True
@@ -114,7 +114,7 @@ def vsBuild():
         if(not tryredo):
             errorem += "LIBTSK C++ failed to build.\n"
             attachl.append(VSpth)
-            if email_enabled:
+            if email_enabled: 
                 Emailer.send_email(parsed, errorem, attachl, False)
         tryredo = True
         passed = False
@@ -157,7 +157,7 @@ def antBuild(which, Build):
             if(not tryredo):
                 errorem += "DataModel Java build failed.\n"
                 attachl.append(antpth)
-                if email_enabled:
+                if email_enabled: 
                     Emailer.send_email(to, server, subj, errorem, attachl)
             passed = False
             tryredo = True
@@ -174,7 +174,7 @@ def main():
     global email_enabled
     global to
     global server
-    global subj
+    global subj 
     errore = ""
     attachli = []
     config_file = ""
@@ -188,8 +188,8 @@ def main():
         subj = parsedin.getElementsByTagName("subject")[0].getAttribute("value").encode().decode("utf_8")
     except Exception:
         email_enabled = False
-    # email_enabled = (to is not None) and (server is not None) and (subj is not None)
-    email_enabled = False
+    # email_enabled = (to is not None) and (server is not None) and (subj is not None) 
+    email_enabled = False 
     compile(errore, attachli, parsedin)
 
 class OS:
