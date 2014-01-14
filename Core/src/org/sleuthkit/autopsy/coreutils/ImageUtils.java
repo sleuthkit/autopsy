@@ -125,8 +125,10 @@ public class ImageUtils {
      * @return 
      */
     public static File getIconFile(Content content, int iconSize) {
-        getIcon(content, iconSize);
-        return getFile(content.getId());
+        if (getIcon(content, iconSize) != null) {
+            return getFile(content.getId());
+        }
+        return null;
     }
     
     /**
@@ -138,7 +140,7 @@ public class ImageUtils {
      * @return 
      */
     public static File getFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
+        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
     }
     
     /**
@@ -186,7 +188,7 @@ public class ImageUtils {
                 if (f.exists()) {
                     f.delete();
                 }
-                ImageIO.write((BufferedImage) icon, "jpg", getFile(content.getId()));
+                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId()));
             }         
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);

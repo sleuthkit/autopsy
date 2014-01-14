@@ -36,5 +36,7 @@ public interface FileTypeDetectionInterface {
     }
     
     // You only have one job
-    FileIdInfo attemptMatch(AbstractFile abstractFile);    
+    FileIdInfo attemptMatch(AbstractFile abstractFile);
+    
+    boolean isMimeTypeDetectable(String mimeType);
 }
