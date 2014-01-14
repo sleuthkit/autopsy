@@ -16,11 +16,11 @@ from xml.dom.minidom import parse, parseString
 import Emailer
 from regression_utils import *
 
-def compile(errore, attachli, parsedin):
+def compile(errore, attachli, parsedin, branch):
     global to
     global server
     global subj
-    global email_enabled
+    global email_enabled 
     global redo
     global tryredo
     global failedbool
@@ -37,12 +37,12 @@ def compile(errore, attachli, parsedin):
     while(redo):
         passed = True
         if(passed):
-            gitPull("sleuthkit")
+            gitPull("sleuthkit", branch)
         if(passed):
             vsBuild()
-            print("TSK")
+            print("TSK") 
         if(passed):
-            gitPull("autopsy")
+            gitPull("autopsy", branch)
         if(passed):
             antBuild("datamodel", False)
             print("DataModel")
@@ -60,13 +60,13 @@ def compile(errore, attachli, parsedin):
     if(tryredo):
         errorem = ""
         errorem += "Rebuilt properly.\n"
-        if email_enabled:
+        if email_enabled: 
             Emailer.send_email(to, server, subj, errorem, attachl)
         attachl = []
         passed = True
 
 #Pulls from git
-def gitPull(TskOrAutopsy):
+def gitPull(TskOrAutopsy, branch):
     global SYS
     global errorem
     global attachl
@@ -75,7 +75,7 @@ def gitPull(TskOrAutopsy):
     attachl.append(gppth)
     gpout = open(gppth, 'a')
     toPull = "https://www.github.com/sleuthkit/" + TskOrAutopsy
-    call = ["git", "pull", toPull]
+    call = ["git", "pull", toPull, branch]
     if TskOrAutopsy == "sleuthkit":
         ccwd = os.path.join("..", "..", "..", "sleuthkit")
     else:
@@ -114,7 +114,7 @@ def vsBuild():
         if(not tryredo):
             errorem += "LIBTSK C++ failed to build.\n"
             attachl.append(VSpth)
-            if email_enabled:
+            if email_enabled: 
                 Emailer.send_email(parsed, errorem, attachl, False)
         tryredo = True
         passed = False
@@ -157,7 +157,7 @@ def antBuild(which, Build):
             if(not tryredo):
                 errorem += "DataModel Java build failed.\n"
                 attachl.append(antpth)
-                if email_enabled:
+                if email_enabled: 
                     Emailer.send_email(to, server, subj, errorem, attachl)
             passed = False
             tryredo = True
@@ -174,13 +174,15 @@ def main():
     global email_enabled
     global to
     global server
-    global subj
+    global subj 
     errore = ""
     attachli = []
     config_file = ""
     arg = sys.argv.pop(0)
     arg = sys.argv.pop(0)
     config_file = arg
+    arg = sys.argv.pop(0)
+    branch = arg
     parsedin = parse(config_file)
     try:
         to = parsedin.getElementsByTagName("email")[0].getAttribute("value").encode().decode("utf_8")
@@ -188,9 +190,9 @@ def main():
         subj = parsedin.getElementsByTagName("subject")[0].getAttribute("value").encode().decode("utf_8")
     except Exception:
         email_enabled = False
-    # email_enabled = (to is not None) and (server is not None) and (subj is not None)
-    email_enabled = False
-    compile(errore, attachli, parsedin)
+    # email_enabled = (to is not None) and (server is not None) and (subj is not None) 
+    email_enabled = False 
+    compile(errore, attachli, parsedin, branch)
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
