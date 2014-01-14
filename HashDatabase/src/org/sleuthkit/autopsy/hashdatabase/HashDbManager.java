@@ -225,7 +225,7 @@ public class HashDbManager implements PropertyChangeListener {
             knownBadHashSets.add(hashDb);
         }      
         
-        // Let any listeners know that the hash sets have changed
+        // Let any external listeners know that the hash sets have changed
         IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(HashDbIngestModule.MODULE_NAME));
         
         return hashDb;
@@ -293,7 +293,7 @@ public class HashDbManager implements PropertyChangeListener {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex);                        
         }
         
-        // Let any listeners know that the hash sets have changed
+        // Let any external listeners know that the hash sets have changed
         IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(HashDbIngestModule.MODULE_NAME));
     }     
 

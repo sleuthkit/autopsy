@@ -52,9 +52,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" pref="414" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="newListButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="importButton" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="importButton" max="32767" attributes="0"/>
+                  <Component id="newListButton" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
