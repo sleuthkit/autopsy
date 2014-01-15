@@ -82,7 +82,11 @@ public class HashDbManager implements PropertyChangeListener {
     private boolean alwaysCalculateHashes = true;            
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     
-    // Property change event support
+    /**
+     * Property change event support
+     *  In events: For both of these enums, the old value should be null, and 
+     *  the new value should be the hashset name string.
+     */
     public enum SetEvt {
         DB_ADDED, DB_DELETED
     };    
