@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -27,6 +29,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -50,6 +53,49 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
+    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    
+    public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
+        return dspProgressMonitorImpl;
+    }
+            
+    private class DSPProgressMonitorImpl implements DSPProgressMonitor {
+        @Override
+        public void setIndeterminate(final boolean indeterminate) {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setIndeterminate(indeterminate);
+                    }
+                });
+        }
+        
+        @Override
+        public void setProgress(final int progress)  {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setValue(progress);
+                    }
+                });      
+        }
+        
+        @Override
+        public void setProgressText(final String text) {
+            // update the progress UI asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().setProgressMsgText(text);
+                    }
+                });      
+        }
+        
+        
+        
+    }
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created

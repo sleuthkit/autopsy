@@ -25,7 +25,10 @@ import java.awt.Font;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
@@ -37,13 +40,16 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
-public class LocalDiskPanel extends ContentTypePanel {
+public class LocalDiskPanel extends JPanel  {
+    private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
+    
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = null;
     private List<LocalDisk> disks;
@@ -57,6 +63,9 @@ public class LocalDiskPanel extends ContentTypePanel {
         this.disks = new ArrayList<LocalDisk>();
         initComponents();
         customInit();
+        
+        createTimeZoneList();
+        
     }
     
     /**
@@ -74,8 +83,10 @@ public class LocalDiskPanel extends ContentTypePanel {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
+        
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
+        
     }
 
     /**
@@ -90,6 +101,10 @@ public class LocalDiskPanel extends ContentTypePanel {
         diskLabel = new javax.swing.JLabel();
         diskComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
+        timeZoneLabel = new javax.swing.JLabel();
+        timeZoneComboBox = new javax.swing.JComboBox<String>();
+        noFatOrphansCheckbox = new javax.swing.JCheckBox();
+        descLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(485, 65));
@@ -99,6 +114,15 @@ public class LocalDiskPanel extends ContentTypePanel {
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.errorLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.timeZoneLabel.text")); // NOI18N
+
+        timeZoneComboBox.setMaximumRowCount(30);
+
+        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.text")); // NOI18N
+        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.descLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -107,8 +131,16 @@ public class LocalDiskPanel extends ContentTypePanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(diskLabel)
                     .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(errorLabel))
-                .addGap(0, 140, Short.MAX_VALUE))
+                    .addComponent(errorLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(timeZoneLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(noFatOrphansCheckbox)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(descLabel)))
+                .addGap(0, 102, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -116,21 +148,34 @@ public class LocalDiskPanel extends ContentTypePanel {
                 .addComponent(diskLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(13, 13, 13)
+                .addComponent(errorLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeZoneLabel)
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(errorLabel))
+                .addComponent(descLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<LocalDisk> diskComboBox;
+    private javax.swing.JLabel descLabel;
+    private javax.swing.JComboBox diskComboBox;
     private javax.swing.JLabel diskLabel;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JCheckBox noFatOrphansCheckbox;
+    private javax.swing.JComboBox<String> timeZoneComboBox;
+    private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
      * Return the currently selected disk path.
      * @return String selected disk path
      */
-    @Override
+    //@Override
     public String getContentPaths() {
         if(disks.size() > 0) {
             LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
@@ -144,7 +189,7 @@ public class LocalDiskPanel extends ContentTypePanel {
     /**
      * Set the selected disk.
      */
-    @Override
+   // @Override
     public void setContentPath(String s) {
         for(int i=0; i<disks.size(); i++) {
             if(disks.get(i).getPath().equals(s)) {
@@ -153,9 +198,14 @@ public class LocalDiskPanel extends ContentTypePanel {
         }
     }
     
-    @Override
-    public ContentType getContentType() {
-        return ContentType.DISK;
+    public String getTimeZone() {
+        String tz = timeZoneComboBox.getSelectedItem().toString();
+        return tz.substring(tz.indexOf(")") + 2).trim();
+        
+    }
+    
+    boolean getNoFatOrphans() {
+        return noFatOrphansCheckbox.isSelected();
     }
 
     /**
@@ -163,31 +213,27 @@ public class LocalDiskPanel extends ContentTypePanel {
      * Always return true because we control the possible selections.
      * @return true
      */
-    @Override
-    public boolean enableNext() {
+    //@Override
+    public boolean validatePanel() {
         return enableNext;
     }
     
-    @Override
+    //@Override
     public void reset() {
         //nothing to reset
+        
     }
     
-    /**
-     * @return the representation of this panel as a String.
-     */
-    @Override
-    public String toString() {
-        return "Local Disk";
-    }
+   
     
    /**
      * Set the focus to the diskComboBox and refreshes the list of disks.
      */
-    @Override
+   // @Override
     public void select() {
         diskComboBox.requestFocusInWindow();
-        model.loadDisks();
+        model.loadDisks();   
+        
     }
     
     @Override
@@ -208,16 +254,55 @@ public class LocalDiskPanel extends ContentTypePanel {
         pcs.removePropertyChangeListener(pcl);
     }
     
-    private class LocalDiskModel implements ComboBoxModel<LocalDisk>, ListCellRenderer<LocalDisk> {
-        private LocalDisk selected;
+     /**
+     * Creates the drop down list for the time zones and then makes the local
+     * machine time zone to be selected.
+     */
+     public void createTimeZoneList() {
+        // load and add all timezone
+        String[] ids = SimpleTimeZone.getAvailableIDs();
+        for (String id : ids) {
+            TimeZone zone = TimeZone.getTimeZone(id);
+            int offset = zone.getRawOffset() / 1000;
+            int hour = offset / 3600;
+            int minutes = (offset % 3600) / 60;
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+
+            /*
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
+             */
+            timeZoneComboBox.addItem(item);
+        }
+        // get the current timezone
+        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
+        int thisOffset = thisTimeZone.getRawOffset() / 1000;
+        int thisHour = thisOffset / 3600;
+        int thisMinutes = (thisOffset % 3600) / 60;
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+
+        // set the selected timezone
+        timeZoneComboBox.setSelectedItem(formatted);
+    }
+     
+    private class LocalDiskModel implements ComboBoxModel, ListCellRenderer {
+        private Object selected;
         private boolean ready = false;
-        List<LocalDisk> physical = new ArrayList<>();
+        private volatile boolean loadingDisks = false;
         List<LocalDisk> partitions = new ArrayList<>();
+        List<LocalDisk> physical = new ArrayList<LocalDisk>();
+        List<LocalDisk> partitions = new ArrayList<LocalDisk>();
         
         //private String SELECT = "Select a local disk:";
         private String LOADING_STR = "Loading local disks...";
+        private String LOADING = "Loading local disks...";
+        LocalDiskThread worker = null;
         
-        // Dummy local disk that will be displayed as a loading message
         private LocalDisk LOADING = new LocalDisk("", "", 0L) {
             @Override
             public String toString() {
@@ -226,6 +311,12 @@ public class LocalDiskPanel extends ContentTypePanel {
         };
         
         private void loadDisks() {
+           
+            // if there is a worker already building the lists, then cancel it first.
+            if (loadingDisks && worker != null) {   
+                worker.cancel(false);
+            }
+            
             // Clear the lists
             errorLabel.setText("");
             disks = new ArrayList<>();
@@ -233,9 +324,13 @@ public class LocalDiskPanel extends ContentTypePanel {
             partitions = new ArrayList<>();
             diskComboBox.setEnabled(false);
             ready = false;
-            
-            LocalDiskThread worker = new LocalDiskThread();
+            enableNext = false;
+            loadingDisks = true;
+
+            worker = new LocalDiskThread();
             worker.execute();
+            
+            
         }
 
         @Override
@@ -243,7 +338,7 @@ public class LocalDiskPanel extends ContentTypePanel {
             if(ready) {
                 selected = (LocalDisk) anItem;
                 enableNext = true;
-                pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+                pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             }
         }
 
@@ -269,7 +364,7 @@ public class LocalDiskPanel extends ContentTypePanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-
+        
         @Override
         public Component getListCellRendererComponent(JList<? extends LocalDisk> list, LocalDisk value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
@@ -310,8 +405,6 @@ public class LocalDiskPanel extends ContentTypePanel {
                 // Populate the lists
                 physical = PlatformUtil.getPhysicalDrives();
                 partitions = PlatformUtil.getPartitions();
-                disks.addAll(physical);
-                disks.addAll(partitions);
                 
                 return null;
             }
@@ -347,6 +440,11 @@ public class LocalDiskPanel extends ContentTypePanel {
                         enableNext = false;
                         displayErrors();
                         ready = true;
+                        worker = null;
+                        loadingDisks = false;
+                        
+                         disks.addAll(physical);
+                         disks.addAll(partitions);
                         
                         if(disks.size() > 0) {
                             diskComboBox.setEnabled(true);

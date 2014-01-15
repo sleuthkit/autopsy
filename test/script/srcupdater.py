@@ -164,7 +164,8 @@ def antBuild(which, Build):
     elif (succd != 0 and (not tryredo)):
         errorem += "Autopsy build failed.\n"
         attachl.append(antpth)
-        Emailer.send_email(to, server, subj, errorem, attachl)
+        if email_enabled:
+            Emailer.send_email(to, server, subj, errorem, attachl)
         tryredo = True
     elif (succd != 0):
         passed = False

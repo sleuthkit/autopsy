@@ -18,10 +18,15 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -146,6 +151,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 return "Known";
             }
         },
+        HASHSETS {
+            @Override
+            public String toString() {
+                return "In Hashsets";
+            }           
+        },
         MD5HASH {
             @Override
             public String toString() {
@@ -188,6 +199,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
+        map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
 
@@ -201,4 +213,62 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return name;
     }
+    
+    private static String getHashSetHitsForFile(AbstractFile content) {
+        ResultSet rs = null;
+        String strList = "";
+        SleuthkitCase skCase = content.getSleuthkitCase();
+        long objId = content.getId();
+        
+        try {
+            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            
+//            ArrayList<BlackboardArtifact> artList = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
+//            for (BlackboardArtifact art : artList) {
+//                List<BlackboardAttribute> atrList = art.getAttributes();
+//                int i = 0;
+//                for (BlackboardAttribute att : atrList) {            
+//                    if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {                        
+//                        if (i++ > 0) {
+//                            strList += ", ";
+//                        }     
+//                        strList += att.getValueString();
+//                    }
+//                }
+//            }
+            
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
+                    + "attribute_type_id=" + setNameId
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId
+                    + " AND blackboard_artifacts.obj_id=" + objId;
+            rs = skCase.runQuery(query);
+            int i = 0;
+            while (rs.next()) {
+                if (i++ > 0) {
+                    strList += ", ";
+                }
+                strList += rs.getString("value_text");
+            }
+        }
+        catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+        }
+//      catch (TskCoreException ex) {
+//          logger.log(Level.WARNING, "TskCore Exception occurred: ", ex);
+//      }                
+        finally {
+            if (rs != null) {
+                try {
+                    skCase.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                }
+            }
+        }
+        return strList;
+    }    
+    
 }

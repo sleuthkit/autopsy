@@ -38,13 +38,12 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public final class ReportVisualPanel2 extends JPanel {
-    private static final Logger logger = Logger.getLogger(ReportVisualPanel2.class.getName());
     private ReportWizardPanel2 wizPanel;
     
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();
@@ -73,8 +72,17 @@ public final class ReportVisualPanel2 extends JPanel {
     
     // Initialize the list of Tags
     private void initTags() {
-        for(String tag : Tags.getTagNamesFromCurrentCase()) {
-            tagStates.put(tag, Boolean.FALSE);
+        List<TagName> tagNamesInUse;
+        try {
+            tagNamesInUse = Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
+        }
+        catch (TskCoreException ex) {
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            return;
+        }                                    
+                        
+        for(TagName tagName : tagNamesInUse) {
+            tagStates.put(tagName.getDisplayName(), Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
         
@@ -90,21 +98,22 @@ public final class ReportVisualPanel2 extends JPanel {
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                String value = tagsModel.getElementAt(index);
+                String value = (String) tagsModel.getElementAt(index);
                 tagStates.put(value, !tagStates.get(value));
                 list.repaint();
                 updateFinishButton();
             }
-        });
-        
+        });        
     }
     
     // Initialize the list of Artifacts
     private void initArtifactTypes() {
         
         try {
-             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
             
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
             
@@ -116,7 +125,6 @@ public final class ReportVisualPanel2 extends JPanel {
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex);
-            return;
         }
     }
 
@@ -189,7 +197,7 @@ public final class ReportVisualPanel2 extends JPanel {
         selectAllButton = new javax.swing.JButton();
         deselectAllButton = new javax.swing.JButton();
         tagsScrollPane = new javax.swing.JScrollPane();
-        tagsList = new javax.swing.JList<>();
+        tagsList = new javax.swing.JList();
         advancedButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
@@ -315,11 +323,11 @@ public final class ReportVisualPanel2 extends JPanel {
     private javax.swing.ButtonGroup optionsButtonGroup;
     private javax.swing.JButton selectAllButton;
     private javax.swing.JRadioButton taggedResultsRadioButton;
-    private javax.swing.JList<String> tagsList;
+    private javax.swing.JList tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
     // End of variables declaration//GEN-END:variables
     
-    private class TagsListModel implements ListModel<String> {
+    private class TagsListModel implements ListModel {
 
         @Override
         public int getSize() {
@@ -327,7 +335,7 @@ public final class ReportVisualPanel2 extends JPanel {
         }
 
         @Override
-        public String getElementAt(int index) {
+        public Object getElementAt(int index) {
             return tags.get(index);
         }
 
@@ -341,10 +349,10 @@ public final class ReportVisualPanel2 extends JPanel {
     }
     
     // Render the Tags as JCheckboxes
-    private class TagsListRenderer extends JCheckBox implements ListCellRenderer<String> {
+    private class TagsListRenderer extends JCheckBox implements ListCellRenderer {
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagStates.get(value.toString()));
@@ -355,8 +363,6 @@ public final class ReportVisualPanel2 extends JPanel {
                 return this;
             }
             return new JLabel();
-        }
-        
+        }        
     }
-
 }

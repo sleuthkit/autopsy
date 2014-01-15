@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
@@ -71,6 +70,18 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         reloadEncodings();
     }
 
+    public void load() {  
+        KeywordSearchListsXML.getCurrent().reload();                
+        reloadLists();
+        reloadLangs();
+        reloadEncodings();
+        tableModel.fireTableDataChanged();
+    }
+
+    public void store() {
+        KeywordSearchListsXML.getCurrent().save();
+    }
+                
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is

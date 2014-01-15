@@ -886,10 +886,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         }
 
         @Override
-        public DisplayableItemNode.TYPE getDisplayableItemNodeType() {
-            return DisplayableItemNode.TYPE.CONTENT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+        
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return null;

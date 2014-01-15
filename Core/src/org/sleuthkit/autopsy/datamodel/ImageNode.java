@@ -56,11 +56,6 @@ public class ImageNode extends AbstractContentNode<Image> {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
     }
 
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.CONTENT;
-    }
-
     /**
      * Right click action for this node
      *
@@ -98,6 +93,11 @@ public class ImageNode extends AbstractContentNode<Image> {
         return v.visit(this);
     }
 
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+                
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

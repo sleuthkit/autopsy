@@ -171,14 +171,14 @@ public class KeywordHits implements AutopsyVisitableItem {
             //logger.info("Process took " + (finish-start) + " ms" );
         }
 
+                @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
 
         @Override
@@ -232,11 +232,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -259,6 +254,11 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
+        @Override
+        public boolean isLeafTypeNode() {
+            return false;
+        }
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -310,11 +310,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
         }
 
         @Override
