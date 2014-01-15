@@ -384,7 +384,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         + "\nPlease note that you will still be able to browse directories and generate reports\n"
                         + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Image", JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
+                   
                     MissingImageDialog.makeDialog(obj_id, db);
+                    
                 } else {
                     logger.log(Level.WARNING, "Selected image files don't match old files!");
                 }
@@ -401,6 +403,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      */
+    @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
 
@@ -420,11 +423,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param newDataSource new data source added
      */
+   @Deprecated
     void addLocalDataSource(Content newDataSource) {
         pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
         CoreComponentControl.openCoreWindows();
     }
 
+    /**
+     * Notifies the UI that a new data source has been added.
+     * 
+     *
+     * @param newDataSource new data source added
+     */
+    void notifyNewDataSource(Content newDataSource) {
+        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        CoreComponentControl.openCoreWindows();
+    }
+    
     /**
      * @return The Services object for this case.
      */

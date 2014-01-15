@@ -30,40 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Utilities {
 
-    /**
-     * Check if is jpeg file based on header
-     *
-     * @param file
-     *
-     * @return true if jpeg file, false otherwise
-     */
     @SuppressWarnings("cast")
-    public static boolean isJpegFileHeader(AbstractFile file) {
-        if (file.getSize() < 100) {
-            return false;
-        }
-
-        byte[] fileHeaderBuffer = new byte[2];
-        int bytesRead;
-        try {
-            bytesRead = file.read(fileHeaderBuffer, 0, 2);
-        } catch (TskCoreException ex) {
-            //ignore if can't read the first few bytes, not a JPEG
-            return false;
-        }
-        if (bytesRead != 2) {
-            return false;
-        }
-        /*
-         * Check for the JPEG header. Since Java bytes are signed, we cast them
-         * to an int first.
-         */
-        if (((int) (fileHeaderBuffer[0] & 0xff) == 0xff) && ((int) (fileHeaderBuffer[1] & 0xff) == 0xd8)) {
-            return true;
-        }
-        return false;
-    }
-
     public static void configureTextPaneAsHtml(JTextPane pane) {
         pane.setContentType("text/html;charset=UTF-8");
         HTMLEditorKit kit = new HTMLEditorKit();

@@ -150,15 +150,20 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         public AbstractNode visit(HashsetHits hh) {
             return hh.new HashsetHitsRootNode();
         }
-
+        
+        @Override
+        public AbstractNode visit(InterestingHits ih) {
+            return ih.new InterestingHitsRootNode();
+        }
+         
         @Override
         public AbstractNode visit(EmailExtracted ee) {
             return ee.new EmailExtractedRootNode();
         }
 
         @Override
-        public AbstractNode visit(Tags t) {
-            return t.new TagsRootNode();
+        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
+            return new TagsNode();
         }
 
         @Override

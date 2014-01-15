@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -56,6 +57,7 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -586,6 +588,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             respondSelection((Node[]) oldValue, (Node[]) newValue);
         } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
+            if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
+                return;
+            }
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -651,7 +656,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        dataResult.setNode(new TableFilterNode(drfn, true));
+                        Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
+                        dataResult.setNode(new TableFilterNode(kffn, true));
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
@@ -688,7 +694,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // update the back and forward list
         updateHistory(em.getSelectedNodes());
     }
-    
+   
     private void updateHistory(Node[] selectedNodes) {
         if (selectedNodes.length == 0) {
             return;
@@ -804,7 +810,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
-    void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
         //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
@@ -856,38 +862,53 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Set selected node using the previously saved selection path to the
-     * selected node
+     * Set the selected node using a path to a previously selected node.
      *
-     * @param path node path with node names
-     * @param rootNodeName name of the root node to match or null if any
+     * @param previouslySelectedNodePath Path to a previously selected node. 
+     * @param rootNodeName Name of the root node to match, may be null.
      */
-    private void setSelectedNode(final String[] path, final String rootNodeName) {
-        if (path == null) {
+    private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
+        if (previouslySelectedNodePath == null) {
             return;
         }
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-
-                if (path.length > 0 && (rootNodeName == null || path[0].equals(rootNodeName))) {
-                    try {
-                        Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                        
-                        if (newSelection != null) {
-                            if (rootNodeName != null) {
-                                //called from tree auto refresh context
-                                //remove last from backlist, because auto select will result in duplication
-                                backList.pollLast();
-                            }
-                            em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                if (previouslySelectedNodePath.length > 0 && (rootNodeName == null || previouslySelectedNodePath[0].equals(rootNodeName))) {
+                    Node selectedNode = null;                    
+                    ArrayList<String> selectedNodePath = new ArrayList<>(Arrays.asList(previouslySelectedNodePath));
+                    while (null == selectedNode && !selectedNodePath.isEmpty()) {
+                        try {
+                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));                        
                         }
-                        
-                        // We need to set the selection, which will refresh dataresult and get rid of the oob exception
-                    } catch (NodeNotFoundException ex) {
-                        logger.log(Level.WARNING, "Node not found", ex);
-                    } catch (PropertyVetoException ex) {
-                        logger.log(Level.WARNING, "Property Veto", ex);
+                        catch (NodeNotFoundException ex) {
+                            // The selected node may have been deleted (e.g., a deleted tag), so truncate the path and try again. 
+                            if (selectedNodePath.size() > 1) {
+                                selectedNodePath.remove(selectedNodePath.size() - 1);
+                            }                            
+                            else {
+                                StringBuilder nodePath = new StringBuilder();
+                                for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
+                                    nodePath.append(previouslySelectedNodePath[i]).append("/");
+                                }
+                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex);
+                                break; 
+                            }
+                        } 
+                    }
+                    
+                    if (null != selectedNode) {
+                        if (rootNodeName != null) {
+                            //called from tree auto refresh context
+                            //remove last from backlist, because auto select will result in duplication
+                            backList.pollLast();
+                        }
+                        try {
+                            em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});                                                    
+                        }
+                        catch (PropertyVetoException ex) {
+                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex);
+                        }
                     }
                 }
             }
@@ -945,6 +966,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Node listNode = keywordRootChilds.findChild(listName);
                 Children listChildren = listNode.getChildren();
                 treeNode = listChildren.findChild(keywordName);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+            }
+        } else if ( type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT) || 
+                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) )   { 
+            Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
+            Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+             try {
+                String setName = null;
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                        setName = att.getValueString();
+                    }
+                }
+                treeNode = interestingItemsRootChildren.findChild(setName);
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }

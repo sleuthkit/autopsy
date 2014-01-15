@@ -109,10 +109,10 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.META;
+        public boolean isLeafTypeNode() {
+            return false;
         }
-
+                
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -197,11 +197,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                         filter.getDisplayName()));
 
                 return s;
-            }
-
-            @Override
-            public TYPE getDisplayableItemNodeType() {
-                return TYPE.META;
             }
 
             @Override

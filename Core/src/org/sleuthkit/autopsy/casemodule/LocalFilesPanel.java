@@ -24,11 +24,13 @@ import java.io.File;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
-public class LocalFilesPanel extends ContentTypePanel {
+public class LocalFilesPanel extends JPanel {
 
     private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
@@ -57,7 +59,7 @@ public class LocalFilesPanel extends ContentTypePanel {
         
     }
     
-    @Override
+    //@Override
     public String getContentPaths() {
         //TODO consider interface change to return list of paths instead
         
@@ -72,36 +74,37 @@ public class LocalFilesPanel extends ContentTypePanel {
         return b.toString();
     }
 
-    @Override
+    //@Override
     public void setContentPath(String s) {
         //for the local file panel we don't need to restore the last paths used
         //when the wizard restarts
     }
     
-    @Override
-    public ContentType getContentType() {
-        return ContentType.LOCAL;
+    //@Override
+    public String getContentType() {
+        return "LOCAL";
     }
 
-    @Override
-    public boolean enableNext() {
+    //@Override
+    public boolean validatePanel() {
         return enableNext;
     }
 
-    @Override
+    //@Override
     public void select() {
         reset();
     }
     
-    @Override
+    //@Override
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
-      @Override
+    @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
 	super.addPropertyChangeListener(pcl);
 
@@ -231,7 +234,7 @@ public class LocalFilesPanel extends ContentTypePanel {
         else {
             enableNext = false;
         }
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed

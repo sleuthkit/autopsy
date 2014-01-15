@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -36,13 +35,19 @@ public class ResultsNode extends DisplayableItemNode {
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new Tags(sleuthkitCase) //TODO move to the top of the tree 
+                new InterestingHits(sleuthkitCase),
+                new TagsNodeKey()
                 )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
     }
 
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -62,10 +67,5 @@ public class ResultsNode extends DisplayableItemNode {
                 "no description",
                 NAME));
         return s;
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
     }
 }

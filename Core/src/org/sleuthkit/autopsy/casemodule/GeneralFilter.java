@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
 import java.util.List;
+import java.util.Arrays;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -28,6 +29,16 @@ import javax.swing.filechooser.FileFilter;
  */
 public class GeneralFilter extends FileFilter{
 
+    
+    // Extensions & Descriptions for commonly used filters
+    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin"});
+    public static final String RAW_IMAGE_DESC = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw, *.bin)";
+    
+    public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"});
+    public static final String ENCASE_IMAGE_DESC = "Encase Images (*.e01)";
+    
+   
+  
     private List<String> extensions;
     private String desc;
 

@@ -18,49 +18,44 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
-import javax.swing.ComboBoxModel;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JPanel;
+import javax.swing.JList;
+import javax.swing.JSeparator;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListDataListener;
-import org.sleuthkit.autopsy.casemodule.ContentTypePanel.ContentType;
+import javax.swing.ListCellRenderer;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * visual component for the first panel of add image wizard. Allows user to pick
- * data source and timezone.
+ * visual component for the first panel of add image wizard. 
+ * Allows the user to choose the data source type and then select the data source
  *
  */
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
-    enum EVENT {
-
-        UPDATE_UI, FOCUS_NEXT
-    };
-    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw"});
-    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa, *.raw)";
-    static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
-    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
-    static final String encaseDesc = "Encase Images (*.e01)";
-    static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
-    static final List<String> allExt = new ArrayList<String>();
-
-    static {
-        allExt.addAll(rawExt);
-        allExt.addAll(encaseExt);
-    }
-    static final String allDesc = "All Supported Types";
-    static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+    
     private AddImageWizardChooseDataSourcePanel wizPanel;
-    private ContentTypeModel model;
-    private ContentTypePanel currentPanel;
+    
+    private JPanel currentPanel;
+    private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<String, DataSourceProcessor>();
+          
+
+     List<String> coreDSPTypes = new ArrayList<String>();
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -70,24 +65,83 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
-        createTimeZoneList();
+        
         customInit();
     }
 
     private void customInit() {
-        model = new ContentTypeModel();
-        typeComboBox.setModel(model);
-        typeComboBox.setSelectedIndex(0);
+      
         typePanel.setLayout(new BorderLayout());
-        updateCurrentPanel(ImageFilePanel.getDefault());
+        
+        discoverDataSourceProcessors();
+         
+        // set up the DSP type combobox
+        typeComboBox.removeAllItems();
+        
+        Set<String> dspTypes = datasourceProcessorsMap.keySet();
+        
+        // make a list of core DSPs
+        // ensure that the core DSPs are at the top and in a fixed order
+        coreDSPTypes.add(ImageDSProcessor.dsType);
+        coreDSPTypes.add(LocalDiskDSProcessor.dsType);
+        coreDSPTypes.add(LocalFilesDSProcessor.dsType);
+          
+        for(String dspType:coreDSPTypes){
+            typeComboBox.addItem(dspType);
+        }
+        
+        // now add any addtional DSPs that haven't already been added
+        for(String dspType:dspTypes){
+            if (!coreDSPTypes.contains(dspType)) {
+                typeComboBox.addItem(dspType);
+            }
+        }
+        
+        // set a custom renderer that draws a separator at the end of the core DSPs in the combobox
+        typeComboBox.setRenderer(new ComboboxSeparatorRenderer(typeComboBox.getRenderer()){   
+            @Override
+            protected boolean addSeparatorAfter(JList list, Object value, int index){ 
+                return (index == coreDSPTypes.size() - 1);          
+            }                                                                            
+        });   
+        
+        //add actionlistner to listen for change
+        ActionListener cbActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dspSelectionChanged();
+            }
+        };
+        typeComboBox.addActionListener(cbActionListener);
+        typeComboBox.setSelectedIndex(0);
     }
 
+    private void discoverDataSourceProcessors() {
+      
+        for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
+           
+            if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
+                dsProcessor.reset();
+                datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
+            }
+            else {
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getType() );
+            }      
+        }
+     } 
+
+     private void dspSelectionChanged() {
+         // update the current panel to selection
+         currentPanel = getCurrentDSProcessor().getPanel();
+         updateCurrentPanel(currentPanel);
+    }
+     
     /**
      * Changes the current panel to the given panel.
      *
      * @param panel instance of ImageTypePanel to change to
      */
-    private void updateCurrentPanel(ContentTypePanel panel) {
+    private void updateCurrentPanel(JPanel panel) {
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
@@ -96,28 +150,32 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString())) {
+                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString())) {
                     updateUI(null);
                 }
-                if (evt.getPropertyName().equals(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString())) {
+                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString())) {
                     wizPanel.moveFocusToNext();
                 }
             }
         });
-        currentPanel.select();
-        if (currentPanel.getContentType().equals(ContentType.LOCAL)) {
-            //disable image specific options
-            noFatOrphansCheckbox.setEnabled(false);
-            descLabel.setEnabled(false);
-            timeZoneComboBox.setEnabled(false);
-        } else {
-            noFatOrphansCheckbox.setEnabled(true);
-            descLabel.setEnabled(true);
-            timeZoneComboBox.setEnabled(true);
-        }
+      
         updateUI(null);
     }
 
+     /**
+     * Returns the currently selected DS Processor
+     * @return DataSourceProcessor the DataSourceProcessor corresponding to the data source type selected in the combobox
+     */
+    public DataSourceProcessor getCurrentDSProcessor() {
+        // get the type of the currently selected panel and then look up 
+        // the correspodning DS Handler in the map
+        String dsType = (String) typeComboBox.getSelectedItem();
+        DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(dsType);
+        
+        return dsProcessor;
+        
+    }
+            
     /**
      * Returns the name of the this panel. This name will be shown on the left
      * panel of the "Add Image" wizard panel.
@@ -129,94 +187,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         return "Enter Data Source Information";
     }
 
-    /**
-     * Gets the data sources path from the Image Path Text Field.
-     *
-     * @return data source path, can be comma separated for multiples
-     */
-    public String getContentPaths() {
-        return currentPanel.getContentPaths();
-    }
-
-    /**
-     * Gets the data sources type selected
-     *
-     * @return data source selected
-     */
-    public ContentType getContentType() {
-        return currentPanel.getContentType();
-    }
-
-    /**
-     * Reset the data sources panel selected
-     */
-    public void reset() {
-        currentPanel.reset();
-    }
-
-    /**
-     * Sets the image path of the current panel.
-     *
-     * @param s the image path to set
-     */
-    public void setContentPath(String s) {
-        currentPanel.setContentPath(s);
-    }
-
-    /**
-     *
-     * @return true if no fat orphans processing is selected
-     */
-    boolean getNoFatOrphans() {
-        return noFatOrphansCheckbox.isSelected();
-    }
-
-    /**
-     * Gets the time zone that selected on the drop down list.
-     *
-     * @return timeZone the time zone that selected
-     */
-    public String getSelectedTimezone() {
-        String tz = timeZoneComboBox.getSelectedItem().toString();
-        return tz.substring(tz.indexOf(")") + 2).trim();
-    }
-
-    // add the timeZone list to the timeZoneComboBox
-    /**
-     * Creates the drop down list for the time zones and then makes the local
-     * machine time zones to be selected.
-     */
-    public void createTimeZoneList() {
-        // load and add all timezone
-        String[] ids = SimpleTimeZone.getAvailableIDs();
-        for (String id : ids) {
-            TimeZone zone = TimeZone.getTimeZone(id);
-            int offset = zone.getRawOffset() / 1000;
-            int hour = offset / 3600;
-            int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
-
-            /*
-             * DateFormat dfm = new SimpleDateFormat("z");
-             * dfm.setTimeZone(zone); boolean hasDaylight =
-             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
-             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
-             * = hour * -1; String result = first + Integer.toString(mid);
-             * if(hasDaylight){ result = result + second; }
-             * timeZoneComboBox.addItem(item + " (" + result + ")");
-             */
-            timeZoneComboBox.addItem(item);
-        }
-        // get the current timezone
-        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
-        int thisOffset = thisTimeZone.getRawOffset() / 1000;
-        int thisHour = thisOffset / 3600;
-        int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
-
-        // set the selected timezone
-        timeZoneComboBox.setSelectedItem(formatted);
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -229,14 +199,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel2 = new javax.swing.JLabel();
         nextLabel = new javax.swing.JLabel();
-        timeZoneLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox<String>();
-        noFatOrphansCheckbox = new javax.swing.JCheckBox();
-        descLabel = new javax.swing.JLabel();
         inputPanel = new javax.swing.JPanel();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
-        typeComboBox = new javax.swing.JComboBox<ContentTypePanel>();
+        typeComboBox = new javax.swing.JComboBox<String>();
         imgInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
@@ -244,15 +210,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         setPreferredSize(new java.awt.Dimension(588, 328));
 
         org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.timeZoneLabel.text")); // NOI18N
-
-        timeZoneComboBox.setMaximumRowCount(30);
-
-        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.text")); // NOI18N
-        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.noFatOrphansCheckbox.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.descLabel.text")); // NOI18N
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -269,7 +226,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 77, Short.MAX_VALUE)
+            .addGap(0, 173, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
@@ -295,7 +252,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     .addComponent(typeTabel)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE)
+                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -313,14 +270,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(timeZoneLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(noFatOrphansCheckbox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addComponent(descLabel))
                             .addComponent(imgInfoLabel))
                         .addGap(0, 54, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -332,30 +281,18 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 .addComponent(imgInfoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeZoneLabel)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(descLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JLabel descLabel;
     private javax.swing.JLabel imgInfoLabel;
     private javax.swing.JPanel inputPanel;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel nextLabel;
-    private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JComboBox<String> timeZoneComboBox;
-    private javax.swing.JLabel timeZoneLabel;
-    private javax.swing.JComboBox<ContentTypePanel> typeComboBox;
+    private javax.swing.JComboBox<String> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
@@ -369,44 +306,31 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * @param e the document event
      */
     public void updateUI(DocumentEvent e) {
-        this.wizPanel.enableNextButton(currentPanel.enableNext());
+        // Enable the Next button if the current DSP panel is valid
+        this.wizPanel.enableNextButton(getCurrentDSProcessor().validatePanel());
     }
 
-    /**
-     * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
-     */
-    private class ContentTypeModel implements ComboBoxModel<ContentTypePanel> {
+    
+   public abstract class ComboboxSeparatorRenderer implements ListCellRenderer{
+        private ListCellRenderer delegate;
+        private JPanel separatorPanel = new JPanel(new BorderLayout());
+        private JSeparator separator = new JSeparator();
 
-        private ContentTypePanel selected;
-        private ContentTypePanel[] types = ContentTypePanel.getPanels();
-
-        @Override
-        public void setSelectedItem(Object anItem) {
-            selected = (ContentTypePanel) anItem;
-            updateCurrentPanel(selected);
+        public ComboboxSeparatorRenderer(ListCellRenderer delegate){
+             this.delegate = delegate;
         }
 
-        @Override
-        public Object getSelectedItem() {
-            return selected;
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus){
+            Component comp = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if(index!=-1 && addSeparatorAfter(list, value, index)){
+                separatorPanel.removeAll();
+                separatorPanel.add(comp, BorderLayout.CENTER);
+                separatorPanel.add(separator, BorderLayout.SOUTH);
+                return separatorPanel;
+            }else
+                return comp;
         }
 
-        @Override
-        public int getSize() {
-            return types.length;
-        }
-
-        @Override
-        public ContentTypePanel getElementAt(int index) {
-            return types[index];
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener l) {
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener l) {
-        }
+        protected abstract boolean addSeparatorAfter(JList list, Object value, int index);
     }
 }

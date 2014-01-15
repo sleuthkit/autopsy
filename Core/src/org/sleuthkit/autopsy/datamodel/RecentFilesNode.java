@@ -42,10 +42,10 @@ public class RecentFilesNode extends DisplayableItemNode {
     }
 
     @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
+    public boolean isLeafTypeNode() {
+        return false;
     }
-
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

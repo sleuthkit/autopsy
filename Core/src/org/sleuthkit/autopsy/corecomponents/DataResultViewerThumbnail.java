@@ -41,6 +41,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -63,7 +64,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;    
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;    
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
@@ -239,13 +240,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
         
-        iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        iconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
         switch(thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
-                iconSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                iconSize = ImageUtils.ICON_SIZE_SMALL;
                 break;
             case 2:
-                iconSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                iconSize = ImageUtils.ICON_SIZE_LARGE;
                 break;
         }                    
 
@@ -289,9 +290,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (selectedNode == null) {
             return false;
         }
-        //TODO quering children will need to change after lazy loading of original nodes works.
-        //we will need to query children of the datamodel object instead, 
-        //or force children creation, breaking the lazy loading.
+        
         Children ch = selectedNode.getChildren();
         for (Node n : ch.getNodes()) {
             if (ThumbnailViewChildren.isSupported(n)) {

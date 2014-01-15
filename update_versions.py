@@ -114,9 +114,8 @@ class Spec:
         self.third = None
         spec_nums = num.split(".")
         if len(spec_nums) == 3:
-            final = spec_nums[2]
-            self.third = int(final)
-
+            self.final = spec_nums[2]
+            self.third = int(self.final)
         l, r = spec_nums[0], spec_nums[1]
 
         self.left = int(l)
@@ -846,7 +845,6 @@ def usage():
 def main():
     global tag; global source; global docdir; global dry
     tag = None; source = None; docdir = None; dry = True
-
     ret = args()
     if ret:
         print(usage())
@@ -868,7 +866,6 @@ def main():
     if not do_git(tag, tag_dir):
         return 1
     sys.stdout.flush()
-
     tag_modules = find_modules(tag_dir)
     source_modules = find_modules(source)
 
