@@ -119,13 +119,6 @@ public class IngestManager {
          */
         DATA,
         
-        
-        /**
-         * Event sent when modules change major configuration data such as hash 
-         * sets being added by the user.
-         */
-        CONFIG_DATA_CHANGED,
-        
         /**
          * Event send when content changed, either its attributes changed, or
          * new content children have been added.  I.e. from ZIP files or Carved files
@@ -253,21 +246,6 @@ public class IngestManager {
     }
 
     /**
-     * Fire event for ModuleConfigDataEvent (when modules change major configuration 
-     * data such as hash sets being added by the user)
-     * @param moduleContentEvent 
-     */
-    static synchronized void fireModuleConfigDataEvent(ModuleConfigDataEvent moduleConfigDataEvent) {
-        try {
-            pcs.firePropertyChange(IngestModuleEvent.CONFIG_DATA_CHANGED.toString(), moduleConfigDataEvent, null);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
-        }
-    }       
-    
-    /**
      * Fire event for ModuleContentChanged (when  modules create new content that needs to be analyzed)
      * @param moduleContentEvent 
      */
@@ -280,7 +258,7 @@ public class IngestManager {
             MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
         }
     }
-    
+
     /**
      * Returns the return value from a previously run module on the file being
      * currently analyzed.

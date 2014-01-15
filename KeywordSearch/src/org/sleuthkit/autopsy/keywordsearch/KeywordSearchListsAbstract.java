@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleConfigDataEvent;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -70,8 +68,8 @@ public abstract class KeywordSearchListsAbstract {
         return currentInstance;
     }
 
-    void addPropertyChangeListener(PropertyChangeListener l) {
-        changeSupport.addPropertyChangeListener(l);
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
     }
 
     private void prepopulateLists() {
@@ -299,7 +297,7 @@ public abstract class KeywordSearchListsAbstract {
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
             
             // Let any external listeners know that the sets have changed
-            IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));
+            //IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
 //            if (!locked) {
@@ -384,7 +382,7 @@ public abstract class KeywordSearchListsAbstract {
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());         
 
             // Let any external listeners know that the sets have changed
-            IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));            
+            //IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));            
         }
         for (KeywordSearchList over : overwritten) {
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
@@ -409,7 +407,7 @@ public abstract class KeywordSearchListsAbstract {
         changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         
         // Let any external listeners know that the sets have changed
-        IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));        
+        //IngestServices.getDefault().fireModuleConfigDataEvent(new ModuleConfigDataEvent(KeywordSearchIngestModule.MODULE_NAME));        
         
         return true;
 
