@@ -326,18 +326,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node) {
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if(isSupported) {
-            if(artifact == null) {
-                return 3;
-            } 
-            else {
-                return 5;
-            }
+        if(artifact == null) {
+            return 3;
         } 
         else {
-            return 0;
+            return 5;
         }
     }
 

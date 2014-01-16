@@ -434,12 +434,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        if (isSupported) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public int isPreferred(Node node) {
+        return 1;
     }
 
     @Override
