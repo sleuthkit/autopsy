@@ -80,6 +80,16 @@ public class HashDbManager implements PropertyChangeListener {
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
     private boolean alwaysCalculateHashes = true;            
+    PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
+    
+    /**
+     * Property change event support
+     *  In events: For both of these enums, the old value should be null, and 
+     *  the new value should be the hashset name string.
+     */
+    public enum SetEvt {
+        DB_ADDED, DB_DELETED
+    };    
     
     /**
      * Gets the singleton instance of this class.
@@ -91,6 +101,10 @@ public class HashDbManager implements PropertyChangeListener {
         return instance;
     }
 
+    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
+    }    
+    
     private HashDbManager() {
         if (hashSetsConfigurationFileExists()) {
             readHashSetsConfigurationFromDisk();            
@@ -223,6 +237,9 @@ public class HashDbManager implements PropertyChangeListener {
             knownBadHashSets.add(hashDb);
         }      
         
+        // Let any external listeners know that there's a new set
+        changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
+        
         return hashDb;
     }
         
@@ -262,9 +279,10 @@ public class HashDbManager implements PropertyChangeListener {
         // and remove its hash set name from the hash set used to ensure unique
         // hash set names are used, before undertaking These operations will succeed and constitute
         // a mostly effective removal, even if the subsequent operations fail.
+        String hashSetName = hashDb.getHashSetName();
         knownHashSets.remove(hashDb);
         knownBadHashSets.remove(hashDb);
-        hashSetNames.remove(hashDb.getHashSetName());
+        hashSetNames.remove(hashSetName);
 
         // Now undertake the operations that could throw.
         try {
@@ -287,6 +305,9 @@ public class HashDbManager implements PropertyChangeListener {
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex);                        
         }
+        
+        // Let any external listeners know that a set has been deleted
+        changeSupport.firePropertyChange(SetEvt.DB_DELETED.toString(), null, hashSetName);        
     }     
 
     /**
