@@ -129,7 +129,7 @@ public class FileSize implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     NAME));
@@ -193,7 +193,7 @@ public class FileSize implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty("Filter Type",
+                ss.put(new NodeProperty<>("Filter Type",
                         "Filter Type",
                         "no description",
                         filter.getDisplayName()));

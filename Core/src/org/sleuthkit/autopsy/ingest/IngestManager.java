@@ -331,7 +331,7 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFile(AbstractFile file, PipelineContext pipelineContext) {
+    void scheduleFile(AbstractFile file, PipelineContext<IngestModuleAbstractFile> pipelineContext) {
         scheduler.getFileScheduler().schedule(file, pipelineContext);
     }
 
@@ -1271,7 +1271,7 @@ public class IngestManager {
 
                 //queue to file-level ingest pipeline
                 final ScheduledTask<IngestModuleAbstractFile> fTask = 
-                        new ScheduledTask(input, fileMods);
+                        new ScheduledTask<>(input, fileMods);
                 final PipelineContext<IngestModuleAbstractFile> filepipelineContext 
                         = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);

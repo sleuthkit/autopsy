@@ -67,7 +67,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         return sizeCheckBox;
     }
 
-    JComboBox getSizeCompareComboBox() {
+    JComboBox<String> getSizeCompareComboBox() {
         return sizeCompareComboBox;
     }
 
@@ -75,7 +75,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         return sizeTextField;
     }
 
-    JComboBox getSizeUnitComboBox() {
+    JComboBox<String> getSizeUnitComboBox() {
         return sizeUnitComboBox;
     }
 
@@ -93,9 +93,9 @@ class SizeSearchPanel extends javax.swing.JPanel {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        sizeUnitComboBox = new javax.swing.JComboBox();
+        sizeUnitComboBox = new javax.swing.JComboBox<String>();
         sizeTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        sizeCompareComboBox = new javax.swing.JComboBox();
+        sizeCompareComboBox = new javax.swing.JComboBox<String>();
         sizeCheckBox = new javax.swing.JCheckBox();
 
         cutMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.cutMenuItem.text")); // NOI18N
@@ -110,7 +110,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
+        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
 
         sizeTextField.setValue(0);
         sizeTextField.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -119,7 +119,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "equal to", "greater than", "less than" }));
+        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "equal to", "greater than", "less than" }));
 
         sizeCheckBox.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.sizeCheckBox.text")); // NOI18N
 
@@ -157,9 +157,9 @@ class SizeSearchPanel extends javax.swing.JPanel {
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JCheckBox sizeCheckBox;
-    private javax.swing.JComboBox sizeCompareComboBox;
+    private javax.swing.JComboBox<String> sizeCompareComboBox;
     private javax.swing.JFormattedTextField sizeTextField;
-    private javax.swing.JComboBox sizeUnitComboBox;
+    private javax.swing.JComboBox<String> sizeUnitComboBox;
     // End of variables declaration//GEN-END:variables
 
     void addActionListener(ActionListener l) {

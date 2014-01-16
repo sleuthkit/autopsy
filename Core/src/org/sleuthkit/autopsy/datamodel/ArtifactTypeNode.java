@@ -65,12 +65,12 @@ public class ArtifactTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Artifact Type",
+        ss.put(new NodeProperty<>("Artifact Type",
                 "Artifact Type",
                 "no description",
                 type.getDisplayName()));
 
-        ss.put(new NodeProperty("Child Count",
+        ss.put(new NodeProperty<>("Child Count",
                 "Child Count",
                 "no description",
                 childCount));

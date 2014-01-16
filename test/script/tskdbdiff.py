@@ -136,37 +136,40 @@ class TskDbDiff(object):
         """
         unsorted_dump = TskDbDiff._get_tmp_file("dump_data", ".txt")
         conn = sqlite3.connect(db_file)
-        autopsy_cur2 = conn.cursor()
+        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
+        conn.row_factory = sqlite3.Row
+        artifact_cursor = conn.cursor()
         # Get the list of all artifacts
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
-        autopsy_cur2.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
+        artifact_cursor.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
         database_log = codecs.open(unsorted_dump, "wb", "utf_8")
-        rw = autopsy_cur2.fetchone()
+        row = artifact_cursor.fetchone()
         appnd = False
         counter = 0
         artifact_count = 0
         artifact_fail = 0
         # Cycle through artifacts
         try:
-            while (rw != None):
+            while (row != None):
                 # File Name and artifact type
-                if(rw[0] != None):
-                    database_log.write(rw[0] + rw[1] + ' <artifact type="' + rw[2] + '" > ')
+                if(row["parent_path"] != None):
+                    database_log.write(row["parent_path"] + row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
                 else:
-                    database_log.write(rw[1] + ' <artifact type="' + rw[2] + '" > ')
+                    database_log.write(row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
 
                 # Get attributes for this artifact
-                autopsy_cur1 = conn.cursor()
+                attribute_cursor = conn.cursor()
                 looptry = True
                 artifact_count += 1
                 try:
-                    key = ""
-                    key = str(rw[3])
-                    key = key,
-                    autopsy_cur1.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", key)
-                    attributes = autopsy_cur1.fetchall()
+                    art_id = ""
+                    art_id = str(row["artifact_id"])
+                    attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                    attributes = attribute_cursor.fetchall()
                 except sqlite3.Error as e:
-                    msg ="Attributes in artifact id (in output DB)# " + str(rw[3]) + " encountered an error: " + str(e) +" .\n"
+                    msg = "Attributes in artifact id (in output DB)# " + str(row["artifact_id"]) + " encountered an error: " + str(e) +" .\n"
+                    print("Attributes in artifact id (in output DB)# ", str(row["artifact_id"]), " encountered an error: ", str(e))
+                    print() 
                     looptry = False
                     artifact_fail += 1
                     database_log.write('Error Extracting Attributes')
@@ -177,33 +180,29 @@ class TskDbDiff(object):
                 if(looptry == True):
                     src = attributes[0][0]
                     for attr in attributes:
-                        val = 3 + attr[2]
+                        attr_value_index = 3 + attr["value_type"]
                         numvals = 0
                         for x in range(3, 6):
                             if(attr[x] != None):
                                 numvals += 1
                         if(numvals > 1):
-                            msg = "There were too many values for attribute type: " + attr[1] + " for artifact with id #" + str(rw[3]) + ".\n"
-                        if(not attr[0] == src):
-                            msg ="There were inconsistent sources for artifact with id #" + str(rw[3]) + ".\n"
+                            msg = "There were too many values for attribute type: " + attr["display_name"] + " for artifact with id #" + str(row["artifact_id"]) + ".\n"
+                        if(not attr["source"] == src):
+                            msg = "There were inconsistent sources for artifact with id #" + str(row["artifact_id"]) + ".\n"
                         try:
-                            database_log.write('<attribute source="' + attr[0] + '" type="' + attr[1] + '" value="')
-                            inpval = attr[val]
-                            if((type(inpval) != 'unicode') or (type(inpval) != 'str')):
-                                inpval = str(inpval)
-                            patrn = re.compile("[\n\0\a\b\r\f\e]")
-                            inpval = re.sub(patrn, ' ', inpval)
-                            database_log.write(inpval)
+                            attr_value_as_string = str(attr[attr_value_index])
+                            #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
+                            #    attr_value_as_string = str(attr_value_as_string)
+                            patrn = re.compile("[\n\0\a\b\r\f]")
+                            attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
+                            database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
                         except IOError as e:
+                            print("IO error")
                             raise TskDbDiffException("Unexpected IO error while writing to database log." + str(e))
-
-                        database_log.write('" />')
+                
                 database_log.write(' <artifact/>\n')
-                rw = autopsy_cur2.fetchone()
+                row = artifact_cursor.fetchone()
 
-            # Now sort the file
-            srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
-            subprocess.call(srtcmdlst)
             print(artifact_fail)
             if(artifact_fail > 0):
                 msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
@@ -211,6 +210,10 @@ class TskDbDiff(object):
             raise TskDbDiffException("Unexpected error while dumping blackboard database: " + str(e))
         finally:
             database_log.close()
+        
+        # Now sort the file
+        srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
+        subprocess.call(srtcmdlst)
 
     def _dump_output_db_nonbb(db_file, dump_file):
         """Dumps a database to a text file.
@@ -224,7 +227,7 @@ class TskDbDiff(object):
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         conn = sqlite3.connect(backup_db_file)
-
+        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         # Delete the blackboard tables
         conn.execute("DROP TABLE blackboard_artifacts")
         conn.execute("DROP TABLE blackboard_attributes")
@@ -266,14 +269,14 @@ def main():
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
         sys.exit()
 
-    db_diff = TskDbDiff(output_db, gold_db)
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:
         print("Database comparison passed.")
-    elif not dump_passed:
+    if not dump_passed:
         print("Non blackboard database comparison failed.")
-    elif not bb_dump_passed:
+    if not bb_dump_passed:
         print("Blackboard database comparison failed.")
 
     return 0

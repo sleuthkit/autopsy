@@ -71,7 +71,7 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
+        ss.put(new NodeProperty<>("Filter Type",
                 "Filter Type",
                 "no description",
                 filter.getDisplayName()));

@@ -75,11 +75,11 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
+        ss.put(new NodeProperty<>("Name", "Name", "no description", getName()));
 
         final String NO_DESCR = "no description";
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
         // @@@ add more properties here...
 

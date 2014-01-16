@@ -64,7 +64,7 @@ public class ViewsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
+        ss.put(new NodeProperty<>("Name",
                 "Name",
                 "no description",
                 NAME));

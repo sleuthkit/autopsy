@@ -13,7 +13,8 @@
     <attr name="Menu\File\Separator4.instance_hidden\position" intvalue="400"/>-->
 
     <folder name="OptionsDialog"> 
-        <folder name="General.instance_hidden"/>
+        <!--<folder name="General.instance_hidden"/>-->
+        <file name="General.instance"/>
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->

@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Utilities {
 
+    @SuppressWarnings("cast")
     public static void configureTextPaneAsHtml(JTextPane pane) {
         pane.setContentType("text/html;charset=UTF-8");
         HTMLEditorKit kit = new HTMLEditorKit();

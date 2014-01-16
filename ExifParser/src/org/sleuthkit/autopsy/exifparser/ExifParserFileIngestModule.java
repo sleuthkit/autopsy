@@ -199,6 +199,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
      */
     private boolean parsableFormat(AbstractFile f) {
         return ImageUtils.isJpegFileHeader(f);
+    @SuppressWarnings("unchecked")
     }
 
     @Override

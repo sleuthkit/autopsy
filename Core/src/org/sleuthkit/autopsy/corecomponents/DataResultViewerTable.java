@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = "Name";
+    @SuppressWarnings("rawtypes")
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
@@ -174,6 +175,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param parent Node with at least one child to get properties from
      * @return Properties,
      */
+    @SuppressWarnings("rawtypes")
     private Node.Property[] getAllChildPropertyHeaders(Node parent) {
         Node firstChild = parent.getChildren().getNodeAt(0);
 
@@ -425,6 +427,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param table the object table
      * @return max the maximum width of the column
      */
+    @SuppressWarnings("rawtypes")
     private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property> header, Object[][] table) {
         // set the tree (the node / names column) width
         String headerName = header.get(index - 1).getDisplayName();

@@ -127,7 +127,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
+            ss.put(new NodeProperty<>("Name",
                     "Name",
                     "no description",
                     NAME));
@@ -191,7 +191,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty("Filter Type",
+                ss.put(new NodeProperty<>("Filter Type",
                         "Filter Type",
                         "no description",
                         filter.getDisplayName()));
@@ -211,7 +211,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private DeletedContent.DeletedContentFilter filter;
             private final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
             
-        private static final int MAX_OBJECTS = 2001;
+        private static final int MAX_OBJECTS = 10001;
 
             DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase) {
                 this.skCase = skCase;

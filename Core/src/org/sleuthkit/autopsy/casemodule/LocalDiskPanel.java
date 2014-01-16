@@ -52,7 +52,7 @@ public class LocalDiskPanel extends JPanel  {
     
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = null;
-    private List<LocalDisk> disks = new ArrayList<LocalDisk>();
+    private List<LocalDisk> disks;
     private LocalDiskModel model;
     private boolean enableNext = false;
 
@@ -60,6 +60,7 @@ public class LocalDiskPanel extends JPanel  {
      * Creates new form LocalDiskPanel
      */
     public LocalDiskPanel() {
+        this.disks = new ArrayList<LocalDisk>();
         initComponents();
         customInit();
         
@@ -98,7 +99,7 @@ public class LocalDiskPanel extends JPanel  {
     private void initComponents() {
 
         diskLabel = new javax.swing.JLabel();
-        diskComboBox = new javax.swing.JComboBox();
+        diskComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox<String>();
@@ -293,13 +294,21 @@ public class LocalDiskPanel extends JPanel  {
         private Object selected;
         private boolean ready = false;
         private volatile boolean loadingDisks = false;
+        List<LocalDisk> partitions = new ArrayList<>();
         List<LocalDisk> physical = new ArrayList<LocalDisk>();
         List<LocalDisk> partitions = new ArrayList<LocalDisk>();
         
         //private String SELECT = "Select a local disk:";
+        private String LOADING_STR = "Loading local disks...";
         private String LOADING = "Loading local disks...";
         LocalDiskThread worker = null;
         
+        private LocalDisk LOADING = new LocalDisk("", "", 0L) {
+            @Override
+            public String toString() {
+                return LOADING_STR;
+            }
+        };
         
         private void loadDisks() {
            
@@ -310,9 +319,9 @@ public class LocalDiskPanel extends JPanel  {
             
             // Clear the lists
             errorLabel.setText("");
-            disks = new ArrayList<LocalDisk>();
-            physical = new ArrayList<LocalDisk>();
-            partitions = new ArrayList<LocalDisk>();
+            disks = new ArrayList<>();
+            physical = new ArrayList<>();
+            partitions = new ArrayList<>();
             diskComboBox.setEnabled(false);
             ready = false;
             enableNext = false;
@@ -327,7 +336,7 @@ public class LocalDiskPanel extends JPanel  {
         @Override
         public void setSelectedItem(Object anItem) {
             if(ready) {
-                selected = anItem;
+                selected = (LocalDisk) anItem;
                 enableNext = true;
                 pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             }
@@ -344,7 +353,7 @@ public class LocalDiskPanel extends JPanel  {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public LocalDisk getElementAt(int index) {
             return ready ? disks.get(index) : LOADING;
         }
 
@@ -357,7 +366,7 @@ public class LocalDiskPanel extends JPanel  {
         }
         
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends LocalDisk> list, LocalDisk value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
             if(index == physical.size() - 1) {
@@ -372,13 +381,14 @@ public class LocalDiskPanel extends JPanel  {
                 label.setForeground(list.getForeground());
             }
             
-            if(value !=null && value.equals(LOADING)) {
+            String localDiskString = value.toString();
+            if(localDiskString.equals(LOADING_STR)) {
                 Font font = new Font(label.getFont().getName(), Font.ITALIC, label.getFont().getSize()); 
-                label.setText(LOADING);
+                label.setText(LOADING_STR);
                 label.setFont(font);
                 label.setBackground(Color.GRAY);
             } else {
-                label.setText(value != null ? value.toString() : "");
+                label.setText(value.toString());
             }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));

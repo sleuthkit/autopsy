@@ -51,7 +51,7 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         return "size " + operator + " " + size;
     }
 
-    private String compareComboBoxToOperator(JComboBox compare) {
+    private String compareComboBoxToOperator(JComboBox<String> compare) {
         String compareSize = compare.getSelectedItem().toString();
 
         if (compareSize.equals("equal to")) {
