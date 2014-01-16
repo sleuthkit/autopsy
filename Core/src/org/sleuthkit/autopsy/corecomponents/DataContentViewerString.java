@@ -322,14 +322,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
-    @Deprecated
-    public void setDataView(Content dataSource, long offset, boolean reset) {
-        if (reset) {
-            resetComponent();
-            return;
-        }
-        setDataView(dataSource, offset);
-    }
     
     /**
      * Sets the DataView (The tabbed panel)
@@ -398,6 +390,30 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         outputViewPane.moveCaretPosition(0);
 
         this.setCursor(null);
+    }
+    
+    private void setDataView(StringContent dataSource) {
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            this.dataSource = null;
+
+            // set the data on the bottom and show it
+            String text = dataSource.getString();
+
+            nextPageButton.setEnabled(false);
+
+            prevPageButton.setEnabled(false);
+            currentPage = 1;
+
+            int totalPage = 1;
+            totalPageLabel.setText(Integer.toString(totalPage));
+            currentPageLabel.setText(Integer.toString(currentPage));
+            outputViewPane.setText(text); // set the output view
+            setComponentsVisibility(true); // shows the components that not needed
+            outputViewPane.moveCaretPosition(0);
+        } finally {
+            this.setCursor(null);
+        }
     }
 
     /**
@@ -493,29 +509,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         return this;
     }
 
-    private void setDataView(StringContent dataSource) {
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            this.dataSource = null;
-
-            // set the data on the bottom and show it
-            String text = dataSource.getString();
-
-            nextPageButton.setEnabled(false);
-
-            prevPageButton.setEnabled(false);
-            currentPage = 1;
-
-            int totalPage = 1;
-            totalPageLabel.setText(Integer.toString(totalPage));
-            currentPageLabel.setText(Integer.toString(currentPage));
-            outputViewPane.setText(text); // set the output view
-            setComponentsVisibility(true); // shows the components that not needed
-            outputViewPane.moveCaretPosition(0);
-        } finally {
-            this.setCursor(null);
-        }
-    }
 
     /* Show the right click menu only if evt is the correct mouse event */
     private void maybeShowPopup(java.awt.event.MouseEvent evt) {
