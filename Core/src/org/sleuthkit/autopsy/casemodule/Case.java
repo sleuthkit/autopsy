@@ -63,9 +63,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static String appName = null;
     /**
      * Property name that indicates the name of the current case has changed.
-     * Fired with the case is renamed, and when the current case is
-     * opened/closed/changed. The value is a String: the name of the case. The
-     * empty string ("") is used for no open case.
+     * When a case is opened, "old name" is empty string and "new name" is the name.
+     * When a case is closed, "old name" is the case name and "new name" is empty string.
+     * When a case is renamed, "old name" has the original name and "new name" has the new name. 
      */
     public static final String CASE_NAME = "caseName";
     /**
@@ -95,10 +95,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static final String CASE_DEL_DATA_SOURCE = "removeDataSource";
     /**
-     * Property name that indicates the currently open case has changed. The new
-     * value is the instance of the opened Case, or null if there is no open
-     * case. The old value is the instance of the closed Case, or null if there
-     * was no open case.
+     * Property name that indicates the currently open case has changed. 
+     * When a case is opened, the "new value" will be an instance of the opened
+     * Case object and the "old value" will be null.
+     * When a case is closed, the "new value" will be null and the "old value" 
+     * will be the instance of the Case object being closed. 
      */
     public static final String CASE_CURRENT_CASE = "currentCase";
     /**
@@ -231,22 +232,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Updates the current case to the given case and fires off the appropriate
      * property-change
      *
-     * @param newCase the new current case
+     * @param newCase the new current case or null if case is being closed
+     * 
      */
     private static void changeCase(Case newCase) {
 
+        // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
+        if (oldCase != null) {
+            doCaseChange(null); //closes windows, etc
+            pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
 
-        String oldCaseName = oldCase != null ? oldCase.name : "";
-
-        doCaseChange(null); //closes windows, etc
-        pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
-
-
-        doCaseNameChange("");
-        pcs.firePropertyChange(CASE_NAME, oldCaseName, "");
-
+            doCaseNameChange("");
+            pcs.firePropertyChange(CASE_NAME, oldCase.name, "");
+        }
 
         if (newCase != null) {
             currentCase = newCase;

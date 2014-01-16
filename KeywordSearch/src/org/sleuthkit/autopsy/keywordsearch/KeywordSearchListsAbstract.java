@@ -51,7 +51,11 @@ public abstract class KeywordSearchListsAbstract {
         changeSupport = new PropertyChangeSupport(this);
     }
 
-    //property support
+    /**
+     * Property change event support
+     *  In events: For all of these enums, the old value should be null, and 
+     *  the new value should be the keyword list name string.
+     */
     public enum ListsEvt {
 
         LIST_ADDED, LIST_DELETED, LIST_UPDATED
@@ -68,8 +72,8 @@ public abstract class KeywordSearchListsAbstract {
         return currentInstance;
     }
 
-    void addPropertyChangeListener(PropertyChangeListener l) {
-        changeSupport.addPropertyChangeListener(l);
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
     }
 
     private void prepopulateLists() {
@@ -303,7 +307,7 @@ public abstract class KeywordSearchListsAbstract {
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
-
+        
         return replaced;
     }
 
@@ -376,7 +380,7 @@ public abstract class KeywordSearchListsAbstract {
         //boolean saved = save();
 
         for (KeywordSearchList list : newLists) {
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());         
         }
         for (KeywordSearchList over : overwritten) {
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
@@ -399,6 +403,7 @@ public abstract class KeywordSearchListsAbstract {
             //deleted = save();
         }
         changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
+        
         return true;
 
     }

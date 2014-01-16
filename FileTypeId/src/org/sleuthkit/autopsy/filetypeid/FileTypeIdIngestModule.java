@@ -49,6 +49,7 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     private static int messageId = 0;
     private static long numFiles = 0;
     private static boolean skipKnown = true;
+    private static long MIN_FILE_SIZE = 512;
     
     private FileTypeIdSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
@@ -91,6 +92,10 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
         if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
+        
+        if (abstractFile.getSize() < MIN_FILE_SIZE) {
+             return ProcessResult.OK;        
+        }        
         
         try 
         {
