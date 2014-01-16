@@ -969,6 +969,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }
+        } else if ( type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT) || 
+                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) )   { 
+            Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
+            Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+             try {
+                String setName = null;
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                        setName = att.getValueString();
+                    }
+                }
+                treeNode = interestingItemsRootChildren.findChild(setName);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+            }
         } else {
             Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
             Children extractedChilds = extractedContent.getChildren();
