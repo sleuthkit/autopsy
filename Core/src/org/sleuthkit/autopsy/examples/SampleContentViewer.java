@@ -166,10 +166,7 @@ public class SampleContentViewer extends javax.swing.JPanel implements DataConte
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        if (isSupported == false) {
-            return 0;
-        }
+    public int isPreferred(Node node) {
         // we return 1 since this module will operate on nearly all files
         return 1;
     }

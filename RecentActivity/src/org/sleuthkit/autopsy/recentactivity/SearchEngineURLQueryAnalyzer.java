@@ -62,14 +62,14 @@ import org.xml.sax.SAXException;
  * To add search engines, edit SearchEngines.xml under RecentActivity
  *
  */
-public class SearchEngineURLQueryAnalyzer extends Extract {
+class SearchEngineURLQueryAnalyzer extends Extract {
 
     private IngestServices services;
     
-    public static final String MODULE_NAME = "Search Engine URL Query Analyzer";
-    public final static String MODULE_VERSION = "1.0";
+    private static final String MODULE_NAME = "Search Engine URL Query Analyzer";
+    private final static String MODULE_VERSION = "1.0";
     
-    public static final String XMLFILE = "SEUQAMappings.xml";
+    private static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
 
     

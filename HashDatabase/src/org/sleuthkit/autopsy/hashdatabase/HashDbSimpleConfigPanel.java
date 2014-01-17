@@ -146,7 +146,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                 HashDb db = hashDatabases.get(rowIndex);
                 boolean dbHasIndex = false;
                 try {
-                    dbHasIndex = db.hasLookupIndex();
+                    dbHasIndex = db.hasIndex();
                 }
                 catch (TskCoreException ex) {
                     Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + db.getHashSetName() + " hash database", ex);            

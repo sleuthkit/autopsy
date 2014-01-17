@@ -57,14 +57,14 @@ import org.xml.sax.SAXException;
  * and the second is a set that were customized for Autopsy to produce a more structured
  * output of XML so that we can parse and turn into blackboard artifacts. 
  */
-public class ExtractRegistry extends Extract {
+class ExtractRegistry extends Extract {
 
-    public Logger logger = Logger.getLogger(this.getClass().getName());
+    private Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     private String RR_FULL_PATH;
-    boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
-    boolean rrFullFound = false; // true if we found the full version of regripper
-    final public static String MODULE_VERSION = "1.0";
+    private boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
+    private boolean rrFullFound = false; // true if we found the full version of regripper
+    final private static String MODULE_VERSION = "1.0";
     private ExecUtil execRR;
 
     //hide public constructor to prevent from instantiation by ingest module loader
