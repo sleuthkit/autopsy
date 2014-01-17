@@ -36,6 +36,7 @@
         <ext>php</ext>
         <ext>php3</ext>
         <ext>phtml</ext>
+        <ext>adp</ext>        
         <ext>h</ext>
         <ext>hpp</ext>
         <ext>hxx</ext>
