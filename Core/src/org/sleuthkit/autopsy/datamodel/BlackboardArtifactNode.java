@@ -29,6 +29,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -129,13 +130,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
-            String actualExt = "";
-            int i = associated.getName().lastIndexOf(".");
-            if ((i > -1) && ((i + 1) < associated.getName().length())) {
-                actualExt = associated.getName().substring(i + 1).toLowerCase();
-            }                    
-            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, actualExt));        
-        
+            AbstractFile af = (AbstractFile)associated;
+            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, af.getNameExtension()));
+            
             try {
                 String actualMimeType = "";
                 ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
