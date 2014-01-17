@@ -243,9 +243,9 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
         
-    synchronized void indexHashDatabase(HashDb hashDb, boolean deleteIndexFile) {
+    synchronized void indexHashDatabase(HashDb hashDb) {
         hashDb.addPropertyChangeListener(this);
-        HashDbIndexer creator = new HashDbIndexer(hashDb, deleteIndexFile);
+        HashDbIndexer creator = new HashDbIndexer(hashDb);
         creator.execute();        
     }
     
@@ -788,7 +788,7 @@ public class HashDbManager implements PropertyChangeListener {
          * @throws TskCoreException 
          */
         public void addHashes(Content content, String comment) throws TskCoreException {
-            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
+            // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
@@ -812,23 +812,21 @@ public class HashDbManager implements PropertyChangeListener {
 
         public HashInfo lookUp(Content content) throws TskCoreException {
             HashInfo result = null;
-            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
+            // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
-                if (null != file.getMd5Hash()) {
-                    result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
-                }
+                result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
             }             
             return result;
         }         
 
-        boolean hasLookupIndex() throws TskCoreException {
+        boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
         }
 
         boolean hasIndexOnly() throws TskCoreException {
-            return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
+            return SleuthkitJNI.hashDatabaseIsIndexOnly(handle);        
         }
         
         boolean canBeReIndexed() throws TskCoreException {
@@ -847,11 +845,9 @@ public class HashDbManager implements PropertyChangeListener {
     private class HashDbIndexer extends SwingWorker<Object, Void> {
         private ProgressHandle progress = null;
         private HashDb hashDb = null;
-        private boolean deleteIndexFile = false;
 
-        HashDbIndexer(HashDb hashDb, boolean deleteIndexFile) {
+        HashDbIndexer(HashDb hashDb) {
             this.hashDb = hashDb;
-            this.deleteIndexFile = deleteIndexFile;
         };
 
         @Override
@@ -861,7 +857,7 @@ public class HashDbManager implements PropertyChangeListener {
             progress.start();
             progress.switchToIndeterminate();
             try {
-                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle, deleteIndexFile);
+                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle);
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
