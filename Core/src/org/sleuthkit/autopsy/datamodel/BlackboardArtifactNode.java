@@ -130,8 +130,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
-            AbstractFile af = (AbstractFile)associated;
-            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, af.getNameExtension()));
+            String ext = "";
+            if (associated instanceof AbstractFile) {
+                AbstractFile af = (AbstractFile) associated;
+                ext = af.getNameExtension();
+            }
+            ss.put(new NodeProperty("Extension", "Extension", NO_DESCR, ext));
             
             try {
                 String actualMimeType = "";
