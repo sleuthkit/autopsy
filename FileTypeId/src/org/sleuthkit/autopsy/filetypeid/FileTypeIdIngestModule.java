@@ -48,7 +48,8 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     private static long matchTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
-    private static boolean skipKnown = false;
+    private static boolean skipKnown = true;
+    private static long MIN_FILE_SIZE = 512;
     
     private FileTypeIdSimpleConfigPanel simpleConfigPanel;
     private IngestServices services;
@@ -91,6 +92,10 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
         if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
+        
+        if (abstractFile.getSize() < MIN_FILE_SIZE) {
+             return ProcessResult.OK;        
+        }        
         
         try 
         {
@@ -173,4 +178,15 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     public static void setSkipKnown(boolean flag) {
         skipKnown = flag;
     }
+    
+    /**
+     * Validate if a given mime type is in the detector's registry.
+     * @param mimeType Full string of mime type, e.g. "text/html"
+     * @return true if detectable
+     */
+    public static boolean isMimeTypeDetectable(String mimeType) {
+        FileTypeDetectionInterface detector = new TikaFileTypeDetector();         
+        return detector.isMimeTypeDetectable(mimeType);
+    }    
+    
 }
