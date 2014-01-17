@@ -74,7 +74,7 @@ def gitPull(TskOrAutopsy, branch):
     gppth = make_local_path("..", "GitPullOutput" + TskOrAutopsy + ".txt")
     attachl.append(gppth)
     gpout = open(gppth, 'a')
-    toPull = "https://www.github.com/sleuthkit/" + TskOrAutopsy
+    toPull = "https://www.github.com/alexjacks92/" + TskOrAutopsy
     call = ["git", "pull", toPull, branch]
     if TskOrAutopsy == "sleuthkit":
         ccwd = os.path.join("..", "..", "..", "sleuthkit")
