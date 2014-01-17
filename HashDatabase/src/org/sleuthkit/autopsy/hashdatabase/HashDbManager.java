@@ -816,7 +816,9 @@ public class HashDbManager implements PropertyChangeListener {
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
-                result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
+                if (null != file.getMd5Hash()) {
+                    result = SleuthkitJNI.lookupInHashDatabaseVerbose(file.getMd5Hash(), handle);
+                }
             }             
             return result;
         }         
