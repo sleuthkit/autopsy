@@ -222,6 +222,7 @@
         <ext>hta</ext>
         <ext>wpl</ext>
         <ext>htt</ext>
+        <ext>adp</ext>        
     </signature>
     <signature mimetype="image/jpeg">
         <ext>jpg</ext>        
