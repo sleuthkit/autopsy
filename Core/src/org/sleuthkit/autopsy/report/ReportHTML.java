@@ -34,11 +34,13 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.filesystems.FileUtil;
@@ -52,7 +54,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
@@ -60,8 +62,10 @@ public class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator;
     private static ReportHTML instance;
+    private static final int MAX_THUMBS_PER_PAGE = 1000;
     private Case currentCase;
     private SleuthkitCase skCase;
+    static Integer THUMBNAIL_COLUMNS = 5;
     
     private Map<String, Integer> dataTypes;
     private String path;
@@ -503,59 +507,6 @@ public class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
-
-    /**
-     * Saves a local copy of a tagged file and adds a row with a hyper link to 
-     * the file. The hyper link will be a thumbnail if the Content associated
-     * with the given ContentTag is an image.
-     * 
-     * @param row Values for each data cell in the row.
-     * @param contentTag A content tag to use to make the hyper link. 
-     */
-    public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
-        // Only handling AbstractFiles at present.
-        String tagName = contentTag.getName().getDisplayName();
-        AbstractFile file;
-        if (contentTag.getContent() instanceof AbstractFile) {
-            file = (AbstractFile)contentTag.getContent();
-            StringBuilder linkContent = new StringBuilder();
-            if (ImageUtils.thumbnailSupported(file)) {
-                linkContent.append("<img src=\"").append(prepareThumbnail(file)).append("\" />");
-            } else {
-                linkContent.append("View File");
-            }
-            addRowWithTaggedContentHyperlink(row, file, tagName, linkContent.toString());
-        }
-    }
-    
-    /**
-     * Saves a local copy of a tagged file and adds a row with a hyper link to 
-     * the file. The hyper link will be a thumbnail if the Content associated
-     * with the given BlackboardArtifactTag is an image.
-     * 
-     * @param row Values for each data cell in the row.
-     * @param artifactTag An artifact tag to use to make the hyper link. 
-     */
-    public void addRowWithTaggedContentHyperlink(List<String> row, BlackboardArtifactTag artifactTag) {
-        String tagName = artifactTag.getName().getDisplayName();
-        AbstractFile file;
-        try {
-            file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
-            return;
-        }
-        
-        // Only include content for images
-        if (ImageUtils.thumbnailSupported(file)) {
-            StringBuilder linkContent = new StringBuilder();
-            linkContent.append("<img src=\"").append(prepareThumbnail(file)).append("\" />");
-            addRowWithTaggedContentHyperlink(row, file, tagName, linkContent.toString());
-        } else {
-            row.add("");
-            this.addRow(row);
-        }
-    }
     
     /**
      * Saves a local copy of a tagged file and adds a row with a hyper link to 
@@ -566,7 +517,14 @@ public class ReportHTML implements TableReportModule {
      * @param tagName the name of the tag that the content was flagged by
      * @param linkHTMLContent the html that will be the body of the link
      */
-    private void addRowWithTaggedContentHyperlink(List<String> row, AbstractFile file, String tagName, String linkHTMLContent) {
+    public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
+        Content content = contentTag.getContent();
+        if (content instanceof AbstractFile == false) {
+            addRow(row);
+            return;
+        }
+        
+        AbstractFile file = (AbstractFile) content;
         // Don't make a local copy of the file if it is a directory or unallocated space.
         if (file.isDir() ||
             file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
@@ -578,7 +536,7 @@ public class ReportHTML implements TableReportModule {
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();
         localFilePath.append(path);            
-        localFilePath.append(tagName);
+        localFilePath.append(contentTag.getName().getDisplayName());
         File localFileFolder = new File(localFilePath.toString());
         if (!localFileFolder.exists()) { 
             localFileFolder.mkdirs();
@@ -611,9 +569,7 @@ public class ReportHTML implements TableReportModule {
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\"file:///");
         localFileLink.append(localFilePath.toString());
-        localFileLink.append("\">");
-        localFileLink.append(linkHTMLContent);
-        localFileLink.append("</a>");
+        localFileLink.append("\">View File</a>");
         row.add(localFileLink.toString());              
         
         StringBuilder builder = new StringBuilder();
@@ -634,7 +590,121 @@ public class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
+    
+    /**
+     * Add the body of the thumbnails table.
+     * @param images 
+     */
+    public void addThumbnailRows(List<Content> images) {
+        List<String> currentRow = new ArrayList<>();
+        int totalCount = 0;
+        int pages = 0;
+        for (Content content : images) {
+            if (currentRow.size() == THUMBNAIL_COLUMNS) {
+                addRow(currentRow);
+                currentRow.clear();
+            }
+            
+            if (totalCount == MAX_THUMBS_PER_PAGE) {
+                // manually set the row count so the count of items shown in the 
+                // navigation page reflects the number of thumbnails instead of
+                // the number of rows.
+                rowCount = totalCount;
+                totalCount = 0;
+                pages++;
+                endTable();
+                endDataType();
+                startDataType("Tagged Images - " + pages, "Tagged Results and Contents that contain images.");
+                List<String> emptyHeaders = new ArrayList<>();
+                for (int i = 0; i < THUMBNAIL_COLUMNS; i++) {
+                    emptyHeaders.add("");
+                }
+                startTable(emptyHeaders);
+            }
+            
+            if (failsContentCheck(content)) {
+                continue;
+            }
+            
+            AbstractFile file = (AbstractFile) content; 
+
+            String contentPath = saveContent(file);
+            String thumbnailPath = prepareThumbnail(file);
+            if (thumbnailPath == null) {
+                continue;
+            }
+            StringBuilder linkToThumbnail = new StringBuilder();
+            linkToThumbnail.append("<a href=\"file:///");
+            linkToThumbnail.append(contentPath);
+            linkToThumbnail.append("\">");
+            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" />");
+            linkToThumbnail.append("</a>");
+            currentRow.add(linkToThumbnail.toString());
+            
+            totalCount++;
+        }
         
+        if (currentRow.isEmpty() == false) {
+            int extraCells = THUMBNAIL_COLUMNS - currentRow.size();
+            for (int i = 0; i < extraCells; i++) {
+                // Finish out the row.
+                currentRow.add("");
+            }
+            addRow(currentRow);
+        }
+        
+        // manually set rowCount to be the total number of images.
+        rowCount = totalCount;
+    }
+    
+    private boolean failsContentCheck(Content c) {
+        if (c instanceof AbstractFile == false) {
+            return true;
+        }
+        AbstractFile file = (AbstractFile) c;
+        if (file.isDir() ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+            return true;
+        }
+        return false;
+    }
+    
+    public String saveContent(AbstractFile file) {
+        // Make a folder for the local file with the same tagName as the tag.
+        StringBuilder localFilePath = new StringBuilder();
+        localFilePath.append(path);            
+        localFilePath.append("tagged_images");
+        File localFileFolder = new File(localFilePath.toString());
+        if (!localFileFolder.exists()) { 
+            localFileFolder.mkdirs();
+        }
+
+        // Construct a file tagName for the local file that incorporates the file id to ensure uniqueness.
+        String fileName = file.getName();
+        String objectIdSuffix = "_" + file.getId();
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex != -1 && lastDotIndex != 0) {
+            // The file tagName has a conventional extension. Insert the object id before the '.' of the extension.
+            fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+        }
+        else {
+            // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
+            // Add the object id to the end of the file tagName.
+            fileName += objectIdSuffix;
+        }                                
+        localFilePath.append(File.separator);
+        localFilePath.append(fileName);
+
+        // If the local file doesn't already exist, create it now. 
+        // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
+        File localFile = new File(localFilePath.toString());
+        if (!localFile.exists()) {
+            ExtractFscContentVisitor.extract(file, localFile, null, null);
+        }
+        return localFilePath.toString();
+    }
+         
     /**
      * Return a String date for the long date given.
      * @param date date as a long
@@ -949,12 +1019,17 @@ public class ReportHTML implements TableReportModule {
     }
 
     private String prepareThumbnail(AbstractFile file) {
-        File thumbFile = ImageUtils.getIconFile(file, ImageUtils.ICON_SIZE_SMALL);
+        File thumbFile = ImageUtils.getIconFile(file, ImageUtils.ICON_SIZE_MEDIUM);
+        if (thumbFile.exists() == false) {
+            return null;
+        }
         try {
             File to = new File(thumbsPath);
-            FileUtil.copyFile(FileUtil.toFileObject(thumbFile), FileUtil.toFileObject(to), thumbFile.getName(), "");
+            FileObject from = FileUtil.toFileObject(thumbFile);
+            FileObject dest = FileUtil.toFileObject(to);
+            FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.");
+            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex);
         }
         
         return THUMBS_REL_PATH + thumbFile.getName();

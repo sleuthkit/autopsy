@@ -44,6 +44,7 @@ public class FileTypeIdSimpleConfigPanel extends javax.swing.JPanel {
 
         skipKnownCheckBox = new javax.swing.JCheckBox();
 
+        skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdSimpleConfigPanel.class, "FileTypeIdSimpleConfigPanel.skipKnownCheckBox.text")); // NOI18N
         skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdSimpleConfigPanel.class, "FileTypeIdSimpleConfigPanel.skipKnownCheckBox.toolTipText")); // NOI18N
         skipKnownCheckBox.addActionListener(new java.awt.event.ActionListener() {

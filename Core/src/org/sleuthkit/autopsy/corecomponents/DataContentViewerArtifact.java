@@ -34,12 +34,16 @@ import javax.swing.SwingWorker;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the Content represented by a Node.
@@ -326,18 +330,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node) {
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if(isSupported) {
-            if(artifact == null) {
-                return 3;
-            } 
-            else {
-                return 5;
-            }
+        if(artifact == null) {
+            return 3;
         } 
         else {
-            return 0;
+            return 5;
         }
     }
 
@@ -471,7 +470,31 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 index = artifacts.indexOf(artifact);
                 if (index == -1) {
                     index = 0;
-                }
+                } else {
+                    // if the artifact has an ASSOCIATED ARTIFACT, then we display the associated artifact instead
+                    try {
+                        for (BlackboardAttribute attr : artifact.getAttributes()) {
+                           if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                               long assocArtifactId = attr.getValueLong();
+                               int assocArtifactIndex = -1;
+                               for (BlackboardArtifact art: artifacts) {
+                                   if (assocArtifactId == art.getArtifactID()) {
+                                       assocArtifactIndex = artifacts.indexOf(art);
+                                       break;
+                                   }
+                               }
+                               if (assocArtifactIndex >= 0) {
+                                    index = assocArtifactIndex;
+                                }
+                               break;
+                           }
+                        }
+                    } 
+                    catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Couldn't get associated artifact to display in Content Viewer.", ex);
+                    }
+               }
+                    
             }        
 
             if (isCancelled()) {

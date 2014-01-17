@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.Long;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -128,7 +127,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
     private boolean initialized = false;
-    private KeywordSearchConfigurationPanel panel;
+    private KeywordSearchIngestSimplePanel simpleConfigPanel;
+    private KeywordSearchConfigurationPanel advancedConfigPanel;
     private Tika tikaFormatDetector;
     
 
@@ -302,7 +302,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         commitTimer.stop();
         searchTimer.stop();
         commitTimer = null;
-        searchTimer = null;
+        //searchTimer = null; // do not collect, final searcher might still be running, in which case it throws an exception
 
         textExtractors.clear();
         textExtractors = null;
@@ -436,26 +436,36 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
         KeywordSearchListsXML.getCurrent().reload();
-        return new KeywordSearchIngestSimplePanel();
+        
+        if (null == simpleConfigPanel) {
+           simpleConfigPanel = new KeywordSearchIngestSimplePanel();  
+        }
+        else {
+            simpleConfigPanel.load();
+        }
+        
+        return simpleConfigPanel;
     }
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration(String context) {
-        //return KeywordSearchConfigurationPanel.getDefault();
-        getPanel().load();
-        return getPanel();
-    }
-
-    private KeywordSearchConfigurationPanel getPanel() {
-        if (panel == null) {
-            panel = new KeywordSearchConfigurationPanel();
+        if (advancedConfigPanel == null) {
+            advancedConfigPanel = new KeywordSearchConfigurationPanel();
         }
-        return panel;
+        
+        advancedConfigPanel.load();
+        return advancedConfigPanel;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
-        getPanel().store();
+        if (advancedConfigPanel != null) {
+            advancedConfigPanel.store();
+        }
+        
+        if (simpleConfigPanel != null) {
+            simpleConfigPanel.load();
+        }
     }
 
     @Override

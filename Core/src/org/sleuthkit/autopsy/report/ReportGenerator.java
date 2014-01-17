@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -345,6 +346,8 @@ public class ReportGenerator {
         private List<ARTIFACT_TYPE> artifactTypes  = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
         
+        private List<Content> images = new ArrayList<>();
+        
         TableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
             // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
@@ -384,6 +387,7 @@ public class ReportGenerator {
             makeBlackboardArtifactTables();
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
+            makeThumbnailTable();
             
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).complete();
@@ -520,7 +524,8 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (ContentTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                                                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) { 
+                    checkIfTagHasImage(tag);
                     ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
                     for (TableReportModule module : tableModules) {                                                                                       
                         // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
@@ -569,30 +574,17 @@ public class ReportGenerator {
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }                        
                 module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());  
-                String[] tableHeaders;
-                if (module instanceof ReportHTML) {
-                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File", "Thumbnail"};
-                } else {
-                    tableHeaders = new String[] {"Result Type", "Tag", "Comment", "Source File"};
-                }
-                module.startTable(new ArrayList<>(Arrays.asList(tableHeaders)));
+                module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
             }
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {                               
+                if (passesTagNamesFilter(tag.getName().getDisplayName())) {          
+                    checkIfTagHasImage(tag);
                     List<String> row;
-                    File thumbFile;
                     for (TableReportModule module : tableModules) {
-                        // We have specific behavior if the module is a ReportHTML.
-                        // We add a thumbnail if the artifact is associated with an
-                        // image file.
                         row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
-                        if (module instanceof ReportHTML) {
-                            ((ReportHTML) module).addRowWithTaggedContentHyperlink(row, tag);
-                        } else {
-                            module.addRow(row); 
-                        }
+                        module.addRow(row);
                     }
                 }
             }                
@@ -617,6 +609,64 @@ public class ReportGenerator {
                     iter.remove();
                 }
             }            
+        }
+
+        private void makeThumbnailTable() {
+            for (TableReportModule module : tableModules) {
+                tableProgress.get(module).updateStatusLabel("Now processing Tagged Images..."); 
+                
+                if (module instanceof ReportHTML) {
+                    ReportHTML htmlModule = (ReportHTML) module;
+                    htmlModule.startDataType("Tagged Images", "Tagged Results and Contents that contain images.");
+                    List<String> emptyHeaders = new ArrayList<>();
+                    for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
+                        emptyHeaders.add("");
+                    }
+                    htmlModule.startTable(emptyHeaders);
+                    htmlModule.addThumbnailRows(images);
+                    htmlModule.endTable();
+                    htmlModule.endDataType();
+                }
+            }
+        }
+        
+        private void checkIfTagHasImage(BlackboardArtifactTag artifactTag) {
+            AbstractFile file;
+            try {
+                file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
+                return;
+            }
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
+
+            // Only include content for images
+            if (ImageUtils.thumbnailSupported(file)) {
+                images.add(file);
+            }
+        }
+        
+        private void checkIfTagHasImage(ContentTag contentTag) {
+            Content c = contentTag.getContent();
+            if (c instanceof AbstractFile == false) {
+                return;
+            }
+            AbstractFile file = (AbstractFile) c;
+            
+            if (file.isDir() ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+                return;
+            }
+            
+            if (ImageUtils.thumbnailSupported(c)) {
+                images.add(c);
+            }
         }
     }
         
@@ -1016,6 +1066,9 @@ public class ReportGenerator {
             case TSK_TOOL_OUTPUT: 
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
                 break;
+            case TSK_ENCRYPTION_DETECTED:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Source File"}));
+                break;
             default:
                 return null;
         }
@@ -1340,6 +1393,10 @@ public class ReportGenerator {
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
+                 case TSK_ENCRYPTION_DETECTED:
+                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                     orderedRowData.add(getFileUniquePath(getObjectID()));
+                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
 

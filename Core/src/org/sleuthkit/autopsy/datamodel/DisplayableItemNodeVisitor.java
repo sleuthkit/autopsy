@@ -27,6 +27,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
@@ -84,7 +86,11 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(EmailExtractedFolderNode eefn);
 
     T visit(TagsNode node);
+    
+    T visit(InterestingHitsRootNode ihrn);
 
+    T visit(InterestingHitsSetNode ihsn);
+    
     T visit(TagNameNode node);
 
     T visit(ContentTagTypeNode node);    
@@ -237,7 +243,17 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(HashsetHitsSetNode hhsn) {
             return defaultVisit(hhsn);
         }
+        
+         @Override
+        public T visit(InterestingHitsRootNode ihrn) {
+            return defaultVisit(ihrn);
+        }
 
+        @Override
+        public T visit(InterestingHitsSetNode ihsn) {
+            return defaultVisit(ihsn);
+        }
+        
         @Override
         public T visit(EmailExtractedRootNode eern) {
             return defaultVisit(eern);
