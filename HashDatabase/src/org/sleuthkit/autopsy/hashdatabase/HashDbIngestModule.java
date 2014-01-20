@@ -237,10 +237,10 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                     ArrayList<String> comments = hashInfo.getComments();
                     int i = 0;
                     for (String c : comments) {
-                        comment += c;
                         if (++i > 1) {
-                            c += ". ";
+                            comment += " ";
                         }
+                        comment += c;
                         if (comment.length() > MAX_COMMENT_SIZE) {
                             comment = comment.substring(0, MAX_COMMENT_SIZE) + "...";
                             break;
