@@ -72,7 +72,6 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String ALWAYS_CALCULATE_HASHES_ELEMENT = "hash_calculate";
     private static final String VALUE_ATTRIBUTE = "value";
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; 
-    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private static HashDbManager instance = null;        
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
@@ -626,13 +625,6 @@ public class HashDbManager implements PropertyChangeListener {
         File database = new File(configuredPath);
         if (database.exists()) {
             return configuredPath;
-        }
-
-        // Try a path that could be in an older version of the configuration file.
-        String legacyPath = configuredPath + LEGACY_INDEX_FILE_EXTENSION;
-        database = new File(legacyPath); 
-        if (database.exists()) {
-            return legacyPath;
         }
         
         // Give the user an opportunity to find the desired file.
