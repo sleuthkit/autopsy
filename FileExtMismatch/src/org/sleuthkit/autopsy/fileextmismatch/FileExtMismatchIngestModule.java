@@ -60,7 +60,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long numFiles = 0;
     private static boolean skipKnown = false;
     private static boolean skipNoExt = true;
-    
+    private static boolean skip_plain_text_bool = false;  
+     
     private int attrId = -1;
     private int attrId2 = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
@@ -152,7 +153,13 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
                 for (BlackboardAttribute att : atrList) {
                     if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
                         currActualSigType = att.getValueString();
-                        
+                        if (skip_plain_text_bool)
+                        {
+                           if (!currActualExt.isEmpty()&&currActualSigType.equals("text/plain"))
+                           {
+                               return false;
+                           }
+                        }
                         //get known allowed values from the map for this type
                         String[] slist = SigTypeToExtMap.get(att.getValueString());
                         if (slist != null) {
@@ -262,6 +269,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public static void setSkipNoExt(boolean flag) {
         skipNoExt = flag;
     }               
-    
+    public static void setSkip_plain_text(boolean flag) {
+        skip_plain_text_bool = flag;
+    }
 }
 
