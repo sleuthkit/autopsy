@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
 
-public class ExtractIE extends Extract {
+class ExtractIE extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private IngestServices services;
     
@@ -77,7 +77,7 @@ public class ExtractIE extends Extract {
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;
     
-    final public static String MODULE_VERSION = "1.0";
+    final private static String MODULE_VERSION = "1.0";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
     private  ExecUtil execPasco;

@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author Alex
  */
-public class Util {
+class Util {
 
     private static Logger logger = Logger.getLogger(Util.class.getName());
 

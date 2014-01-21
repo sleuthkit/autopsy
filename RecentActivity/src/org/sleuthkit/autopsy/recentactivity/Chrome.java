@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Chrome recent activity extraction
  */
-public class Chrome extends Extract {
+class Chrome extends Extract {
 
     private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
@@ -65,8 +65,8 @@ public class Chrome extends Extract {
     private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    public int ChromeCount = 0;
-    final public static String MODULE_VERSION = "1.0";
+    private int ChromeCount = 0;
+    final private static String MODULE_VERSION = "1.0";
     private IngestServices services;
 
     //hide public constructor to prevent from instantiation by ingest module loader
