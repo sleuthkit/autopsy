@@ -331,7 +331,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
-
+            if (null != db.getBackupDatabasePath()) {
+                JOptionPane.showMessageDialog(null, "Updated case database schema.\nA backup copy of the database with the following path has been made:\n " + db.getBackupDatabasePath(), "Case Database Schema Update", JOptionPane.INFORMATION_MESSAGE);                
+            }
+            
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
