@@ -5,7 +5,7 @@ import java.awt.Image;
 /**
  *
  */
-public class VideoFrame {
+ class VideoFrame {
 
     private Image frame;
     private long timeMillis;

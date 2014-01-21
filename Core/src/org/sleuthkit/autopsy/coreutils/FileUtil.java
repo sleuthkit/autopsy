@@ -27,7 +27,7 @@ import org.openide.filesystems.FileObject;
 /**
  * File and dir utilities
  */
-public class FileUtil {
+ class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
 

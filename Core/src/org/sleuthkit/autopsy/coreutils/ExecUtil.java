@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Takes care of forking a process and reading output / error streams to either a
  * string buffer or directly to a file writer
  */
-public final class ExecUtil {
+ final class ExecUtil {
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
