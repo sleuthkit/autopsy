@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <mismatch_config>
+	<!-- Applications/Miscellaneous -->
     <signature mimetype="text/plain">
         <ext>txt</ext>
         <ext>ini</ext>
@@ -260,7 +261,9 @@
         <ext>hta</ext>
         <ext>wpl</ext>
         <ext>htt</ext>
-    </signature>
+	    <ext>shtml</ext>
+    </signature> 
+	<!-- Images -->
     <signature mimetype="image/jpeg">
         <ext>jpg</ext>        
         <ext>jpeg</ext>   
@@ -295,6 +298,7 @@
     <signature mimetype="image/x-icon">
         <ext>ico</ext>        
     </signature>     
+	<!-- Video -->
     <signature mimetype="video/mp4">
         <ext>mp4</ext>        
 		<ext>m4r</ext>  
@@ -351,7 +355,8 @@
     </signature>                         
     <signature mimetype="application/x-shockwave-flash">
         <ext>swf</ext>        
-    </signature>   
+    </signature> 
+	<!-- Audio -->
 	<signature mimetype="audio/x-aiff">
         <ext>aif</ext>
 		<ext>aiff</ext>
@@ -401,6 +406,7 @@
 	<signature mimetype="audio/ogg">
         <ext>ogg</ext>
     </signature> 
+	<!-- File Compression -->
 	<signature mimetype="application/x-rar-compressed">
         <ext>rar</ext>
     </signature> 
@@ -418,10 +424,7 @@
 	<signature mimetype="application/x-bzip">
         <ext>bzip</ext>
 		<ext>bz</ext>
-    </signature> 
-	<signature mimetype="application/x-bzip2">
-        <ext>bzip2</ext>
-    </signature> 
+    </signature>  
 	<signature mimetype="application/vnd.ms-cab-compressed">
         <ext>cab</ext>
     </signature> 
@@ -434,14 +437,8 @@
 	<signature mimetype="application/x-cpio">
         <ext>cpio</ext>
     </signature> 
-    <signature mimetype="test/html">
-        <ext>htm</ext>
-        <ext>html</ext>
-        <ext>shtml</ext>
-    </signature> 
+	<!-- Executables -->
     <signature mimetype="application/x-dosexec">
-        <ext>htm</ext>
-        <ext>html</ext>
-        <ext>shtml</ext>
+        <ext>exe</ext>
     </signature> 	
 </mismatch_config>
