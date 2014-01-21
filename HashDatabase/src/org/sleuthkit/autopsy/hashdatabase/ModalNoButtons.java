@@ -21,13 +21,9 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
@@ -42,7 +38,6 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
  */
 class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListener {
 
-    private static final String INDEX_FILE_EXTENSION = ".kdb";
     List<HashDb> unindexed;
     HashDb toIndex;
     HashDbConfigPanel hdbmp;
@@ -211,7 +206,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
         if (!this.toIndex.isIndexing()) {
             this.toIndex.addPropertyChangeListener(this);
-            HashDbManager.getInstance().indexHashDatabase(toIndex, okToDeleteOldIndexFile(toIndex));
+            HashDbManager.getInstance().indexHashDatabase(toIndex);
         }
     }
     
@@ -227,7 +222,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
             this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
             if (!db.isIndexing()) {
                 db.addPropertyChangeListener(this);
-                HashDbManager.getInstance().indexHashDatabase(db, okToDeleteOldIndexFile(db));
+                HashDbManager.getInstance().indexHashDatabase(db);
             }
         }
     }
@@ -255,23 +250,5 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);                
             }
         }
-    }
-    
-    private boolean okToDeleteOldIndexFile(HashDb hashDb) {
-        boolean deleteOldIndexFile =  true;        
-        try {
-            if (hashDb.hasLookupIndex()) {
-                String indexPath = hashDb.getIndexPath();
-                File indexFile = new File(indexPath);
-                if (!indexPath.endsWith(INDEX_FILE_EXTENSION)) {
-                    deleteOldIndexFile = JOptionPane.showConfirmDialog(this, "Updating index file format, delete " + indexFile.getName() + " file that uses the old file format?", "Delete Obsolete Index File", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-                }
-            }
-        }
-        catch (TskCoreException ex) {
-            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);                
-            JOptionPane.showMessageDialog(null, "Error gettting index information for " + hashDb.getHashSetName() + " hash database. Cannot perform indexing operation.", "Hash Database Index Status Error", JOptionPane.ERROR_MESSAGE);                                 
-        }
-        return deleteOldIndexFile;
-    }
+    }    
 }

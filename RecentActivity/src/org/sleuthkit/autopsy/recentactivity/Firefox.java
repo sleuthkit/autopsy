@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Firefox recent activity extraction
  */
-public class Firefox extends Extract {
+class Firefox extends Extract {
 
     private static final String historyQuery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
@@ -59,8 +59,7 @@ public class Firefox extends Extract {
     private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";
     private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3";
     
-    public int FireFoxCount = 0;
-    final public static String MODULE_VERSION = "1.0";
+    final private static String MODULE_VERSION = "1.0";
     private IngestServices services;
 
     //hide public constructor to prevent from instantiation by ingest module loader

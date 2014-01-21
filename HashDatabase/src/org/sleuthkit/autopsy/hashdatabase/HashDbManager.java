@@ -72,7 +72,6 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String ALWAYS_CALCULATE_HASHES_ELEMENT = "hash_calculate";
     private static final String VALUE_ATTRIBUTE = "value";
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; 
-    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private static HashDbManager instance = null;        
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
@@ -243,9 +242,9 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
         
-    synchronized void indexHashDatabase(HashDb hashDb, boolean deleteIndexFile) {
+    synchronized void indexHashDatabase(HashDb hashDb) {
         hashDb.addPropertyChangeListener(this);
-        HashDbIndexer creator = new HashDbIndexer(hashDb, deleteIndexFile);
+        HashDbIndexer creator = new HashDbIndexer(hashDb);
         creator.execute();        
     }
     
@@ -627,13 +626,6 @@ public class HashDbManager implements PropertyChangeListener {
         if (database.exists()) {
             return configuredPath;
         }
-
-        // Try a path that could be in an older version of the configuration file.
-        String legacyPath = configuredPath + LEGACY_INDEX_FILE_EXTENSION;
-        database = new File(legacyPath); 
-        if (database.exists()) {
-            return legacyPath;
-        }
         
         // Give the user an opportunity to find the desired file.
         String newPath = null;
@@ -788,7 +780,7 @@ public class HashDbManager implements PropertyChangeListener {
          * @throws TskCoreException 
          */
         public void addHashes(Content content, String comment) throws TskCoreException {
-            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
+            // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
@@ -812,7 +804,7 @@ public class HashDbManager implements PropertyChangeListener {
 
         public HashInfo lookUp(Content content) throws TskCoreException {
             HashInfo result = null;
-            // TODO: This only works for AbstractFiles and MD5 hashes at present. 
+            // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile)content;
@@ -823,12 +815,12 @@ public class HashDbManager implements PropertyChangeListener {
             return result;
         }         
 
-        boolean hasLookupIndex() throws TskCoreException {
+        boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);        
         }
 
         boolean hasIndexOnly() throws TskCoreException {
-            return SleuthkitJNI.hashDatabaseHasLegacyLookupIndexOnly(handle);        
+            return SleuthkitJNI.hashDatabaseIsIndexOnly(handle);        
         }
         
         boolean canBeReIndexed() throws TskCoreException {
@@ -847,11 +839,9 @@ public class HashDbManager implements PropertyChangeListener {
     private class HashDbIndexer extends SwingWorker<Object, Void> {
         private ProgressHandle progress = null;
         private HashDb hashDb = null;
-        private boolean deleteIndexFile = false;
 
-        HashDbIndexer(HashDb hashDb, boolean deleteIndexFile) {
+        HashDbIndexer(HashDb hashDb) {
             this.hashDb = hashDb;
-            this.deleteIndexFile = deleteIndexFile;
         };
 
         @Override
@@ -861,7 +851,7 @@ public class HashDbManager implements PropertyChangeListener {
             progress.start();
             progress.switchToIndeterminate();
             try {
-                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle, deleteIndexFile);
+                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle);
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
