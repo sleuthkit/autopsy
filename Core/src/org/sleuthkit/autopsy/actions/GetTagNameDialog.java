@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class GetTagNameDialog extends JDialog {
+ class GetTagNameDialog extends JDialog {
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagName tagName = null;

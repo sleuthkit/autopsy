@@ -28,7 +28,7 @@ import org.openide.util.actions.SystemAction;
 /**
  * This class is used to change / update the list of recent cases dynamically.
  */
-public class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
+ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
 
     int length;
     static boolean hasRecentCase = false;

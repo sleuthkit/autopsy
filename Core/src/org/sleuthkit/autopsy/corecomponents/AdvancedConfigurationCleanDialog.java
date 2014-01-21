@@ -15,7 +15,7 @@ import javax.swing.JPanel;
  * but the panel given to it. No additional buttons or features, except
  * the default close operation, which is set to dispose.
  */
-public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
+ class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
 
     /** Creates new form AdvancedConfigurationDialog */
     public AdvancedConfigurationCleanDialog() {
