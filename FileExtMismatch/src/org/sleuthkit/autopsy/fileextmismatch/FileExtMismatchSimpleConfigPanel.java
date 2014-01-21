@@ -46,6 +46,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
 
         skipKnownCheckBox = new javax.swing.JCheckBox();
         skipNoExtCheckBox = new javax.swing.JCheckBox();
+        Skip_text_plain = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipKnownCheckBox.text")); // NOI18N
@@ -64,25 +65,34 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
             }
         });
 
+        Skip_text_plain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.Skip_text_plain.text")); // NOI18N
+        Skip_text_plain.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Skip_text_plainActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(skipNoExtCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(127, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(Skip_text_plain)
+                    .addComponent(skipNoExtCheckBox)
+                    .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 57, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(11, 11, 11)
-                .addComponent(skipKnownCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipNoExtCheckBox)
-                .addContainerGap(152, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(Skip_text_plain)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(skipKnownCheckBox)
+                .addContainerGap(72, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -94,7 +104,13 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
         FileExtMismatchIngestModule.setSkipNoExt(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
+    private void Skip_text_plainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Skip_text_plainActionPerformed
+        FileExtMismatchIngestModule.setSkip_plain_text(Skip_text_plain.isSelected());
+       
+    }//GEN-LAST:event_Skip_text_plainActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox Skip_text_plain;
     private javax.swing.JCheckBox skipKnownCheckBox;
     private javax.swing.JCheckBox skipNoExtCheckBox;
     // End of variables declaration//GEN-END:variables
