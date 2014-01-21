@@ -83,16 +83,15 @@ public interface DataContentViewer {
      * Checks whether the given viewer is preferred for the Node. 
      * This is a bit subjective, but the idea is that Autopsy wants to display
      * the most relevant tab.  The more generic the viewer, the lower 
-     * the return value should be. 
+     * the return value should be. This will only be called on viewers that 
+     * support the given node. 
      * 
      * @param node Node to check for preference
-     * @param isSupported true if the viewer is supported by the node, false otherwise
-     * as determined by a previous check
      * @return an int (0-10) higher return means the viewer has higher priority
      * 0 means not supported
      * 1 to 2 means the module will display all file types (such as the hex viewer)
      * 3-10 are prioritized by Content viewer developer.  Modules that operate on very
      * few file types should be towards 10.
      */
-    public int isPreferred(Node node, boolean isSupported);
+    public int isPreferred(Node node);
 }

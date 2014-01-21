@@ -185,7 +185,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node) {
         return 1;
     }
 }

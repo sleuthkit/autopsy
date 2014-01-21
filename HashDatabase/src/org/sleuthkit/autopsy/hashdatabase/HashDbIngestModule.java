@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.datamodel.HashInfo;
 
 public class HashDbIngestModule extends IngestModuleAbstractFile {
     private static HashDbIngestModule instance = null;
@@ -164,7 +165,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         for (HashDb db : hashDbs) {
             if (db.getSearchDuringIngest()) {
                 try {
-                    if (db.hasLookupIndex()) {
+                    if (db.hasIndex()) {
                         hashDbsForIngest.add(db);
                     }
                 }
@@ -218,7 +219,8 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
-                if (db.hasMd5HashOf(file)) {
+                HashInfo hashInfo = db.lookUp(file);
+                if (null != hashInfo) {
                     foundBad = true;
                     knownBadCount += 1;
                     try {
@@ -231,14 +233,14 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                     }                    
                     String hashSetName = db.getHashSetName();
                     
-                    String comment = "";                    
-                    ArrayList<String> comments = db.lookUp(file).getComments();
+                    String comment = "";                   
+                    ArrayList<String> comments = hashInfo.getComments();
                     int i = 0;
                     for (String c : comments) {
-                        comment += c;
                         if (++i > 1) {
-                            c += ". ";
+                            comment += " ";
                         }
+                        comment += c;
                         if (comment.length() > MAX_COMMENT_SIZE) {
                             comment = comment.substring(0, MAX_COMMENT_SIZE) + "...";
                             break;

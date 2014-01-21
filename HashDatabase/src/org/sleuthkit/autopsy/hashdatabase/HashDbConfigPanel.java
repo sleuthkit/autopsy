@@ -50,7 +50,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private static final String NO_SELECTION_TEXT = "No database selected";
     private static final String ERROR_GETTING_PATH_TEXT = "Error occurred getting path";
     private static final String ERROR_GETTING_INDEX_STATUS_TEXT = "Error occurred getting status";
-    private static final String LEGACY_INDEX_FILE_EXTENSION = "-md5.idx";
     private HashDbManager hashSetManager = HashDbManager.getInstance();
     private HashSetTableModel hashSetTableModel = new HashSetTableModel();    
         
@@ -161,12 +160,9 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                 hashDbIndexStatusLabel.setForeground(Color.black);
                 indexButton.setEnabled(false);
             }         
-            else if (db.hasLookupIndex()) {
+            else if (db.hasIndex()) {
                 if (db.hasIndexOnly()) {
                     hashDbIndexStatusLabel.setText("Index only");                
-                }
-                else if (db.getIndexPath().endsWith(LEGACY_INDEX_FILE_EXTENSION)) {
-                    hashDbIndexStatusLabel.setText("Indexed (old format)");                                    
                 }
                 else {
                     hashDbIndexStatusLabel.setText("Indexed");
@@ -242,7 +238,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         List<HashDb> unindexed = new ArrayList<>();
         for (HashDb hashSet : hashSetManager.getAllHashSets()) {
             try {
-                if (!hashSet.hasLookupIndex()) {
+                if (!hashSet.hasIndex()) {
                     unindexed.add(hashSet);
                 }
             }
@@ -376,7 +372,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         
         private boolean indexExists(int rowIndex){
             try {
-                return hashSets.get(rowIndex).hasLookupIndex();
+                return hashSets.get(rowIndex).hasIndex();
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);                

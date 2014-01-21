@@ -226,25 +226,22 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        if (isSupported) {
-            //special case, check if deleted video, then do not make it preferred
-            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (file == null) {
-                return 0;
-            }
-            String name = file.getName().toLowerCase();
-            boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-
-            if (containsExt(name, videoExtensions) && deleted) {
-                return 0;
-            } 
-            else {
-                return 7;
-            }
-        } else {
+    public int isPreferred(Node node) {
+        //special case, check if deleted video, then do not make it preferred
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
             return 0;
         }
+        String name = file.getName().toLowerCase();
+        boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+
+        if (containsExt(name, videoExtensions) && deleted) {
+            return 0;
+        } 
+        else {
+            return 7;
+        }
+        
     }
 
     private static boolean containsExt(String name, String[] exts) {
