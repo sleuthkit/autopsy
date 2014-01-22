@@ -82,7 +82,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
                     .addComponent(skipTextPlain)
                     .addComponent(skipNoExtCheckBox)
                     .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 197, Short.MAX_VALUE))
+                .addGap(0, 327, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

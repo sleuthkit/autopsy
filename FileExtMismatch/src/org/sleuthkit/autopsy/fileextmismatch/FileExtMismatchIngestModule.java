@@ -133,12 +133,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
         try {
-            currActualExt = "";
-            int i = abstractFile.getName().lastIndexOf(".");
-            if ((i > -1) && ((i + 1) < abstractFile.getName().length())) {
-                currActualExt = abstractFile.getName().substring(i + 1).toLowerCase();
-            }
-            
+            currActualExt = abstractFile.getNameExtension();
+           
             // If we are skipping names with no extension
             if (skipNoExt && currActualExt.isEmpty()) {
                 return false;
