@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.FsContent;
  * specific Content attached; it is manually programmed into a Node's available
  * actions.
  */
-public class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
+class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
     private AbstractFile file;

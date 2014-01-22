@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Monitor health of the system and stop ingest if necessary
  */
- class IngestMonitor {
+ public class IngestMonitor {
 
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());

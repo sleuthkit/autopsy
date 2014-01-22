@@ -27,7 +27,7 @@ import java.util.Set;
  * Filter to restrict query only specific files, chunks, images
  * Single filter supports multiple ids per file/chunk/image, that act as OR filter
  */
-public class KeywordQueryFilter {
+class KeywordQueryFilter {
 
     public static enum FilterType {
 

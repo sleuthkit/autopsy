@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.coreutils;
  *
  * @author jwallace
  */
- class JLnkParserException extends Exception {
+ public class JLnkParserException extends Exception {
 
     /**
      * Constructs an instance of

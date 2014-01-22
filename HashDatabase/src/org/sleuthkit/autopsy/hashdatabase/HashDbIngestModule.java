@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashInfo;
 
-public class HashDbIngestModule extends IngestModuleAbstractFile {
+class HashDbIngestModule extends IngestModuleAbstractFile {
     private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";

@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
  *
  * @author dick
  */
- class JLNK {
+ public class JLNK {
     private int header;
     private byte[] linkClassIdentifier;
     private List<LinkFlags> linkFlags;

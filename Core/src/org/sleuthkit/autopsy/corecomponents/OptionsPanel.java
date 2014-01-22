@@ -7,7 +7,7 @@ package org.sleuthkit.autopsy.corecomponents;
 /**
  *
  */
- interface OptionsPanel {
+public interface OptionsPanel {
     
     /**
      * Store the current state of all options in this OptionsPanel.

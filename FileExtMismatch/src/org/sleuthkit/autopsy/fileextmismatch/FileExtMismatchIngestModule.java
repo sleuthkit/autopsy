@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
-public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
+ class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileExtMismatchIngestModule defaultInstance = null;
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
     public static final String MODULE_NAME = "File Extension Mismatch Detection";

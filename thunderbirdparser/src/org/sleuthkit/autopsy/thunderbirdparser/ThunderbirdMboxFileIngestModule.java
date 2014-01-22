@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskException;
  * File-level ingest module that detects MBOX files based on signature. 
  * Understands Thunderbird folder layout to provide additional structure and metadata.
  */
-public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
+class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;

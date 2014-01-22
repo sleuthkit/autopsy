@@ -65,7 +65,7 @@ import org.apache.solr.client.solrj.impl.XMLResponseParser;
 /**
  * Handles for keeping track of a Solr server and its cores
  */
-public class Server {
+class Server {
 
     // field names that are used in SOLR schema
     public static enum Schema {

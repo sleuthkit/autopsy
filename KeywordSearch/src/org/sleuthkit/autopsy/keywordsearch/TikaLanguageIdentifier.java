@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * TextLanguageIdentifier implementation based on a wrapped Tike
  * LanguageIdentifier
  */
-public class TikaLanguageIdentifier implements TextLanguageIdentifier {
+class TikaLanguageIdentifier implements TextLanguageIdentifier {
 
     private static final Logger logger = Logger.getLogger(TikaLanguageIdentifier.class.getName());
     private static final int MIN_STRING_LENGTH = 1000;

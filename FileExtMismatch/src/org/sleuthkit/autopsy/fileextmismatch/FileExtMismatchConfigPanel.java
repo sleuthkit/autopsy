@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
-public final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;

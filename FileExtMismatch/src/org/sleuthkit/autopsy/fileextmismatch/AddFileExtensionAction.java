@@ -31,7 +31,7 @@ import javax.swing.JOptionPane;
  * Do the context menu action for adding a new filename extension to 
  * the mismatch list for the MIME type of the selected node.
  */
-public class AddFileExtensionAction extends AbstractAction { 
+ class AddFileExtensionAction extends AbstractAction { 
     private String extStr;
     private String mimeTypeStr;
     

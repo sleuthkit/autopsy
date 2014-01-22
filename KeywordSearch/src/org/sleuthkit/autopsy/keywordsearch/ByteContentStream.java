@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.AbstractContent;
  * Stream of bytes representing string with specified encoding
  * to feed into Solr as ContentStream
  */
-public class ByteContentStream implements ContentStream {   
+class ByteContentStream implements ContentStream {   
     
     
     //input

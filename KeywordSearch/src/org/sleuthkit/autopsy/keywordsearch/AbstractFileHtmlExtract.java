@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-public class AbstractFileHtmlExtract implements AbstractFileExtract {
+ class AbstractFileHtmlExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;

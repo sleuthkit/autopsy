@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Submitted to user via IngestServices. 
  * Create using factory methods.
  */
- class IngestMessage {
+public class IngestMessage {
 
     /**
      * Level of message. 

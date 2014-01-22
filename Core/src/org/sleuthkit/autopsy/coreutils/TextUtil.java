@@ -23,7 +23,7 @@ import java.awt.ComponentOrientation;
 /**
  * Text utilities
  */
- class TextUtil {
+ public class TextUtil {
 
     /**
      * Determine and return text orientation

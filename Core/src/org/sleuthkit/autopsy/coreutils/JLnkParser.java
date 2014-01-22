@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
  * http://msdn.microsoft.com/en-us/library/windows/desktop/cc144090(v=vs.85).aspx#unknown_74413
  * http://blog.0x01000000.org/2010/08/10/lnk-parsing-youre-doing-it-wrong-i/
  */
- class JLnkParser {
+ public class JLnkParser {
     
     private byte[] content;
     private static final Logger logger = Logger.getLogger(JLnkParser.class.getName());

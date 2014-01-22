@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
+ class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
     
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
