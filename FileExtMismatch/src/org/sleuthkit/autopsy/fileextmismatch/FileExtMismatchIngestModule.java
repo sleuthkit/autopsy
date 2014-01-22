@@ -60,7 +60,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long numFiles = 0;
     private static boolean skipKnown = false;
     private static boolean skipNoExt = true;
-    
+    private static boolean skipTextPlain = false;  
+     
     private int attrId = -1;
     private int attrId2 = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
@@ -132,7 +133,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
         try {
-            currActualExt = abstractFile.getNameExtension();
+            currActualExt = "";
+            int i = abstractFile.getName().lastIndexOf(".");
+            if ((i > -1) && ((i + 1) < abstractFile.getName().length())) {
+                currActualExt = abstractFile.getName().substring(i + 1).toLowerCase();
+            }
             
             // If we are skipping names with no extension
             if (skipNoExt && currActualExt.isEmpty()) {
@@ -148,7 +153,13 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
                 for (BlackboardAttribute att : atrList) {
                     if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
                         currActualSigType = att.getValueString();
-                        
+                        if (skipTextPlain)
+                        {
+                           if (!currActualExt.isEmpty()&&currActualSigType.equals("text/plain"))
+                           {
+                               return false;
+                           }
+                        }
                         //get known allowed values from the map for this type
                         String[] slist = SigTypeToExtMap.get(att.getValueString());
                         if (slist != null) {
@@ -258,6 +269,8 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public static void setSkipNoExt(boolean flag) {
         skipNoExt = flag;
     }               
-    
+    public static void setSkipTextPlain(boolean flag) {
+        skipTextPlain = flag;
+    }
 }
 
