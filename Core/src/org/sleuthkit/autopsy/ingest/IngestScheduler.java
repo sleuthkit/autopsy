@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  * pipelines.
  *
  */
-public class IngestScheduler {
+class IngestScheduler {
     private static IngestScheduler instance;
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();

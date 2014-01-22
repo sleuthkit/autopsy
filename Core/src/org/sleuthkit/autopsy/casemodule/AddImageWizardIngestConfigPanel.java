@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * TODO: review this for dead code. think about moving logic of adding image to
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
-public class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
     private IngestConfigurator ingestConfig;

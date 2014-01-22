@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
-public class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
     /**
      * flag to indicate that the image adding process is finished and this panel

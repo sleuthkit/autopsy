@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 
-public final class GeneralPanel extends javax.swing.JPanel {
+final class GeneralPanel extends javax.swing.JPanel {
 
     private final GeneralOptionsPanelController controller;
     private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";

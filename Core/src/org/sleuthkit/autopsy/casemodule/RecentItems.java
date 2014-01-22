@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * This class is used to add the action to the recent case menu item. When the
  * the recent case menu is pressed, it should open that selected case.
  */
-public class RecentItems implements ActionListener {
+class RecentItems implements ActionListener {
 
     String caseName;
     String casePath;

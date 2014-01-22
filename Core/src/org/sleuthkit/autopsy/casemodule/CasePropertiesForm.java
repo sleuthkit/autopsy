@@ -44,7 +44,7 @@ import org.openide.util.actions.CallableSystemAction;
  *
  * @author jantonius
  */
-public class CasePropertiesForm extends javax.swing.JPanel{
+class CasePropertiesForm extends javax.swing.JPanel{
 
     Case current = null;
     private static JPanel caller;    // panel for error

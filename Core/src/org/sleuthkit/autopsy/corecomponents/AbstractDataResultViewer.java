@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Additionally, the ExplorerManager.Provider interface is implemented to 
  * supply an ExplorerManager to derived classes and their child components. 
  */
- public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
+ abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em;

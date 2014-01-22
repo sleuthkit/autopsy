@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 /**
  * main configuration panel for all ingest modules, reusable JPanel component
  */
- public class IngestDialogPanel extends javax.swing.JPanel {
+ class IngestDialogPanel extends javax.swing.JPanel {
 
     private IngestModuleAbstract currentModule;
     private ModulesTableModel tableModel;

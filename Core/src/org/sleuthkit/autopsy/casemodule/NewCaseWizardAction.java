@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Action to open the New Case wizard.
  */
- public final class NewCaseWizardAction extends CallableSystemAction {
+ final class NewCaseWizardAction extends CallableSystemAction {
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
     

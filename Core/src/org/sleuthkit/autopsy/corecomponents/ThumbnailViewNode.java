@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Content;
  * Node that wraps around original node and adds the bitmap icon representing
  * the picture
  */
-public class ThumbnailViewNode extends FilterNode {
+class ThumbnailViewNode extends FilterNode {
 
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;

@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * Allows the user to choose the data source type and then select the data source
  *
  */
-public final class AddImageWizardChooseDataSourceVisual extends JPanel {
+final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
     

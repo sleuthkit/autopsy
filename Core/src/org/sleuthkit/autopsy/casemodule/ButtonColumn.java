@@ -44,7 +44,7 @@ import javax.swing.table.*;
  *  the model row number of the button that was clicked.
  *
  */
-public class ButtonColumn extends AbstractCellEditor
+class ButtonColumn extends AbstractCellEditor
 	implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener
 {
 	private JTable table;

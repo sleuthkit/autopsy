@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Container for the image viewer part of media view, on a layered pane. To be
  * used with JavaFx image viewer only.
  */
- public class MediaViewImagePanel extends javax.swing.JPanel {
+ class MediaViewImagePanel extends javax.swing.JPanel {
 
     private JFXPanel fxPanel;
     private ImageView fxImageView;

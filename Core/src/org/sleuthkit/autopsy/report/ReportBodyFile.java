@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.*;
  * ReportBodyFile generates a report in the body file format specified on
  * The Sleuth Kit wiki as MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
- public class ReportBodyFile implements GeneralReportModule {
+ class ReportBodyFile implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
     private static ReportBodyFile instance = null;
     

@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Details panel within IngestMessagePanel
  */
-public class IngestMessageDetailsPanel extends javax.swing.JPanel {
+class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
     private IngestMessageMainPanel mainPanel;
 

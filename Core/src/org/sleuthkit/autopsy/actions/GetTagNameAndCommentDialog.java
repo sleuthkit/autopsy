@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
- public class GetTagNameAndCommentDialog extends JDialog {
+ class GetTagNameAndCommentDialog extends JDialog {
     private static final String NO_TAG_NAMES_MESSAGE = "No Tags";
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagNameAndComment tagNameAndComment = null;

@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the children filter so that files and such are hidden from the tree.
  *
  */
-public class DirectoryTreeFilterNode extends FilterNode {
+class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());

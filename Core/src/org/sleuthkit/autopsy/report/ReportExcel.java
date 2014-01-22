@@ -29,7 +29,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
- public class ReportExcel implements TableReportModule {
+ class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
     

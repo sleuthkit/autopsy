@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.Volume;
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
  */
-public abstract class AbstractContentChildren<T> extends Keys<T> {
+abstract class AbstractContentChildren<T> extends Keys<T> {
 
     private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
     private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();

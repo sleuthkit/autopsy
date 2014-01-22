@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
-public class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<WizardDescriptor>, PropertyChangeListener {
+class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<WizardDescriptor>, PropertyChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the

@@ -32,7 +32,7 @@ import javax.swing.event.DocumentListener;
  *
  * @author jantonius
  */
-public final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
+final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
 
     private JFileChooser fc = new JFileChooser();
     private NewCaseWizardPanel1 wizPanel;

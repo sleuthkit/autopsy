@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.Content;
  * Filter-node like class, but adds additional hierarchy (pages) as parents of
  * the filtered nodes.
  */
-public class ThumbnailViewChildren extends Children.Keys<Integer> {
+class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     static final int IMAGES_PER_PAGE = 200;
     private Node parent;

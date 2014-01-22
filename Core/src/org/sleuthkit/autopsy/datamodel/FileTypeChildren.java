@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Children factory for a specific file type - does the database query. 
  */
-public class FileTypeChildren extends ChildFactory<Content> {
+class FileTypeChildren extends ChildFactory<Content> {
 
     private SleuthkitCase skCase;
     private FileTypeExtensionFilters.SearchFilterInterface filter;

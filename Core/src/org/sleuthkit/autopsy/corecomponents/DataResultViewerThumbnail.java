@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 // service provider when DataResultViewers can be made compatible with node 
 // multi-selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
- public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded

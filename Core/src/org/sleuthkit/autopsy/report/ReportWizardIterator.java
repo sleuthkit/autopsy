@@ -27,7 +27,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbPreferences;
 
- public final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
     private int index;
     
     private ReportWizardPanel1 firstPanel;

@@ -27,7 +27,7 @@ import javax.swing.filechooser.FileFilter;
 /**
  * FileFilter helper class. Matches files based on extension
  */
- public class GeneralFilter extends FileFilter{
+ class GeneralFilter extends FileFilter{
 
     
     // Extensions & Descriptions for commonly used filters

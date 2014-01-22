@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * An abstract base class for Actions that allow users to tag SleuthKit data 
  * model objects.  
  */
-public abstract class AddTagAction extends TagAction implements Presenter.Popup { 
+abstract class AddTagAction extends TagAction implements Presenter.Popup { 
     private static final String NO_COMMENT = "";
     
     AddTagAction(String menuText) {

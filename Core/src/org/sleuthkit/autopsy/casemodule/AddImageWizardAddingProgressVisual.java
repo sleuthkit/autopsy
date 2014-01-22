@@ -28,7 +28,7 @@ import org.openide.WizardDescriptor;
  * visual component to display progress bar and status updates while adding an
  * image in the wizard
  */
- public class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
+ class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     private static final String ADDING_DATA_SOURCE_COMPLETE = "Adding Data Source - Complete";
     private String errorLog = "";

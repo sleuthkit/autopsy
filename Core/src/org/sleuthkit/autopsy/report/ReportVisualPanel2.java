@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
- public final class ReportVisualPanel2 extends JPanel {
+ final class ReportVisualPanel2 extends JPanel {
     private ReportWizardPanel2 wizPanel;
     
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();

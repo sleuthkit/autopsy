@@ -21,32 +21,29 @@
               <Component id="imageInfoLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace pref="78" max="32767" attributes="0"/>
           </Group>
-          <Group type="102" alignment="1" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="imgNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgTypeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgSectorSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgTotalSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgHashLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="imgNameValue" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgTypeValue" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgSectorSizeValue" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgTotalSizeValue" min="-2" max="-2" attributes="0"/>
-                          <Component id="imgHashValue" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="1" attributes="0">
-                      <Component id="OKButton" min="-2" pref="80" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="imgNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgTypeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgSectorSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgTotalSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgHashLabel" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="imgNameValue" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgTypeValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgSectorSizeValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgTotalSizeValue" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgHashValue" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="32767" attributes="0"/>
+              <Component id="OKButton" min="-2" pref="80" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -76,7 +73,10 @@
                               <Component id="imgTypeLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="imgSectorSizeLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <EmptySpace min="50" pref="50" max="-2" attributes="0"/>
+                              <Component id="imgSectorSizeLabel" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="imgTotalSizeLabel" min="-2" max="-2" attributes="0"/>

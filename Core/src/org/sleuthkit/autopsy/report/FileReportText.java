@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * 
  * @author jwallace
  */
- public class FileReportText implements FileReportModule {
+ class FileReportText implements FileReportModule {
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;
     private Writer out;
