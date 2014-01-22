@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 /**
  * Custom "About" window panel.
  */
-public class ProductInformationPanel extends JPanel implements HyperlinkListener {
+ class ProductInformationPanel extends JPanel implements HyperlinkListener {
 
     private URL url = null;
     private Icon about;

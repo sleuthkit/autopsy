@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
-public class ChangeViewAction extends AbstractAction implements Presenter.Popup {
+ class ChangeViewAction extends AbstractAction implements Presenter.Popup {
 
     private int type; // type 1 = hex view, 2 = string view
     private Node node;

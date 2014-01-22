@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
  *
  * @author jantonius
  */
-public class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
+ class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
 
     @Override
     public JComponent[] getMenuPresenters() {

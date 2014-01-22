@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Panel containing all other Keyword search Options panels.
  */
-public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
 
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;

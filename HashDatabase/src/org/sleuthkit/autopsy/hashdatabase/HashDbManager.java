@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class implements a singleton that manages the set of hash databases
  * used to classify files as unknown, known or known bad. 
  */
-public class HashDbManager implements PropertyChangeListener {
+class HashDbManager implements PropertyChangeListener {
     
     private static final String ROOT_ELEMENT = "hash_sets";
     private static final String SET_ELEMENT = "hash_set";

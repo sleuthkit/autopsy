@@ -26,7 +26,7 @@ import java.util.LinkedHashMap;
  * highlight the keyword hits and a version that does not do markup
  * so that you can simply view the stored text. 
  */
-public interface MarkupSource {
+interface MarkupSource {
 
     /**
      * @return text optionally marked up with the subsest of HTML that Swing

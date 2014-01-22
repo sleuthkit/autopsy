@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
-public class LocalDiskPanel extends JPanel  {
+ class LocalDiskPanel extends JPanel  {
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
     
     private static LocalDiskPanel instance;

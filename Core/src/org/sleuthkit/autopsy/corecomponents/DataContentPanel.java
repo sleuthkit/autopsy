@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
+ public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
     private final List<UpdateWrapper> viewers = new ArrayList<>();;

@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 /**
  * Simple ingest config panel
  */
-public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
+class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     
     private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
     public static final String PROP_OPTIONS = "Keyword Search_Options";

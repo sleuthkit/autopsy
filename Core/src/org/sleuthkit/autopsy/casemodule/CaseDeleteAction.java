@@ -66,7 +66,7 @@ import org.openide.util.actions.CallableSystemAction;
  * The action to delete the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
-public final class CaseDeleteAction extends CallableSystemAction {
+ final class CaseDeleteAction extends CallableSystemAction {
 
     private JPanel caller; // for error handling
     
