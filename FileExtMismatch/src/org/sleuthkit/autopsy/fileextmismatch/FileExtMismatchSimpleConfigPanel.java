@@ -46,7 +46,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
 
         skipKnownCheckBox = new javax.swing.JCheckBox();
         skipNoExtCheckBox = new javax.swing.JCheckBox();
-        SkipTextPlain = new javax.swing.JCheckBox();
+        skipTextPlain = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipKnownCheckBox.text")); // NOI18N
@@ -65,10 +65,10 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
             }
         });
 
-        SkipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.SkipTextPlain.text")); // NOI18N
-        SkipTextPlain.addActionListener(new java.awt.event.ActionListener() {
+        skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipTextPlain.text")); // NOI18N
+        skipTextPlain.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SkipTextPlainActionPerformed(evt);
+                skipTextPlainActionPerformed(evt);
             }
         });
 
@@ -79,7 +79,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(SkipTextPlain)
+                    .addComponent(skipTextPlain)
                     .addComponent(skipNoExtCheckBox)
                     .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 197, Short.MAX_VALUE))
@@ -89,7 +89,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(skipNoExtCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(SkipTextPlain)
+                .addComponent(skipTextPlain)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipKnownCheckBox)
                 .addContainerGap(72, Short.MAX_VALUE))
@@ -104,14 +104,14 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
         FileExtMismatchIngestModule.setSkipNoExt(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
-    private void SkipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SkipTextPlainActionPerformed
-        FileExtMismatchIngestModule.setSkip_plain_text(SkipTextPlain.isSelected());
+    private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
+        FileExtMismatchIngestModule.setSkipTextPlain(skipTextPlain.isSelected());
        
-    }//GEN-LAST:event_SkipTextPlainActionPerformed
+    }//GEN-LAST:event_skipTextPlainActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox SkipTextPlain;
     private javax.swing.JCheckBox skipKnownCheckBox;
     private javax.swing.JCheckBox skipNoExtCheckBox;
+    private javax.swing.JCheckBox skipTextPlain;
     // End of variables declaration//GEN-END:variables
 }
