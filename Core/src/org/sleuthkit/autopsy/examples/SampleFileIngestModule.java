@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
  * IngestModuleLoader will not load things from the org.sleuthkit.autopsy.examples package.
  * Either change the package or the loading code to make this module actually run. 
  */
-public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
+ class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private int attrId = -1;
     private static SampleFileIngestModule defaultInstance = null;
     

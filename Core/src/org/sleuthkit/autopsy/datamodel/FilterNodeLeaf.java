@@ -24,7 +24,7 @@ import org.openide.nodes.Node;
 /**
  * AbstractFile filter node that filters out the children
  */
-public class FilterNodeLeaf extends FilterNode {
+ class FilterNodeLeaf extends FilterNode {
 
     public FilterNodeLeaf(Node node) {
         super(node, Children.LEAF);

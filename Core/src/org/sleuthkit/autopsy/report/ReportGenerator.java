@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.TskException;
  * can be called to show report generation progress using ReportProgressPanel 
  * objects displayed using a dialog box.
  */
-public class ReportGenerator {
+ class ReportGenerator {
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
     
     private Case currentCase = Case.getCurrentCase();

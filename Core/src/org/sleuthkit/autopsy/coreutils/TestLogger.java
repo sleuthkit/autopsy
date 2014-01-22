@@ -28,7 +28,7 @@ import java.util.logging.Level;
 /*
  * Toolbar button for testing logging. Not a normal part of application.
  */
-public final class TestLogger implements ActionListener {
+ final class TestLogger implements ActionListener {
 
     static final Logger logger = Logger.getLogger(TestLogger.class.getName());
     Formatter fmt;

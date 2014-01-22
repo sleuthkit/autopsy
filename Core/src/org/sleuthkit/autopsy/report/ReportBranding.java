@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  *
  * Uses module settings property files to store customizations.
  */
-public final class ReportBranding implements ReportBrandingProviderI {
+ final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
     private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath";

@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
-public class FileSearchPanel extends javax.swing.JPanel {
+ class FileSearchPanel extends javax.swing.JPanel {
 
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;

@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Database connection class & utilities *
  */
-public class SQLiteDBConnect {
+ class SQLiteDBConnect {
 
     public String sDriver = "";
     public String sUrl = null;

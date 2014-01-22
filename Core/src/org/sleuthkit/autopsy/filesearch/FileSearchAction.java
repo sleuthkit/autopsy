@@ -26,7 +26,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
-public final class FileSearchAction extends CallableSystemAction implements FileSearchProvider{
+ final class FileSearchAction extends CallableSystemAction implements FileSearchProvider{
     
     private static FileSearchAction instance = null;
 

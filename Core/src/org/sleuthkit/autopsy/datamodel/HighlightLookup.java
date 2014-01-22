@@ -29,6 +29,6 @@ import org.sleuthkit.datamodel.Content;
  * @param isRegex whether the original query was a regex query
  * @param originalQuery (regex or literal) that may need to be performed again to get all ContentHit results
  */
-public interface HighlightLookup {
+ interface HighlightLookup {
     public HighlightLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

@@ -28,7 +28,7 @@ import org.openide.util.actions.Presenter;
  * Menu item that tracks available DataExplorers.
  * @author jantonius
  */
-public class DataExplorerMenu extends CallableSystemAction implements Presenter.Menu {
+class DataExplorerMenu extends CallableSystemAction implements Presenter.Menu {
 
     @Override
     public JMenuItem getMenuPresenter() {

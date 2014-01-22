@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author alawrence
  */
-public class KeyValueNode extends AbstractNode {
+ class KeyValueNode extends AbstractNode {
 
     private KeyValue data;
 

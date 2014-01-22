@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-public class ReportHTML implements TableReportModule {
+ class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator;
     private static ReportHTML instance;

@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
  * 
  * @author jantonius
  */
-public class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent{
+ class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent{
    DataExplorerDynamicMenu(){
     }
 

@@ -26,7 +26,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbPreferences;
 
-public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private ReportVisualPanel2 component;
     private JButton finishButton;
     private JButton nextButton;
