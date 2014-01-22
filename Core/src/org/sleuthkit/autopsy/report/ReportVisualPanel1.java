@@ -36,7 +36,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
- final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
+ public final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private ReportWizardPanel1 wizPanel;
     private List<ReportModule> modules = new ArrayList<>();

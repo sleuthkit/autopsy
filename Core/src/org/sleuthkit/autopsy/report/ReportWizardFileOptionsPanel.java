@@ -30,7 +30,7 @@ import org.openide.util.HelpCtx;
  * 
  * @author jwallace
  */
- class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>{
+ public class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>{
     private WizardDescriptor wiz;
     private ReportWizardFileOptionsVisualPanel component;
     private JButton finishButton;

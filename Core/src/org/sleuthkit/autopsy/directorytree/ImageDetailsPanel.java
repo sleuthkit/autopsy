@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
  *
  * @author jantonius
  */
-class ImageDetailsPanel extends javax.swing.JPanel {
+public class ImageDetailsPanel extends javax.swing.JPanel {
 
     /** Creates new form ImageDetailsPanel */
     ImageDetailsPanel() {

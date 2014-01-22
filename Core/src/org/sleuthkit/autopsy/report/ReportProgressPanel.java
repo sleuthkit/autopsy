@@ -27,7 +27,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 
- class ReportProgressPanel extends javax.swing.JPanel {
+ public class ReportProgressPanel extends javax.swing.JPanel {
     private ReportStatus STATUS;
     
     // Enum to represent if a report is waiting,

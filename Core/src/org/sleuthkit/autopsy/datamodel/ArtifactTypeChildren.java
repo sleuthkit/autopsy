@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @author dfickling
  */
-class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
+public class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
     
     private SleuthkitCase skCase;
     private BlackboardArtifact.ARTIFACT_TYPE type;

@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
-class CollapseAction extends AbstractAction {
+public class CollapseAction extends AbstractAction {
 
     CollapseAction(String title) {
         super(title);

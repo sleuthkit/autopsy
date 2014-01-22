@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * View the content associated with the given BlackboardArtifactNode
  */
-class ViewAssociatedContentAction extends AbstractAction {
+public class ViewAssociatedContentAction extends AbstractAction {
 
     private Content content;
 

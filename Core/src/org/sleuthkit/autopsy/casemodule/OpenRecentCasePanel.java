@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Panel show from the splash dialog that shows recent cases and allows them to
  * be opened.
  */
-class OpenRecentCasePanel extends javax.swing.JPanel {
+public class OpenRecentCasePanel extends javax.swing.JPanel {
 
     static String[] caseNames;
     static String[] casePaths;

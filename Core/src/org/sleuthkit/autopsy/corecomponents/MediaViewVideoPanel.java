@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Video viewer part of the Media View layered pane.
  * Uses different engines depending on platform.
  */
- abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
+ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
     
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     

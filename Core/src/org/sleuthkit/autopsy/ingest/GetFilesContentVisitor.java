@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.LayoutFile;
  * Abstract visitor for getting all the files from content
  * TODO should be moved to utility module (needs resolve cyclic deps)
  */
- abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
+ public abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
     private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 

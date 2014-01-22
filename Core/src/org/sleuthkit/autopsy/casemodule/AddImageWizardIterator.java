@@ -31,7 +31,7 @@ import org.openide.WizardDescriptor;
  * The iterator class for the "Add Image" wizard panel. This class is used to
  * iterate on the sequence of panels of the "Add Image" wizard panel.
  */
-class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+public class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index = 0;
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;

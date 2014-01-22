@@ -45,7 +45,7 @@ import org.openide.util.actions.Presenter;
  * The action to close the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
- final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar{
+ public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar{
 
     JButton toolbarButton = new JButton();
 

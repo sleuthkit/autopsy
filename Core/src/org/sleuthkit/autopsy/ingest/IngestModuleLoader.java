@@ -90,7 +90,7 @@ import org.w3c.dom.NodeList;
  * NOTE: this will be part of future IngestPipelineManager with IngestManager
  * code refactored
  */
- final class IngestModuleLoader {
+ public final class IngestModuleLoader {
 
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
     private static final String XSDFILE = "PipelineConfigSchema.xsd";

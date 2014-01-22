@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 /**
  * Abstraction for certain top level items displayed in the GUI
  */
- interface AutopsyVisitableItem {
+ public interface AutopsyVisitableItem {
 
     /**
      * visitor pattern support

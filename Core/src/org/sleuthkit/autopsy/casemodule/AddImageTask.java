@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskException;
  * It updates the given ProgressMonitor as it works through adding the image,
  * and et the end, calls the specified Callback.
  */
- class AddImageTask implements Runnable {
+public class AddImageTask implements Runnable {
 
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
         

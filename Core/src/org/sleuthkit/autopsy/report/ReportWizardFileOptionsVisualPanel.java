@@ -37,7 +37,7 @@ import javax.swing.event.ListDataListener;
  * 
  * @author jwallace
  */
-class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
+public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     private List<FileReportDataTypes> options;
     private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel model;

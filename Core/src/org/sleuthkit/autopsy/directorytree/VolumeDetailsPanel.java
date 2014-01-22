@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
 /**
  * This is the form / panel to show the Volume Details.
  */
-class VolumeDetailsPanel extends javax.swing.JPanel {
+public class VolumeDetailsPanel extends javax.swing.JPanel {
 
     /** Creates new form VolumeDetailPanel */
     VolumeDetailsPanel() {

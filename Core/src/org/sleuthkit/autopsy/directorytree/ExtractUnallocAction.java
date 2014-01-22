@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Extracts all the unallocated space as a single file
  */
- final class ExtractUnallocAction extends AbstractAction {
+ public final class ExtractUnallocAction extends AbstractAction {
 
     private final List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
     private static final List<String> lockedVols = new ArrayList<String>();

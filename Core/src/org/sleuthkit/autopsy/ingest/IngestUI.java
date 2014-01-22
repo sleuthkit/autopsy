@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * UI support for ingest
  */
- interface IngestUI {
+ public interface IngestUI {
     void displayMessage(final IngestMessage message);
     int getMessagesCount();
     void clearMessages();

@@ -26,7 +26,7 @@ import org.openide.util.Lookup;
  * Provides basic information such as ID, parent ID, etc.
  */
 
- abstract class ContentNode extends DisplayableItemNode{
+ public abstract class ContentNode extends DisplayableItemNode{
 
     public ContentNode(Children children) {
         super(children);

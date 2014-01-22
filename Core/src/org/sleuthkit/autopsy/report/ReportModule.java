@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.report;
 /**
  * Interface got report modules that plug in to the reporting infrastructure.
  */
- interface ReportModule {
+public interface ReportModule {
 
     /**
      * Get the name of the report this module generates.

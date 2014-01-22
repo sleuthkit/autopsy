@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
  */
- class CustomAboutAction extends AboutAction {
+public class CustomAboutAction extends AboutAction {
 
     @Override
     public void performAction() {

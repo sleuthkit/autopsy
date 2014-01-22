@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 
  
- class MissingImageDialog extends javax.swing.JDialog {
+ public class MissingImageDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
     long obj_id;
     SleuthkitCase db;

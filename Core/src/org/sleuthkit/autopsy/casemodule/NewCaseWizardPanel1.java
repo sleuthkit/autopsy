@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * data of wizard step. It defers creation and initialization of UI component of
  * wizard panel into getComponent() method.
  */
-class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+public class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
     /**
      * The visual component that displays this panel. If you need to access the

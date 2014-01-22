@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * past subclasses that aren't part of the exposed hierarchy (VolumeSystem,
  * FileSystem, and root Directories)
  */
- class ContentIdHierarchyVisitor extends ContentVisitor.Default<List<? extends Long>> {
+public class ContentIdHierarchyVisitor extends ContentVisitor.Default<List<? extends Long>> {
     private static final Logger logger = Logger.getLogger(ContentHierarchyVisitor.class.getName());
     private static final ContentIdHierarchyVisitor INSTANCE = new ContentIdHierarchyVisitor();
     

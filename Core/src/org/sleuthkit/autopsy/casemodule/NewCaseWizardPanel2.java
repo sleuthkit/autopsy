@@ -37,7 +37,7 @@ import org.openide.util.HelpCtx;
  *
  * @author jantonius
  */
-class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+public class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
     /**
      * The visual component that displays this panel. If you need to access the

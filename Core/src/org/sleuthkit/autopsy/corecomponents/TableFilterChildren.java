@@ -25,7 +25,7 @@ import org.openide.nodes.Node;
 /**
  * Complementary class to TableFilterNode.
  */
-class TableFilterChildren extends FilterNode.Children {
+public class TableFilterChildren extends FilterNode.Children {
 
     /** the constructor */
     TableFilterChildren(Node arg) {

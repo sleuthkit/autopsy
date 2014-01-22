@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Filters database results by file extension.
  */
- class FileTypeExtensionFilters implements AutopsyVisitableItem {
+ public class FileTypeExtensionFilters implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 

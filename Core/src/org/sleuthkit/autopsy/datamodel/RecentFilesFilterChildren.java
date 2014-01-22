@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author dfickling
  */
- class RecentFilesFilterChildren extends ChildFactory<Content> {
+ public class RecentFilesFilterChildren extends ChildFactory<Content> {
 
     private SleuthkitCase skCase;
     private RecentFilesFilter filter;

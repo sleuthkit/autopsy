@@ -45,7 +45,7 @@ import org.xml.sax.SAXException;
  *
  * @author jantonius
  */
- class XMLCaseManagement implements CaseConfigFileInterface {
+ public class XMLCaseManagement implements CaseConfigFileInterface {
 
     final static String XSDFILE = "CaseSchema.xsd";
     final static String TOP_ROOT_NAME = "AutopsyCase";

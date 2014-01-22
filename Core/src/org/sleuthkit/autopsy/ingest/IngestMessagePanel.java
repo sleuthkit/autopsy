@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Notification window showing messages from modules to user
  * 
  */
-class IngestMessagePanel extends JPanel implements TableModelListener {
+public class IngestMessagePanel extends JPanel implements TableModelListener {
 
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;

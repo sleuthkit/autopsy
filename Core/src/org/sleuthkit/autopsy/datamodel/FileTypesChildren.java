@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  *
  */
-class FileTypesChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
+public class FileTypesChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
     
     private SleuthkitCase skCase;
     private FileTypeExtensionFilters.RootFilter filter;

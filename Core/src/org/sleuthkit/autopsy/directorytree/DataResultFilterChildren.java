@@ -27,7 +27,7 @@ import org.openide.nodes.Node;
  * DataResultFilterNode that created in the DataResultFilterNode.java.
  *
  */
- class DataResultFilterChildren extends FilterNode.Children {
+ public class DataResultFilterChildren extends FilterNode.Children {
     
     ExplorerManager sourceEm;
 

@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * 
  * @author jwallace
  */
- interface FileReportModule extends ReportModule {
+ public interface FileReportModule extends ReportModule {
     /** 
      * Initialize the report which will be stored at the given path.
      * @param path 

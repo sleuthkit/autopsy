@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.Content;
  * Worker thread that runs a data source-level ingest module (image, file set virt dir, etc). 
  * Used to process only a single data-source and single module. 
  */
- class IngestDataSourceThread extends SwingWorker<Void, Void> {
+ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
     private final Logger logger = Logger.getLogger(IngestDataSourceThread.class.getName());
     private ProgressHandle progress;

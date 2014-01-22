@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 /**
  * Interface for startup window implementations
  */
- interface StartupWindowInterface {
+ public interface StartupWindowInterface {
 
     /**
      * Shows and makes active the startup window

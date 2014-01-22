@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.Content;
  *
  * @param T type of Ingest Module / Pipeline (file or data source content) associated with this task
  */
-class ScheduledTask<T extends IngestModuleAbstract> {
+public class ScheduledTask<T extends IngestModuleAbstract> {
 
     private Content input;
     private List<T> modules;

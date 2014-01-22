@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
- final class CasePropertiesAction extends CallableSystemAction {
+ public final class CasePropertiesAction extends CallableSystemAction {
 
     private static JDialog popUpWindow;
 

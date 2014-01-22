@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.casemodule;
  * The interface for the classes that edit the case configuration file
  */
 //TODO: check that this can just be deleted.
-interface CaseConfigFileInterface {
+public interface CaseConfigFileInterface {
     public void open(String conFilePath) throws Exception;  // opens the confiuation store (XML, DB...)
     public void writeFile() throws Exception;            // writes out the configuration to store
     public void close() throws Exception;                   // close and clear the document handler

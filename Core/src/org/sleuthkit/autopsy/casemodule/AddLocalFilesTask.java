@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
      * manager methods acquire the locks for each transaction when adding
      * logical files.
      */
- class AddLocalFilesTask implements Runnable {
+ public class AddLocalFilesTask implements Runnable {
 
     private Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
      

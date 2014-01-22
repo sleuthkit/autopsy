@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
- class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
+ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
 
     private SleuthkitCase skCase;
     private Calendar lastDay;

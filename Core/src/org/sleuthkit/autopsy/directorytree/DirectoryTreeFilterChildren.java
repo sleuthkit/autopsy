@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.Volume;
  * hides files, '..', and other children that should not be displayed. facility
  * to customize nodes view in dir tree: hide them or set no children
  */
-class DirectoryTreeFilterChildren extends FilterNode.Children {
+public class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     private final ShowItemVisitor showItemV = new ShowItemVisitor();
     private final IsLeafItemVisitor isLeafItemV = new IsLeafItemVisitor();

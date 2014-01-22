@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * is to implement StartupWindowInterface and register it with lookup as a ServiceProvider.
  * The custom startup window is automatically chosen over the default one, given it is the only external module custom startup window.
  */
- class StartupWindowProvider implements StartupWindowInterface {
+ public class StartupWindowProvider implements StartupWindowInterface {
 
     private static volatile StartupWindowProvider instance;
     private static final Logger logger = Logger.getLogger(StartupWindowProvider.class.getName());
