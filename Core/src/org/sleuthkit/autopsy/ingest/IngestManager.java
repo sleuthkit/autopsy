@@ -277,13 +277,13 @@ public class IngestManager {
     }
 
     /**
-     * Multiple data-sources version of execute() method. Enqueues multiple sources inputs (Content objects) 
+     * Multiple data-sources version of scheduleDataSource() method. Enqueues multiple sources inputs (Content objects) 
      * and associated modules at once
      *
-     * @param modules modules to execute on every data source
-     * @param inputs input data sources  to enqueue and execute the ingest modules on
+     * @param modules modules to scheduleDataSource on every data source
+     * @param inputs input data sources  to enqueue and scheduleDataSource the ingest modules on
      */
-    public void execute(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
+    public void scheduleDataSource(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
         logger.log(Level.INFO, "Will enqueue number of inputs: " + inputs.size() 
                 + " to " + modules.size() + " modules.");
 
@@ -310,14 +310,14 @@ public class IngestManager {
      * not block and can be called multiple times to enqueue more work to
      * already running background ingest process.
      *
-     * @param modules modules to execute on the data source input
-     * @param input input data source Content objects to execute the ingest modules on
+     * @param modules modules to scheduleDataSource on the data source input
+     * @param input input data source Content objects to scheduleDataSource the ingest modules on
      */
-    public void execute(final List<IngestModuleAbstract> modules, final Content input) {
+    public void scheduleDataSource(final List<IngestModuleAbstract> modules, final Content input) {
         List<Content> inputs = new ArrayList<Content>();
         inputs.add(input);
         logger.log(Level.INFO, "Will enqueue input: " + input.getName());
-        execute(modules, inputs);
+        scheduleDataSource(modules, inputs);
     }
 
     /**

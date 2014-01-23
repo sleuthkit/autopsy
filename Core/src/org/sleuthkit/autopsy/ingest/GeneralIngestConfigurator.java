@@ -197,7 +197,7 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
 
         if (!modulesToStart.isEmpty() && contentToIngest != null) {
             // Queue the ingest process.
-            manager.execute(modulesToStart, contentToIngest);
+            manager.scheduleDataSource(modulesToStart, contentToIngest);
         }
     }
 
