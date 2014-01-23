@@ -81,7 +81,7 @@ def gitPull(TskOrAutopsy, branch):
     print("Checking out " + branch)
     call = ["git", "checkout", branch]
     subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
-    toPull = "https://www.github.com/alexjacks92/" + TskOrAutopsy
+    toPull = "https://www.github.com/sleuthkit/" + TskOrAutopsy
     call = ["git", "pull", toPull, branch]
     if TskOrAutopsy == "sleuthkit":
         ccwd = os.path.join("..", "..", "..", "sleuthkit")
