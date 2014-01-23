@@ -392,7 +392,11 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
             mimeErrLabel.setText("MIME type text is empty!");
             return;
         }
-
+        if (newMime.equals( "application/octet-stream")){
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText("MIME type not supported!");
+            return;   
+        }
         if (mimeList.contains(newMime)) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText("MIME type already exists!");
