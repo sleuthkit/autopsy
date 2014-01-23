@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <mismatch_config>
+	<!-- Applications/Miscellaneous -->
     <signature mimetype="text/plain">
         <ext>txt</ext>
         <ext>ini</ext>
@@ -112,7 +113,45 @@
         <ext>winprf</ext>
         <ext>winprf_backup</ext>
         <ext>svg</ext>
-    </signature>
+		<ext>psp</ext>
+		<ext>jsp</ext>
+		<ext>oem</ext>
+		<ext>map</ext>
+		<ext>det</ext>
+		<ext>ins</ext>
+		<ext>ph</ext>
+		<ext>prx</ext>
+		<ext>sif</ext>
+		<ext>idl</ext>
+		<ext>isl</ext>
+		<ext>nld</ext>
+		<ext>sve</ext>
+		<ext>ita</ext>
+		<ext>fra</ext>
+		<ext>esn</ext>
+		<ext>enu</ext>
+		<ext>deu</ext>
+		<ext>sep</ext>
+		<ext>sve</ext>
+		<ext>cht</ext>
+		<ext>chs</ext>
+		<ext>psm</ext>
+		<ext>rq0</ext>
+		<ext>old</ext>
+	    <ext>eng</ext>
+		<ext>dlg</ext>
+		<ext>org</ext>
+		<ext>ic</ext>
+		<ext>ths</ext>
+		<ext>sig</ext>
+		<ext>std</ext>
+		<ext>cmp</ext>
+		<ext>stp</ext>
+		<ext>rst</ext>
+		<ext>lng</ext>
+		<ext>xdc</ext>
+		<ext>tha</ext>
+    </signature>sys
     <signature mimetype="application/x-msoffice">
         <ext>doc</ext>
         <ext>docx</ext>
@@ -222,10 +261,22 @@
         <ext>hta</ext>
         <ext>wpl</ext>
         <ext>htt</ext>
-    </signature>
+	    <ext>shtml</ext>
+    </signature> 
+	<!-- Images -->
     <signature mimetype="image/jpeg">
         <ext>jpg</ext>        
-        <ext>jpeg</ext>        
+        <ext>jpeg</ext>   
+        <ext>jpe</ext>        
+        <ext>jif</ext>   
+        <ext>jfif</ext>        
+        <ext>jfi</ext>   		
+    </signature>
+    <signature mimetype="image/vnd.adobe.photoshop">
+        <ext>psd</ext>              
+    </signature>
+	<signature mimetype="image/x-raw-nikon">
+        <ext>nef</ext>              
     </signature>
     <signature mimetype="image/tiff">
         <ext>tif</ext>
@@ -247,14 +298,19 @@
     <signature mimetype="image/x-icon">
         <ext>ico</ext>        
     </signature>     
+	<!-- Video -->
     <signature mimetype="video/mp4">
         <ext>mp4</ext>        
+		<ext>m4r</ext>  
     </signature>     
     <signature mimetype="video/quicktime">
         <ext>mov</ext>        
         <ext>qt</ext>        
         <ext>mp4</ext>                        
-    </signature>     
+    </signature>
+    <signature mimetype="application/vnd.rn-realmedia">
+        <ext>rm</ext>                         
+    </signature>	
     <signature mimetype="video/3gpp">
         <ext>3gp</ext>        
     </signature>     
@@ -271,6 +327,7 @@
     <signature mimetype="video/x-ms-asf">
         <ext>wmv</ext>
         <ext>asf</ext>
+		<ext>wma</ext>
     </signature>
     <signature mimetype="audio/x-ms-wma">
         <ext>wma</ext>
@@ -279,10 +336,17 @@
     <signature mimetype="video/mpeg">
         <ext>mpg</ext>                
         <ext>mpeg</ext>        
+        <ext>m1v</ext>        
+        <ext>m2v</ext>       
+        <ext>mpe</ext>        
+        <ext>mpv</ext>        
     </signature>                         
     <signature mimetype="video/x-flv">
         <ext>flv</ext>        
-    </signature>                         
+    </signature>   
+	<signature mimetype="video/x-m4v">
+        <ext>m4v</ext>        
+    </signature>   	
     <signature mimetype="application/vnd.rn-realmedia">
         <ext>rm</ext>        
     </signature>                                         
@@ -291,5 +355,90 @@
     </signature>                         
     <signature mimetype="application/x-shockwave-flash">
         <ext>swf</ext>        
-    </signature>                                                                            
+    </signature> 
+	<!-- Audio -->
+	<signature mimetype="audio/x-aiff">
+        <ext>aif</ext>
+		<ext>aiff</ext>
+    </signature> 
+	<signature mimetype="audio/aiff">
+        <ext>aif</ext>
+		<ext>aiff</ext>
+    </signature> 
+	<signature mimetype="audio/x-flac">
+        <ext>flac</ext>
+    </signature> 
+	<signature mimetype="audio/x-wav">
+        <ext>wav</ext>
+    </signature> 
+	<signature mimetype="audio/mp4">
+        <ext>m4a</ext>
+		<ext>mp4</ext>
+    </signature> 
+	<signature mimetype="audio/mpeg">
+        <ext>mp2</ext>
+		<ext>mp3</ext>
+		<ext>mpa</ext>
+		<ext>m2a</ext>
+    </signature> 
+	<signature mimetype="audio/x-aac">
+        <ext>aac</ext>
+    </signature> 
+	<signature mimetype="audio/mpa">
+        <ext>mp2</ext>
+		<ext>mp3</ext>
+		<ext>mpa</ext>
+		<ext>m2a</ext>
+    </signature>
+	<signature mimetype="audio/x-mpeg">
+        <ext>mp2</ext>
+		<ext>mp3</ext>
+		<ext>mpa</ext>
+		<ext>m2a</ext>
+    </signature>
+	<signature mimetype="audio/x-mpegurl">
+        <ext>m3u</ext>
+    </signature> 
+	<signature mimetype="audio/midi">
+        <ext>mid</ext>
+		<ext>midi</ext>
+	</signature> 
+	<signature mimetype="audio/ogg">
+        <ext>ogg</ext>
+    </signature> 
+	<!-- File Compression -->
+	<signature mimetype="application/x-rar-compressed">
+        <ext>rar</ext>
+    </signature> 
+	<signature mimetype="application/x-arj">
+        <ext>arj</ext>
+    </signature> 
+	<signature mimetype="application/x-tar">
+        <ext>tar</ext>
+    </signature> 
+	<signature mimetype="application/x-gzip">
+        <ext>gz</ext>
+		<ext>gzip</ext>
+		<ext>tgz</ext>
+    </signature> 
+	<signature mimetype="application/x-bzip">
+        <ext>bzip</ext>
+		<ext>bz</ext>
+    </signature>  
+	<signature mimetype="application/vnd.ms-cab-compressed">
+        <ext>cab</ext>
+    </signature> 
+	<signature mimetype="application/java-archive">
+        <ext>jar</ext>
+    </signature> 
+	<signature mimetype="application/x-bzip2">
+        <ext>bzip2</ext>
+    </signature> 
+	<signature mimetype="application/x-cpio">
+        <ext>cpio</ext>
+    </signature> 
+	<!-- Executables -->
+    <signature mimetype="application/x-dosexec">
+        <ext>exe</ext>
+    </signature> 	
 </mismatch_config>
