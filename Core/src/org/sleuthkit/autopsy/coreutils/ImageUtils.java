@@ -93,16 +93,12 @@ public class ImageUtils {
             logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
         }
         
-        final String fName = f.getName();
-        final int dotIdx = fName.lastIndexOf('.');
+        final String extension = f.getNameExtension();
         
         // if we have an extension, check it
-        if ((dotIdx != -1) && (dotIdx != (fName.length() - 1))) {
-            
-            final String ext = fName.substring(dotIdx + 1).toLowerCase();
-
+        if (extension.equals("") == false) {
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-            if (SUPP_EXTENSIONS.contains(ext)) {
+            if (SUPP_EXTENSIONS.contains(extension)) {
                 return true;
             }
         }

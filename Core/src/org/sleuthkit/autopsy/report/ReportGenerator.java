@@ -46,6 +46,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -87,7 +88,7 @@ public class ReportGenerator {
     static final String REPORTS_DIR = "Reports";
         
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
-        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
@@ -542,7 +543,14 @@ public class ReportGenerator {
                     continue;
                 }
                 
-                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
+                String fileName;
+                try {
+                    fileName = tag.getContent().getUniquePath();
+                } catch (TskCoreException ex) {
+                    fileName = tag.getContent().getName();
+                }
+                
+                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(fileName, tag.getName().getDisplayName(), tag.getComment()));
                 for (TableReportModule module : tableModules) {                                                                                       
                     // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                     if (module instanceof ReportHTML) {

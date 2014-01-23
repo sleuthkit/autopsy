@@ -44,6 +44,8 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
@@ -538,7 +540,7 @@ public class ReportHTML implements TableReportModule {
         
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
-        localFileLink.append("<a href=\"file:///");
+        localFileLink.append("<a href=\"");
         localFileLink.append(localFilePath);
         localFileLink.append("\">View File</a>");
         row.add(localFileLink.toString());              
@@ -605,15 +607,39 @@ public class ReportHTML implements TableReportModule {
                 continue;
             }
             String contentPath = saveContent(file, "thumbs_fullsize");
+            String nameInImage;
+            try {
+                nameInImage = file.getUniquePath();
+            } catch (TskCoreException ex) {
+                nameInImage = file.getName();
+            }
             
             StringBuilder linkToThumbnail = new StringBuilder();
-            linkToThumbnail.append("<a href=\"file:///");
+            linkToThumbnail.append("<a href=\"");
             linkToThumbnail.append(contentPath);
             linkToThumbnail.append("\">");
-            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" />");
+            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>");
             linkToThumbnail.append("</a><br>");
             linkToThumbnail.append(file.getName()).append("<br>");
-            // @@@ Add tags here
+            
+            Services services = currentCase.getServices();
+            TagsManager tagsManager = services.getTagsManager();
+            try {
+                List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
+                if (tags.size() > 0) {
+                    linkToThumbnail.append("Tags: " );
+                }
+                for (int i = 0; i < tags.size(); i++) {
+                    ContentTag tag = tags.get(i);
+                    linkToThumbnail.append(tag.getName().getDisplayName());
+                    if (i != tags.size() - 1) {
+                        linkToThumbnail.append(", ");
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Could not find get tags for file.", ex);
+            }
+
             currentRow.add(linkToThumbnail.toString());
             
             totalCount++;
@@ -649,7 +675,7 @@ public class ReportHTML implements TableReportModule {
      * Save a local copy of the given file in the reports folder.
      * @param file File to save
      * @param dirName Custom top-level folder to use to store the files in (tag name, etc.)
-     * @return Path to where file was stored
+     * @return Path to where file was stored (relative to root of HTML folder)
      */
     public String saveContent(AbstractFile file, String dirName) {
         // clean up the dir name passed in
@@ -657,8 +683,9 @@ public class ReportHTML implements TableReportModule {
         dirName2 = dirName2.replace("\\", "_");
         
         // Make a folder for the local file with the same tagName as the tag.
-        StringBuilder localFilePath = new StringBuilder();
-        localFilePath.append(path);            
+        StringBuilder localFilePath = new StringBuilder();  // full path
+        
+        localFilePath.append(path);
         localFilePath.append(dirName2);
         File localFileFolder = new File(localFilePath.toString());
         if (!localFileFolder.exists()) { 
@@ -687,7 +714,9 @@ public class ReportHTML implements TableReportModule {
         if (!localFile.exists()) {
             ExtractFscContentVisitor.extract(file, localFile, null, null);
         }
-        return localFilePath.toString();
+        
+        // get the relative path
+        return localFilePath.toString().substring(path.length());
     }
          
     /**
