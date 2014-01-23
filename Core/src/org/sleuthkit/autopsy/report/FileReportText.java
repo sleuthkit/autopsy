@@ -123,7 +123,7 @@ public class FileReportText implements FileReportModule {
 
     @Override
     public String getDescription() {
-        return "A tab delimited text file containing information about files in the case."; 
+        return "A tab delimited text file containing information about individual files in the case."; 
     }
 
     @Override

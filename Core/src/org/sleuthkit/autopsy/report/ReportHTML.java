@@ -715,7 +715,7 @@ public class ReportHTML implements TableReportModule {
     
     @Override
     public String getDescription() {
-        return "An HTML formatted report, designed to be viewed in a modern browser.";
+        return "A report about results and tagged items in HTML format.";
     }
 
     

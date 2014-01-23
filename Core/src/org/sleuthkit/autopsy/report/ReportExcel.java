@@ -282,7 +282,7 @@ public class ReportExcel implements TableReportModule {
 
     @Override
     public String getDescription() {
-        return "An XLS formatted report which is meant to be viewed in Excel.";
+        return "A report about results and tagged items in Excel (XLS) format.";
     }
 
     @Override
