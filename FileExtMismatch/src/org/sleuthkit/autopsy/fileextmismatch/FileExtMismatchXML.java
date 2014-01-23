@@ -42,7 +42,7 @@ import org.w3c.dom.NodeList;
  * Storage of file extension mismatch configuration, which maps mimetypes to
  * allowable filename extensions.
  */
- class FileExtMismatchXML {
+class FileExtMismatchXML {
     private static final Logger logger = Logger.getLogger(FileExtMismatchXML.class.getName());    
     private static FileExtMismatchXML defaultInstance = null;
             

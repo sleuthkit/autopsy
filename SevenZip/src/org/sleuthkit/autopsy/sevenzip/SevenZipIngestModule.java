@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * Updates datamodel / directory tree with new files.
  */
-final class SevenZipIngestModule extends IngestModuleAbstractFile {
+public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     public static final String MODULE_NAME = "Archive Extractor";

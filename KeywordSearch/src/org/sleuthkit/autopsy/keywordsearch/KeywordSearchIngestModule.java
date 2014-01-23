@@ -76,7 +76,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  *
  * Registered as a module in layer.xml
  */
-final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
+public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
     enum UpdateFrequency {
 

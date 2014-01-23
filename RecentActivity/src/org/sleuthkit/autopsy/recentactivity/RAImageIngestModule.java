@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.Content;
  * Recent activity image ingest module
  *
  */
-final class RAImageIngestModule extends IngestModuleDataSource {
+public final class RAImageIngestModule extends IngestModuleDataSource {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private static RAImageIngestModule defaultInstance = null;
