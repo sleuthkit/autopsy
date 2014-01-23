@@ -533,42 +533,13 @@ public class ReportHTML implements TableReportModule {
             return;
         }
 
-        // Make a folder for the local file with the same tagName as the tag.
-        StringBuilder localFilePath = new StringBuilder();
-        localFilePath.append(path);            
-        localFilePath.append(contentTag.getName().getDisplayName());
-        File localFileFolder = new File(localFilePath.toString());
-        if (!localFileFolder.exists()) { 
-            localFileFolder.mkdirs();
-        }
-
-        // Construct a file tagName for the local file that incorporates the file id to ensure uniqueness.
-        String fileName = file.getName();
-        String objectIdSuffix = "_" + file.getId();
-        int lastDotIndex = fileName.lastIndexOf(".");
-        if (lastDotIndex != -1 && lastDotIndex != 0) {
-            // The file tagName has a conventional extension. Insert the object id before the '.' of the extension.
-            fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
-        }
-        else {
-            // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
-            // Add the object id to the end of the file tagName.
-            fileName += objectIdSuffix;
-        }                                
-        localFilePath.append(File.separator);
-        localFilePath.append(fileName);
-
-        // If the local file doesn't already exist, create it now. 
-        // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
-        File localFile = new File(localFilePath.toString());
-        if (!localFile.exists()) {
-            ExtractFscContentVisitor.extract(file, localFile, null, null);
-        }
+        // save it in a folder based on the tag name
+        String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
         
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\"file:///");
-        localFileLink.append(localFilePath.toString());
+        localFileLink.append(localFilePath);
         localFileLink.append("\">View File</a>");
         row.add(localFileLink.toString());              
         
@@ -628,17 +599,21 @@ public class ReportHTML implements TableReportModule {
             
             AbstractFile file = (AbstractFile) content; 
 
-            String contentPath = saveContent(file);
+            // save copies of the orginal image and thumbnail image
             String thumbnailPath = prepareThumbnail(file);
             if (thumbnailPath == null) {
                 continue;
             }
+            String contentPath = saveContent(file, "thumbs_fullsize");
+            
             StringBuilder linkToThumbnail = new StringBuilder();
             linkToThumbnail.append("<a href=\"file:///");
             linkToThumbnail.append(contentPath);
             linkToThumbnail.append("\">");
             linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" />");
-            linkToThumbnail.append("</a>");
+            linkToThumbnail.append("</a><br>");
+            linkToThumbnail.append(file.getName()).append("<br>");
+            // @@@ Add tags here
             currentRow.add(linkToThumbnail.toString());
             
             totalCount++;
@@ -670,11 +645,21 @@ public class ReportHTML implements TableReportModule {
         return false;
     }
     
-    public String saveContent(AbstractFile file) {
+    /**
+     * Save a local copy of the given file in the reports folder.
+     * @param file File to save
+     * @param dirName Custom top-level folder to use to store the files in (tag name, etc.)
+     * @return Path to where file was stored
+     */
+    public String saveContent(AbstractFile file, String dirName) {
+        // clean up the dir name passed in
+        String dirName2 = dirName.replace("/", "_");
+        dirName2 = dirName2.replace("\\", "_");
+        
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();
         localFilePath.append(path);            
-        localFilePath.append("tagged_images");
+        localFilePath.append(dirName2);
         File localFileFolder = new File(localFilePath.toString());
         if (!localFileFolder.exists()) { 
             localFileFolder.mkdirs();

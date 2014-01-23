@@ -27,15 +27,19 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -51,7 +55,7 @@ public class ImageUtils {
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-    
+    private static final List<String> SUPP_MIME_TYPES = Arrays.asList(ImageIO.getReaderMIMETypes());
     /**
      * Get the default Icon, which is the icon for a file.
      * @return 
@@ -72,18 +76,41 @@ public class ImageUtils {
         }
         
         AbstractFile f = (AbstractFile) content;
-        final String fName = f.getName();
-        final int dotIdx = fName.lastIndexOf('.');
-        if (dotIdx == -1 || dotIdx == (fName.length() - 1)) {
-            return isJpegFileHeader(f);
+        if (f.getSize() == 0) {
+            return false;
         }
 
-        final String ext = fName.substring(dotIdx + 1).toLowerCase();
+        // check the blackboard for a file type attribute
+        try {
+            ArrayList <BlackboardAttribute> attributes = f.getGenInfoAttributes(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) { 
+                if (SUPP_MIME_TYPES.contains(attribute.getValueString())) {
+                    return true;
+                }
+            }
+        } 
+        catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
+        }
+        
+        final String fName = f.getName();
+        final int dotIdx = fName.lastIndexOf('.');
+        
+        // if we have an extension, check it
+        if ((dotIdx != -1) && (dotIdx != (fName.length() - 1))) {
+            
+            final String ext = fName.substring(dotIdx + 1).toLowerCase();
 
-        // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-        return (f.getSize() > 0
-                && SUPP_EXTENSIONS.contains(ext));
+            // Note: thumbnail generator only supports JPG, GIF, and PNG for now
+            if (SUPP_EXTENSIONS.contains(ext)) {
+                return true;
+            }
+        }
+        
+        // if no extension or one that is not for an image, then read the content
+        return isJpegFileHeader(f);    
     }
+
    
     /**
      * Get an icon of a specified size.
