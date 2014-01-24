@@ -144,6 +144,8 @@ class TestRunner(object):
                 logres.append(TestRunner._run_test(test_data))
             test_data.printout = Errors.printout
             test_data.printerror = Errors.printerror
+            # give solr process time to die.
+            time.sleep(10)
 
         Reports.write_html_foot(test_config.html_log)
         # TODO: move this elsewhere
@@ -165,9 +167,9 @@ class TestRunner(object):
             Errors.add_email_attachment(html.name)
             html.close()
 
-        if test_config.email_enabled:
-            Emailer.send_email(test_config.mail_to, test_config.mail_server,
-            test_config.mail_subject, Errors.email_body, Errors.email_attachs)
+            if test_config.email_enabled:
+                Emailer.send_email(test_config.mail_to, test_config.mail_server,
+                test_config.mail_subject, Errors.email_body, Errors.email_attachs)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -221,6 +223,9 @@ class TestRunner(object):
         logres = Logs.search_common_log("TskCoreException", test_data)
 
         TestResultsDiffer.run_diff(test_data)
+        print("Html report passed: ", test_data.html_report_passed)
+        print("Errors diff passed: ", test_data.errors_diff_passed)
+        print("DB diff passed: ", test_data.db_diff_passed)
         test_data.overall_passed = (test_data.html_report_passed and
         test_data.errors_diff_passed and test_data.db_diff_passed)
 
@@ -714,6 +719,7 @@ class TestConfiguration(object):
             self.email_enabled = True
             print("Email will be sent to ", self.mail_to)
         else:
+            self.email_enabled = False
             print("No email will be sent.")
 
 
@@ -736,8 +742,8 @@ class TestResultsDiffer(object):
             output_dir = test_data.output_path
             gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            test_data.db_diff_pass = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
-            gold_dump=gold_dump).run_diff())
+            test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
+            gold_dump=gold_dump.run_diff())
 
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
@@ -1656,7 +1662,7 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
-            elif arg == "-e" or arg == "-email":
+            elif arg == "--email":
                 self.email_enabled = True
             else:
                 print(usage())
