@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
  * Interface for visitor pattern on ContentNodes
  * @param <T> visit method return type
  */
-public interface ContentNodeVisitor<T> {
+ interface ContentNodeVisitor<T> {
 
     T visit(DirectoryNode dn);
 

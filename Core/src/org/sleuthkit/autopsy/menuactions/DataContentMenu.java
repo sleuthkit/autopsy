@@ -27,7 +27,7 @@ import org.openide.util.actions.Presenter;
 /**
  * Menu item that displays DataContentViewers
  */
-public class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
+ class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
 
     DataContentMenu(){}
 

@@ -33,7 +33,7 @@ import javax.swing.JFrame;
 /**
  * File search dialog
  */
-public class FileSearchDialog extends javax.swing.JDialog {
+ class FileSearchDialog extends javax.swing.JDialog {
 
     /** Creates new form FileSearchDialog */
     public FileSearchDialog() {

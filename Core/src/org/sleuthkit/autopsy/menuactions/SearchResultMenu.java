@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 /**
  * Menu item lists DataResult tabs.
  */
-public class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
+ class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
     SearchResultMenu(){
 

@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * it is compiled each time to ensure that it is compliant with the API.
  */
 // @ServiceProvider(service = DataContentViewer.class)
-public class SampleContentViewer extends javax.swing.JPanel implements DataContentViewer  {
+ class SampleContentViewer extends javax.swing.JPanel implements DataContentViewer  {
 
     /**
      * Creates new form SampleContentViewer

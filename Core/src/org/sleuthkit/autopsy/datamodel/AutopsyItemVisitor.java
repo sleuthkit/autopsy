@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
  *
  * @author dfickling
  */
-public interface AutopsyItemVisitor<T> {
+ interface AutopsyItemVisitor<T> {
 
     T visit(ExtractedContent ec);
 

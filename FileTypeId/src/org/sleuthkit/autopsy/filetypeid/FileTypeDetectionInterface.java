@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * to an extension string list instead of the third-party library's extension
  * reporting.
  */
-public interface FileTypeDetectionInterface {
+ interface FileTypeDetectionInterface {
     
     // Struct to hold multiple values for return 
     public class FileIdInfo {

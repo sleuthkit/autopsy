@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskException;
  * For other script/languages support and better encoding detection use AbstractFileStringIntStream streaming class,
  * which wraps around StringExtract extractor.
  */
-public class AbstractFileStringStream extends InputStream {
+ class AbstractFileStringStream extends InputStream {
 
     //args
     private AbstractFile content;

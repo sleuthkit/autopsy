@@ -30,7 +30,7 @@ import java.util.logging.LogRecord;
  * Formatter to wrap another formatter and prepend a timestampe to each formatted string
  * Not currently used.
  */
-public class TimestampingFormatter extends Formatter {
+ class TimestampingFormatter extends Formatter {
 
     Formatter original;
     DateFormat timestampFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.US);

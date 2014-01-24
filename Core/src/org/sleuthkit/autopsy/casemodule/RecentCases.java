@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * The constructor is called when the autopsy is running.
  * All the method to create and modify the properties file are within this class
  */
-public final class RecentCases extends CallableSystemAction implements Presenter.Menu {
+ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
     static final int LENGTH = 5;
     static final String NAME_PROP_KEY = "LBL_RecentCase_Name";

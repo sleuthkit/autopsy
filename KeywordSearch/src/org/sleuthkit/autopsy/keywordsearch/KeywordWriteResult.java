@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 /**
  * result of writing keyword search result to blackboard (cached artifact and attributes)
  */
-public class KeywordWriteResult {
+class KeywordWriteResult {
 
     private BlackboardArtifact artifact;
     private Map<Integer, BlackboardAttribute> attributes;

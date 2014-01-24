@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Abstract base class for Actions involving tags.
  */
-public abstract class TagAction extends AbstractAction {
+ abstract class TagAction extends AbstractAction {
     public TagAction(String menuText) {
         super(menuText);
     }

@@ -39,7 +39,7 @@ import java.util.logging.Level;
  * and finally the EncaseFileEntries are converted to KeywordSearchLists
  * 
  */
-public class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
+class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
     
     ArrayList<EncaseFileEntry> entriesUnsorted;
     EncaseFileEntry rootEntry;

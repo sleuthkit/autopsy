@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * content and blackboard artifact tags, grouped first by tag type, then by 
  * tag name. 
  */
-public class TagsNode extends DisplayableItemNode {
+ class TagsNode extends DisplayableItemNode {
     private static final String DISPLAY_NAME = "Tags";
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
         

@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.filetypeid;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class FileTypeIdSimpleConfigPanel extends javax.swing.JPanel {    
+ class FileTypeIdSimpleConfigPanel extends javax.swing.JPanel {    
 
     public FileTypeIdSimpleConfigPanel() {
         initComponents();

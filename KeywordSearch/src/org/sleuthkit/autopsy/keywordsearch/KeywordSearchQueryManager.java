@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
  * Responsible for running a keyword search query and displaying
  * the results. 
  */
-public class KeywordSearchQueryManager {
+class KeywordSearchQueryManager {
 
     // how to display the results
     public enum Presentation {

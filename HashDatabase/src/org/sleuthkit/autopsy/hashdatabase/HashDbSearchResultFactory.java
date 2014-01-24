@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Factory class to create a KeyValueFileNode for each KeyValueContent in the Collection.
  */
-public class HashDbSearchResultFactory extends ChildFactory<AbstractFile> {
+ class HashDbSearchResultFactory extends ChildFactory<AbstractFile> {
     Collection<AbstractFile>  kvContents;
     
     HashDbSearchResultFactory(Collection<AbstractFile> kvContents) {
