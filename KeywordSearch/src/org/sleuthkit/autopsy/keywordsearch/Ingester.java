@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -70,10 +71,10 @@ class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     private static Ingester instance;
-   
+
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
-    private final static int MAX_DOC_CHUNK_SIZE = 1024*1024;
+    private final static int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
     private final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
     private static final String docContentEncoding = "UTF-8";
 
@@ -105,7 +106,7 @@ class Ingester {
      *
      * @param afscs File AbstractFileStringContentStream to ingest
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFileStringContentStream afscs) throws IngesterException {
         Map<String, String> params = getContentFields(afscs.getSourceContent());
@@ -121,7 +122,7 @@ class Ingester {
      *
      * @param fe AbstractFileExtract to ingest
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFileExtract fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
@@ -136,11 +137,11 @@ class Ingester {
      * added to the index. commit() should be called once you're done ingesting
      * files. AbstractFileChunk represents a file chunk and its chunk content.
      *
-     * @param fec AbstractFileChunk to ingest
+     * @param fec  AbstractFileChunk to ingest
      * @param size approx. size of the stream in bytes, used for timeout
-     * estimation
+     *             estimation
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
@@ -148,7 +149,7 @@ class Ingester {
 
         //overwrite id with the chunk id
         params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
+                   Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
 
         ingest(bcs, params, size);
     }
@@ -159,11 +160,11 @@ class Ingester {
      * file is a directory or ingestContent is set to false, the file name is
      * indexed only.
      *
-     * @param file File to ingest
+     * @param file          File to ingest
      * @param ingestContent if true, index the file and the content, otherwise
-     * indesx metadata only
+     *                      indesx metadata only
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFile file, boolean ingestContent) throws IngesterException {
         if (ingestContent == false || file.isDir()) {
@@ -189,11 +190,11 @@ class Ingester {
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         private SleuthkitCase curCase = null;
-        
+
         GetContentFieldsV() {
             curCase = Case.getCurrentCase().getSleuthkitCase();
         }
-        
+
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
             return new HashMap<String, String>();
@@ -205,7 +206,7 @@ class Ingester {
             getCommonFileContentFields(params, f);
             return params;
         }
-        
+
         @Override
         public Map<String, String> visit(DerivedFile df) {
             Map<String, String> params = getCommonFields(df);
@@ -225,7 +226,7 @@ class Ingester {
             // layout files do not have times
             return getCommonFields(lf);
         }
-        
+
         @Override
         public Map<String, String> visit(LocalFile lf) {
             Map<String, String> params = getCommonFields(lf);
@@ -240,7 +241,7 @@ class Ingester {
             params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
             return params;
         }
-        
+
 
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
@@ -259,31 +260,31 @@ class Ingester {
         }
     }
 
-    
+
     /**
      * Indexing method that bypasses Tika, assumes pure text
      * It reads and converts the entire content stream to string, assuming UTF8
      * since we can't use streaming approach for Solr /update handler.
      * This should be safe, since all content is now in max 1MB chunks.
-     * 
+     * <p/>
      * TODO see if can use a byte or string streaming way to add content to /update handler
-     * e.g. with XMLUpdateRequestHandler (deprecated in SOlr 4.0.0), see if possible 
+     * e.g. with XMLUpdateRequestHandler (deprecated in SOlr 4.0.0), see if possible
      * to stream with UpdateRequestHandler
-     * 
+     *
      * @param cs
      * @param fields
      * @param size
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
-        
+
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = "Skipping indexing the file, unknown image id, for file: " + cs.getName();
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
-        
+
         SolrInputDocument updateDoc = new SolrInputDocument();
 
         for (String key : fields.keySet()) {
@@ -292,9 +293,9 @@ class Ingester {
 
         //using size here, but we are no longer ingesting entire files
         //size is normally a chunk size, up to 1MB
-    
+
         if (size > 0) {
- 
+
             InputStream is = null;
             int read = 0;
             try {
@@ -306,7 +307,8 @@ class Ingester {
                 try {
                     is.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex);
+                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(),
+                               ex);
                 }
             }
 
@@ -321,12 +323,11 @@ class Ingester {
             } else {
                 updateDoc.addField(Server.Schema.CONTENT.toString(), "");
             }
-        }
-        else {
+        } else {
             //no content, such as case when 0th chunk indexed
             updateDoc.addField(Server.Schema.CONTENT.toString(), "");
         }
-        
+
 
         try {
             //TODO consider timeout thread, or vary socket timeout based on size of indexed content
@@ -343,13 +344,12 @@ class Ingester {
      * Delegate method actually performing the indexing work for objects
      * implementing ContentStream
      *
-     * @param cs ContentStream to ingest
+     * @param cs     ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content - used to determine the Solr timeout, not
-     * used to populate meta-data
-     *
+     * @param size   size of the content - used to determine the Solr timeout, not
+     *               used to populate meta-data
      * @throws IngesterException if there was an error processing a specific
-     * content, but the Solr server is probably fine.
+     *                           content, but the Solr server is probably fine.
      */
     private void ingestExtract(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
@@ -373,9 +373,12 @@ class Ingester {
             logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
             //restart may be needed to recover from some error conditions
             hardSolrRestart();
-            throw new IngesterException("Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
+            throw new IngesterException(
+                    "Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
         } catch (Exception e) {
-            throw new IngesterException("Problem posting content to Solr, id: " + fields.get("id") + ", name: " + fields.get("file_name"), e);
+            throw new IngesterException(
+                    "Problem posting content to Solr, id: " + fields.get("id") + ", name: " + fields.get("file_name"),
+                    e);
         }
         uncommitedIngests = true;
     }
@@ -458,7 +461,8 @@ class Ingester {
                 // When Tika has problems with a document, it throws a server error
                 // but it's okay to continue with other documents
                 if (ec.equals(ErrorCode.SERVER_ERROR)) {
-                    throw new RuntimeException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
+                    throw new RuntimeException("Problem posting file contents to Solr. SolrException error code: " + ec,
+                                               ex);
                 } else {
                     // shouldn't get any other error codes
                     throw ex;
@@ -486,7 +490,7 @@ class Ingester {
     /**
      * Helper to set document fields
      *
-     * @param up request with document
+     * @param up     request with document
      * @param fields map of field-names->values
      */
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -85,8 +86,9 @@ class ContentHit {
 
     /**
      * Identify the list of files with the first chunk that has a hit
+     *
      * @param hits
-     * @return 
+     * @return
      */
     static Map<AbstractFile, Integer> flattenResults(List<ContentHit> hits) {
         Map<AbstractFile, Integer> ret = new LinkedHashMap<AbstractFile, Integer>();
@@ -99,7 +101,7 @@ class ContentHit {
 
         return ret;
     }
-    
+
     //flatten results to get unique AbstractFile per hit, with first chunk id encountered
     static LinkedHashMap<AbstractFile, Integer> flattenResults(Map<String, List<ContentHit>> results) {
         LinkedHashMap<AbstractFile, Integer> flattened = new LinkedHashMap<AbstractFile, Integer>();
