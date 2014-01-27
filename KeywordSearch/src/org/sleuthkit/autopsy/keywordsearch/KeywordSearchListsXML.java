@@ -39,7 +39,7 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-class KeywordSearchListsXML extends KeywordSearchListsAbstract{
+public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
 
     private static final String ROOT_EL = "keyword_lists";
     private static final String LIST_EL = "keyword_list";
