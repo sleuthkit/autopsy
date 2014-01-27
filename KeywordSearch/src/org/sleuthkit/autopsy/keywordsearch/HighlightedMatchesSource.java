@@ -94,7 +94,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         this.hits = hits;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, Map<String, List<ContentHit>> hits) {
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group,
+                             Map<String, List<ContentHit>> hits) {
         this(content, solrQuery, isRegex, hits);
         this.group = group;
     }
@@ -345,11 +346,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
         q.addFilterQuery(filterQuery);
-        q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
+        q.addHighlightField(
+                highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
 
         //q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
         //q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
-        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+        q.setHighlightFragsize(
+                0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
         //tune the highlighter
         q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
@@ -439,6 +442,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         return buf.toString();
     }
+
     //dummy instance for Lookup only
     private static HighlightLookup instance = null;
 

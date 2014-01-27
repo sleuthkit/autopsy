@@ -7,17 +7,19 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
+
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
-iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
-position = 2,
-keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
-keywordsCategory = "KeywordSearchOptions")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
+        categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
+        iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
+        position = 2,
+        keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
+        keywordsCategory = "KeywordSearchOptions")
+@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search",
+                                     "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
 
     private KeywordSearchConfigurationPanel panel;

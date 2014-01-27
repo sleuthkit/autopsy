@@ -163,31 +163,38 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private void initIngest(boolean running) {
         if (running) {
             ingestRunning = true;
-            searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
-            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg" ));
+            searchAddButton.setText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
+            searchAddButton.setToolTipText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg"));
             listsTableModel.resync();
-            
+
         } else {
             ingestRunning = false;
-            searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
-            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
+            searchAddButton.setText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
+            searchAddButton.setToolTipText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
             listsTableModel.resync();
         }
         updateIngestIndexLabel(running);
     }
-    
+
     private void updateIngestIndexLabel(boolean ingestRunning) {
         if (ingestRunning) {
-            ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.ongoingIngestMsg", filesIndexed));
-        }
-        else {
-            ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.fileIndexCtMsg", filesIndexed));
+            ingestIndexLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.ongoingIngestMsg",
+                                        filesIndexed));
+        } else {
+            ingestIndexLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.fileIndexCtMsg",
+                                        filesIndexed));
         }
     }
-    
+
     @Override
     protected void postFilesIndexedChange() {
-         updateIngestIndexLabel(ingestRunning);
+        updateIngestIndexLabel(ingestRunning);
     }
 
     /**
@@ -234,18 +241,22 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         jSplitPane1.setRightComponent(rightPane);
 
-        manageListsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
-        manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
+        manageListsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class,
+                                                                       "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
+        manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class,
+                                                                              "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
         manageListsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 manageListsButtonActionPerformed(evt);
             }
         });
 
-        searchAddButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
+        searchAddButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class,
+                                                                     "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
 
         ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
+        ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class,
+                                                                      "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -278,9 +289,11 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void manageListsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageListsButtonActionPerformed
+    private void manageListsButtonActionPerformed(
+            java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageListsButtonActionPerformed
         SystemAction.get(KeywordSearchConfigurationAction.class).performAction();
     }//GEN-LAST:event_manageListsButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel ingestIndexLabel;
     private javax.swing.JSplitPane jSplitPane1;
@@ -440,7 +453,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         List<KeywordSearchListsAbstract.KeywordSearchList> getSelectedListsL() {
-            List<KeywordSearchListsAbstract.KeywordSearchList> ret = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+            List<KeywordSearchListsAbstract.KeywordSearchList> ret
+                    = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
             for (String s : getSelectedLists()) {
                 ret.add(listsHandle.getList(s));
             }

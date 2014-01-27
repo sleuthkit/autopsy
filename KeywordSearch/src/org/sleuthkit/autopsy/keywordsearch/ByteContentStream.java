@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -32,30 +33,30 @@ import org.sleuthkit.datamodel.AbstractContent;
  * Stream of bytes representing string with specified encoding
  * to feed into Solr as ContentStream
  */
-class ByteContentStream implements ContentStream {   
-    
-    
+class ByteContentStream implements ContentStream {
+
+
     //input
     private byte[] content; //extracted subcontent
     private long contentSize;
     private AbstractContent aContent; //origin
     private Charset charset; //output byte stream charset of encoded strings
-    
+
     private InputStream stream;
 
     private static Logger logger = Logger.getLogger(ByteContentStream.class.getName());
 
-    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Charset charset) {
+    public ByteContentStream(byte[] content, long contentSize, AbstractContent aContent, Charset charset) {
         this.content = content;
         this.aContent = aContent;
         this.charset = charset;
-        stream = new ByteArrayInputStream(content, 0, (int)contentSize);
+        stream = new ByteArrayInputStream(content, 0, (int) contentSize);
     }
 
     public byte[] getByteContent() {
         return content;
     }
-    
+
     public AbstractContent getSourceContent() {
         return aContent;
     }
@@ -95,10 +96,9 @@ class ByteContentStream implements ContentStream {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        
+
         stream.close();
     }
-    
-    
+
 
 }

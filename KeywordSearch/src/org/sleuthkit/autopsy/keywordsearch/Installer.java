@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
+
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -31,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
  * application is closed.
- *
+ * <p/>
  * In addition, the default KeywordSearch config files (NSRL, Options, Scripts)
  * are generated here, if they config files do not already exist.
  */
@@ -202,7 +203,9 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportPortError", curFailPort, Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
+                final String msg = NbBundle
+                        .getMessage(this.getClass(), "Installer.reportPortError", curFailPort, Version.getName(),
+                                    Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
@@ -212,7 +215,8 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportStopPortError", curFailPort, Server.PROPERTIES_CURRENT_STOP_PORT, Server.PROPERTIES_FILE);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportStopPortError", curFailPort,
+                                                       Server.PROPERTIES_CURRENT_STOP_PORT, Server.PROPERTIES_FILE);
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
@@ -222,7 +226,10 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportInitError", KeywordSearch.getServer().getCurrentSolrServerPort(), Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportInitError",
+                                                       KeywordSearch.getServer().getCurrentSolrServerPort(),
+                                                       Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT,
+                                                       Server.PROPERTIES_FILE);
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
 
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
