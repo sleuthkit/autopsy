@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
- class ImageFilePanel extends JPanel implements DocumentListener {
+public class ImageFilePanel extends JPanel implements DocumentListener {
     
     private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
     
