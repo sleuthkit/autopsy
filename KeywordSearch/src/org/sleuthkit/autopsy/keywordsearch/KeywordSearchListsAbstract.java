@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 /**
  * Keyword list saving, loading, and editing abstract class.
  */
-abstract class KeywordSearchListsAbstract {
+public abstract class KeywordSearchListsAbstract {
 
     protected String filePath;
     Map<String, KeywordSearchList> theLists; //the keyword data
