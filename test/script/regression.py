@@ -719,7 +719,6 @@ class TestConfiguration(object):
             self.email_enabled = True
             print("Email will be sent to ", self.mail_to)
         else:
-            self.email_enabled = False
             print("No email will be sent.")
 
 
