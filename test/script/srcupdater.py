@@ -78,6 +78,9 @@ def gitPull(TskOrAutopsy, branch):
         ccwd = os.path.join("..", "..", "..", "sleuthkit")
     else:
         ccwd = os.path.join("..", "..")
+    print("Resetting " + TskOrAutopsy)
+    call = ["git", "reset", "--hard"]
+    subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
     print("Checking out " + branch)
     call = ["git", "checkout", branch]
     subprocess.call(call, stdout=sys.stdout, cwd=ccwd)
