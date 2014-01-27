@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 /**
  * Menu item tracks the DataResult windows
  */
-public class DataResultMenu extends CallableSystemAction implements Presenter.Menu, PropertyChangeListener {
+ class DataResultMenu extends CallableSystemAction implements Presenter.Menu, PropertyChangeListener {
 
     JMenu menu = new JMenu("DataResult Windows");
 

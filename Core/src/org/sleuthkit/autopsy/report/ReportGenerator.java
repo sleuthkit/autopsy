@@ -46,6 +46,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -71,7 +72,7 @@ import org.sleuthkit.datamodel.TskException;
  * can be called to show report generation progress using ReportProgressPanel 
  * objects displayed using a dialog box.
  */
-public class ReportGenerator {
+ class ReportGenerator {
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
     
     private Case currentCase = Case.getCurrentCase();
@@ -87,7 +88,7 @@ public class ReportGenerator {
     static final String REPORTS_DIR = "Reports";
         
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
-        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case name> <Timestamp>/
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
@@ -383,12 +384,19 @@ public class ReportGenerator {
                     progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
                 }
             }
-                        
+                      
+            
+            // report on the blackboard results
             makeBlackboardArtifactTables();
+            
+            // report on the tagged files and artifacts
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
+            
+            // report on the tagged images
             makeThumbnailTable();
             
+            // finish progress, wrap up
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).complete();
                 module.endReport();
@@ -397,11 +405,14 @@ public class ReportGenerator {
             return 0;
         }
         
+        /**
+         * Generate the tables for the selected blackboard artifacts
+         */
         private void makeBlackboardArtifactTables() {
             // Make a comment string describing the tag names filter in effect. 
             StringBuilder comment = new StringBuilder();
             if (!tagNamesFilter.isEmpty()) {
-                comment.append("This report only includes results tagged with: ");
+                comment.append("Contains results that were tagged with one of the following: ");
                 comment.append(makeCommaSeparatedList(tagNamesFilter));
             }            
 
@@ -483,6 +494,9 @@ public class ReportGenerator {
             }        
         }
         
+        /**
+         * Make table for tagged files
+         */
         private void makeContentTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -508,7 +522,7 @@ public class ReportGenerator {
                 ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment"));                
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
-                    comment.append("This report only includes file tagged with: ");
+                    comment.append("Contains files that were tagged with one of the following: ");
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }            
                 if (module instanceof ReportHTML) {
@@ -524,20 +538,32 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (ContentTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) { 
-                    checkIfTagHasImage(tag);
-                    ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getContent().getName(), tag.getName().getDisplayName(), tag.getComment()));
-                    for (TableReportModule module : tableModules) {                                                                                       
-                        // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
-                        if (module instanceof ReportHTML) {
-                            ReportHTML htmlReportModule = (ReportHTML)module;
-                            htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag); 
-                        }
-                        else {      
-                            module.addRow(rowData);
-                        }                        
-                    }
+                // skip tags that we are not reporting on 
+                if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+                    continue;
                 }
+                
+                String fileName;
+                try {
+                    fileName = tag.getContent().getUniquePath();
+                } catch (TskCoreException ex) {
+                    fileName = tag.getContent().getName();
+                }
+                
+                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(fileName, tag.getName().getDisplayName(), tag.getComment()));
+                for (TableReportModule module : tableModules) {                                                                                       
+                    // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+                    if (module instanceof ReportHTML) {
+                        ReportHTML htmlReportModule = (ReportHTML)module;
+                        htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag); 
+                    }
+                    else {      
+                        module.addRow(rowData);
+                    }                        
+                }
+                
+                // see if it is for an image so that we later report on it
+                checkIfTagHasImage(tag);
             }                
                 
             // The the modules content tags reporting is ended.
@@ -548,6 +574,9 @@ public class ReportGenerator {
             }            
         }
         
+        /**
+         * Generate the tables for the tagged artifacts
+         */
         private void makeBlackboardArtifactTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -579,14 +608,18 @@ public class ReportGenerator {
                         
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
-                if (passesTagNamesFilter(tag.getName().getDisplayName())) {          
-                    checkIfTagHasImage(tag);
-                    List<String> row;
-                    for (TableReportModule module : tableModules) {
-                        row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
-                        module.addRow(row);
-                    }
+                if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+                    continue;
                 }
+                
+                List<String> row;
+                for (TableReportModule module : tableModules) {
+                    row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+                    module.addRow(row);
+                }
+                
+                // check if the tag is an image that we should later make a thumbnail for
+                checkIfTagHasImage(tag);
             }                
 
             // The the modules blackboard artifact tags reporting is ended.
@@ -597,7 +630,12 @@ public class ReportGenerator {
             }            
         }     
         
-        boolean passesTagNamesFilter(String tagName) {
+        /**
+         * Test if the user requested that this tag be reported on 
+         * @param tagName
+         * @return true if it should be reported on
+         */
+        private boolean passesTagNamesFilter(String tagName) {
             return tagNamesFilter.isEmpty() || tagNamesFilter.contains(tagName);
         }
         
@@ -611,25 +649,36 @@ public class ReportGenerator {
             }            
         }
 
+        /**
+         * Make a report for the files that were previously found to
+         * be images. 
+         */
         private void makeThumbnailTable() {
             for (TableReportModule module : tableModules) {
-                tableProgress.get(module).updateStatusLabel("Now processing Tagged Images..."); 
+                tableProgress.get(module).updateStatusLabel("Creating thumbnails..."); 
                 
                 if (module instanceof ReportHTML) {
                     ReportHTML htmlModule = (ReportHTML) module;
-                    htmlModule.startDataType("Tagged Images", "Tagged Results and Contents that contain images.");
+                    htmlModule.startDataType("Thumbnails", "Contains thumbnails of images that are associated with tagged files and results.");
                     List<String> emptyHeaders = new ArrayList<>();
                     for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
                         emptyHeaders.add("");
                     }
                     htmlModule.startTable(emptyHeaders);
+                    
                     htmlModule.addThumbnailRows(images);
+                    
                     htmlModule.endTable();
                     htmlModule.endDataType();
                 }
             }
         }
         
+        /**
+         * Analyze artifact associated with tag and add to internal list if it is associated
+         * with an image.   
+         * @param artifactTag 
+         */
         private void checkIfTagHasImage(BlackboardArtifactTag artifactTag) {
             AbstractFile file;
             try {
@@ -638,34 +687,37 @@ public class ReportGenerator {
                 logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
                 return;
             }
-            
-            if (file.isDir() ||
-                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-                return;
-            }
-
-            // Only include content for images
-            if (ImageUtils.thumbnailSupported(file)) {
-                images.add(file);
-            }
+            checkIfFileIsImage(file);
         }
         
+        /**
+         * Analyze file that tag is associated with and determine if
+         * it is an image and should have a thumbnail reported for it.
+         * Images are added to internal list.
+         * @param contentTag 
+         */
         private void checkIfTagHasImage(ContentTag contentTag) {
             Content c = contentTag.getContent();
             if (c instanceof AbstractFile == false) {
                 return;
             }
-            AbstractFile file = (AbstractFile) c;
+            checkIfFileIsImage((AbstractFile) c);
+        }
             
+        /**
+         * If file is an image file, add it to the internal 'images' list.
+         * @param file 
+         */
+        private void checkIfFileIsImage(AbstractFile file) {    
+           
             if (file.isDir() ||
                 file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
                 file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
                 return;
             }
             
-            if (ImageUtils.thumbnailSupported(c)) {
-                images.add(c);
+            if (ImageUtils.thumbnailSupported(file)) {
+                images.add(file);
             }
         }
     }

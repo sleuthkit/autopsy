@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * @deprecated do not use, it is here in case we ever pick up on this work
  */
 @Deprecated
-public class ResultDeleteAction extends AbstractAction {
+ class ResultDeleteAction extends AbstractAction {
 
     private enum ActionType {
 

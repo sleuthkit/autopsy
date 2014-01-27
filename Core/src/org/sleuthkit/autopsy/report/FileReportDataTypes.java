@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskData;
  * 
  * @author jwallace
  */
-public enum FileReportDataTypes {
+ enum FileReportDataTypes {
     
     NAME("Name") {
         @Override

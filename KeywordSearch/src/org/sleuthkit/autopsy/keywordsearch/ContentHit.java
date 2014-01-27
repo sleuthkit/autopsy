@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Represents result of keyword search query containing the Content it hit
  * and chunk information, if the result hit is a content chunk
  */
-public class ContentHit {
+class ContentHit {
 
     private AbstractFile content;
     private int chunkID = 0;

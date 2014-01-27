@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Sample DataSource-level ingest module that doesn't do much at all. 
  * Just exists to show basic idea of these modules
  */
-public class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
+ class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
 
     /* Data Source modules operate on a disk or set of logical files. They
      * are passed in teh data source refernce and query it for things they want.

@@ -28,7 +28,7 @@ package org.sleuthkit.autopsy.casemodule;
  *
  * @author dfickling
  */
-public class NewCaseVisualPanel2 extends javax.swing.JPanel {
+ class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
     /** Creates new form NewCaseVisualPanel2 */
     public NewCaseVisualPanel2() {

@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * engines or methods of using the same engine.   One of these
  * is created for each query. 
  */
-public interface KeywordSearchQuery {
+interface KeywordSearchQuery {
 
     /**
      * validate the query pre execution

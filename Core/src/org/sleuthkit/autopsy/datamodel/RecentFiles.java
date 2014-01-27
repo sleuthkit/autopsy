@@ -23,7 +23,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Recent files node support
  */
-public class RecentFiles implements AutopsyVisitableItem {
+ class RecentFiles implements AutopsyVisitableItem {
     
     SleuthkitCase skCase;
     

@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
  * In addition, the default KeywordSearch config files (NSRL, Options, Scripts)
  * are generated here, if they config files do not already exist.
  */
-public class Installer extends ModuleInstall {
+class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private final static int SERVER_START_RETRIES = 5;

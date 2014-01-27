@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
  *
  * @author jantonius
  */
-class FileSystemDetailsPanel extends javax.swing.JPanel {
+ class FileSystemDetailsPanel extends javax.swing.JPanel {
 
     /** Creates new form FileSystemDetailsPanel */
     FileSystemDetailsPanel() {

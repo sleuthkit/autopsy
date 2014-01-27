@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-public class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { // disable autodiscovery for now  {
+class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { // disable autodiscovery for now  {
     
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     

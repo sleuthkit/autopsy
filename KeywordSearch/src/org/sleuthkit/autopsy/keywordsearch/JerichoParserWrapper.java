@@ -36,7 +36,7 @@ import net.htmlparser.jericho.StartTagType;
  * the text, comments, tag attributes, and other important information
  * found in the HTML.
  */
-public class JerichoParserWrapper {
+class JerichoParserWrapper {
     private static final Logger logger = Logger.getLogger(JerichoParserWrapper.class.getName());
     private InputStream in;    
     private StringBuilder out;

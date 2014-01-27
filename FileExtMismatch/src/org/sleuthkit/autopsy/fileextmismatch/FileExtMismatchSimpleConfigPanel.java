@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.fileextmismatch;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {    
+class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {    
 
     public FileExtMismatchSimpleConfigPanel() {
         initComponents();
