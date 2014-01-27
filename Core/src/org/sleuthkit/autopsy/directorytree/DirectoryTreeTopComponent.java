@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * Top component which displays something.
  */
@@ -1027,6 +1027,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     void fireViewerComplete() {
-        firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
+        
+        try {
+            firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to DirectoryTreeTopComponent updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }
