@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
@@ -76,8 +78,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         //for now, do not update second time
         if (selectedNode == currentNode) {
             return;
-        }
-        else {
+        } else {
             currentNode = selectedNode;
         }
 
@@ -91,13 +92,13 @@ public class ExtractedContentViewer implements DataContentViewer {
         //add additional registered sources for this node
         sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
 
-        
+
         // if it doesn't have any SOLR content, then we won't add more sources
         if (solrHasContent(selectedNode) == false) {
             setPanel(sources);
             return;
         }
-        
+
         Content content = selectedNode.getLookup().lookup(Content.class);
         if (content == null) {
             return;
@@ -184,7 +185,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public String toString() {
-                return "Extracted Text";
+                return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toString");
             }
 
             @Override
@@ -236,10 +237,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         //initialize the  source
         newSource.getNumberPages();
-        
+
         currentSource = newSource;
         sources.add(newSource);
-      
+
 
         //init pages
         int currentPage = currentSource.getCurrentPage();
@@ -264,12 +265,12 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return "Text";
+        return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getTitle");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays extracted text from files and keyword-search results. Requires Keyword Search ingest to be run on a file to activate this viewer. ";
+        return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toolTip");
     }
 
     @Override
@@ -397,11 +398,11 @@ public class ExtractedContentViewer implements DataContentViewer {
     /**
      * Get extracted content for a node from Solr
      *
-     * @param node a node that has extracted content in Solr (check with
-     * solrHasContent(ContentNode))
+     * @param node        a node that has extracted content in Solr (check with
+     *                    solrHasContent(ContentNode))
      * @param currentPage currently used page
-     * @param hasChunks true if the content behind the node has multiple chunks.
-     * This means we need to address the content pages specially.
+     * @param hasChunks   true if the content behind the node has multiple chunks.
+     *                    This means we need to address the content pages specially.
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */
@@ -413,24 +414,25 @@ public class ExtractedContentViewer implements DataContentViewer {
         int chunkId = 0;
         if (hasChunks) {
             chunkId = currentPage;
-        }
-        else {
+        } else {
             //if no chunks, it is safe to assume there is no text content
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
             String name = contentObj.getName();
             String msg = null;
-            if (contentObj instanceof AbstractFile) { 
+            if (contentObj instanceof AbstractFile) {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile)contentObj).getKnown());
+                boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile) contentObj).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = "<p style='font-style:italic'>" + name + " is a known file (based on MD5 hash) and does not have text in the index.</p>";
+                    msg = NbBundle
+                            .getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
                 }
             }
             if (msg == null) {
-                 msg = "<p style='font-style:italic'>" + name + " does not have text in the index.<br/>It may have no text, not been analyzed yet, or keyword search was not enabled during ingest.</p>";
+                msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
             }
-            String htmlMsg = "<span style='font-style:italic'>" + msg + "</span>";
+            String htmlMsg = NbBundle
+                    .getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
             return htmlMsg;
         }
 
@@ -565,7 +567,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateControls(null);
             return;
         }
-        
+
         if (currentSource.hasNextPage()) {
             currentSource.nextPage();
 
@@ -598,7 +600,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateControls(null);
             return;
         }
-        
+
         if (currentSource.hasPreviousPage()) {
             currentSource.previousPage();
 

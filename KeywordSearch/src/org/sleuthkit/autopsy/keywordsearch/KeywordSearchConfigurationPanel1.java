@@ -28,9 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Panel containing all other Keyword search Options panels.
@@ -40,11 +41,14 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
-    private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    
-    /** Creates new form KeywordSearchConfigurationPanel1 */
+    private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
+                                                                                           "ListBundleConfig");
+
+    /**
+     * Creates new form KeywordSearchConfigurationPanel1
+     */
     KeywordSearchConfigurationPanel1() {
-        
+
         initComponents();
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
@@ -56,13 +60,14 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
 
         listsManagementPanel.addListSelectionListener(editListPanel);
         editListPanel.addDeleteButtonActionPerformed(new ActionListener() {
- 
+
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (KeywordSearchUtil.displayConfirmDialog("Delete a keyword list"
-                        , "This will delete the keyword list globally (for all Cases). "
-                        + "Do you want to proceed with the deletion? "
-                        , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
+                if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(),
+                                                                               "KeywordSearchConfigurationPanel1.customizeComponents.title")
+                        , NbBundle.getMessage(this.getClass(),
+                                              "KeywordSearchConfigurationPanel1.customizeComponents.body")
+                        , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
 
                     KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
@@ -73,9 +78,9 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
                 }
             }
         });
-        
+
         editListPanel.addSaveButtonActionPerformed(new ActionListener() {
-           
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = "Save Keyword List";
@@ -84,13 +89,15 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(),
+                                                                                      "KeywordSearchConfigurationPanel1.customizeComponents.keywordListEmptyErr"),
+                                                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                     return;
                 }
 
                 String listName = (String) JOptionPane.showInputDialog(
                         null,
-                        "New keyword list name:",
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                         FEATURE_NAME,
                         JOptionPane.PLAIN_MESSAGE,
                         null,
@@ -101,13 +108,18 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
                 }
 
                 if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Cannot overwrite default list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(),
+                                                                                      "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"),
+                                                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
                 }
                 boolean shouldAdd = false;
                 if (writer.listExists(listName)) {
-                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
-                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME,
+                                                                             NbBundle.getMessage(this.getClass(),
+                                                                                                 "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg",
+                                                                                                 listName),
+                                                                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     if (replace) {
                         shouldAdd = true;
                     }
@@ -118,34 +130,38 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
 
                 if (shouldAdd) {
                     writer.addList(listName, keywords);
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(),
+                                                                                      "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg",
+                                                                                      listName),
+                                                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
 
                 //currentKeywordList = writer.getList(listName);
-                
+
                 listsManagementPanel.resync();
             }
         });
-        
+
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
     }
-    
+
     @Override
     public void store() {
         KeywordSearchListsXML.getCurrent().save(false);
         //refresh the list viewer/searcher panel
         KeywordSearchListsViewerPanel.getDefault().resync();
     }
-    
+
     @Override
     public void load() {
         listsManagementPanel.load();
     }
 
-    /** This method is called from within the constructor to
+    /**
+     * This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
      * always regenerated by the Form Editor.
@@ -164,12 +180,12 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
         javax.swing.GroupLayout leftPanelLayout = new javax.swing.GroupLayout(leftPanel);
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
-            leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 275, Short.MAX_VALUE)
+                leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                               .addGap(0, 275, Short.MAX_VALUE)
         );
         leftPanelLayout.setVerticalGroup(
-            leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 327, Short.MAX_VALUE)
+                leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                               .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setLeftComponent(leftPanel);
@@ -177,12 +193,12 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
         javax.swing.GroupLayout rightPanelLayout = new javax.swing.GroupLayout(rightPanel);
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
-            rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 318, Short.MAX_VALUE)
+                rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGap(0, 318, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
-            rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 327, Short.MAX_VALUE)
+                rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setRightComponent(rightPanel);
@@ -190,12 +206,12 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                      .addComponent(mainSplitPane)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                      .addComponent(mainSplitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -204,5 +220,5 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JPanel rightPanel;
     // End of variables declaration//GEN-END:variables
-    
+
 }

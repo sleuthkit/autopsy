@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
