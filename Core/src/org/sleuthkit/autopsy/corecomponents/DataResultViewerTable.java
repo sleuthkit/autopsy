@@ -378,8 +378,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    // Populate a two-dimensional array with rows of property values for up 
-    // to maxRows children of the node passed in. 
+    /**
+     * Create a 2-d array of rows (one per node) and columns (one per property) based on
+     * the passed in parent node. 
+     * 
+     * @param node Parent node
+     * @param maxRows Max rows to create
+     * @return Array of rows and columns
+     */ 
     private static Object[][] getRowValues(Node node, int maxRows) {
         Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];        
         int rowCount = 0;
@@ -388,16 +394,23 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 break;
             }                
             PropertySet[] propertySets = child.getPropertySets();
-            if (propertySets.length > 0)
-            {
-                Property[] properties = propertySets[0].getProperties();
-                rowValues[rowCount] = new Object[properties.length];
-                for (int j = 0; j < properties.length; ++j) {
-                    try {
-                        rowValues[rowCount][j] = properties[j].getValue();
-                    } 
-                    catch (IllegalAccessException | InvocationTargetException ignore) {
-                        rowValues[rowCount][j] = "n/a";
+            /* This lock was added because we saw an exception whereby the 
+             * properties[j] access below was out of bounds when I was quickly
+             * scrolling down items in the tree and the result viewer was 
+             * constantly updating.
+             */
+            synchronized (propertySets) {
+                if (propertySets.length > 0) {
+                    Property[] properties = propertySets[0].getProperties();
+                
+                    rowValues[rowCount] = new Object[properties.length];
+                    for (int j = 0; j < properties.length; ++j) {
+                        try {
+                            rowValues[rowCount][j] = properties[j].getValue();
+                        } 
+                        catch (IllegalAccessException | InvocationTargetException ignore) {
+                            rowValues[rowCount][j] = "n/a";
+                        }
                     }
                 }
             }                        
