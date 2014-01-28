@@ -23,6 +23,7 @@ Improvements:
 - HTML text is better formatted
 - Report generation performance
 - HTML parser is skipped for files > 50MB. 
+- Removed xdock definitions -> some claim this helps with memory problems
 
 
 
