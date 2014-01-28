@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.report;
 
 import javax.swing.JPanel;
 
-public interface GeneralReportModule extends ReportModule {
+ interface GeneralReportModule extends ReportModule {
     
     /**
      * Called to generate the report.  Method is responsible for saving the file at the 

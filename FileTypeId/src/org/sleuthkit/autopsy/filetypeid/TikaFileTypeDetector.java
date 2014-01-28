@@ -26,7 +26,7 @@ import org.apache.tika.mime.MimeTypes;
 
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class TikaFileTypeDetector implements FileTypeDetectionInterface {
+class TikaFileTypeDetector implements FileTypeDetectionInterface {
 
     private static Tika tikaInst = new Tika();
     

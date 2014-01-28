@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
-public final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
@@ -392,7 +392,11 @@ public final class FileExtMismatchConfigPanel extends javax.swing.JPanel impleme
             mimeErrLabel.setText("MIME type text is empty!");
             return;
         }
-
+        if (newMime.equals( "application/octet-stream")){
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText("MIME type not supported!");
+            return;   
+        }
         if (mimeList.contains(newMime)) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText("MIME type already exists!");

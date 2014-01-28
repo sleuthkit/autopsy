@@ -41,8 +41,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
+
 import javax.swing.AbstractAction;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -65,7 +68,7 @@ import org.apache.solr.client.solrj.impl.XMLResponseParser;
 /**
  * Handles for keeping track of a Solr server and its cores
  */
-public class Server {
+class Server {
 
     // field names that are used in SOLR schema
     public static enum Schema {
@@ -133,8 +136,11 @@ public class Server {
                 return "num_chunks";
             }
         },
-    };
-    public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
+    }
+
+    ;
+    public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000";
+            //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
@@ -143,7 +149,8 @@ public class Server {
     public static final String CORE_EVT = "CORE_EVT";
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java";
-    public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
+    public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8");
+            ///< default Charset to index text as
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     private static Ingester ingester = null;
@@ -160,7 +167,9 @@ public class Server {
     public enum CORE_EVT_STATES {
 
         STOPPED, STARTED
-    };
+    }
+
+    ;
     private SolrServer solrServer;
     private String instanceDir;
     private File solrFolder;
@@ -189,26 +198,34 @@ public class Server {
     private void initSettings() {
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
             try {
-                currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
+                currentSolrServerPort = Integer
+                        .decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
             } catch (NumberFormatException nfe) {
-                logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe);
+                logger.log(Level.WARNING,
+                           "Could not decode indexing server port, value was not a valid port number, using the default. ",
+                           nfe);
                 currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
             }
         } else {
             currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(currentSolrServerPort));
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT,
+                                            String.valueOf(currentSolrServerPort));
         }
 
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT)) {
             try {
-                currentSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
+                currentSolrStopPort = Integer
+                        .decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
             } catch (NumberFormatException nfe) {
-                logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe);
+                logger.log(Level.WARNING,
+                           "Could not decode indexing server stop port, value was not a valid port number, using default",
+                           nfe);
                 currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
             }
         } else {
             currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT,
+                                            String.valueOf(currentSolrStopPort));
         }
     }
 
@@ -299,7 +316,7 @@ public class Server {
                         logger.log(Level.WARNING, "Error closing Solr output stream writer");
                     }
                 }
-                 if (br != null) {
+                if (br != null) {
                     try {
                         br.close();
                     } catch (IOException ex) {
@@ -366,21 +383,21 @@ public class Server {
 
                 final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
 
-                final String [] SOLR_START_CMD = {
-                    javaPath,
-                    MAX_SOLR_MEM_MB_PAR,
-                    "-DSTOP.PORT=" + currentSolrStopPort,
-                    "-Djetty.port=" + currentSolrServerPort,
-                    "-DSTOP.KEY=" + KEY,
-                    loggingProperties,
-                    "-jar",
-                    "start.jar"};
-                
+                final String[] SOLR_START_CMD = {
+                        javaPath,
+                        MAX_SOLR_MEM_MB_PAR,
+                        "-DSTOP.PORT=" + currentSolrStopPort,
+                        "-Djetty.port=" + currentSolrServerPort,
+                        "-DSTOP.KEY=" + KEY,
+                        loggingProperties,
+                        "-jar",
+                        "start.jar"};
+
                 StringBuilder cmdSb = new StringBuilder();
-                for (int i = 0; i<SOLR_START_CMD.length; ++i ) {
+                for (int i = 0; i < SOLR_START_CMD.length; ++i) {
                     cmdSb.append(SOLR_START_CMD[i]).append(" ");
                 }
-                
+
                 logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString());
                 curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
                 logger.log(Level.INFO, "Finished starting Solr");
@@ -409,7 +426,8 @@ public class Server {
                 throw new KeywordSearchModuleException("Could not start Solr server process", ex);
             }
         } else {
-            logger.log(Level.WARNING, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
+            logger.log(Level.WARNING,
+                       "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
             throw new SolrServerNoPortException(currentSolrServerPort);
         }
     }
@@ -465,20 +483,20 @@ public class Server {
 
     /**
      * Tries to stop a Solr instance.
-     *
+     * <p/>
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
-            final String [] SOLR_STOP_CMD = {
-              javaPath,
-              "-DSTOP.PORT=" + currentSolrStopPort,
-              "-DSTOP.KEY=" + KEY,
-              "-jar",
-              "start.jar",
-              "--stop",
+            final String[] SOLR_STOP_CMD = {
+                    javaPath,
+                    "-DSTOP.PORT=" + currentSolrStopPort,
+                    "-DSTOP.KEY=" + KEY,
+                    "-jar",
+                    "start.jar",
+                    "--stop",
             };
             Process stop = Runtime.getRuntime().exec(SOLR_STOP_CMD, null, solrFolder);
             logger.log(Level.INFO, "Waiting for stopping Solr server");
@@ -532,7 +550,8 @@ public class Server {
             // TODO: check if SocketExceptions should actually happen (is
             // probably caused by starting a connection as the server finishes
             // shutting down)
-            if (cause instanceof ConnectException || cause instanceof SocketException) { //|| cause instanceof NoHttpResponseException) {
+            if (cause instanceof ConnectException
+                    || cause instanceof SocketException) { //|| cause instanceof NoHttpResponseException) {
                 logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
                 return false;
             } else {
@@ -544,6 +563,7 @@ public class Server {
 
         return true;
     }
+
     /**
      * ** Convenience methods for use while we only open one case at a time ***
      */
@@ -769,13 +789,14 @@ public class Server {
     /**
      * Execute solr query
      *
-     * @param sq the query
+     * @param sq     the query
      * @param method http method to use
      * @return query response
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
      */
-    public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws KeywordSearchModuleException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method)
+            throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -824,7 +845,7 @@ public class Server {
      *
      * @param content to get the text for
      * @param chunkID chunk number to query (starting at 1), or 0 if there is no
-     * chunks for that content
+     *                chunks for that content
      * @return content text string or null if error quering
      * @throws NoOpenCoreException
      */
@@ -849,7 +870,7 @@ public class Server {
      * chunk as stored in Solr, e.g. FILEID_CHUNKID
      *
      * @param parentID the parent file id (id of the source content)
-     * @param childID the child chunk id
+     * @param childID  the child chunk id
      * @return formatted string id
      */
     public static String getChunkIdString(long parentID, int childID) {
@@ -860,7 +881,7 @@ public class Server {
      * Open a new core
      *
      * @param coreName name to refer to the core by in Solr
-     * @param dataDir directory to load/store the core data from/to
+     * @param dataDir  directory to load/store the core data from/to
      * @return new core
      */
     private Core openCore(String coreName, File dataDir) throws KeywordSearchModuleException {
@@ -958,19 +979,24 @@ public class Server {
             try {
                 solrCore.add(doc);
             } catch (SolrServerException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
-                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"),
+                           ex);
+                throw new KeywordSearchModuleException(
+                        "Could not add document to index via update handler: " + doc.getField("id"), ex);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
-                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"),
+                           ex);
+                throw new KeywordSearchModuleException(
+                        "Could not add document to index via update handler: " + doc.getField("id"), ex);
             }
         }
 
         /**
          * get the text from the content field for the given file
+         *
          * @param contentID
          * @param chunkID
-         * @return 
+         * @return
          */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
@@ -1059,7 +1085,7 @@ public class Server {
          * Execute query that gets number of indexed file chunks for a file
          *
          * @param contentID file id of the original file broken into chunks and
-         * indexed
+         *                  indexed
          * @return int representing number of indexed file chunks, 0 if there is
          * no chunks
          * @throws SolrServerException
@@ -1092,8 +1118,8 @@ public class Server {
 
         SolrServerNoPortException(int port) {
             super("Indexing server could not bind to port " + port
-                    + ", port is not available, consider change the default "
-                    + Server.PROPERTIES_CURRENT_SERVER_PORT + " port.");
+                          + ", port is not available, consider change the default "
+                          + Server.PROPERTIES_CURRENT_SERVER_PORT + " port.");
             this.port = port;
         }
 

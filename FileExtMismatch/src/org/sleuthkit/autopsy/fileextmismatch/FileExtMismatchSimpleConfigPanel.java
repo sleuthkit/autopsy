@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.fileextmismatch;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {    
+class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {    
 
     public FileExtMismatchSimpleConfigPanel() {
         initComponents();
@@ -46,6 +46,7 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
 
         skipKnownCheckBox = new javax.swing.JCheckBox();
         skipNoExtCheckBox = new javax.swing.JCheckBox();
+        skipTextPlain = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipKnownCheckBox.text")); // NOI18N
@@ -64,25 +65,34 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
             }
         });
 
+        skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipTextPlain.text")); // NOI18N
+        skipTextPlain.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipTextPlainActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(skipNoExtCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(127, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(skipTextPlain)
+                    .addComponent(skipNoExtCheckBox)
+                    .addComponent(skipKnownCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 327, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(11, 11, 11)
-                .addComponent(skipKnownCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipNoExtCheckBox)
-                .addContainerGap(152, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(skipTextPlain)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(skipKnownCheckBox)
+                .addContainerGap(72, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -94,8 +104,14 @@ public class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
         FileExtMismatchIngestModule.setSkipNoExt(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
+    private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
+        FileExtMismatchIngestModule.setSkipTextPlain(skipTextPlain.isSelected());
+       
+    }//GEN-LAST:event_skipTextPlainActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox skipKnownCheckBox;
     private javax.swing.JCheckBox skipNoExtCheckBox;
+    private javax.swing.JCheckBox skipTextPlain;
     // End of variables declaration//GEN-END:variables
 }

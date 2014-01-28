@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -51,7 +52,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
     private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
     private Map<String, String> extractOptions = new HashMap<String, String>();
-    
+
 
     //disabled prepending of BOM
     //static {
@@ -132,7 +133,8 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             //break input stream into chunks 
 
             long readSize = 0;
-            while ((readSize = stringStream.read(STRING_CHUNK_BUF, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
+            while ((readSize = stringStream.read(STRING_CHUNK_BUF, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN))
+                    != -1) {
                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
                 //debug.write(STRING_CHUNK_BUF, 0, (int)readSize);
 
@@ -143,7 +145,9 @@ class AbstractFileStringExtract implements AbstractFileExtract {
                     ++this.numChunks;
                 } catch (IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
+                    logger.log(Level.WARNING,
+                               "Ingester had a problem with extracted strings from file '" + sourceFile.getName()
+                                       + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
 
@@ -159,7 +163,8 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             ingester.ingest(this);
 
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING,
+                       "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex);
             success = false;
         } finally {
             try {

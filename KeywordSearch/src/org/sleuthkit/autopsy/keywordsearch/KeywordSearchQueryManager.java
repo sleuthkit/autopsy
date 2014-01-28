@@ -24,6 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -34,17 +36,18 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
  * Responsible for running a keyword search query and displaying
- * the results. 
+ * the results.
  */
-public class KeywordSearchQueryManager {
+class KeywordSearchQueryManager {
 
     // how to display the results
     public enum Presentation {
-        FLAT,   // all results are in a single level (even if multiple keywords and reg-exps are used).  We made this because we were having problems with multiple-levels of nodes and the thumbnail and table view sharing an ExplorerManager. IconView seemed to change EM so that it did not allow lower levels to be selected.
+        FLAT,
+        // all results are in a single level (even if multiple keywords and reg-exps are used).  We made this because we were having problems with multiple-levels of nodes and the thumbnail and table view sharing an ExplorerManager. IconView seemed to change EM so that it did not allow lower levels to be selected.
         COLLAPSE, // two levels. Keywords on top, files on bottom.
         DETAIL // not currently used, but seems like it has three levels of nodes
     };
-    
+
     private List<Keyword> keywords;
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
@@ -53,8 +56,7 @@ public class KeywordSearchQueryManager {
     private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
 
     /**
-     * 
-     * @param queries Keywords to search for
+     * @param queries      Keywords to search for
      * @param presentation Presentation layout
      */
     public KeywordSearchQueryManager(List<Keyword> queries, Presentation presentation) {
@@ -65,9 +67,8 @@ public class KeywordSearchQueryManager {
     }
 
     /**
-     * 
-     * @param query Keyword to search for
-     * @param qt Query type
+     * @param query        Keyword to search for
+     * @param qt           Query type
      * @param presentation Presentation Layout
      */
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
@@ -79,9 +80,8 @@ public class KeywordSearchQueryManager {
     }
 
     /**
-     * 
-     * @param query Keyword to search for
-     * @param isLiteral false if reg-exp
+     * @param query        Keyword to search for
+     * @param isLiteral    false if reg-exp
      * @param presentation Presentation layout
      */
     public KeywordSearchQueryManager(String query, boolean isLiteral, Presentation presentation) {
@@ -136,7 +136,7 @@ public class KeywordSearchQueryManager {
         //       q.execute();
         //  }
         // } else {
-        
+
         //Collapsed view
         Collection<KeyValueQuery> things = new ArrayList<>();
         int queryID = 0;
@@ -152,11 +152,14 @@ public class KeywordSearchQueryManager {
         String queryConcatStr = queryConcat.toString();
         final int queryConcatStrLen = queryConcatStr.length();
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
-        final String windowTitle = "Keyword search " + (++resultWindowCount) + " - " + queryStrShort;
+        final String windowTitle = NbBundle
+                .getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount,
+                            queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(keywords, things, presentation, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(keywords, things, presentation, searchResultWin),
+                                    true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -173,6 +176,7 @@ public class KeywordSearchQueryManager {
 
     /**
      * validate the queries before they are run
+     *
      * @return false if any are invalid
      */
     public boolean validate() {

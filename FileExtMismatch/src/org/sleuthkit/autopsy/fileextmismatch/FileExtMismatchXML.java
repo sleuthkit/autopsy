@@ -42,7 +42,7 @@ import org.w3c.dom.NodeList;
  * Storage of file extension mismatch configuration, which maps mimetypes to
  * allowable filename extensions.
  */
-public class FileExtMismatchXML {
+class FileExtMismatchXML {
     private static final Logger logger = Logger.getLogger(FileExtMismatchXML.class.getName());    
     private static FileExtMismatchXML defaultInstance = null;
             
@@ -54,7 +54,7 @@ public class FileExtMismatchXML {
     private static final String EXT_EL = "ext";    
     private static final String SIG_MIMETYPE_ATTR = "mimetype";
     
-    private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";
+    private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";  
         
     protected String filePath;
     
@@ -79,7 +79,7 @@ public class FileExtMismatchXML {
         }
         return defaultInstance;
     }
-    
+     
     /**
      * Load and parse XML
      * 
@@ -111,7 +111,7 @@ public class FileExtMismatchXML {
             for(int sigIndex = 0; sigIndex < numSigs; ++sigIndex) {                
                 Element sigEl = (Element)sigNList.item(sigIndex);
                 final String mimetype = sigEl.getAttribute(SIG_MIMETYPE_ATTR); 
-                
+             
                 NodeList extNList = sigEl.getElementsByTagName(EXT_EL);
                 final int numExts = extNList.getLength();
 
@@ -181,4 +181,6 @@ public class FileExtMismatchXML {
         }
         return success;        
     }
+    
 }
+        

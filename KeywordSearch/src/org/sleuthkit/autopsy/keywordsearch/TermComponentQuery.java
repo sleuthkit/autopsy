@@ -26,9 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
+
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse;
@@ -43,9 +46,9 @@ import org.sleuthkit.datamodel.TskException;
 
 
 /**
- * Performs a regular expression query to the SOLR/Lucene instance. 
+ * Performs a regular expression query to the SOLR/Lucene instance.
  */
-public class TermComponentQuery implements KeywordSearchQuery {
+class TermComponentQuery implements KeywordSearchQuery {
 
     private static final int TERMS_UNLIMITED = -1;
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
@@ -61,7 +64,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private final List<KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
     private String field = null;
     private static int MAX_TERMS_RESULTS = 20000;
-    
+
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public TermComponentQuery(Keyword keywordQuery) {
@@ -167,7 +170,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet,
+                                                String listName) {
         final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
 
         //there is match actually in this file, create artifact only then
@@ -193,7 +197,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         //preview
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
+            attributes
+                    .add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
         //regex keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, termsQuery));
@@ -226,12 +231,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
-        q.setTermsLimit(MAX_TERMS_RESULTS); 
+        q.setTermsLimit(MAX_TERMS_RESULTS);
         logger.log(Level.INFO, "Query: " + q.toString());
         terms = executeQuery(q);
 
         int resultSize = 0;
-        
+
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
@@ -260,7 +265,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             }
 
         }
-        
+
         //TODO limit how many results we store, not to hit memory limits
         logger.log(Level.INFO, "Regex # results: " + resultSize);
 

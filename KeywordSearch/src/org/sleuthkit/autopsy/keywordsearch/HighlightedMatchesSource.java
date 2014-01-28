@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -46,7 +48,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
-    private static final String NO_MATCHES = "<html><pre><span style='background:yellow'>There were no keyword hits on this page. <br />Keyword could have been in file name. <br />Advance to another page for hits or choose Extracted Text to view original text..</span></pre></html>";
+
     private Content content;
     private String keywordHitQuery;
     private Server solrServer;
@@ -92,7 +94,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         this.hits = hits;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, Map<String, List<ContentHit>> hits) {
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group,
+                             Map<String, List<ContentHit>> hits) {
         this(content, solrQuery, isRegex, hits);
         this.group = group;
     }
@@ -343,11 +346,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
         q.addFilterQuery(filterQuery);
-        q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
+        q.addHighlightField(
+                highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
 
         //q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
         //q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
-        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+        q.setHighlightFragsize(
+                0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
         //tune the highlighter
         q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
@@ -364,11 +369,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             if (responseHighlightID == null) {
-                return NO_MATCHES;
+                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+
             }
             List<String> contentHighlights = responseHighlightID.get(highLightField);
             if (contentHighlights == null) {
-                return NO_MATCHES;
+                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
             } else {
                 // extracted content (minus highlight tags) is HTML-escaped
                 String highlightedContent = contentHighlights.get(0).trim();
@@ -388,7 +394,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public String toString() {
-        return "Search Results";
+        return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
     }
 
     @Override
@@ -436,6 +442,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         return buf.toString();
     }
+
     //dummy instance for Lookup only
     private static HighlightLookup instance = null;
 

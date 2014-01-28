@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * has all of the blackboard artifacts that are not displayed in a more specific form elsewhere
  * in the tree.
  */
-public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
+class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
     private SleuthkitCase skCase;
     private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow;
     

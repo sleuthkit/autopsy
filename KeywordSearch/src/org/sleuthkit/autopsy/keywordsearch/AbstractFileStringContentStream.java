@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -31,7 +32,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Wrapper over InputStream that implements ContentStream to feed to Solr.
  */
-public class AbstractFileStringContentStream implements ContentStream {
+class AbstractFileStringContentStream implements ContentStream {
     //input
 
     private AbstractFile content;
@@ -69,7 +70,8 @@ public class AbstractFileStringContentStream implements ContentStream {
     @Override
     public Long getSize() {
         //return convertedLength;
-        throw new UnsupportedOperationException("Cannot tell how many chars in converted string, until entire string is converted");
+        throw new UnsupportedOperationException(
+                "Cannot tell how many chars in converted string, until entire string is converted");
     }
 
     @Override
@@ -85,7 +87,7 @@ public class AbstractFileStringContentStream implements ContentStream {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        
+
         stream.close();
     }
 }

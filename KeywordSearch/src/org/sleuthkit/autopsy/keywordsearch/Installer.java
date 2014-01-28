@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
+
 import org.openide.modules.ModuleInstall;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
@@ -30,11 +32,11 @@ import org.sleuthkit.autopsy.coreutils.Version;
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
  * application is closed.
- *
+ * <p/>
  * In addition, the default KeywordSearch config files (NSRL, Options, Scripts)
  * are generated here, if they config files do not already exist.
  */
-public class Installer extends ModuleInstall {
+class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private final static int SERVER_START_RETRIES = 5;
@@ -201,12 +203,10 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server port " + curFailPort + " is not available. "
-                        + " Check if your security software does not block " + Version.getName()
-                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder."
-                        + " Then try rebooting your system if another process was causing the conflict. ";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle
+                        .getMessage(this.getClass(), "Installer.reportPortError", curFailPort, Version.getName(),
+                                    Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }
@@ -215,10 +215,9 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server stop port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_STOP_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder.";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportStopPortError", curFailPort,
+                                                       Server.PROPERTIES_CURRENT_STOP_PORT, Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }
@@ -227,14 +226,13 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server port " + KeywordSearch.getServer().getCurrentSolrServerPort() + " is not available. "
-                        + " Check if your security software does not block " + Version.getName()
-                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder."
-                        + " Then try rebooting your system if another process was causing the conflict. ";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportInitError",
+                                                       KeywordSearch.getServer().getCurrentSolrServerPort(),
+                                                       Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT,
+                                                       Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
 
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }
