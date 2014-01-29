@@ -33,14 +33,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract extends IngestModuleDataSource{
+abstract class Extract extends IngestModuleDataSource{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
-    protected final ArrayList<String> errorMessages = new ArrayList<>();
-    protected String moduleName = "";
-    protected boolean dataFound = false;
+    private final ArrayList<String> errorMessages = new ArrayList<>();
+    String moduleName = "";
+    boolean dataFound = false;
     
     //hide public constructor to prevent from instantiation by ingest module loader
     Extract() {

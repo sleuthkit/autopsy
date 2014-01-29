@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * responsible for assembling nodes and columns in the right way
  * and performing lazy queries as needed
  */
-public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
+class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
     //common properties (superset of all Node properties) to be displayed as columns
     //these are merged with FsContentPropertyType defined properties

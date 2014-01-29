@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
-public class LocalFilesPanel extends JPanel {
+ class LocalFilesPanel extends JPanel {
 
     private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add

@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Advanced configuration panel handling languages config.
  */
-public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements OptionsPanel {
 
     private static KeywordSearchConfigurationPanel3 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());

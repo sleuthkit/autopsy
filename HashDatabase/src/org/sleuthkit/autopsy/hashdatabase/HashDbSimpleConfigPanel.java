@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
+ class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
     
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
@@ -146,7 +146,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                 HashDb db = hashDatabases.get(rowIndex);
                 boolean dbHasIndex = false;
                 try {
-                    dbHasIndex = db.hasLookupIndex();
+                    dbHasIndex = db.hasIndex();
                 }
                 catch (TskCoreException ex) {
                     Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + db.getHashSetName() + " hash database", ex);            

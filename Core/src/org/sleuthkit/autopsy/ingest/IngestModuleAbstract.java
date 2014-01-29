@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.ingest;
 /**
  * Base interface for ingest modules
  */
-public abstract class IngestModuleAbstract {
+ abstract class IngestModuleAbstract {
     
     private String args;
     

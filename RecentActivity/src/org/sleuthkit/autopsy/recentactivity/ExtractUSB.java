@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * Loads a file that maps USB IDs to names of makes and models. Uses Linux USB info. 
  * This should be renamed because it isn't extracting.  It's just mapping IDs to names. 
  */
-public class ExtractUSB {
+class ExtractUSB {
     private static final Logger logger = Logger.getLogger(ExtractUSB.class.getName());
     private HashMap<String, USBInfo> devices;
     private static final String DataFile = "USB_DATA.txt";

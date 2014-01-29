@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Searches by MD5 hash to find all files with the same hash, and
  * subsequently the same content.
  */
-public class HashDbSearcher {
+ class HashDbSearcher {
     
     /**
      * Given a string hash value, find all files with that hash.

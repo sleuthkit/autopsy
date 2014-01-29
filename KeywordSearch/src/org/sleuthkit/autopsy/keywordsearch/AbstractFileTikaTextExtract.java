@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * parsers-supported content type.
  *
  */
-public class AbstractFileTikaTextExtract implements AbstractFileExtract {
+class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(IngestModuleAbstractFile.class.getName());
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;

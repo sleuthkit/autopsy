@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskException;
  * It updates the given ProgressMonitor as it works through adding the image,
  * and et the end, calls the specified Callback.
  */
-public class AddImageTask implements Runnable {
+ class AddImageTask implements Runnable {
 
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
         
@@ -234,9 +234,6 @@ public class AddImageTask implements Runnable {
             if (!(cancelled || hasCritError)) {
 
                 try {
-                    // Tell the progress monitor we're done
-                    progressMonitor.setProgress(100);
-
                     if (newContents.isEmpty()) {
                         if (addImageProcess != null) { // and if we're done configuring ingest
                             // commit anything
@@ -255,6 +252,8 @@ public class AddImageTask implements Runnable {
                     else {   //already commited?
                         logger.log(Level.INFO, "Assuming image already committed, will not commit.");
                     }
+                    // Tell the progress monitor we're done
+                    progressMonitor.setProgress(100);
 
                 } catch (Exception ex) {
                     //handle unchecked exceptions post image add

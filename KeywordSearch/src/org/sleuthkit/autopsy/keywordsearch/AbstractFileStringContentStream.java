@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Wrapper over InputStream that implements ContentStream to feed to Solr.
  */
-public class AbstractFileStringContentStream implements ContentStream {
+ class AbstractFileStringContentStream implements ContentStream {
     //input
 
     private AbstractFile content;

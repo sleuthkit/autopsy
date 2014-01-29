@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * @author jwallace
  */
-public class PstParser {
+class PstParser {
     private static final Logger logger = Logger.getLogger(PstParser.class.getName());
     /**
      * First four bytes of a pst file.

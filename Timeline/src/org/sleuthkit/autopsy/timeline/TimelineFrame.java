@@ -29,7 +29,7 @@ import java.awt.Image;
  *
  * Ready timeline frame with layout to hold dynamic components
  */
-public class TimelineFrame extends javax.swing.JFrame {
+ class TimelineFrame extends javax.swing.JFrame {
 
     /**
      * Creates new form TimelineFrame

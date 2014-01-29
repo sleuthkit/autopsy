@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
  */
-public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
+ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
     private static final Logger logger = Logger.getLogger(HashDbSearchPanel.class.getName());
     private static HashDbSearchPanel instance;
     

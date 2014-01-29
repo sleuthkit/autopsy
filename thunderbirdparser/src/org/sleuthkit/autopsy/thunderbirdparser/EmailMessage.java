@@ -29,7 +29,7 @@ import java.util.List;
  * the original format or source.
  * @author jwallace
  */
-public class EmailMessage {
+class EmailMessage {
     private String recipients = "";
     private String bcc = "";
     private String cc = "";

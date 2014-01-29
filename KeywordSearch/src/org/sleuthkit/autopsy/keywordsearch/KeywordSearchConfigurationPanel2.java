@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 /**
  * General, not per list, keyword search configuration and status display widget
  */
-public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements OptionsPanel {
 
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel2.class.getName());
 

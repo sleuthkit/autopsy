@@ -19,7 +19,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 /**
- * Exception thrown when case action (such as open, close, create) resulted in an error
+ * Exception thrown when case action (such as open, close, create) resulted in
+ * an error
  */
 public class CaseActionException extends Exception {
 
@@ -30,6 +31,4 @@ public class CaseActionException extends Exception {
     public CaseActionException(String message, Throwable cause) {
         super(message, cause);
     }
-    
-    
 }

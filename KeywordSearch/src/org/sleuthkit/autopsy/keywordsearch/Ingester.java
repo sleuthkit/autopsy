@@ -62,7 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Handles indexing files on a Solr core.
  */
-public class Ingester {
+class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private boolean uncommitedIngests = false;

@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
+ public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
     
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
     private final List<UpdateWrapper> viewers = new ArrayList<>();;
@@ -181,7 +181,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                 jTabbedPane1.setEnabledAt(i, true);
                 
                 // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode, true);
+                int currentPreferred = dcv.isPreferred(selectedNode);
                 if (currentPreferred > maxPreferred) {
                     preferredViewerIndex = i;
                     maxPreferred = currentPreferred;
@@ -258,8 +258,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             return this.wrapped.isSupported(node);
         }
         
-        int isPreferred(Node node, boolean isSupported) {
-            return this.wrapped.isPreferred(node, isSupported);
+        int isPreferred(Node node) {
+            return this.wrapped.isPreferred(node);
         }
     }
     

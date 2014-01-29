@@ -27,7 +27,7 @@ import org.openide.windows.WindowManager;
 /**
  * This action opens the TopComponent passed to the constructor
  */
-public class OpenTopComponentAction extends AbstractAction{
+ class OpenTopComponentAction extends AbstractAction{
 
     private TopComponent tc;
     

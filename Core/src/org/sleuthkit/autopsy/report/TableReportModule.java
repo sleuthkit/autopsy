@@ -29,7 +29,7 @@ import java.util.List;
  * The data sent consists of user-chosen fields such as Blackboard Artifacts
  * and File/Result Tags.
  */
-public interface TableReportModule extends ReportModule {
+ interface TableReportModule extends ReportModule {
     
     /**
      * Start the report. Open any output streams, initialize member variables,

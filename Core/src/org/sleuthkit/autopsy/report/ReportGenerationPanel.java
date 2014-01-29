@@ -29,7 +29,7 @@ import javax.swing.Box;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
-public class ReportGenerationPanel extends javax.swing.JPanel {
+ class ReportGenerationPanel extends javax.swing.JPanel {
     private GridBagConstraints c;
     private List<ReportProgressPanel> progressPanels;
     private Component glue;

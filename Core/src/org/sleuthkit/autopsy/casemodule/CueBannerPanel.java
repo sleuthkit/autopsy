@@ -33,7 +33,7 @@ import org.openide.util.Lookup;
 /**
  *
  */
-public class CueBannerPanel extends javax.swing.JPanel {
+ class CueBannerPanel extends javax.swing.JPanel {
 
     final private static String title = "Open Recent Case";
     final private static JFrame frame = new JFrame(title);
