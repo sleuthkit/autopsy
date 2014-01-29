@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@HelpSetRegistration(helpSet = "keywordsearch-hs.xml",
-                     position = 3521) package org.sleuthkit.autopsy.keywordsearch.docs;
+@HelpSetRegistration(helpSet = "keywordsearch-hs.xml", position = 3521)
+package org.sleuthkit.autopsy.keywordsearch.docs;
 
 import org.netbeans.api.javahelp.HelpSetRegistration;

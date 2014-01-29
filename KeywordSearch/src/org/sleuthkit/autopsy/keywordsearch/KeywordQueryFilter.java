@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
+ *
  * Filter to restrict query only specific files, chunks, images
  * Single filter supports multiple ids per file/chunk/image, that act as OR filter
  */
@@ -32,7 +33,7 @@ class KeywordQueryFilter {
 
         FILE, CHUNK, DATA_SOURCE
     };
-    private Set<Long> idFilters;
+    private Set<Long>idFilters;
     private FilterType filterType;
 
     public KeywordQueryFilter(FilterType filterType, long id) {
@@ -41,7 +42,7 @@ class KeywordQueryFilter {
         this.idFilters.add(id);
     }
 
-    public KeywordQueryFilter(FilterType filterType, Set<Long> ids) {
+    public KeywordQueryFilter(FilterType filterType, Set<Long>ids) {
         this.filterType = filterType;
         this.idFilters = ids;
     }
@@ -58,8 +59,8 @@ class KeywordQueryFilter {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         String id = null;
-
-        Iterator<Long> it = idFilters.iterator();
+        
+        Iterator<Long>it = idFilters.iterator();
         for (int i = 0; it.hasNext(); ++i) {
             if (i > 0) {
                 sb.append(" "); //OR

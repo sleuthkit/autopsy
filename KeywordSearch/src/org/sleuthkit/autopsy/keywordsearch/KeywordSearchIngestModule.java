@@ -36,11 +36,9 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-
 import org.apache.tika.Tika;
 import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
@@ -77,7 +75,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * ingest update interval) Runs a periodic keyword / regular expression search
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
- * <p/>
+ *
  * Registered as a module in layer.xml
  */
 public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
@@ -98,13 +96,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         int getTime() {
             return time;
         }
-    }
-
-    ;
+    };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
-    public static final String MODULE_DESCRIPTION
-            = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
+    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     final public static String MODULE_VERSION = Version.getVersion();
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
@@ -137,7 +132,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private KeywordSearchIngestSimplePanel simpleConfigPanel;
     private KeywordSearchConfigurationPanel advancedConfigPanel;
     private Tika tikaFormatDetector;
-
+    
 
     private enum IngestStatus {
         TEXT_INGESTED,   /// Text was extracted by knowing file type and text_ingested
@@ -146,9 +141,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         SKIPPED_ERROR_INDEXING, ///< File was skipped because index engine had problems
         SKIPPED_ERROR_TEXTEXTRACT, ///< File was skipped because of text extraction issues
         SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
-    }
-
-    ;
+    };
     private Map<Long, IngestStatus> ingestStatus;
 
     //private constructor to ensure singleton instance 
@@ -182,10 +175,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             curDataSourceIds.add(fileSourceId);
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE,
-                       "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
+            logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
-
+        
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             //skip indexing of virtual dirs (no content, no real name) - will index children files
             return ProcessResult.OK;
@@ -197,13 +189,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             //notify depending module that keyword search (would) encountered error for this file
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
             return ProcessResult.ERROR;
-        } else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+        } 
+        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
         }
 
-        processedFiles = true;
+        processedFiles = true;        
 
         //check if it's time to commit after previous processing
         checkRunCommitSearch();
@@ -344,6 +337,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     /**
      * Initializes the module for new ingest run Sets up threads, timers,
      * retrieves settings, keyword lists to run on
+     *
      */
     @Override
     public void init(IngestModuleInit initContext) {
@@ -362,8 +356,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             if (!server.isRunning()) {
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 logger.log(Level.SEVERE, msg);
-                String details = NbBundle
-                        .getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                 return;
 
@@ -406,11 +399,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         initKeywords();
 
         if (keywords.isEmpty() || keywordLists.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance,
-                                                                    NbBundle.getMessage(this.getClass(),
-                                                                                        "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                                                                    NbBundle.getMessage(this.getClass(),
-                                                                                        "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
         }
 
         processedFiles = false;
@@ -449,13 +439,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     @Override
     public javax.swing.JPanel getSimpleConfiguration(String context) {
         KeywordSearchListsXML.getCurrent().reload();
-
+        
         if (null == simpleConfigPanel) {
-            simpleConfigPanel = new KeywordSearchIngestSimplePanel();
-        } else {
+           simpleConfigPanel = new KeywordSearchIngestSimplePanel();  
+        }
+        else {
             simpleConfigPanel.load();
         }
-
+        
         return simpleConfigPanel;
     }
 
@@ -464,7 +455,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         if (advancedConfigPanel == null) {
             advancedConfigPanel = new KeywordSearchConfigurationPanel();
         }
-
+        
         advancedConfigPanel.load();
         return advancedConfigPanel;
     }
@@ -474,7 +465,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         if (advancedConfigPanel != null) {
             advancedConfigPanel.store();
         }
-
+        
         if (simpleConfigPanel != null) {
             simpleConfigPanel.load();
         }
@@ -552,42 +543,23 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         }
 
         StringBuilder msg = new StringBuilder();
-        msg.append("<table border=0><tr><td>")
-           .append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl"))
-           .append("</td><td>").append(text_ingested).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(),
-                                                          "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead"))
-           .append("</td><td>").append(strings_ingested).append("</td></tr>");
-        msg.append("<tr><td>")
-           .append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl"))
-           .append("</td><td>").append(metadata_ingested).append("</td></tr>");
-        msg.append("<tr><td>")
-           .append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl"))
-           .append("</td><td>").append(error_index).append("</td></tr>");
-        msg.append("<tr><td>")
-           .append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl"))
-           .append("</td><td>").append(error_text).append("</td></tr>");
-        msg.append("<tr><td>")
-           .append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl"))
-           .append("</td><td>").append(error_io).append("</td></tr>");
+        msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>");
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>");
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl")).append("</td><td>").append(metadata_ingested).append("</td></tr>");
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl")).append("</td><td>").append(error_index).append("</td></tr>");
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl")).append("</td><td>").append(error_text).append("</td></tr>");
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl")).append("</td><td>").append(error_io).append("</td></tr>");
         msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
-        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this,
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"),
-                                                         indexStats));
+        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
         if (error_index > 0) {
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(),
-                                                               "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
-                                           NbBundle.getMessage(this.getClass(),
-                                                               "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles",
-                                                               error_index));
-        } else if (error_io + error_text > 0) {
-            MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(),
-                                                              "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg"));
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
+        }
+        else if (error_io + error_text > 0) {
+            MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg"));
         }
     }
 
@@ -723,8 +695,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          * streaming) from the file Divide the file into chunks and index the
          * chunks
          *
-         * @param aFile          file to extract strings from, divide into chunks and
-         *                       index
+         * @param aFile file to extract strings from, divide into chunks and
+         * index
          * @param detectedFormat mime-type detected, or null if none detected
          * @return true if the file was text_ingested, false otherwise
          * @throws IngesterException exception thrown if indexing failed
@@ -756,7 +728,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          * Extract strings using heuristics from the file and add to index.
          *
          * @param aFile file to extract strings from, divide into chunks and
-         *              index
+         * index
          * @return true if the file was text_ingested, false otherwise
          */
         private boolean extractStringsAndIndex(AbstractFile aFile) {
@@ -765,16 +737,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     ingestStatus.put(aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
-                    logger.log(Level.WARNING,
-                               "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile
-                                       .getId() + ").");
+                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
             } catch (IngesterException ex) {
-                logger.log(Level.WARNING,
-                           "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId()
-                                   + ").", ex);
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);
                 ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;
             }
@@ -784,9 +752,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
          * Check with every extractor if it supports the file with the detected
          * format
          *
-         * @param aFile          file to check for
+         * @param aFile file to check for
          * @param detectedFormat mime-type with detected format (such as
-         *                       text/plain) or null if not detected
+         * text/plain) or null if not detected
          * @return true if text extraction is supported
          */
         private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
@@ -802,18 +770,17 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         /**
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
-         * @param aFile        File to analyze
+         * @param aFile File to analyze
          * @param indexContent False if only metadata should be text_ingested. True if
-         *                     content and metadata should be index.
+         * content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
-            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-
+            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType(); 
+            
             // unallocated and unused blocks can only have strings extracted from them. 
-            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType
-                    .equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
                 extractStringsAndIndex(aFile);
             }
 
@@ -823,7 +790,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } catch (IngesterException ex) {
+                } 
+                catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
@@ -836,9 +804,11 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             try {
                 is = new ReadContentInputStream(aFile);
                 detectedFormat = tikaFormatDetector.detect(is, aFile.getName());
-            } catch (Exception e) {
+            } 
+            catch (Exception e) {
                 logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e);
-            } finally {
+            } 
+            finally {
                 if (is != null) {
                     try {
                         is.close();
@@ -848,9 +818,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     }
                 }
             }
-
+            
             // @@@ Add file type signature to blackboard here
-
+            
             //logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
 
             // we skip archive formats that are opened by the archive module. 
@@ -859,7 +829,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } catch (IngesterException ex) {
+                } 
+                catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
@@ -872,9 +843,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 try {
                     //logger.log(Level.INFO, "indexing: " + aFile.getName());
                     if (!extractTextAndIndex(aFile, detectedFormat)) {
-                        logger.log(Level.WARNING,
-                                   "Failed to extract text and ingest, file '" + aFile.getName() + "' (id: " + aFile
-                                           .getId() + ").");
+                        logger.log(Level.WARNING, "Failed to extract text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
                         ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     } else {
                         ingestStatus.put(aFile.getId(), IngestStatus.TEXT_INGESTED);
@@ -937,21 +906,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 logger.log(Level.INFO, "Pending start of new searcher");
             }
 
-            final String displayName =
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName") +
-                            (finalRun ? (" - " + NbBundle.getMessage(this.getClass(),
-                                                                     "KeywordSearchIngestModule.doInBackGround.finalizeMsg"))
-                                      : "");
-            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" (" +
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")"),
-                                                                        null, new Cancellable() {
+            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName") +
+                    (finalRun ? (" - "+ NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" ("+
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") +")"), null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
                     if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " (" + NbBundle
-                                .getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.cancelMsg")
-                                                             + "...)");
+                        progressGroup.setDisplayName(displayName + " ("+ NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.cancelMsg") +"...)");
                     }
                     return Searcher.this.cancel(true);
                 }
@@ -991,8 +954,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
-                        logger.log(Level.INFO,
-                                   "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
+                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
                         return null;
                     }
 
@@ -1012,15 +974,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                     boolean isRegex = !keywordQuery.isLiteral();
                     if (isRegex) {
                         del = new TermComponentQuery(keywordQuery);
-                    } else {
+                    } 
+                    else {
                         del = new LuceneQuery(keywordQuery);
-                        del.escape();
+                        del.escape();    
                     }
 
                     //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
-                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(
-                            KeywordQueryFilter.FilterType.DATA_SOURCE, curDataSourceIds);
+                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, curDataSourceIds);
                     del.addFilter(dataSourceFilter);
 
                     Map<String, List<ContentHit>> queryResult = null;
@@ -1034,8 +996,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         //likely case has closed and threads are being interrupted
                         return null;
                     } catch (CancellationException e) {
-                        logger.log(Level.INFO,
-                                   "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
+                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
                         return null;
                     } catch (Exception e) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
@@ -1068,11 +1029,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                         for (final Keyword hitTerm : newResults.keySet()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
-                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: "
-                                        + keywordQuery.getQuery());
+                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: " + keywordQuery.getQuery());
                                 return null;
                             }
-
+                            
                             // update progress display
                             String hitDisplayStr = hitTerm.getQuery();
                             if (hitDisplayStr.length() > 50) {
@@ -1082,17 +1042,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                             //subProgresses[keywordsSearched].progress(unitProgress);
 
                             // this returns the unique files in the set with the first chunk that has a hit
-                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit
-                                    .flattenResults(newResults.get(hitTerm));
+                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
-
+                                
                                 // get the snippet for the first hit in the file
                                 String snippet = null;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
                                 int chunkId = contentHitsFlattened.get(hitFile);
                                 try {
-                                    snippet = LuceneQuery
-                                            .querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
+                                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
                                 } catch (NoOpenCoreException e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
                                     //no reason to continue
@@ -1103,12 +1061,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                                 }
 
                                 // write the blackboard artifact for this keyword in this file
-                                KeywordWriteResult written = del
-                                        .writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
+                                KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
                                 if (written == null) {
-                                    logger.log(Level.WARNING,
-                                               "BB artifact for keyword hit not written, file: " + hitFile + ", hit: "
-                                                       + hitTerm.toString());
+                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: " + hitFile + ", hit: " + hitTerm.toString());
                                     continue;
                                 }
 
@@ -1121,16 +1076,13 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                                     //final int hitFiles = newResults.size();
 
                                     if (!keywordQuery.isLiteral()) {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(),
-                                                                             "KeywordSearchIngestModule.regExpHitLbl"));
+                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
                                     } else {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(),
-                                                                             "KeywordSearchIngestModule.kwHitLbl"));
+                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
                                     }
                                     //subjectSb.append("<");
                                     String uniqueKey = null;
-                                    BlackboardAttribute attr = written
-                                            .getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+                                    BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                                     if (attr != null) {
                                         final String keyword = attr.getValueString();
                                         subjectSb.append(keyword);
@@ -1144,64 +1096,49 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                                     detailsSb.append("<table border='0' cellpadding='4' width='280'>");
                                     //hit
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(),
-                                                                         "KeywordSearchIngestModule.kwHitLThLbl"));
-                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString()))
-                                             .append("</td>");
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLThLbl"));
+                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
                                     //preview
-                                    attr = written.getAttribute(
-                                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                     if (attr != null) {
                                         detailsSb.append("<tr>");
-                                        detailsSb.append(NbBundle.getMessage(this.getClass(),
-                                                                             "KeywordSearchIngestModule.previewThLbl"));
-                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString()))
-                                                 .append("</td>");
+                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
+                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                         detailsSb.append("</tr>");
 
                                     }
 
                                     //file
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(),
-                                                                         "KeywordSearchIngestModule.fileThLbl"));
-                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName())
-                                             .append("</td>");
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
+                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
 
                                     detailsSb.append("</tr>");
 
 
                                     //list
-                                    attr = written
-                                            .getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(),
-                                                                         "KeywordSearchIngestModule.listThLbl"));
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
                                     detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                     detailsSb.append("</tr>");
 
                                     //regex
                                     if (!keywordQuery.isLiteral()) {
-                                        attr = written.getAttribute(
-                                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                         if (attr != null) {
                                             detailsSb.append("<tr>");
-                                            detailsSb.append(NbBundle.getMessage(this.getClass(),
-                                                                                 "KeywordSearchIngestModule.regExThLbl"));
+                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
                                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                             detailsSb.append("</tr>");
 
                                         }
                                     }
                                     detailsSb.append("</table>");
-
-                                    services.postMessage(IngestMessage.createDataMessage(++messageID, instance,
-                                                                                         subjectSb.toString(),
-                                                                                         detailsSb.toString(),
-                                                                                         uniqueKey,
-                                                                                         written.getArtifact()));
+                                
+                                    services.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
 
@@ -1211,8 +1148,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            services.fireModuleDataEvent(
-                                    new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     } //if has results
 
@@ -1262,7 +1198,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
         //without relying on done() method that is not guaranteed to run after background thread completes
         //NEED to call this method always right before doInBackground() returns
-
         /**
          * Performs the cleanup that needs to be done right AFTER
          * doInBackground() returns without relying on done() method that is not
@@ -1300,8 +1235,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
-        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult,
-                                                             boolean isRegex) {
+        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
             Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
 
             for (String termResult : queryResult.keySet()) {

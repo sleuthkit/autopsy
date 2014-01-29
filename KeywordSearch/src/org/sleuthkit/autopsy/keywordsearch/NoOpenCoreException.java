@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 /**
+ *
  * Exception thrown when no core is open
  */
 class NoOpenCoreException extends Exception {
@@ -27,5 +28,5 @@ class NoOpenCoreException extends Exception {
         super("No currently open Solr core.");
     }
 
-
+    
 }

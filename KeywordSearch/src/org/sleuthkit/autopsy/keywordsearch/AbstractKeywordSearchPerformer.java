@@ -33,8 +33,7 @@ import org.openide.util.NbBundle;
  */
 abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
-    private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(),
-                                                                                               "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
+    private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
 
     AbstractKeywordSearchPerformer() {
@@ -87,26 +86,19 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
         if (filesIndexed == 0) {
             if (isRunning) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                                                                                                    "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
-                                                                                                    KeywordSearchSettings
-                                                                                                            .getUpdateFrequency()
-                                                                                                            .getTime()),
-                                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
+                        KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             } else {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                                                                                                    "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"),
-                                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             }
             return;
         }
 
         //check if keyword search module  ingest is running (indexing, etc)
         if (isRunning) {
-            if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(),
-                                                                                            "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
-                                                       NbBundle.getMessage(this.getClass(),
-                                                                           "AbstractKeywordSearchPerformer.search.ingestInProgressBody"),
-                                                       KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
+            if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
+                    NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;
             }
         }
@@ -116,8 +108,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             final List<Keyword> keywords = getQueryList();
             if (keywords.isEmpty()) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                                                                                                    "AbstractKeywordSearchPerformer.search.emptyKeywordErrorBody"),
-                                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        "AbstractKeywordSearchPerformer.search.emptyKeywordErrorBody"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
             man = new KeywordSearchQueryManager(keywords, Presentation.FLAT);
@@ -131,8 +123,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             final String queryText = getQueryText();
             if (queryText == null || queryText.trim().equals("")) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                                                                                                    "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"),
-                                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
             man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.FLAT);
@@ -142,8 +133,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             man.execute();
         } else {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                                                                                                "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"),
-                                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
         }
     }
 }

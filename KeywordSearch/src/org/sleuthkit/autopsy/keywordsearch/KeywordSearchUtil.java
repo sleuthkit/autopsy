@@ -21,11 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.io.File;
 import java.util.logging.Level;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
-
 import javax.swing.JOptionPane;
-
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
@@ -35,10 +32,9 @@ class KeywordSearchUtil {
     public enum DIALOG_MESSAGE_TYPE {
 
         ERROR, WARN, INFO
-    }
-
-    ;
+    };
     private static final Logger logger = Logger.getLogger(KeywordSearchUtil.class.getName());
+
 
 
     /**
@@ -121,8 +117,7 @@ class KeywordSearchUtil {
                 messageType);
     }
 
-    public static boolean displayConfirmDialog(final String title, final String message,
-                                               final DIALOG_MESSAGE_TYPE type) {
+    public static boolean displayConfirmDialog(final String title, final String message, final DIALOG_MESSAGE_TYPE type) {
         int messageType;
         if (type == DIALOG_MESSAGE_TYPE.ERROR) {
             messageType = JOptionPane.ERROR_MESSAGE;
@@ -131,8 +126,7 @@ class KeywordSearchUtil {
         } else {
             messageType = JOptionPane.INFORMATION_MESSAGE;
         }
-        if (JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION, messageType)
-                == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION, messageType) == JOptionPane.YES_OPTION) {
             return true;
         } else {
             return false;

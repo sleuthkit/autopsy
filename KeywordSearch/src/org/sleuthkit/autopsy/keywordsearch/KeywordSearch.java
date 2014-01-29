@@ -27,7 +27,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -67,8 +66,7 @@ class KeywordSearch {
     static {
         try {
             final int MAX_TIKA_LOG_FILES = 3;
-            FileHandler tikaLogHandler = new FileHandler(
-                    PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
+            FileHandler tikaLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             tikaLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
@@ -90,16 +88,16 @@ class KeywordSearch {
     static Logger getTikaLogger() {
         return TIKA_LOGGER;
     }
-
+    
 
     public static void addNumIndexedFilesChangeListener(PropertyChangeListener l) {
         changeSupport.addPropertyChangeListener(NUM_FILES_CHANGE_EVT, l);
     }
-
+    
     public static void removeNumIndexedFilesChangeListener(PropertyChangeListener l) {
         changeSupport.removePropertyChangeListener(l);
     }
-
+    
     static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
         changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
     }

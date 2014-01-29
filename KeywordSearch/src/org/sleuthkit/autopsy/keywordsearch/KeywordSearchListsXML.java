@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,7 +39,7 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
+public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
 
     private static final String ROOT_EL = "keyword_lists";
     private static final String LIST_EL = "keyword_list";
@@ -58,23 +57,23 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
     private static final Logger logger = Logger.getLogger(KeywordSearchListsXML.class.getName());
     private DateFormat dateFormatter;
 
+    
 
     /**
      * Constructor to obtain handle on other that the current keyword list
      * (such as for import or export)
-     *
      * @param xmlFile xmlFile to obtain KeywordSearchListsXML handle on
      */
     KeywordSearchListsXML(String xmlFile) {
         super(xmlFile);
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
-
+    
     @Override
     public boolean save() {
         return save(false);
     }
-
+    
     @Override
     public boolean save(boolean isExport) {
         boolean success = false;
@@ -103,7 +102,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
-
+                
                 // only write the 'useForIngest' and 'ingestMessages' attributes
                 // if we're not exporting the list
                 if (!isExport) {
@@ -113,7 +112,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String literal = keyword.isLiteral() ? "true" : "false";
+                    String literal = keyword.isLiteral()?"true":"false";
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
                     BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
                     if (selectorType != null) {
@@ -155,29 +154,30 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
-
+                
                 //set these bools to true by default, if they don't exist in XML
                 Boolean useForIngestBool;
-                Boolean ingestMessagesBool;
-
-                if (listEl.hasAttribute(LIST_USE_FOR_INGEST)) {
+                Boolean ingestMessagesBool; 
+                
+                if (listEl.hasAttribute(LIST_USE_FOR_INGEST) ) {
                     useForIngestBool = Boolean.parseBoolean(listEl.getAttribute(LIST_USE_FOR_INGEST));
-                } else {
+                }
+                else {
                     useForIngestBool = true;
                 }
 
                 if (listEl.hasAttribute(LIST_INGEST_MSGS)) {
                     ingestMessagesBool = Boolean.parseBoolean(listEl.getAttribute(LIST_INGEST_MSGS));
-                } else {
+                }
+                else {
                     ingestMessagesBool = true;
                 }
-
+                
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
 
                 List<Keyword> words = new ArrayList<Keyword>();
-                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool,
-                                                               ingestMessagesBool, words);
+                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 
                 //parse all words
                 NodeList wordsNList = listEl.getElementsByTagName(KEYWORD_EL);
@@ -188,13 +188,12 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                     boolean isLiteral = literal.equals("true");
                     Keyword keyword = new Keyword(wordEl.getTextContent(), isLiteral);
                     String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
-                    if (!selector.equals("")) {
-                        BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE
-                                                                                             .fromLabel(selector);
+                    if (! selector.equals("")) {
+                        BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(selector);
                         keyword.setType(selectorType);
                     }
                     words.add(keyword);
-
+                    
                 }
                 theLists.put(name, list);
             }
