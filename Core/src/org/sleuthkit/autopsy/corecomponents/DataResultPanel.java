@@ -136,6 +136,23 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Factory method to create, customize and open a new custom data result panel.
+     * Does NOT call open(). Client must manually initialize by calling open().
+     * 
+     * @param title Title of the result panel
+     * @param pathText Descriptive text about the source of the nodes displayed
+     * @param givenNode The new root node
+     * @param totalMatches Cardinality of root node's children
+     * @return a new DataResultPanel instance representing a custom data result viewer
+     */
+    public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node givenNode, int totalMatches) {
+        DataResultPanel newDataResult = new DataResultPanel(false, title);
+
+        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
+        return newDataResult;
+    }    
+    
+    /**
+     * Factory method to create, customize and open a new custom data result panel.
      *
      * @param title Title of the component window
      * @param pathText Descriptive text about the source of the nodes displayed
