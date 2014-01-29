@@ -51,6 +51,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Notification window showing messages from modules to user
@@ -66,7 +69,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
-
+    private static final Logger logger = Logger.getLogger(IngestMessagePanel.class.getName());
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
     static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed
     static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared
@@ -291,7 +294,14 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         ++totalMessages;
         final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
 
-        messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
+        
+        try {
+            messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
 
         //update labels
         this.totalMessagesNameVal.setText(Long.toString(totalMessages));
@@ -309,7 +319,14 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         tableModel.clearMessages();
         totalMessagesNameVal.setText("-");
         totalUniqueMessagesNameVal.setText("-");
-        messagePcs.firePropertyChange(MESSAGES_BOX_CLEARED, origMsgGroups, 0);
+        
+        try {
+            messagePcs.firePropertyChange(MESSAGES_BOX_CLEARED, origMsgGroups, 0);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
     
      public synchronized int getMessagesCount() {
@@ -321,13 +338,27 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         tableModel.setVisited(rowNumber);
         //renderer.setSelected(rowNumber);
         lastRowSelected = rowNumber;
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
+        
+        try {
+            messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     @Override
     public void tableChanged(TableModelEvent e) {
         int newMessages = tableModel.getNumberNewMessages();
-        messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, TOTAL_NUM_NEW_MESSAGES_CHANGED, -1, newMessages));
+        
+        try {
+            messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, TOTAL_NUM_NEW_MESSAGES_CHANGED, -1, newMessages));
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     private class MessageTableModel extends AbstractTableModel {

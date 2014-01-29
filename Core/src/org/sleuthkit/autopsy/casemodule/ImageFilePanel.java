@@ -34,7 +34,9 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
@@ -42,7 +44,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 public class ImageFilePanel extends JPanel implements DocumentListener {
     
     private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
-    
+    private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
     
@@ -192,7 +194,16 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             String path = fc.getSelectedFile().getPath();
             pathTextField.setText(path);
         }
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
+        
+      
+            
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -313,17 +324,37 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     @Override
-    public void removeUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+    public void removeUpdate(DocumentEvent e) { 
+        try {
+             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
     
     /**
