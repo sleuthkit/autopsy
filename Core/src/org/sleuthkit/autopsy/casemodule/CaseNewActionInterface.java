@@ -25,6 +25,6 @@ import java.awt.event.ActionListener;
 /**
  *
  */
- interface CaseNewActionInterface extends ActionListener {
+public interface CaseNewActionInterface extends ActionListener {
 
 }
