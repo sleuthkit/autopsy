@@ -96,7 +96,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
             @Override
             public void focusGained(FocusEvent e) {
-                if (searchBox.getText().equals("Search...")) {
+                if (searchBox.getText()
+                             .equals(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
+                                                                          "KeywordSearchPanel.searchBox.text"))) {
                     searchBox.setText("");
                     searchBox.setForeground(Color.BLACK);
                     entered = true;
@@ -150,7 +152,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
                 } else if (jmi.equals(copyMenuItem)) {
                     searchBox.copy();
                 } else if (jmi.equals(pasteMenuItem)) {
-                    if (searchBox.getText().equals("Search...")) {
+                    if (searchBox.getText()
+                                 .equals(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
+                                                                              "KeywordSearchPanel.searchBox.text"))) {
                         searchBox.setText("");
                         searchBox.setForeground(Color.BLACK);
                         entered = true;
@@ -170,7 +174,8 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
     private void resetSearchBox() {
         searchBox.setEditable(true);
-        searchBox.setText("Search...");
+        searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
+                                                               "KeywordSearchPanel.searchBox.text"));
         searchBox.setForeground(Color.LIGHT_GRAY);
         regExCheckboxMenuItem.setEnabled(true);
         entered = false;
