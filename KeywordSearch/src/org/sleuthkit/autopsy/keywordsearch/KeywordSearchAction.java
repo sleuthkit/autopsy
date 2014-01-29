@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-
 import org.openide.util.actions.Presenter;
 
 final class KeywordSearchAction extends AbstractAction implements Presenter.Toolbar {

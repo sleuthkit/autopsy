@@ -26,7 +26,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -54,15 +53,13 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * Property change event support
-     * In events: For all of these enums, the old value should be null, and
-     * the new value should be the keyword list name string.
+     *  In events: For all of these enums, the old value should be null, and 
+     *  the new value should be the keyword list name string.
      */
     public enum ListsEvt {
 
         LIST_ADDED, LIST_DELETED, LIST_UPDATED
-    }
-
-    ;
+    };
 
     /**
      * get instance for managing the current keyword list of the application
@@ -80,47 +77,41 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     private void prepopulateLists() {
-        if (!theLists.isEmpty()) {
+        if (! theLists.isEmpty()) {
             return;
         }
         //phone number
         List<Keyword> phones = new ArrayList<Keyword>();
-        phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false,
-                               BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
+        phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
         //phones.add(new Keyword("\\d{8,10}", false));
         //IP address
         List<Keyword> ips = new ArrayList<Keyword>();
-        ips.add(new Keyword(
-                "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])",
-                false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS));
+        ips.add(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS));
         //email
         List<Keyword> emails = new ArrayList<Keyword>();
-        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false,
-                               BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
+        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
         //URL
         List<Keyword> urls = new ArrayList<Keyword>();
         //urls.add(new Keyword("http://|https://|^www\\.", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
-        urls.add(new Keyword(
-                "((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*",
-                false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
+        urls.add(new Keyword("((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
 
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
 
         //disable messages for harcoded/locked lists
         String name;
-
+        
         name = "Phone Numbers";
         lockedLists.add(name);
         addList(name, phones, false, false, true);
-
+        
         name = "IP Addresses";
         lockedLists.add(name);
         addList(name, ips, false, false, true);
-
+        
         name = "Email Addresses";
         lockedLists.add(name);
         addList(name, emails, true, false, true);
-
+        
         name = "URLs";
         lockedLists.add(name);
         addList(name, urls, false, false, true);
@@ -135,7 +126,7 @@ public abstract class KeywordSearchListsAbstract {
         //theLists.clear();
         //populate only the first time
         prepopulateLists();
-
+        
         //reset all the lists other than locked lists (we don't save them to XML)
         //we want to preserve state of locked lists
         List<String> toClear = new ArrayList<String>();
@@ -146,8 +137,8 @@ public abstract class KeywordSearchListsAbstract {
         }
         for (String clearList : toClear) {
             theLists.remove(clearList);
-        }
-
+        } 
+        
         if (!this.listFileExists()) {
             //create new if it doesn't exist
             save();
@@ -292,8 +283,8 @@ public abstract class KeywordSearchListsAbstract {
      * adds the new word list using name id replacing old one if exists with the
      * same name
      *
-     * @param name         the name of the new list or list to replace
-     * @param newList      list of keywords
+     * @param name the name of the new list or list to replace
+     * @param newList list of keywords
      * @param useForIngest should this list be used for ingest
      * @return true if old list was replaced
      */
@@ -309,15 +300,14 @@ public abstract class KeywordSearchListsAbstract {
 //            }
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
-            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages,
-                                                     newList, locked));
+            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
 //            if (!locked) {
 //                save();
 //            }
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
-
+        
         return replaced;
     }
 
@@ -333,8 +323,7 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     boolean addList(KeywordSearchList list) {
-        return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(),
-                       list.isLocked());
+        return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isLocked());
     }
 
     /**
@@ -391,7 +380,7 @@ public abstract class KeywordSearchListsAbstract {
         //boolean saved = save();
 
         for (KeywordSearchList list : newLists) {
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());         
         }
         for (KeywordSearchList over : overwritten) {
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
@@ -414,7 +403,7 @@ public abstract class KeywordSearchListsAbstract {
             //deleted = save();
         }
         changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
-
+        
         return true;
 
     }
@@ -423,12 +412,11 @@ public abstract class KeywordSearchListsAbstract {
      * writes out current list replacing the last lists file
      */
     public abstract boolean save();
-
+    
     /**
      * writes out current list replacing the last lists file
-     *
      * @param isExport true is this save operation is an export and not a 'Save
-     *                 As'
+     * As'
      */
     public abstract boolean save(boolean isExport);
 
@@ -441,11 +429,11 @@ public abstract class KeywordSearchListsAbstract {
         File f = new File(filePath);
         return f.exists() && f.canRead() && f.canWrite();
     }
-
-    public void setUseForIngest(String key, boolean flag) {
+    
+    public void setUseForIngest(String key, boolean flag)
+    {
         theLists.get(key).setUseForIngest(flag);
     }
-
     /**
      * a representation of a single keyword list created or loaded
      */
@@ -459,8 +447,7 @@ public abstract class KeywordSearchListsAbstract {
         private List<Keyword> keywords;
         private Boolean locked;
 
-        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages,
-                          List<Keyword> keywords, boolean locked) {
+        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords, boolean locked) {
             this.name = name;
             this.created = created;
             this.modified = modified;
@@ -470,8 +457,7 @@ public abstract class KeywordSearchListsAbstract {
             this.locked = locked;
         }
 
-        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages,
-                          List<Keyword> keywords) {
+        KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
             this(name, created, modified, useForIngest, ingestMessages, keywords, false);
         }
 

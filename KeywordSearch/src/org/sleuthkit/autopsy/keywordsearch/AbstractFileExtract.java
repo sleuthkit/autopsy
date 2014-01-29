@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -38,46 +37,44 @@ interface AbstractFileExtract {
 
         EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
         EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
-    }
-
-    ;
-
+    };
+    
     //generally text extractors should ignore archives
     //and let unpacking modules take case of them
     static final List<String> ARCHIVE_MIME_TYPES =
             Arrays.asList(
-                    //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
-                    "application/x-7z-compressed",
-                    "application/x-ace-compressed",
-                    "application/x-alz-compressed",
-                    "application/x-arj",
-                    "application/vnd.ms-cab-compressed",
-                    "application/x-cfs-compressed",
-                    "application/x-dgc-compressed",
-                    "application/x-apple-diskimage",
-                    "application/x-gca-compressed",
-                    "application/x-dar",
-                    "application/x-lzx",
-                    "application/x-lzh",
-                    "application/x-rar-compressed",
-                    "application/x-stuffit",
-                    "application/x-stuffitx",
-                    "application/x-gtar",
-                    "application/x-archive",
-                    "application/x-executable",
-                    "application/x-gzip",
-                    "application/zip",
-                    "application/x-zoo",
-                    "application/x-cpio",
-                    "application/x-shar",
-                    "application/x-tar",
-                    "application/x-bzip",
-                    "application/x-bzip2",
-                    "application/x-lzip",
-                    "application/x-lzma",
-                    "application/x-lzop",
-                    "application/x-z",
-                    "application/x-compress");
+            //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
+            "application/x-7z-compressed",
+            "application/x-ace-compressed",
+            "application/x-alz-compressed",
+            "application/x-arj",
+            "application/vnd.ms-cab-compressed",
+            "application/x-cfs-compressed",
+            "application/x-dgc-compressed",
+            "application/x-apple-diskimage",
+            "application/x-gca-compressed",
+            "application/x-dar",
+            "application/x-lzx",
+            "application/x-lzh",
+            "application/x-rar-compressed",
+            "application/x-stuffit",
+            "application/x-stuffitx",
+            "application/x-gtar",
+            "application/x-archive",
+            "application/x-executable",
+            "application/x-gzip",
+            "application/zip",
+            "application/x-zoo",
+            "application/x-cpio",
+            "application/x-shar",
+            "application/x-tar",
+            "application/x-bzip",
+            "application/x-bzip2",
+            "application/x-lzip",
+            "application/x-lzma",
+            "application/x-lzop",
+            "application/x-z",
+            "application/x-compress");
 
     /**
      * Get number of chunks resulted from extracting this AbstractFile
@@ -146,9 +143,9 @@ interface AbstractFileExtract {
      * Determines if the file content is supported by the extractor if
      * isContentTypeSpecific() returns true.
      *
-     * @param file           to test if its content should be supported
+     * @param file to test if its content should be supported
      * @param detectedFormat mime-type with detected format (such as text/plain)
-     *                       or null if not detected
+     * or null if not detected
      * @return true if the file content is supported, false otherwise
      */
     boolean isSupported(AbstractFile file, String detectedFormat);

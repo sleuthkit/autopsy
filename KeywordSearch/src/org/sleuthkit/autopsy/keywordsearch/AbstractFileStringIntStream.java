@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
@@ -34,17 +33,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Wrapper over StringExtract to provide streaming API Given AbstractFile
  * object, extract international strings from the file and read output as a
  * stream of UTF-8 strings as encoded bytes.
- * <p/>
+ *
  * Currently not-thread safe (reusing static buffers for efficiency)
  */
-class AbstractFileStringIntStream extends InputStream {
+ class AbstractFileStringIntStream extends InputStream {
 
     private AbstractFile content;
     private final byte[] oneCharBuf = new byte[1];
     private final StringExtract stringExtractor;
     private static final int FILE_BUF_SIZE = 1024 * 1024;
-    private static final byte[] fileReadBuff = new byte[FILE_BUF_SIZE];
-            //NOTE: need to run all stream extraction in same thread
+    private static final byte[] fileReadBuff = new byte[FILE_BUF_SIZE]; //NOTE: need to run all stream extraction in same thread
     private long fileReadOffset = 0L;
     private byte[] convertBuff; //stores extracted string encoded as bytes, before returned to user
     private int convertBuffOffset = 0; //offset to start returning data to user on next read()
@@ -61,14 +59,14 @@ class AbstractFileStringIntStream extends InputStream {
      * strings, then to byte stream, for specified script, auto-detected encoding
      * (UTF8, UTF16LE, UTF16BE), and specified output byte stream encoding
      *
-     * @param content      input content to process and turn into a stream to convert into strings
-     * @param scripts      a list of scripts to consider
-     * @param extractUTF8  whether to extract utf8 encoding
+     * @param content input content to process and turn into a stream to convert into strings
+     * @param scripts a list of scripts to consider
+     * @param extractUTF8 whether to extract utf8 encoding
      * @param extractUTF16 whether to extract utf16 encoding
-     * @param outCharset   encoding to use in the output byte stream
+     * @param outCharset encoding to use in the output byte stream
      */
-    public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8,
-                                       boolean extractUTF16, Charset outCharset) {
+    public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8, 
+           boolean extractUTF16, Charset outCharset) {
         this.content = content;
         this.stringExtractor = new StringExtract();
         this.stringExtractor.setEnabledScripts(scripts);
@@ -102,7 +100,7 @@ class AbstractFileStringIntStream extends InputStream {
         } else if (len == 0) {
             return 0;
         }
-
+        
         if (extractUTF8 == false && extractUTF16 == false) {
             return -1;
         }
@@ -126,22 +124,22 @@ class AbstractFileStringIntStream extends InputStream {
                     //convert more strings, store in buffer
                     long toRead = 0;
                     //int shiftSize = 0;
-
+                    
                     //if (lastExtractResult != null && lastExtractResult.getTextLength() != 0
-                    //      && (shiftSize = FILE_BUF_SIZE - lastExtractResult.getFirstUnprocessedOff()) > 0) {
-                    ////a string previously extracted
-                    ////shift the fileReadBuff past last bytes extracted
-                    ////read only what's needed to fill the buffer
-                    ////to avoid loosing chars and breaking or corrupting potential strings - preserve byte stream continuity
-                    //byte[] temp = new byte[shiftSize];
-                    //System.arraycopy(fileReadBuff, lastExtractResult.getFirstUnprocessedOff(),
-                    //        temp, 0, shiftSize);
-                    //System.arraycopy(temp, 0, fileReadBuff, 0, shiftSize);
-                    //toRead = Math.min(lastExtractResult.getFirstUnprocessedOff(), fileSize - fileReadOffset);
-                    //lastExtractResult = null;
+                      //      && (shiftSize = FILE_BUF_SIZE - lastExtractResult.getFirstUnprocessedOff()) > 0) {
+                        ////a string previously extracted
+                        ////shift the fileReadBuff past last bytes extracted
+                        ////read only what's needed to fill the buffer
+                        ////to avoid loosing chars and breaking or corrupting potential strings - preserve byte stream continuity
+                        //byte[] temp = new byte[shiftSize];
+                        //System.arraycopy(fileReadBuff, lastExtractResult.getFirstUnprocessedOff(),
+                        //        temp, 0, shiftSize);
+                        //System.arraycopy(temp, 0, fileReadBuff, 0, shiftSize);
+                        //toRead = Math.min(lastExtractResult.getFirstUnprocessedOff(), fileSize - fileReadOffset);
+                        //lastExtractResult = null;
                     //} else { 
-                    //fill up entire fileReadBuff fresh
-                    toRead = Math.min(FILE_BUF_SIZE, fileSize - fileReadOffset);
+                        //fill up entire fileReadBuff fresh
+                        toRead = Math.min(FILE_BUF_SIZE, fileSize - fileReadOffset);
                     //}
                     int read = content.read(fileReadBuff, fileReadOffset, toRead);
                     if (read == -1 || read == 0) {
@@ -175,7 +173,7 @@ class AbstractFileStringIntStream extends InputStream {
             //return part or all of convert buff to user
             final int toCopy = Math.min(convertBuffRemain, len - offsetUser);
             System.arraycopy(convertBuff, convertBuffOffset, b, offsetUser, toCopy);
-
+            
             //DEBUG
             /*
             if (toCopy > 0) {
@@ -184,12 +182,12 @@ class AbstractFileStringIntStream extends InputStream {
                 debug.close();
             }
             */
-
+            
             convertBuffOffset += toCopy;
             offsetUser += toCopy;
 
             bytesToUser += toCopy;
-
+          
         }
 
         //if more string data in convertBuff, will be consumed on next read()

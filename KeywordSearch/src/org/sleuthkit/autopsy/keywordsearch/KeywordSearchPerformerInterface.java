@@ -25,48 +25,43 @@ import java.util.List;
  * KeywordSearchPerformers are perform different searches from
  * different interfaces and places in the application. Its
  * results are then passed to a KeywordSearchQuery implementation
- * to perform the actual search.
+ * to perform the actual search. 
  */
 interface KeywordSearchPerformerInterface {
-
+    
     /**
      * Does this interface support multi-word queries?
-     *
-     * @return
+     * @return 
      */
     boolean isMultiwordQuery();
-
+    
     /**
      * True if the user did not choose to do a regular expression search
-     *
-     * @return
+     * @return 
      */
     boolean isLuceneQuerySelected();
-
+    
     /**
      * Returns the query/keyword string that the user entered/selected
-     *
      * @return Keyword to search
      */
     String getQueryText();
-
+    
     /**
      * Returns the list of Keyword objects that the user entered/selected
-     *
-     * @return
+     * @return 
      */
     List<Keyword> getQueryList();
-
+    
     /**
      * Set the number of files that have been indexed
-     *
-     * @param filesIndexed
+     * @param filesIndexed 
      */
     void setFilesIndexed(int filesIndexed);
-
+    
     /**
-     * Performs the search using the selected keywords.
-     * Creates a DataResultTopComponent with the results.
+     * Performs the search using the selected keywords.  
+     * Creates a DataResultTopComponent with the results. 
      */
     void search();
 }

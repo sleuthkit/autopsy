@@ -30,33 +30,36 @@ class Keyword {
     private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
 
     /**
-     * @param query     Keyword to search for
+     * 
+     * @param query Keyword to search for
      * @param isLiteral false if reg exp
      */
     Keyword(String query, boolean isLiteral) {
         this.keywordString = query;
         this.isLiteral = isLiteral;
     }
-
+    
     /**
-     * @param query       Keyword to search for
-     * @param isLiteral   false if reg exp
-     * @param keywordType
+     * 
+     * @param query Keyword to search for
+     * @param isLiteral false if reg exp
+     * @param keywordType 
      */
     Keyword(String query, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
         this(query, isLiteral);
         this.keywordType = keywordType;
     }
-
+    
     void setType(BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
         this.keywordType = keywordType;
     }
-
+    
     BlackboardAttribute.ATTRIBUTE_TYPE getType() {
         return this.keywordType;
     }
 
     /**
+     * 
      * @return Keyword to search for
      */
     String getQuery() {
@@ -69,10 +72,10 @@ class Keyword {
 
     @Override
     public String toString() {
-        return "Keyword{" + "query=" + keywordString + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType
-                + '}';
+        return "Keyword{" + "query=" + keywordString + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
     }
-
+    
+    
 
     @Override
     public boolean equals(Object obj) {
@@ -83,8 +86,7 @@ class Keyword {
             return false;
         }
         final Keyword other = (Keyword) obj;
-        if ((this.keywordString == null) ? (other.keywordString != null)
-                                         : !this.keywordString.equals(other.keywordString)) {
+        if ((this.keywordString == null) ? (other.keywordString != null) : !this.keywordString.equals(other.keywordString)) {
             return false;
         }
         if (this.isLiteral != other.isLiteral) {

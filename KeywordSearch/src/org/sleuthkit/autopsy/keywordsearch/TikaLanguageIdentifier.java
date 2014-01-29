@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -54,11 +53,9 @@ class TikaLanguageIdentifier implements TextLanguageIdentifier {
                 genInfo.addAttribute(textLang);
 
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING,
-                           "failed to add TSK_TEXT_LANGUAGE attribute to TSK_GEN_INFO artifact for file: " + sourceFile
-                                   .getName(), ex);
+                logger.log(Level.WARNING, "failed to add TSK_TEXT_LANGUAGE attribute to TSK_GEN_INFO artifact for file: " + sourceFile.getName(), ex);
             }
 
-        }
+        } 
     }
 }

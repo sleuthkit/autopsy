@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -38,7 +37,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-class AbstractFileHtmlExtract implements AbstractFileExtract {
+ class AbstractFileHtmlExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
@@ -59,7 +58,7 @@ class AbstractFileHtmlExtract implements AbstractFileExtract {
             "text/html",
             "text/javascript" //"application/xml",
             //"application/xml-dtd",
-    );
+            );
     private final TikaLanguageIdentifier tikaLanguageIdentifier;
 
     AbstractFileHtmlExtract() {
@@ -190,12 +189,10 @@ class AbstractFileHtmlExtract implements AbstractFileExtract {
                 module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read content stream from "
-                    + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
             success = false;
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from "
-                    + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
             success = false;
         } finally {
             try {

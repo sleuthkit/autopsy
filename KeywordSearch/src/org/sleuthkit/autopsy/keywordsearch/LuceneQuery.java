@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -45,7 +44,7 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * Performs a normal string (i.e. non-regexp) query to SOLR/Lucene.
- * By default, matches in all fields.
+ * By default, matches in all fields. 
  */
 class LuceneQuery implements KeywordSearchQuery {
 
@@ -54,7 +53,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private String keywordStringEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
-    private final List<KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
+    private final List <KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
     private String field = null;
     private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
@@ -63,13 +62,12 @@ class LuceneQuery implements KeywordSearchQuery {
     static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
     //TODO use content_ws stored="true" in solr schema for perfect highlight hits
     //static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT_WS.toString()
-
+    
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     /**
      * Constructor with query to process.
-     *
-     * @param keywordQuery
+     * @param keywordQuery 
      */
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
@@ -78,7 +76,6 @@ class LuceneQuery implements KeywordSearchQuery {
 
     /**
      * Constructor with keyword string to process
-     *
      * @param queryStr Keyword to search for
      */
     public LuceneQuery(String queryStr) {
@@ -91,7 +88,7 @@ class LuceneQuery implements KeywordSearchQuery {
     public void addFilter(KeywordQueryFilter filter) {
         this.filters.add(filter);
     }
-
+    
     @Override
     public void setField(String field) {
         this.field = field;
@@ -144,8 +141,7 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet,
-                                                String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
 
         KeywordWriteResult writeResult = null;
@@ -160,8 +156,7 @@ class LuceneQuery implements KeywordSearchQuery {
         }
 
         if (snippet != null) {
-            attributes
-                    .add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
         //keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
@@ -191,10 +186,9 @@ class LuceneQuery implements KeywordSearchQuery {
         return null;
     }
 
-
+    
     /**
      * Perform the query and return result
-     *
      * @return list of ContentHit objects
      * @throws NoOpenCoreException
      */
@@ -218,7 +212,7 @@ class LuceneQuery implements KeywordSearchQuery {
             sb.append(field).append(":").append(groupedQuery);
             theQueryStr = sb.toString();
         }
-
+        
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
         q.setFields(Server.Schema.ID.toString());
@@ -292,30 +286,26 @@ class LuceneQuery implements KeywordSearchQuery {
 
     /**
      * return snippet preview context
-     *
-     * @param query     the keyword query for text to highlight. Lucene special cahrs should already be escaped.
+     * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
      * @param contentID content id associated with the file
-     * @param isRegex   whether the query is a regular expression (different Solr fields are then used to generate the preview)
-     * @param group     whether the query should look for all terms grouped together in the query order, or not
-     * @return
+     * @param isRegex whether the query is a regular expression (different Solr fields are then used to generate the preview)
+     * @param group whether the query should look for all terms grouped together in the query order, or not
+     * @return 
      */
-    public static String querySnippet(String query, long contentID, boolean isRegex, boolean group)
-            throws NoOpenCoreException {
+    public static String querySnippet(String query, long contentID, boolean isRegex, boolean group) throws NoOpenCoreException {
         return querySnippet(query, contentID, 0, isRegex, group);
     }
 
     /**
      * return snippet preview context
-     *
-     * @param query     the keyword query for text to highlight. Lucene special cahrs should already be escaped.
+     * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
      * @param contentID content id associated with the hit
-     * @param chunkID   chunk id associated with the content hit, or 0 if no chunks
-     * @param isRegex   whether the query is a regular expression (different Solr fields are then used to generate the preview)
-     * @param group     whether the query should look for all terms grouped together in the query order, or not
-     * @return
+     * @param chunkID chunk id associated with the content hit, or 0 if no chunks
+     * @param isRegex whether the query is a regular expression (different Solr fields are then used to generate the preview)
+     * @param group whether the query should look for all terms grouped together in the query order, or not
+     * @return 
      */
-    public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group)
-            throws NoOpenCoreException {
+    public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
         Server solrServer = KeywordSearch.getServer();
 
         String highlightField = null;
@@ -328,7 +318,7 @@ class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
 
         String queryStr = null;
-
+        
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
             sb.append(highlightField).append(":");
@@ -346,7 +336,7 @@ class LuceneQuery implements KeywordSearchQuery {
             //always force grouping/quotes
             queryStr = KeywordSearchUtil.quoteQuery(query);
         }
-
+        
         q.setQuery(queryStr);
 
         String contentIDStr = null;
@@ -365,20 +355,21 @@ class LuceneQuery implements KeywordSearchQuery {
         //q.setHighlightSimplePost("&raquo;");  //original highlighter only
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
-
-
+        
+        
+        
         //tune the highlighter
         q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
         q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
         q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
         q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
-
-        //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
+        
+         //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
         q.setParam("hl.fragCharSize", Integer.toString(queryStr.length())); //makes sense for FastVectorHighlighter only
-
+        
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); 
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
