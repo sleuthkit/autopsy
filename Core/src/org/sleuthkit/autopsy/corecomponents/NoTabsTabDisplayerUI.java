@@ -33,7 +33,7 @@ import org.netbeans.swing.tabcontrol.TabDisplayerUI;
  *
  * @author dfickling
  */
- class NoTabsTabDisplayerUI extends TabDisplayerUI {
+public class NoTabsTabDisplayerUI extends TabDisplayerUI {
     
     /** Creates a new instance of NoTabsTabDisplayerUI */
     public NoTabsTabDisplayerUI(TabDisplayer displayer) {
