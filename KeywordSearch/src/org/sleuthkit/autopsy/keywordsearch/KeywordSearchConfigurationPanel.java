@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 /**
  * Container panel for keyword search advanced configuration options
  */
-final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
+public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
