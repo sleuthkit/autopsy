@@ -68,7 +68,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private boolean listeningToTabbedPane = false;    
-
+    private boolean defaultContent = true;
+    
     /**
      * Creates new DataResultPanel
      * Default constructor, needed mostly  for the palette/UI builder
@@ -99,7 +100,28 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.isMain = isMain;
         this.title = title;
     }
+    
+    
+    /**
+     * Creates data result panel
+     * 
+     * @param isMain whether it is the main panel associated with the main window, 
+     * clients will almost always use false
+     * @param title title string to be displayed
+     * @param defaultContent Flag to indicate if the default content viewer should 
+     * be used (if a custom one is not provided)
+     */
+    DataResultPanel(boolean isMain, String title, boolean defaultContent) {
+        this();
+        
+        setName(title);
 
+        this.isMain = isMain;
+        this.title = title;
+        this.defaultContent = defaultContent;
+    }    
+    
+        
     /**
      * Create a new, custom data result panel, in addition to the application
      * main one and links with a custom data content panel.
@@ -110,7 +132,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
-        
+
         setName(title);
 
         //custom content viewer tc to setup for every result viewer
@@ -142,10 +164,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param pathText Descriptive text about the source of the nodes displayed
      * @param givenNode The new root node
      * @param totalMatches Cardinality of root node's children
+     * @param defaultContent Flag to indicate if the default content viewer should 
+     * be used (if a custom one is not provided)
      * @return a new DataResultPanel instance representing a custom data result viewer
      */
-    public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node givenNode, int totalMatches) {
-        DataResultPanel newDataResult = new DataResultPanel(false, title);
+    public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node givenNode, int totalMatches, boolean defaultContent) {
+        DataResultPanel newDataResult = new DataResultPanel(false, title, defaultContent);
 
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         return newDataResult;
@@ -287,30 +311,32 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                // If a custom DataContent object has not been specified, get the default instance.
+                    
+                // If a custom DataContent object has not been specified, 
+                // AND the defaultContent flag is set, get the default instance.
                 DataContent contentViewer = customContentViewer;
-                if (null == contentViewer) {
+                if ((contentViewer == null) && defaultContent) {
                     contentViewer = Lookup.getDefault().lookup(DataContent.class);
                 }
 
                 try {
-                    Node[] selectedNodes = explorerManager.getSelectedNodes();
-                    for (UpdateWrapper drv : viewers) {
-                        drv.setSelectedNodes(selectedNodes);
-                    }                                
+                    if (contentViewer != null) {                       
+                        Node[] selectedNodes = explorerManager.getSelectedNodes();
+                        for (UpdateWrapper drv : viewers) {
+                            drv.setSelectedNodes(selectedNodes);
+                        }                                
 
-                    // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
-                    // This is important to the DataContent object, since the content mode (area) of the app is designed 
-                    // to show only the content underlying a single Node.                                
-                    if (selectedNodes.length == 1) {
-                        contentViewer.setNode(selectedNodes[0]);
-                    } 
-                    else {                                    
-                        contentViewer.setNode(null);
+                        // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
+                        // This is important to the DataContent object, since the content mode (area) of the app is designed 
+                        // to show only the content underlying a single Node.                                
+                        if (selectedNodes.length == 1) {
+                            contentViewer.setNode(selectedNodes[0]);
+                        } 
+                        else {                                    
+                            contentViewer.setNode(null);
+                        }
                     }
-                } 
-                finally {
+                } finally {
                     setCursor(null);
                 }
             }
