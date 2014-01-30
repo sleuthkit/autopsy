@@ -90,7 +90,7 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
         }
 
             
-         if (!img.getMd5().isEmpty()) 
+         if ((img.getMd5()!= null) && !img.getMd5().isEmpty()) 
          {
                 storedHash = img.getMd5().toLowerCase();
                 logger.info("Hash value stored in " + imgName + ": " + storedHash);
