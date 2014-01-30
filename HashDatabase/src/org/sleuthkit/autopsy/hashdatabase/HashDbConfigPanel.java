@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
- final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
     private static final String NO_SELECTION_TEXT = "No database selected";
     private static final String ERROR_GETTING_PATH_TEXT = "Error occurred getting path";
     private static final String ERROR_GETTING_INDEX_STATUS_TEXT = "Error occurred getting status";

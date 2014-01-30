@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 /**
  * Generic Keyword search module exception, wrapper for underlying exceptions
  */
-class KeywordSearchModuleException extends Exception {
+public class KeywordSearchModuleException extends Exception {
 
     public KeywordSearchModuleException(String message) {
         super(message);

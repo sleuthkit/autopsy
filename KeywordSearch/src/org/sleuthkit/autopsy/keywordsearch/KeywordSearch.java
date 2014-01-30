@@ -38,7 +38,7 @@ import java.util.logging.Level;
  * Wrapper over KeywordSearch Solr server singleton.
  * The class also provides some global types and property change support on the server events.
  */
-class KeywordSearch {
+public class KeywordSearch {
 
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
