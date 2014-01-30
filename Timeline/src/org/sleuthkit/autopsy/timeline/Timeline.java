@@ -129,6 +129,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private ComboBox<String> fxDropdownSelectYears; //Dropdown box for selecting years. Useful when the charts' scale means some years are unclickable, despite having events.
     private final Stack<BarChart<String, Number>> fxStackPrevCharts = new Stack<BarChart<String, Number>>();  //Stack for storing drill-up information.
     private BarChart<String, Number> fxChartTopLevel; //the topmost chart, used for resetting to default view.
+    private BarChart<String, Number> fxMonthView; //the month chart
     private DataResultPanel dataResultPanel;
     private DataContentPanel dataContentPanel;
     private ProgressHandle progress;
@@ -142,7 +143,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private EventHandler<MouseEvent> fxMouseExitedListener;
     private SleuthkitCase skCase;
     private boolean fxInited = false;
-
+    private int monthCounter = 0;
     public Timeline() {
         super();
 
@@ -277,7 +278,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                             if (fxStackPrevCharts.size() == 0) {
                                 bc = fxChartTopLevel;
                             } else {
-                                bc = fxStackPrevCharts.pop();
+                                bc = fxStackPrevCharts.pop();                             
                             }
                             fxChartEvents = bc;
                             fxScrollEvents.setContent(fxChartEvents);
@@ -410,7 +411,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Always 12 per year, empty months are represented by no bar.
      */
     private BarChart<String, Number> createMonthsWithDrill(final YearEpoch ye) {
-
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Month (" + ye.year + ")");
@@ -465,7 +465,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         bc.autosize();
         bc.setPrefWidth(FRAME_WIDTH);
         bc.setLegendVisible(false);
-        fxStackPrevCharts.push(bc);
+        fxMonthView= bc;
         return bc;
     }
 
@@ -538,7 +538,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             });
         }
         bc.autosize();
-        bc.setPrefWidth(FRAME_WIDTH);
+        bc.setPrefWidth(FRAME_WIDTH); 
+        monthCounter++;
+        if (monthCounter==12)
+        {
+        fxStackPrevCharts.push(fxMonthView);
+        monthCounter=0;
+        }
         return bc;
     }
 
