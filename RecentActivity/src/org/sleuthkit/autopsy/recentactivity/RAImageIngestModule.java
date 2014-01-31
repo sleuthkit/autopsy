@@ -158,6 +158,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
 
         final Extract registry = new ExtractRegistry();
         final Extract iexplore = new ExtractIE();
+        final Extract recentDocuments= new RecentDocuments(); 
         final Extract chrome = new Chrome();
         final Extract firefox = new Firefox();
         final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
@@ -165,6 +166,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         modules.add(chrome);
         modules.add(firefox);
         modules.add(iexplore);
+        modules.add(recentDocuments);
         // this needs to run after the web browser modules
         modules.add(SEUQA);
         
