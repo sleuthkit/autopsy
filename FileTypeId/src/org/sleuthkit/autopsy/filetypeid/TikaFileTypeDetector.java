@@ -50,7 +50,6 @@ class TikaFileTypeDetector implements FileTypeDetectionInterface {
             return ret;
 
         } catch (Exception ex) {
-            Exceptions.printStackTrace(ex);
             return new FileTypeDetectionInterface.FileIdInfo();
         }        
     }

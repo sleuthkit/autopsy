@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -369,10 +369,10 @@ public class IngestManager {
             }
             //dequeue
             // get next data source content and set of modules
-            final ScheduledTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
+            final DataSourceTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
 
             // check if each module for this data source content is already running
-            for (IngestModuleDataSource taskModule : dataSourceTask.getModules()) {
+            for (IngestModuleDataSource dataSourceTaskModule : dataSourceTask.getModules()) {
                 boolean alreadyRunning = false;
                 for (IngestDataSourceThread worker : dataSourceIngesters) {
                     // ignore threads that are on different data sources
@@ -380,31 +380,32 @@ public class IngestManager {
                         continue; //check next worker
                     }
                     //same data source, check module (by name, not id, since different instances)
-                    if (worker.getModule().getName().equals(taskModule.getName())) {
+                    if (worker.getModule().getName().equals(dataSourceTaskModule.getName())) {
                         alreadyRunning = true;
                         logger.log(Level.INFO, "Data Source Ingester <" + dataSourceTask.getContent()
-                                + ", " + taskModule.getName() + "> is already running");
+                                + ", " + dataSourceTaskModule.getName() + "> is already running");
                         break;
                     }
                 }
                 //checked all workers
                 if (alreadyRunning == false) {
                     logger.log(Level.INFO, "Starting new data source Ingester <" + dataSourceTask.getContent()
-                            + ", " + taskModule.getName() + ">");
+                            + ", " + dataSourceTaskModule.getName() + ">");
                     //data source modules are now initialized per instance
 
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     
                     PipelineContext<IngestModuleDataSource> dataSourcepipelineContext =
-                            new PipelineContext<IngestModuleDataSource>(dataSourceTask, getProcessUnallocSpace());
+                            dataSourceTask.getPipelineContext();
+                    
                     final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
-                            dataSourcepipelineContext, dataSourceTask.getContent(), taskModule, moduleInit);
+                            dataSourcepipelineContext, dataSourceTask.getContent(), dataSourceTaskModule, moduleInit);
                     try {
                         newDataSourceWorker.init();
                     } catch (Exception e) {
-                        logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + taskModule.getName(), e);
+                        logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + dataSourceTaskModule.getName(), e);
                         allInited = false;
-                        failedModule = taskModule;
+                        failedModule = dataSourceTaskModule;
                         errorMessage = e.getMessage();
                         break;
                     }
@@ -1012,12 +1013,14 @@ public class IngestManager {
             int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
             progress.switchToDeterminate(totalEnqueuedFiles);
             int processedFiles = 0;
+            
             //process AbstractFiles queue
             while (fileScheduler.hasNext()) {
-                final ProcessTask fileTask = fileScheduler.next();
-                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = fileTask.context;
-                final ScheduledTask<IngestModuleAbstractFile> fileIngestTask = filepipelineContext.getScheduledTask();
-                final AbstractFile fileToProcess = fileTask.file;
+                final FileTask fileTask = fileScheduler.next();
+                final DataSourceTask<IngestModuleAbstractFile> dataSourceTask = fileTask.getDataSourceTask();
+                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = dataSourceTask.getPipelineContext();
+                
+                final AbstractFile fileToProcess = fileTask.getFile();
 
                 //clear return values from modules for last file
                 synchronized (abstractFileModulesRetValues) {
@@ -1026,7 +1029,7 @@ public class IngestManager {
 
                 //logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
                 
-                for (IngestModuleAbstractFile module : fileIngestTask.getModules()) {
+                for (IngestModuleAbstractFile module : dataSourceTask.getModules()) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
@@ -1147,7 +1150,9 @@ public class IngestManager {
         }
     }
 
-    /* Thread that adds content/file and module pairs to queues.  Starts pipelines when done. */
+    /**
+     * Thread that adds content/file and module pairs to queues.  
+     * Starts pipelines when done. */
     private class EnqueueWorker extends SwingWorker<Object, Void> {
 
         private List<IngestModuleAbstract> modules;
@@ -1211,12 +1216,18 @@ public class IngestManager {
             }
         }
 
+        /**
+         * Create modules and schedule analysis
+         * @param modules Modules to load into pipeline
+         * @param inputs List of parent data sources
+         */
         private void queueAll(List<IngestModuleAbstract> modules, final List<Content> inputs) {
             
             int processed = 0;
             for (Content input : inputs) {
                 final String inputName = input.getName();
 
+                // Create a new instance of the modules for each data source
                 final List<IngestModuleDataSource> dataSourceMods = new ArrayList<IngestModuleDataSource>();
                 final List<IngestModuleAbstractFile> fileMods = new ArrayList<IngestModuleAbstractFile>();
 
@@ -1255,35 +1266,30 @@ public class IngestManager {
 
                 }//for modules
 
-                //queue to schedulers
                 
-                //queue to datasource-level ingest pipeline(s)
-                final boolean processUnalloc = getProcessUnallocSpace();
-                final ScheduledTask<IngestModuleDataSource> dataSourceTask = 
-                        new ScheduledTask<IngestModuleDataSource>(input, dataSourceMods);
-                final PipelineContext<IngestModuleDataSource> dataSourcePipelineContext = 
-                        new PipelineContext<IngestModuleDataSource>(dataSourceTask, processUnalloc);
+                /* Schedule the data source-level ingest modules for this data source */
+                final DataSourceTask<IngestModuleDataSource> dataSourceTask = 
+                        new DataSourceTask<IngestModuleDataSource>(input, dataSourceMods, getProcessUnallocSpace());
+                
+                
                 logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
                 final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
-                dataSourceScheduler.schedule(dataSourcePipelineContext);
+                dataSourceScheduler.schedule(dataSourceTask);
                 progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
-                //queue to file-level ingest pipeline
-                final ScheduledTask<IngestModuleAbstractFile> fTask = 
-                        new ScheduledTask(input, fileMods);
-                final PipelineContext<IngestModuleAbstractFile> filepipelineContext 
-                        = new PipelineContext<IngestModuleAbstractFile>(fTask, processUnalloc);
+                
+                /* Schedule the file-level ingest modules for the children of the data source */
+                final DataSourceTask<IngestModuleAbstractFile> fTask = 
+                        new DataSourceTask(input, fileMods, getProcessUnallocSpace());
+                
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
                 progress.progress("File Ingest" + " " + inputName, processed);
                 final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-                fileScheduler.schedule(filepipelineContext);
+                fileScheduler.schedule(fTask);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
 
             } //for data sources
-
-
-            //logger.log(Level.INFO, AbstractFileQueue.printQueue());
         }
 
         private void handleInterruption(Exception ex) {

@@ -242,19 +242,46 @@ public class Case implements SleuthkitCase.ErrorObserver {
         Case.currentCase = null;
         if (oldCase != null) {
             doCaseChange(null); //closes windows, etc
-            pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
 
+            try {
+                pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
             doCaseNameChange("");
-            pcs.firePropertyChange(CASE_NAME, oldCase.name, "");
+            
+            try {
+                pcs.firePropertyChange(CASE_NAME, oldCase.name, "");
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
 
         if (newCase != null) {
             currentCase = newCase;
 
-            pcs.firePropertyChange(CASE_CURRENT_CASE, null, currentCase);
+            
+            try {
+                pcs.firePropertyChange(CASE_CURRENT_CASE, null, currentCase);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
             doCaseChange(currentCase);
 
-            pcs.firePropertyChange(CASE_NAME, "", currentCase.name);
+            
+            try {
+                pcs.firePropertyChange(CASE_NAME, "", currentCase.name);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
             doCaseNameChange(currentCase.name);
 
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
@@ -412,7 +439,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         try {
             Image newImage = db.getImageById(imgId);
-            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newImage); // the new value is the instance of the image
+           
+                    try {
+                        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newImage); // the new value is the instance of the image
+                    }
+                    catch (Exception e) {
+                        logger.log(Level.SEVERE, "Case listener threw exception", e);
+                        MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                    }
             CoreComponentControl.openCoreWindows();
             return newImage;
         } catch (Exception ex) {
@@ -428,7 +462,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
    @Deprecated
     void addLocalDataSource(Content newDataSource) {
-        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        
+        try {
+            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Case listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
         CoreComponentControl.openCoreWindows();
     }
 
@@ -439,7 +480,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param newDataSource new data source added
      */
     void notifyNewDataSource(Content newDataSource) {
-        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        
+        try {
+            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Case threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
         CoreComponentControl.openCoreWindows();
     }
     
@@ -513,9 +561,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             xmlcm.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
-            RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case
-
-            pcs.firePropertyChange(CASE_NAME, oldCaseName, newCaseName);
+            RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
+            try {
+                pcs.firePropertyChange(CASE_NAME, oldCaseName, newCaseName);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
             doCaseNameChange(newCaseName);
 
         } catch (Exception e) {
@@ -532,9 +585,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
     void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
         try {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
-            examiner = newExaminer;
-
-            pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
+            examiner = newExaminer;      
+            try {
+                pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         } catch (Exception e) {
             throw new CaseActionException("Error while trying to update the examiner.", e);
         }
@@ -550,8 +608,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
-
-            pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
+    
+            try {
+                pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         } catch (Exception e) {
             throw new CaseActionException("Error while trying to update the case number.", e);
         }
