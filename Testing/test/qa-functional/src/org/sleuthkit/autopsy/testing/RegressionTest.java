@@ -192,7 +192,7 @@ public class RegressionTest extends TestCase {
             importButtonOperator.pushNoBlock();
             JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
-            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Add...", 0);
+            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();
             JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
             fileChooserOperator.chooseFile(database);
