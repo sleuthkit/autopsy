@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -75,7 +76,6 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.modules.ModuleInstall;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
@@ -112,7 +112,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
-
+ 
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false);
     private TimelineFrame mainFrame;          //frame for holding all the elements
@@ -147,7 +147,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         super();
 
         fxInited = Installer.isJavaFxInited();
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC")); //sets the default timezone to UTC unless otherwise stated
     }
 
     //Swing components and JavafX components don't play super well together
