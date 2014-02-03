@@ -161,8 +161,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             @Override
             public String toString() {
                 return "MD5 Hash";
+            }    
+        },
+        ObjectID {
+            @Override
+            public String toString() {
+                return "Object ID";
             }
-        }
+        }, 
     }
     
     
@@ -201,6 +207,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
+        map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
     }
 
 
