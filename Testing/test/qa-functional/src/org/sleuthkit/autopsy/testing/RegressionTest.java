@@ -182,7 +182,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Set Configuration", false, false);
         JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
         List<String> databases = new ArrayList<String>();
         databases.add(System.getProperty("nsrl_path"));
