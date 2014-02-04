@@ -192,7 +192,7 @@ public class RegressionTest extends TestCase {
             importButtonOperator.pushNoBlock();
             JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
-            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Browse", 0);
+            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();
             JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
             fileChooserOperator.chooseFile(database);
@@ -232,12 +232,11 @@ public class RegressionTest extends TestCase {
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
-        if (!jcbo.isSelected()) {
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
+        if (!(jcbo.isSelected())) {
             jcbo.doClick();
         }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
-        System.out.println(Boolean.parseBoolean((System.getProperty("mugen_mode")));
         if (Boolean.parseBoolean(System.getProperty("mugen_mode"))) {
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
             jtpo.selectPage("String Extraction");
