@@ -26,6 +26,7 @@ import javax.swing.JOptionPane;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -78,11 +79,17 @@ import org.sleuthkit.datamodel.AbstractFile;
                 rootNode = Node.EMPTY;
             }
 
-            final String pathText = "MD5 Hash Search";
-            TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, kvCollection.size());
+            final String pathText = NbBundle.getMessage(this.getClass(), "HashDbSearchManager.MD5HashSearch");
+            TopComponent searchResultWin = DataResultTopComponent.createInstance(
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchManager.MD5HashSearch"),
+                    pathText,
+                    rootNode,
+                    kvCollection.size());
+
             searchResultWin.requestActive();
         } else {
-            JOptionPane.showMessageDialog(null, "No results were found.");
+            JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(), "HashDbSearchManager.noResultsFoundMsg"));
         }
     }
 }

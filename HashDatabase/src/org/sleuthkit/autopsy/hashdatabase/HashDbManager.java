@@ -31,6 +31,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
@@ -52,8 +54,7 @@ import org.sleuthkit.datamodel.HashInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+
 /**
  * This class implements a singleton that manages the set of hash databases
  * used to classify files as unknown, known or known bad. 
@@ -63,11 +64,11 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String ROOT_ELEMENT = "hash_sets";
     private static final String SET_ELEMENT = "hash_set";
     private static final String SET_NAME_ATTRIBUTE = "name";
-    private static final String SET_TYPE_ATTRIBUTE = "type"; 
+    private static final String SET_TYPE_ATTRIBUTE = "type";
     private static final String SEARCH_DURING_INGEST_ATTRIBUTE = "use_for_ingest";
     private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages";
     private static final String PATH_ELEMENT = "hash_set_path";
-    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number";    
+    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number";
     private static final String CONFIG_FILE_NAME = "hashsets.xml";
     private static final String XSD_FILE_NAME = "HashsetsSchema.xsd";
     private static final String ENCODING = "UTF-8";
@@ -123,31 +124,32 @@ public class HashDbManager implements PropertyChangeListener {
     
     class DuplicateHashSetNameException extends Exception {  
         private DuplicateHashSetNameException(String hashSetName) {
-            super("The hash set name '"+ hashSetName +"' has already been used for another hash database.");
+            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
         }
     }
     
     class HashDatabaseDoesNotExistException extends Exception {        
         private HashDatabaseDoesNotExistException(String path) {
-            super("No hash database found at\n" + path);
+            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbDoesNotExistExceptionMsg", path));
         }
     }
     
     class HashDatabaseFileAlreadyExistsException extends Exception {
         private HashDatabaseFileAlreadyExistsException(String path) {
-            super("A file already exists at\n" + path);
+            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbFileExistsExceptionMsg", path));
         }
     }
     
     class HashDatabaseAlreadyAddedException extends Exception {
         private HashDatabaseAlreadyAddedException(String path) {
-            super("The hash database at\n" + path + "\nhas already been created or imported.");
+            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbAlreadyAddedExceptionMsg", path));
         }
     }
     
     class IllegalHashDatabaseFileNameExtensionException extends Exception {
         private IllegalHashDatabaseFileNameExtensionException() {
-            super("The hash database file name must have a ." + getHashDatabaseFileExtension() + " extension.");
+            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.illegalHashDbFileNameExtensionMsg",
+                                      getHashDatabaseFileExtension()));
         }
     }
     
@@ -244,7 +246,10 @@ public class HashDbManager implements PropertyChangeListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(
+                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
         return hashDb;
     }
@@ -319,7 +324,10 @@ public class HashDbManager implements PropertyChangeListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(
+                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }     
 
@@ -536,7 +544,12 @@ public class HashDbManager implements PropertyChangeListener {
                     newHashSetName = hashSetName + suffix; 
                 }
                 while (hashSetNames.contains(newHashSetName));
-                JOptionPane.showMessageDialog(null, "Duplicate hash set name " + hashSetName + " found.\nReplacing with " + newHashSetName + ".", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "HashDbManager.replacingDuplicateHashsetNameMsg",
+                                                                  hashSetName, newHashSetName),
+                                              NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                                              JOptionPane.ERROR_MESSAGE);
                 hashSetName = newHashSetName;
             }
            
@@ -595,7 +608,11 @@ public class HashDbManager implements PropertyChangeListener {
                 }
                 catch (HashDatabaseDoesNotExistException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException | TskCoreException ex) {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
-                    JOptionPane.showMessageDialog(null, "Unable to open " + dbPath + " hash database.", "Open Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "HashDbManager.unableToOpenHashDbMsg", dbPath),
+                                                  NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                                                  JOptionPane.ERROR_MESSAGE);
                 }
             } 
             else {
@@ -617,11 +634,18 @@ public class HashDbManager implements PropertyChangeListener {
 
         if (updatedSchema) {    
             String backupFilePath = configFilePath + ".v1_backup";
-            String messageBoxTitle = "Configuration File Format Changed";
-            String baseMessage = "The format of the hash database configuration file has been updated.";
+            String messageBoxTitle = NbBundle.getMessage(this.getClass(),
+                                                         "HashDbManager.msgBoxTitle.confFileFmtChanged");
+            String baseMessage = NbBundle.getMessage(this.getClass(),
+                                                     "HashDbManager.baseMessage.updatedFormatHashDbConfig");
             try {
                 FileUtils.copyFile(new File(configFilePath), new File (backupFilePath));
-                JOptionPane.showMessageDialog(null, baseMessage + "\nA backup copy of the old configuration has been saved as\n" + backupFilePath, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "HashDbManager.savedBackupOfOldConfigMsg",
+                                                                  baseMessage, backupFilePath),
+                                              messageBoxTitle,
+                                              JOptionPane.INFORMATION_MESSAGE);
             }
             catch (IOException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex);
@@ -643,7 +667,11 @@ public class HashDbManager implements PropertyChangeListener {
         
         // Give the user an opportunity to find the desired file.
         String newPath = null;
-        if (JOptionPane.showConfirmDialog(null, "Database " + hashSetName + " could not be found at location\n" + configuredPath + "\nWould you like to search for the file?", "Missing Database", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(null,
+                                          NbBundle.getMessage(this.getClass(), "HashDbManager.dlgMsg.dbNotFoundAtLoc",
+                                                              hashSetName, configuredPath),
+                                          NbBundle.getMessage(this.getClass(), "HashDbManager.dlgTitle.MissingDb"),
+                                          JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             newPath = searchForFile();
             if (null != newPath && !newPath.isEmpty()) {                
                 database = new File(newPath); 
@@ -661,7 +689,8 @@ public class HashDbManager implements PropertyChangeListener {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash", "kdb" };
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Hash Database File", EXTENSION);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "HashDbManager.fileNameExtensionFilter.title"), EXTENSION);
         fc.setFileFilter(filter);
         fc.setMultiSelectionEnabled(false);
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -686,8 +715,8 @@ public class HashDbManager implements PropertyChangeListener {
          * object should be classified.
          */
         public enum KnownFilesType{
-            KNOWN("Known"), 
-            KNOWN_BAD("Known Bad");
+            KNOWN(NbBundle.getMessage(HashDbManager.class, "HashDbManager.known.text")),
+            KNOWN_BAD(NbBundle.getMessage(HashDbManager.class, "HashDbManager.knownBad.text"));
 
             private String displayName;
 
@@ -861,7 +890,8 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         protected Object doInBackground() {
             hashDb.indexing = true;
-            progress = ProgressHandleFactory.createHandle("Indexing " + hashDb.hashSetName);
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.progress.indexingHashSet", hashDb.hashSetName));
             progress.start();
             progress.switchToIndeterminate();
             try {
@@ -869,7 +899,12 @@ public class HashDbManager implements PropertyChangeListener {
             }
             catch (TskCoreException ex) {
                 Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);                
-                JOptionPane.showMessageDialog(null, "Error indexing " + hashDb.getHashSetName() + " hash database.", "Hash Database Indexing Error", JOptionPane.ERROR_MESSAGE);                
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "HashDbManager.dlgMsg.errorIndexingHashSet",
+                                                                  hashDb.getHashSetName()),
+                                              NbBundle.getMessage(this.getClass(), "HashDbManager.hashDbIndexingErr"),
+                                              JOptionPane.ERROR_MESSAGE);
             }
             return null;
         }
@@ -884,7 +919,10 @@ public class HashDbManager implements PropertyChangeListener {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
     }    
