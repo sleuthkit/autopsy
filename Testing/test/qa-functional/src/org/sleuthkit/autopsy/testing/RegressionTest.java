@@ -237,6 +237,7 @@ public class RegressionTest extends TestCase {
             jcbo.doClick();
         }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
+        System.out.println(Boolean.parseBoolean((System.getProperty("mugen_mode")));
         if (Boolean.parseBoolean(System.getProperty("mugen_mode"))) {
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
             jtpo.selectPage("String Extraction");
