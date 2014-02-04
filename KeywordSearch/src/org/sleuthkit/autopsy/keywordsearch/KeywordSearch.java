@@ -32,18 +32,20 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
 
 /**
  * Wrapper over KeywordSearch Solr server singleton.
  * The class also provides some global types and property change support on the server events.
  */
-class KeywordSearch {
+public class KeywordSearch {
 
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
     static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
-
+    private static final Logger logger = Logger.getLogger(Case.class.getName());
     public enum QueryType {
 
         WORD, REGEX
@@ -101,7 +103,14 @@ class KeywordSearch {
     }
 
     static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
-        changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
+        
+        try {
+            changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "KeywordSearch listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearch updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     /**

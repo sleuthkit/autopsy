@@ -30,6 +30,8 @@ import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
 
 /**
  * Keyword list saving, loading, and editing abstract class.
@@ -54,15 +56,13 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * Property change event support
-     * In events: For all of these enums, the old value should be null, and
-     * the new value should be the keyword list name string.
+     *  In events: For all of these enums, the old value should be null, and
+     *  the new value should be the keyword list name string.
      */
     public enum ListsEvt {
 
         LIST_ADDED, LIST_DELETED, LIST_UPDATED
-    }
-
-    ;
+    };
 
     /**
      * get instance for managing the current keyword list of the application
@@ -80,7 +80,7 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     private void prepopulateLists() {
-        if (!theLists.isEmpty()) {
+        if (! theLists.isEmpty()) {
             return;
         }
         //phone number
@@ -95,8 +95,10 @@ public abstract class KeywordSearchListsAbstract {
                 false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS));
         //email
         List<Keyword> emails = new ArrayList<Keyword>();
-        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false,
-                               BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
+        emails.add(new Keyword("(?=.{8})[a-z0-9%+_-]+(?:\\.[a-z0-9%+_-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,4}(?<!\\.txt|\\.exe|\\.dll|\\.jpg|\\.xml)", 
+                               false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL)); 
+        //emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", 
+        //                       false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
         //URL
         List<Keyword> urls = new ArrayList<Keyword>();
         //urls.add(new Keyword("http://|https://|^www\\.", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
@@ -108,19 +110,19 @@ public abstract class KeywordSearchListsAbstract {
 
         //disable messages for harcoded/locked lists
         String name;
-
+        
         name = "Phone Numbers";
         lockedLists.add(name);
         addList(name, phones, false, false, true);
-
+        
         name = "IP Addresses";
         lockedLists.add(name);
         addList(name, ips, false, false, true);
-
+        
         name = "Email Addresses";
         lockedLists.add(name);
         addList(name, emails, true, false, true);
-
+        
         name = "URLs";
         lockedLists.add(name);
         addList(name, urls, false, false, true);
@@ -307,7 +309,14 @@ public abstract class KeywordSearchListsAbstract {
 //            if (!locked) {
 //                save();
 //            }
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
+           
+            try {
+                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages,
                                                      newList, locked));
@@ -315,7 +324,14 @@ public abstract class KeywordSearchListsAbstract {
 //                save();
 //            }
             replaced = true;
-            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
+            
+            try {
+                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
 
         return replaced;
@@ -359,10 +375,22 @@ public abstract class KeywordSearchListsAbstract {
         boolean saved = save(true);
         if (saved) {
             for (KeywordSearchList list : newLists) {
-                changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+                try {
+                    changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                }
             }
             for (KeywordSearchList over : overwritten) {
-                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+                try {
+                    changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                }
             }
         }
 
@@ -391,10 +419,24 @@ public abstract class KeywordSearchListsAbstract {
         //boolean saved = save();
 
         for (KeywordSearchList list : newLists) {
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+             
+            try {
+                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());  
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstractr listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
         for (KeywordSearchList over : overwritten) {
-            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+            
+            try {
+                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
 
         return true;
@@ -413,8 +455,14 @@ public abstract class KeywordSearchListsAbstract {
             theLists.remove(name);
             //deleted = save();
         }
-        changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
-
+        
+            try {
+                changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         return true;
 
     }
@@ -423,7 +471,7 @@ public abstract class KeywordSearchListsAbstract {
      * writes out current list replacing the last lists file
      */
     public abstract boolean save();
-
+    
     /**
      * writes out current list replacing the last lists file
      *

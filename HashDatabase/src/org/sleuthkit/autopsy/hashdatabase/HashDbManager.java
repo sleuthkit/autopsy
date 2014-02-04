@@ -51,7 +51,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * This class implements a singleton that manages the set of hash databases
  * used to classify files as unknown, known or known bad. 
@@ -80,7 +82,7 @@ public class HashDbManager implements PropertyChangeListener {
     private Set<String> hashSetPaths = new HashSet<>();
     private boolean alwaysCalculateHashes = true;            
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
-    
+    private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     /**
      * Property change event support
      *  In events: For both of these enums, the old value should be null, and 
@@ -236,9 +238,14 @@ public class HashDbManager implements PropertyChangeListener {
             knownBadHashSets.add(hashDb);
         }      
         
-        // Let any external listeners know that there's a new set
-        changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
-        
+        // Let any external listeners know that there's a new set   
+        try {
+            changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
         return hashDb;
     }
         
@@ -306,7 +313,14 @@ public class HashDbManager implements PropertyChangeListener {
         }
         
         // Let any external listeners know that a set has been deleted
-        changeSupport.firePropertyChange(SetEvt.DB_DELETED.toString(), null, hashSetName);        
+       
+        try {
+             changeSupport.firePropertyChange(SetEvt.DB_DELETED.toString(), null, hashSetName);  
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }     
 
     /**
@@ -864,7 +878,14 @@ public class HashDbManager implements PropertyChangeListener {
         protected void done() {
             hashDb.indexing = false;
             progress.finish();
-            hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+            
+            try {
+                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDbManager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
     }    
 }
