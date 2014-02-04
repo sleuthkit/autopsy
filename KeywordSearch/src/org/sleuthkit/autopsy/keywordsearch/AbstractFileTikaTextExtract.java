@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,16 +39,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
-import org.apache.tika.language.LanguageIdentifier;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -75,11 +70,9 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-    private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<String>();
-    private final TikaLanguageIdentifier tikaLanguageIdentifier;
+    private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
     AbstractFileTikaTextExtract() {
-        tikaLanguageIdentifier = new TikaLanguageIdentifier();
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
 
@@ -87,7 +80,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
         for (MediaType mt : mediaTypes) {
             TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
         }
-        logger.log(Level.INFO, "Tika supported media types: " + TIKA_SUPPORTED_TYPES);
+        logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES);
 
     }
 
@@ -138,13 +131,11 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
             } catch (TimeoutException te) {
-                tika = null;
                 final String msg = "Exception: Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
-                tika = null;
                 final String msg = "Exception: Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
                 logger.log(Level.WARNING, msg);
@@ -220,9 +211,6 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 }
 
                 extracted = sb.toString();
-
-                //attempt to identify language of extracted text and post it to the blackboard
-                tikaLanguageIdentifier.addLanguageToBlackBoard(extracted, sourceFile);
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
