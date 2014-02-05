@@ -26,6 +26,8 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
  * Shows file metadata as a list to make it easy to copy and paste.
@@ -132,6 +134,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         } catch (TskCoreException ex) {
             addRow(sb, "Name", file.getParentPath() + "/" + file.getName());
         }
+        addRow(sb, "File Name Allocation", file.getDirFlagAsString());
+        addRow(sb, "Metadata Allocation", file.getMetaFlagsAsString());
         
         addRow(sb, "Modified", file.getMtimeAsDate());
         addRow(sb, "Accessed", file.getAtimeAsDate());
@@ -143,8 +147,12 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
             md5 = "Not calculated";
         }
         addRow(sb, "MD5", md5);
+        addRow(sb, "Hash Lookup Results", file.getKnown().toString());
         
         addRow(sb, "Internal ID", new Long(file.getId()).toString());
+        if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
+            addRow(sb, "Local Path", file.getLocalAbsPath());
+        }
         
         endTable(sb);
         setText(sb.toString());
