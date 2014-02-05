@@ -43,6 +43,7 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -80,6 +81,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
@@ -100,7 +102,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-
+import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
+import org.sleuthkit.datamodel.Content;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
@@ -147,7 +150,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         super();
 
         fxInited = Installer.isJavaFxInited();
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC")); //sets the default timezone to UTC unless otherwise stated
+       // TimeZone.setDefault(TimeZone.getTimeZone("UTC")); //sets the default timezone to UTC unless otherwise stated
     }
 
     //Swing components and JavafX components don't play super well together
@@ -914,17 +917,36 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         int prevYear = -1;
         YearEpoch ye = null;
+
         while (scan.hasNextLine()) {
             String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
             
-            // break the date into mon, day and year: Note that the ISO times are in GMT
-            String[] datetime = s[0].split("T"); //{1999-02-08, 11:08:08Z}
-            String[] date = datetime[0].split("-"); // {1999, 02, 08}
+            // break the date into year,month,day,hour,minute, and second: Note that the ISO times are in GMT
+            String delims = "[T:Z\\-]+";
+            String[] date = s[0].split(delims); //{1999,02,08,11,08,08,...}
+   
             int year = Integer.valueOf(date[0]);
             int month = Integer.valueOf(date[1]) - 1; //Months are zero indexed: 1 = February, 6 = July, 11 = December
             int day = Integer.valueOf(date[2]); //Days are 1 indexed
+            int hour=Integer.valueOf(date[3]);
+            int minute=Integer.valueOf(date[4]);
+            int second=Integer.valueOf(date[5]);
+
+            Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core"); //access Use GMT? checkbox
+            boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
             
-            // get the object id out of the modified outpu
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT")); //set calendar to GMT due to ISO format
+            calendar.set(year, month, day, hour, minute, second); 
+            day=calendar.get(Calendar.DAY_OF_MONTH); // this is needed or else timezone change wont work for some reason
+            //conversion to GMT
+            if (!useLocalTime) 
+            {
+               calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+            }
+            else calendar.setTimeZone(TimeZone.getDefault());// local timezone OF the user. should be what the user SETS at startup
+            
+            day=calendar.get(Calendar.DAY_OF_MONTH);//get the day which may be affected by timezone change
+         
             long ObjId = Long.valueOf(s[4]);
 
             // when the year changes, create and add a new YearEpoch object to the list
@@ -961,7 +983,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         // Get report path
         String bodyFilePath = moduleDir.getAbsolutePath()
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
-
         // Run query to get all files
         final String filesAndDirs = "name != '.' "
                 + "AND name != '..'";
