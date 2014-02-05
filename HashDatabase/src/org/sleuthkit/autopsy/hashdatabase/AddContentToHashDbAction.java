@@ -43,6 +43,10 @@ import static org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
  */
 final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup { 
     private static AddContentToHashDbAction instance;
+    private final static String SINGLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
+                                                                            "AddContentToHashDbAction.singleSelectionName");
+    private final static String MULTIPLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
+                                                                              "AddContentToHashDbAction.multipleSelectionName");
 
     /**
      * AddContentToHashDbAction is a singleton to support multi-selection of nodes, since 
@@ -72,8 +76,6 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
     // Instances of this class are used to implement the a pop up menu for this
     // action.
     private final class AddContentToHashDbMenu extends JMenu { 
-        private final static String SINGLE_SELECTION_NAME = "Add file to hash database";
-        private final static String MULTIPLE_SELECTION_NAME = "Add files to hash database";
 
         AddContentToHashDbMenu() {
             super(SINGLE_SELECTION_NAME);
