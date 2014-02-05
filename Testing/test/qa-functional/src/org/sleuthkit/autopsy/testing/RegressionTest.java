@@ -182,7 +182,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Set Configuration", false, false);
         JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
         List<String> databases = new ArrayList<String>();
         databases.add(System.getProperty("nsrl_path"));
@@ -190,9 +190,9 @@ public class RegressionTest extends TestCase {
         for (String database : databases) {
             JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
             importButtonOperator.pushNoBlock();
-            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Add Hash Database", false, false);
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
-            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Browse", 0);
+            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();
             JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
             fileChooserOperator.chooseFile(database);
@@ -232,8 +232,8 @@ public class RegressionTest extends TestCase {
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
-        if (!jcbo.isSelected()) {
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
+        if (!(jcbo.isSelected())) {
             jcbo.doClick();
         }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
