@@ -50,7 +50,7 @@ public final class ContentUtils {
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+    private static boolean localTime;
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -104,12 +104,11 @@ public final class ContentUtils {
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
-
+     
     public static TimeZone getTimeZone(Content c) {
-        Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
-        boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
+        
         try {
-            if (!useLocalTime) {
+            if (!localTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
@@ -359,5 +358,19 @@ public final class ContentUtils {
             throw new UnsupportedOperationException("Can't extract a "
                     + cntnt.getClass().getSimpleName());
         }
+    }
+    /**sets localTime value based on button in GeneralPanel.java
+     * 
+     * @param flag 
+     */
+    public static void setLocalTime(boolean flag) {
+    localTime = flag;
+    }
+    /** returns true if local time is selected. 
+     *  returns false if GMT is selected.
+     * @return 
+     */
+    public static boolean localTime(){
+        return localTime;
     }
 }

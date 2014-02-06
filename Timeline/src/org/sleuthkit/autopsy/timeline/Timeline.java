@@ -99,11 +99,11 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
-import org.sleuthkit.datamodel.Content;
+
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
@@ -145,7 +145,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private EventHandler<MouseEvent> fxMouseExitedListener;
     private SleuthkitCase skCase;
     private boolean fxInited = false;
-
+    private static boolean localTime = true;
     public Timeline() {
         super();
 
@@ -922,7 +922,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
             
             // break the date into year,month,day,hour,minute, and second: Note that the ISO times are in GMT
-            String delims = "[T:Z\\-]+";
+            String delims = "[T:Z\\-]+"; //split by the delimiters
             String[] date = s[0].split(delims); //{1999,02,08,11,08,08,...}
    
             int year = Integer.valueOf(date[0]);
@@ -932,21 +932,20 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             int minute=Integer.valueOf(date[4]);
             int second=Integer.valueOf(date[5]);
 
-            Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core"); //access Use GMT? checkbox
-            boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
-            
+            setLocalTime(localTime);
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT")); //set calendar to GMT due to ISO format
             calendar.set(year, month, day, hour, minute, second); 
-            day=calendar.get(Calendar.DAY_OF_MONTH); // this is needed or else timezone change wont work for some reason
+            day=calendar.get(Calendar.DAY_OF_MONTH); // this is needed or else timezone change wont work. probably incorrect optimization by compiler
+           
             //conversion to GMT
-            if (!useLocalTime) 
-            {
+            if (!localTime()) {
                calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
             }
-            else calendar.setTimeZone(TimeZone.getDefault());// local timezone OF the user. should be what the user SETS at startup
+            else{
+                calendar.setTimeZone(TimeZone.getDefault());// local timezone OF the user. should be what the user SETS at startup
+            }
             
             day=calendar.get(Calendar.DAY_OF_MONTH);//get the day which may be affected by timezone change
-         
             long ObjId = Long.valueOf(s[4]);
 
             // when the year changes, create and add a new YearEpoch object to the list
@@ -1128,7 +1127,21 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public void performAction() {
         initTimeline();
     }
-
+    
+    /**set localTime by getting it from ContentUtils class
+     * 
+     * @param flag 
+     */
+    public static void setLocalTime(boolean flag) {
+        localTime = ContentUtils.localTime();
+    }
+    /**returns whether user has set localTime settings, or GMT if false
+     * 
+     * @return 
+     */
+    public static boolean localTime() {
+        return localTime;
+    }
     private void initTimeline() {
         if (!Case.existsCurrentCase()) {
             return;
