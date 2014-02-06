@@ -21,9 +21,8 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="skipTextPlain" min="-2" max="-2" attributes="0"/>
                   <Component id="skipNoExtCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="skipKnownCheckBox" alignment="0" min="-2" pref="165" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="0" pref="327" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="138" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -33,28 +32,12 @@
               <Component id="skipNoExtCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="skipTextPlain" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="skipKnownCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="72" max="32767" attributes="0"/>
+              <EmptySpace pref="51" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JCheckBox" name="skipKnownCheckBox">
-      <Properties>
-        <Property name="selected" type="boolean" value="true"/>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchSimpleConfigPanel.skipKnownCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-        <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchSimpleConfigPanel.skipKnownCheckBox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="skipKnownCheckBoxActionPerformed"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JCheckBox" name="skipNoExtCheckBox">
       <Properties>
         <Property name="selected" type="boolean" value="true"/>
