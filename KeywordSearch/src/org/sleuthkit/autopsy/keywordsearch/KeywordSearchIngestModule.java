@@ -102,9 +102,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
 
     ;
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    public static final String MODULE_NAME = "Keyword Search";
-    public static final String MODULE_DESCRIPTION
-            = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
+    public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchIngestModule.class,
+                                                                 "KeywordSearchIngestModule.moduleName");
+    public static final String MODULE_DESCRIPTION = NbBundle.getMessage(KeywordSearchIngestModule.class,
+                                                                        "KeywordSearchIngestModule.moduleDescription");
     final public static String MODULE_VERSION = Version.getVersion();
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
@@ -129,7 +130,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
-    private final String hashDBModuleName = "Hash Lookup"; //NOTE this needs to match the HashDB module getName()
+    private final String hashDBModuleName = NbBundle
+            .getMessage(this.getClass(), "KeywordSearchIngestModule.hashDbModuleName"); //NOTE this needs to match the HashDB module getName()
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
