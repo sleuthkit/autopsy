@@ -68,7 +68,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private boolean listeningToTabbedPane = false;    
-    
+
     /**
      * Creates new DataResultPanel
      * Default constructor, needed mostly  for the palette/UI builder
@@ -99,7 +99,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.isMain = isMain;
         this.title = title;
     }
-    
+
     /**
      * Create a new, custom data result panel, in addition to the application
      * main one and links with a custom data content panel.
@@ -110,7 +110,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
-
         setName(title);
 
         //custom content viewer tc to setup for every result viewer
@@ -133,7 +132,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         newDataResult.open();
         return newDataResult;
     }
-   
+
     /**
      * Factory method to create, customize and open a new custom data result panel.
      *
@@ -271,8 +270,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     
-                // If a custom DataContent object has not been specified, 
-                // AND the defaultContent flag is set, get the default instance.
+                // If a custom DataContent object has not been specified, get the default instance.
                 DataContent contentViewer = customContentViewer;
                 if (contentViewer == null) {
                     contentViewer = Lookup.getDefault().lookup(DataContent.class);
