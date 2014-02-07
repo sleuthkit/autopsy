@@ -26,7 +26,9 @@ import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
@@ -37,7 +39,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
-
+    private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     /**
      * Creates new form LocalFilesPanel
      */
@@ -234,7 +236,14 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
         else {
             enableNext = false;
         }
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to LocalFilesPanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+        }
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed

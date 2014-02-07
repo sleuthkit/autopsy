@@ -25,7 +25,7 @@ import java.util.List;
  * Contains Lists of commonly known and used file type extensions
  * and 'getters' to obtain them.
  */
- class FileTypeExtensions {
+public class FileTypeExtensions {
     private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp");
     private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v",
             ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf");
