@@ -50,10 +50,9 @@ import org.sleuthkit.datamodel.TskException;
 public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileExtMismatchIngestModule defaultInstance = null;
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
-    public static final String MODULE_NAME = "File Extension Mismatch Detection";
-    public static final String MODULE_DESCRIPTION = "Flags mismatched filename extensions based on file signature.";
+    public static final String MODULE_NAME = "Extension Mismatch Detector";
+    public static final String MODULE_DESCRIPTION = "Flags files that have a non-standard extension based on their file type.";
     public static final String MODULE_VERSION = Version.getVersion();    
-    private static final String ART_NAME = "TSK_MISMATCH";
 
     private static long processTime = 0;
     private static int messageId = 0;
@@ -62,14 +61,11 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static boolean skipNoExt = true;
     private static boolean skipTextPlain = false;  
      
-    private int attrId = -1;
-    private int attrId2 = -1;
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
     private FileExtMismatchConfigPanel advancedConfigPanel;
     private IngestServices services;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
-    private String currActualExt = "";
-    private String currActualSigType = "";
+    
     
     // Private to ensure Singleton status
     private FileExtMismatchIngestModule() {
@@ -100,8 +96,13 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
-            (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {         
-            
+            (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {            
+            return ProcessResult.OK;
+        }
+        
+        // deleted files often have content that was not theirs and therefor causes mismatch
+        if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) ||
+                (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
             return ProcessResult.OK;
         }
 
@@ -113,12 +114,12 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         {
             long startTime = System.currentTimeMillis();
            
-            boolean flag = compareSigTypeToExt(abstractFile);
+            boolean mismatchDetected = compareSigTypeToExt(abstractFile);
             
             processTime += (System.currentTimeMillis() - startTime);
             numFiles++;
                         
-            if (flag) {
+            if (mismatchDetected) {
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
 
@@ -131,52 +132,51 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         }
     }
     
+    /**
+     * Compare file type for file and extension.
+     * @param abstractFile
+     * @return false if the two match.  True if there is a mismatch.
+     */
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
         try {
-            currActualExt = abstractFile.getNameExtension();
-           
+            String currActualExt = abstractFile.getNameExtension();
+
             // If we are skipping names with no extension
             if (skipNoExt && currActualExt.isEmpty()) {
                 return false;
             }
-            
+
             // find file_sig value.
-            // getArtifacts by type doesn't seem to work, so get all artifacts
-            ArrayList<BlackboardArtifact> artList = abstractFile.getAllArtifacts();
+            // check the blackboard for a file type attribute
+            ArrayList<BlackboardAttribute> attributes = abstractFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                String currActualSigType = attribute.getValueString();
+                if (skipTextPlain) {
+                    if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) {
+                        return false;
+                    }
+                }
 
-            for (BlackboardArtifact art : artList) {
-                List<BlackboardAttribute> atrList = art.getAttributes();
-                for (BlackboardAttribute att : atrList) {
-                    if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
-                        currActualSigType = att.getValueString();
-                        if (skipTextPlain)
-                        {
-                           if (!currActualExt.isEmpty()&&currActualSigType.equals("text/plain"))
-                           {
-                               return false;
-                           }
-                        }
-                        //get known allowed values from the map for this type
-                        String[] slist = SigTypeToExtMap.get(att.getValueString());
-                        if (slist != null) {
-                            List<String> allowedExtList = Arrays.asList(slist);
+                //get known allowed values from the map for this type
+                String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
+                if (allowedExtArray != null) {
+                    List<String> allowedExtList = Arrays.asList(allowedExtArray);
 
-                            // see if the filename ext is in the allowed list
-                            if (allowedExtList != null) {
-                                for (String e : allowedExtList) {
-                                    if (e.equals(currActualExt)) {
-                                        return false;
-                                    }
-                                }
-                                return true; //potential mismatch
+                    // see if the filename ext is in the allowed list
+                    if (allowedExtList != null) {
+                        for (String e : allowedExtList) {
+                            if (e.equals(currActualExt)) {
+                                return false;
                             }
                         }
+                        return true; //potential mismatch
                     }
-                }                
+                }
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
         }
+
         return false;
     }
     

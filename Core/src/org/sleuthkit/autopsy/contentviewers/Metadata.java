@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,14 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
-import javax.swing.JTextPane;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
  * Shows file metadata as a list to make it easy to copy and paste.
@@ -133,18 +135,25 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
             addRow(sb, "Name", file.getParentPath() + "/" + file.getName());
         }
         
-        addRow(sb, "Modified", file.getMtimeAsDate());
-        addRow(sb, "Accessed", file.getAtimeAsDate());
-        addRow(sb, "Created",  file.getCrtimeAsDate());
-        addRow(sb, "Changed",  file.getCtimeAsDate());
-           
+        addRow(sb, "Size", new Long(file.getSize()).toString() );
+        addRow(sb, "File Name Allocation", file.getDirFlagAsString());
+        addRow(sb, "Metadata Allocation", file.getMetaFlagsAsString());
+        addRow(sb, "Modified", ContentUtils.getStringTime(file.getMtime(), file));
+        addRow(sb, "Accessed", ContentUtils.getStringTime(file.getAtime(), file));
+        addRow(sb, "Created",  ContentUtils.getStringTime(file.getCrtime(), file));
+        addRow(sb, "Changed",  ContentUtils.getStringTime(file.getCtime(), file));
+       
         String md5 = file.getMd5Hash();
         if (md5 == null) {
             md5 = "Not calculated";
         }
         addRow(sb, "MD5", md5);
+        addRow(sb, "Hash Lookup Results", file.getKnown().toString());
         
         addRow(sb, "Internal ID", new Long(file.getId()).toString());
+        if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
+            addRow(sb, "Local Path", file.getLocalAbsPath());
+        }
         
         endTable(sb);
         setText(sb.toString());
