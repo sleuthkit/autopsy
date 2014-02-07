@@ -50,7 +50,7 @@ public final class ContentUtils {
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    private static boolean localTime;
+    private static boolean displayInLocalTime;
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -108,7 +108,7 @@ public final class ContentUtils {
     public static TimeZone getTimeZone(Content c) {
         
         try {
-            if (!localTime()) {
+            if (!getDisplayInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
@@ -359,18 +359,18 @@ public final class ContentUtils {
                     + cntnt.getClass().getSimpleName());
         }
     }
-    /**sets localTime value based on button in GeneralPanel.java
+    /**sets displayInlocalTime value based on button in GeneralPanel.java
      * 
      * @param flag 
      */
-    public static void setLocalTime(boolean flag) {
-    localTime = flag;
+    public static void setDisplayInLocalTime(boolean flag) {
+    displayInLocalTime = flag;
     }
-    /** returns true if local time is selected. 
-     *  returns false if GMT is selected.
+    /** get global timezone setting for displaying time values 
+     *  
      * @return 
      */
-    public static boolean localTime(){
-        return localTime;
+    public static boolean getDisplayInLocalTime(){
+        return displayInLocalTime;
     }
 }

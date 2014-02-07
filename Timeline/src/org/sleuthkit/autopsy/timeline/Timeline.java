@@ -145,7 +145,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private EventHandler<MouseEvent> fxMouseExitedListener;
     private SleuthkitCase skCase;
     private boolean fxInited = false;
-    private static boolean localTime = true;
     public Timeline() {
         super();
 
@@ -932,13 +931,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             int minute=Integer.valueOf(date[4]);
             int second=Integer.valueOf(date[5]);
 
-            setLocalTime(localTime);
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT")); //set calendar to GMT due to ISO format
             calendar.set(year, month, day, hour, minute, second); 
             day=calendar.get(Calendar.DAY_OF_MONTH); // this is needed or else timezone change wont work. probably incorrect optimization by compiler
            
             //conversion to GMT
-            if (!localTime()) {
+                
+            if (!ContentUtils.getDisplayInLocalTime()) {
                calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
             }
             else{
@@ -1128,20 +1127,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         initTimeline();
     }
     
-    /**set localTime by getting it from ContentUtils class
-     * 
-     * @param flag 
-     */
-    public static void setLocalTime(boolean flag) {
-        localTime = ContentUtils.localTime();
-    }
-    /**returns whether user has set localTime settings, or GMT if false
-     * 
-     * @return 
-     */
-    public static boolean localTime() {
-        return localTime;
-    }
     private void initTimeline() {
         if (!Case.existsCurrentCase()) {
             return;

@@ -34,7 +34,7 @@ final class GeneralPanel extends javax.swing.JPanel {
     GeneralPanel(GeneralOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
-        ContentUtils.setLocalTime(useLocalTimeRB.isSelected());
+        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
     }
 
@@ -152,7 +152,7 @@ final class GeneralPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_useBestViewerRBActionPerformed
 
     private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
-         ContentUtils.setLocalTime(useLocalTimeRB.isSelected());
+         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
     }//GEN-LAST:event_useGMTTimeRBActionPerformed
 
     void load() {
