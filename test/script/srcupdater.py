@@ -44,10 +44,10 @@ def compile(errore, attachli, parsedin, branch):
         if(passed):
             gitPull("autopsy", branch)
         if(passed):
-            antBuild("datamodel", False)
+            antBuild("datamodel", False, branch)
             print("DataModel")
         if(passed):
-            antBuild("autopsy", True)
+            antBuild("autopsy", True, branch)
             print("Aut")
         if(passed):
             redo = False
@@ -131,7 +131,7 @@ def vsBuild():
         redo = True
 
 #Builds Autopsy or the Datamodel
-def antBuild(which, Build):
+def antBuild(which, Build, branch):
     print("building: ", which)
     global redo
     global passed
@@ -165,14 +165,14 @@ def antBuild(which, Build):
             open(chk)
         except IOError as e:
             if(not tryredo):
-                errorem += "DataModel Java build failed.\n"
+                errorem += "DataModel Java build failed on branch " + branch + ".\n"
                 attachl.append(antpth)
                 if email_enabled: 
                     Emailer.send_email(to, server, subj, errorem, attachl)
             passed = False
             tryredo = True
     elif (succd != 0 and (not tryredo)):
-        errorem += "Autopsy build failed.\n"
+        errorem += "Autopsy build failed on branch " + branch + ".\n"
         attachl.append(antpth)
         Emailer.send_email(to, server, subj, errorem, attachl)
         tryredo = True
