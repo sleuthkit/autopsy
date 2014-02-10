@@ -23,6 +23,8 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -136,11 +138,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         addRow(sb, "Size", new Long(file.getSize()).toString() );
         addRow(sb, "File Name Allocation", file.getDirFlagAsString());
         addRow(sb, "Metadata Allocation", file.getMetaFlagsAsString());
-        
-        addRow(sb, "Modified", file.getMtimeAsDate());
-        addRow(sb, "Accessed", file.getAtimeAsDate());
-        addRow(sb, "Created",  file.getCrtimeAsDate());
-        addRow(sb, "Changed",  file.getCtimeAsDate());
+        addRow(sb, "Modified", ContentUtils.getStringTime(file.getMtime(), file));
+        addRow(sb, "Accessed", ContentUtils.getStringTime(file.getAtime(), file));
+        addRow(sb, "Created",  ContentUtils.getStringTime(file.getCrtime(), file));
+        addRow(sb, "Changed",  ContentUtils.getStringTime(file.getCtime(), file));
        
         String md5 = file.getMd5Hash();
         if (md5 == null) {
