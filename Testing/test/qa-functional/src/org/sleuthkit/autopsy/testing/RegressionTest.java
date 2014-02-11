@@ -56,6 +56,7 @@ import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
