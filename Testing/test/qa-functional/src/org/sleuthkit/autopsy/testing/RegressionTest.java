@@ -305,7 +305,7 @@ public class RegressionTest extends TestCase {
         Date date = new Date();
         String datenotime = dateFormat.format(date);
         listOperator.clickOnItem(2, 1);
-        new Timeout("pausing", 1000).sleep()
+        new Timeout("pausing", 1000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
