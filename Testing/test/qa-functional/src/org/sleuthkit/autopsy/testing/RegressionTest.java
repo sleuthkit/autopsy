@@ -299,10 +299,13 @@ public class RegressionTest extends TestCase {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
+        JListOperator listOperator = new JListOperator(reportDialogOperator);
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
+        listOperator.clickOnItem(2, 1);
+        new Timeout("pausing", 1000).sleep()
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
