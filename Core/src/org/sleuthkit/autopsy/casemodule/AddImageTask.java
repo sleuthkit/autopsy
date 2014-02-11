@@ -48,13 +48,16 @@ import org.sleuthkit.datamodel.TskException;
         private Logger logger = Logger.getLogger(AddImageTask.class.getName());
         
         private Case currentCase;
-        // true if the process was requested to stop
-        private volatile boolean cancelled = false;
+        
+        // true if the process was requested to cancel
+        private final Object lock = new Object();   // synchronization object for cancelRequested
+        private volatile boolean cancelRequested = false;
+        
         //true if revert has been invoked.
         private boolean reverted = false;
-        private boolean hasCritError = false;
         
-        private volatile boolean  addImageDone = false;
+        // true if there was a critical error in adding the data source
+        private boolean hasCritError = false;
         
         private List<String> errorList = new ArrayList<String>();
         
@@ -113,7 +116,6 @@ import org.sleuthkit.datamodel.TskException;
            
             currentCase = Case.getCurrentCase();
             
-    
             this.imagePath = imgPath;
             this.timeZone = tz;
             this.noFatOrphans = noOrphans;
@@ -158,9 +160,6 @@ import org.sleuthkit.datamodel.TskException;
                 logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
                 errorList.add(ex.getMessage());
             } 
-            finally {
-             
-            }
 
             // handle addImage done
             postProcess();
@@ -217,11 +216,9 @@ import org.sleuthkit.datamodel.TskException;
             // cancel the directory fetcher
             dirFetcher.interrupt();
             
-            addImageDone = true; 
-            // attempt actions that might fail and force the process to stop
             
-            if (cancelled || hasCritError) {
-                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be comitted.");
+            if (cancelRequested() || hasCritError) {
+                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be committed.");
                 revert();
             }
             
@@ -231,12 +228,12 @@ import org.sleuthkit.datamodel.TskException;
             
             
             // When everything happens without an error:
-            if (!(cancelled || hasCritError)) {
+            if (!(cancelRequested() || hasCritError)) {
 
                 try {
                     if (newContents.isEmpty()) {
-                        if (addImageProcess != null) { // and if we're done configuring ingest
-                            // commit anything
+                        if (addImageProcess != null) {
+                            // commit image
                             try {
                                 commitImage();
                             } catch (Exception ex) {
@@ -261,14 +258,11 @@ import org.sleuthkit.datamodel.TskException;
                     
                     logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
                     logger.log(Level.SEVERE, "Error adding image to case", ex);
-                } finally {
-
-
-                }
+                } 
             }
             
             // invoke the callBack, unless the caller cancelled 
-            if (!cancelled) {
+            if (!cancelRequested()) {
                 doCallBack();
             }
             
@@ -294,7 +288,7 @@ import org.sleuthkit.datamodel.TskException;
                   result = DSPCallback.DSP_Result.NO_ERRORS;
               }
 
-              // invoke the callcak, passing it the result, list of new contents, and list of errors
+              // invoke the callback, passing it the result, list of new contents, and list of errors
               callbackObj.done(result, errorList, newContents);
         }
         
@@ -303,27 +297,18 @@ import org.sleuthkit.datamodel.TskException;
          */
         public void cancelTask() {
             
-             cancelled = true;
-             
-             if (!addImageDone) {
+            synchronized (lock) {
+                cancelRequested = true;
                 try {
                   interrupt();
                 }
                 catch (Exception ex) {
-                      logger.log(Level.SEVERE, "Failed to interrup the add image task...");    
-                }
-            }
-            else {
-                try {
-                  revert();  
-                }
-                catch(Exception ex) {
-                     logger.log(Level.SEVERE, "Failed to revert the add image task...");   
+                      logger.log(Level.SEVERE, "Failed to interrupt the add image task...");    
                 }
             }
         }
         /*
-         * Interrurp the add image process if it is still running
+         * Interrupt the add image process if it is still running
          */
         private void interrupt() throws Exception {
             
@@ -338,20 +323,21 @@ import org.sleuthkit.datamodel.TskException;
         /*
          * Revert - if image has already been added but not committed yet
          */
-        void revert() {
-            
+        private void revert() {
              if (!reverted) {     
+                logger.log(Level.INFO, "Revert after add image process");
                 try {
-                    logger.log(Level.INFO, "Revert after add image process");
-                    try {
-                        addImageProcess.revert();
-                    } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error reverting add image process", ex);
-                    }
-                } finally {
-                    
+                    addImageProcess.revert();
+                } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error reverting add image process", ex);
                 }
                 reverted = true;
+            }
+        }
+        
+        private boolean cancelRequested() {
+            synchronized (lock) {
+                return cancelRequested;   
             }
         }
     }
