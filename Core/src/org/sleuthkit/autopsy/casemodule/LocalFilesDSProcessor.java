@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014  Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -32,10 +32,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    protected static final String dsType = "Logical Files";
+    private static final String dsType = "Logical Files";
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
-    private LocalFilesPanel localFilesPanel;
+    private final LocalFilesPanel localFilesPanel;
     
     // The Background task that does the actual work of adding the files 
     private AddLocalFilesTask addFilesTask;
@@ -43,7 +43,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     // true if cancelled by the caller
     private boolean cancelled = false;
     
-    DSPCallback callbackObj = null;
+    DataSourceProcessorCallback callbackObj = null;
     
     // set to TRUE if the image options have been set via API and config Jpanel should be ignored
     private boolean localFilesOptionsSet = false;
@@ -51,8 +51,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     // data source options
     private String localFilesPath;
    
-    
-    
     /*
      * A no argument constructor is required for the NM lookup() method to create an object
      */
@@ -62,13 +60,18 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
         localFilesPanel =  LocalFilesPanel.getDefault();    
     }
     
+    // this static method is used by the wizard to determine dsp type for 'core' data source processors
+    public static String getType() {
+        return dsType;
+    }
+    
     /**
      * Returns the Data source type (string) handled by this DSP
      *
      * @return String the data source type
      **/ 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return dsType;
     }
             
@@ -82,18 +85,17 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
        localFilesPanel.select();
        return localFilesPanel;
    }
+    
     /**
      * Validates the data collected by the JPanel
      *
      * @return String returns NULL if success, error string if there is any errors  
      **/  
    @Override
-   public boolean validatePanel() {
+   public boolean isPanelValid() {
         return localFilesPanel.validatePanel();
    }
     
-    
-   
    /**
      * Runs the data source processor.
      * This must kick off processing the data source in background
@@ -102,7 +104,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * @param cbObj callback to call when processing is done.
      **/    
   @Override
-  public void run(DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
+  public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
       
       callbackObj = cbObj;
       cancelled = false;
@@ -115,7 +117,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
       addFilesTask = new AddLocalFilesTask(localFilesPath,  progressMonitor, cbObj); 
       new Thread(addFilesTask).start();
        
-      return;
   }
    
    /**
@@ -126,13 +127,12 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
       
       cancelled = true;
       addFilesTask.cancelTask();
-      
-      return;
+    
   }
   
   /**
    * Reset the data source processor
-   **/     
+   **/ 
   @Override
   public void reset() {
       
@@ -143,8 +143,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      localFilesOptionsSet = false;
      localFilesPath = null;
 
-    
-      return;
   }
   
   /**
@@ -157,7 +155,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
    **/ 
   public void setDataSourceOptions(String filesPath) {
       
-    this.localFilesPath = filesPath;
+    localFilesPath = filesPath;
     
     localFilesOptionsSet = true;
       
