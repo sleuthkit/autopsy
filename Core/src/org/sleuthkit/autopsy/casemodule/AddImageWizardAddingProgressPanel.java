@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -59,7 +59,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
         return dspProgressMonitorImpl;
     }
             
-    private class DSPProgressMonitorImpl implements DSPProgressMonitor {
+    private class DSPProgressMonitorImpl implements DataSourceProcessorProgressMonitor {
         @Override
         public void setIndeterminate(final boolean indeterminate) {
               // update the progress bar asynchronously
