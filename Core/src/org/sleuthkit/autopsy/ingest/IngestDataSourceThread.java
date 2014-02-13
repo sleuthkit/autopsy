@@ -68,7 +68,7 @@ import org.sleuthkit.datamodel.Content;
     }
     
     Content getContent() {
-        return pipelineContext.getScheduledTask().getContent();
+        return pipelineContext.getDataSourceTask().getContent();
     }
 
     IngestModuleDataSource getModule() {

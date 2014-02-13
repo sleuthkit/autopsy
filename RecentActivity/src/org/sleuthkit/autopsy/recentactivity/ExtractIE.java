@@ -100,7 +100,6 @@ class ExtractIE extends Extract {
         dataFound = false;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
-        this.getRecentDocuments(dataSource, controller);
         this.getHistory(dataSource, controller);
     }
 
@@ -243,62 +242,6 @@ class ExtractIE extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
-    /**
-     * Find the documents that Windows stores about recent documents and make artifacts.
-     * @param dataSource
-     * @param controller 
-     */
-    private void getRecentDocuments(Content dataSource, IngestDataSourceWorkerController controller) {
-        
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> recentFiles = null;
-        try {
-            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error searching for .lnk files.");
-            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
-            return;
-        }
-
-        if (recentFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any IE recent files.");
-            return;
-        }
-        
-        dataFound = true;
-        for (AbstractFile recentFile : recentFiles) {
-            if (controller.isCancelled()) {
-                break;
-            }
-            
-            if (recentFile.getSize() == 0) {
-                continue;
-            }
-            JLNK lnk = null;
-            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(recentFile), (int) recentFile.getSize());
-            try {
-                lnk = lnkParser.parse();
-            } catch (JLnkParserException e) {
-                //TODO should throw a specific checked exception
-                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
-                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-                if (unalloc == false) {
-                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
-                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
-                }
-                continue;
-            }
-           
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-            String path = lnk.getBestPath();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, path)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", recentFile.getCrtime()));
-            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
-        }
-        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
-    }
-            
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts. 
      * @param dataSource

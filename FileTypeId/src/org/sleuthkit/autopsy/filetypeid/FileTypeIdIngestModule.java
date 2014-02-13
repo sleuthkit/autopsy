@@ -117,6 +117,10 @@ import org.sleuthkit.datamodel.TskException;
             logger.log(Level.WARNING, "Error matching file signature", ex);
             return ProcessResult.ERROR;
         }
+        catch (Exception e) {
+            logger.log(Level.WARNING, "Error matching file signature", e);
+            return ProcessResult.ERROR;
+        }
     }
     
 
