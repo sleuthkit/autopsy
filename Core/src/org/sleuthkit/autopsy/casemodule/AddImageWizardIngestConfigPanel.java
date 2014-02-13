@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
@@ -229,9 +229,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
          // get the selected DSProcessor
         dsProcessor =  dataSourcePanel.getComponent().getCurrentDSProcessor();
         
-        DSPCallback cbObj = new DSPCallback () {
+        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback () {
             @Override
-            public void doneEDT(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents)  {
+            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents)  {
                 dataSourceProcessorDone(result, errList, contents );
             }
             
@@ -255,7 +255,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Callback for the data source processor. 
      * Invoked by the DSP on the EDT thread, when it finishes processing the data source.
      */
-    private void dataSourceProcessorDone(DSPCallback.DSP_Result result, List<String> errList,  List<Content> contents) {
+    private void dataSourceProcessorDone(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents) {
          
          // disable the cleanup task
         cleanupTask.disable();
@@ -274,7 +274,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 
       
         //check the result and display to user
-        if (result == DSPCallback.DSP_Result.NO_ERRORS)
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS)
             progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
         else 
             progressPanel.getComponent().setProgressBarTextAndColor("*Errors encountered in adding Data Source.", 100, Color.red);
@@ -282,7 +282,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         
         //if errors, display them on the progress panel
         boolean critErr = false;
-        if (result == DSPCallback.DSP_Result.CRITICAL_ERRORS) {
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
             critErr = true;
         }
         for ( String err: errList ) {

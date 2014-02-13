@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -42,22 +42,25 @@ import org.sleuthkit.datamodel.TskCoreException;
      */
  class AddLocalFilesTask implements Runnable {
 
-    private Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
+    private final Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
      
-    private String dataSourcePath;
-    private DSPProgressMonitor progressMonitor;
-    private DSPCallback callbackObj;
+    private final String dataSourcePath;
+    private final DataSourceProcessorProgressMonitor progressMonitor;
+    private final DataSourceProcessorCallback callbackObj;
         
-    private Case currentCase;
+    private final Case currentCase;
+    
+    // synchronization object for cancelRequested
+    private final Object lock = new Object();  
     // true if the process was requested to stop
-    private volatile boolean cancelled = false;
+    private volatile boolean cancelRequested = false;
+    
     private boolean hasCritError = false;
     
-   private List<String> errorList = new ArrayList<String>();
-   private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>()); 
+    private final List<String> errorList = new ArrayList<>();
+    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>()); 
    
-
-    protected AddLocalFilesTask(String dataSourcePath, DSPProgressMonitor aProgressMonitor, DSPCallback cbObj) {
+    public AddLocalFilesTask(String dataSourcePath, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
        
         currentCase = Case.getCurrentCase();
        
@@ -67,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     }
 
     /**
-     * Starts the addImage process, but does not commit the results.
+     * Add local files and directories to the case
      *
      * @return
      *
@@ -86,7 +89,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             
             final FileManager fileManager = currentCase.getServices().getFileManager();
             String[] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
-            List<String> absLocalPaths = new ArrayList<String>();
+            List<String> absLocalPaths = new ArrayList<>();
             for (String path : paths) {
                 absLocalPaths.add(path);
             }
@@ -95,38 +98,31 @@ import org.sleuthkit.datamodel.TskCoreException;
             logger.log(Level.WARNING, "Errors occurred while running add logical files. ", ex);
             hasCritError = true;
             errorList.add(ex.getMessage());
-        } finally {
-           
-        }
+        } 
         
          // handle  done
         postProcess();
         
-        return;
     }
 
-    /**
-     *
-     * (called by EventDispatch Thread after doInBackground finishes)
-     */
-    protected void postProcess() {
+
+    private void postProcess() {
         
-        if (cancelled || hasCritError) {
-            logger.log(Level.WARNING, "Handling errors or interruption that occured in logical files process");
-            
+        if (cancelRequested() || hasCritError) {
+            logger.log(Level.WARNING, "Handling errors or interruption that occured in logical files process"); 
         }
         if (!errorList.isEmpty()) {
                 //data error (non-critical)
                 logger.log(Level.WARNING, "Handling non-critical errors that occured in logical files process");
         }
    
-        if (!(cancelled || hasCritError)) {
+        if (!(cancelRequested() || hasCritError)) {
             progressMonitor.setProgress(100);
             progressMonitor.setIndeterminate(false);      
         }
           
         // invoke the callBack, unless the caller cancelled 
-        if (!cancelled) {
+        if (!cancelRequested()) {
             doCallBack();
         }
            
@@ -137,16 +133,16 @@ import org.sleuthkit.datamodel.TskCoreException;
     */
    private void doCallBack()
    {     
-         DSPCallback.DSP_Result result;
+         DataSourceProcessorCallback.DataSourceProcessorResult result;
 
          if (hasCritError) {
-               result = DSPCallback.DSP_Result.CRITICAL_ERRORS;
+               result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
          }
          else if (!errorList.isEmpty()) {
-             result = DSPCallback.DSP_Result.NONCRITICAL_ERRORS;       
+             result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;       
          }      
          else {
-             result = DSPCallback.DSP_Result.NO_ERRORS;
+             result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
          }
 
          // invoke the callback, passing it the result, list of new contents, and list of errors
@@ -156,21 +152,27 @@ import org.sleuthkit.datamodel.TskCoreException;
    /*
     * cancel the files addition, if possible
     */
-   public void cancelTask() {
-       cancelled = true;
-  
+    public void cancelTask() {
+        synchronized(lock) {
+            cancelRequested = true;
+        }
    }
-        
+   
+    private boolean cancelRequested() {
+        synchronized (lock) {
+            return cancelRequested;   
+        }
+    }
+    
     /**
      * Updates the wizard status with logical file/folder
      */
     private class LocalFilesAddProgressUpdater implements FileManager.FileAddProgressUpdater {
 
         private int count = 0;
-        private DSPProgressMonitor progressMonitor;
+        private final DataSourceProcessorProgressMonitor progressMonitor;
        
-
-        LocalFilesAddProgressUpdater(DSPProgressMonitor progressMonitor) {
+        LocalFilesAddProgressUpdater(DataSourceProcessorProgressMonitor progressMonitor) {
            
             this.progressMonitor = progressMonitor;
         }
