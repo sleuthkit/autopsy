@@ -10,7 +10,9 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
 iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
@@ -23,7 +25,8 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     private KeywordSearchConfigurationPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-
+    private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
+    
     public void update() {
         getPanel().load();
         changed = false;
@@ -72,8 +75,22 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     void changed() {
         if (!changed) {
             changed = true;
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            }
+        
     }
 }

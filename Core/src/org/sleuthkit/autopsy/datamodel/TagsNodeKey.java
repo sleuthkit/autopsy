@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.datamodel;
  * RootContentChildren class. RootContentChildren is a NetBeans child node 
  * factory built on top of the NetBeans Children.Keys class.  
  */
-public class TagsNodeKey implements AutopsyVisitableItem {
+ class TagsNodeKey implements AutopsyVisitableItem {
     // Creation of a TagsNode object corresponding to a TagsNodeKey object is done 
     // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
     // override of Children.Keys<T>.createNodes().

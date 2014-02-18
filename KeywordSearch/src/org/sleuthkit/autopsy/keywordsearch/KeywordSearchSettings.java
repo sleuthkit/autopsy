@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 
 
 //This file contains constants and settings for KeywordSearch
-public class KeywordSearchSettings {
+class KeywordSearchSettings {
     public static final String MODULE_NAME = "KeywordSearch";
     static final String PROPERTIES_OPTIONS = MODULE_NAME+"_Options";
     static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";

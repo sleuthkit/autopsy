@@ -29,7 +29,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbPreferences;
 
-public class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
     private WizardDescriptor wiz;
     private ReportVisualPanel1 component;
     private JButton nextButton;

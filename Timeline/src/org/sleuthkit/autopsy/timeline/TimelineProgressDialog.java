@@ -31,7 +31,7 @@ import org.openide.windows.WindowManager;
 /**
  * Dialog with progress bar that pops up when timeline is being generated
  */
-public class TimelineProgressDialog extends javax.swing.JDialog {
+ class TimelineProgressDialog extends javax.swing.JDialog {
 
     /**
      * A return status code - returned if Cancel button has been pressed

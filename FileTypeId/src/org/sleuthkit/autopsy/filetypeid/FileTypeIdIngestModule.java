@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskException;
  * Detects the type of a file based on signature (magic) values.
  * Posts results to the blackboard.
  */
-public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
+ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileTypeIdIngestModule defaultInstance = null;
     public final static String MODULE_NAME = "File Type Identification";
     public final static String MODULE_DESCRIPTION = "Matches file types based on binary signatures.";
@@ -115,6 +115,10 @@ public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
             return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
+            return ProcessResult.ERROR;
+        }
+        catch (Exception e) {
+            logger.log(Level.WARNING, "Error matching file signature", e);
             return ProcessResult.ERROR;
         }
     }

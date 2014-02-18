@@ -29,7 +29,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class ReportExcel implements TableReportModule {
+ class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
     
@@ -282,7 +282,7 @@ public class ReportExcel implements TableReportModule {
 
     @Override
     public String getDescription() {
-        return "An XLS formatted report which is meant to be viewed in Excel.";
+        return "A report about results and tagged items in Excel (XLS) format.";
     }
 
     @Override

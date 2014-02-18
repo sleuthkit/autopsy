@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-public class AbstractFileHtmlExtract implements AbstractFileExtract {
+ class AbstractFileHtmlExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
@@ -59,10 +59,8 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
             "text/javascript" //"application/xml",
             //"application/xml-dtd",
             );
-    private final TikaLanguageIdentifier tikaLanguageIdentifier;
 
     AbstractFileHtmlExtract() {
-        tikaLanguageIdentifier = new TikaLanguageIdentifier();
         this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
     }
@@ -165,11 +163,6 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
                 //reset for next chunk
                 totalRead = 0;
                 extracted = sb.toString();
-
-
-                //attempt to identify language of extracted text and post it to the blackboard
-                tikaLanguageIdentifier.addLanguageToBlackBoard(extracted, sourceFile);
-
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(outCharset);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,9 +82,9 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         
         // make a list of core DSPs
         // ensure that the core DSPs are at the top and in a fixed order
-        coreDSPTypes.add(ImageDSProcessor.dsType);
-        coreDSPTypes.add(LocalDiskDSProcessor.dsType);
-        coreDSPTypes.add(LocalFilesDSProcessor.dsType);
+        coreDSPTypes.add(ImageDSProcessor.getType());
+        coreDSPTypes.add(LocalDiskDSProcessor.getType());
+        coreDSPTypes.add(LocalFilesDSProcessor.getType());
           
         for(String dspType:coreDSPTypes){
             typeComboBox.addItem(dspType);
@@ -120,12 +120,11 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
       
         for (DataSourceProcessor dsProcessor: Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
            
-            if (!datasourceProcessorsMap.containsKey(dsProcessor.getType()) ) {
-                dsProcessor.reset();
-                datasourceProcessorsMap.put(dsProcessor.getType(), dsProcessor);
+            if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType()) ) {
+                datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
             }
             else {
-                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getType() );
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = " + dsProcessor.getDataSourceType() );
             }      
         }
      } 
@@ -166,7 +165,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * Returns the currently selected DS Processor
      * @return DataSourceProcessor the DataSourceProcessor corresponding to the data source type selected in the combobox
      */
-    public DataSourceProcessor getCurrentDSProcessor() {
+    protected DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
         // the correspodning DS Handler in the map
         String dsType = (String) typeComboBox.getSelectedItem();
@@ -307,7 +306,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     public void updateUI(DocumentEvent e) {
         // Enable the Next button if the current DSP panel is valid
-        this.wizPanel.enableNextButton(getCurrentDSProcessor().validatePanel());
+        this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
     }
 
     

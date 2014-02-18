@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.Objects;
 
-
 /**
  * Stores information about a given pipeline, which is a series of modules. 
  * This is passed into modules for their reference. 
@@ -29,43 +28,30 @@ import java.util.Objects;
  * 
  */
 public class PipelineContext <T extends IngestModuleAbstract> {
-    private final ScheduledTask<T> task;
-    private final boolean processUnalloc;
+    private final DataSourceTask<T> task;
     
-    PipelineContext(ScheduledTask<T> task, boolean processUnalloc) {
+    PipelineContext(DataSourceTask<T> task) {
         this.task = task;
-        this.processUnalloc = processUnalloc;
     }
     
-    
-
     /**
      * Returns the currently scheduled task.
      * @return 
      */
-    ScheduledTask<T> getScheduledTask() {
+    DataSourceTask<T> getDataSourceTask() {
         return task;
     }
 
 
-    /**
-     * Returns value of if unallocated space is going to be scheduled.
-     * @return True if pipeline is processing unallocated space. 
-     */
-    boolean isProcessUnalloc() {
-        return processUnalloc;
-    }
-
     @Override
     public String toString() {
-        return "pipelineContext{" + "task=" + task + ", processUnalloc=" + processUnalloc + '}';
+        return "pipelineContext{" + "task=" + task + '}';
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
         hash = 53 * hash + Objects.hashCode(this.task);
-        hash = 53 * hash + (this.processUnalloc ? 1 : 0);
         return hash;
     }
 
@@ -82,12 +68,7 @@ public class PipelineContext <T extends IngestModuleAbstract> {
         if (!Objects.equals(this.task, other.task)) {
             return false;
         }
-        if (this.processUnalloc != other.processUnalloc) {
-            return false;
-        }
+        
         return true;
-    }
-    
-  
-    
+    }    
 }

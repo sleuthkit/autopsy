@@ -65,7 +65,7 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * Class responsible for discovery and loading ingest modules specified in
  * pipeline XML file. Maintains a singleton instance. Requires restart of
@@ -90,7 +90,7 @@ import org.w3c.dom.NodeList;
  * NOTE: this will be part of future IngestPipelineManager with IngestManager
  * code refactored
  */
-public final class IngestModuleLoader {
+ final class IngestModuleLoader {
 
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
     private static final String XSDFILE = "PipelineConfigSchema.xsd";
@@ -605,7 +605,14 @@ public final class IngestModuleLoader {
 
             if (modulesChanged) {
                 save();
-                pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
+               
+                try {
+                    pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "IngestModuleLoader listener threw exception", e);
+                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestModuleLoader updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                }
             }
 
             /*

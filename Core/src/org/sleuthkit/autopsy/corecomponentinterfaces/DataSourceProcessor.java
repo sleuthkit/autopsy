@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ public interface DataSourceProcessor {
     enum DSP_PANEL_EVENT {
 
         UPDATE_UI,  // the content of JPanel has changed that MAY warrant updates to the caller UI
-        FOCUS_NEXT  // the caller UI may move focus the the next UI element, floowing the panel.
+        FOCUS_NEXT  // the caller UI may move focus the the next UI element, following the panel.
     };
     
     
@@ -52,7 +52,7 @@ public interface DataSourceProcessor {
     * Returns the type of Data Source it handles. 
     * This name gets displayed in the drop-down listbox
     **/
-    String getType();
+    String getDataSourceType();
     
    /**
     * Returns the picker panel to be displayed along with any other
@@ -65,7 +65,7 @@ public interface DataSourceProcessor {
     * Returns true if no errors, or 
     * Returns false if there is an error.  
     **/
-    boolean validatePanel();
+    boolean isPanelValid();
     
    /**
     * Called to invoke the handling of Data source in the background.
@@ -74,7 +74,7 @@ public interface DataSourceProcessor {
     * @param progressPanel progress panel to be updated while processing
     * 
     **/
-    void run(DSPProgressMonitor progressPanel, DSPCallback dspCallback);
+    void run(DataSourceProcessorProgressMonitor progressPanel, DataSourceProcessorCallback dspCallback);
     
     
    /**
@@ -84,9 +84,6 @@ public interface DataSourceProcessor {
     
    /**
     * Called to reset/reinitialize  the DSP.
-    * 
     **/
     void reset();
-
-    
 }

@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Interface/Node manager for hash searching. The manager takes in the raw
  * map of MD5 hashes to files, flattens the map, and sends it to the HashDbSearchResultFactory.
  */
-public class HashDbSearchManager {
+ class HashDbSearchManager {
     private Map<String, List<AbstractFile>> map;
     private List<AbstractFile> kvContents;
     

@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Top component which displays something.
  */
-public final class IngestMessageTopComponent extends TopComponent implements IngestUI {
+ final class IngestMessageTopComponent extends TopComponent implements IngestUI {
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());

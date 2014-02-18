@@ -23,29 +23,45 @@ import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A task that will be scheduled. Contains the top-level data to analyze and the pipeline.
+ * Represents a data source-level task to schedule and analyze. 
  * Children of the data will also be scheduled. 
  *
  * @param T type of Ingest Module / Pipeline (file or data source content) associated with this task
  */
-class ScheduledTask<T extends IngestModuleAbstract> {
-
+class DataSourceTask<T extends IngestModuleAbstract> {
     private Content input;
     private List<T> modules;
+    private boolean processUnallocated;
+    private PipelineContext<T> pipelineContext;
 
-    public ScheduledTask(Content input, List<T> modules) {
+    public DataSourceTask(Content input, List<T> modules, boolean processUnallocated) {
         this.input = input;
         this.modules = modules;
+        this.processUnallocated = processUnallocated;
+        pipelineContext = new PipelineContext(this);
     }
 
     public Content getContent() {
         return input;
     }
+    
+    public PipelineContext<T> getPipelineContext() {
+        return pipelineContext;
+    }
 
     public List<T> getModules() {
         return modules;
     }
+    
+    /**
+     * Returns value of if unallocated space should be analyzed (and scheduled)
+     * @return True if pipeline should process unallocated space. 
+     */
+    boolean isProcessUnalloc() {
+        return processUnallocated;
+    }
 
+    // @@@ BC: I think this should go away.
     void addModules(List<T> newModules) {
         for (T newModule : newModules) {
             if (!modules.contains(newModule)) {
@@ -75,7 +91,7 @@ class ScheduledTask<T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ScheduledTask<T> other = (ScheduledTask<T>) obj;
+        final DataSourceTask<T> other = (DataSourceTask<T>) obj;
         if (this.input != other.input && (this.input == null || !this.input.equals(other.input))) {
             return false;
         }

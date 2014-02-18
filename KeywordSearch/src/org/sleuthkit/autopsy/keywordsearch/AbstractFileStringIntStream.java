@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Currently not-thread safe (reusing static buffers for efficiency)
  */
-public class AbstractFileStringIntStream extends InputStream {
+ class AbstractFileStringIntStream extends InputStream {
 
     private AbstractFile content;
     private final byte[] oneCharBuf = new byte[1];

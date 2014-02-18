@@ -27,7 +27,7 @@ import org.imgscalr.Scalr.Method;
  * Scalr wrapper to deal with exports and provide thread-safety
  *
  */
-public class ScalrWrapper {
+ public class ScalrWrapper {
 
     public static synchronized BufferedImage resize(BufferedImage input, int width, int height) {
         return Scalr.resize(input, width, height, Scalr.OP_ANTIALIAS);

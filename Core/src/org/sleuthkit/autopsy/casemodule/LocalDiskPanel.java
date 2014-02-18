@@ -43,11 +43,11 @@ import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
-public class LocalDiskPanel extends JPanel  {
+ class LocalDiskPanel extends JPanel  {
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
     
     private static LocalDiskPanel instance;
@@ -329,7 +329,14 @@ public class LocalDiskPanel extends JPanel  {
             if(ready) {
                 selected = anItem;
                 enableNext = true;
-                pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+                
+                try {
+                    pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e);
+                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                }
             }
         }
 

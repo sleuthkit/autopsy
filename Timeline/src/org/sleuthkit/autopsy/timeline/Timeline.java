@@ -895,6 +895,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         }
     }
 
+    /**
+     * Parse the output of mactime to break the results in to day-sized chunks (in GMT)
+     * @param f handle to mactime csv output
+     * @return 
+     */
     private List<YearEpoch> parseMacTime(java.io.File f) {
         List<YearEpoch> years = new ArrayList<>();
         Scanner scan;
@@ -911,11 +916,15 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         YearEpoch ye = null;
         while (scan.hasNextLine()) {
             String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
+            
+            // break the date into mon, day and year: Note that the ISO times are in GMT
             String[] datetime = s[0].split("T"); //{1999-02-08, 11:08:08Z}
             String[] date = datetime[0].split("-"); // {1999, 02, 08}
             int year = Integer.valueOf(date[0]);
             int month = Integer.valueOf(date[1]) - 1; //Months are zero indexed: 1 = February, 6 = July, 11 = December
             int day = Integer.valueOf(date[2]); //Days are 1 indexed
+            
+            // get the object id out of the modified outpu
             long ObjId = Long.valueOf(s[4]);
 
             // when the year changes, create and add a new YearEpoch object to the list
@@ -925,6 +934,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 prevYear = year;
             }
 
+            // save the object id along with the day
             if (ye != null) {
                 ye.add(ObjId, month, day);
             }
@@ -1038,6 +1048,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         return bodyFilePath;
     }
 
+    /**
+     * Run mactime on the given body file.  Generates CSV file with ISO dates (in GMT) 
+     * @param pathToBodyFile
+     * @return Path to output file. 
+     */
     private String makeMacTime(String pathToBodyFile) {
         String cmdpath = "";
         String macpath = "";

@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
  * 
  * @author jwallace
  */
-public class MboxParser {
+ class MboxParser {
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private DefaultMessageBuilder messageBuilder;
     private IngestServices services;
