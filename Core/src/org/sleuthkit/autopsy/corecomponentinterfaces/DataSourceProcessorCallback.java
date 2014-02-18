@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,9 @@ import org.sleuthkit.datamodel.Content;
  * in the EDT thread. 
  * 
  */
-public abstract class DSPCallback {
+public abstract class DataSourceProcessorCallback {
     
-    public enum DSP_Result 
+    public enum DataSourceProcessorResult 
             {
                 NO_ERRORS, 
                 CRITICAL_ERRORS,
@@ -42,10 +42,10 @@ public abstract class DSPCallback {
     /*
      * Invoke the caller supplied callback function on the EDT thread
      */
-    public void done(DSP_Result result, List<String> errList,  List<Content> newContents)
+    public void done(DataSourceProcessorResult result, List<String> errList,  List<Content> newContents)
     {
         
-        final DSP_Result resultf = result;
+        final DataSourceProcessorResult resultf = result;
         final List<String> errListf = errList;
         final List<Content> newContentsf = newContents;
                 
@@ -62,5 +62,5 @@ public abstract class DSPCallback {
     /*
      * calling code overrides to provide its own calllback 
      */
-    public abstract void doneEDT(DSP_Result result, List<String> errList,  List<Content> newContents);
+    public abstract void doneEDT(DataSourceProcessorResult result, List<String> errList,  List<Content> newContents);
 };

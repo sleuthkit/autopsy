@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -463,14 +463,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
    @Deprecated
     void addLocalDataSource(Content newDataSource) {
         
-        try {
-            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Case listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
-        }
-        CoreComponentControl.openCoreWindows();
+        notifyNewDataSource(newDataSource);
     }
 
     /**

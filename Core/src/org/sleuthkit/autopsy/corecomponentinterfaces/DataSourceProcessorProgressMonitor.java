@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,11 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 /*
- * An GUI agnostic DSPProgressMonitor interface for DataSourceProcesssors to 
+ * An GUI agnostic DataSourceProcessorProgressMonitor interface for DataSourceProcesssors to 
  * indicate progress.
  * It models after a JProgressbar though it could use any underlying implementation
  */
-public interface DSPProgressMonitor {
+public interface DataSourceProcessorProgressMonitor {
  
     void setIndeterminate(boolean indeterminate);
     
