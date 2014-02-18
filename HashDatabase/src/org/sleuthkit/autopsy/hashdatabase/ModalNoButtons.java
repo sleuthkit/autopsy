@@ -24,6 +24,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
@@ -52,7 +54,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param unindexed the list of unindexed databases to index.
      */
     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
-        super(parent, "Indexing databases", true);
+        super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbsTitle"), true);
         this.unindexed = unindexed;
         this.toIndex = null;
         this.hdbmp = hdbmp;
@@ -67,7 +69,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param unindexed The unindexed database to index.
      */
      ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
-        super(parent, "Indexing database", true);
+        super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbTitle"), true);
         this.unindexed = null;
         this.toIndex = unindexed;
         this.hdbmp = hdbmp;
@@ -163,12 +165,13 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param evt mouse click event
      */
     private void CANCEL_BUTTONMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_CANCEL_BUTTONMouseClicked
-        String message = "You are about to exit out of indexing your hash databases. \n"
-                + "The generated index will be left unusable. If you choose to continue,\n "
-                + "please delete the corresponding -md5.idx file in the hash folder.\n"
-                + "                                                Exit indexing?";
+        String message = NbBundle.getMessage(this.getClass(), "ModalNoButtons.exitHashDbIndexingMsg");
 
-        int res = JOptionPane.showConfirmDialog(this, message, "Unfinished Indexing", JOptionPane.YES_NO_OPTION);
+        int res = JOptionPane.showConfirmDialog(this,
+                                                message,
+                                                NbBundle.getMessage(this.getClass(),
+                                                                    "ModalNoButtons.dlgTitle.unfinishedIndexing"),
+                                                JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
             List<HashDb> remove = new ArrayList<>();
             if(this.toIndex == null){
@@ -203,7 +206,8 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         currentDb = this.toIndex.getHashSetName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
         this.length = 1;
-        this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
+        this.CURRENTLYON_LABEL.setText(
+                NbBundle.getMessage(this.getClass(), "ModalNoButtons.indexThis.currentlyIndexing1Db"));
         if (!this.toIndex.isIndexing()) {
             this.toIndex.addPropertyChangeListener(this);
             HashDbManager.getInstance().indexHashDatabase(toIndex);
@@ -219,7 +223,8 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         for (HashDb db : this.unindexed) {
             currentDb = db.getHashSetName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
-            this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
+            this.CURRENTLYON_LABEL.setText(
+                    NbBundle.getMessage(this.getClass(), "ModalNoButtons.indexThese.currentlyIndexing1OfNDbs", length));
             if (!db.isIndexing()) {
                 db.addPropertyChangeListener(this);
                 HashDbManager.getInstance().indexHashDatabase(db);
@@ -247,7 +252,9 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.dispose();
             } else {
                 currentcount++;
-                this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);                
+                this.CURRENTLYON_LABEL.setText(
+                        NbBundle.getMessage(this.getClass(), "ModalNoButtons.propChg.currentlyIndexingXofN",
+                                            currentcount, length));
             }
         }
     }    

@@ -98,10 +98,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         }
     };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
+<<<<<<< HEAD
+    public static final String MODULE_NAME = "Keyword Search";
+    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
+=======
     public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchIngestModule.class,
                                                                  "KeywordSearchIngestModule.moduleName");
     public static final String MODULE_DESCRIPTION = NbBundle.getMessage(KeywordSearchIngestModule.class,
                                                                         "KeywordSearchIngestModule.moduleDescription");
+>>>>>>> mrtizmo/develop
     final public static String MODULE_VERSION = Version.getVersion();
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;

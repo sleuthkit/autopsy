@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
@@ -45,43 +45,44 @@ import org.sleuthkit.datamodel.TskException;
  */
  class AddImageTask implements Runnable {
 
-        private Logger logger = Logger.getLogger(AddImageTask.class.getName());
+        private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
         
-        private Case currentCase;
-        // true if the process was requested to stop
-        private volatile boolean cancelled = false;
+        private final Case currentCase;
+        
+        // true if the process was requested to cancel
+        private final Object lock = new Object();   // synchronization object for cancelRequested
+        private volatile boolean cancelRequested = false;
+        
         //true if revert has been invoked.
         private boolean reverted = false;
+        
+        // true if there was a critical error in adding the data source
         private boolean hasCritError = false;
         
-        private volatile boolean  addImageDone = false;
+        private final List<String> errorList = new ArrayList<>();
         
-        private List<String> errorList = new ArrayList<String>();
-        
-        private DSPProgressMonitor progressMonitor;
-        private DSPCallback callbackObj;
+        private final DataSourceProcessorProgressMonitor progressMonitor;
+        private final DataSourceProcessorCallback callbackObj;
         
         private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
         
         private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
         private Thread dirFetcher;
    
-        private String imagePath;
-        private String dataSourcetype;
+        private final String imagePath;
         String timeZone;
         boolean noFatOrphans;
-            
-        
+          
         /*
          * A Swingworker that updates the progressMonitor with the name of the 
          * directory currently being processed  by the AddImageTask 
          */
         private class CurrentDirectoryFetcher implements Runnable {
 
-            DSPProgressMonitor progressMonitor;
+            DataSourceProcessorProgressMonitor progressMonitor;
             SleuthkitJNI.CaseDbHandle.AddImageProcess process;
 
-            CurrentDirectoryFetcher(DSPProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
+            CurrentDirectoryFetcher(DataSourceProcessorProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
                 this.progressMonitor = aProgressMonitor;
                 this.process = proc;
             }
@@ -99,21 +100,21 @@ import org.sleuthkit.datamodel.TskException;
                                 progressMonitor.setProgressText("Adding: " + currDir);
                             }
                         }
+                        // this sleep here prevents the UI from locking up 
+                        // due to too frequent updates to the progressMonitor above
                         Thread.sleep(2 * 1000);
                     }
-                    return;
                 } catch (InterruptedException ie) {
-                    return;
+                    // nothing to do, thread was interrupted externally  
+                    // signaling the end of AddImageProcess 
                 }
             }
         }
-   
-         
-        protected AddImageTask(String imgPath, String tz, boolean noOrphans, DSPProgressMonitor aProgressMonitor, DSPCallback cbObj ) {
+    
+        public AddImageTask(String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj ) {
            
             currentCase = Case.getCurrentCase();
             
-    
             this.imagePath = imgPath;
             this.timeZone = tz;
             this.noFatOrphans = noOrphans;
@@ -132,7 +133,6 @@ import org.sleuthkit.datamodel.TskException;
         @Override
         public void run() {
              
-            
             errorList.clear();
            
             //lock DB for writes in this thread
@@ -158,17 +158,12 @@ import org.sleuthkit.datamodel.TskException;
                 logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
                 errorList.add(ex.getMessage());
             } 
-            finally {
-             
-            }
 
             // handle addImage done
             postProcess();
             
             // unclock the DB 
-            SleuthkitCase.dbWriteUnlock();
-             
-            return;
+            SleuthkitCase.dbWriteUnlock();   
         }
 
         /**
@@ -182,11 +177,10 @@ import org.sleuthkit.datamodel.TskException;
             long imageId = 0;
             try {
                 imageId = addImageProcess.commit();
-            } catch (TskException e) {
+            } catch (TskCoreException e) {
                 logger.log(Level.WARNING, "Errors occured while committing the image", e);
                 errorList.add(e.getMessage());
             } finally {
-               
                 if (imageId != 0) {
                     // get the newly added Image so we can return to caller
                     Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
@@ -202,7 +196,7 @@ import org.sleuthkit.datamodel.TskException;
                     newContents.add(newImage);
                 }
 
-                logger.log(Level.INFO, "Image committed, imageId: " + imageId);
+                logger.log(Level.INFO, "Image committed, imageId: {0}", imageId);
                 logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             }
         }
@@ -213,15 +207,11 @@ import org.sleuthkit.datamodel.TskException;
          */
         private void postProcess() {
         
-            
             // cancel the directory fetcher
             dirFetcher.interrupt();
             
-            addImageDone = true; 
-            // attempt actions that might fail and force the process to stop
-            
-            if (cancelled || hasCritError) {
-                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be comitted.");
+            if (cancelRequested() || hasCritError) {
+                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be committed.");
                 revert();
             }
             
@@ -229,72 +219,57 @@ import org.sleuthkit.datamodel.TskException;
                 logger.log(Level.INFO, "There were errors that occured in add image process");
             }
             
-            
             // When everything happens without an error:
-            if (!(cancelled || hasCritError)) {
-
+            if (!(cancelRequested() || hasCritError)) {
                 try {
-                    if (newContents.isEmpty()) {
-                        if (addImageProcess != null) { // and if we're done configuring ingest
-                            // commit anything
-                            try {
-                                commitImage();
-                            } catch (Exception ex) {
-                                errorList.add(ex.getMessage());
-                                // Log error/display warning
-                                logger.log(Level.SEVERE, "Error adding image to case.", ex);
-                            }
-                        } else {
-                            logger.log(Level.SEVERE, "Missing image process object");
+                    if (addImageProcess != null) {
+                        // commit image
+                        try {
+                            commitImage();
+                        } catch (Exception ex) {
+                            errorList.add(ex.getMessage());
+                            // Log error/display warning
+                            logger.log(Level.SEVERE, "Error adding image to case.", ex);
                         }
+                    } else {
+                        logger.log(Level.SEVERE, "Missing image process object");
                     }
-
-                    else {   //already commited?
-                        logger.log(Level.INFO, "Assuming image already committed, will not commit.");
-                    }
+                    
                     // Tell the progress monitor we're done
                     progressMonitor.setProgress(100);
-
                 } catch (Exception ex) {
                     //handle unchecked exceptions post image add
                     errorList.add(ex.getMessage());
                     
                     logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
                     logger.log(Level.SEVERE, "Error adding image to case", ex);
-                } finally {
-
-
-                }
+                } 
             }
             
             // invoke the callBack, unless the caller cancelled 
-            if (!cancelled) {
+            if (!cancelRequested()) {
                 doCallBack();
             }
-            
-            return;
         }
-
-       
-                
+   
         /*
          * Call the callback with results, new content, and errors, if any
          */
         private void doCallBack()
         {     
-              DSPCallback.DSP_Result result;
+              DataSourceProcessorCallback.DataSourceProcessorResult result;
               
               if (hasCritError) {
-                    result = DSPCallback.DSP_Result.CRITICAL_ERRORS;
+                    result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
               }
               else if (!errorList.isEmpty()) {
-                  result = DSPCallback.DSP_Result.NONCRITICAL_ERRORS;       
+                  result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;       
               }      
               else {
-                  result = DSPCallback.DSP_Result.NO_ERRORS;
+                  result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
               }
 
-              // invoke the callcak, passing it the result, list of new contents, and list of errors
+              // invoke the callback, passing it the result, list of new contents, and list of errors
               callbackObj.done(result, errorList, newContents);
         }
         
@@ -303,34 +278,26 @@ import org.sleuthkit.datamodel.TskException;
          */
         public void cancelTask() {
             
-             cancelled = true;
-             
-             if (!addImageDone) {
+            synchronized (lock) {
+                cancelRequested = true;
                 try {
                   interrupt();
                 }
                 catch (Exception ex) {
-                      logger.log(Level.SEVERE, "Failed to interrup the add image task...");    
-                }
-            }
-            else {
-                try {
-                  revert();  
-                }
-                catch(Exception ex) {
-                     logger.log(Level.SEVERE, "Failed to revert the add image task...");   
+                      logger.log(Level.SEVERE, "Failed to interrupt the add image task...");    
                 }
             }
         }
+        
         /*
-         * Interrurp the add image process if it is still running
+         * Interrupt the add image process if it is still running
          */
         private void interrupt() throws Exception {
             
             try {
                 logger.log(Level.INFO, "interrupt() add image process");
                 addImageProcess.stop();  //it might take time to truly stop processing and writing to db
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 throw new Exception("Error stopping add-image process.", ex);
             }
         }
@@ -338,20 +305,22 @@ import org.sleuthkit.datamodel.TskException;
         /*
          * Revert - if image has already been added but not committed yet
          */
-        void revert() {
+        private void revert() {
             
              if (!reverted) {     
+                logger.log(Level.INFO, "Revert after add image process");
                 try {
-                    logger.log(Level.INFO, "Revert after add image process");
-                    try {
-                        addImageProcess.revert();
-                    } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error reverting add image process", ex);
-                    }
-                } finally {
-                    
+                    addImageProcess.revert();
+                } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error reverting add image process", ex);
                 }
                 reverted = true;
+            }
+        }
+        
+        private boolean cancelRequested() {
+            synchronized (lock) {
+                return cancelRequested;   
             }
         }
     }
