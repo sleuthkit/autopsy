@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.HashSearchProvider;
@@ -103,8 +104,11 @@ class HashDbSearchAction extends CallableSystemAction implements HashSearchProvi
         if (HashDbSearcher.countFilesMd5Hashed() > 0) {
             doSearch();
         } else {
-            JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash calculated, run HashDB ingest first.",
-                    "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbSearchAction.dlgMsg.noFilesHaveMD5Calculated"),
+                                          NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),
+                                          JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -115,7 +119,7 @@ class HashDbSearchAction extends CallableSystemAction implements HashSearchProvi
 
     @Override
     public String getName() {
-        return "Hash Search";
+        return NbBundle.getMessage(this.getClass(), "HashDbSearchAction.getName.text");
     }
 
     @Override
