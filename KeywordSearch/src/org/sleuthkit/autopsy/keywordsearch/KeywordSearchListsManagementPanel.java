@@ -25,11 +25,11 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -176,21 +176,23 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
-        String listName = (String) JOptionPane.showInputDialog(null, "New keyword list name:", "New Keyword List", JOptionPane.PLAIN_MESSAGE, null, null, "");
+        String listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
+                NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, "");
         if (listName == null || listName.trim().equals("")) {
             return;
         }
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             if (writer.getList(listName).isLocked() ) {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog("New Keyword List", "Keyword List <" + listName 
-                        + "> already exists as a read-only list. Do you want to replace it for the duration of the program (the change will not be persistent).", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                boolean replace = KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.keywordListAlreadyExistMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                 if (replace) {
                     shouldAdd = true;
                 }
             }
             else {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog("New Keyword List", "Keyword List <" + listName + "> already exists, do you want to replace it?", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                boolean replace = KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListAlreadyExistMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                 if (replace) {
                     shouldAdd = true;
                 }
@@ -211,12 +213,10 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
 
-        final String FEATURE_NAME = "Keyword List Import";
-
         JFileChooser chooser = new JFileChooser();
         final String[] EXTENSION = new String[]{"xml", "txt"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Keyword List File", EXTENSION);
+                NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.fileExtensionFilterLbl"), EXTENSION);
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
@@ -239,7 +239,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             }
             
             if (!reader.load()) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Error importing keyword list from file " + fileAbs, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
 
@@ -251,12 +252,12 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             for (KeywordSearchListsAbstract.KeywordSearchList list : toImport) {
                 //check name collisions
                 if (writer.listExists(list.getName())) {
-                    Object[] options = {"Yes, overwrite",
-                        "No, skip",
-                        "Cancel import"};
+                    Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
                     int choice = JOptionPane.showOptionDialog(this,
-                            "Keyword list <" + list.getName() + "> already exists locally, overwrite?",
-                            "Import list conflict",
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", list.getName()),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
                             JOptionPane.YES_NO_CANCEL_OPTION,
                             JOptionPane.QUESTION_MESSAGE,
                             null,
@@ -280,7 +281,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             }
 
             if (!writer.writeLists(toImportConfirmed)) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list not imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                KeywordSearchUtil.displayDialog(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
 
         }

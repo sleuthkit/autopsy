@@ -24,6 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -152,7 +154,7 @@ class KeywordSearchQueryManager {
         String queryConcatStr = queryConcat.toString();
         final int queryConcatStrLen = queryConcatStr.length();
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
-        final String windowTitle = "Keyword search " + (++resultWindowCount) + " - " + queryStrShort;
+        final String windowTitle = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount, queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (things.size() > 0) {
             Children childThingNodes =

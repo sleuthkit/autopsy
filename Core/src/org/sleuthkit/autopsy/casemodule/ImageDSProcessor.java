@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,14 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-
-import java.util.logging.Level;
 import javax.swing.JPanel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPProgressMonitor;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DSPCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
@@ -41,15 +38,13 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 @ServiceProvider(service = DataSourceProcessor.class)
 public class ImageDSProcessor implements DataSourceProcessor {
   
-   
-     
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    protected final static String dsType = "Image File";
+    private final static String dsType = "Image File";
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
-    private ImageFilePanel imageFilePanel;
+    private final ImageFilePanel imageFilePanel;
     
     // The Background task that does the actual work of adding the image 
     private AddImageTask addImageTask;
@@ -57,7 +52,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     // true of cancelled by the caller
     private boolean cancelled = false;
     
-    DSPCallback callbackObj = null;
+    DataSourceProcessorCallback callbackObj = null;
     
     // set to TRUE if the image options have been set via API and config Jpanel should be ignored
     private boolean imageOptionsSet = false;
@@ -67,13 +62,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private String timeZone;
     private boolean noFatOrphans;
      
-    
-    
-    
     static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
     static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
     
-    static final List<String> allExt = new ArrayList<String>();
+    static final List<String> allExt = new ArrayList<>();
     static {
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
@@ -81,7 +73,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     static final String allDesc = "All Supported Types";
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     
-    static final List<FileFilter> filtersList = new ArrayList<FileFilter>();
+    static final List<FileFilter> filtersList = new ArrayList<>();
     
     static {
         filtersList.add(allFilter);
@@ -89,7 +81,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
         filtersList.add(encaseFilter);
     }
     
-        
     /*
      * A no argument constructor is required for the NM lookup() method to create an object
      */
@@ -100,13 +91,18 @@ public class ImageDSProcessor implements DataSourceProcessor {
         
     }
     
+    // this static method is used by the wizard to determine dsp type for 'core' data source processors
+    public static String getType() {
+        return dsType;
+    }
+     
     /**
      * Returns the Data source type (string) handled by this DSP
      *
      * @return String the data source type
      **/ 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return dsType;
     }
             
@@ -118,22 +114,23 @@ public class ImageDSProcessor implements DataSourceProcessor {
    @Override
     public JPanel getPanel() {
 
-    
        imageFilePanel.readSettings();
        imageFilePanel.select();
        
        return imageFilePanel;
    }
+    
     /**
      * Validates the data collected by the JPanel
      *
      * @return String returns NULL if success, error string if there is any errors  
      **/  
    @Override
-   public boolean validatePanel() {
+   public boolean isPanelValid() {
        
         return imageFilePanel.validatePanel(); 
    }
+   
     /**
      * Runs the data source processor.
      * This must kick off processing the data source in background
@@ -142,7 +139,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * @param cbObj callback to call when processing is done.
      **/    
   @Override
-  public void run(DSPProgressMonitor progressMonitor, DSPCallback cbObj) {
+  public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
       
       callbackObj = cbObj;
       cancelled = false;
@@ -161,7 +158,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
       addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans,  progressMonitor, cbObj); 
       new Thread(addImageTask).start();
        
-      return;
   }
   
     /**
@@ -171,15 +167,12 @@ public class ImageDSProcessor implements DataSourceProcessor {
   public void cancel() {
       
       cancelled = true;
-      
       addImageTask.cancelTask();
-      
-      return;
   }
   
   /**
    * Reset the data source processor
-   **/     
+   **/    
   @Override
   public void reset() {
       
@@ -191,8 +184,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
      imagePath = null;
      timeZone = null;
      noFatOrphans = false;
-    
-      return;
   }
   
   /**
@@ -201,7 +192,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
    * collect this information from a user.
    * 
    * @param imgPath path to thew image or first image
-   * @param String timeZone 
+   * @param tz timeZone 
    * @param noFat whether to parse FAT orphans
    **/ 
   public void setDataSourceOptions(String imgPath, String tz, boolean noFat) {

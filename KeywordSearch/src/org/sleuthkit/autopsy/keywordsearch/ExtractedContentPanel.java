@@ -26,6 +26,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
@@ -659,7 +661,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * background thread. To be invoked from GUI thread only.
      */
     private void setMarkup(MarkupSource source) {
-        setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>", false);
+        setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
         new SetMarkup(source).execute();
     }
 

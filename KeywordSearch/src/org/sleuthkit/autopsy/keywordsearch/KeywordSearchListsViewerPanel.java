@@ -36,7 +36,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.apache.solr.client.solrj.SolrServerException;
+
+import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -162,16 +163,14 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private void initIngest(boolean running) {
         if (running) {
             ingestRunning = true;
-            searchAddButton.setText("Add to Ingest");
-            searchAddButton.setToolTipText("<html>You can select additional keyword lists"
-                    + "<br />and enqueue them to the ongoing ingest."
-                    + "<br />The selected lists will be searched next time the file index is rebuilt.</html>");
+            searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
+            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg" ));
             listsTableModel.resync();
             
         } else {
             ingestRunning = false;
-            searchAddButton.setText("Search");
-            searchAddButton.setToolTipText("Search indexed files for keywords in selected lists");
+            searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
+            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
             listsTableModel.resync();
         }
         updateIngestIndexLabel(running);
@@ -179,11 +178,10 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     
     private void updateIngestIndexLabel(boolean ingestRunning) {
         if (ingestRunning) {
-            ingestIndexLabel.setText("Files Indexed: " + filesIndexed
-                    + " (ingest is ongoing)");
+            ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.ongoingIngestMsg", filesIndexed));
         }
         else {
-            ingestIndexLabel.setText("Files Indexed: " + filesIndexed);
+            ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.fileIndexCtMsg", filesIndexed));
         }
     }
     
@@ -357,10 +355,10 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             String ret = null;
             switch (column) {
                 case 0:
-                    ret = "Selected";
+                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.selectedColLbl");
                     break;
                 case 1:
-                    ret = "Name";
+                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.nameColLbl");
                     break;
                 default:
                     break;
@@ -511,10 +509,10 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             String ret = null;
             switch (column) {
                 case 0:
-                    ret = "Name";
+                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.nameColLbl");
                     break;
                 case 1:
-                    ret = "RegEx";
+                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.regExColLbl");
                     break;
                 default:
                     break;

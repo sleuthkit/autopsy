@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.openide.util.NbBundle;
 
 /**
  * Common functionality among keyword search performers / widgets.
@@ -31,6 +33,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentatio
  */
 abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
+    private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
 
     AbstractKeywordSearchPerformer() {
@@ -58,7 +61,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
      * Hook to run after indexed files number changed
      */
     protected abstract void postFilesIndexedChange();
-    
+
     @Override
     public abstract boolean isMultiwordQuery();
 
@@ -79,25 +82,23 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
     @Override
     public void search() {
         boolean isRunning = IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
-        
+
         if (filesIndexed == 0) {
             if (isRunning) {
-                KeywordSearchUtil.displayDialog("Keyword Search Error", "<html>No files are in index yet. <br />"
-                        + "Try again later.  Index is updated every " + KeywordSearchSettings.getUpdateFrequency().getTime() + " minutes.</html>", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
-            }
-            else {
-                KeywordSearchUtil.displayDialog("Keyword Search Error", "<html>No files were indexed.<br />"
-                        + "Re-ingest the image with the Keyword Search Module enabled. </html>", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
+                        KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            } else {
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             }
             return;
         }
 
         //check if keyword search module  ingest is running (indexing, etc)
         if (isRunning) {
-            if (KeywordSearchUtil.displayConfirmDialog("Keyword Search Ingest in Progress",
-                    "<html>Keyword Search Ingest is currently running.<br />"
-                    + "Not all files have been indexed and this search might yield incomplete results.<br />"
-                    + "Do you want to proceed with this search anyway?</html>", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
+            if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
+                    NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;
             }
         }
@@ -106,12 +107,13 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
             if (keywords.isEmpty()) {
-                KeywordSearchUtil.displayDialog("Keyword Search Error", "Keyword list is empty, please add at least one keyword to the list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.emptyKeywordErrorBody"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
             man = new KeywordSearchQueryManager(keywords, Presentation.FLAT);
-        } 
-        else {
+        } else {
             QueryType queryType = null;
             if (isLuceneQuerySelected()) {
                 queryType = QueryType.WORD;
@@ -120,7 +122,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             }
             final String queryText = getQueryText();
             if (queryText == null || queryText.trim().equals("")) {
-                KeywordSearchUtil.displayDialog("Keyword Search Error", "Please enter a keyword to search for", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
             man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.FLAT);
@@ -129,7 +132,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
         if (man.validate()) {
             man.execute();
         } else {
-            KeywordSearchUtil.displayDialog("Keyword Search Error", "Invalid query syntax.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                    "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
         }
     }
 }

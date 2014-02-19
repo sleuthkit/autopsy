@@ -44,7 +44,7 @@ def compile(errore, attachli, parsedin, branch):
         if(passed):
             gitPull("autopsy", branch)
         if(passed):
-            antBuild("datamodel", False)
+            antBuild("datamodel", False, branch)
             print("DataModel")
         if(passed):
             antBuild("autopsy", True, branch)
