@@ -25,5 +25,12 @@ import org.sleuthkit.datamodel.Content;
  * Interface that must be implemented by all data source ingest modules.
  */
 public interface DataSourceIngestModule extends IngestModule {
-    void process(Content dataSource);    
+    
+    /**
+     * Process a data source.
+     * @param dataSource The data source to process.
+     * @param statusHelper A status helper to be used to report progress and 
+     * detect task cancellation.
+     */
+    void process(Content dataSource, IngestDataSourceWorkerController statusHelper); // RJCTODO: Change name of IngestDataSourceWorkerController class     
 }
