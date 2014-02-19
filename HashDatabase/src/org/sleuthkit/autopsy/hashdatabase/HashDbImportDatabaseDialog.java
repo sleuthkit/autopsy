@@ -318,7 +318,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         
         String errorMessage = "Failed to open hash database at " + selectedFilePath + ".";
         try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabase(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseInternal(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
         } 
         catch (HashDatabaseDoesNotExistException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);

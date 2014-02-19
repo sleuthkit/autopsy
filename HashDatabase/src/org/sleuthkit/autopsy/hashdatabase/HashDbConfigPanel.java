@@ -264,7 +264,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashDatabase(hashDb);
+            hashSetManager.removeHashDatabaseInternal(hashDb);
         }
         hashSetTableModel.refreshModel();        
     }
@@ -723,7 +723,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (JOptionPane.showConfirmDialog(null, "This will remove the hash database for all cases. Do you want to proceed? ", "Delete Hash Database from Configuration", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }
@@ -733,7 +733,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }                
