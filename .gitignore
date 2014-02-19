@@ -36,7 +36,6 @@
 !/Ingest/nbproject/project.properties
 /branding_spear
 /installer_spear
-Bundle_*.properties
 */genfiles.properties
 genfiles.properties
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
