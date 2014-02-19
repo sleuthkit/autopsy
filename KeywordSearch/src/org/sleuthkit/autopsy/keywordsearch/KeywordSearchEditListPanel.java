@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -71,12 +73,12 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     
 
     private void customizeComponents() {
-        chRegex.setToolTipText("Keyword is a regular expression");
-        addWordButton.setToolTipText(("Add a new word to the keyword search list"));
-        addWordField.setToolTipText("Enter a new word or regex to search");
-        exportButton.setToolTipText("Export the current keyword list to a file");
-        saveListButton.setToolTipText("Save the current keyword list with a new name");
-        deleteWordButton.setToolTipText("Remove selected keyword(s) from the list");
+        chRegex.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.kwReToolTip"));
+        addWordButton.setToolTipText((NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.addWordToolTip")));
+        addWordField.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.enterNewWordToolTip"));
+        exportButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.exportToFile"));
+        saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
+        deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
 
         //keywordTable.setAutoscrolls(true);
         //keywordTable.setTableHeader(null);
@@ -489,7 +491,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         if (newWord.equals("")) {
             return;
         } else if (currentKeywordList.hasKeyword(keyword)) {
-            KeywordSearchUtil.displayDialog("New Keyword Entry", "Keyword already exists in the list.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addWordButtonAction.kwAlreadyExistsMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
 
@@ -504,7 +507,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             valid = false;
         }
         if (!valid) {
-            KeywordSearchUtil.displayDialog("New Keyword Entry", "Invalid keyword pattern.  Use words or a correct regex pattern.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.invalidKwMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
 
@@ -518,9 +522,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
-        if (KeywordSearchUtil.displayConfirmDialog("Removing a keyword"
-                , "This will remove a keyword from the list globally (for all Cases). "
-                + "Do you want to proceed? "
+        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg")
+                , NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg")
                 , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
         
         tableModel.deleteSelected(keywordTable.getSelectedRows());
@@ -540,7 +543,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml";
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Keyword List XML file", EXTENSION);
+                NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileFilterLabel"), EXTENSION);
         chooser.setFileFilter(filter);
         chooser.setSelectedFile(new File(currentKeywordList.getName()));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -561,7 +564,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             boolean shouldWrite = true;
             if (selFile.exists()) {
-                shouldWrite = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "File " + selFile.getName() + " exists, overwrite?", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                shouldWrite = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileExistPrompt",
+                                selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
             if (!shouldWrite) {
                 return;
@@ -575,7 +580,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
             boolean written = exporter.saveLists(toWrite);
             if (written) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported",
+                KeywordSearchUtil.displayDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListExportedMsg"),
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
         }
@@ -689,10 +695,10 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
 
             switch (column) {
                 case 0:
-                    colName = "Keyword";
+                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.kwColName");
                     break;
                 case 1:
-                    colName = "RegEx";
+                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.regExColName");
                     break;
                 default:
                     ;
