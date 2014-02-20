@@ -34,10 +34,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseFileAlreadyExistsException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.DuplicateHashSetNameException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseAlreadyAddedException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.IllegalHashDatabaseFileNameExtensionException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
  * Instances of this class allow a user to create a new hash database and
@@ -367,7 +364,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                                           JOptionPane.ERROR_MESSAGE);
             return; 
         }
-        catch (HashDatabaseFileAlreadyExistsException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException | IllegalHashDatabaseFileNameExtensionException ex) {
+        catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                                           ex.getMessage(),
