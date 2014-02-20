@@ -37,7 +37,8 @@ position = 3,
 keywords = "#OptionsCategory_Keywords_HashDatabase",
 keywordsCategory = "HashDatabase",
 id = "HashDatabase")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
 
     private HashDbConfigPanel panel;
