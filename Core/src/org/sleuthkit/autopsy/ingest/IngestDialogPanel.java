@@ -23,10 +23,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -41,92 +43,64 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * main configuration panel for all ingest modules, reusable JPanel component
  */
  class IngestDialogPanel extends javax.swing.JPanel {
+     private List<IngestModuleModel> moduleModels = null;
+     private IngestModuleModel selectedModuleModel = null;
+     private boolean processUnallocatedSpace = false;
+     private ModulesTableModel tableModel = null;
 
-    private IngestModuleAbstract currentModule;
-    private ModulesTableModel tableModel;
-    private String context;
-
-    /**
-     * Creates new form IngestDialogPanel
-     */
-    public IngestDialogPanel() {
-        tableModel = new ModulesTableModel();
-        context = ModuleSettings.DEFAULT_CONTEXT;
+    IngestDialogPanel(List<IngestModuleModel> moduleModels, boolean processUnallocatedSpace) {
+        this.moduleModels = moduleModels;
+        this.processUnallocatedSpace = processUnallocatedSpace;
         initComponents();
         customizeComponents();
     }
-    
-    public void setContext(String context) {
-        this.context = context;
-    }
-    
-    
-    public IngestModuleAbstract getCurrentIngestModule() {
-        return currentModule;
-    }
-    
-    public List<IngestModuleAbstract> getModulesToStart() {
-        return tableModel.getSelectedModules();
-    }
-    
-    public List<IngestModuleAbstract> getDisabledModules() {
-        return tableModel.getUnSelectedModules();
-    }
-    
-    public boolean processUnallocSpaceEnabled() {
+                
+    boolean getProcessUnallocSpace() {
         return processUnallocCheckbox.isSelected();
     }
-
+    
     private void customizeComponents() {
         modulesTable.setModel(tableModel);
         modulesTable.setTableHeader(null);
         modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        //custom renderer for tooltips
-        ModulesTableRenderer renderer = new ModulesTableRenderer();
-        
-        //customize column witdhs
-        final int width = modulesScrollPane.getPreferredSize().width;
-        TableColumn column = null;
-        for (int i = 0; i < modulesTable.getColumnCount(); i++) {
-            column = modulesTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.15)));
+        // Set the column widths in the table model and add a custom cell 
+        // renderer that will display module descriptions from the module models 
+        // as tooltips.
+        ModulesTableRenderer renderer = new ModulesTableRenderer();        
+        int width = modulesScrollPane.getPreferredSize().width;
+        for (int i = 0; i < modulesTable.getColumnCount(); ++i) {
+            TableColumn column = modulesTable.getColumnModel().getColumn(i);
+            if (0 == i) {
+                column.setPreferredWidth(((int)(width * 0.15)));
             } else {
                 column.setCellRenderer(renderer);
-                column.setPreferredWidth(((int) (width * 0.84)));
+                column.setPreferredWidth(((int)(width * 0.84)));
             }
         }
 
+        // Add a selection listener to the table model that will display the  
+        // ingest options panel of the currently selected module model and 
+        // enable or disable the global options panel invocation button.
         modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+                ListSelectionModel listSelectionModel = (ListSelectionModel)e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
-                    currentModule = tableModel.getModule(index);
-                    
-                    // add the module-specific configuration panel, if there is one
+                    selectedModuleModel = moduleModels.get(index);                    
                     simplePanel.removeAll();
-                    if (currentModule.hasSimpleConfiguration()) {
-                        simplePanel.add(currentModule.getSimpleConfiguration(context));
+                    if (null != selectedModuleModel.getIngestOptionsPanel()) {
+                        simplePanel.add(selectedModuleModel.getIngestOptionsPanel());
                     }
                     simplePanel.revalidate();
                     simplePanel.repaint();
-                    advancedButton.setEnabled(currentModule.hasAdvancedConfiguration());
-                } else {
-                    currentModule = null;
+                    advancedButton.setEnabled(null != selectedModuleModel.getGlobalOptionsPanel());
                 }
             }
         });
-    }
-
-    public void setProcessUnallocSpaceEnabled(final boolean enabled) {
-        processUnallocCheckbox.setSelected(enabled);
-    }
-    
-    public void setEnabledIngestModules(List<IngestModuleAbstract> enabledModules) {
-        tableModel.setSelectedModules(enabledModules);
+        
+        processUnallocCheckbox.setSelected(processUnallocatedSpace);        
     }
 
     /**
@@ -277,11 +251,11 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
                 dialog.close();
             }
         });
-        dialog.display(currentModule.getAdvancedConfiguration(context));
+        dialog.display(selectedModuleModel.getGlobalOptionsPanel());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
-        // nothing to do here
+        processUnallocatedSpace = processUnallocCheckbox.isSelected();
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
@@ -296,20 +270,57 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
 
-    private class ModulesTableModel extends AbstractTableModel {
-        
-        private List<Map.Entry<IngestModuleAbstract, Boolean>>moduleData = new ArrayList<>();
+    static class IngestModuleModel {
+        private final IngestModuleFactory moduleFactory;
+        private final JPanel ingestOptionsPanel;
+        private final JPanel globalOptionsPanel;
+        private boolean enabled = true;
 
-        public ModulesTableModel() {
-            List<IngestModuleAbstract> modules = IngestManager.getDefault().enumerateAllModules();
-            for (IngestModuleAbstract ingestModuleAbstract : modules) {
-                moduleData.add(new AbstractMap.SimpleEntry<>(ingestModuleAbstract, Boolean.TRUE));
+        IngestModuleModel(IngestModuleFactory moduleFactory, Serializable ingestOptions, boolean enabled) {
+            this.moduleFactory = moduleFactory;
+            this.enabled = enabled;
+            if (moduleFactory.providesIngestOptionsPanels()) {
+                ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(ingestOptions);
+            }
+            else {
+                ingestOptionsPanel = null;
+            }
+            if (moduleFactory.providesGlobalOptionsPanels()) {
+                
+            }
+            else {
             }
         }
+                
+        String getModuleDisplayName() {
+            return moduleFactory.getModuleDisplayName();
+        }
 
+        String getModuleDescription() {
+            return moduleFactory.getModuleDescription();
+        }
+
+        void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        boolean isEnabled() {
+            return enabled;
+        }       
+
+        JPanel getIngestOptionsPanel() {
+            return ingestOptionsPanel;
+        }
+        
+        JPanel getGlobalOptionsPanel() {
+            return globalOptionsPanel;
+        }        
+    }
+        
+    private class ModulesTableModel extends AbstractTableModel {
         @Override
         public int getRowCount() {
-            return moduleData.size();
+            return moduleModels.size();
         }
 
         @Override
@@ -319,11 +330,12 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Map.Entry<IngestModuleAbstract, Boolean> entry = moduleData.get(rowIndex);
+            IngestModuleTemplate moduleTemplate = moduleModels.get(rowIndex);
             if (columnIndex == 0) {
-                return entry.getValue();
-            } else {
-                return entry.getKey().getName();
+                return moduleTemplate.isEnabled();
+            } 
+            else {
+                return moduleTemplate.getModuleDisplayName();
             }
         }
 
@@ -335,87 +347,14 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
-                moduleData.get(rowIndex).setValue((Boolean)aValue);
+                moduleModels.get(rowIndex).setEnabled((boolean)aValue);
             }
         }
 
         @Override
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
-        }
-        
-        public List<IngestModuleAbstract> getSelectedModules() {
-            List<IngestModuleAbstract> selectedModules = new ArrayList<>();
-            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
-                if (entry.getValue().booleanValue()) {
-                    selectedModules.add(entry.getKey());
-                }
-            }
-            return selectedModules;
-        }
-        
-        public List<IngestModuleAbstract> getUnSelectedModules() {
-            List<IngestModuleAbstract> unselectedModules = new ArrayList<>();
-            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
-                if (!entry.getValue().booleanValue()) {
-                    unselectedModules.add(entry.getKey());
-                }
-            }
-            return unselectedModules;
         }        
-        
-        /**
-         * Sets the given modules as selected in the modules table
-         * @param selectedModules 
-         */
-        public void setSelectedModules(List<IngestModuleAbstract> selectedModules) {
-            // unselect all modules
-            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
-                entry.setValue(Boolean.FALSE);
-            }
-            
-            // select only the given modules
-            for (IngestModuleAbstract selectedModule : selectedModules) {
-                getEntryForModule(selectedModule).setValue(Boolean.TRUE);
-            }
-            
-            // tell everyone about it
-            fireTableDataChanged();
-        }
-        
-        /**
-         * Sets the given modules as NOT selected in the modules table
-         * @param selectedModules 
-         */
-        public void setUnselectedModules(List<IngestModuleAbstract> unselectedModules) {
-            // select all modules
-            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
-                entry.setValue(Boolean.TRUE);
-            }
-            
-            // unselect only the given modules
-            for (IngestModuleAbstract unselectedModule : unselectedModules) {
-                getEntryForModule(unselectedModule).setValue(Boolean.FALSE);
-            }
-            
-            // tell everyone about it
-            fireTableDataChanged();
-        }
-        
-        public IngestModuleAbstract getModule(int row) {
-            return moduleData.get(row).getKey();
-        }
-        
-        private Map.Entry<IngestModuleAbstract, Boolean> getEntryForModule(IngestModuleAbstract module) {
-            Map.Entry<IngestModuleAbstract, Boolean> entry = null;
-            for (Map.Entry<IngestModuleAbstract, Boolean> anEntry : moduleData) {
-                if (anEntry.getKey().equals(module)) {
-                    entry = anEntry;
-                    break;
-                }
-            }
-            return entry;
-        }
     }
 
     /**
@@ -426,20 +365,15 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
         List<String> tooltips = new ArrayList<>();
 
         public ModulesTableRenderer() {
-            List<IngestModuleAbstract> modules = IngestManager.getDefault().enumerateAllModules();
-            for (IngestModuleAbstract ingestModuleAbstract : modules) {
-                tooltips.add(ingestModuleAbstract.getDescription());
+            for (IngestModuleTemplate moduleTemplate : moduleModels) {
+                tooltips.add(moduleTemplate.getModuleDescription());
             }
         }
 
         @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {                
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {                
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-            if (column == 1) {
+            if (1 == column) {
                 setToolTipText(tooltips.get(row));
             }
             return this;

@@ -792,6 +792,10 @@ public class IngestManager {
         modules.addAll(enumerateAbstractFileModules());
         return modules;
     }
+    
+    List<IngestModuleFactory> getIngestModuleFactories() {
+        return moduleLoader.getIngestModuleFactories();
+    }
 
     //data source worker to remove itself when complete or interrupted
     void removeDataSourceIngestWorker(IngestDataSourceThread worker) {

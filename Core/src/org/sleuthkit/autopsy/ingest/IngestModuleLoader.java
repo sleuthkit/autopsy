@@ -91,7 +91,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * code refactored
  */
  final class IngestModuleLoader {
-
+     private ArrayList<IngestModuleFactory> moduleFactories = new ArrayList<>();
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
     private static final String XSDFILE = "PipelineConfigSchema.xsd";
     private String absFilePath;
@@ -456,6 +456,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         return urls;
     }
 
+    List<IngestModuleFactory> getIngestModuleFactories() {
+        return moduleFactories;
+    }
+    
     /**
      * Auto-discover ingest modules in all platform modules that are "enabled"
      * If discovered ingest module is not already in XML config, add it do
@@ -466,6 +470,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     @SuppressWarnings("unchecked")
     private void autodiscover() throws IngestModuleLoaderException {
 
+        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
+        moduleFactories.addAll(factories);
+        
+//        moduleFactories        
+        
         // Use Lookup to find the other NBM modules. We'll later search them for ingest modules
         Collection<? extends ModuleInfo> moduleInfos = Lookup.getDefault().lookupAll(ModuleInfo.class);
         logger.log(Level.INFO, "Autodiscovery, found #platform modules: " + moduleInfos.size());

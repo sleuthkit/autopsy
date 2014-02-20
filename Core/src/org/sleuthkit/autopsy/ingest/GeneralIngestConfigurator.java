@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -51,92 +53,99 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         return loadSettingsForContext();
     }
 
-    private List<String> loadSettingsForContext() {        
-        List<String> messages = new ArrayList<>();  
-        List<IngestModuleAbstract> allModules = IngestManager.getDefault().enumerateAllModules();
+    private List<String> loadSettingsForContext() {
+        List<IngestModuleFactory> moduleFactories = IngestManager.getDefault().getIngestModuleFactories();
+
+        // Get the enabled and disabled ingest modules settings from the user's 
+        // config file. The default settings make all ingest modules enabled. 
+        HashSet<String> enabledModuleNames = getModulesNamesFromSetting(ENABLED_INGEST_MODULES_KEY, moduleListToCsv(moduleFactories));        
+        HashSet<String> disabledModuleNames = getModulesNamesFromSetting(DISABLED_INGEST_MODULES_KEY, "");        
         
-        // If there is no enabled ingest modules setting for this user, default to enabling all
-        // of the ingest modules the IngestManager has loaded.
-        if (ModuleSettings.settingExists(moduleContext, ENABLED_INGEST_MODULES_KEY) == false) {
-            String defaultSetting = moduleListToCsv(allModules);
-            ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, defaultSetting);
-        }        
-        
-        String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
-        ArrayList<String> enabledList = new ArrayList<>(Arrays.asList(enabledModuleNames));
-        
-        // Check for modules that are missing from the config file
-        
-        String[] disabledModuleNames = null;
-        // Older config files won't have the disabled list, so don't assume it exists
-        if (ModuleSettings.settingExists(moduleContext, DISABLED_INGEST_MODULES_KEY)) {
-            disabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY).split(", ");
+        // Set up a collection of module templates for the view.
+        List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();  
+        HashSet<String> foundModules = new HashSet<>();
+        for (IngestModuleFactory moduleFactory : moduleFactories) {
+            String moduleName = moduleFactory.getModuleDisplayName();            
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, null, enabledModuleNames.contains(moduleName));            
+            if (!enabledModuleNames.contains(moduleName) && !enabledModuleNames.contains(moduleName)) {
+                // The module factory was loaded, but the module name does not
+                // appear in the enabled/disabled module settings. Treat the
+                // module as a new module and enable it by default.
+                moduleTemplate.setEnabled(true);
+                enabledModuleNames.add(moduleName);
+            }
+            foundModules.add(moduleName);
         }
         
-        for (IngestModuleAbstract module : allModules) {
-            boolean found = false;
+        // Check for missing modules and update the enabled/disabled ingest 
+        // module settings. This way the settings will be up to date, even if 
+        // save() is never called.
+        List<String> errorMessages = new ArrayList<>();  
+        for (String moduleName : enabledModuleNames) {
+            if (!foundModules.contains(moduleName)) {
+                errorMessages.add(moduleName + " was previously enabled, but could not be found");
+                enabledModuleNames.remove(moduleName);
+                disabledModuleNames.add(moduleName);                
+            }
+        }                
+        ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));                
 
-            // Check enabled first
-            for (String moduleName : enabledModuleNames) {
-                if (module.getName().equals(moduleName)) {
-                    found = true;
-                    break;
-                }
-            }                
-
-            // Then check disabled
-            if (!found && (disabledModuleNames != null)) {
-                for (String moduleName : disabledModuleNames) {
-                    if (module.getName().equals(moduleName)) {
-                        found = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!found) {
-                enabledList.add(module.getName());
-                // It will get saved to file later
-            }
-        }            
-        
-        // Get the enabled ingest modules setting, check for missing modules, and pass the setting to
-        // the UI component.
-        List<IngestModuleAbstract> enabledModules = new ArrayList<>();
-        for (String moduleName : enabledList) {
-            if (moduleName.equals("Thunderbird Parser") 
-                    || moduleName.equals("MBox Parser")) {
-                moduleName = "Email Parser";
-            }
-            
-            IngestModuleAbstract moduleFound =  null;
-            for (IngestModuleAbstract module : allModules) {
-                if (moduleName.equals(module.getName())) {
-                    moduleFound = module;
-                    break;
-                }
-            }
-            if (moduleFound != null) {
-                enabledModules.add(moduleFound);
-            }
-            else {
-                messages.add(moduleName + " was previously enabled, but could not be found");
-            }
-        }        
-        ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
-
-        // If there is no process unallocated space flag setting, default it to false.
+        // Get the process unallocated space flag setting. If the setting does
+        // not exist yet, default it to false.
         if (ModuleSettings.settingExists(moduleContext, PARSE_UNALLOC_SPACE_KEY) == false) {
             ModuleSettings.setConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY, "false");
-        }        
-        
-        // Get the process unallocated space flag setting and pass it to the UI component.
+        }                
         boolean processUnalloc = Boolean.parseBoolean(ModuleSettings.getConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY));
+
+        // Pass the settings to the nigest dialog panel.
+        ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
         ingestDialogPanel.setProcessUnallocSpaceEnabled(processUnalloc);        
         
-        return messages;
+        return errorMessages;
     }
-                
+        
+    private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
+        // Get the ingest modules setting from the user's config file. 
+        // If there is no such setting yet, create the default setting.
+        if (ModuleSettings.settingExists(moduleContext, key) == false) {
+            ModuleSettings.setConfigSetting(moduleContext, key, defaultSetting);
+        }
+        HashSet<String> moduleNames = new HashSet<>();
+        String modulesSetting = ModuleSettings.getConfigSetting(moduleContext, key);
+        if (!modulesSetting.isEmpty()) {
+            String[] settingNames = modulesSetting.split(", ");
+            for (String name : settingNames) {
+                // Map some old core module names to the current core module names.
+                if (name.equals("Thunderbird Parser") || name.equals("MBox Parser")) {
+                    moduleNames.add("Email Parser");
+                }            
+                else if (name.equals("File Extension Mismatch Detection") || name.equals("Extension Mismatch Detector")) {
+                    moduleNames.add("File Extension Mismatch Detector");                
+                }
+                else {
+                    moduleNames.add(name);
+                }            
+            }
+        }        
+        return moduleNames;        
+    } 
+    
+    private static String makeCommaSeparatedList(HashSet<String> input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+        
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(input);
+        StringBuilder csvList = new StringBuilder();
+        for (int i = 0; i < list.size() - 1; ++i) {
+            csvList.append(list.get(i)).append(", ");
+        }
+        csvList.append(list.get(list.size() - 1));        
+        return csvList.toString();
+    }    
+    
    @Override
     public JPanel getIngestConfigPanel() {
        // Note that this panel allows for selecting modules for the ingest process, 
@@ -166,18 +175,18 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         }        
     }
 
-    private static String moduleListToCsv(List<IngestModuleAbstract> lst) {
+    private static String moduleListToCsv(List<IngestModuleFactory> lst) {
         if (lst == null || lst.isEmpty()) {
             return "";
         }
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < lst.size() - 1; ++i) {
-            sb.append(lst.get(i).getName()).append(", ");
+            sb.append(lst.get(i).getModuleDisplayName()).append(", ");
         }
         
         // and the last one
-        sb.append(lst.get(lst.size() - 1).getName());
+        sb.append(lst.get(lst.size() - 1).getModuleDisplayName());
         
         return sb.toString();
     }
