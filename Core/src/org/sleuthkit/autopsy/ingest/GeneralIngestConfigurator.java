@@ -52,40 +52,49 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
     }
 
     private List<String> loadSettingsForContext() {        
-        List<String> messages = new ArrayList<>();  
-        List<IngestModuleAbstract> allModules = IngestManager.getDefault().enumerateAllModules();
-        
-        // If there is no enabled ingest modules setting for this user, default to enabling all
-        // of the ingest modules the IngestManager has loaded.
+
+        List<IngestModuleAbstract> loadedModules = IngestManager.getDefault().enumerateAllModules();
+                
+        // Get the enabled ingest modules setting from the user's config file. 
+        // If there is no such setting yet, create the default setting of all
+        // loaded ingest modules enabled.
         if (ModuleSettings.settingExists(moduleContext, ENABLED_INGEST_MODULES_KEY) == false) {
-            String defaultSetting = moduleListToCsv(allModules);
-            ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, defaultSetting);
-        }        
-        
-        String[] enabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY).split(", ");
-        ArrayList<String> enabledList = new ArrayList<>(Arrays.asList(enabledModuleNames));
-        
-        // Check for modules that are missing from the config file
-        
-        String[] disabledModuleNames = null;
-        // Older config files won't have the disabled list, so don't assume it exists
-        if (ModuleSettings.settingExists(moduleContext, DISABLED_INGEST_MODULES_KEY)) {
-            disabledModuleNames = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY).split(", ");
+            ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, moduleListToCsv(loadedModules));
+        }
+        ArrayList<String> enabledModuleNames = new ArrayList<>();
+        String enabledModulesSetting = ModuleSettings.getConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY);
+        if (!enabledModulesSetting.isEmpty()) {
+            enabledModuleNames.addAll(Arrays.asList(enabledModulesSetting.split(", ")));
+        }
+
+        // Get the disabled ingest modules setting from the user's config file. 
+        // If there is no such setting yet, create the default setting of no
+        // ingest modules disabled.
+        if (ModuleSettings.settingExists(moduleContext, DISABLED_INGEST_MODULES_KEY) == false) {
+            ModuleSettings.setConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY, "");
+        }   
+        ArrayList<String> disabledModuleNames = new ArrayList<>();
+        String disabledModulesSetting = ModuleSettings.getConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY);
+        if (!disabledModulesSetting.isEmpty()) {
+            disabledModuleNames.addAll(Arrays.asList(disabledModulesSetting.split(", ")));
         }
         
-        for (IngestModuleAbstract module : allModules) {
+        // Check for ingest modules that were loaded, but do not appear in the 
+        // settings. If any such modules are found, consider them to be enabled 
+        // by default.
+        for (IngestModuleAbstract module : loadedModules) {            
             boolean found = false;
-
-            // Check enabled first
+            
+            // Is the module in the enabled list?
             for (String moduleName : enabledModuleNames) {
                 if (module.getName().equals(moduleName)) {
                     found = true;
                     break;
                 }
             }                
-
-            // Then check disabled
-            if (!found && (disabledModuleNames != null)) {
+            
+            // If not, is the module in the diabled list?
+            if (!found) {
                 for (String moduleName : disabledModuleNames) {
                     if (module.getName().equals(moduleName)) {
                         found = true;
@@ -93,48 +102,64 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                     }
                 }
             }
-
+            
+            // If the module is not in either list, add it to the enabled list.
             if (!found) {
-                enabledList.add(module.getName());
-                // It will get saved to file later
+                enabledModuleNames.add(module.getName());
             }
         }            
         
-        // Get the enabled ingest modules setting, check for missing modules, and pass the setting to
-        // the UI component.
+        // Now use the enabled module names to create a list of enabled ingest 
+        // modules for the ingest dialog panel (the panel has also grabbed the 
+        // list of loaded ingest modules and will use the list created here as 
+        // a filter, so a list of disabled modules is not created). Also, 
+        // identify any modules that appear in the enabled modules setting, but 
+        // are not loaded.
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
-        for (String moduleName : enabledList) {
-            if (moduleName.equals("Thunderbird Parser") 
-                    || moduleName.equals("MBox Parser")) {
+        List<String> errorMessages = new ArrayList<>();  
+        for (String moduleName : enabledModuleNames) {
+            // Map some old core module names to the current core module names.
+            if (moduleName.equals("Thunderbird Parser") || moduleName.equals("MBox Parser")) {
                 moduleName = "Email Parser";
+            }            
+            if (moduleName.equals("File Extension Mismatch Detection") || moduleName.equals("Extension Mismatch Detector")) {
+                moduleName = "File Extension Mismatch Detector";                
             }
-            
+
             IngestModuleAbstract moduleFound =  null;
-            for (IngestModuleAbstract module : allModules) {
+            for (IngestModuleAbstract module : loadedModules) {
                 if (moduleName.equals(module.getName())) {
                     moduleFound = module;
                     break;
                 }
             }
-            if (moduleFound != null) {
+            
+            if (null != moduleFound) {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add(moduleName + " was previously enabled, but could not be found");
+                errorMessages.add(moduleName + " was previously enabled, but could not be found");
+                disabledModuleNames.add(moduleName);
             }
-        }        
-        ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
+        }
+        
+        // Update the enabled/disabled ingest module settings. This way the
+        // settings will be up to date, even if save() is never called.
+        ModuleSettings.setConfigSetting(moduleContext, ENABLED_INGEST_MODULES_KEY, moduleNamesListToCsv(enabledModuleNames));
+        ModuleSettings.setConfigSetting(moduleContext, DISABLED_INGEST_MODULES_KEY, moduleNamesListToCsv(disabledModuleNames));                
 
-        // If there is no process unallocated space flag setting, default it to false.
+        // Get the process unallocated space flag setting. If the setting does
+        // not exist yet, default it to false.
         if (ModuleSettings.settingExists(moduleContext, PARSE_UNALLOC_SPACE_KEY) == false) {
             ModuleSettings.setConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY, "false");
-        }        
-        
-        // Get the process unallocated space flag setting and pass it to the UI component.
+        }                
         boolean processUnalloc = Boolean.parseBoolean(ModuleSettings.getConfigSetting(moduleContext, PARSE_UNALLOC_SPACE_KEY));
+
+        // Pass the settings to the nigest dialog panel.
+        ingestDialogPanel.setEnabledIngestModules(enabledModules);                            
         ingestDialogPanel.setProcessUnallocSpaceEnabled(processUnalloc);        
         
-        return messages;
+        return errorMessages;
     }
                 
    @Override
@@ -178,6 +203,22 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         
         // and the last one
         sb.append(lst.get(lst.size() - 1).getName());
+        
+        return sb.toString();
+    }
+        
+    private static String moduleNamesListToCsv(List<String> lst) {
+        if (lst == null || lst.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lst.size() - 1; ++i) {
+            sb.append(lst.get(i)).append(", ");
+        }
+        
+        // and the last one
+        sb.append(lst.get(lst.size() - 1));
         
         return sb.toString();
     }

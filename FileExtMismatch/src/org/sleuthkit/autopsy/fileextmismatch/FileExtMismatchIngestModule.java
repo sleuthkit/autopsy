@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskException;
 public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileExtMismatchIngestModule defaultInstance = null;
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
-    public static final String MODULE_NAME = "File Extension Mismatch Detection";
+    public static final String MODULE_NAME = "File Extension Mismatch Detector";
     public static final String MODULE_DESCRIPTION = "Flags files that have a non-standard extension based on their file type.";
     public static final String MODULE_VERSION = Version.getVersion();    
 
