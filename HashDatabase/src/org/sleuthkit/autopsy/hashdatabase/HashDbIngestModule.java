@@ -45,9 +45,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.datamodel.HashInfo;
 
-public class HashDbIngestModule extends IngestModuleAbstractFile {
+public class HashDbIngestModule extends IngestModuleAbstractFile implements FileIngestModule {
     private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = NbBundle.getMessage(HashDbIngestModule.class,
                                                                  "HashDbIngestModule.moduleName");
@@ -69,7 +70,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     static long lookuptime = 0;
     private final Hash hasher = new Hash();
 
-    private HashDbIngestModule() {
+    HashDbIngestModule() {
     }
 
     public static synchronized HashDbIngestModule getDefault() {
@@ -145,6 +146,34 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     }
     
     @Override
+    public void init(long dataSourceTaskId) {
+        services = IngestServices.getDefault();
+        skCase = Case.getCurrentCase().getSleuthkitCase();
+
+        HashDbManager hashDbManager = HashDbManager.getInstance();
+        getHashSetsUsableForIngest(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
+        getHashSetsUsableForIngest(hashDbManager.getKnownFileHashSets(), knownHashSets);        
+        calcHashesIsSet = hashDbManager.getAlwaysCalculateHashes();
+
+        if (knownHashSets.isEmpty()) {
+            services.postMessage(IngestMessage.createWarningMessage(++messageId,
+                                this,
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+        }
+        if (knownBadHashSets.isEmpty()) {
+            services.postMessage(IngestMessage.createWarningMessage(++messageId,
+                                this,
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.noKnownBadHashDbSetMsg"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
+        }        
+    }
+    
+    @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -195,6 +224,16 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         return false;
     }
 
+    @Override
+    public void process(AbstractFile file) {
+        // Skip unallocated space files.
+        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return;
+        }
+        
+        processFile(file);
+    }
+    
     @Override
     public ProcessResult process(PipelineContext<IngestModuleAbstractFile>pipelineContext, AbstractFile file) {
         //skip unalloc

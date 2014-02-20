@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Interface that must be implemented by all data source ingest modules.
  */
-public interface FileIngestModule {
+public interface FileIngestModule extends IngestModule {
     
     /**
      * Process a file.
