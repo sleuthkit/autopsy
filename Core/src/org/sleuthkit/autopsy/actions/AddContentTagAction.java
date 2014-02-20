@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.actions;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -51,7 +53,9 @@ public class AddContentTagAction extends AddTagAction {
                        
     @Override
     protected String getActionDisplayName() {
-        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File";
+        String singularTagFile = NbBundle.getMessage(this.getClass(), "AddContentTagAction.singularTagFile");
+        String pluralTagFile = NbBundle.getMessage(this.getClass(), "AddContentTagAction.pluralTagFile");
+        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? pluralTagFile : singularTagFile;
     }
 
     @Override
@@ -66,7 +70,13 @@ public class AddContentTagAction extends AddTagAction {
                         file = (AbstractFile)parentFile;
                     }
                     else {
-                        JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(null,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "AddContentTagAction.unableToTag.msg",
+                                                                          parentFile.getName()),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "AddContentTagAction.cannotApplyTagErr"),
+                                                      JOptionPane.WARNING_MESSAGE);
                         continue;
                     }
                 }
@@ -78,12 +88,24 @@ public class AddContentTagAction extends AddTagAction {
                             file = (AbstractFile)parentFile;
                         }
                         else {
-                            JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                            JOptionPane.showMessageDialog(null,
+                                                          NbBundle.getMessage(this.getClass(),
+                                                                              "AddContentTagAction.unableToTag.msg",
+                                                                              parentFile.getName()),
+                                                          NbBundle.getMessage(this.getClass(),
+                                                                              "AddContentTagAction.cannotApplyTagErr"),
+                                                          JOptionPane.WARNING_MESSAGE);
                             continue;
                         }
                     }
                     else {
-                        JOptionPane.showMessageDialog(null, "Unable to tag " + parentFile.getName() + ", not a regular file.", "Cannot Apply Tag", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(null,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "AddContentTagAction.unableToTag.msg",
+                                                                          parentFile.getName()),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "AddContentTagAction.cannotApplyTagErr"),
+                                                      JOptionPane.WARNING_MESSAGE);
                         continue;
                     }                    
                 }
@@ -92,7 +114,12 @@ public class AddContentTagAction extends AddTagAction {
             }
             catch (TskCoreException ex) {                        
                 Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
-                JOptionPane.showMessageDialog(null, "Unable to tag " + file.getName() + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "AddContentTagAction.unableToTag.msg2",
+                                                                  file.getName()),
+                                              NbBundle.getMessage(this.getClass(), "AddContentTagAction.taggingErr"),
+                                              JOptionPane.ERROR_MESSAGE);
             }                    
         }                             
     }
