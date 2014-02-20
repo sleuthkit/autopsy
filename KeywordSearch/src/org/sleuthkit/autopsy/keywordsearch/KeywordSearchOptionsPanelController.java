@@ -19,7 +19,8 @@ iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
 position = 2,
 keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
 keywordsCategory = "KeywordSearchOptions")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
 
     private KeywordSearchConfigurationPanel panel;

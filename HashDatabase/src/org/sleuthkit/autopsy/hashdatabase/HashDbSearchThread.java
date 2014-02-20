@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -52,12 +54,14 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
         logger.log(Level.INFO, "Starting background processing for file search by MD5 hash.");
             
         // Setup progress bar
-        final String displayName = "Searching";
+        final String displayName = NbBundle.getMessage(this.getClass(), "HashDbSearchThread.name.searching");
         progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
                 if (progress != null)
-                    progress.setDisplayName(displayName + " (Cancelling...)");
+                    progress.setDisplayName(
+                            NbBundle.getMessage(this.getClass(), "HashDbSearchThread.progress.cancellingSearch",
+                                                displayName));
                 return HashDbSearchThread.this.cancel(true);
             }
         });
@@ -97,7 +101,9 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
                         }
                     }
                     if(quit) {
-                        JOptionPane.showMessageDialog(null, "No other files with the same MD5 hash were found.");
+                        JOptionPane.showMessageDialog(null,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                        "HashDbSearchThread.noMoreFilesWithMD5Msg"));
                         return;
                     }
                 }
