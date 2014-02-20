@@ -107,7 +107,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     
     @Override
     public FileIngestModule createFileIngestModule(Serializable ingestOptions) throws InvalidOptionsException {
-        return null; // RJCTODO
+        return new HashDbIngestModule();
     }
     
     private static class IngestOptions implements Serializable {
