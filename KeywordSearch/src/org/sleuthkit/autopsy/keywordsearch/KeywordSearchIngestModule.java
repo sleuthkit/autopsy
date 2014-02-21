@@ -343,7 +343,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
      *
      */
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
