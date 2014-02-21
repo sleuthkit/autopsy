@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.IngestModuleException;
 import org.sleuthkit.datamodel.HashInfo;
 
 public class HashDbIngestModule extends IngestModuleAbstractFile {
@@ -145,7 +146,7 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     }
     
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
 

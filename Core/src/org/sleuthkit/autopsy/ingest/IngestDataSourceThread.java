@@ -31,6 +31,7 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.IngestModuleException;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -75,13 +76,13 @@ import org.sleuthkit.datamodel.Content;
         return module;
     }
     
-    public void init() {
+    public void init() throws IngestModuleException{
         
         logger.log(Level.INFO, "Initializing module: " + module.getName());
         try {
             module.init(init);
             inited = true;
-        } catch (Exception e) {
+        } catch (IngestModuleException e) {
             logger.log(Level.INFO, "Failed initializing module: " + module.getName() + ", will not run.");
             //will not run
             inited = false;
