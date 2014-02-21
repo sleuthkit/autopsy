@@ -275,7 +275,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashDatabase(hashDb);
+            hashSetManager.removeHashDatabaseInternal(hashDb);
         }
         hashSetTableModel.refreshModel();        
     }
@@ -744,7 +744,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                                           JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }
@@ -754,7 +754,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }                

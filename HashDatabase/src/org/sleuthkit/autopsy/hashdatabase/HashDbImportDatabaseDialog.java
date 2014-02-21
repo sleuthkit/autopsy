@@ -34,9 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseDoesNotExistException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.DuplicateHashSetNameException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseAlreadyAddedException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
  * Instances of this class allow a user to select an existing  hash database and 
@@ -342,9 +340,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                                                   "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
                                                   selectedFilePath);
         try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabase(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseInternal(hashSetNameTextField.getText(), selectedFilePath, searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);
         } 
-        catch (HashDatabaseDoesNotExistException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException ex) {
+        catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                                           ex.getMessage(),
