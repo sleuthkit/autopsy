@@ -285,7 +285,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
 
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         fileManager = Case.getCurrentCase().getServices().getFileManager();
     }

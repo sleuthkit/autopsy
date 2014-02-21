@@ -89,7 +89,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         // do nothing
     }
 
