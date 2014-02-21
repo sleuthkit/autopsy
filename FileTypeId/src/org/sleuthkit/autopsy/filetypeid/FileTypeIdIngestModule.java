@@ -76,7 +76,7 @@ import org.sleuthkit.datamodel.TskException;
 
     
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
     }
     
