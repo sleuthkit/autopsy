@@ -23,12 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -37,24 +33,30 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.ingest.GeneralIngestConfigurator.IngestModuleModel;
 
 /**
- * main configuration panel for all ingest modules, reusable JPanel component
+ * User interface component to allow a user to set ingest module options and
+ * enable/disable the modules. Designed as a view of a ingest module model class
+ * provided by a controller (Model-View-Controller design pattern).
  */
- class IngestDialogPanel extends javax.swing.JPanel {
-     private List<IngestModuleModel> moduleModels = null;
-     private IngestModuleModel selectedModuleModel = null;
+ class IngestConfigurationPanel extends javax.swing.JPanel {
+     private final List<IngestModuleModel> modules;
+     private IngestModuleModel selectedModule = null;
      private boolean processUnallocatedSpace = false;
-     private ModulesTableModel tableModel = null;
+     private IngestModulesTableModel tableModel = null;
 
-    IngestDialogPanel(List<IngestModuleModel> moduleModels, boolean processUnallocatedSpace) {
-        this.moduleModels = moduleModels;
+    IngestConfigurationPanel(List<IngestModuleModel> modules, boolean processUnallocatedSpace) {
+        this.modules = modules;
         this.processUnallocatedSpace = processUnallocatedSpace;
         initComponents();
         customizeComponents();
     }
-                
+    
+    List<IngestModuleModel> getIngestModules() {
+        return modules;
+    }
+    
     boolean getProcessUnallocSpace() {
         return processUnallocCheckbox.isSelected();
     }
@@ -67,7 +69,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
         // Set the column widths in the table model and add a custom cell 
         // renderer that will display module descriptions from the module models 
         // as tooltips.
-        ModulesTableRenderer renderer = new ModulesTableRenderer();        
+        IngestModulesTableRenderer renderer = new IngestModulesTableRenderer();        
         int width = modulesScrollPane.getPreferredSize().width;
         for (int i = 0; i < modulesTable.getColumnCount(); ++i) {
             TableColumn column = modulesTable.getColumnModel().getColumn(i);
@@ -88,14 +90,14 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
                 ListSelectionModel listSelectionModel = (ListSelectionModel)e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
-                    selectedModuleModel = moduleModels.get(index);                    
+                    selectedModule = modules.get(index);                    
                     simplePanel.removeAll();
-                    if (null != selectedModuleModel.getIngestOptionsPanel()) {
-                        simplePanel.add(selectedModuleModel.getIngestOptionsPanel());
+                    if (null != selectedModule.getIngestOptionsPanel()) {
+                        simplePanel.add(selectedModule.getIngestOptionsPanel());
                     }
                     simplePanel.revalidate();
                     simplePanel.repaint();
-                    advancedButton.setEnabled(null != selectedModuleModel.getGlobalOptionsPanel());
+                    advancedButton.setEnabled(null != selectedModule.getGlobalOptionsPanel());
                 }
             }
         });
@@ -146,7 +148,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
 
-        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.advancedButton.text")); // NOI18N
+        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.advancedButton.text")); // NOI18N
         advancedButton.setEnabled(false);
         advancedButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -184,8 +186,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
-        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.processUnallocCheckbox.toolTipText")); // NOI18N
         processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 processUnallocCheckboxActionPerformed(evt);
@@ -238,20 +240,31 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        
         dialog.addApplyButtonListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                try {
+                    if (selectedModule.hasGlobalOptionsPanel())
+                    selectedModule.saveGlobalOptions();
+                }
+                catch (IngestModuleFactory.InvalidOptionsException ex) {
+                    // RJCTODO: Error message box
+                    // Return without closing to allow user to correct error.
+                    return;
+                }
                 dialog.close();
-                currentModule.saveAdvancedConfiguration();
             }
         });
+        
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 dialog.close();
             }
         });
-        dialog.display(selectedModuleModel.getGlobalOptionsPanel());
+        
+        dialog.display(selectedModule.getGlobalOptionsPanel());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
@@ -269,58 +282,15 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
     private javax.swing.JPanel simplePanel;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
-
-    static class IngestModuleModel {
-        private final IngestModuleFactory moduleFactory;
-        private final JPanel ingestOptionsPanel;
-        private final JPanel globalOptionsPanel;
-        private boolean enabled = true;
-
-        IngestModuleModel(IngestModuleFactory moduleFactory, Serializable ingestOptions, boolean enabled) {
-            this.moduleFactory = moduleFactory;
-            this.enabled = enabled;
-            if (moduleFactory.providesIngestOptionsPanels()) {
-                ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(ingestOptions);
-            }
-            else {
-                ingestOptionsPanel = null;
-            }
-            if (moduleFactory.providesGlobalOptionsPanels()) {
-                
-            }
-            else {
-            }
-        }
-                
-        String getModuleDisplayName() {
-            return moduleFactory.getModuleDisplayName();
-        }
-
-        String getModuleDescription() {
-            return moduleFactory.getModuleDescription();
-        }
-
-        void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        boolean isEnabled() {
-            return enabled;
-        }       
-
-        JPanel getIngestOptionsPanel() {
-            return ingestOptionsPanel;
-        }
         
-        JPanel getGlobalOptionsPanel() {
-            return globalOptionsPanel;
-        }        
-    }
-        
-    private class ModulesTableModel extends AbstractTableModel {
+    /**
+     * Custom table model to display ingest module names and enable/disable 
+     * ingest modules.
+     */
+    private class IngestModulesTableModel extends AbstractTableModel {
         @Override
         public int getRowCount() {
-            return moduleModels.size();
+            return modules.size();
         }
 
         @Override
@@ -330,12 +300,12 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestModuleTemplate moduleTemplate = moduleModels.get(rowIndex);
+            IngestModuleModel module = modules.get(rowIndex);
             if (columnIndex == 0) {
-                return moduleTemplate.isEnabled();
+                return module.isEnabled();
             } 
             else {
-                return moduleTemplate.getModuleDisplayName();
+                return module.getModuleName();
             }
         }
 
@@ -347,7 +317,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
-                moduleModels.get(rowIndex).setEnabled((boolean)aValue);
+                modules.get(rowIndex).setEnabled((boolean)aValue);
             }
         }
 
@@ -358,14 +328,14 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
     }
 
     /**
-     * Custom cell renderer for tool tips with module description
+     * Custom cell renderer to create tool tips displaying ingest module 
+     * descriptions.
      */
-    private class ModulesTableRenderer extends DefaultTableCellRenderer {
-        
+    private class IngestModulesTableRenderer extends DefaultTableCellRenderer {
         List<String> tooltips = new ArrayList<>();
 
-        public ModulesTableRenderer() {
-            for (IngestModuleTemplate moduleTemplate : moduleModels) {
+        public IngestModulesTableRenderer() {
+            for (IngestModuleModel moduleTemplate : modules) {
                 tooltips.add(moduleTemplate.getModuleDescription());
             }
         }

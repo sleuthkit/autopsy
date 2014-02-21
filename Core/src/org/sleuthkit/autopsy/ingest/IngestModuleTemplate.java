@@ -22,40 +22,27 @@ package org.sleuthkit.autopsy.ingest;
 import java.io.Serializable;
 
 /**
- * RJCTODO
+ * Combines an ingest module factory with ingest options and an enabled flag to
+ * create a template for creating fully configured ingest modules. 
  */
 public class IngestModuleTemplate {
     private final IngestModuleFactory moduleFactory;
     private Serializable ingestOptions = null;
-    private boolean enabled = true;
     
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, Serializable ingestOptions, boolean enabled) {
+    IngestModuleTemplate(IngestModuleFactory moduleFactory, Serializable ingestOptions) {
         this.moduleFactory = moduleFactory;
         this.ingestOptions = ingestOptions;
-        this.enabled = enabled;
     }
     
-    String getModuleDisplayName() {
-        return moduleFactory.getModuleDisplayName();
+    IngestModuleFactory getIngestModuleFactory() {
+        return moduleFactory;
     }
     
-    String getModuleDescription() {
-        return moduleFactory.getModuleDescription();
-    }
-
     Serializable getIngestOptions() {
         return ingestOptions;
     }
     
     void setIngestOptions(Serializable ingestOptions) {
         this.ingestOptions = ingestOptions;
-    }
-    
-    void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-    
-    boolean isEnabled() {
-        return enabled;
-    }   
+    }    
 }
