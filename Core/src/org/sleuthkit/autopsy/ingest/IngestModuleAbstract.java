@@ -43,7 +43,7 @@ package org.sleuthkit.autopsy.ingest;
     };
     
     public class IngestModuleException extends Exception {
-        IngestModuleException(String msg) {
+        public IngestModuleException(String msg) {
             super(msg);
         }
     }
