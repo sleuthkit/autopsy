@@ -46,8 +46,8 @@ public class IngestDialog extends JDialog {
     
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestConfigurator = new GeneralIngestConfigurator();
-        List<String> messages = ingestConfigurator.setContext(IngestDialog.class.getCanonicalName());
+        ingestConfigurator = new IngestConfigurator(IngestDialog.class.getCanonicalName());
+        List<String> messages = ingestConfigurator.getMissingIngestModuleErrorMessages();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -83,7 +83,12 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.save();
+                try {
+                    ingestConfigurator.save();
+                }
+                catch (IngestConfigurator.IngestConfigurationException ex) {
+                    // RJCTODO: Decide what to do here.
+                }
                 ingestConfigurator.start();
                 close();
             }
@@ -92,7 +97,12 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.save();
+                try {
+                    ingestConfigurator.save();
+                }
+                catch (IngestConfigurator.IngestConfigurationException ex) {
+                    // RJCTODO: Decide what to do here.
+                }
                 close();
             }
         });
@@ -100,7 +110,12 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                ingestConfigurator.save();
+                try {
+                    ingestConfigurator.save();
+                }
+                catch (IngestConfigurator.IngestConfigurationException ex) {
+                    // RJCTODO: Decide what to do here.
+                }
                 close();
             }
         });

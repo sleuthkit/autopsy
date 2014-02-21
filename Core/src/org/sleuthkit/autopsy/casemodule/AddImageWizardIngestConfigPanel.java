@@ -73,8 +73,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        List<String> messages = ingestConfig.setContext(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        ingestConfig = new IngestConfigurator(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        List<String> messages = ingestConfig.getMissingIngestModuleErrorMessages();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -187,8 +187,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //save previously selected config
-        ingestConfig.save();
+        try {
+            ingestConfig.save();
+        }
+        catch (IngestConfigurator.IngestConfigurationException ex) {
+            // RJCTODO: Decide what to do here
+        }
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();

@@ -33,7 +33,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.ingest.GeneralIngestConfigurator.IngestModuleModel;
+import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
 
 /**
  * User interface component to allow a user to set ingest module options and
