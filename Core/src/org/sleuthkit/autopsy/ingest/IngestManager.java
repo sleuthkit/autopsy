@@ -1303,4 +1303,19 @@ public class IngestManager {
             scheduler.getDataSourceScheduler().empty();
         }
     }
+    
+    private class FileIngester implements Runnable {
+        @Override
+        public void run() {
+            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
+            while (fileScheduler.hasNext()) {
+                final FileTask fileTask = fileScheduler.next();
+                final DataSourceTask<IngestModuleAbstractFile> dataSourceTask = fileTask.getDataSourceTask();                
+                final AbstractFile fileToProcess = fileTask.getFile();
+                
+                fileToProcess.close();                
+            } 
+            logger.log(Level.INFO, "IngestManager: Finished processing files");
+        }        
+    }
 }
