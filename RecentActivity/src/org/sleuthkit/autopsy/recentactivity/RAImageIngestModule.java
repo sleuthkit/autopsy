@@ -150,7 +150,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         modules = new ArrayList<>();
         browserModules = new ArrayList();
         logger.log(Level.INFO, "init() {0}", this.toString());
@@ -180,7 +180,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         for (Extract module : modules) {
             try {
                 module.init(initContext);
-            } catch (Exception ex) {
+            } catch (IngestModuleException ex) {
                 logger.log(Level.SEVERE, "Exception during init() of " + module.getName(), ex);
             }
         }

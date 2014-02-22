@@ -51,10 +51,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashInfo;
+import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
+import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * This class implements a singleton that manages the set of hash databases
  * used to classify files as unknown, known or known bad. 
@@ -122,36 +124,39 @@ public class HashDbManager implements PropertyChangeListener {
         return HASH_DATABASE_FILE_EXTENSON;
     }
     
-    class DuplicateHashSetNameException extends Exception {  
-        private DuplicateHashSetNameException(String hashSetName) {
-            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
-        }
+    public class HashDbManagerException extends Exception {
+        private HashDbManagerException(String message) {
+            super(message);
+        }  
     }
     
-    class HashDatabaseDoesNotExistException extends Exception {        
-        private HashDatabaseDoesNotExistException(String path) {
-            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbDoesNotExistExceptionMsg", path));
+     /**
+     * Adds an existing hash database to the set of hash databases used to classify files as known or known bad
+     * and saves the configuration. 
+     * @param hashSetName Name used to represent the hash database in user interface components. 
+     * @param path Full path to either a hash database file or a hash database index file.
+     * @param searchDuringIngest A flag indicating whether or not the hash database should be searched during ingest.
+     * @param sendIngestMessages A flag indicating whether hash set hit messages should be sent as ingest messages.
+     * @param knownFilesType The classification to apply to files whose hashes are found in the hash database. 
+     * @return A HashDb representing the hash database.
+     * @throws HashDbManagerException
+     */   
+    public HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException{
+        HashDb  hashDb = null;
+        try{
+            addExistingHashDatabaseInternal(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
         }
-    }
-    
-    class HashDatabaseFileAlreadyExistsException extends Exception {
-        private HashDatabaseFileAlreadyExistsException(String path) {
-            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbFileExistsExceptionMsg", path));
+        catch(TskCoreException ex){
+            throw new HashDbManagerException(ex.getMessage());         
         }
-    }
-    
-    class HashDatabaseAlreadyAddedException extends Exception {
-        private HashDatabaseAlreadyAddedException(String path) {
-            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbAlreadyAddedExceptionMsg", path));
+        
+        // Save the configuration
+        if(! save()){
+            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
         }
-    }
-    
-    class IllegalHashDatabaseFileNameExtensionException extends Exception {
-        private IllegalHashDatabaseFileNameExtensionException() {
-            super(NbBundle.getMessage(HashDbManager.class, "HashDbManager.illegalHashDbFileNameExtensionMsg",
-                                      getHashDatabaseFileExtension()));
-        }
-    }
+        
+        return hashDb;
+    } 
     
     /**
      * Adds an existing hash database to the set of hash databases used to classify files as known or known bad.
@@ -163,22 +168,52 @@ public class HashDbManager implements PropertyChangeListener {
      * @param sendIngestMessages A flag indicating whether hash set hit messages should be sent as ingest messages.
      * @param knownFilesType The classification to apply to files whose hashes are found in the hash database. 
      * @return A HashDb representing the hash database.
-     * @throws HashDatabaseDoesNotExistException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException 
+     * @throws HashDbManagerException, TskCoreException 
      */
-    synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseDoesNotExistException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
+    synchronized HashDb addExistingHashDatabaseInternal(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException, TskCoreException {
         if (!new File(path).exists()) {
-            throw new HashDatabaseDoesNotExistException(path);
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbDoesNotExistExceptionMsg", path));           
         }
         
-        if (hashSetPaths.contains(path)) {
-            throw new HashDatabaseAlreadyAddedException(path);            
+        if (hashSetPaths.contains(path)) { 
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbAlreadyAddedExceptionMsg", path));
         }
         
         if (hashSetNames.contains(hashSetName)) {
-            throw new DuplicateHashSetNameException(hashSetName);
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
         }
         
         return addHashDatabase(SleuthkitJNI.openHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
+    }
+    
+    /**
+     * Adds a new hash database to the set of hash databases used to classify files as known or known bad
+     * and saves the configuration.
+     * @param hashSetName Hash set name used to represent the hash database in user interface components. 
+     * @param path Full path to the database file to be created.
+     * @param searchDuringIngest A flag indicating whether or not the hash database should be searched during ingest.
+     * @param sendIngestMessages A flag indicating whether hash set hit messages should be sent as ingest messages.
+     * @param knownFilesType The classification to apply to files whose hashes are found in the hash database. 
+     * @return A HashDb representing the hash database.
+     * @throws HashDbManagerException 
+     */
+    public HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, 
+            HashDb.KnownFilesType knownFilesType) throws HashDbManagerException{
+        
+        HashDb hashDb = null;
+        try{
+            hashDb = addNewHashDatabaseInternal(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
+        }
+        catch(TskCoreException ex){
+            throw new HashDbManagerException(ex.getMessage());
+        }
+                
+        // Save the configuration
+        if(! save()){
+            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
+        }
+        
+        return hashDb;
     }
 
     /**
@@ -191,23 +226,24 @@ public class HashDbManager implements PropertyChangeListener {
      * @param sendIngestMessages A flag indicating whether hash set hit messages should be sent as ingest messages.
      * @param knownFilesType The classification to apply to files whose hashes are found in the hash database. 
      * @return A HashDb representing the hash database.
-     * @throws TskCoreException 
+     * @throws HashDbManagerException, TskCoreException 
      */
-    synchronized HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDatabaseFileAlreadyExistsException, IllegalHashDatabaseFileNameExtensionException, DuplicateHashSetNameException, HashDatabaseAlreadyAddedException, TskCoreException {
+    synchronized HashDb addNewHashDatabaseInternal(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException, TskCoreException {
         File file = new File(path);
         if (file.exists()) {
-            throw new HashDatabaseFileAlreadyExistsException(path);
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbFileExistsExceptionMsg", path));
         }
         if (!FilenameUtils.getExtension(file.getName()).equalsIgnoreCase(HASH_DATABASE_FILE_EXTENSON)) {
-            throw new IllegalHashDatabaseFileNameExtensionException();            
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.illegalHashDbFileNameExtensionMsg",
+                                      getHashDatabaseFileExtension()));
         }
         
         if (hashSetPaths.contains(path)) {
-            throw new HashDatabaseAlreadyAddedException(path);            
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbAlreadyAddedExceptionMsg", path));            
         }
         
         if (hashSetNames.contains(hashSetName)) {
-            throw new DuplicateHashSetNameException(hashSetName);
+            throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
         }
         
         return addHashDatabase(SleuthkitJNI.createHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
@@ -277,6 +313,24 @@ public class HashDbManager implements PropertyChangeListener {
             }
         }
     }
+    
+    /**
+     * Removes a hash database from the set of hash databases used to classify 
+     * files as known or known bad and saves the configuration.
+     * @param hashDb 
+     * @throws HashDbManagerException
+     */
+    public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
+        // Don't remove a database if ingest is running
+        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();
+        if(ingestIsRunning){
+            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.ingestRunningExceptionMsg"));
+        }
+        removeHashDatabaseInternal(hashDb);
+        if(! save()){
+            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
+        }
+    }
         
     /**
      * Removes a hash database from the set of hash databases used to classify 
@@ -285,7 +339,7 @@ public class HashDbManager implements PropertyChangeListener {
      * configuration panels.
      * @throws TskCoreException
      */
-    synchronized void removeHashDatabase(HashDb hashDb) {
+    synchronized void removeHashDatabaseInternal(HashDb hashDb) {
         // Remove the database from whichever hash set list it occupies,
         // and remove its hash set name from the hash set used to ensure unique
         // hash set names are used, before undertaking These operations will succeed and constitute
@@ -408,7 +462,7 @@ public class HashDbManager implements PropertyChangeListener {
      * saved on demand to support cancellation of configuration panels.
      * @return True on success, false otherwise.
      */
-    public synchronized boolean save() {
+    synchronized boolean save() {
         return writeHashSetConfigurationToDisk();
     }
 
@@ -604,9 +658,9 @@ public class HashDbManager implements PropertyChangeListener {
                         
             if (null != dbPath) {
                 try {
-                    addExistingHashDatabase(hashSetName, dbPath, seearchDuringIngestFlag, sendIngestMessagesFlag, HashDb.KnownFilesType.valueOf(knownFilesType));
+                    addExistingHashDatabaseInternal(hashSetName, dbPath, seearchDuringIngestFlag, sendIngestMessagesFlag, HashDb.KnownFilesType.valueOf(knownFilesType));
                 }
-                catch (HashDatabaseDoesNotExistException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException | TskCoreException ex) {
+                catch (HashDbManagerException | TskCoreException ex) {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);                
                     JOptionPane.showMessageDialog(null,
                                                   NbBundle.getMessage(this.getClass(),
@@ -831,6 +885,15 @@ public class HashDbManager implements PropertyChangeListener {
                     SleuthkitJNI.addToHashDatabase(null, file.getMd5Hash(), null, null, comment, handle);
                 }
             }
+        }
+        
+        /**
+         * Adds a list of hashes to the hash database at once
+         * @param hashes List of hashes
+         * @throws TskCoreException
+         */
+        public void addHashes(List<HashEntry> hashes) throws TskCoreException{
+            SleuthkitJNI.addToHashDatabase(hashes, handle);
         }
 
          public boolean hasMd5HashOf(Content content) throws TskCoreException {         

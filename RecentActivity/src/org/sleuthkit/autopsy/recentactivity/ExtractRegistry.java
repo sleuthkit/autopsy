@@ -540,7 +540,7 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
     }
 
     @Override

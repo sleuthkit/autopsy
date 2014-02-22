@@ -83,7 +83,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
 
     
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();           
         
         // Load mapping
