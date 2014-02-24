@@ -29,6 +29,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,8 +52,12 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
-        FS_DELETED_FILTER(0, "FS_DELETED_FILTER", "File System"),
-        ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", "All");
+        FS_DELETED_FILTER(0,
+                          "FS_DELETED_FILTER",
+                          NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
+        ALL_DELETED_FILTER(1,
+                           "ALL_DELETED_FILTER",
+                           NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
         private int id;
         private String name;
         private String displayName;
@@ -97,7 +102,8 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public static class DeletedContentsNode extends DisplayableItemNode {
 
-        private static final String NAME = "Deleted Files";
+        private static final String NAME = NbBundle.getMessage(DeletedContent.class,
+                                                               "DeletedContent.deletedContentsNode.name");
         private SleuthkitCase skCase;
 
         DeletedContentsNode(SleuthkitCase skCase) {
@@ -127,10 +133,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    NAME));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.text"),
+                                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.text"),
+                                    NbBundle.getMessage(this.getClass(), "DeletedContent.noDesc.text"),
+                                    NAME));
             return s;
         }
     }
@@ -191,9 +197,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty("Filter Type",
-                        "Filter Type",
-                        "no description",
+                ss.put(new NodeProperty(
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.text"),
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.text"),
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.noDesc.text"),
                         filter.getDisplayName()));
 
                 return s;
@@ -225,9 +232,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            JOptionPane.showMessageDialog(null, "There are more Deleted Files than can be displayed. Only the first " 
-                                                                + (MAX_OBJECTS - 1) 
-                                                                + " Deleted Files will be shown.");
+                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                                                                    "DeletedContent.createKeys.maxObjects.msg",
+                                                                                    MAX_OBJECTS - 1));
                         }
                     });
                 }
@@ -330,7 +337,9 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+                        throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                                                                                    "DeletedContent.createNodeForKey.typeNotSupported.msg",
+                                                                                    di.toString()));
                     }
                 });
             }

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -131,10 +133,10 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.noDesc.text"),
+                                    getName()));
 
             return s;
         }
@@ -177,10 +179,10 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.noDesc.text"),
+                                    getName()));
 
             return s;
         }

@@ -23,6 +23,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -78,12 +79,18 @@ import org.sleuthkit.datamodel.AbstractFile;
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty("Name", "Name", "n/a", data.getName()));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name"),
+                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name"),
+                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.na"),
+                                data.getName()));
 
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty(key, key, "n/a", value));
+            ss.put(new NodeProperty(key,
+                                    key,
+                                    NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.na"),
+                                    value));
         }
 
         return s;

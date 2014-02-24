@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -63,7 +65,8 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
     @Override
     public void setName(String name) {
-        throw new UnsupportedOperationException("Can't change the system name.");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "AbstractContentNode.exception.cannotChangeSysName.msg"));
     }
 
     @Override

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -61,19 +62,19 @@ public class FileTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
-                "Filter Type",
-                "no description",
-                filter.getDisplayName()));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.text"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.text"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.noDesc.text"),
+                                filter.getDisplayName()));
         String extensions = "";
         for (String ext : filter.getFilter()) {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty("File Extensions",
-                "File Extensions",
-                "no description",
-                extensions));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.text"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.text"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.noDesc.text"),
+                                extensions));
 
         return s;
     }
