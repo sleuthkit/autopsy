@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.TskData;
 
     
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         /* For this demo, we are going to make a private attribute to post our
          * results to the blackbaord with. There are many standard blackboard artifact
          * and attribute types and you should first consider using one of those before

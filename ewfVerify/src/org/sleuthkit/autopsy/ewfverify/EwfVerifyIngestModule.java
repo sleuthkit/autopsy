@@ -153,7 +153,7 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
         running = false;

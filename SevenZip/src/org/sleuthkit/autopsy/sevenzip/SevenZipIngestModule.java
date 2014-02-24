@@ -113,7 +113,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         initialized = false;
 

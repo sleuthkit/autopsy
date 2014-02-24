@@ -24,6 +24,8 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -32,10 +34,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseFileAlreadyExistsException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.DuplicateHashSetNameException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDatabaseAlreadyAddedException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.IllegalHashDatabaseFileNameExtensionException;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
  * Instances of this class allow a user to create a new hash database and
@@ -44,7 +43,8 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.IllegalHashDatabaseFileN
  */
 final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {    
     
-    private static final String DEFAULT_FILE_NAME = "hashset";
+    private static final String DEFAULT_FILE_NAME = NbBundle
+            .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;            
     private HashDb newHashDb = null;
     
@@ -54,7 +54,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
      * or known bad. 
      */
     HashDbCreateDatabaseDialog() {
-        super(new JFrame(), "Create Hash Database", true);
+        super(new JFrame(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
         initFileChooser();
         initComponents();
         display();
@@ -74,13 +74,24 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             public void approveSelection() {
                 File selectedFile = getSelectedFile();                
                 if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase(HashDbManager.getHashDatabaseFileExtension())) {
-                    if (JOptionPane.showConfirmDialog(this, "The hash database file must have a ." + HashDbManager.getHashDatabaseFileExtension() + " extension.", "File Name Error", JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
+                    if (JOptionPane.showConfirmDialog(this,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "HashDbCreateDatabaseDialog.hashDbMustHaveFileExtensionMsg",
+                                                                          HashDbManager.getHashDatabaseFileExtension()),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "HashDbCreateDatabaseDialog.fileNameErr"),
+                                                      JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
                         cancelSelection();                       
                     }
                     return;                    
                 }                        
                 if (selectedFile.exists()) {
-                    if (JOptionPane.showConfirmDialog(this, "A file with this name already exists. Please choose a new file name.", "File Already Exists Error", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                    if (JOptionPane.showConfirmDialog(this,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "HashDbCreateDatabaseDialog.fileNameAlreadyExistsMsg"),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "HashDbCreateDatabaseDialog.fileExistsErr"),
+                                                      JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
                         cancelSelection();                       
                     }
                     return;                    
@@ -310,12 +321,22 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         // dialog to allow the user to try again, if desired.
                 
         if (hashSetNameTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "A hash set name must be entered.", "Create Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
+                                          JOptionPane.ERROR_MESSAGE);
             return;
         }
                         
         if (databasePathTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "A database path must be entered.", "Create Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.mustEnterHashDbPathMsg"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
+                                          JOptionPane.ERROR_MESSAGE);
             return;
         }
                         
@@ -327,24 +348,39 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             type = KnownFilesType.KNOWN_BAD;
         }
                         
-        String errorMessage = "Hash database creation error";
+        String errorMessage = NbBundle
+                .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try
         {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);       
+            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);       
         } 
         catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
-            JOptionPane.showMessageDialog(this, "Cannot create a hash database file at the selected location.", "Create Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.cannotCreateFileAtLocMsg"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
+                                          JOptionPane.ERROR_MESSAGE);
             return; 
         }
-        catch (HashDatabaseFileAlreadyExistsException | DuplicateHashSetNameException | HashDatabaseAlreadyAddedException | IllegalHashDatabaseFileNameExtensionException ex) {
+        catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Create Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          ex.getMessage(),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
+                                          JOptionPane.ERROR_MESSAGE);
             return;            
         }
         catch (TskCoreException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this, "Failed to create the hash database.", "Create Hash Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
+                                          JOptionPane.ERROR_MESSAGE);
             return;
         }             
 

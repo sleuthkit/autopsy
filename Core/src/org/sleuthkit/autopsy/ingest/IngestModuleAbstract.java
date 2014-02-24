@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.ingest;
 /**
  * Base interface for ingest modules
  */
- abstract class IngestModuleAbstract {
+ public abstract class IngestModuleAbstract {
     
     private String args;
     
@@ -41,6 +41,13 @@ package org.sleuthkit.autopsy.ingest;
          */
         AbstractFile
     };
+    
+    public class IngestModuleException extends Exception {
+        public IngestModuleException(String msg) {
+            super(msg);
+        }
+    }
+    
 
     /**
      * Invoked every time an ingest session is started by the framework.  
@@ -55,8 +62,10 @@ package org.sleuthkit.autopsy.ingest;
      * NEVER initialize IngestServices handle in the member declaration, because it might result
      * in multiple instances of the singleton -- different class loaders are used in different modules.
      * @param initContext context used to initialize some modules
+     * 
+     * @throws IngestModuleException if a critical error occurs in initializing the module.
      */
-    abstract public void init(IngestModuleInit initContext);
+    abstract public void init(IngestModuleInit initContext) throws IngestModuleException;
 
     /**
      * Invoked when an ingest session completes.  

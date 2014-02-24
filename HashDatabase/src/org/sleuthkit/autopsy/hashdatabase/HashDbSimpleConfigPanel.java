@@ -28,6 +28,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -155,7 +157,9 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
                     db.setSearchDuringIngest((Boolean) aValue);
                 } 
                 else {
-                    JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this, "Hash databases must be indexed before they can be used for ingest");
+                    JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "HashDbSimpleConfigPanel.dlgMsg.mustIndexDbBeforeUse"));
                 }
             }
         }

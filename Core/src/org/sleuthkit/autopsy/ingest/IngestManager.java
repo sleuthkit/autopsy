@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -459,7 +460,7 @@ public class IngestManager {
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 try {
                     s.init(moduleInit);
-                } catch (Exception e) {
+                } catch (IngestModuleException e) {
                     logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
                     allInited = false;
                     failedModule = s;
