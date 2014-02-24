@@ -226,7 +226,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
 

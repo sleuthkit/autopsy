@@ -333,7 +333,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         try{
             services = IngestServices.getDefault();   
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
