@@ -1310,10 +1310,16 @@ public class IngestManager {
             final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
             while (fileScheduler.hasNext()) {
                 final FileTask fileTask = fileScheduler.next();
-                final DataSourceTask<IngestModuleAbstractFile> dataSourceTask = fileTask.getDataSourceTask();                
-                final AbstractFile fileToProcess = fileTask.getFile();
-                
-                fileToProcess.close();                
+                // RJCTODO: fileTask.execute(thread id);
+                // In this method, the file task get the IngestPipelines object for 
+                // the DataSourceTask and calls process(AbstractFile, thread id)
+                // The thread id allows the IngestPipelines to select the copy of the
+                // file ingest pipeline that is to be used by this thread.
+                // When the execute method completes, the scheduler needs to be notified...
+                // it asppears this is being done with an event.
+                // When the scheduler is all done with a DataSourceTask, all of the 
+                // pipelines need a complete() call for thweir modules; stop also needs to
+                // be handled.
             } 
             logger.log(Level.INFO, "IngestManager: Finished processing files");
         }        

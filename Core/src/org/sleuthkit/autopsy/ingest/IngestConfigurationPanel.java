@@ -25,6 +25,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -32,8 +33,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.io.Serializable;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
 
 /**
  * User interface component to allow a user to set ingest module options and
@@ -41,20 +42,37 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
  * provided by a controller (Model-View-Controller design pattern).
  */
  class IngestConfigurationPanel extends javax.swing.JPanel {
-     private final List<IngestModuleModel> modules;
-     private IngestModuleModel selectedModule = null;
+     private List<IngestModuleModel> modules = new ArrayList<>();
      private boolean processUnallocatedSpace = false;
+     private IngestModuleModel selectedModule = null;
      private IngestModulesTableModel tableModel = null;
 
-    IngestConfigurationPanel(List<IngestModuleModel> modules, boolean processUnallocatedSpace) {
-        this.modules = modules;
+    IngestConfigurationPanel(List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            modules.add(new IngestModuleModel(moduleTemplate));
+        }
         this.processUnallocatedSpace = processUnallocatedSpace;
         initComponents();
         customizeComponents();
     }
     
-    List<IngestModuleModel> getIngestModules() {
-        return modules;
+    List<IngestModuleTemplate> getIngestModuleTemplates() {
+        List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
+        for (IngestModuleModel module : modules) {
+            IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
+            if (module.hasIngestOptionsPanel()) {
+                IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
+                try {
+                    Serializable options = moduleFactory.getIngestOptionsFromPanel(module.getIngestOptionsPanel());
+                    moduleTemplate.setIngestOptions(options);
+                }
+                catch (IngestModuleFactory.InvalidOptionsException ex) {
+                    // RJCTODO
+                }
+            }
+            moduleTemplates.add(moduleTemplate);
+        }
+        return moduleTemplates;
     }
     
     boolean getProcessUnallocSpace() {
@@ -245,8 +263,9 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    if (selectedModule.hasGlobalOptionsPanel())
-                    selectedModule.saveGlobalOptions();
+                    if (selectedModule.hasGlobalOptionsPanel()) {
+                        selectedModule.saveGlobalOptions();
+                    }
                 }
                 catch (IngestModuleFactory.InvalidOptionsException ex) {
                     // RJCTODO: Error message box
@@ -284,6 +303,77 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
     // End of variables declaration//GEN-END:variables
         
     /**
+     * A decorator for an ingest module template that adds ingest and global
+     * options panels with lifetimes equal to that of the ingest configuration
+     * panel.
+     */
+    static private class IngestModuleModel {
+        private final IngestModuleTemplate moduleTemplate;
+        private final JPanel ingestOptionsPanel;
+        private final JPanel globalOptionsPanel;
+
+        IngestModuleModel(IngestModuleTemplate moduleTemplate) {
+            this.moduleTemplate = moduleTemplate;
+            
+            IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
+            if (moduleFactory.providesIngestOptionsPanels()) {
+                ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(moduleTemplate.getIngestOptions());
+            }
+            else {
+                ingestOptionsPanel = null;
+            }
+            
+            if (moduleFactory.providesGlobalOptionsPanels()) {
+                globalOptionsPanel = moduleFactory.getGlobalOptionsPanel();
+            }
+            else {
+                globalOptionsPanel = null;
+            }
+        }
+        
+        IngestModuleTemplate getIngestModuleTemplate() {
+            return moduleTemplate;
+        }
+                        
+        String getName() {
+            return moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+        }
+        
+        String getDescription() {
+            return moduleTemplate.getIngestModuleFactory().getModuleDescription();
+        }
+
+        void setEnabled(boolean enabled) {
+            moduleTemplate.setEnabled(enabled);
+        }
+
+        boolean isEnabled() {
+            return moduleTemplate.isEnabled();
+        }       
+
+        boolean hasIngestOptionsPanel() {
+            return moduleTemplate.getIngestModuleFactory().providesIngestOptionsPanels();
+        }
+        
+        JPanel getIngestOptionsPanel() {
+            return ingestOptionsPanel;
+        }
+        
+        boolean hasGlobalOptionsPanel() {
+            return moduleTemplate.getIngestModuleFactory().providesGlobalOptionsPanels();
+        }
+        
+        JPanel getGlobalOptionsPanel() {
+            return globalOptionsPanel;
+        }      
+        
+        void saveGlobalOptions() throws IngestModuleFactory.InvalidOptionsException {
+            // RJCTODO: Check for null.
+            moduleTemplate.getIngestModuleFactory().saveGlobalOptionsFromPanel(globalOptionsPanel);
+        }           
+    }
+        
+    /**
      * Custom table model to display ingest module names and enable/disable 
      * ingest modules.
      */
@@ -305,7 +395,7 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
                 return module.isEnabled();
             } 
             else {
-                return module.getModuleName();
+                return module.getName();
             }
         }
 
@@ -336,7 +426,7 @@ import org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestModuleModel;
 
         public IngestModulesTableRenderer() {
             for (IngestModuleModel moduleTemplate : modules) {
-                tooltips.add(moduleTemplate.getModuleDescription());
+                tooltips.add(moduleTemplate.getDescription());
             }
         }
 

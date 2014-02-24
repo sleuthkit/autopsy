@@ -27,9 +27,10 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.Content;
 
 /**
+ * RJCTODO: Improve comment
  * Controller to allow a user to set context-sensitive ingest module options,
  * enable/disable ingest modules, and set general ingest options. Provides an 
- * ingest module module model class and instances of a UI component to its 
+ * ingest module model class and instances of a UI component to its 
  * clients (Model-View-Controller design pattern).
  */
 public class IngestConfigurator { 
@@ -55,60 +56,54 @@ public class IngestConfigurator {
      */
     public IngestConfigurator(String context) {
         this.context = context;
-        initializeForContext();
-    }
-    
-    /**
-     * RJCTODO
-     * @return 
-     */
-    public List<String> getMissingIngestModuleErrorMessages() {
-        return missingIngestModuleErrorMessages;
-    }
-        
-    private void initializeForContext() {
-        // Get the enabled and disabled ingest modules settings for the current
-        // context. The default settings make all ingest modules enabled. 
-        List<IngestModuleFactory> moduleFactories = IngestManager.getDefault().getIngestModuleFactories(); // RJCTODO: Put in uniqueness test in loader!
+
+        // Get the ingest module factories discovered by the ingest module 
+        // loader.
+        // RJCTODO: Put in name uniqueness test/solution in loader!
+        List<IngestModuleFactory> moduleFactories = IngestManager.getDefault().getIngestModuleFactories(); 
         HashSet<String> loadedModuleNames = new HashSet<>(); 
         for (IngestModuleFactory moduleFactory : moduleFactories) {            
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
-        }       
+        } 
+                
+        // Get the enabled and disabled ingest modules settings for the current
+        // context. The default settings make all ingest modules enabled. 
         HashSet<String> enabledModuleNames = getModulesNamesFromSetting(ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(loadedModuleNames));        
         HashSet<String> disabledModuleNames = getModulesNamesFromSetting(DISABLED_INGEST_MODULES_KEY, "");        
         
-        // Create ingest module templates for the ingest module pipelines and
-        // wrap them in ingest module models to pass to the ingest configuration 
-        // panel (view). The initial enabled/disabled state of the module models
-        // comes from the context-sensitive settings.
+        // Create ingest module templates for the current context.
         HashSet<String> knownModuleNames = new HashSet<>(); 
-        List<IngestConfigurator.IngestModuleModel> modules = new ArrayList<>();
+        List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {            
             // NOTE: In the future, this code will be modified to get the ingest 
-            // options for each modules for the current context; for now just
+            // options for each module for the current context; for now just
             // get the default ingest options.
             IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultIngestOptions());             
-            String moduleName = moduleFactory.getModuleDisplayName();            
-            IngestConfigurator.IngestModuleModel module = new IngestConfigurator.IngestModuleModel(moduleTemplate, enabledModuleNames.contains(moduleName));
-            if (!enabledModuleNames.contains(moduleName) && !enabledModuleNames.contains(moduleName)) {
+            String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+            if (enabledModuleNames.contains(moduleName)) {
+                moduleTemplate.setEnabled(true);
+            }
+            else if (disabledModuleNames.contains(moduleName)) {
+                moduleTemplate.setEnabled(true);                
+            }
+            else {
                 // The module factory was loaded, but the module name does not
                 // appear in the enabled/disabled module settings. Treat the
                 // module as a new module and enable it by default.
-                module.setEnabled(true);
-                enabledModuleNames.add(moduleName); // RJCTODO: Put in uniqueness test, i.e., check return value!
+                moduleTemplate.setEnabled(true);
+                enabledModuleNames.add(moduleName);
             }
-            modules.add(module);
+            moduleTemplates.add(moduleTemplate);
             knownModuleNames.add(moduleName);
         }
         
         // Check for missing modules and update the enabled/disabled ingest 
-        // module settings. This way the settings for the context will be 
-        // up-to-date, even if save() is never called.
+        // module settings for any missing modules.
         for (String moduleName : enabledModuleNames) {
             if (!knownModuleNames.contains(moduleName)) {
                 missingIngestModuleErrorMessages.add(moduleName + " was previously enabled, but could not be found");
                 enabledModuleNames.remove(moduleName);
-                disabledModuleNames.add(moduleName);                
+                disabledModuleNames.add(moduleName); // RJCTODO: Is this the right behavior?                
             }
         }                
         ModuleSettings.setConfigSetting(context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
@@ -122,9 +117,87 @@ public class IngestConfigurator {
         processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(context, PARSE_UNALLOC_SPACE_KEY));
 
         // Make the configuration panel for the current context (view).
-        ingestConfigPanel = new IngestConfigurationPanel(modules, processUnallocatedSpace);        
+        ingestConfigPanel = new IngestConfigurationPanel(moduleTemplates, processUnallocatedSpace);        
     }
+
+    /**
+     * RJCTODO
+     * @return 
+     */
+    public List<String> getMissingIngestModuleErrorMessages() {
+        return missingIngestModuleErrorMessages;
+    }
+       
+    /**
+     * RJCTODO
+     * @return 
+     */
+    public JPanel getIngestConfigPanel() {
+        return ingestConfigPanel;
+    }    
+    
+    /**
+     * RJCTODO
+     * @throws org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestConfigurationException 
+     */
+    public void save() throws IngestConfigurationException {     
+        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
         
+        // Save the enabled/disabled ingest module settings for the current context.
+        HashSet<String> enabledModuleNames = new HashSet<>();        
+        HashSet<String> disabledModuleNames = new HashSet<>();        
+        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+            if (moduleTemplate.isEnabled()) {
+                enabledModuleNames.add(moduleName);
+            }
+            else {
+                disabledModuleNames.add(moduleName);
+            }
+        }               
+        ModuleSettings.setConfigSetting(context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));                
+        
+        // Save the process unallocated space setting for the current context.
+        String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
+        ModuleSettings.setConfigSetting(context, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
+        
+        // NOTE: In the future, this code will be modified to persist the ingest 
+        // options for each ingest module for the current context.        
+    }
+                        
+    // RJCTODO: If time permits, make it so that this class is not responsible
+    // starting and running the ingest - probably need to do this anyway, at 
+    // least if the IngestConfigurator interface goes away and this becomes the
+    // IngestConfigurator class.
+    public void setContent(List<Content> inputContent) {
+        this.contentToIngest = inputContent;
+    }
+
+    // RJCTODO: If time permits, make it so that this class is not responsible
+    // starting and running the ingest - probably need to do this anyway, at 
+    // least if the IngestConfigurator interface goes away and this becomes the
+    // IngestConfigurator class.
+    public void start() {
+        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
+        
+        // Get the user's selection of whether or not to process unallocated space.
+        ingestManager.setProcessUnallocSpace(processUnallocatedSpace);
+
+        if (!modulesToStart.isEmpty() && contentToIngest != null) {
+            // Queue the ingest process.
+            ingestManager.scheduleDataSource(modulesToStart, contentToIngest);
+        }
+    }
+
+    // RJCTODO: If time permits, make it so that this class is not responsible
+    // starting and running the ingest - probably need to do this anyway, at 
+    // least if the IngestConfigurator interface goes away and this becomes the
+    // IngestConfigurator class.
+    public boolean isIngestRunning() {
+        return ingestManager.isIngestRunning();
+    }      
+
     private static String makeCommaSeparatedList(HashSet<String> input) {
         if (input == null || input.isEmpty()) {
             return "";
@@ -167,149 +240,5 @@ public class IngestConfigurator {
             }
         }        
         return moduleNames;        
-    } 
-        
-    public JPanel getIngestConfigPanel() {
-        return ingestConfigPanel;
-    }    
-    
-    public void save() throws IngestConfigurationException {     
-        if (null == context || null == ingestConfigPanel) {
-            throw new IngestConfigurationException("Ingest context not set");
-        }
-
-        List<IngestModuleModel> modules = ingestConfigPanel.getIngestModules();
-        
-        // Save the enbaled/disabled ingest module settings for the current context.
-        HashSet<String> enabledModuleNames = new HashSet<>();        
-        HashSet<String> disabledModuleNames = new HashSet<>();        
-        for (IngestModuleModel module : modules) {
-            if (module.isEnabled()) {
-                enabledModuleNames.add(module.getModuleName());
-            }
-            else {
-                disabledModuleNames.add(module.getModuleName());
-            }
-        }               
-        ModuleSettings.setConfigSetting(context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));                
-        
-        // Save the process unallocated space setting for this context.
-        String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
-        ModuleSettings.setConfigSetting(context, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
-        
-        // Get the ingest module options for each ingest module.
-        // NOTE: In the future, this code will be modified to persist the ingest 
-        // options for each ingest module for the current context.        
-        // RJCTODO: Decide whether to set the ingest options here or in the dialog; in the dialog allows corrections by user
-//        if (currentModule != null && currentModule.hasSimpleConfiguration()) {
-//            currentModule.saveSimpleConfiguration();
-//        }        
-    }
-                        
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public void setContent(List<Content> inputContent) {
-        this.contentToIngest = inputContent;
-    }
-
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public void start() {
-        // Get the list of ingest modules selected by the user.
-        // RJCTODO:
-//        List<IngestModuleAbstract> modulesToStart = ingestConfigPanel.getModulesToStart();
-        List<IngestModuleAbstract> modulesToStart = new ArrayList<>();
-        
-        // Get the user's selection of whether or not to process unallocated space.
-        ingestManager.setProcessUnallocSpace(processUnallocatedSpace);
-
-        if (!modulesToStart.isEmpty() && contentToIngest != null) {
-            // Queue the ingest process.
-            ingestManager.scheduleDataSource(modulesToStart, contentToIngest);
-        }
-    }
-
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public boolean isIngestRunning() {
-        return ingestManager.isIngestRunning();
-    }      
-    
-    /**
-     * A model of an ingest module tailored for the view used to configure 
-     * ingest modules. 
-     */
-    static class IngestModuleModel {
-        private final IngestModuleTemplate moduleTemplate;
-        private final IngestModuleFactory moduleFactory;
-        private final JPanel ingestOptionsPanel;
-        private final JPanel globalOptionsPanel;
-        private boolean enabled = true;
-
-        IngestModuleModel(IngestModuleTemplate moduleTemplate, boolean enabled) {
-            this.moduleTemplate = moduleTemplate;
-            moduleFactory = moduleTemplate.getIngestModuleFactory();
-            if (moduleFactory.providesIngestOptionsPanels()) {
-                ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(moduleTemplate.getIngestOptions());
-            }
-            else {
-                ingestOptionsPanel = null;
-            }
-            if (moduleFactory.providesGlobalOptionsPanels()) {
-                globalOptionsPanel = moduleFactory.getGlobalOptionsPanel();
-            }
-            else {
-                globalOptionsPanel = null;
-            }
-            this.enabled = enabled;
-        }
-                
-        String getModuleName() {
-            return moduleFactory.getModuleDisplayName();
-        }
-        
-        String getModuleDescription() {
-            return moduleFactory.getModuleDescription();
-        }
-
-        void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        boolean isEnabled() {
-            return enabled;
-        }       
-
-        boolean hasIngestOptionsPanel() {
-            return moduleFactory.providesIngestOptionsPanels();
-        }
-        
-        JPanel getIngestOptionsPanel() {
-            return ingestOptionsPanel;
-        }
-        
-        boolean hasGlobalOptionsPanel() {
-            return moduleFactory.providesGlobalOptionsPanels();
-        }
-        
-        JPanel getGlobalOptionsPanel() {
-            return globalOptionsPanel;
-        }      
-        
-        void saveGlobalOptions() throws IngestModuleFactory.InvalidOptionsException {
-            // RJCTODO: Check for null.
-            moduleFactory.saveGlobalOptionsFromPanel(globalOptionsPanel);
-        }   
-        
-        private IngestModuleTemplate getIngestModuleTemplate() {
-            return moduleTemplate;
-        }
-    }
+    }                 
 }

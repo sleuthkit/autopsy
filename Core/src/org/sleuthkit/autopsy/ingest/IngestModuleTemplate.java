@@ -28,6 +28,7 @@ import java.io.Serializable;
 public class IngestModuleTemplate {
     private final IngestModuleFactory moduleFactory;
     private Serializable ingestOptions = null;
+    boolean enabled = true;
     
     IngestModuleTemplate(IngestModuleFactory moduleFactory, Serializable ingestOptions) {
         this.moduleFactory = moduleFactory;
@@ -44,5 +45,13 @@ public class IngestModuleTemplate {
     
     void setIngestOptions(Serializable ingestOptions) {
         this.ingestOptions = ingestOptions;
-    }    
+    }        
+    
+    void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    boolean isEnabled() {
+        return enabled;
+    }           
 }
