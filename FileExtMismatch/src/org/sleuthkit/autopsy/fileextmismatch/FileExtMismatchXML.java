@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -164,6 +165,7 @@ class FileExtMismatchXML {
                 String[] extArray = sigTypeToExtMap.get(key);
                 if (extArray != null) {
                     ArrayList<String> extList = new ArrayList<>(Arrays.asList(extArray));
+                    Collections.sort(extList);
                     for (String ext : extList) {
                         Element extEl = doc.createElement(EXT_EL);
                         extEl.setTextContent(ext);
