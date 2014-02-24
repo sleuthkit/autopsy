@@ -209,7 +209,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     private ProcessResult processFile(AbstractFile file) {
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
-            System.out.println("processFile, no hashes set");
             return ProcessResult.OK;
         }
 
@@ -240,7 +239,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
             try {
-                System.out.println("in processFile known bad");
                 long lookupstart = System.currentTimeMillis();
                 HashInfo hashInfo = db.lookUp(file);
                 if (null != hashInfo) {
@@ -249,7 +247,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
                     } catch (TskException ex) {
-                        System.out.println("in processFile couldn't set known bad state 252");
                         logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
                         services.postMessage(IngestMessage.createErrorMessage(++messageId,
                                               HashDbIngestModule.this,
@@ -276,13 +273,11 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                             break;
                         }                        
                     }
-                    System.out.println("About to postHashHitToBlackboard");
+
                     postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
-                    System.out.println("Out of postHashHitToBlackboard");
                 }
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
-                System.out.println("in processFile couldn't lookup known bad state 252");
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
                 services.postMessage(IngestMessage.createErrorMessage(++messageId,
                                       HashDbIngestModule.this,
@@ -302,14 +297,12 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
         if (!foundBad) {
             for (HashDb db : knownHashSets) {
                 try {
-                    System.out.println("in processFile 205");
                     long lookupstart = System.currentTimeMillis();
                     if (db.hasMd5HashOf(file)) {
                         try {
                             skCase.setKnown(file, TskData.FileKnown.KNOWN);
                             break;
                         } catch (TskException ex) {
-                            System.out.println("in processFile couldn't set known bad state 311");
                             logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
                             services.postMessage(IngestMessage.createErrorMessage(++messageId,
                                                   HashDbIngestModule.this,
@@ -324,7 +317,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
                 } catch (TskException ex) {
-                    System.out.println("in processFile couldn't lookup known bad state 326");
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);
                     services.postMessage(IngestMessage.createErrorMessage(++messageId,
                                           HashDbIngestModule.this,
@@ -343,7 +335,6 @@ public class HashDbIngestModule extends IngestModuleAbstractFile {
     }
 
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
-        System.out.printf("at postHashSetHitToBlackboard");
         try {
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             //TODO Revisit usage of deprecated constructor as per TSK-583

@@ -53,9 +53,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
 
     @Override
     public void applyChanges() {
-        System.out.println("in applyChanges, before store");
         getPanel().store();
-        System.out.println("in applyChanges, after store");
         changed = false;
     }
 
