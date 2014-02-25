@@ -133,9 +133,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.text"),
-                                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.text"),
-                                    NbBundle.getMessage(this.getClass(), "DeletedContent.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.desc"),
                                     NAME));
             return s;
         }
@@ -198,9 +198,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                 }
 
                 ss.put(new NodeProperty(
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.text"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.text"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.noDesc.text"),
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.name"),
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.displayName"),
+                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.desc"),
                         filter.getDisplayName()));
 
                 return s;

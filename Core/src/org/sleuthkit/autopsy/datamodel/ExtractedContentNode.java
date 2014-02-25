@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -58,9 +57,9 @@ public class ExtractedContentNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.text"),
-                                NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.text"),
-                                NbBundle.getMessage(this.getClass(), "ExtractedContentNode.noDesc.text"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.desc"),
                 NAME));
         return s;
     }

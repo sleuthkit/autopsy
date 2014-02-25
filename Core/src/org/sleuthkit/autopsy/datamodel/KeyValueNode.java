@@ -79,9 +79,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name"),
-                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name"),
-                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.na"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.desc"),
                                 data.getName()));
 
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
@@ -89,7 +89,7 @@ import org.sleuthkit.datamodel.AbstractFile;
             Object value = entry.getValue();
             ss.put(new NodeProperty(key,
                                     key,
-                                    NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.na"),
+                                    NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.map.desc"),
                                     value));
         }
 

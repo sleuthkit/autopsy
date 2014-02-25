@@ -66,9 +66,8 @@ public class ContentTagTypeNode extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty(
-                NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.text"),
-                                        NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.text"),
+        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.name"),
+                                        NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.displayName"),
                                         "",
                                         getName()));
 

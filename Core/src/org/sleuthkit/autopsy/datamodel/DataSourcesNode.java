@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
-import org.openide.nodes.AbstractNode;
+
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -58,9 +58,9 @@ public class DataSourcesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.text"),
-                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.text"),
-                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.noDesc.text"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.desc"),
                                 NAME));
         return s;
     }

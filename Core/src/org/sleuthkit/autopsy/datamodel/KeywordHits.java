@@ -193,9 +193,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.desc"),
                                     getName()));
 
             return s;
@@ -243,15 +243,15 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
             
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
                                     name));
 
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.name"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.desc"),
                                     children.size()));
 
             return s;
@@ -324,15 +324,15 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
             
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
                                     getDisplayName()));
 
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.text"),
-                                    NbBundle.getMessage(this.getClass(), "KeywordHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
                                     children.size()));
 
             return s;

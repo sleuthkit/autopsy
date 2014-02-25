@@ -62,18 +62,18 @@ public class FileTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.text"),
-                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.text"),
-                                NbBundle.getMessage(this.getClass(), "FileTypeNode.noDesc.text"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.name"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.displayName"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.desc"),
                                 filter.getDisplayName()));
         String extensions = "";
         for (String ext : filter.getFilter()) {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.text"),
-                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.text"),
-                                NbBundle.getMessage(this.getClass(), "FileTypeNode.noDesc.text"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.name"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.displayName"),
+                                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.desc"),
                                 extensions));
 
         return s;

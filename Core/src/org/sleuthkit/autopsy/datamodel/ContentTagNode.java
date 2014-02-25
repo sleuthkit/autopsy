@@ -58,8 +58,8 @@ import org.sleuthkit.datamodel.TskCoreException;
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.text"),
-                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.text"),
+        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.name"),
+                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.displayName"),
                                         "",
                                         tag.getContent().getName()));
         String contentPath; 
@@ -68,15 +68,14 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         catch (TskCoreException ex) {
             Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
-            contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.text");
+            contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
         }
-        properties.put(new NodeProperty(
-                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.text"),
-                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.text"),
+        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),
+                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.displayName"),
                                         "",
                                         contentPath));
-        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.text"),
-                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.text"),
+        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.name"),
+                                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.displayName"),
                                         "",
                                         tag.getComment()));
         

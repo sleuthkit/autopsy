@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskException;
 public class InterestingHits implements AutopsyVisitableItem {
     
     private static final String INTERESTING_ITEMS = NbBundle
-            .getMessage(InterestingHits.class, "InterestingHits.nodeName.text");
+            .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private SleuthkitCase skCase;
@@ -135,9 +135,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                                     getName()));
 
             return s;
@@ -181,9 +181,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.noDesc.text"),
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                                     getName()));
 
             return s;

@@ -85,9 +85,9 @@ public class ImageNode extends AbstractContentNode<Image> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name"),
-                                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name"),
-                                NbBundle.getMessage(this.getClass(), "ImageNode.noDesc.text"),
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
                                 getName()));
         // @@@ add more properties here...
 
