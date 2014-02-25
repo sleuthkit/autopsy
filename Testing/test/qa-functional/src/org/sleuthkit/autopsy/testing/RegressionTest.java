@@ -279,7 +279,8 @@ public class RegressionTest extends TestCase {
         //   but randomize the timing so that we don't always get the same error
         //   consistently, making it seem like default behavior
         Random rand = new Random();
-        new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
+        new Timeout("pausing", 10000).sleep();
+        //new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
         screenshot("Finished Ingest");
 
     }
