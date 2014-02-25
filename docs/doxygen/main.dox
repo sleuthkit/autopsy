@@ -3,6 +3,8 @@
 <h3>Overview</h3>
 Autopsy has been designed as a platform for open source tools besides just The Sleuth Kit.  This document is for developers who want to add functionality into Autopsy.  This could be in the form of enhancing the existing functionality or by making a module that plugs into it and you may distribute from your own site or push it back into the base distribution. 
 
+If these pages don't answer your question, then send the question to The Sleuth Kit Developer's List (https://lists.sourceforge.net/lists/listinfo/sleuthkit-developers). 
+
 If you want to write modules, then these pages are for you:
 - \subpage platform_page
 - \subpage mod_dev_page
