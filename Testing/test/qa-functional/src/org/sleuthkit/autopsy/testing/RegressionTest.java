@@ -265,22 +265,27 @@ public class RegressionTest extends TestCase {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
         logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
+        int count = 0;
         while (man.isIngestRunning()) {
-
+            count++;
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
+        logger.info("count was " + count);
+        count = 0;
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
         boolean sleep = true;
         while (man.areModulesRunning()) {
-            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
+           count++; 
+           logger.info("count is " + count);
+           new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
+        
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
         //   consistently, making it seem like default behavior
         Random rand = new Random();
-        new Timeout("pausing", 10000).sleep();
-        //new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
+        new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
         screenshot("Finished Ingest");
 
     }
