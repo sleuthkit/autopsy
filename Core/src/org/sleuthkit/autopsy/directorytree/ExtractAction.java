@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -63,7 +65,7 @@ public final class ExtractAction extends AbstractAction {
     }
 
     private ExtractAction() {
-        super("Extract File(s)");
+        super(NbBundle.getMessage(ExtractAction.class, "ExtractAction.title.extractFiles.text"));
     }
         
     /**
@@ -110,7 +112,8 @@ public final class ExtractAction extends AbstractAction {
                     destinationFolder.mkdirs();
                 }
                 catch (Exception ex) {
-                    JOptionPane.showMessageDialog((Component) e.getSource(), "Couldn't create selected folder.");                    
+                    JOptionPane.showMessageDialog((Component) e.getSource(), NbBundle.getMessage(this.getClass(),
+                                                                                                 "ExtractAction.extractFiles.cantCreateFolderErr.msg"));
                     logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex);
                     return;
                 }
@@ -142,9 +145,13 @@ public final class ExtractAction extends AbstractAction {
              * Unique Id was added to set of names before calling this method to deal with that.
              */
             if (task.destination.exists()) {
-                if (JOptionPane.showConfirmDialog((Component) e.getSource(), "Destination file " + task.destination.getAbsolutePath() + " already exists, overwrite?", "File Exists", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog((Component) e.getSource(),
+                                                  NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.msg", task.destination.getAbsolutePath()),
+                                                  NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.title"),
+                                                  JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     if (!FileUtil.deleteFileDir(task.destination)) {
-                        JOptionPane.showMessageDialog((Component) e.getSource(), "Couldn't overwrite existing file " + task.destination.getAbsolutePath());
+                        JOptionPane.showMessageDialog((Component) e.getSource(),
+                                                      NbBundle.getMessage(this.getClass(), "ExtractAction.msgDlg.cantOverwriteFile.msg", task.destination.getAbsolutePath()));
                         it.remove();
                     }
                 }
@@ -164,7 +171,8 @@ public final class ExtractAction extends AbstractAction {
             }                                    
         }
         else {
-            MessageNotifyUtil.Message.info("No file(s) to extract.");
+            MessageNotifyUtil.Message.info(
+                    NbBundle.getMessage(this.getClass(), "ExtractAction.notifyDlg.noFileToExtr.msg"));
         }
     }
         
@@ -194,12 +202,13 @@ public final class ExtractAction extends AbstractAction {
             }
             
             // Setup progress bar.
-            final String displayName = "Extracting";
+            final String displayName = NbBundle.getMessage(this.getClass(), "ExtractAction.progress.extracting");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     if (progress != null)
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                        progress.setDisplayName(
+                                NbBundle.getMessage(this.getClass(), "ExtractAction.progress.cancellingExtraction", displayName));
                     return ExtractAction.FileExtracter.this.cancel(true);
                 }
             });
@@ -236,7 +245,8 @@ public final class ExtractAction extends AbstractAction {
             finally {
                 progress.finish();
                 if (!this.isCancelled()) {
-                    MessageNotifyUtil.Message.info("File(s) extracted.");
+                    MessageNotifyUtil.Message.info(
+                            NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.fileExtr.text"));
                 } 
             }
         }
