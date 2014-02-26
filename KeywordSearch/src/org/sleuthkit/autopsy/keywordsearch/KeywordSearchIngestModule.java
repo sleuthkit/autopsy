@@ -44,6 +44,7 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -361,8 +362,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-                return;
-
+                throw new IngestModuleException(msg);
             }
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
@@ -370,9 +370,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-            return;
+            throw new IngestModuleException(msg);
         }
-
+        try {
+            // make an actual query to verify that server is responding
+            // we had cases where getStatus was OK, but the connection resulted in a 404
+            server.queryNumIndexedDocuments();
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            throw new IngestModuleException("Error connecting to SOLR server");
+        }
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
@@ -415,7 +421,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
         curDataSourceIds = new HashSet<Long>();
 
         indexer = new Indexer();
-
+        
         final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
