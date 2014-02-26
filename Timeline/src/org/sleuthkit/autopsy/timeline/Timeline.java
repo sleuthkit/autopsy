@@ -613,7 +613,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (prop.equals(Case.CASE_ADD_DATA_SOURCE)) {
+        if (prop.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             if (mainFrame != null && !mainFrame.isVisible()) {
                 // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;
@@ -629,7 +629,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
             // call performAction as if the user selected 'Make Timeline' from the menu
             performAction();
-        } else if (prop.equals(Case.CASE_CURRENT_CASE)) {
+        } else if (prop.equals(Case.Events.CURRENT_CASE.toString())) {
             if (mainFrame != null && mainFrame.isVisible()) {
                 mainFrame.dispose();
                 mainFrame = null;
