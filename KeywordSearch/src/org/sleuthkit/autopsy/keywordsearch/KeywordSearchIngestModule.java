@@ -377,7 +377,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
             // we had cases where getStatus was OK, but the connection resulted in a 404
             server.queryNumIndexedDocuments();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            throw new IngestModuleException("Error connecting to SOLR server");
+            throw new IngestModuleException("Error connecting to SOLR server: " + ex.getMessage());
         }
 
         //initialize extractors
