@@ -115,7 +115,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         });
 
         final KeywordSearchIngestModule module = KeywordSearchIngestModule.getDefault();
-        if (IngestManager.getDefault().isModuleRunning(module)) {
+        if (IngestManager.getDefault().isIngestRunning()) {
             initIngest(true);
         } else {
             initIngest(false);

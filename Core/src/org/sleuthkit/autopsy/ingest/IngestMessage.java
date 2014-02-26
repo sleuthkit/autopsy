@@ -40,7 +40,7 @@ public class IngestMessage {
     
     private long ID;
     private MessageType messageType;
-    private IngestModuleAbstract source;
+    private IngestModule source;
     private String subject;
     private String detailsHtml;
     private String uniqueKey;
@@ -52,7 +52,7 @@ public class IngestMessage {
     /**
      * Private constructor used by factory methods
      */
-    private IngestMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey) {
+    private IngestMessage(long ID, MessageType messageType, IngestModule source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
@@ -69,7 +69,7 @@ public class IngestMessage {
         return ID;
     }
 
-    public IngestModuleAbstract getSource() {
+    public IngestModule getSource() {
         return source;
     }
 
@@ -104,7 +104,7 @@ public class IngestMessage {
         sb.append("type: ").append(messageType.name());
         if (source != null) //can be null for manager messages
         {
-            sb.append(" source: ").append(source.getName());
+            sb.append(" source: ").append(source.getDisplayName());
         }
         sb.append(" date: ").append(dateFormat.format(datePosted));
         sb.append(" subject: ").append(subject);
@@ -174,7 +174,7 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModule source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
@@ -189,7 +189,7 @@ public class IngestMessage {
      * @param subject message subject to be displayed
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModule source, String subject) {
         return createMessage(ID, messageType, source, subject, null);
     }
 
@@ -202,7 +202,7 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null
      * @return 
      */
-    public static IngestMessage createErrorMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createErrorMessage(long ID, IngestModule source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
@@ -217,7 +217,7 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null 
      * @return 
      */
-    public static IngestMessage createWarningMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createWarningMessage(long ID, IngestModule source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
@@ -234,7 +234,7 @@ public class IngestMessage {
      * @param data  blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
      * @return 
      */
-    public static IngestMessage createDataMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
+    public static IngestMessage createDataMessage(long ID, IngestModule source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         if (source == null || subject == null || detailsHtml == null || data == null) {
             throw new IllegalArgumentException("source, subject, details and data cannot be null");
         }

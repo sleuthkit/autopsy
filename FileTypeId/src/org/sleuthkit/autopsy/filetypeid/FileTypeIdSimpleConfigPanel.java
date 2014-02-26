@@ -72,7 +72,7 @@ package org.sleuthkit.autopsy.filetypeid;
     }// </editor-fold>//GEN-END:initComponents
 
     private void skipKnownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipKnownCheckBoxActionPerformed
-        FileTypeIdIngestModule.setSkipKnown(skipKnownCheckBox.isSelected());
+//        FileTypeIdIngestModule.setSkipKnown(skipKnownCheckBox.isSelected()); RJCTODO
     }//GEN-LAST:event_skipKnownCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

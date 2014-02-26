@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,59 +20,68 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
+import java.util.Objects;
 import org.sleuthkit.datamodel.Content;
 
+// RJCTODO: Update comment
 /**
  * Represents a data source-level task to schedule and analyze. 
  * Children of the data will also be scheduled. 
  *
  * @param T type of Ingest Module / Pipeline (file or data source content) associated with this task
  */
-class DataSourceTask<T extends IngestModuleAbstract> {
-    private Content input;
-    private List<T> modules;
-    private boolean processUnallocated;
-    private PipelineContext<T> pipelineContext;
+class DataSourceTask {
+    private final long id;
+    private final Content dataSource;
+    private final IngestPipelines ingestPipelines;
+    private final boolean processUnallocatedSpace;
+    private long fileTasksCount = 0; // RJCTODO: Need additional counters
 
-    public DataSourceTask(Content input, List<T> modules, boolean processUnallocated) {
-        this.input = input;
-        this.modules = modules;
-        this.processUnallocated = processUnallocated;
-        pipelineContext = new PipelineContext(this);
-    }
-
-    public Content getContent() {
-        return input;
+    DataSourceTask(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
+        this.id = id;
+        this.dataSource = dataSource;
+        this.ingestPipelines = new IngestPipelines(id, ingestModuleTemplates);
+        this.processUnallocatedSpace = processUnallocatedSpace;        
+    }    
+    
+    long getTaskId() {
+        return id;
     }
     
-    public PipelineContext<T> getPipelineContext() {
-        return pipelineContext;
+    Content getDataSource() {
+        return dataSource;
     }
 
-    public List<T> getModules() {
-        return modules;
+    IngestPipelines getIngestPipelines() {
+        return ingestPipelines;
     }
     
     /**
      * Returns value of if unallocated space should be analyzed (and scheduled)
      * @return True if pipeline should process unallocated space. 
      */
-    boolean isProcessUnalloc() {
-        return processUnallocated;
+    boolean getProcessUnallocatedSpace() {
+        return processUnallocatedSpace;
     }
 
-    // @@@ BC: I think this should go away.
-    void addModules(List<T> newModules) {
-        for (T newModule : newModules) {
-            if (!modules.contains(newModule)) {
-                modules.add(newModule);
-            }
+    synchronized void fileTaskScheduled() {
+        // RJCTODO: Implement the counters for fully, or do list scanning
+        ++fileTasksCount;
+    }
+    
+    synchronized void fileTaskCompleted() {
+        // RJCTODO: Implement the counters for fully, or do list scanning
+        --fileTasksCount;
+        if (0 == fileTasksCount) {
+            // RJCTODO
         }
     }
-
+    
     @Override
     public String toString() {
-        return "ScheduledTask{" + "input=" + input + ", modules=" + modules + '}';
+        // RJCTODO: Improve? Is this useful?
+//        return "ScheduledTask{" + "input=" + dataSource + ", modules=" + modules + '}';        
+        return "ScheduledTask{ id=" + id + ", dataSource=" + dataSource + '}';
     }
 
     /**
@@ -85,20 +94,31 @@ class DataSourceTask<T extends IngestModuleAbstract> {
      */
     @Override
     public boolean equals(Object obj) {
+        // RJCTODO: Revisit this, probably don't need it
         if (obj == null) {
             return false;
         }
+        
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DataSourceTask<T> other = (DataSourceTask<T>) obj;
-        if (this.input != other.input && (this.input == null || !this.input.equals(other.input))) {
+        
+        final DataSourceTask other = (DataSourceTask)obj;
+        if (this.dataSource != other.dataSource && (this.dataSource == null || !this.dataSource.equals(other.dataSource))) {
             return false;
         }
-        if (this.modules != other.modules && (this.modules == null || !this.modules.equals(other.modules))) {
-            return false;
-        }
-
+        
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        // RJCTODO: Probably don't need this
+        int hash = 5;
+        hash = 61 * hash + (int) (this.id ^ (this.id >>> 32));
+        hash = 61 * hash + Objects.hashCode(this.dataSource);
+        hash = 61 * hash + Objects.hashCode(this.ingestPipelines);
+        hash = 61 * hash + (this.processUnallocatedSpace ? 1 : 0);
+        return hash;
+    }    
 }

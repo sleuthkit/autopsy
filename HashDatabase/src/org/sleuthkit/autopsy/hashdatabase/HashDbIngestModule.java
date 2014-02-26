@@ -61,6 +61,11 @@ public class HashDbIngestModule implements FileIngestModule {
     }
     
     @Override
+    public String getDisplayName() {
+        return HashLookupModuleFactory.getModuleName();
+    }
+    
+    @Override
     public void init(long dataSourceTaskId) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();

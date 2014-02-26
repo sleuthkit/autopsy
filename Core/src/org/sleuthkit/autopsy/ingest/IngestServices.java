@@ -86,8 +86,8 @@ public class IngestServices {
      * @param module module to get the logger for
      * @return logger object
      */
-    public Logger getLogger(IngestModuleAbstract module) {
-        return Logger.getLogger(module.getName());
+    public Logger getLogger(IngestModule module) {
+        return Logger.getLogger(module.getDisplayName());
     }
     
     /**
@@ -136,9 +136,9 @@ public class IngestServices {
      * @param file file to be scheduled
      * @param pipelineContext the ingest context for the file ingest pipeline
      */
-    public void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
-        logger.log(Level.INFO, "Scheduling file: " + file.getName());
-        manager.scheduleFile(file, pipelineContext);
+    public void scheduleFile(long dataSourceTaskId, AbstractFile file)  {
+        logger.log(Level.INFO, "Scheduling file: {0}", file.getName());
+        manager.scheduleFile(dataSourceTaskId, file);
     }
     
     
@@ -152,8 +152,7 @@ public class IngestServices {
         return manager.getFreeDiskSpace();
     }
     
-    
-    
+    // RJCTODO: Thsi may be obsolete
     /**
      * Facility for a file ingest module to check a return value from a previously run file ingest module
      * that executed for the same file.
@@ -162,9 +161,9 @@ public class IngestServices {
      * @param moduleName registered module name of the module to check the return value of
      * @return the return value of the previously executed module for the currently processed file in the file ingest pipeline
      */
-    public IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
-        return manager.getAbstractFileModuleResult(moduleName);
-    }
+//    public IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
+//        return manager.getAbstractFileModuleResult(moduleName);
+//    }
     
     /**
      * Gets a specific name/value configuration setting for a module

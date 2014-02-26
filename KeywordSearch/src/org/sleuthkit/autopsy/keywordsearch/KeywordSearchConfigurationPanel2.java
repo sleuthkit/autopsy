@@ -44,8 +44,7 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
 
     private void activateWidgets() {
         skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
-        boolean enable = !IngestManager.getDefault().isIngestRunning()
-                && !IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
+        boolean enable = !IngestManager.getDefault().isIngestRunning() && !IngestManager.getDefault().isIngestRunning();
         skipNSRLCheckBox.setEnabled(enable);
         setTimeSettingEnabled(enable);
 

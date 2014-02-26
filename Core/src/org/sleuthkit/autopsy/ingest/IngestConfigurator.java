@@ -37,18 +37,10 @@ public class IngestConfigurator {
     private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules";
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules";
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
-    private final IngestManager ingestManager = IngestManager.getDefault();
     private final String context;
     private List<String> missingIngestModuleErrorMessages = new ArrayList<>();
-    private boolean processUnallocatedSpace = false;
     private IngestConfigurationPanel ingestConfigPanel = null;
     private List<Content> contentToIngest = null; // RJCTODO: Remove if start() method removed
-    
-    public class IngestConfigurationException extends Exception {
-        IngestConfigurationException(String message) {
-            super(message);
-        }        
-    }
     
     /**
      * RJCTODO
@@ -60,7 +52,7 @@ public class IngestConfigurator {
         // Get the ingest module factories discovered by the ingest module 
         // loader.
         // RJCTODO: Put in name uniqueness test/solution in loader!
-        List<IngestModuleFactory> moduleFactories = IngestManager.getDefault().getIngestModuleFactories(); 
+        List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getDefault().getIngestModuleFactories(); 
         HashSet<String> loadedModuleNames = new HashSet<>(); 
         for (IngestModuleFactory moduleFactory : moduleFactories) {            
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
@@ -114,7 +106,7 @@ public class IngestConfigurator {
         if (ModuleSettings.settingExists(context, PARSE_UNALLOC_SPACE_KEY) == false) {
             ModuleSettings.setConfigSetting(context, PARSE_UNALLOC_SPACE_KEY, "false");
         }                
-        processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(context, PARSE_UNALLOC_SPACE_KEY));
+        boolean processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(context, PARSE_UNALLOC_SPACE_KEY));
 
         // Make the configuration panel for the current context (view).
         ingestConfigPanel = new IngestConfigurationPanel(moduleTemplates, processUnallocatedSpace);        
@@ -140,7 +132,7 @@ public class IngestConfigurator {
      * RJCTODO
      * @throws org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestConfigurationException 
      */
-    public void save() throws IngestConfigurationException {     
+    public void save() {     
         List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
         
         // Save the enabled/disabled ingest module settings for the current context.
@@ -179,14 +171,16 @@ public class IngestConfigurator {
     // least if the IngestConfigurator interface goes away and this becomes the
     // IngestConfigurator class.
     public void start() {
+        // Filter out the disabled module tremplates.
         List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
+        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            if (!moduleTemplate.isEnabled()) {
+                moduleTemplates.remove(moduleTemplate);
+            }
+        }
         
-        // Get the user's selection of whether or not to process unallocated space.
-        ingestManager.setProcessUnallocSpace(processUnallocatedSpace);
-
-        if (!modulesToStart.isEmpty() && contentToIngest != null) {
-            // Queue the ingest process.
-            ingestManager.scheduleDataSource(modulesToStart, contentToIngest);
+        if (!moduleTemplates.isEmpty() && null != contentToIngest) {
+            IngestManager.getDefault().scheduleDataSource(contentToIngest, moduleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
     }
 
@@ -195,7 +189,7 @@ public class IngestConfigurator {
     // least if the IngestConfigurator interface goes away and this becomes the
     // IngestConfigurator class.
     public boolean isIngestRunning() {
-        return ingestManager.isIngestRunning();
+        return IngestManager.getDefault().isIngestRunning();
     }      
 
     private static String makeCommaSeparatedList(HashSet<String> input) {

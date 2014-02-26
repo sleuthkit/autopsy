@@ -30,96 +30,96 @@
 
 package org.sleuthkit.autopsy.examples;
 
-import java.util.List;
-import org.apache.log4j.Logger;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
+// RJCTODO: Rework this module for the new interfaces
+//import java.util.List;
+//import org.apache.log4j.Logger;
+//import org.openide.util.Exceptions;
+//import org.sleuthkit.autopsy.casemodule.Case;
+//import org.sleuthkit.autopsy.casemodule.services.FileManager;
+//import org.sleuthkit.autopsy.casemodule.services.Services;
+//import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+//import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
+//import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+//import org.sleuthkit.datamodel.AbstractFile;
+//import org.sleuthkit.datamodel.Content;
+//import org.sleuthkit.datamodel.FsContent;
+//import org.sleuthkit.datamodel.SleuthkitCase;
+//import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Sample DataSource-level ingest module that doesn't do much at all. 
  * Just exists to show basic idea of these modules
  */
- class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
-
-    /* Data Source modules operate on a disk or set of logical files. They
-     * are passed in teh data source refernce and query it for things they want.
-     */
-    @Override
-    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        
-        Case case1 = Case.getCurrentCase();
-        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
-        
-        Services services = new Services(sleuthkitCase);
-        FileManager fm = services.getFileManager();
-        try {
-            /* you can use the findFiles method in FileManager (or similar ones in
-             * SleuthkitCase to find files based only on their name.  This
-             * one finds files that have a .doc extension. */
-            List<AbstractFile> docFiles = fm.findFiles(dataSource, "%.doc");
-            for (AbstractFile file : docFiles) {
-                // do something with each doc file
-            }
-            
-            /* We can also do more general queries with findFilesWhere, which 
-             * allows us to make our own WHERE clause in the database. 
-             */
-            long currentTime = System.currentTimeMillis()/1000;
-            // go back 2 weeks
-            long minTime = currentTime - (14 * 24 * 60 * 60);
-            List<FsContent> otherFiles = sleuthkitCase.findFilesWhere("crtime > " + minTime);
-            // do something with these files...
-            
-        } catch (TskCoreException ex) {
-            Logger log = Logger.getLogger(SampleDataSourceIngestModule.class);
-            log.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
-            return;
-        }    
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) {
-        // do nothing
-    }
-
-    @Override
-    public void complete() {
-        // do nothing
-    }
-
-    @Override
-    public void stop() {
-        // do nothing
-    }
-
-    @Override
-    public String getName() {
-        return "SampleDataSourceIngestModule";    
-    }
-
-    @Override
-    public String getVersion() {
-        return "1.0";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Doesn't do much";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
-    }
-}
+// class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
+//
+//    /* Data Source modules operate on a disk or set of logical files. They
+//     * are passed in teh data source refernce and query it for things they want.
+//     */
+//    @Override
+//    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+//        
+//        Case case1 = Case.getCurrentCase();
+//        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
+//        
+//        Services services = new Services(sleuthkitCase);
+//        FileManager fm = services.getFileManager();
+//        try {
+//            /* you can use the findFiles method in FileManager (or similar ones in
+//             * SleuthkitCase to find files based only on their name.  This
+//             * one finds files that have a .doc extension. */
+//            List<AbstractFile> docFiles = fm.findFiles(dataSource, "%.doc");
+//            for (AbstractFile file : docFiles) {
+//                // do something with each doc file
+//            }
+//            
+//            /* We can also do more general queries with findFilesWhere, which 
+//             * allows us to make our own WHERE clause in the database. 
+//             */
+//            long currentTime = System.currentTimeMillis()/1000;
+//            // go back 2 weeks
+//            long minTime = currentTime - (14 * 24 * 60 * 60);
+//            List<FsContent> otherFiles = sleuthkitCase.findFilesWhere("crtime > " + minTime);
+//            // do something with these files...
+//            
+//        } catch (TskCoreException ex) {
+//            Logger log = Logger.getLogger(SampleDataSourceIngestModule.class);
+//            log.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
+//            return;
+//        }    
+//    }
+//
+//    @Override
+//    public void init(IngestModuleInit initContext) {
+//        // do nothing
+//    }
+//
+//    @Override
+//    public void complete() {
+//        // do nothing
+//    }
+//
+//    @Override
+//    public void stop() {
+//        // do nothing
+//    }
+//
+//    @Override
+//    public String getName() {
+//        return "SampleDataSourceIngestModule";    
+//    }
+//
+//    @Override
+//    public String getVersion() {
+//        return "1.0";
+//    }
+//
+//    @Override
+//    public String getDescription() {
+//        return "Doesn't do much";
+//    }
+//
+//    @Override
+//    public boolean hasBackgroundJobsRunning() {
+//        return false;
+//    }
+//}

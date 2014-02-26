@@ -161,7 +161,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
 
 
-        if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
+        if (IngestManager.getDefault().isIngestRunning()) {
             initIngest(0);
         } else {
             initIngest(1);

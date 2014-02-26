@@ -83,12 +83,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    ingestConfigurator.save();
-                }
-                catch (IngestConfigurator.IngestConfigurationException ex) {
-                    // RJCTODO: Decide what to do here.
-                }
+                ingestConfigurator.save();
                 ingestConfigurator.start();
                 close();
             }
@@ -97,12 +92,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    ingestConfigurator.save();
-                }
-                catch (IngestConfigurator.IngestConfigurationException ex) {
-                    // RJCTODO: Decide what to do here.
-                }
+                ingestConfigurator.save();
                 close();
             }
         });
@@ -110,12 +100,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                try {
-                    ingestConfigurator.save();
-                }
-                catch (IngestConfigurator.IngestConfigurationException ex) {
-                    // RJCTODO: Decide what to do here.
-                }
+                ingestConfigurator.save();
                 close();
             }
         });

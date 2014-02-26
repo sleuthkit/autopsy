@@ -187,12 +187,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        try {
-            ingestConfig.save();
-        }
-        catch (IngestConfigurator.IngestConfigurationException ex) {
-            // RJCTODO: Decide what to do here
-        }
+        ingestConfig.save();
+
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();

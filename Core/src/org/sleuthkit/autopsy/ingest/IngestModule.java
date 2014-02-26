@@ -25,21 +25,33 @@ package org.sleuthkit.autopsy.ingest;
 public interface IngestModule {
     
     /**
-     * Invoked to allow an ingest module to set up internal data structures and
-     * acquire any private resources it will need during a single ingest of a 
-     * particular data source. IMPORTANT: There will usually be more than one 
-     * instance of a module executing, but it is guaranteed that there will be 
-     * no more than one instance of the module per thread. However, if these 
-     * instances must share resources, the modules are responsible for 
-     * synchronizing access to the shared resources and doing reference counting 
-     * as required to release the resources correctly.
-     * @param dataSourceTaskId A module that uses the scheduling service to 
-     * schedule additional processing needs to supply its data source task ID to 
-     * the scheduler. For example, a module that extracts files from an archive
-     * discovered in a data source may schedule ingest of those files using the 
-     * data source task ID. 
+     * Invoked to obtain a display name for the module, i.e., a name that is
+     * suitable for presentation to a user in a user interface component or a
+     * log message.
+     * 
+     * @return The display name of the module
      */
-    void init(long dataSourceTaskId);
+    String getDisplayName();
+    
+    /**
+     * Invoked to allow an ingest module to set up internal data structures and
+     * acquire any private resources it will need during ingest of a single 
+     * data source. There will usually be more than one instance of a module 
+     * executing, but it is guaranteed that there will be no more than one 
+     * instance of the module per thread. If these instances must share 
+     * resources, the modules are responsible for synchronizing access to the 
+     * shared resources and doing reference counting as required to release 
+     * the resources correctly.
+     * <p>
+     * A module that uses the scheduling service to schedule additional 
+     * processing needs to supply the task ID passed to this method to the 
+     * scheduler. For example, a module that extracts files from an archive 
+     * discovered in a data source may schedule ingest of those files using 
+     * the task ID.
+     * 
+     * @param taskId  To be used to schedule ingest of derived files
+     */
+    void init(long taskId);
     
     /**
      * Invoked when a single ingest of a particular data source is completed.  
@@ -52,7 +64,7 @@ public interface IngestModule {
     /**
      * Invoked when a single ingest of a particular data source is canceled. 
      * The module should tear down internal data sources and release private 
-     * resources, discard unsubmitted results, and post a final ingest message. 
+     * resources, discard unrecorded results, and post a final ingest message. 
      *  The module will be discarded when this method returns.
      */
     void stop();    

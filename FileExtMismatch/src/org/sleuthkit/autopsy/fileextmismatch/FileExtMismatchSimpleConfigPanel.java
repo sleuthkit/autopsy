@@ -83,11 +83,11 @@ class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void skipNoExtCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNoExtCheckBoxActionPerformed
-        FileExtMismatchIngestModule.setSkipNoExt(skipNoExtCheckBox.isSelected());
+//        FileExtMismatchIngestModule.setSkipNoExt(skipNoExtCheckBox.isSelected()); RJCTODO
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
     private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
-        FileExtMismatchIngestModule.setSkipTextPlain(skipTextPlain.isSelected());
+//        FileExtMismatchIngestModule.setSkipTextPlain(skipTextPlain.isSelected()); // RJCTODO
        
     }//GEN-LAST:event_skipTextPlainActionPerformed
 

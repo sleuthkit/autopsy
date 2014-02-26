@@ -366,7 +366,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         private String[] columnNames = new String[]{"Module", "Num", "New?", "Subject", "Timestamp"};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
-        private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
+        private Map<IngestModule, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModule, Map<String, List<IngestMessageGroup>>>();
         private boolean chronoSort = true; //chronological sort default
         private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per module with same uniqness
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
@@ -378,12 +378,13 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         private void init() {
             final IngestManager manager = IngestManager.getDefault();
             //initialize groupings map with modules
-            for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
-                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
-            }
-            for (IngestModuleAbstract module : manager.enumerateDataSourceModules()) {
-                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
-            }
+            // RJCTODO
+//            for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
+//                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
+//            }
+//            for (IngestModuleAbstract module : manager.enumerateDataSourceModules()) {
+//                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
+//            }
         }
         
    
@@ -470,7 +471,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             switch (columnIndex) {
                 case 0:
                     Object module = entry.messageGroup.getSource();
-                    ret = module == null ? "" : entry.messageGroup.getSource().getName();
+                    ret = module == null ? "" : entry.messageGroup.getSource().getDisplayName();
                     break;
                 case 1:
                     ret = entry.messageGroup.getCount();
@@ -517,7 +518,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         synchronized public void addMessage(IngestMessage m) {
             //check how many messages per module with the same uniqness
             //and add to existing group or create a new group
-            IngestModuleAbstract module = m.getSource();
+            IngestModule module = m.getSource();
             IngestMessageGroup messageGroup = null;
             if (module != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
                 //not a manager message, a data message, then group
@@ -781,7 +782,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         /*
          * return source module, should be the same for all msgs
          */
-        IngestModuleAbstract getSource() {
+        IngestModule getSource() {
             return messages.get(0).getSource();
         }
 

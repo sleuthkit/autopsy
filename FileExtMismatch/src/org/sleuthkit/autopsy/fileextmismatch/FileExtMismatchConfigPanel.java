@@ -30,15 +30,15 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
+//import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+//import org.sleuthkit.autopsy.coreutils.Logger;
+//import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule; RJCTODO
 
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
-final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements OptionsPanel {
-    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
+final class FileExtMismatchConfigPanel extends javax.swing.JPanel /*implements OptionsPanel*/ {
+//    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
     private ArrayList<String> currentExtensions = null;
@@ -402,12 +402,13 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
             mimeErrLabel.setText("MIME type already exists!");
             return;            
         }
-        
-        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
-            mimeErrLabel.setForeground(Color.red);
-            mimeErrLabel.setText("MIME type is not detectable by this module.");
-            return;                        
-        }
+
+        // RJCTODO
+//        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
+//            mimeErrLabel.setForeground(Color.red);
+//            mimeErrLabel.setText("MIME type is not detectable by this module.");
+//            return;                        
+//        }
         
         editableMap.put(newMime, new String[0]);
 
@@ -501,29 +502,29 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         }
     }
     
-    @Override
+//    @Override
     public void load() {
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
-        editableMap = FileExtMismatchXML.getDefault().load();
+//        editableMap = FileExtMismatchXML.getDefault().load();
         updateMimeList();
         updateExtList();
     }
 
-    @Override
+//    @Override
     public void store() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
-            mimeErrLabel.setText(" ");
-            mimeRemoveErrLabel.setText(" ");
-            extRemoveErrLabel.setText(" ");
-            extErrorLabel.setText(" ");
-            
-            saveMsgLabel.setText("Saved.");
-            saveButton.setEnabled(false);
-        } else {
-            //error
-            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
-        }
+//        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
+//            mimeErrLabel.setText(" ");
+//            mimeRemoveErrLabel.setText(" ");
+//            extRemoveErrLabel.setText(" ");
+//            extErrorLabel.setText(" ");
+//            
+//            saveMsgLabel.setText("Saved.");
+//            saveButton.setEnabled(false);
+//        } else {
+//            //error
+//            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
+//        }
     }
 
     private void setIsModified() {
@@ -606,18 +607,18 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
-            if ((mimeList == null) || (rowIndex > mimeList.size())) {
-                return "";
-            }
-            String word = mimeList.get(rowIndex);
-            switch (columnIndex) {
-                case 0:
-                    ret = (Object) word;
-                    break;
-                default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
-                    break;
-            }
+//            if ((mimeList == null) || (rowIndex > mimeList.size())) {
+//                return "";
+//            }
+//            String word = mimeList.get(rowIndex);
+//            switch (columnIndex) {
+//                case 0:
+//                    ret = (Object) word;
+//                    break;
+//                default:
+//                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+//                    break;
+//            }
             return ret;
         }
 
@@ -671,18 +672,18 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
             
-            if ((currentExtensions == null) || (currentExtensions.size() == 0) || (rowIndex > currentExtensions.size())) {
-                return "";
-            }
-            String word = currentExtensions.get(rowIndex);
-            switch (columnIndex) {
-                case 0:
-                    ret = (Object) word;
-                    break;
-                default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
-                    break;
-            }
+//            if ((currentExtensions == null) || (currentExtensions.size() == 0) || (rowIndex > currentExtensions.size())) {
+//                return "";
+//            }
+//            String word = currentExtensions.get(rowIndex);
+//            switch (columnIndex) {
+//                case 0:
+//                    ret = (Object) word;
+//                    break;
+//                default:
+//                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+//                    break;
+//            }
             return ret;
         }
 

@@ -43,18 +43,18 @@ class AddFileExtensionAction extends AbstractAction {
     
     @Override
     public void actionPerformed(ActionEvent event) {
-        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));        
-        editedExtensions.add(extStr);
-        
-        // Old array will be replaced by new array for this key
-        editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0])); 
-        
-        if (!FileExtMismatchXML.getDefault().save(editableMap)) {            
-            //error
-            JOptionPane.showMessageDialog(null, "Writing XML configuration file failed.", "Add Mismatch Extension Error", JOptionPane.ERROR_MESSAGE);
-        } // else //in the future we might want to update the statusbar to give feedback to the user
-        
+//        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
+//        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));        
+//        editedExtensions.add(extStr);
+//        
+//        // Old array will be replaced by new array for this key
+//        editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0])); 
+//        
+//        if (!FileExtMismatchXML.getDefault().save(editableMap)) {            
+//            //error
+//            JOptionPane.showMessageDialog(null, "Writing XML configuration file failed.", "Add Mismatch Extension Error", JOptionPane.ERROR_MESSAGE);
+//        } // else //in the future we might want to update the statusbar to give feedback to the user
+//        
     }      
     
 }

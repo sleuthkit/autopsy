@@ -36,7 +36,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 public class HashLookupModuleFactory extends AbstractIngestModuleFactory { 
     @Override
     public String getModuleDisplayName() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
+        return getModuleName();
+    }
+    
+    static String getModuleName() {
+        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");        
     }
     
     @Override

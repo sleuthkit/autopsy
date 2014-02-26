@@ -81,10 +81,10 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
 
     @Override
     public void search() {
-        boolean isRunning = IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
+        boolean isIngestRunning = IngestManager.getDefault().isIngestRunning();
 
         if (filesIndexed == 0) {
-            if (isRunning) {
+            if (isIngestRunning) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                         "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
                         KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
@@ -96,7 +96,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
         }
 
         //check if keyword search module  ingest is running (indexing, etc)
-        if (isRunning) {
+        if (isIngestRunning) {
             if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
                     NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;

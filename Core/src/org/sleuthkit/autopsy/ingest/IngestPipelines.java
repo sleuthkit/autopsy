@@ -22,67 +22,80 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.Serializable;
+import java.util.concurrent.ConcurrentHashMap;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * RJCTODO: 
+ * RJCTODO
  */
-public class IngestPipelines {
+class IngestPipelines {
     private final long dataSourceTaskId;
-    private List<IngestModuleTemplate> fileIngestPipelineTemplate = new ArrayList<>();
-    private List<IngestModuleTemplate> dataSourceIngestPipelineTemplate = new ArrayList<>();
+    private final List<IngestModuleTemplate> ingestModuleTemplates;
+    private final ConcurrentHashMap<Integer, FileIngestPipeline> fileIngestPipelines = new ConcurrentHashMap<>();  
+    private final ConcurrentHashMap<Integer, DataSourceIngestPipeline> dataSourceIngestPipelines = new ConcurrentHashMap<>();  
     
-    IngestPipelines(long dataSourceTaskId, List<IngestModuleTemplate> moduleTemplates) {
+    IngestPipelines(long dataSourceTaskId, final List<IngestModuleTemplate> ingestModuleTemplates) {
         this.dataSourceTaskId = dataSourceTaskId;
-        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            if (moduleTemplate.getIngestModuleFactory().isFileIngestModuleFactory()) {
-                fileIngestPipelineTemplate.add(moduleTemplate);
-            }
-            else {
-                dataSourceIngestPipelineTemplate.add(moduleTemplate);                
-            }
-        }
+        this.ingestModuleTemplates = ingestModuleTemplates;
     }    
 
-    DataSourceIngestPipeline getDataSourceIngestPipeline() {
-        return new DataSourceIngestPipeline();
+    // RJCTODO: Added provisionally
+    List<IngestModuleTemplate> getIngestModuleTemplates() {
+        return ingestModuleTemplates;
     }
-            
-    FileIngestPipeline getFileIngestPipeline() {
-        return new FileIngestPipeline();
+    
+    void ingestFile(int threadId, AbstractFile file) {
+        FileIngestPipeline pipeline;
+        if (!fileIngestPipelines.containsKey(threadId)) {
+            pipeline = new FileIngestPipeline();
+            fileIngestPipelines.put(threadId, pipeline);            
+        }
+        else {
+            pipeline = fileIngestPipelines.get(threadId);
+        }
+        pipeline.ingestFile(file);
     }
-        
-    public class DataSourceIngestPipeline {
-        private List<DataSourceIngestModule> modules = new ArrayList<>();        
+    
+    void ingestDataSource(int threadId, Content dataSource) {
+        DataSourceIngestPipeline pipeline;
+        if (!dataSourceIngestPipelines.containsKey(threadId)) {
+            pipeline = new DataSourceIngestPipeline();
+            dataSourceIngestPipelines.put(threadId, pipeline);            
+        }
+        else {
+            pipeline = dataSourceIngestPipelines.get(threadId);
+        }
+        pipeline.ingestDataSource(dataSource);        
+    }
 
-        private DataSourceIngestPipeline() {
-            try {
-                for (IngestModuleTemplate moduleTemplate : dataSourceIngestPipelineTemplate) {
-                    IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                    Serializable ingestOptions = moduleTemplate.getIngestOptions();
-                    DataSourceIngestModule module = moduleFactory.createDataSourceIngestModule(ingestOptions);
-                    module.init(dataSourceTaskId);
-                    modules.add(module);   
-                }  
-            }
-            catch (IngestModuleFactory.InvalidOptionsException ex) {
-                // RJCTODO: Is this a stopper condition? What about init?
-            }
-        }                
+    void stopFileIngestPipeline() {
+        // RJCTODO        
+        for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
+            pipeline.stop();
+        }
     }
-        
-    public class FileIngestPipeline {
-        private List<FileIngestModule> modules = new ArrayList<>();
+    
+    void completeFileIngestPipeline() {
+        // RJCTODO        
+        for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
+            pipeline.complete();
+        }
+    }
+    
+    private class FileIngestPipeline {
+        private List<FileIngestModule> ingestModules = new ArrayList<>();
 
         private FileIngestPipeline() {
             try {
-                for (IngestModuleTemplate moduleTemplate : fileIngestPipelineTemplate) {
+                for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
                     IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                    Serializable ingestOptions = moduleTemplate.getIngestOptions();
-                    FileIngestModule module = moduleFactory.createFileIngestModule(ingestOptions);
-                    module.init(dataSourceTaskId);
-                    modules.add(module);   
+                    if (moduleFactory.isFileIngestModuleFactory()) {
+                        Serializable ingestOptions = moduleTemplate.getIngestOptions();
+                        FileIngestModule module = moduleFactory.createFileIngestModule(ingestOptions);
+                        module.init(dataSourceTaskId);
+                        ingestModules.add(module);   
+                    }
                 }  
             }
             catch (IngestModuleFactory.InvalidOptionsException ex) {
@@ -90,11 +103,54 @@ public class IngestPipelines {
             }
         }        
         
-        void doTask(FileTask fileTask) {
-                final DataSourceTask<IngestModuleAbstractFile> dataSourceTask = fileTask.getDataSourceTask();                
-                final AbstractFile fileToProcess = fileTask.getFile();
+        void init() {
+            for (FileIngestModule module : ingestModules) {
+                module.init(dataSourceTaskId);
+            }            
+        }
+        
+        void ingestFile(AbstractFile file) {
+            for (FileIngestModule module : ingestModules) {
+                module.process(file);
+            }
+            file.close();                            
+        }
+
+        void stop() {
+            for (FileIngestModule module : ingestModules) {
+                module.stop();
+            }            
+        }
                 
-                fileToProcess.close();                            
+        void complete() {
+            for (FileIngestModule module : ingestModules) {
+                module.complete();
+            }            
         }
     }    
+   
+    private class DataSourceIngestPipeline {
+        private final List<DataSourceIngestModule> modules = new ArrayList<>();        
+
+        private DataSourceIngestPipeline() {
+            try {
+                for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
+                    IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
+                    if (moduleFactory.isDataSourceIngestModuleFactory()) {
+                        Serializable ingestOptions = moduleTemplate.getIngestOptions();
+                        DataSourceIngestModule module = moduleFactory.createDataSourceIngestModule(ingestOptions);
+                        module.init(dataSourceTaskId);
+                        modules.add(module);   
+                    }
+                } 
+            }
+            catch (IngestModuleFactory.InvalidOptionsException ex) {
+                // RJCTODO: Is this a stopper condition? What about trial init?
+            }
+        }                
+        
+        void ingestDataSource(Content dataSource) {
+            // RJCTODO
+        }        
+    }        
 }
