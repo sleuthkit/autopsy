@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
@@ -57,7 +56,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
-    private static final Logger logger = Logger.getLogger(IngestModuleAbstractFile.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractFileTikaTextExtract.class.getName());
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;

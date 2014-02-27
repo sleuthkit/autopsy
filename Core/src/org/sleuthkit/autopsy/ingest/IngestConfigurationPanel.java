@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
      private List<IngestModuleModel> modules = new ArrayList<>();
      private boolean processUnallocatedSpace = false;
      private IngestModuleModel selectedModule = null;
-     private IngestModulesTableModel tableModel = null;
 
     IngestConfigurationPanel(List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
@@ -80,7 +79,7 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
     }
     
     private void customizeComponents() {
-        modulesTable.setModel(tableModel);
+        modulesTable.setModel(new IngestModulesTableModel());
         modulesTable.setTableHeader(null);
         modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
