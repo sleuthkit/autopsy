@@ -48,8 +48,11 @@ public class Installer extends ModuleInstall {
          * If libtsk_jni tries to load them, they will not be found by
          * Windows because they are in special NetBeans folders. So, we
          * manually load them from within Autopsy so that they are found 
-         * via the NetBeans loading setup. 
-         * On other platforms, we assume the dependncies are all installed
+         * via the NetBeans loading setup.  These are copied by the build
+         * script when making the ZIP file.  In a development environment
+         * they will need to be loaded from standard places in your system.
+         * 
+         * On non-Windows platforms, we assume the dependncies are all installed
          * and loadable (i.e. a 'make install' was done). 
          */
         if (PlatformUtil.isWindowsOS()) {
