@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -122,7 +123,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         if (file == null) {
-            setText("Non-file passed in");
+            setText(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn"));
             return;
         }
         
@@ -130,29 +131,29 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         startTable(sb);
         
         try {
-            addRow(sb, "Name", file.getUniquePath());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
         } catch (TskCoreException ex) {
-            addRow(sb, "Name", file.getParentPath() + "/" + file.getName());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
         }
         
-        addRow(sb, "Size", new Long(file.getSize()).toString() );
-        addRow(sb, "File Name Allocation", file.getDirFlagAsString());
-        addRow(sb, "Metadata Allocation", file.getMetaFlagsAsString());
-        addRow(sb, "Modified", ContentUtils.getStringTime(file.getMtime(), file));
-        addRow(sb, "Accessed", ContentUtils.getStringTime(file.getAtime(), file));
-        addRow(sb, "Created",  ContentUtils.getStringTime(file.getCrtime(), file));
-        addRow(sb, "Changed",  ContentUtils.getStringTime(file.getCtime(), file));
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), new Long(file.getSize()).toString() );
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"),  ContentUtils.getStringTime(file.getCrtime(), file));
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"),  ContentUtils.getStringTime(file.getCtime(), file));
        
         String md5 = file.getMd5Hash();
         if (md5 == null) {
-            md5 = "Not calculated";
+            md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
         }
-        addRow(sb, "MD5", md5);
-        addRow(sb, "Hash Lookup Results", file.getKnown().toString());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
         
-        addRow(sb, "Internal ID", new Long(file.getId()).toString());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), new Long(file.getId()).toString());
         if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
-            addRow(sb, "Local Path", file.getLocalAbsPath());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
         }
         
         endTable(sb);
@@ -161,12 +162,12 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
 
     @Override
     public String getTitle() {
-        return "Metadata";
+        return NbBundle.getMessage(this.getClass(), "Metadata.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays metadata about the file.";
+        return NbBundle.getMessage(this.getClass(), "Metadata.toolTip");
     }
 
     @Override
