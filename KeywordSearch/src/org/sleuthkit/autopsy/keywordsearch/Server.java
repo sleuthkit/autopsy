@@ -350,7 +350,7 @@ public class Server {
      */
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
-        if (available(currentSolrServerPort)) {
+        if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr");
             try {
                 final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
@@ -419,7 +419,7 @@ public class Server {
      *
      * @param port the port to check for availability
      */
-    static boolean available(int port) {
+    static boolean isPortAvailable(int port) {
         ServerSocket ss = null;
         try {
 
@@ -524,6 +524,7 @@ public class Server {
 
             //TODO handle timeout in cases when some other type of server on that port
             CoreAdminRequest.getStatus(null, solrServer);
+            
             logger.log(Level.INFO, "Solr server is running");
         } catch (SolrServerException ex) {
 

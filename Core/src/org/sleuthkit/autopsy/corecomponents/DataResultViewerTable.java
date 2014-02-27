@@ -242,6 +242,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         return true;
     }
 
+    /**
+     * Thread note: Make sure to run this in the EDT as it causes GUI operations.
+     * @param selectedNode 
+     */
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation

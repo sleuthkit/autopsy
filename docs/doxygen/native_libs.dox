@@ -16,4 +16,6 @@ Autopsy has two types of native libraries:
 
 The libraries that <tt>libtsk_jni</tt> depends on are launched by Autopsy in the Installer.loadDynLibraries() method. This is because if we wait until <tt>libtsk_jni</tt> needs them, then they will be located based on Windows search paths and the NetBeans paths are not in that set.  So, we launch them before <tt>libtsk_jni</tt> needs them and from within Autopsy so that it  uses the Autopsy search pathes. 
 
+There is code in build-windows.xml and build-unix.xml to copy the external libraries into their respective locations when a ZIP package is made of the program.  These libraries must be accessible via normal launching methods when developing Autopsy (i.e. we only copy them into the Autopsy structure when building the ZIP). 
+
 */

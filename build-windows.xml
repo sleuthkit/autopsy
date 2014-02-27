@@ -83,16 +83,21 @@
     <target name="copyExternalLibsToZip" depends="copyCRT32,copyCRT64"/>
     
     <target name="copyCRT32">
-        <property name="CRT.path" value="${thirdparty.dir}/crt/win32/crt.zip"/>
-        <available file="${CRT.path}"  property="crtFound"/>
-        
-        <fail unless="crtFound" message="CRT not found in the thirdparty repo in path: ${CRT.path}"/>
 
+        <!-- verify we have the 32-bit dlls -->
+        <property name="CRT32.path" value="${thirdparty.dir}/crt/win32"/>
+        <available file="${CRT32.path}"  property="crtFound"/>
+        <fail unless="crtFound" message="32-bit CRT not found in the thirdparty repo in path: ${CRT32.path}"/>
+
+        <!-- copy them from third party -->
         <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
-        <unzip src="${CRT.path}" dest="${zip-lib-path}/x86" overwrite="true"/>
-        <fileset dir="${zip-lib-path}/x86" id="crt32dlls">
+        <fileset dir="${CRT32.path}" id="crt32dlls">
             <include name="*.dll"/>
         </fileset>
+
+        <copy todir="${zip-lib-path}/x86" overwrite="true">
+            <fileset refid="crt32dlls"/>
+        </copy>
         
         <copy todir="${zip-lib-path}/i386" overwrite="true">
             <fileset refid="crt32dlls"/>
@@ -108,19 +113,23 @@
     </target>
     
     <target name="copyCRT64">
-        <property name="CRT.path" value="${thirdparty.dir}/crt/win64/crt.zip"/>
-        <available file="${CRT.path}"  property="crtFound"/>
-        
-        <fail unless="crtFound" message="CRT not found in the thirdparty repo in path: ${CRT.path}"/>
+        <!-- Verify we have the 64-bit -->
+        <property name="CRT64.path" value="${thirdparty.dir}/crt/win64"/>
+        <available file="${CRT64.path}"  property="crtFound"/>
+        <fail unless="crtFound" message="64-bit CRT not found in the thirdparty repo in path: ${CRT64.path}"/>
 
+        <!-- Copy the libs -->
         <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
-        <unzip src="${CRT.path}" dest="${zip-lib-path}/x86_64" overwrite="true"/>
-        <fileset dir="${zip-lib-path}/x86_64" id="crt32dlls">
+        <fileset dir="${CRT64.path}" id="crt64dlls">
             <include name="*.dll"/>
         </fileset>
+
+        <copy todir="${zip-lib-path}/x86_64" overwrite="true">
+            <fileset refid="crt64dlls"/>
+        </copy>
         
         <copy todir="${zip-lib-path}/amd64" overwrite="true">
-            <fileset refid="crt32dlls"/>
+            <fileset refid="crt64dlls"/>
         </copy>
     </target>
     
