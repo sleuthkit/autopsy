@@ -108,7 +108,7 @@ class IngestScheduler {
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-        private final ConcurrentHashMap<Long, DataSourceTask> dataSourceTasks = new ConcurrentHashMap<>(); // RJCTODO: Why weren't these concurrent before? Synchronized methods?
+        private final ConcurrentHashMap<Long, DataSourceIngestJob> dataSourceTasks = new ConcurrentHashMap<>(); // RJCTODO: Why weren't these concurrent before? Synchronized methods?
         private final ConcurrentSkipListSet<FileTask> rootDirectoryTasks = new ConcurrentSkipListSet<>(new RootTaskComparator());
         private final List<FileTask> directoryTasks = new ArrayList<>();
 //        private final ConcurrentLinkedQueue<FileTask> directoryTasks = new ConcurrentLinkedQueue<>();
@@ -138,7 +138,7 @@ class IngestScheduler {
             return sb.toString();
         }
 
-        synchronized void scheduleIngestOfFiles(DataSourceTask dataSourceTask) {
+        synchronized void scheduleIngestOfFiles(DataSourceIngestJob dataSourceTask) {
             // Save the data source task to manage its pipelines.
             dataSourceTasks.put(dataSourceTask.getTaskId(), dataSourceTask);
  
@@ -202,7 +202,7 @@ class IngestScheduler {
          * to schedule the parent origin content, with the modules, settings, etc.
          */
         synchronized void scheduleIngestOfDerivedFile(long dataSourceTaskId, AbstractFile file) {
-            DataSourceTask dataSourceTask = dataSourceTasks.get(dataSourceTaskId);
+            DataSourceIngestJob dataSourceTask = dataSourceTasks.get(dataSourceTaskId);
             if (null == dataSourceTask) {
                 // RJCTODO: Handle severe error
             }
@@ -376,43 +376,6 @@ class IngestScheduler {
             return new ArrayList<>(contentSet);
         }
 
-        /**
-         * Determine if a module is in a pipeline in the queue.
-         * @param module
-         * @return true if it is in the queue.
-         */
-        // RJCTODO: Remove
-//        synchronized boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
-//            for (FileTask task : rootProcessTasks) {
-//                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-//                for (IngestModuleAbstractFile m : modules) {
-//                    if (m.getName().equals(module.getName())) {
-//                        return true;
-//                    }
-//                }
-//            }
-//
-//            for (FileTask task : curDirProcessTasks) {
-//                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-//                for (IngestModuleAbstractFile m : modules) {
-//                    if (m.getName().equals(module.getName())) {
-//                        return true;
-//                    }
-//                }
-//            }
-//
-//            for (FileTask task : curFileProcessTasks) {
-//                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-//                for (IngestModuleAbstractFile m : modules) {
-//                    if (m.getName().equals(module.getName())) {
-//                        return true;
-//                    }
-//                }
-//            }
-//
-//            return false;
-//        }
-
         synchronized void empty() {
             this.rootDirectoryTasks.clear();
             this.directoryTasks.clear();
@@ -490,9 +453,9 @@ class IngestScheduler {
          */
         static class FileTask {
             private final AbstractFile file;
-            private final DataSourceTask dataSourceTask;
+            private final DataSourceIngestJob dataSourceTask;
 
-            public FileTask(AbstractFile file, DataSourceTask dataSourceTask) {
+            public FileTask(AbstractFile file, DataSourceIngestJob dataSourceTask) {
                 this.file = file;
                 this.dataSourceTask = dataSourceTask;
             }
@@ -504,7 +467,7 @@ class IngestScheduler {
                 dataSourceTask.fileTaskCompleted();
             }
             
-            public DataSourceTask getDataSourceTask() {
+            public DataSourceIngestJob getDataSourceTask() {
                 return dataSourceTask;
             }
             
@@ -544,8 +507,8 @@ class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                DataSourceTask thisTask = this.getDataSourceTask();
-                DataSourceTask otherTask = other.getDataSourceTask();
+                DataSourceIngestJob thisTask = this.getDataSourceTask();
+                DataSourceIngestJob otherTask = other.getDataSourceTask();
 
                 if (thisTask != otherTask
                         && (thisTask == null || !thisTask.equals(otherTask))) {
@@ -801,15 +764,15 @@ class IngestScheduler {
     /**
      * DataSourceScheduler ingest scheduler
      */
-    static class DataSourceScheduler implements Iterator<DataSourceTask> {
+    static class DataSourceScheduler implements Iterator<DataSourceIngestJob> {
 
-        private LinkedList<DataSourceTask> tasks;
+        private LinkedList<DataSourceIngestJob> tasks;
 
         DataSourceScheduler() {
             tasks = new LinkedList<>();
         }
 
-        synchronized void schedule(DataSourceTask task) {
+        synchronized void schedule(DataSourceIngestJob task) {
             try {
                 if (task.getDataSource().getParent() != null) {
                     //only accepting parent-less content objects (Image, parentless VirtualDirectory)
@@ -825,12 +788,12 @@ class IngestScheduler {
         }
 
         @Override
-        public synchronized DataSourceTask next() throws IllegalStateException {
+        public synchronized DataSourceIngestJob next() throws IllegalStateException {
             if (!hasNext()) {
                 throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
             }
 
-            final DataSourceTask ret = tasks.pollFirst();
+            final DataSourceIngestJob ret = tasks.pollFirst();
             return ret;
         }
 
@@ -841,7 +804,7 @@ class IngestScheduler {
          */
         synchronized List<org.sleuthkit.datamodel.Content> getContents() {
             List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (DataSourceTask task : tasks) {
+            for (DataSourceIngestJob task : tasks) {
                 contents.add(task.getDataSource());
             }
             return contents;
@@ -869,7 +832,7 @@ class IngestScheduler {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("DataSourceQueue, size: ").append(getCount());
-            for (DataSourceTask task : tasks) {
+            for (DataSourceIngestJob task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();

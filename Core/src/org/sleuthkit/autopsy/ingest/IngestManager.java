@@ -64,7 +64,7 @@ public class IngestManager {
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 //    private IngestModuleLoader moduleLoader = null;
-    private DataSourceTask currentTask = null; // RJCTODO: Temp glue code, remove
+    private DataSourceIngestJob currentTask = null; // RJCTODO: Temp glue code, remove
     private long nextDataSourceTaskId = 0;
     public final static String MODULE_PROPERTIES = "ingest";
 
@@ -1106,7 +1106,7 @@ public class IngestManager {
             int processed = 0;
             for (Content dataSource : dataSources) {
                 final String inputName = dataSource.getName();
-                DataSourceTask dataSourceTask = new DataSourceTask(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);                
+                DataSourceIngestJob dataSourceTask = new DataSourceIngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);                
                 logger.log(Level.INFO, "Queing data source ingest task: {0}", dataSourceTask);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
                 scheduler.getDataSourceScheduler().schedule(dataSourceTask);
