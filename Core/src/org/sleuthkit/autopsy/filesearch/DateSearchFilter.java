@@ -239,7 +239,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            if (changed.equals(Case.Events.CURRENT_CASE.toString().toString())) {
                 // create or open a case
                 if (newValue != null) {
                     DateSearchFilter.this.updateTimeZoneList();
@@ -247,12 +247,12 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             }
 
             // if the image is added to the case
-            if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
+            if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                 DateSearchFilter.this.updateTimeZoneList();
             }
 
             // if the image is removed from the case
-            if (changed.equals(Case.CASE_DEL_DATA_SOURCE)) {
+            if (changed.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
                 DateSearchFilter.this.updateTimeZoneList();
             }
         }
