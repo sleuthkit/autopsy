@@ -83,7 +83,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     Case newCase = (Case) evt.getNewValue();
                     setEnabled(newCase != null);
 

@@ -126,7 +126,7 @@ public class KeywordSearch {
             Object newValue = evt.getNewValue();
 
             final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 if (newValue != null) {
                     // new case is open
                     try {
