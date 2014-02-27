@@ -143,7 +143,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     setEnabled(evt.getNewValue() != null);
                 }
             }
