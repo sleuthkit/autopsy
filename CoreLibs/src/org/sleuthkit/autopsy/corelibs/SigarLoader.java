@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corelibs;
 
 import com.sun.javafx.PlatformUtil;
 import org.hyperic.sigar.Sigar;
+import org.openide.util.NbBundle;
 
 /**
  * Wrapper over Sigar instrumentation class to facilitate dll loading. Our setup
@@ -51,10 +52,10 @@ public class SigarLoader {
                         sigar.enableLogging(false); //forces a test
 
                     } catch (UnsatisfiedLinkError ex) {
-                        String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                        String msg = NbBundle.getMessage(SigarLoader.class, "SigarLoader.linkErr.msg");
                         System.out.println(msg + ex.toString());
                     } catch (Exception ex) {
-                        String msg = "Could not load sigar library for your environment (non-critical), OS-level metrics will be unavailable. ";
+                        String msg = NbBundle.getMessage(SigarLoader.class, "SigarLoader.linkErr.msg");
                         System.out.println(msg + ex.toString());
                     }
                 }
