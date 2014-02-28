@@ -84,7 +84,7 @@ import org.sleuthkit.datamodel.TskData;
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
     
-    static final String REPORTS_DIR = NbBundle.getMessage(ReportGenerator.class, "ReportGenerator.reportsDir.text");
+    static final String REPORTS_DIR = "Reports";
         
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
