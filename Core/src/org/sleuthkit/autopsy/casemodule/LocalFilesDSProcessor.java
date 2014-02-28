@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -32,7 +34,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    private static final String dsType = "Logical Files";
+    private static final String dsType = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private final LocalFilesPanel localFilesPanel;

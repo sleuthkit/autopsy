@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -106,7 +108,8 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     void moveFocusToNext() {
         // set the focus to the next button of the wizard dialog if it's enabled
         if (isNextEnable) {
-            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton("Next >");
+            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardChooseDataSourcePanel.moveFocusNext"));
         }
     }
 

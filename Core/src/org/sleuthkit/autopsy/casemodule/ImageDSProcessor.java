@@ -22,6 +22,8 @@ import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.filechooser.FileFilter;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -41,7 +43,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     
     // Data source type handled by this processor
-    private final static String dsType = "Image File";
+    private final static String dsType = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
     
     // The Config UI panel that plugins into the Choose Data Source Wizard
     private final ImageFilePanel imageFilePanel;
@@ -70,7 +72,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
     }
-    static final String allDesc = "All Supported Types";
+    static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     
     static final List<FileFilter> filtersList = new ArrayList<>();

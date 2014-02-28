@@ -40,6 +40,8 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -297,7 +299,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         List<LocalDisk> partitions = new ArrayList<LocalDisk>();
         
         //private String SELECT = "Select a local disk:";
-        private String LOADING = "Loading local disks...";
+        private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
         LocalDiskThread worker = null;
         
         
@@ -335,7 +337,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 }
                 catch (Exception e) {
                     logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e);
-                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                    MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
+                                                  NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+                                                  MessageNotifyUtil.MessageType.ERROR);
                 }
             }
         }
@@ -409,16 +413,22 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             private void displayErrors() {
                 if(physical.isEmpty() && partitions.isEmpty()) {
                     if(PlatformUtil.isWindowsOS()) {
-                        errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                        errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                        errorLabel.setText(
+                                NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.disksNotDetected.text"));
+                        errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
+                                                                      "LocalDiskPanel.errLabel.disksNotDetected.toolTipText"));
                     } else {
-                        errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
-                        errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                        errorLabel.setText(
+                                NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.drivesNotDetected.text"));
+                        errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
+                                                                      "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText"));
                     }
                     diskComboBox.setEnabled(false);
                 } else if(physical.isEmpty()) {
-                    errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                    errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                    errorLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.someDisksNotDetected.text"));
+                    errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
+                                                                  "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText"));
                 }
             }
         
