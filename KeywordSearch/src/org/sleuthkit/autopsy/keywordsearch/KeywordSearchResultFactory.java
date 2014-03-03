@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -569,7 +571,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             try {
                 final String queryStr = query.getQueryString();
                 final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
-                progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
 
                     @Override
                     public boolean cancel() {

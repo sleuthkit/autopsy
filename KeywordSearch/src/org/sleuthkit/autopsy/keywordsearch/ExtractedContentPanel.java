@@ -682,8 +682,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Loading text");
-            progress.setDisplayName("Loading text");
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
+            progress.setDisplayName(
+                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
             progress.start();
             progress.switchToIndeterminate();
 
