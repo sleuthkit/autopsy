@@ -75,7 +75,6 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.modules.ModuleInstall;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
@@ -105,7 +104,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
-@NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
+//@NbBundle.Messages(value = "CTL_TimelineView=Generate Timeline")
 /**
  * The Timeline Action entry point. Collects data and pushes data to javafx
  * widgets
@@ -175,7 +174,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 //Making the main frame *
 
                 mainFrame = new TimelineFrame();
-                mainFrame.setFrameName(Case.getCurrentCase().getName() + " - Autopsy Timeline (Beta)");
+                mainFrame.setFrameName(
+                        NbBundle.getMessage(this.getClass(), "Timeline.frameName.text", Case.getCurrentCase().getName()));
 
                 //use the same icon on jframe as main application
                 mainFrame.setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
@@ -186,7 +186,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 //dataContentPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
                 //dataContentPanel.setPreferredSize(new Dimension(FRAME_WIDTH, (int) (FRAME_HEIGHT * 0.4)));
 
-                dataResultPanel = DataResultPanel.createInstance("Timeline Results", "", Node.EMPTY, 0, dataContentPanel);
+                dataResultPanel = DataResultPanel.createInstance(
+                        NbBundle.getMessage(this.getClass(), "Timeline.resultsPanel.title"),
+                        "", Node.EMPTY, 0, dataContentPanel);
                 dataResultPanel.setContentViewer(dataContentPanel);
                 //dataResultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 //dataResultPanel.setPreferredSize(new Dimension((int)(FRAME_WIDTH * 0.5), (int) (FRAME_HEIGHT * 0.5)));
@@ -211,7 +213,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             public void run() {
                 try {
                     // start the progress bar
-                    progress = ProgressHandleFactory.createHandle("Creating timeline . . .");
+                    progress = ProgressHandleFactory.createHandle(
+                            NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.creating"));
                     progress.start();
 
                     fxChartEvents = null; //important to reset old data
@@ -239,11 +242,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     if (!mactimeFile.exists()) {
                         progressDialog.setProgressTotal(3); //total 3 units
                         logger.log(Level.INFO, "Creating body file");
-                        progressDialog.updateProgressBar("Generating Bodyfile");
+                        progressDialog.updateProgressBar(
+                                NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.genBodyFile"));
                         String bodyFilePath = makeBodyFile();
                         progressDialog.updateProgressBar(++currentProgress);
                         logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
-                        progressDialog.updateProgressBar("Generating Mactime");
+                        progressDialog.updateProgressBar(
+                                NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.genMacTime"));
                         makeMacTime(bodyFilePath);
                         progressDialog.updateProgressBar(++currentProgress);
                         data = null;
@@ -253,7 +258,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     }
 
 
-                    progressDialog.updateProgressBar("Parsing Mactime");
+                    progressDialog.updateProgressBar(
+                            NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.parseMacTime"));
                     if (data == null) {
                         logger.log(Level.INFO, "Parsing mactime file: " + mactimeFile.getAbsolutePath());
                         data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
@@ -269,7 +275,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     fxDropdownSelectYears = new ComboBox<String>(listSelect);
 
                     //Buttons for navigating up and down the timeline
-                    fxZoomOutButton = new Button("Zoom Out");
+                    fxZoomOutButton = new Button(NbBundle.getMessage(this.getClass(), "Timeline.zoomOutButton.text"));
                     fxZoomOutButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
@@ -301,7 +307,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                     //Adding things to the V and H boxes. 
                     //hBox_Charts stores the pseudo menu bar at the top of the timeline. |Zoom Out|View Year: [Select Year]|►|
-                    fxHBoxCharts.getChildren().addAll(fxZoomOutButton, new Label("Go To:"), fxDropdownSelectYears);
+                    fxHBoxCharts.getChildren().addAll(fxZoomOutButton, new Label(
+                            NbBundle.getMessage(this.getClass(), "Timeline.goToButton.text")), fxDropdownSelectYears);
                     fxVBox.getChildren().addAll(fxHBoxCharts, fxScrollEvents); //FxBox_V holds things in a visual stack. 
                     fxGroupCharts.getChildren().add(fxVBox); //Adding the FxBox to the group. Groups make things easier to manipulate without having to update a hundred things every change.
                     fxPanelCharts.setScene(fxSceneCharts);
@@ -346,8 +353,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         final Label l = new Label("");
         l.setStyle("-fx-font: 24 arial;");
         l.setTextFill(Color.AZURE);
-        xAxis.setLabel("Years");
-        yAxis.setLabel("Number of Events");
+        xAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.yearBarChart.x.years"));
+        yAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.yearBarChart.y.numEvents"));
         //Charts are made up of individual pieces of Chart.Data. In this case, a piece of barData is a single bar on the graph.
         //Data is packaged into a series, which can be assigned custom colors or styling
         //After the series are created, 1 or more series are packaged into a single chart.
@@ -413,8 +420,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("Month (" + ye.year + ")");
-        yAxis.setLabel("Number of Events");
+        xAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.MonthsBarChart.x.monthYY", ye.year));
+        yAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.MonthsBarChart.y.numEvents"));
         ObservableList<BarChart.Series<String, Number>> bcData = FXCollections.observableArrayList();
 
         BarChart.Series<String, Number> se = new BarChart.Series<String, Number>();
@@ -477,8 +484,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private BarChart<String, Number> createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("Day of Month");
-        yAxis.setLabel("Number of Events");
+        xAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.eventsByMoBarChart.x.dayOfMo"));
+        yAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.eventsByMoBarChart.y.numEvents"));
         ObservableList<BarChart.Data<String, Number>> bcData = makeObservableListByMonthAllDays(me, ye.getYear());
         BarChart.Series<String, Number> series = new BarChart.Series<String, Number>(bcData);
         series.setName(me.getMonthName() + " " + ye.getYear());
@@ -507,9 +514,10 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         @Override
                         public void run() {
                             //reset the view and free the current nodes before loading new ones
-                            final FileRootNode d = new FileRootNode("Empty Root", new ArrayList<Long>());
+                            final FileRootNode d = new FileRootNode(
+                                    NbBundle.getMessage(this.getClass(), "Timeline.node.emptyRoot"), new ArrayList<Long>());
                             dataResultPanel.setNode(d);
-                            dataResultPanel.setPath("Loading...");
+                            dataResultPanel.setPath(NbBundle.getMessage(this.getClass(), "Timeline.resultPanel.loading"));
                         }
                     });
                     final int day = (Integer.valueOf((barData.getXValue()).split("-")[1]));
@@ -525,7 +533,8 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            final FileRootNode d = new FileRootNode("Root", afs);
+                            final FileRootNode d = new FileRootNode(
+                                    NbBundle.getMessage(this.getClass(), "Timeline.node.root"), afs);
                             dataResultPanel.setNode(d);
                             //set result viewer title path with the current date
                             String dateString = ye.getYear() + "-" + (1 + me.getMonthInt()) + "-" + +de.dayNum;
@@ -620,7 +629,12 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 return;
             }
 
-            int answer = JOptionPane.showConfirmDialog(mainFrame, "Timeline is out of date. Would you like to regenerate it?", "Select an option", JOptionPane.YES_NO_OPTION);
+            int answer = JOptionPane.showConfirmDialog(mainFrame,
+                                                       NbBundle.getMessage(this.getClass(),
+                                                                           "Timeline.propChg.confDlg.timelineOOD.msg"),
+                                                       NbBundle.getMessage(this.getClass(),
+                                                                           "Timeline.propChg.confDlg.timelineOOD.details"),
+                                                       JOptionPane.YES_NO_OPTION);
             if (answer != JOptionPane.YES_OPTION) {
                 return;
             }
@@ -1123,10 +1137,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
                 if (IngestManager.getDefault().isIngestRunning()) {
                     int answer = JOptionPane.showConfirmDialog(new JFrame(),
-                            "You are trying to generate a timeline before "
-                            + "ingest has been completed. The timeline may be "
-                            + "incomplete. Do you want to continue?", "Timeline",
-                            JOptionPane.YES_NO_OPTION);
+                                                               NbBundle.getMessage(this.getClass(),
+                                                                                   "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
+                                                               NbBundle.getMessage(this.getClass(),
+                                                                                   "Timeline.initTimeline.confDlg.genBeforeIngest.deails"),
+                                                               JOptionPane.YES_NO_OPTION);
                     if (answer != JOptionPane.YES_OPTION) {
                         return;
                     }
@@ -1177,7 +1192,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
     @Override
     public String getName() {
-        return "Make Timeline (Beta)";
+        return NbBundle.getMessage(this.getClass(), "Timeline.getName");
     }
 
     @Override
