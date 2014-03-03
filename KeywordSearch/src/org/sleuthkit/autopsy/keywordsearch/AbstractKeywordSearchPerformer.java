@@ -69,6 +69,9 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
     public abstract boolean isLuceneQuerySelected();
 
     @Override
+    public abstract boolean isWholewordQuerySelected();
+    
+    @Override
     public abstract String getQueryText();
 
     @Override
@@ -102,7 +105,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                 return;
             }
         }
-
+        
+        boolean isWholeword = isWholewordQuerySelected();
         KeywordSearchQueryManager man = null;
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
@@ -112,11 +116,11 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(keywords, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(keywords, isWholeword, Presentation.FLAT);
         } else {
             QueryType queryType = null;
             if (isLuceneQuerySelected()) {
-                queryType = QueryType.WORD;
+                queryType = QueryType.LITERAL;
             } else {
                 queryType = QueryType.REGEX;
             }
@@ -126,7 +130,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(getQueryText(), queryType, isWholeword, Presentation.FLAT);
         }
 
         if (man.validate()) {

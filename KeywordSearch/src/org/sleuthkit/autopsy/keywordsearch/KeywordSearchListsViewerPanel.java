@@ -326,6 +326,11 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     }
 
     @Override
+    public boolean isWholewordQuerySelected() {
+        return false;
+    }    
+    
+    @Override
     public String getQueryText() {
         throw new UnsupportedOperationException("Not supported for multi-word queries.");
     }

@@ -81,7 +81,6 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     
     
     private void customizeComponents() {
-
         listener = new KeywordPropertyChangeListener();
 
         KeywordSearch.getServer().addServerActionListener(listener);
@@ -174,6 +173,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
                                                                "KeywordSearchPanel.searchBox.text"));
         searchBox.setForeground(Color.LIGHT_GRAY);
         regExCheckboxMenuItem.setEnabled(true);
+        wholewordCheckboxMenuItem.setEnabled(true);
         entered = false;
     }
 
@@ -188,6 +188,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
         settingsMenu = new javax.swing.JPopupMenu();
         regExCheckboxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        wholewordCheckboxMenuItem = new javax.swing.JCheckBoxMenuItem();
         listsMenu = new javax.swing.JPopupMenu();
         rightClickMenu = new javax.swing.JPopupMenu();
         cutMenuItem = new javax.swing.JMenuItem();
@@ -202,6 +203,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
         regExCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.regExCheckboxMenuItem.text")); // NOI18N
         settingsMenu.add(regExCheckboxMenuItem);
+
+        wholewordCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.wholewordCheckboxMenuItem.text")); // NOI18N
+        settingsMenu.add(wholewordCheckboxMenuItem);
 
         cutMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
@@ -365,6 +369,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JPopupMenu settingsMenu;
+    private javax.swing.JCheckBoxMenuItem wholewordCheckboxMenuItem;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -377,6 +382,11 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         return !regExCheckboxMenuItem.isSelected();
     }
 
+    @Override
+    public boolean isWholewordQuerySelected() {
+        return wholewordCheckboxMenuItem.isSelected();
+    }
+    
     @Override
     public boolean isMultiwordQuery() {
         return false;
@@ -428,6 +438,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         private void setFields(boolean enabled) {
             searchBox.setEnabled(enabled);
             regExCheckboxMenuItem.setEnabled(enabled);
+            wholewordCheckboxMenuItem.setEnabled(enabled);
             settingsLabel.setEnabled(enabled);
             listsButton.setEnabled(enabled);
             searchButton.setEnabled(enabled);

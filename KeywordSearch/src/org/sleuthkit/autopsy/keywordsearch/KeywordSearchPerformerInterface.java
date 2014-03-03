@@ -42,6 +42,12 @@ interface KeywordSearchPerformerInterface {
     boolean isLuceneQuerySelected();
     
     /**
+     * True if the user wants to match substrings instead of just whole words
+     * @return 
+     */    
+    boolean isWholewordQuerySelected();
+    
+    /**
      * Returns the query/keyword string that the user entered/selected
      * @return Keyword to search
      */

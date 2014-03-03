@@ -51,6 +51,7 @@ class KeywordSearchQueryManager {
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
     private QueryType queryType;
+    private boolean queryWholeword;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
     private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
 
@@ -59,10 +60,11 @@ class KeywordSearchQueryManager {
      * @param queries Keywords to search for
      * @param presentation Presentation layout
      */
-    public KeywordSearchQueryManager(List<Keyword> queries, Presentation presentation) {
+    public KeywordSearchQueryManager(List<Keyword> queries, boolean wholeword, Presentation presentation) {
         this.keywords = queries;
         this.presentation = presentation;
         queryType = QueryType.REGEX;
+        queryWholeword = wholeword;
         init();
     }
 
@@ -72,11 +74,12 @@ class KeywordSearchQueryManager {
      * @param qt Query type
      * @param presentation Presentation Layout
      */
-    public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
+    public KeywordSearchQueryManager(String query, QueryType qt, boolean wholeword, Presentation presentation) {
         keywords = new ArrayList<>();
         keywords.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
         this.presentation = presentation;
         queryType = qt;
+        queryWholeword = wholeword;
         init();
     }
 
@@ -86,11 +89,12 @@ class KeywordSearchQueryManager {
      * @param isLiteral false if reg-exp
      * @param presentation Presentation layout
      */
-    public KeywordSearchQueryManager(String query, boolean isLiteral, Presentation presentation) {
+    public KeywordSearchQueryManager(String query, boolean isLiteral, boolean wholeword, Presentation presentation) {
         keywords = new ArrayList<>();
         keywords.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
-        queryType = isLiteral ? QueryType.WORD : QueryType.REGEX;
+        queryType = isLiteral ? QueryType.LITERAL : QueryType.REGEX;
+        queryWholeword = wholeword;
         init();
     }
 
@@ -102,8 +106,9 @@ class KeywordSearchQueryManager {
         queryDelegates = new ArrayList<>();
         for (Keyword keyword : keywords) {
             KeywordSearchQuery query = null;
+            
             switch (queryType) {
-                case WORD:
+                case LITERAL:
                     query = new LuceneQuery(keyword);
                     break;
                 case REGEX:
@@ -116,6 +121,7 @@ class KeywordSearchQueryManager {
                 default:
                     ;
             }
+                       
             if (query != null) {
                 if (keyword.isLiteral()) {
                     query.escape();
@@ -147,7 +153,7 @@ class KeywordSearchQueryManager {
             Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
             queryConcat.append(queryStr).append(" ");
-            things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
+            things.add(new KeyValueQuery(decorateQuery(queryStr), kvs, ++queryID, q));
         }
 
         Node rootNode;
@@ -173,6 +179,21 @@ class KeywordSearchQueryManager {
         // }
     }
 
+    /**
+     * Adds prefixes and suffixes to make the query treated as a substring
+     * Any needed literal escaping will have already been added by the KeywordSearchQuery object.
+     * @return New query string
+     */
+    private String decorateQuery(String keywordQueryStr) {
+        if (!queryWholeword) {
+            // allow substring matches
+            String queryStr = ".*" + keywordQueryStr + ".*";
+            return queryStr;
+        } else {
+            return keywordQueryStr;
+        }
+    }    
+    
     /**
      * validate the queries before they are run
      * @return false if any are invalid
