@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -28,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class ResultsNode extends DisplayableItemNode {
 
-    public static final String NAME = "Results";
+    public static final String NAME = NbBundle.getMessage(ResultsNode.class, "ResultsNode.name.text");
 
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
@@ -62,10 +63,10 @@ public class ResultsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
-                NAME));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
+                                NAME));
         return s;
     }
 }
