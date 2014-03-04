@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
@@ -50,6 +51,8 @@ import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Cancellable;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -658,6 +661,18 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             resetVideo();
 
             return null;
+        }
+        
+        
+        @Override
+        protected void done() {
+            // see if any exceptions were thrown
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage());
+                infoLabel.setText("Error updating video progress: " + ex.getMessage());
+            }
         }
     } //end class progress worker
 
