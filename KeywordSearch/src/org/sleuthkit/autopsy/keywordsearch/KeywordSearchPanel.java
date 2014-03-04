@@ -324,6 +324,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         searchDropButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchDropButton.text")); // NOI18N
         searchDropButton.setBorderPainted(false);
         searchDropButton.setContentAreaFilled(false);
+        searchDropButton.setPreferredSize(new java.awt.Dimension(77, 27));
+        searchDropButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png"))); // NOI18N
+        searchDropButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-pressed.png"))); // NOI18N
         searchDropButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 searchDropButtonMousePressed(evt);
@@ -337,7 +340,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(listsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(searchDropButton)
+                .addComponent(searchDropButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
