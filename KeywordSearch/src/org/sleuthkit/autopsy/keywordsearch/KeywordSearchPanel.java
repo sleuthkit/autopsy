@@ -395,7 +395,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 resetSearchBox();
                 if (newValue == null) {
                     setFields(false);

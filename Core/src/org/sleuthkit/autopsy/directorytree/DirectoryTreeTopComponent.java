@@ -516,7 +516,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Object newValue = evt.getNewValue();
 
         // change in the case name
-        if (changed.equals(Case.CASE_NAME)) {
+        if (changed.equals(Case.Events.NAME.toString())) {
             // set the main title of the window
             String oldCaseName = oldValue.toString();
             String newCaseName = newValue.toString();
@@ -529,7 +529,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 em.getRootContext().setDisplayName(newCaseName);
             }
         } // changed current case
-        else if (changed.equals(Case.CASE_CURRENT_CASE)) {
+        else if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
             // opened, the old value is null and the new value is the new Case
@@ -553,7 +553,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 resetHistory();
             }
         } // if the image is added to the case
-        else if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
+        else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             componentOpened();
 //            Image img = (Image)newValue;
 //
