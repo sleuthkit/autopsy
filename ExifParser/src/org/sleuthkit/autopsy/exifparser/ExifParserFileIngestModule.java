@@ -77,16 +77,16 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
     
     @Override
-    public void process(AbstractFile content) {
+    public ProcessResult process(AbstractFile content) {
 
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return;
+            return ProcessResult.OK;
         }
 
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
-            return;
+            return ProcessResult.OK;
         }
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
@@ -98,13 +98,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         
         //skip unsupported
         if (!parsableFormat(content)) {
-            return;
+            return ProcessResult.OK;
         }
 
-        processFile(content);
+        return processFile(content);
     }
 
-    public void processFile(AbstractFile f) {
+    ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
 
@@ -161,13 +161,22 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 bba.addAttributes(attributes);
                 filesToFire = true;
             }
-        } catch (TskCoreException ex) {
+            
+            return ProcessResult.OK;
+        } 
+        catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage());
-        } catch (ImageProcessingException ex) {
+            return ProcessResult.ERROR;
+        } 
+        catch (ImageProcessingException ex) {
             logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()});
-        } catch (IOException ex) {
+            return ProcessResult.ERROR;
+        } 
+        catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
-        } finally {
+            return ProcessResult.ERROR;
+        } 
+        finally {
             try {
                 if (in != null) {
                     in.close();
@@ -177,6 +186,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to close InputStream.", ex);
+                return ProcessResult.ERROR;
             }
         }
     }

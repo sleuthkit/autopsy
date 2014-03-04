@@ -117,9 +117,8 @@ public class IngestServices {
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
-    
-    
-     /**
+        
+    /**
      * Fire module content event to notify registered module content event listeners
      * that there is new content (from ZIP file contents, carving, etc.)
      * @param moduleContentEvent module content event, encapsulating content changed
@@ -141,18 +140,16 @@ public class IngestServices {
         manager.scheduleFile(dataSourceTaskId, file);
     }
     
-    
      /**
-     * Get free disk space of a drive where ingest data are written to
-     * That drive is being monitored by IngestMonitor thread when ingest is running.
-     * 
-     * @return amount of disk space, -1 if unknown
-     */
+      * Get free disk space of a drive where ingest data are written to
+      * That drive is being monitored by IngestMonitor thread when ingest is running.
+      * 
+      * @return amount of disk space, -1 if unknown
+      */
     public long getFreeDiskSpace() {
         return manager.getFreeDiskSpace();
     }
     
-    // RJCTODO: Thsi may be obsolete
     /**
      * Facility for a file ingest module to check a return value from a previously run file ingest module
      * that executed for the same file.
@@ -161,9 +158,9 @@ public class IngestServices {
      * @param moduleName registered module name of the module to check the return value of
      * @return the return value of the previously executed module for the currently processed file in the file ingest pipeline
      */
-//    public IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
-//        return manager.getAbstractFileModuleResult(moduleName);
-//    }
+    public IngestModule.ProcessResult getAbstractFileModuleResult(String moduleName) {
+        return manager.getAbstractFileModuleResult(moduleName);
+    }
     
     /**
      * Gets a specific name/value configuration setting for a module

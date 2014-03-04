@@ -60,7 +60,7 @@ public class IngestManager {
     private IngestAbstractFileProcessor abstractFileIngester;
     private List<IngestDataSourceThread> dataSourceIngesters;
     private SwingWorker<Object, Void> queueWorker;
-//    private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<>(); RJCTODO: May be obsolete
+    private final Map<String, IngestModule.ProcessResult> abstractFileModulesRetValues = new HashMap<>();
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 //    private IngestModuleLoader moduleLoader = null;
@@ -227,8 +227,6 @@ public class IngestManager {
         }
     }
 
-    // RJCTODO: This method and the concept it supports (modules are able to query the success or failure of
-    // other modules in the pipeline by name) may be obsolete.
     /**
      * Returns the return value from a previously run module on the file being
      * currently analyzed.
@@ -236,15 +234,15 @@ public class IngestManager {
      * @param moduleName Name of module.
      * @returns Return value from that module if it was previously run.
      */
-//    IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
-//        synchronized (abstractFileModulesRetValues) {
-//            if (abstractFileModulesRetValues.containsKey(moduleName)) {
-//                return abstractFileModulesRetValues.get(moduleName);
-//            } else {
-//                return IngestModuleAbstractFile.ProcessResult.UNKNOWN;
-//            }
-//        }
-//    }
+    IngestModule.ProcessResult getAbstractFileModuleResult(String moduleName) {
+        synchronized (abstractFileModulesRetValues) {
+            if (abstractFileModulesRetValues.containsKey(moduleName)) {
+                return abstractFileModulesRetValues.get(moduleName);
+            } else {
+                return IngestModule.ProcessResult.UNKNOWN; // RJCTODO: Not yet determined?
+            }
+        }
+    }
 
     // RJCTODO: Update comment
     /**

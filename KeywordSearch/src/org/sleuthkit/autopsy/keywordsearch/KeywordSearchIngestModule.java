@@ -66,7 +66,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
-// RJCTODO: Update for new infrastructure
 /**
  * An ingest module on a file level Performs indexing of allocated and Solr
  * supported files, string extraction and indexing of unallocated and not Solr
@@ -134,7 +133,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private KeywordSearchConfigurationPanel advancedConfigPanel;
     private Tika tikaFormatDetector;
     
-
     private enum IngestStatus {
         TEXT_INGESTED,   /// Text was extracted by knowing file type and text_ingested
         STRINGS_INGESTED, ///< Strings were extracted from file 
@@ -148,108 +146,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     KeywordSearchIngestModule() {
     }
 
-    /**
-     * Initializes the module for new ingest run Sets up threads, timers,
-     * retrieves settings, keyword lists to run on
-     *
-     */
     @Override
-    public void init(long taskId) {
-        logger.log(Level.INFO, "init()");
-        services = IngestServices.getDefault();
-        initialized = false;
-
-        caseHandle = Case.getCurrentCase().getSleuthkitCase();
-
-        tikaFormatDetector = new Tika();
-
-        ingester = Server.getIngester();
-
-        final Server server = KeywordSearch.getServer();
-        try {
-            if (!server.isRunning()) {
-                String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                logger.log(Level.SEVERE, msg);
-                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-                return;
-
-            }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
-            //this means Solr is not properly initialized
-            String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-            String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
-            return;
-        }
-
-
-        //initialize extractors
-        stringExtractor = new AbstractFileStringExtract();
-        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
-        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
-
-        //log the scripts used for debugging
-        final StringBuilder sbScripts = new StringBuilder();
-        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
-            sbScripts.append(s.name()).append(" ");
-        }
-        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString());
-
-        textExtractors = new ArrayList<>();
-        //order matters, more specific extractors first
-        textExtractors.add(new AbstractFileHtmlExtract());
-        textExtractors.add(new AbstractFileTikaTextExtract());
-
-
-        ingestStatus = new HashMap<>();
-
-        keywords = new ArrayList<>();
-        keywordLists = new ArrayList<>();
-        keywordToList = new HashMap<>();
-
-        initKeywords();
-
-        if (keywords.isEmpty() || keywordLists.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-        }
-
-        processedFiles = false;
-        finalSearcherDone = false;
-        searcherDone = true; //make sure to start the initial currentSearcher
-        //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<>();
-
-        curDataSourceIds = new HashSet<>();
-
-        indexer = new Indexer();
-
-        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-        logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
-        logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
-
-        commitTimer = new Timer(updateIntervalMs, new CommitTimerAction());
-        searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
-
-        initialized = true;
-
-        commitTimer.start();
-        searchTimer.start();
-    }
-      
-    @Override
-    public void process(AbstractFile abstractFile) {
+    public ProcessResult process(AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            return;
-            // RJCTODO
-//            return ProcessResult.OK;
+            return ProcessResult.OK;
         }
         try {
             //add data source id of the file to the set, keeping track of images being ingested
@@ -262,25 +166,20 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             //skip indexing of virtual dirs (no content, no real name) - will index children files
-            return;
-            // RJCTODO
-//            return ProcessResult.OK;
+            return ProcessResult.OK;
         }
 
-        // RJCTODO
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-//        if (services.getAbstractFileModuleResult(hashDBModuleName) == IngestModuleAbstractFile.ProcessResult.ERROR) {
-//            indexer.indexFile(abstractFile, false);
-//            //notify depending module that keyword search (would) encountered error for this file
-//            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
-//            return ProcessResult.ERROR;
-//        } 
-//        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
-        if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+        if (services.getAbstractFileModuleResult(hashDBModuleName) == IngestModuleAbstractFile.ProcessResult.ERROR) {
+            indexer.indexFile(abstractFile, false);
+            //notify depending module that keyword search (would) encountered error for this file
+            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
+            return ProcessResult.ERROR;
+        } 
+        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
-            // RJCTODO
-            //            return ProcessResult.OK;
+            return ProcessResult.OK;
         }
 
         processedFiles = true;        
@@ -291,8 +190,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
 
-        // RJCTODO
-//        return ProcessResult.OK;
+        return ProcessResult.OK;
     }
 
     /**
@@ -405,6 +303,98 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         initialized = false;
     }
 
+    /**
+     * Initializes the module for new ingest run Sets up threads, timers,
+     * retrieves settings, keyword lists to run on
+     *
+     */
+    @Override
+    public void init(long taskId) {
+        logger.log(Level.INFO, "init()");
+        services = IngestServices.getDefault();
+        initialized = false;
+
+        caseHandle = Case.getCurrentCase().getSleuthkitCase();
+
+        tikaFormatDetector = new Tika();
+
+        ingester = Server.getIngester();
+
+        final Server server = KeywordSearch.getServer();
+        try {
+            if (!server.isRunning()) {
+                String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+                logger.log(Level.SEVERE, msg);
+                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+                return;
+
+            }
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+            //this means Solr is not properly initialized
+            String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+            String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+            return;
+        }
+
+
+        //initialize extractors
+        stringExtractor = new AbstractFileStringExtract();
+        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
+        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
+
+
+        //log the scripts used for debugging
+        final StringBuilder sbScripts = new StringBuilder();
+        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
+            sbScripts.append(s.name()).append(" ");
+        }
+        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString());
+
+        textExtractors = new ArrayList<>();
+        //order matters, more specific extractors first
+        textExtractors.add(new AbstractFileHtmlExtract(this));
+        textExtractors.add(new AbstractFileTikaTextExtract());
+
+
+        ingestStatus = new HashMap<>();
+
+        keywords = new ArrayList<>();
+        keywordLists = new ArrayList<>();
+        keywordToList = new HashMap<>();
+
+        initKeywords();
+
+        if (keywords.isEmpty() || keywordLists.isEmpty()) {
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+        }
+
+        processedFiles = false;
+        finalSearcherDone = false;
+        searcherDone = true; //make sure to start the initial currentSearcher
+        //keeps track of all results per run not to repeat reporting the same hits
+        currentResults = new HashMap<>();
+
+        curDataSourceIds = new HashSet<>();
+
+        indexer = new Indexer();
+
+        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
+        logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
+        logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
+
+        commitTimer = new Timer(updateIntervalMs, new CommitTimerAction());
+        searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
+
+        initialized = true;
+
+        commitTimer.start();
+        searchTimer.start();
+    }
+          
     // RJCTODO
 //    public void saveAdvancedConfiguration() {
 //        if (advancedConfigPanel != null) {

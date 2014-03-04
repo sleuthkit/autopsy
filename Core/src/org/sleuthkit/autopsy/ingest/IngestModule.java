@@ -24,6 +24,12 @@ package org.sleuthkit.autopsy.ingest;
  */
 public interface IngestModule {
     
+    public enum ProcessResult { // RJCTODO: Refactor to something like ProcessingResult or probably just Result or ResultCode
+        OK,
+        ERROR, // RJCTODO: Consider replacing comments that existed when this was specific to file ingest modules
+        UNKNOWN // RJCTODO: This apperars to b e specifci
+    };
+        
     /**
      * Invoked to obtain a display name for the module, i.e., a name that is
      * suitable for presentation to a user in a user interface component or a

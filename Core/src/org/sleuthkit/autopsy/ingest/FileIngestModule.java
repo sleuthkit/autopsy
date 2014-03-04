@@ -27,8 +27,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 public interface FileIngestModule extends IngestModule {
     
     /**
-     * Process a file.
-     * @param file The file to process.
+     * RJCTODO
+     * @param file
+     * @return 
      */
-    void process(AbstractFile file);   
+    ProcessResult process(AbstractFile file);   
 }

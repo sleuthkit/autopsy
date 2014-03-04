@@ -31,6 +31,7 @@ public interface DataSourceIngestModule extends IngestModule {
      * @param dataSource The data source to process.
      * @param statusHelper A status helper to be used to report progress and 
      * detect task cancellation.
+     * @return RJCTODO
      */
-    void process(Content dataSource, IngestDataSourceWorkerController statusHelper); // RJCTODO: Change name of IngestDataSourceWorkerController class     
+    ProcessResult process(Content dataSource, IngestDataSourceWorkerController statusHelper); // RJCTODO: Change name of IngestDataSourceWorkerController class, or better, get rid of it so all threads in ingest can be the same     
 }

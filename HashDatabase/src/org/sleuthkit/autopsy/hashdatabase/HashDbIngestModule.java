@@ -112,15 +112,15 @@ public class HashDbIngestModule implements FileIngestModule {
     }
     
     @Override
-    public void process(AbstractFile file) {
+    public ProcessResult process(AbstractFile file) {
         // Skip unallocated space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return;
+            return ProcessResult.OK;
         }
         
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
-            return;
+            return ProcessResult.OK;
         }
 
         // calc hash value
@@ -141,14 +141,13 @@ public class HashDbIngestModule implements FileIngestModule {
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.calcHashValueErr",
                                                           name)));
-//                return ProcessResult.ERROR;
-                return;
+                return ProcessResult.ERROR;
             }
         }
 
         // look up in known bad first
         boolean foundBad = false;
-//        ProcessResult ret = ProcessResult.OK;
+        ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
@@ -168,7 +167,7 @@ public class HashDbIngestModule implements FileIngestModule {
                                               NbBundle.getMessage(this.getClass(),
                                                                   "HashDbIngestModule.settingKnownBadStateErr",
                                                                   name)));
-//                        ret = ProcessResult.ERROR;
+                        ret = ProcessResult.ERROR;
                     }                    
                     String hashSetName = db.getHashSetName();
                     
@@ -199,8 +198,7 @@ public class HashDbIngestModule implements FileIngestModule {
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.lookingUpKnownBadHashValueErr",
                                                           name)));
-// RJCTODO
-                //                ret = ProcessResult.ERROR;
+                ret = ProcessResult.ERROR;
             }
         }
 
@@ -217,8 +215,7 @@ public class HashDbIngestModule implements FileIngestModule {
                             break;
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
-                            // RJCTODO
-                            //                            ret = ProcessResult.ERROR;
+                            ret = ProcessResult.ERROR;
                         }
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
@@ -232,18 +229,16 @@ public class HashDbIngestModule implements FileIngestModule {
                                           NbBundle.getMessage(this.getClass(),
                                                               "HashDbIngestModule.lookingUpKnownHashValueErr",
                                                               name)));
-                    // RJCTODO
-                    //                    ret = ProcessResult.ERROR;
+                    ret = ProcessResult.ERROR;
                 }
             }
         }
 
-//        return ret;
+        return ret;
     }
         
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
-            // RJCTODO
             String MODULE_NAME = NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
             
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
