@@ -82,13 +82,10 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     
     private void customizeComponents() {
         listener = new KeywordPropertyChangeListener();
-
         KeywordSearch.getServer().addServerActionListener(listener);
-
         Case.addPropertyChangeListener(listener);
 
         searchBox.addFocusListener(new FocusListener() {
-
             @Override
             public void focusGained(FocusEvent e) {
                 if (searchBox.getText()
@@ -107,9 +104,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
                 }
             }
         });
+        
         KeywordSearchListsViewerPanel listsPanel = KeywordSearchListsViewerPanel.getDefault();
         listsPanel.addSearchButtonActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 listsMenu.setVisible(false);
@@ -119,7 +116,6 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         listsMenu.setSize(listsPanel.getPreferredSize().width + 6, listsPanel.getPreferredSize().height + 6);
         listsMenu.add(listsPanel);
         listsMenu.addPopupMenuListener(new PopupMenuListener() {
-
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 listsButton.setSelected(true);
@@ -136,9 +132,28 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
+        DropdownSearchPanel dropPanel = DropdownSearchPanel.getDefault();
+        searchMenu.setSize(dropPanel.getPreferredSize().width + 6, dropPanel.getPreferredSize().height + 6);
+        searchMenu.add(dropPanel);
+        searchMenu.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                searchDropButton.setSelected(true);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                searchDropButton.setSelected(false);
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                searchDropButton.setSelected(false);
+            }
+        });        
+        
         searchBox.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
@@ -195,11 +210,13 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
+        searchMenu = new javax.swing.JPopupMenu();
         searchBoxPanel = new javax.swing.JPanel();
         searchBox = new javax.swing.JTextField();
         settingsLabel = new javax.swing.JLabel();
         searchButton = new javax.swing.JLabel();
         listsButton = new javax.swing.JButton();
+        searchDropButton = new javax.swing.JButton();
 
         regExCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.regExCheckboxMenuItem.text")); // NOI18N
         settingsMenu.add(regExCheckboxMenuItem);
@@ -273,15 +290,15 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(searchBoxPanelLayout.createSequentialGroup()
                 .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 9, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 206, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         searchBoxPanelLayout.setVerticalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(searchBox)
-            .addComponent(settingsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addComponent(searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
@@ -303,38 +320,37 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
+        searchDropButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png"))); // NOI18N
+        searchDropButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchDropButton.text")); // NOI18N
+        searchDropButton.setBorderPainted(false);
+        searchDropButton.setContentAreaFilled(false);
+        searchDropButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                searchDropButtonMousePressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(listsButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(searchDropButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(listsButton))
             .addComponent(searchBoxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+            .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
-        if (!entered) {
-            return;
-        }
-        getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            search();
-        } finally {
-            getRootPane().setCursor(null);
-        }
-    }//GEN-LAST:event_searchBoxActionPerformed
-
-    private void settingsLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMousePressed
-        maybeShowSettingsPopup(evt);
-    }//GEN-LAST:event_settingsLabelMousePressed
 
     private void listsButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listsButtonMousePressed
         maybeShowListsPopup(evt);
@@ -348,13 +364,34 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         searchBoxActionPerformed(null);
     }//GEN-LAST:event_searchButtonMousePressed
 
-    private void settingsLabelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseEntered
-        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png")));
-    }//GEN-LAST:event_settingsLabelMouseEntered
+    private void settingsLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMousePressed
+        maybeShowSettingsPopup(evt);
+    }//GEN-LAST:event_settingsLabelMousePressed
 
     private void settingsLabelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseExited
         settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png")));
     }//GEN-LAST:event_settingsLabelMouseExited
+
+    private void settingsLabelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseEntered
+        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png")));
+    }//GEN-LAST:event_settingsLabelMouseEntered
+
+    private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
+        if (!entered) {
+            return;
+        }
+        getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            search();
+        } finally {
+            getRootPane().setCursor(null);
+        }
+    }//GEN-LAST:event_searchBoxActionPerformed
+
+    private void searchDropButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchDropButtonMousePressed
+        maybeShowSearchPopup(evt);
+    }//GEN-LAST:event_searchDropButtonMousePressed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;
@@ -366,6 +403,8 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     private javax.swing.JTextField searchBox;
     private javax.swing.JPanel searchBoxPanel;
     private javax.swing.JLabel searchButton;
+    private javax.swing.JButton searchDropButton;
+    private javax.swing.JPopupMenu searchMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JPopupMenu settingsMenu;
@@ -466,4 +505,14 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         }
         listsMenu.show(listsButton, listsButton.getWidth() - listsMenu.getWidth(), listsButton.getHeight() - 1);
     }
+    
+    private void maybeShowSearchPopup(MouseEvent evt) {
+        if (!active) {
+            return;
+        }
+        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
+            return;
+        }
+        searchMenu.show(searchDropButton, searchDropButton.getWidth() - searchMenu.getWidth(), searchDropButton.getHeight() - 1);
+    }    
 }
