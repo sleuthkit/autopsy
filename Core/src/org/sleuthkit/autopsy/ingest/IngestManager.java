@@ -591,7 +591,6 @@ public class IngestManager {
     public synchronized boolean areModulesRunning() {
         for (IngestModuleAbstract serv : abstractFileModules) {
             if (serv.hasBackgroundJobsRunning()) {
-                logger.info("Module " + serv.toString() + " is running");
                 return true;
             }
         }

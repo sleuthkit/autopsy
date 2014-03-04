@@ -265,15 +265,12 @@ public class RegressionTest extends TestCase {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
         logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
-        int count = 0;
         while (man.isIngestRunning()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
         //boolean sleep = true;
         while (man.areModulesRunning()) {
-           count++; 
-           logger.info("count is " + count);
            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
         
