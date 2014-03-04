@@ -316,7 +316,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
                                                                       lus.get(0).getFile().getParent()));
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                MessageNotifyUtil.Notify.error("Error Extracting", "Error extracting unallocated space: " + ex.getMessage());
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
             } 
         }        
     }
