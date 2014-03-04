@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -37,6 +38,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -294,9 +296,15 @@ import org.sleuthkit.datamodel.VolumeSystem;
             for (UnallocStruct u : lus) {
                 lockedVols.remove(u.getFileName());
             }
-            if (!canceled && !lus.isEmpty()) {
-                MessageNotifyUtil.Notify.info("Completed extraction of unallocated space.", "Files were extracted to " + lus.get(0).getFile().getParent());
-            }
+            
+            try {
+                get();
+                if (!canceled && !lus.isEmpty()) {
+                   MessageNotifyUtil.Notify.info("Completed extraction of unallocated space.", "Files were extracted to " + lus.get(0).getFile().getParent());
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.error("Error Extracting", "Error extracting unallocated space: " + ex.getMessage());
+            } 
         }        
     }
 

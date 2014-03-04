@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /*
- * A background task (swingworker) that adds the given image to 
+ * A background task that adds the given image to 
  * database using the Sleuthkit JNI interface.
  * 
  * It updates the given ProgressMonitor as it works through adding the image,
@@ -76,7 +76,7 @@ import org.sleuthkit.datamodel.TskException;
         boolean noFatOrphans;
           
         /*
-         * A Swingworker that updates the progressMonitor with the name of the 
+         * A thread that updates the progressMonitor with the name of the 
          * directory currently being processed  by the AddImageTask 
          */
         private class CurrentDirectoryFetcher implements Runnable {
