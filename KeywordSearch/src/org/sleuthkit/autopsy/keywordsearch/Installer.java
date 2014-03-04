@@ -66,9 +66,9 @@ class Installer extends ModuleInstall {
                     int serverStopPort = server.getCurrentSolrStopPort();
                     logger.log(Level.SEVERE, "There's already a server running on "
                             + serverPort + " port that can't be shutdown.");
-                    if (!Server.available(serverPort)) {
+                    if (!Server.isPortAvailable(serverPort)) {
                         reportPortError(serverPort);
-                    } else if (!Server.available(serverStopPort)) {
+                    } else if (!Server.isPortAvailable(serverStopPort)) {
                         reportStopPortError(serverStopPort);
                     } else {
                         //some other reason
@@ -95,7 +95,7 @@ class Installer extends ModuleInstall {
             //TODO move some of this logic to Server class
             for (int i = 0; i <= 3; i++) {
                 logger.log(Level.INFO, "Checking if port available.");
-                if (Server.available(server.getCurrentSolrServerPort())) {
+                if (Server.isPortAvailable(server.getCurrentSolrServerPort())) {
                     logger.log(Level.INFO, "Port available, trying to start server.");
                     server.start();
                     break;
@@ -165,9 +165,9 @@ class Installer extends ModuleInstall {
                 //check if port is taken or some other reason
                 int serverPort = server.getCurrentSolrServerPort();
                 int serverStopPort = server.getCurrentSolrStopPort();
-                if (!Server.available(serverPort)) {
+                if (!Server.isPortAvailable(serverPort)) {
                     reportPortError(serverPort);
-                } else if (!Server.available(serverStopPort)) {
+                } else if (!Server.isPortAvailable(serverStopPort)) {
                     reportStopPortError(serverStopPort);
                 } else {
                     //some other reason
