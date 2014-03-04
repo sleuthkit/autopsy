@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -250,6 +251,15 @@ import org.sleuthkit.datamodel.TskData;
             return 0;
         }
         
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
+            }
+        }
+        
     }
     
     /**
@@ -336,6 +346,15 @@ import org.sleuthkit.datamodel.TskData;
             } catch (TskCoreException ex) {
                 // TODO
                 return Collections.EMPTY_LIST;
+            }
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
     }
@@ -587,6 +606,15 @@ import org.sleuthkit.datamodel.TskData;
                 module.endTable();
                 module.endDataType();
             }            
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
+            }
         }
         
         /**
