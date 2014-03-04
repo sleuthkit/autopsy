@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,8 +48,8 @@ public abstract class KeywordSearchListsAbstract {
 
     public KeywordSearchListsAbstract(String filePath) {
         this.filePath = filePath;
-        theLists = new LinkedHashMap<String, KeywordSearchList>();
-        lockedLists = new ArrayList<String>();
+        theLists = new LinkedHashMap<>();
+        lockedLists = new ArrayList<>();
         changeSupport = new PropertyChangeSupport(this);
     }
 
@@ -83,20 +83,20 @@ public abstract class KeywordSearchListsAbstract {
             return;
         }
         //phone number
-        List<Keyword> phones = new ArrayList<Keyword>();
+        List<Keyword> phones = new ArrayList<>();
         phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
         //phones.add(new Keyword("\\d{8,10}", false));
         //IP address
-        List<Keyword> ips = new ArrayList<Keyword>();
+        List<Keyword> ips = new ArrayList<>();
         ips.add(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS));
         //email
-        List<Keyword> emails = new ArrayList<Keyword>();
+        List<Keyword> emails = new ArrayList<>();
         emails.add(new Keyword("(?=.{8})[a-z0-9%+_-]+(?:\\.[a-z0-9%+_-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,4}(?<!\\.txt|\\.exe|\\.dll|\\.jpg|\\.xml)", 
                                false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL)); 
         //emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", 
         //                       false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
         //URL
-        List<Keyword> urls = new ArrayList<Keyword>();
+        List<Keyword> urls = new ArrayList<>();
         //urls.add(new Keyword("http://|https://|^www\\.", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
         urls.add(new Keyword("((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
 

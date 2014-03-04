@@ -147,6 +147,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
 
     @Override
+    public String getDisplayName() {
+        return KeywordSearchModuleFactory.getModuleName();
+    }
+        
+    @Override
     public ProcessResult process(AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
@@ -170,7 +175,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-        if (services.getAbstractFileModuleResult(hashDBModuleName) == IngestModuleAbstractFile.ProcessResult.ERROR) {
+        if (services.getAbstractFileModuleResult(hashDBModuleName) == ProcessResult.ERROR) {
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
@@ -203,7 +208,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return;
         }
 
-        //logger.log(Level.INFO, "complete()");
         commitTimer.stop();
 
         //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
@@ -241,8 +245,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         //cleanup done in final searcher
-
-        //postSummary();
     }
 
     /**
@@ -266,11 +268,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         runSearcher = false;
         finalSearcherDone = true;
 
-
         //commit uncommited files, don't search again
         commit();
-
-        //postSummary();
 
         cleanup();
     }
@@ -326,7 +325,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, this, msg, details));
                 return;
 
             }
@@ -335,16 +334,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //this means Solr is not properly initialized
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, this, msg, details));
             return;
         }
 
-
         //initialize extractors
-        stringExtractor = new AbstractFileStringExtract();
+        stringExtractor = new AbstractFileStringExtract(this);
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
 
         //log the scripts used for debugging
         final StringBuilder sbScripts = new StringBuilder();
@@ -356,8 +353,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new AbstractFileHtmlExtract(this));
-        textExtractors.add(new AbstractFileTikaTextExtract());
-
+        textExtractors.add(new AbstractFileTikaTextExtract(this));
 
         ingestStatus = new HashMap<>();
 
@@ -1069,7 +1065,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                                     }
                                     detailsSb.append("</table>");
                                 
-                                    services.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                    services.postMessage(IngestMessage.createDataMessage(++messageID, KeywordSearchIngestModule.this, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
 

@@ -71,8 +71,8 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
-    AbstractFileTikaTextExtract() {
-        this.module = KeywordSearchIngestModule.getDefault();
+    AbstractFileTikaTextExtract(KeywordSearchIngestModule module) {
+        this.module = module;
         ingester = Server.getIngester();
 
         Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
