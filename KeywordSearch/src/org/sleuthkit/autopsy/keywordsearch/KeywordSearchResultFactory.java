@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 
@@ -38,6 +39,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -615,6 +617,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
 
             return null;
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                // test if any exceptions were thrown
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error querying ", ex);
+            }
         }
 
         private static synchronized void registerWriter(ResultWriter writer) {
