@@ -107,25 +107,35 @@ class KeywordSearchQueryManager {
         for (Keyword keyword : keywords) {
             KeywordSearchQuery query = null;
             
-            switch (queryType) {
-                case LITERAL:
-                    query = new LuceneQuery(keyword);
-                    break;
-                case REGEX:
-                    if (keyword.isLiteral()) {
-                        query = new LuceneQuery(keyword);
-                    } else {
-                        query = new TermComponentQuery(keyword);
-                    }
-                    break;
-                default:
-                    ;
+            /**
+             * There are four combinations:             
+             * Substrings (we wrap with substring regex):
+             *     1. Literal query 
+             *     2. Regex query
+             * Whole words (no wrapping):
+             *     3. Literal query (Lucene search)
+             *     4. Regex query
+             */
+            if ((queryType == QueryType.LITERAL) && queryWholeword) {
+                query = new LuceneQuery(keyword);
+            } else {            
+                query = new TermComponentQuery(keyword);
             }
-                       
+
             if (query != null) {
+                /** It's important to escape (aka quote) the user's keyword if it's
+                 *  not a regexp since we will be wrapping it with regex for substrings 
+                 *  in most cases.
+                 */                
                 if (keyword.isLiteral()) {
                     query.escape();
                 }
+                
+                // Wrap the keyword with wildcards
+                if (!queryWholeword) {
+                    query.setSubstringQuery();
+                }
+                
                 queryDelegates.add(query);
             }
 
@@ -153,7 +163,7 @@ class KeywordSearchQueryManager {
             Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
             queryConcat.append(queryStr).append(" ");
-            things.add(new KeyValueQuery(decorateQuery(queryStr), kvs, ++queryID, q));
+            things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
         }
 
         Node rootNode;
@@ -178,21 +188,6 @@ class KeywordSearchQueryManager {
         searchResultWin.requestActive();
         // }
     }
-
-    /**
-     * Adds prefixes and suffixes to make the query treated as a substring
-     * Any needed literal escaping will have already been added by the KeywordSearchQuery object.
-     * @return New query string
-     */
-    private String decorateQuery(String keywordQueryStr) {
-        if (!queryWholeword) {
-            // allow substring matches
-            String queryStr = ".*" + keywordQueryStr + ".*";
-            return queryStr;
-        } else {
-            return keywordQueryStr;
-        }
-    }    
     
     /**
      * validate the queries before they are run
