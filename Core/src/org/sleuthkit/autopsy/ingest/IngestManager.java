@@ -58,7 +58,7 @@ public class IngestManager {
 //    private IngestManagerStats stats; // RJCTODO: Decide whether to reimplement
     private final IngestScheduler scheduler;
     private IngestAbstractFileProcessor abstractFileIngester;
-//    private List<IngestDataSourceThread> dataSourceIngesters; // RJCTODO: Adapt to new paradigm
+    private List<IngestDataSourceThread> dataSourceIngesters;
     private SwingWorker<Object, Void> queueWorker;
 //    private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<>(); RJCTODO: May be obsolete
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
@@ -672,14 +672,13 @@ public class IngestManager {
         }
     }
 
-    // RJCTODO: Data source ingest is temporarily disabled
     //data source worker to remove itself when complete or interrupted
-//    void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
-//        //remove worker
-//        synchronized (this) {
-//            dataSourceIngesters.remove(worker);
-//        }
-//    }
+    void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
+        //remove worker
+        synchronized (this) {
+            dataSourceIngesters.remove(worker);
+        }
+    }
 
 // RJCTODO: Decide whether or not to reimplement this class
     /**

@@ -66,7 +66,7 @@ public class HashDbIngestModule implements FileIngestModule {
     }
     
     @Override
-    public void init(long dataSourceTaskId) {
+    public void init(long taskId) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
@@ -76,22 +76,20 @@ public class HashDbIngestModule implements FileIngestModule {
         calcHashesIsSet = hashDbManager.getAlwaysCalculateHashes();
 
         if (knownHashSets.isEmpty()) {
-            // RJCTODO
-//            services.postMessage(IngestMessage.createWarningMessage(++messageId,
-//                                this,
-//                                NbBundle.getMessage(this.getClass(),
-//                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
-//                                NbBundle.getMessage(this.getClass(),
-//                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+            services.postMessage(IngestMessage.createWarningMessage(++messageId,
+                                this,
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
         }
         if (knownBadHashSets.isEmpty()) {
-            // RJCTODO
-//            services.postMessage(IngestMessage.createWarningMessage(++messageId,
-//                                this,
-//                                NbBundle.getMessage(this.getClass(),
-//                                                    "HashDbIngestModule.noKnownBadHashDbSetMsg"),
-//                                NbBundle.getMessage(this.getClass(),
-//                                                    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
+            services.postMessage(IngestMessage.createWarningMessage(++messageId,
+                                this,
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.noKnownBadHashDbSetMsg"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
         }        
     }
     
@@ -122,7 +120,6 @@ public class HashDbIngestModule implements FileIngestModule {
         
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
-//            return ProcessResult.OK;
             return;
         }
 
@@ -136,14 +133,14 @@ public class HashDbIngestModule implements FileIngestModule {
                 calctime += (System.currentTimeMillis() - calcstart);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
-//                services.postMessage(IngestMessage.createErrorMessage(++messageId,
-//                                      HashDbIngestModule.this,
-//                                      NbBundle.getMessage(this.getClass(),
-//                                                          "HashDbIngestModule.fileReadErrorMsg",
-//                                                          name),
-//                                      NbBundle.getMessage(this.getClass(),
-//                                                          "HashDbIngestModule.calcHashValueErr",
-//                                                          name)));
+                services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                                      HashDbIngestModule.this,
+                                      NbBundle.getMessage(this.getClass(),
+                                                          "HashDbIngestModule.fileReadErrorMsg",
+                                                          name),
+                                      NbBundle.getMessage(this.getClass(),
+                                                          "HashDbIngestModule.calcHashValueErr",
+                                                          name)));
 //                return ProcessResult.ERROR;
                 return;
             }
@@ -163,14 +160,14 @@ public class HashDbIngestModule implements FileIngestModule {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
                     } catch (TskException ex) {
                         logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
-//                        services.postMessage(IngestMessage.createErrorMessage(++messageId,
-//                                              HashDbIngestModule.this,
-//                                              NbBundle.getMessage(this.getClass(),
-//                                                                  "HashDbIngestModule.hashLookupErrorMsg",
-//                                                                  name),
-//                                              NbBundle.getMessage(this.getClass(),
-//                                                                  "HashDbIngestModule.settingKnownBadStateErr",
-//                                                                  name)));
+                        services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                                              HashDbIngestModule.this,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "HashDbIngestModule.hashLookupErrorMsg",
+                                                                  name),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "HashDbIngestModule.settingKnownBadStateErr",
+                                                                  name)));
 //                        ret = ProcessResult.ERROR;
                     }                    
                     String hashSetName = db.getHashSetName();
@@ -194,15 +191,16 @@ public class HashDbIngestModule implements FileIngestModule {
                 lookuptime += (System.currentTimeMillis() - lookupstart);
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
-//                services.postMessage(IngestMessage.createErrorMessage(++messageId,
-//                                      HashDbIngestModule.this,
-//                                      NbBundle.getMessage(this.getClass(),
-//                                                          "HashDbIngestModule.hashLookupErrorMsg",
-//                                                          name),
-//                                      NbBundle.getMessage(this.getClass(),
-//                                                          "HashDbIngestModule.lookingUpKnownBadHashValueErr",
-//                                                          name)));
-//                ret = ProcessResult.ERROR;
+                services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                                      HashDbIngestModule.this,
+                                      NbBundle.getMessage(this.getClass(),
+                                                          "HashDbIngestModule.hashLookupErrorMsg",
+                                                          name),
+                                      NbBundle.getMessage(this.getClass(),
+                                                          "HashDbIngestModule.lookingUpKnownBadHashValueErr",
+                                                          name)));
+// RJCTODO
+                //                ret = ProcessResult.ERROR;
             }
         }
 
@@ -219,29 +217,23 @@ public class HashDbIngestModule implements FileIngestModule {
                             break;
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
-//                            services.postMessage(IngestMessage.createErrorMessage(++messageId,
-//                                                  HashDbIngestModule.this,
-//                                                  NbBundle.getMessage(this.getClass(),
-//                                                                      "HashDbIngestModule.hashLookupErrorMsg",
-//                                                                      name),
-//                                                  NbBundle.getMessage(this.getClass(),
-//                                                                      "HashDbIngestModule.settingsKnownStateErr",
-//                                                                      name)));
-//                            ret = ProcessResult.ERROR;
+                            // RJCTODO
+                            //                            ret = ProcessResult.ERROR;
                         }
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);
-//                    services.postMessage(IngestMessage.createErrorMessage(++messageId,
-//                                          HashDbIngestModule.this,
-//                                          NbBundle.getMessage(this.getClass(),
-//                                                              "HashDbIngestModule.hashLookupErrorMsg",
-//                                                              name),
-//                                          NbBundle.getMessage(this.getClass(),
-//                                                              "HashDbIngestModule.lookingUpKnownHashValueErr",
-//                                                              name)));
-//                    ret = ProcessResult.ERROR;
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                                          HashDbIngestModule.this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbIngestModule.hashLookupErrorMsg",
+                                                              name),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbIngestModule.lookingUpKnownHashValueErr",
+                                                              name)));
+                    // RJCTODO
+                    //                    ret = ProcessResult.ERROR;
                 }
             }
         }
@@ -294,13 +286,13 @@ public class HashDbIngestModule implements FileIngestModule {
 
                 detailsSb.append("</table>");
 
-//                services.postMessage(IngestMessage.createDataMessage(++messageId, this,
-//                         NbBundle.getMessage(this.getClass(),
-//                                             "HashDbIngestModule.postToBB.knownBadMsg",
-//                                             abstractFile.getName()),
-//                         detailsSb.toString(),
-//                         abstractFile.getName() + md5Hash,
-//                         badFile));
+                services.postMessage(IngestMessage.createDataMessage(++messageId, this,
+                         NbBundle.getMessage(this.getClass(),
+                                             "HashDbIngestModule.postToBB.knownBadMsg",
+                                             abstractFile.getName()),
+                         detailsSb.toString(),
+                         abstractFile.getName() + md5Hash,
+                         badFile));
             }
             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
@@ -337,12 +329,12 @@ public class HashDbIngestModule implements FileIngestModule {
             }
 
             detailsSb.append("</ul>");
-//            services.postMessage(IngestMessage.createMessage(++messageId,
-//                                 IngestMessage.MessageType.INFO,
-//                                 this,
-//                                 NbBundle.getMessage(this.getClass(),
-//                                                     "HashDbIngestModule.complete.hashLookupResults"),
-//                                 detailsSb.toString()));
+            services.postMessage(IngestMessage.createMessage(++messageId,
+                                 IngestMessage.MessageType.INFO,
+                                 this,
+                                 NbBundle.getMessage(this.getClass(),
+                                                     "HashDbIngestModule.complete.hashLookupResults"),
+                                 detailsSb.toString()));
         }
     }
     
