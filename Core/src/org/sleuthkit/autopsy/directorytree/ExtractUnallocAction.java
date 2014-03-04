@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -37,6 +38,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -303,13 +305,21 @@ import org.sleuthkit.datamodel.VolumeSystem;
             for (UnallocStruct u : lus) {
                 lockedVols.remove(u.getFileName());
             }
-            if (!canceled && !lus.isEmpty()) {
-                MessageNotifyUtil.Notify.info(NbBundle.getMessage(this.getClass(),
-                                                                  "ExtractUnallocAction.done.notifyMsg.completedExtract.title"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "ExtractUnallocAction.done.notifyMsg.completedExtract.msg",
-                                                                  lus.get(0).getFile().getParent()));
-            }
+            
+            try {
+                get();
+                if (!canceled && !lus.isEmpty()) {
+                    MessageNotifyUtil.Notify.info(NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.title"),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.msg",
+                                                                      lus.get(0).getFile().getParent()));
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
+            } 
         }        
     }
 

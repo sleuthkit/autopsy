@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
@@ -234,17 +235,18 @@ public final class ExtractAction extends AbstractAction {
         
         @Override
         protected void done() {
+            boolean msgDisplayed = false;
             try {
                 super.get();
             } 
-            catch (CancellationException | InterruptedException ex) {
-            } 
             catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during file extraction", ex);
-            } 
+                MessageNotifyUtil.Message.info("Error extracting files: " + ex.getMessage());
+                msgDisplayed = true;
+            }  
             finally {
                 progress.finish();
-                if (!this.isCancelled()) {
+                if (!this.isCancelled() && !msgDisplayed) {
                     MessageNotifyUtil.Message.info(
                             NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.fileExtr.text"));
                 } 

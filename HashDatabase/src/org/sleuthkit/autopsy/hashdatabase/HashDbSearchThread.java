@@ -32,13 +32,12 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.FsContent;
 
 class HashDbSearchThread extends SwingWorker<Object,Void> {
     private Logger logger = Logger.getLogger(HashDbSearchThread.class.getName());
     private ProgressHandle progress;
     private Map<String, List<AbstractFile>> map;
-    private ArrayList<String> hashes = new ArrayList<String>();
+    private ArrayList<String> hashes = new ArrayList<>();
     private AbstractFile file;
     
     HashDbSearchThread(AbstractFile file) {
