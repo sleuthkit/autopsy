@@ -61,25 +61,25 @@ class KeywordSearchQueryManager {
      * @param presentation Presentation layout
      */
     public KeywordSearchQueryManager(List<Keyword> queries, boolean wholeword, Presentation presentation) {
-        this.keywords = queries;
-        this.presentation = presentation;
         queryType = QueryType.REGEX;
         queryWholeword = wholeword;
+        this.presentation = presentation;        
+        keywords = queries;
         init();
     }
 
     /**
-     * 
+     * KeywordSearchQueryManager will change a literal keyword to regex unless wholeword is set
      * @param query Keyword to search for
      * @param qt Query type
      * @param presentation Presentation Layout
      */
     public KeywordSearchQueryManager(String query, QueryType qt, boolean wholeword, Presentation presentation) {
-        keywords = new ArrayList<>();
-        keywords.add(new Keyword(query, qt == QueryType.REGEX ? false : true));
-        this.presentation = presentation;
         queryType = qt;
-        queryWholeword = wholeword;
+        queryWholeword = wholeword;        
+        this.presentation = presentation;
+        keywords = new ArrayList<>();
+        keywords.add(new Keyword(query, ((queryType == QueryType.LITERAL) && queryWholeword) ? true : false));
         init();
     }
 
@@ -90,11 +90,11 @@ class KeywordSearchQueryManager {
      * @param presentation Presentation layout
      */
     public KeywordSearchQueryManager(String query, boolean isLiteral, boolean wholeword, Presentation presentation) {
+        queryType = isLiteral ? QueryType.LITERAL : QueryType.REGEX;
+        queryWholeword = wholeword;
         keywords = new ArrayList<>();
         keywords.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
-        queryType = isLiteral ? QueryType.LITERAL : QueryType.REGEX;
-        queryWholeword = wholeword;
         init();
     }
 
@@ -108,28 +108,27 @@ class KeywordSearchQueryManager {
             KeywordSearchQuery query = null;
             
             /**
-             * There are four combinations:             
+             * There are three usable combinations:             
              * Substrings (we wrap with substring regex):
              *     1. Literal query 
-             *     2. Regex query
              * Whole words (no wrapping):
-             *     3. Literal query (Lucene search)
-             *     4. Regex query
+             *     2. Literal query (Lucene search)
+             *     3. Regex query
              */
-            if ((queryType == QueryType.LITERAL) && queryWholeword) {
+            if (keyword.isLiteral()) {
                 query = new LuceneQuery(keyword);
             } else {            
                 query = new TermComponentQuery(keyword);
             }
 
             if (query != null) {
-                /** It's important to escape (aka quote) the user's keyword if it's
-                 *  not a regexp since we will be wrapping it with regex for substrings 
-                 *  in most cases.
-                 */                
                 if (keyword.isLiteral()) {
                     query.escape();
                 }
+                // This is commented out because it messes up highlighting somehow        
+                //else if (!queryWholeword) {
+                //  query.escape();
+                //}
                 
                 // Wrap the keyword with wildcards
                 if (!queryWholeword) {
@@ -138,7 +137,6 @@ class KeywordSearchQueryManager {
                 
                 queryDelegates.add(query);
             }
-
         }
     }
 
