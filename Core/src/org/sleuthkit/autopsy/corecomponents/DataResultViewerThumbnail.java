@@ -24,6 +24,7 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -31,6 +32,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
@@ -40,6 +43,7 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -421,7 +425,17 @@ import org.sleuthkit.datamodel.TskCoreException;
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();        
+                updateControls();  
+                // see if any exceptions were thrown
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    NotifyDescriptor d =
+                        new NotifyDescriptor.Message("Error making thumbnails: " + ex.getMessage(), 
+                            NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(d);
+                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
+                }
             }
         }.execute();
 
