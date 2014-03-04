@@ -40,6 +40,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -47,6 +48,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -942,6 +944,9 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
     
+    /**
+     * Worker thread to make an index of a database
+     */
     private class HashDbIndexer extends SwingWorker<Object, Void> {
         private ProgressHandle progress = null;
         private HashDb hashDb = null;
@@ -976,6 +981,16 @@ public class HashDbManager implements PropertyChangeListener {
         protected void done() {
             hashDb.indexing = false;
             progress.finish();
+            
+            // see if we got any errors
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error creating index", ex);
+                MessageNotifyUtil.Notify.show("Error creating index",
+                    "Error creating index: " + ex.getMessage(), 
+                    MessageNotifyUtil.MessageType.ERROR);
+            }
             
             try {
                  hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
