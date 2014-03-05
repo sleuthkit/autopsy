@@ -269,7 +269,6 @@ public class RegressionTest extends TestCase {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
-        //boolean sleep = true;
         while (man.areModulesRunning()) {
            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
