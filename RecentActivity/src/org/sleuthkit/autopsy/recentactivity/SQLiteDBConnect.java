@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report;
+package org.sleuthkit.autopsy.recentactivity;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Database connection class & utilities *
  */
- public class SQLiteDBConnect {
+class SQLiteDBConnect {
 
     public String sDriver = "";
     public String sUrl = null;

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
