@@ -143,19 +143,10 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        settingsMenu = new javax.swing.JPopupMenu();
-        regExCheckboxMenuItem = new javax.swing.JCheckBoxMenuItem();
-        wholewordCheckboxMenuItem = new javax.swing.JCheckBoxMenuItem();
         listsMenu = new javax.swing.JPopupMenu();
         searchMenu = new javax.swing.JPopupMenu();
         listsButton = new javax.swing.JButton();
         searchDropButton = new javax.swing.JButton();
-
-        regExCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.regExCheckboxMenuItem.text")); // NOI18N
-        settingsMenu.add(regExCheckboxMenuItem);
-
-        wholewordCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.wholewordCheckboxMenuItem.text")); // NOI18N
-        settingsMenu.add(wholewordCheckboxMenuItem);
 
         setOpaque(false);
 
@@ -228,11 +219,8 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton listsButton;
     private javax.swing.JPopupMenu listsMenu;
-    private javax.swing.JCheckBoxMenuItem regExCheckboxMenuItem;
     private javax.swing.JButton searchDropButton;
     private javax.swing.JPopupMenu searchMenu;
-    private javax.swing.JPopupMenu settingsMenu;
-    private javax.swing.JCheckBoxMenuItem wholewordCheckboxMenuItem;
     // End of variables declaration//GEN-END:variables
 
     @Override
