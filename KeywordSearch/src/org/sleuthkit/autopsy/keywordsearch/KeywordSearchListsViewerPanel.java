@@ -78,7 +78,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         listsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //customize column witdhs
         final int leftWidth = leftPane.getPreferredSize().width;
-        TableColumn column = null;
+        TableColumn column;
         for (int i = 0; i < listsTable.getColumnCount(); i++) {
             column = listsTable.getColumnModel().getColumn(i);
             if (i == 0) {
@@ -114,7 +114,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
-        final KeywordSearchIngestModule module = KeywordSearchIngestModule.getDefault();
         if (IngestManager.getDefault().isIngestRunning()) {
             initIngest(true);
         } else {
@@ -127,13 +126,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
                 if (changed.equals(IngestModuleEvent.COMPLETED.toString())
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(false);
                 } else if (changed.equals(IngestModuleEvent.STARTED.toString())
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(true);
                 } else if (changed.equals(IngestModuleEvent.STOPPED.toString())
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(false);
                 }
             }
@@ -143,7 +142,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (ingestRunning) {
-                    module.addKeywordLists(listsTableModel.getSelectedLists());
+                    KeywordListsManager.getInstance().addKeywordListsToAllIngestJobs(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest");
                 } else {
                     searchAction(e);
@@ -152,7 +151,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         };
 
         searchAddButton.addActionListener(searchAddListener);
-
     }
 
     /**
@@ -304,7 +302,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
     @Override
     public List<Keyword> getQueryList() {
-        List<Keyword> ret = new ArrayList<Keyword>();
+        List<Keyword> ret = new ArrayList<>();
         for (KeywordSearchListsAbstract.KeywordSearchList list : getSelectedLists()) {
             ret.addAll(list.getKeywords());
         }
@@ -338,7 +336,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         //data
 
         private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
-        private List<ListTableEntry> listData = new ArrayList<ListTableEntry>();
+        private List<ListTableEntry> listData = new ArrayList<>();
 
         @Override
         public int getColumnCount() {
@@ -375,23 +373,25 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             for (int i = 0; i <= rowIndex; ++i) {
                 entry = it.next();
             }
-            switch (columnIndex) {
-                case 0:
-                    ret = (Object) entry.selected;
-                    break;
-                case 1:
-                    ret = (Object) entry.name;
-                    break;
-                default:
-                    break;
+            if (null != entry) {
+                switch (columnIndex) {
+                    case 0:
+                        ret = (Object) entry.selected;
+                        break;
+                    case 1:
+                        ret = (Object) entry.name;
+                        break;
+                    default:
+                        break;
+                }
             }
             return ret;
         }
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
-            return (columnIndex == 0 && (!ingestRunning || !locked.contains((String) getValueAt(rowIndex, 1))));
+            List<String> locked = KeywordListsManager.getInstance().getKeywordListsForAllIngestJobs();
+            return (columnIndex == 0 && (!locked.contains((String) getValueAt(rowIndex, 1))|| !ingestRunning));
         }
 
         @Override
@@ -418,7 +418,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         List<String> getAllLists() {
-            List<String> ret = new ArrayList<String>();
+            List<String> ret = new ArrayList<>();
             for (ListTableEntry e : listData) {
                 ret.add(e.name);
             }
@@ -430,7 +430,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         List<String> getSelectedLists() {
-            List<String> ret = new ArrayList<String>();
+            List<String> ret = new ArrayList<>();
             for (ListTableEntry e : listData) {
                 if (e.selected) {
                     ret.add(e.name);
@@ -440,7 +440,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         List<KeywordSearchListsAbstract.KeywordSearchList> getSelectedListsL() {
-            List<KeywordSearchListsAbstract.KeywordSearchList> ret = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+            List<KeywordSearchListsAbstract.KeywordSearchList> ret = new ArrayList<>();
             for (String s : getSelectedLists()) {
                 ret.add(listsHandle.getList(s));
             }
@@ -492,7 +492,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
     private class KeywordsTableModel extends AbstractTableModel {
 
-        List<KeywordTableEntry> listData = new ArrayList<KeywordTableEntry>();
+        List<KeywordTableEntry> listData = new ArrayList<>();
 
         @Override
         public int getRowCount() {
@@ -529,15 +529,17 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             for (int i = 0; i <= rowIndex; ++i) {
                 entry = it.next();
             }
-            switch (columnIndex) {
-                case 0:
-                    ret = (Object) entry.name;
-                    break;
-                case 1:
-                    ret = (Object) entry.regex;
-                    break;
-                default:
-                    break;
+            if (null != entry) {
+                switch (columnIndex) {
+                    case 0:
+                        ret = (Object) entry.name;
+                        break;
+                    case 1:
+                        ret = (Object) entry.regex;
+                        break;
+                    default:
+                        break;
+                }
             }
             return ret;
         }
@@ -599,7 +601,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setVerticalAlignment(JCheckBox.CENTER);
 
             String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> currentIngest = KeywordSearchIngestModule.getDefault().getKeywordLists();
+            List<String> currentIngest = KeywordListsManager.getInstance().getKeywordListsForAllIngestJobs();
             boolean currentIngestUsed = currentIngest.contains(name);
             setEnabled(!currentIngestUsed || !ingestRunning);
 

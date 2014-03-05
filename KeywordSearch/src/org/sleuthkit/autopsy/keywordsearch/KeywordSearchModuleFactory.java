@@ -29,7 +29,8 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 
 /**
- * An factory that creates file ingest modules that do keyword searches.
+ * An ingest module factory that creates file ingest modules that do keyword 
+ * searching.
  */
 @ServiceProvider(service=IngestModuleFactory.class)
 public class KeywordSearchModuleFactory extends AbstractIngestModuleFactory {
@@ -64,14 +65,15 @@ public class KeywordSearchModuleFactory extends AbstractIngestModuleFactory {
     
     @Override
     public JPanel getIngestOptionsPanel(Serializable ingestOptions) {
-        KeywordSearchListsXML.getCurrent().reload();
-        return new KeywordSearchIngestSimplePanel(); // RJCTODO: Load required?  
+        KeywordSearchIngestSimplePanel ingestOptionsPanel = new KeywordSearchIngestSimplePanel();  
+        ingestOptionsPanel.load();
+        return ingestOptionsPanel; 
     }
     
     @Override
     public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) throws IngestModuleFactory.InvalidOptionsException {
         if (!(ingestOptionsPanel instanceof KeywordSearchIngestSimplePanel)) {
-            throw new IngestModuleFactory.InvalidOptionsException(""); // RJCTODO
+            throw new IllegalArgumentException("JPanel not a KeywordSearchIngestSimplePanel");
         }
 
         KeywordSearchIngestSimplePanel panel = (KeywordSearchIngestSimplePanel)ingestOptionsPanel;
@@ -100,7 +102,6 @@ public class KeywordSearchModuleFactory extends AbstractIngestModuleFactory {
         
         KeywordSearchConfigurationPanel panel = (KeywordSearchConfigurationPanel)globalOptionsPanel;
         panel.store();
-        // RJCTODO: Need simple panel store? May need to change implementation...see also hash db factory
     }
     
     @Override

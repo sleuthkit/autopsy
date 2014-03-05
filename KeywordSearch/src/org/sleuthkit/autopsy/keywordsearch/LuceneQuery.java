@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private String keywordStringEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
-    private final List <KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
+    private final List <KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
@@ -127,13 +128,12 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
-        Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
+        Map<String, List<ContentHit>> results = new HashMap<>();
         //in case of single term literal query there is only 1 term
         results.put(keywordString, performLuceneQuery());
 
         return results;
     }
-
 
     @Override
     public boolean validate() {
@@ -142,11 +142,11 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
-        final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
+        final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-        KeywordWriteResult writeResult = null;
-        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
-        BlackboardArtifact bba = null;
+        KeywordWriteResult writeResult;
+        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        BlackboardArtifact bba;
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
@@ -194,7 +194,7 @@ class LuceneQuery implements KeywordSearchQuery {
      */
     private List<ContentHit> performLuceneQuery() throws NoOpenCoreException {
 
-        List<ContentHit> matches = new ArrayList<ContentHit>();
+        List<ContentHit> matches = new ArrayList<>();
 
         boolean allMatchesFetched = false;
 
@@ -228,7 +228,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
                 allMatchesFetched = start + MAX_RESULTS >= results;
-                SleuthkitCase sc = null;
+                SleuthkitCase sc;
                 try {
                     sc = Case.getCurrentCase().getSleuthkitCase();
                 } catch (IllegalStateException ex) {
@@ -308,7 +308,7 @@ class LuceneQuery implements KeywordSearchQuery {
     public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
         Server solrServer = KeywordSearch.getServer();
 
-        String highlightField = null;
+        String highlightField;
         if (isRegex) {
             highlightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
         } else {
@@ -317,7 +317,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
         SolrQuery q = new SolrQuery();
 
-        String queryStr = null;
+        String queryStr;
         
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
@@ -339,7 +339,7 @@ class LuceneQuery implements KeywordSearchQuery {
         
         q.setQuery(queryStr);
 
-        String contentIDStr = null;
+        String contentIDStr;
 
         if (chunkID == 0) {
             contentIDStr = Long.toString(contentID);

@@ -172,13 +172,13 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
                 if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
                 } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(0);
                 } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
                 }
             }
@@ -219,9 +219,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         boolean noKeywords = !listSet ? true : currentKeywordList.getKeywords().isEmpty();
 
         // Certain buttons will be disabled if ingest is ongoing on this list
-        List<String> ingestLists = new ArrayList<String>();
+        List<String> ingestLists = new ArrayList<>();
         if (ingestOngoing) {
-            ingestLists = KeywordSearchIngestModule.getDefault().getKeywordLists();
+            ingestLists = KeywordListsManager.getInstance().getDefaultKeywordLists();
         }
         boolean inIngest = !listSet ? false : ingestLists.contains(currentKeywordList.getName());
 

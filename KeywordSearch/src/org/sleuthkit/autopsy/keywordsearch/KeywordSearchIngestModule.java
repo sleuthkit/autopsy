@@ -49,7 +49,6 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -79,7 +78,6 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
     enum UpdateFrequency {
-
         FAST(20),
         AVG(10),
         SLOW(5),
@@ -95,19 +93,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return time;
         }
     };
+    
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchIngestModule.class,
-                                                                 "KeywordSearchIngestModule.moduleName");
-    public static final String MODULE_DESCRIPTION = NbBundle.getMessage(KeywordSearchIngestModule.class,
-                                                                        "KeywordSearchIngestModule.moduleDescription");
-    final public static String MODULE_VERSION = Version.getVersion();
+    private long ingestJobId;
     private IngestServices services;
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
-    private List<Keyword> keywords; //keywords to search
-    private List<String> keywordLists; // lists currently being searched
-    private Map<String, KeywordSearchListsAbstract.KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
     private Indexer indexer;
@@ -129,8 +121,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
     private boolean initialized = false;
-    private KeywordSearchIngestSimplePanel simpleConfigPanel;
-    private KeywordSearchConfigurationPanel advancedConfigPanel;
     private Tika tikaFormatDetector;
     
     private enum IngestStatus {
@@ -226,7 +216,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         postIndexSummary();
 
         //run one last search as there are probably some new files committed
-        if (keywordLists != null && !keywordLists.isEmpty() && processedFiles == true) {
+        List<String> keywordLists = KeywordListsManager.getInstance().getKeywordListsForIngestJob(ingestJobId);        
+        if (!keywordLists.isEmpty() && processedFiles == true) {
             finalSearcher = new Searcher(keywordLists, true); //final searcher run
             finalSearcher.execute();
         } else {
@@ -293,10 +284,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors = null;
         stringExtractor = null;
 
-        keywords.clear();
-        keywordLists.clear();
-        keywordToList.clear();
-
         tikaFormatDetector = null;
 
         initialized = false;
@@ -308,7 +295,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *
      */
     @Override
-    public void init(long taskId) {
+    public void init(long ingestJobId) {
+        this.ingestJobId = ingestJobId;
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
@@ -357,16 +345,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         ingestStatus = new HashMap<>();
 
-        keywords = new ArrayList<>();
-        keywordLists = new ArrayList<>();
-        keywordToList = new HashMap<>();
-
-        initKeywords();
-
-        if (keywords.isEmpty() || keywordLists.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-        }
+        // RJCTODO: Fetch lists for job and check?
+//        if (keywords.isEmpty() || keywordLists.isEmpty()) {
+//            services.postMessage(IngestMessage.createWarningMessage(++messageID, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+//                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+//        }
 
         processedFiles = false;
         finalSearcherDone = false;
@@ -507,57 +490,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
 
     /**
-     * Initialize the keyword search lists and associated keywords from the XML
-     * loader Use the lists to ingest that are set in the permanent XML
-     * configuration
-     */
-    private void initKeywords() {
-        addKeywordLists(null);
-    }
-
-    /**
-     * If ingest is ongoing, this will add additional keyword search lists to
-     * the ongoing ingest The lists to add may be temporary and not necessary
-     * set to be added to ingest permanently in the XML configuration. The lists
-     * will be reset back to original (permanent configuration state) on the
-     * next ingest.
-     *
-     * @param listsToAdd lists to add temporarily to the ongoing ingest
-     */
-    void addKeywordLists(List<String> listsToAdd) {
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-
-        keywords.clear();
-        keywordLists.clear();
-        keywordToList.clear();
-
-        StringBuilder sb = new StringBuilder();
-
-        for (KeywordSearchListsAbstract.KeywordSearchList list : loader.getListsL()) {
-            final String listName = list.getName();
-            if (list.getUseForIngest() == true
-                    || (listsToAdd != null && listsToAdd.contains(listName))) {
-                keywordLists.add(listName);
-                sb.append(listName).append(" ");
-            }
-            for (Keyword keyword : list.getKeywords()) {
-                if (!keywords.contains(keyword)) {
-                    keywords.add(keyword);
-                    keywordToList.put(keyword.getQuery(), list);
-                }
-            }
-
-        }
-
-        logger.log(Level.INFO, "Set new effective keyword lists: {0}", sb.toString());
-
-    }
-
-    List<String> getKeywordLists() {
-        return keywordLists == null ? new ArrayList<String>() : keywordLists;
-    }
-
-    /**
      * Check if time to commit, if so, run commit. Then run search if search
      * timer is also set.
      */
@@ -572,7 +504,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //in worst case, we will run search next time after commit timer goes off, or at the end of ingest
             if (searcherDone && runSearcher) {
                 //start search if previous not running
-                if (keywordLists != null && !keywordLists.isEmpty()) {
+                List<String> keywordLists = KeywordListsManager.getInstance().getKeywordListsForIngestJob(ingestJobId);
+                if (!keywordLists.isEmpty()) {
                     currentSearcher = new Searcher(keywordLists);
                     currentSearcher.execute();//searcher will stop timer and restart timer when done
                 }
@@ -1075,7 +1008,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     } //if has results
 

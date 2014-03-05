@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.EventQueue;
@@ -556,7 +557,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             });
 
             if (!this.isCancelled() && !na.isEmpty()) {
-                IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchIngestModule.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }
 

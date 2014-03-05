@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- * Simple ingest config panel
+ * Ingest options panel for the keyword search file ingest module.
  */
 public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     
@@ -39,10 +38,9 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     private KeywordTableModel tableModel;
     private List<KeywordSearchListsAbstract.KeywordSearchList> lists;
 
-    /** Creates new form KeywordSearchIngestSimplePanel */
-    public KeywordSearchIngestSimplePanel() {
+    KeywordSearchIngestSimplePanel() {
         tableModel = new KeywordTableModel();
-        lists = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+        lists = new ArrayList<>();
         reloadLists();
         initComponents();
         customizeComponents();
@@ -56,7 +54,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         //customize column witdhs
         final int width = listsScrollPane.getPreferredSize().width;
         listsTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-        TableColumn column = null;
+        TableColumn column;
         for (int i = 0; i < listsTable.getColumnCount(); i++) {
             column = listsTable.getColumnModel().getColumn(i);
             if (i == 0) {
@@ -183,7 +181,6 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     private void reloadLangs() {
-        //TODO multiple
         List<SCRIPT> scripts = KeywordSearchSettings.getStringExtractScripts();
         StringBuilder langs = new StringBuilder();
         langs.append("<html>");
@@ -202,7 +199,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     private void reloadEncodings() {
         String utf8 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString());
         String utf16 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString());
-        ArrayList<String> encodingsList = new ArrayList<String>();
+        ArrayList<String> encodingsList = new ArrayList<>();
         if(utf8==null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
         }
@@ -260,7 +257,6 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         @Override
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
-        }
-        
+        }        
     }
 }
