@@ -254,7 +254,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 listName = list.getName();
             }
 
-            final boolean literal_query = tcq.isEscaped();
+            final boolean literal_query = tcq.isLiteral();
 
             int resID = 0;
             for (final AbstractFile f : hitContents.keySet()) {

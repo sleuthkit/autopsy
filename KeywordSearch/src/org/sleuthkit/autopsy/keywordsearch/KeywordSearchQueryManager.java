@@ -125,10 +125,9 @@ class KeywordSearchQueryManager {
                 if (keyword.isLiteral()) {
                     query.escape();
                 }
-                // This is commented out because it messes up highlighting somehow        
-                //else if (!queryWholeword) {
-                //  query.escape();
-                //}
+                else if (!queryWholeword) {
+                    query.escape();
+                }
                 
                 // Wrap the keyword with wildcards
                 if (!queryWholeword) {
