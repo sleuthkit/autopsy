@@ -147,16 +147,17 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         searchMenu = new javax.swing.JPopupMenu();
         listsButton = new javax.swing.JButton();
         searchDropButton = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setOpaque(false);
 
-        listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon.png"))); // NOI18N
+        listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png"))); // NOI18N
         listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleName")); // NOI18N
         listsButton.setBorderPainted(false);
         listsButton.setContentAreaFilled(false);
         listsButton.setEnabled(false);
-        listsButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-rollover.png"))); // NOI18N
-        listsButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-pressed.png"))); // NOI18N
+        listsButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png"))); // NOI18N
+        listsButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-pressed.png"))); // NOI18N
         listsButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 listsButtonMousePressed(evt);
@@ -173,9 +174,9 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         searchDropButton.setBorderPainted(false);
         searchDropButton.setContentAreaFilled(false);
         searchDropButton.setEnabled(false);
-        searchDropButton.setMaximumSize(new java.awt.Dimension(118, 27));
-        searchDropButton.setMinimumSize(new java.awt.Dimension(118, 27));
-        searchDropButton.setPreferredSize(new java.awt.Dimension(118, 27));
+        searchDropButton.setMaximumSize(new java.awt.Dimension(146, 27));
+        searchDropButton.setMinimumSize(new java.awt.Dimension(146, 27));
+        searchDropButton.setPreferredSize(new java.awt.Dimension(146, 27));
         searchDropButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/searchbutton-icon-rollover.png"))); // NOI18N
         searchDropButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/searchbutton-icon-pressed.png"))); // NOI18N
         searchDropButton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -184,6 +185,8 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -191,16 +194,19 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(listsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchDropButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(listsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator1)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -217,6 +223,7 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     }//GEN-LAST:event_searchDropButtonMousePressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JButton listsButton;
     private javax.swing.JPopupMenu listsMenu;
     private javax.swing.JButton searchDropButton;
