@@ -56,6 +56,7 @@ import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -265,14 +266,14 @@ public class RegressionTest extends TestCase {
         }
         logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
         while (man.isIngestRunning()) {
-
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
-        boolean sleep = true;
+        //boolean sleep = true;
         while (man.areModulesRunning()) {
-            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
+           new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
+        
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
@@ -299,10 +300,13 @@ public class RegressionTest extends TestCase {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
+        JListOperator listOperator = new JListOperator(reportDialogOperator);
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
+        listOperator.clickOnItem(1, 1);
+        new Timeout("pausing", 1000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
