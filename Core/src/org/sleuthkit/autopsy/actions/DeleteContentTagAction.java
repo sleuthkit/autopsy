@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.ContentTag;
@@ -32,7 +34,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to delete tags applied to content.  
  */
 public class DeleteContentTagAction extends TagAction {
-    private static final String MENU_TEXT = "Delete Tag(s)";
+    private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
+                                                                "DeleteContentTagAction.deleteTags");
         
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -59,7 +62,12 @@ public class DeleteContentTagAction extends TagAction {
             }
             catch (TskCoreException ex) {                        
                 Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex);                
-                JOptionPane.showMessageDialog(null, "Unable to delete tag " + tag.getName() + ".", "Tag Deletion Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "DeleteContentTagAction.unableToDelTag.msg",
+                                                                  tag.getName()),
+                                              NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
+                                              JOptionPane.ERROR_MESSAGE);
             }                    
         }                             
     }    

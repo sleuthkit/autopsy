@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -85,7 +87,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             }
                         
             // Create a "Quick Tag" sub-menu.
-            JMenu quickTagMenu = new JMenu("Quick Tag");
+            JMenu quickTagMenu = new JMenu(NbBundle.getMessage(this.getClass(), "AddTagAction.quickTag"));
             add(quickTagMenu);    
             
             // Each tag name in the current set of tags gets its own menu item in
@@ -105,7 +107,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
                 }
             }
             else {
-                JMenuItem empty = new JMenuItem("No tags");
+                JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
                 empty.setEnabled(false);
                 quickTagMenu.add(empty);                
             }
@@ -115,7 +117,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
-            JMenuItem newTagMenuItem = new JMenuItem("New Tag...");
+            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
             newTagMenuItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -131,7 +133,8 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an 
             // optional comment and adds a tag with the resulting name.
-            JMenuItem tagAndCommentItem = new JMenuItem("Tag and Comment...");
+            JMenuItem tagAndCommentItem = new JMenuItem(
+                    NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
             tagAndCommentItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
