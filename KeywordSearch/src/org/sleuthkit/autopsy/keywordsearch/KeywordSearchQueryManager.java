@@ -156,8 +156,9 @@ class KeywordSearchQueryManager {
         for (KeywordSearchQuery q : queryDelegates) {
             Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
+            final String escQueryStr = q.getEscapedQueryString();
             queryConcat.append(queryStr).append(" ");
-            things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
+            things.add(new KeyValueQuery(escQueryStr, kvs, ++queryID, q));
         }
 
         Node rootNode;
