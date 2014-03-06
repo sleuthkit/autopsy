@@ -67,7 +67,7 @@ package org.sleuthkit.autopsy.filetypeid;
             .addGroup(layout.createSequentialGroup()
                 .addGap(11, 11, 11)
                 .addComponent(skipKnownCheckBox)
-                .addContainerGap(175, Short.MAX_VALUE))
+                .addContainerGap(45, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

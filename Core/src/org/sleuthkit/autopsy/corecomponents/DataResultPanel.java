@@ -110,7 +110,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
-        
         setName(title);
 
         //custom content viewer tc to setup for every result viewer
@@ -152,6 +151,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return newDataResult;
     }
 
+    
+    /**
+     * Factory method to create, customize and open a new custom data result panel.
+     * Does NOT call open(). Client must manually initialize by calling open().
+     *
+     * @param title Title of the component window
+     * @param pathText Descriptive text about the source of the nodes displayed
+     * @param givenNode The new root node
+     * @param totalMatches Cardinality of root node's children
+     * @param dataContent a handle to data content to send selection events to
+     * @return a new DataResultPanel instance representing a custom data result viewer
+     */
+    public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node givenNode, int totalMatches, DataContent dataContent) {
+        DataResultPanel newDataResult = new DataResultPanel(title, dataContent);
+
+        createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
+        return newDataResult;
+    }
+    
+    
     /**
      * Common code for factory helper methods
      * @param pathText
@@ -250,30 +269,31 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
+                    
                 // If a custom DataContent object has not been specified, get the default instance.
                 DataContent contentViewer = customContentViewer;
-                if (null == contentViewer) {
+                if (contentViewer == null) {
                     contentViewer = Lookup.getDefault().lookup(DataContent.class);
                 }
 
                 try {
-                    Node[] selectedNodes = explorerManager.getSelectedNodes();
-                    for (UpdateWrapper drv : viewers) {
-                        drv.setSelectedNodes(selectedNodes);
-                    }                                
+                    if (contentViewer != null) {                       
+                        Node[] selectedNodes = explorerManager.getSelectedNodes();
+                        for (UpdateWrapper drv : viewers) {
+                            drv.setSelectedNodes(selectedNodes);
+                        }                                
 
-                    // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
-                    // This is important to the DataContent object, since the content mode (area) of the app is designed 
-                    // to show only the content underlying a single Node.                                
-                    if (selectedNodes.length == 1) {
-                        contentViewer.setNode(selectedNodes[0]);
-                    } 
-                    else {                                    
-                        contentViewer.setNode(null);
+                        // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
+                        // This is important to the DataContent object, since the content mode (area) of the app is designed 
+                        // to show only the content underlying a single Node.                                
+                        if (selectedNodes.length == 1) {
+                            contentViewer.setNode(selectedNodes[0]);
+                        } 
+                        else {                                    
+                            contentViewer.setNode(null);
+                        }
                     }
-                } 
-                finally {
+                } finally {
                     setCursor(null);
                 }
             }

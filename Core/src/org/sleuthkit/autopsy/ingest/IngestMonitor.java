@@ -123,7 +123,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
                     String changed = evt.getPropertyName();
                     Object newValue = evt.getNewValue();
 
-                    if (changed.equals(Case.CASE_CURRENT_CASE)) {
+                    if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                         if (newValue != null) {
                             setMonitorDir();
                         }

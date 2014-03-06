@@ -23,8 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
@@ -33,7 +33,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -143,7 +142,7 @@ class FileExtMismatchXML {
      * @return Loaded hash map or null on error or null if data does not exist
      */
     public boolean save(HashMap<String, String[]> sigTypeToExtMap) {    
-        boolean success = false;
+        boolean success;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
 
@@ -154,16 +153,17 @@ class FileExtMismatchXML {
             Element rootEl = doc.createElement(ROOT_EL);
             doc.appendChild(rootEl);
             
-            Iterator<String> keyIt = sigTypeToExtMap.keySet().iterator();
+            ArrayList<String> appTypeList = new ArrayList<>(sigTypeToExtMap.keySet());
+            Collections.sort(appTypeList);
             
-            while (keyIt.hasNext()) {
-                String key = keyIt.next();
+            for (String appType : appTypeList) {
                 Element sigEl = doc.createElement(SIG_EL);
-                sigEl.setAttribute(SIG_MIMETYPE_ATTR, key);
+                sigEl.setAttribute(SIG_MIMETYPE_ATTR, appType);
                 
-                String[] extArray = sigTypeToExtMap.get(key);
+                String[] extArray = sigTypeToExtMap.get(appType);
                 if (extArray != null) {
                     ArrayList<String> extList = new ArrayList<>(Arrays.asList(extArray));
+                    Collections.sort(extList);
                     for (String ext : extList) {
                         Element extEl = doc.createElement(EXT_EL);
                         extEl.setTextContent(ext);

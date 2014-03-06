@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,47 +61,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static String appName = null;
-    /**
-     * Property name that indicates the name of the current case has changed.
-     * When a case is opened, "old name" is empty string and "new name" is the name.
-     * When a case is closed, "old name" is the case name and "new name" is empty string.
-     * When a case is renamed, "old name" has the original name and "new name" has the new name. 
-     */
-    public static final String CASE_NAME = "caseName";
-    /**
-     * Property name that indicates the number of the current case has changed.
-     * Fired with the case number is changed. The value is an int: the number of
-     * the case. -1 is used for no case number set.
-     */
-    public static final String CASE_NUMBER = "caseNumber";
-    /**
-     * Property name that indicates the examiner of the current case has
-     * changed. Fired with the case examiner is changed. The value is a String:
-     * the name of the examiner. The empty string ("") is used for no examiner
-     * set.
-     */
-    public static final String CASE_EXAMINER = "caseExaminer";
-    /**
-     * Property name that indicates a new data source (image, disk or local
-     * file) has been added to the current case. The new value is the
-     * newly-added instance of the new data source, and the old value is always
-     * null.
-     */
-    public static final String CASE_ADD_DATA_SOURCE = "addDataSource";
-    /**
-     * Property name that indicates a data source has been removed from the
-     * current case. The "old value" is the (int) content ID of the data source
-     * that was removed, the new value is the instance of the data source.
-     */
-    public static final String CASE_DEL_DATA_SOURCE = "removeDataSource";
-    /**
-     * Property name that indicates the currently open case has changed. 
-     * When a case is opened, the "new value" will be an instance of the opened
-     * Case object and the "old value" will be null.
-     * When a case is closed, the "new value" will be null and the "old value" 
-     * will be the instance of the Case object being closed. 
-     */
-    public static final String CASE_CURRENT_CASE = "currentCase";
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -114,69 +74,53 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Events that the case module will fire. Event listeners can get the event
      * name by using String returned by toString() method on a specific event.
      */
-    /* @@@ BC: I added this as a place holder for what I want this to be, but 
-     * this is not the time to change it.  We'll start using this at a major release
-     * version. 
-     */
-    private enum CaseModuleEvent_DoNotUse {
-       /**
-        * Property name that indicates the name of the current case has changed.
-        * Fired with the case is renamed, and when the current case is
-        * opened/closed/changed. The value is a String: the name of the case. The
-        * empty string ("") is used for no open case.
-        */
-       // @@@ BC: I propose that this is no longer called for case open/close.
-       CASE_NAME("caseName"),
-       
-       /**
-        * Property name that indicates the number of the current case has changed.
-        * Fired with the case number is changed. The value is an int: the number of
-        * the case. -1 is used for no case number set.
-        */
-       CASE_NUMBER("caseNumber"),
-       
-       /**
-        * Property name that indicates the examiner of the current case has
-        * changed. Fired with the case examiner is changed. The value is a String:
-        * the name of the examiner. The empty string ("") is used for no examiner
-        * set.
-        */
-       CASE_EXAMINER("caseExaminer"),
-       
-       /**
-        * Property name that indicates a new data source (image, disk or local
-        * file) has been added to the current case. The new value is the
-        * newly-added instance of the new data source, and the old value is always
-        * null.
-        */
-       CASE_ADD_DATA_SOURCE("addDataSource"),
-       
-       /**
-        * Property name that indicates a data source has been removed from the
-        * current case. The "old value" is the (int) content ID of the data source
-        * that was removed, the new value is the instance of the data source.
-        */
-       CASE_DEL_DATA_SOURCE("removeDataSource"),
-       
+    public enum Events {
         /**
-         * Property name that indicates the currently open case has changed. The new
-         * value is the instance of the opened Case, or null if there is no open
-         * case. The old value is the instance of the closed Case, or null if there
-         * was no open case.
+         * Property name that indicates the name of the current case has
+         * changed. When a case is opened, "old name" is empty string and "new
+         * name" is the name. When a case is closed, "old name" is the case name
+         * and "new name" is empty string. When a case is renamed, "old name"
+         * has the original name and "new name" has the new name.
          */
-        CASE_CURRENT_CASE("currentCase");
- 
-        private String name;
-        CaseModuleEvent_DoNotUse(String name) {
-            this.name = name;
-        }
-        
-        public String getName() {
-            return this.name;
-        }
+        // @@@ BC: I propose that this is no longer called for case open/close.
+        NAME,
+        /**
+         * Property name that indicates the number of the current case has
+         * changed. Fired with the case number is changed. The value is an int:
+         * the number of the case. -1 is used for no case number set.
+         */
+        NUMBER,
+        /**
+         * Property name that indicates the examiner of the current case has
+         * changed. Fired with the case examiner is changed. The value is a
+         * String: the name of the examiner. The empty string ("") is used for
+         * no examiner set.
+         */
+        EXAMINER,
+        /**
+         * Property name that indicates a new data source (image, disk or local
+         * file) has been added to the current case. The new value is the
+         * newly-added instance of the new data source, and the old value is
+         * always null.
+         */
+        DATA_SOURCE_ADDED,
+        /**
+         * Property name that indicates a data source has been removed from the
+         * current case. The "old value" is the (int) content ID of the data
+         * source that was removed, the new value is the instance of the data
+         * source.
+         */
+        DATA_SOURCE_DELETED,
+        /**
+         * Property name that indicates the currently open case has changed.
+         * When a case is opened, the "new value" will be an instance of the
+         * opened Case object and the "old value" will be null. When a case is
+         * closed, the "new value" will be null and the "old value" will be the
+         * instance of the Case object being closed.
+         */
+        CURRENT_CASE;
     };
 
-    
     private String name;
     private String number;
     private String examiner;
@@ -244,7 +188,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             doCaseChange(null); //closes windows, etc
 
             try {
-                pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
+                pcs.firePropertyChange(Events.CURRENT_CASE.toString(), oldCase, null);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -253,7 +197,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             doCaseNameChange("");
             
             try {
-                pcs.firePropertyChange(CASE_NAME, oldCase.name, "");
+                pcs.firePropertyChange(Events.NAME.toString(), oldCase.name, "");
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -266,7 +210,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             
             try {
-                pcs.firePropertyChange(CASE_CURRENT_CASE, null, currentCase);
+                pcs.firePropertyChange(Events.CURRENT_CASE.toString(), null, currentCase);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -276,7 +220,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             
             try {
-                pcs.firePropertyChange(CASE_NAME, "", currentCase.name);
+                pcs.firePropertyChange(Events.NAME.toString(), "", currentCase.name);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case threw exception", e);
@@ -441,7 +385,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Image newImage = db.getImageById(imgId);
            
                     try {
-                        pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newImage); // the new value is the instance of the image
+                        pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newImage); // the new value is the instance of the image
                     }
                     catch (Exception e) {
                         logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -463,14 +407,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
    @Deprecated
     void addLocalDataSource(Content newDataSource) {
         
-        try {
-            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Case listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
-        }
-        CoreComponentControl.openCoreWindows();
+        notifyNewDataSource(newDataSource);
     }
 
     /**
@@ -482,7 +419,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     void notifyNewDataSource(Content newDataSource) {
         
         try {
-            pcs.firePropertyChange(CASE_ADD_DATA_SOURCE, null, newDataSource);
+            pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newDataSource);
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Case threw exception", e);
@@ -563,7 +500,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             name = newCaseName; // change the local value
             RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
             try {
-                pcs.firePropertyChange(CASE_NAME, oldCaseName, newCaseName);
+                pcs.firePropertyChange(Events.NAME.toString(), oldCaseName, newCaseName);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -587,7 +524,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
             examiner = newExaminer;      
             try {
-                pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
+                pcs.firePropertyChange(Events.EXAMINER.toString(), oldExaminer, newExaminer);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
@@ -610,7 +547,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             number = newCaseNumber;
     
             try {
-                pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
+                pcs.firePropertyChange(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber);
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);

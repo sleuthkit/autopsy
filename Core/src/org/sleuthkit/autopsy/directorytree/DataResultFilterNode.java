@@ -32,6 +32,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -130,11 +131,13 @@ public class DataResultFilterNode extends FilterNode {
      */
     @Override
     public Action getPreferredAction() {
-        // double click action(s) for volume node or directory node
-
-        final DisplayableItemNode originalNode;
-        originalNode = (DisplayableItemNode) this.getOriginal();
-
+        final Node original = this.getOriginal();
+        // Once had a org.openide.nodes.ChildFactory$WaitFilterNode passed in
+        if ((original instanceof DisplayableItemNode) == false) {
+            return null;
+        }
+        
+        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         return originalNode.accept(getPreferredActionsDIV);
     }
 

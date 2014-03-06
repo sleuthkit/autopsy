@@ -150,7 +150,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         modules = new ArrayList<>();
         browserModules = new ArrayList();
         logger.log(Level.INFO, "init() {0}", this.toString());
@@ -158,6 +158,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
 
         final Extract registry = new ExtractRegistry();
         final Extract iexplore = new ExtractIE();
+        final Extract recentDocuments= new RecentDocumentsByLnk(); 
         final Extract chrome = new Chrome();
         final Extract firefox = new Firefox();
         final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
@@ -165,6 +166,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         modules.add(chrome);
         modules.add(firefox);
         modules.add(iexplore);
+        modules.add(recentDocuments);
         // this needs to run after the web browser modules
         modules.add(SEUQA);
         
@@ -178,7 +180,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         for (Extract module : modules) {
             try {
                 module.init(initContext);
-            } catch (Exception ex) {
+            } catch (IngestModuleException ex) {
                 logger.log(Level.SEVERE, "Exception during init() of " + module.getName(), ex);
             }
         }

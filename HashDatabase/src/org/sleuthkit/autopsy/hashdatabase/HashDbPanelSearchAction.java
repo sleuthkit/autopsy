@@ -25,6 +25,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
@@ -35,7 +36,7 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
  */
 class HashDbPanelSearchAction extends CallableSystemAction {
 
-    static final String ACTION_NAME = "File Search by MD5 Hash";
+    static final String ACTION_NAME = NbBundle.getMessage(HashDbPanelSearchAction.class, "HashDbPanelSearchAction.actionName");
     private static HashDbPanelSearchAction instance = null;
     
     HashDbPanelSearchAction() {
@@ -46,7 +47,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
                     setEnabled(evt.getNewValue() != null);
                 }
             }

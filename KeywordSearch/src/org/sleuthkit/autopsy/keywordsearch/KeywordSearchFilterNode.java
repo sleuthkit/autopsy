@@ -26,6 +26,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
@@ -127,11 +128,11 @@ class KeywordSearchFilterNode extends FilterNode {
         
         private List<Action> getFileActions() {
             List<Action> actions = new ArrayList<>();
-            actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
-            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+            actions.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
             actions.add(null);
             actions.add(ExtractAction.getInstance());
-            actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
+            actions.add(new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal()));
             actions.add(null); // creates a menu separator
             actions.add(AddContentTagAction.getInstance());
             actions.addAll(ContextMenuExtensionPoint.getActions());

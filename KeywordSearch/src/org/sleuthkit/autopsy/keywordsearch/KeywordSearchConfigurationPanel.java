@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
@@ -36,13 +37,16 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
     }
     
     private void customizeComponents() {
-        setName("Advanced Keyword Search Configuration");
+        setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
         listsPanel = new KeywordSearchConfigurationPanel1();
         languagesPanel = new KeywordSearchConfigurationPanel3();
         generalPanel = new KeywordSearchConfigurationPanel2();
-        tabbedPane.insertTab("Lists", null, listsPanel, "List configuration", 0);
-        tabbedPane.insertTab("String Extraction", null, languagesPanel, "String extraction configuration for Keyword Search Ingest", 1);
-        tabbedPane.insertTab("General", null, generalPanel, "General configuration", 2);        
+        tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
+                listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
+        tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
+                languagesPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtToolTip"), 1);
+        tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabTitle"), null,
+                generalPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabToolTip"), 2);
     }
 
     /**

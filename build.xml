@@ -80,6 +80,7 @@
         </if>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
+        <!-- for Japanese localized version add option:  -Duser.language=ja -->        
         <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->

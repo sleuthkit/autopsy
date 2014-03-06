@@ -113,7 +113,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         initialized = false;
 
@@ -326,6 +326,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         int processedItems = 0;
 
         String compressMethod = null;
+        boolean progressStarted = false;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
             inArchive = SevenZip.openInArchive(null, // autodetect archive type
@@ -335,6 +336,7 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.INFO, "Count of items in archive: " + archiveFile.getName() + ": "
                     + numItems);
             progress.start(numItems);
+            progressStarted = true;
 
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
@@ -524,11 +526,12 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 fullName = archiveFile.getName();
             }
 
-            String msg = "Error unpacking " + archiveFile.getName();
-            String details = "Error unpacking (" +
-                    (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "allocated" : "deleted") + ") " + fullName
-                    + ". " + ex.getMessage();
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+            // print a message if the file is allocated
+            if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                String msg = "Error unpacking " + archiveFile.getName();
+                String details = "Error unpacking  " + fullName + ". " + ex.getMessage();
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+            }
         } finally {
             if (inArchive != null) {
                 try {
@@ -547,7 +550,8 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             }
 
             //close progress bar
-            progress.finish();
+            if (progressStarted)
+                progress.finish();
         }
 
         //create artifact and send user message
@@ -607,22 +611,36 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     }
 
     private boolean isSupported(AbstractFile file) {
-        String fileNameLower = file.getName().toLowerCase();
-        int dotI = fileNameLower.lastIndexOf(".");
-        if (dotI == -1 || dotI == fileNameLower.length() - 1) {
-            return false; //no extension
-        }
-        
-        final String extension = fileNameLower.substring(dotI + 1);
+        // see if it is on the list of extensions
+        final String extension = file.getNameExtension();
         for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
             if (extension.equals(SUPPORTED_EXTENSIONS[i])) {
                 return true;
             }
         }
+            
+        // if no extension match, check the blackboard for the file type
+        boolean attributeFound = false;
+        try {
+            ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                attributeFound = true;
+                String fileType = attribute.getValueString();
+                if (!fileType.isEmpty() && fileType.equals("application/zip")) {
+                    return true;
+                }
+            }
+        } catch (TskCoreException ex) {
+            
+        }   
 
-        //if no extension match, check for zip signature
-        //(note, in near future, we will use pre-detected content type)
-        return isZipFileHeader(file);
+        // if no blackboard entry for file type, do it manually for ZIP files:
+        if (attributeFound) {
+            return false;
+        }
+        else {
+            return isZipFileHeader(file);
+        }
     }
 
     /**

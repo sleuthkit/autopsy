@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,7 +37,8 @@ position = 3,
 keywords = "#OptionsCategory_Keywords_HashDatabase",
 keywordsCategory = "HashDatabase",
 id = "HashDatabase")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
 
     private HashDbConfigPanel panel;
@@ -106,7 +108,10 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDatabaseOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
         
@@ -115,7 +120,10 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to HashDatabaseOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
     }
 }

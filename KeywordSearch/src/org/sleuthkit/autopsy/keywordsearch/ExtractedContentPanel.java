@@ -26,6 +26,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
@@ -41,6 +45,7 @@ import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 import javax.swing.text.html.StyleSheet;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 
@@ -384,7 +389,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @return currently available sources on the panel
      */
     public List<MarkupSource> getSources() {
-        ArrayList<MarkupSource> sources = new ArrayList<MarkupSource>();
+        ArrayList<MarkupSource> sources = new ArrayList<>();
         for (int i = 0; i < sourceComboBox.getItemCount(); ++i) {
             sources.add((MarkupSource) sourceComboBox.getItemAt(i));
         }
@@ -659,7 +664,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * background thread. To be invoked from GUI thread only.
      */
     private void setMarkup(MarkupSource source) {
-        setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>", false);
+        setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
         new SetMarkup(source).execute();
     }
 
@@ -693,6 +698,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         protected void done() {
             //super.done();
             progress.finish();
+            
+            // see if there are any errors
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error getting marked up text" );
+            }
+            
+            
             if (markup != null) {
                 setPanelText(markup, true);
             } else {
@@ -701,8 +715,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             updateControls(source);
 
             scrollToCurrentHit(source);
-
-
         }
     }
 }

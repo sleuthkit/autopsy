@@ -41,7 +41,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -75,11 +77,11 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.modules.ModuleInstall;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
@@ -97,6 +99,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -112,7 +115,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
-
+ 
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
     private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false);
     private TimelineFrame mainFrame;          //frame for holding all the elements
@@ -144,11 +147,12 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     private SleuthkitCase skCase;
     private boolean fxInited = false;
     private int monthCounter = 0;
+
     public Timeline() {
         super();
 
         fxInited = Installer.isJavaFxInited();
-
+       // TimeZone.setDefault(TimeZone.getTimeZone("UTC")); //sets the default timezone to UTC unless otherwise stated
     }
 
     //Swing components and JavafX components don't play super well together
@@ -619,7 +623,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (prop.equals(Case.CASE_ADD_DATA_SOURCE)) {
+        if (prop.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             if (mainFrame != null && !mainFrame.isVisible()) {
                 // change the lastObjectId to trigger a reparse of mactime barData
                 ++lastObjectId;
@@ -635,7 +639,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
             // call performAction as if the user selected 'Make Timeline' from the menu
             performAction();
-        } else if (prop.equals(Case.CASE_CURRENT_CASE)) {
+        } else if (prop.equals(Case.Events.CURRENT_CASE.toString())) {
             if (mainFrame != null && mainFrame.isVisible()) {
                 mainFrame.dispose();
                 mainFrame = null;
@@ -901,6 +905,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         }
     }
 
+    /**
+     * Parse the output of mactime to break the results in to day-sized chunks (in GMT)
+     * @param f handle to mactime csv output
+     * @return 
+     */
     private List<YearEpoch> parseMacTime(java.io.File f) {
         List<YearEpoch> years = new ArrayList<>();
         Scanner scan;
@@ -915,13 +924,35 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         int prevYear = -1;
         YearEpoch ye = null;
+
         while (scan.hasNextLine()) {
             String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
-            String[] datetime = s[0].split("T"); //{1999-02-08, 11:08:08Z}
-            String[] date = datetime[0].split("-"); // {1999, 02, 08}
+            
+            // break the date into year,month,day,hour,minute, and second: Note that the ISO times are in GMT
+            String delims = "[T:Z\\-]+"; //split by the delimiters
+            String[] date = s[0].split(delims); //{1999,02,08,11,08,08,...}
+   
             int year = Integer.valueOf(date[0]);
             int month = Integer.valueOf(date[1]) - 1; //Months are zero indexed: 1 = February, 6 = July, 11 = December
             int day = Integer.valueOf(date[2]); //Days are 1 indexed
+            int hour=Integer.valueOf(date[3]);
+            int minute=Integer.valueOf(date[4]);
+            int second=Integer.valueOf(date[5]);
+
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT")); //set calendar to GMT due to ISO format
+            calendar.set(year, month, day, hour, minute, second); 
+            day=calendar.get(Calendar.DAY_OF_MONTH); // this is needed or else timezone change wont work. probably incorrect optimization by compiler
+           
+            //conversion to GMT
+                
+            if (!ContentUtils.getDisplayInLocalTime()) {
+               calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+            }
+            else{
+                calendar.setTimeZone(TimeZone.getDefault());// local timezone OF the user. should be what the user SETS at startup
+            }
+            
+            day=calendar.get(Calendar.DAY_OF_MONTH);//get the day which may be affected by timezone change
             long ObjId = Long.valueOf(s[4]);
 
             // when the year changes, create and add a new YearEpoch object to the list
@@ -931,6 +962,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 prevYear = year;
             }
 
+            // save the object id along with the day
             if (ye != null) {
                 ye.add(ObjId, month, day);
             }
@@ -957,7 +989,6 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         // Get report path
         String bodyFilePath = moduleDir.getAbsolutePath()
                 + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
-
         // Run query to get all files
         final String filesAndDirs = "name != '.' "
                 + "AND name != '..'";
@@ -1044,6 +1075,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         return bodyFilePath;
     }
 
+    /**
+     * Run mactime on the given body file.  Generates CSV file with ISO dates (in GMT) 
+     * @param pathToBodyFile
+     * @return Path to output file. 
+     */
     private String makeMacTime(String pathToBodyFile) {
         String cmdpath = "";
         String macpath = "";
@@ -1098,7 +1134,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
     public void performAction() {
         initTimeline();
     }
-
+    
     private void initTimeline() {
         if (!Case.existsCurrentCase()) {
             return;

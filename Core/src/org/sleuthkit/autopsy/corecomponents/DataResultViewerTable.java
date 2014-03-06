@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 // service provider when DataResultViewers can be made compatible with node 
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
- class DataResultViewerTable extends AbstractDataResultViewer {
+ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = "Name";
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
@@ -236,6 +236,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         return true;
     }
 
+    /**
+     * Thread note: Make sure to run this in the EDT as it causes GUI operations.
+     * @param selectedNode 
+     */
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation

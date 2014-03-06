@@ -28,9 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Panel containing all other Keyword search Options panels.
@@ -59,9 +60,8 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
  
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (KeywordSearchUtil.displayConfirmDialog("Delete a keyword list"
-                        , "This will delete the keyword list globally (for all Cases). "
-                        + "Do you want to proceed with the deletion? "
+                if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title")
+                        , NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body" )
                         , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
 
                     KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
@@ -84,13 +84,14 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.keywordListEmptyErr"),
+                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                     return;
                 }
 
                 String listName = (String) JOptionPane.showInputDialog(
                         null,
-                        "New keyword list name:",
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                         FEATURE_NAME,
                         JOptionPane.PLAIN_MESSAGE,
                         null,
@@ -101,12 +102,12 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
                 }
 
                 if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Cannot overwrite default list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
                 }
                 boolean shouldAdd = false;
                 if (writer.listExists(listName)) {
-                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
+                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     if (replace) {
                         shouldAdd = true;
@@ -118,7 +119,7 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
 
                 if (shouldAdd) {
                     writer.addList(listName, keywords);
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
 
                 //currentKeywordList = writer.getList(listName);

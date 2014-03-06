@@ -76,7 +76,7 @@ import org.sleuthkit.datamodel.TskException;
 
     
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
     }
     
@@ -115,6 +115,10 @@ import org.sleuthkit.datamodel.TskException;
             return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
+            return ProcessResult.ERROR;
+        }
+        catch (Exception e) {
+            logger.log(Level.WARNING, "Error matching file signature", e);
             return ProcessResult.ERROR;
         }
     }

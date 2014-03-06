@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
@@ -65,9 +66,9 @@ class Installer extends ModuleInstall {
                     int serverStopPort = server.getCurrentSolrStopPort();
                     logger.log(Level.SEVERE, "There's already a server running on "
                             + serverPort + " port that can't be shutdown.");
-                    if (!Server.available(serverPort)) {
+                    if (!Server.isPortAvailable(serverPort)) {
                         reportPortError(serverPort);
-                    } else if (!Server.available(serverStopPort)) {
+                    } else if (!Server.isPortAvailable(serverStopPort)) {
                         reportStopPortError(serverStopPort);
                     } else {
                         //some other reason
@@ -94,7 +95,7 @@ class Installer extends ModuleInstall {
             //TODO move some of this logic to Server class
             for (int i = 0; i <= 3; i++) {
                 logger.log(Level.INFO, "Checking if port available.");
-                if (Server.available(server.getCurrentSolrServerPort())) {
+                if (Server.isPortAvailable(server.getCurrentSolrServerPort())) {
                     logger.log(Level.INFO, "Port available, trying to start server.");
                     server.start();
                     break;
@@ -164,9 +165,9 @@ class Installer extends ModuleInstall {
                 //check if port is taken or some other reason
                 int serverPort = server.getCurrentSolrServerPort();
                 int serverStopPort = server.getCurrentSolrStopPort();
-                if (!Server.available(serverPort)) {
+                if (!Server.isPortAvailable(serverPort)) {
                     reportPortError(serverPort);
-                } else if (!Server.available(serverStopPort)) {
+                } else if (!Server.isPortAvailable(serverStopPort)) {
                     reportStopPortError(serverStopPort);
                 } else {
                     //some other reason
@@ -201,12 +202,8 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server port " + curFailPort + " is not available. "
-                        + " Check if your security software does not block " + Version.getName()
-                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder."
-                        + " Then try rebooting your system if another process was causing the conflict. ";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportPortError", curFailPort, Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }
@@ -215,10 +212,8 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server stop port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_STOP_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder.";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportStopPortError", curFailPort, Server.PROPERTIES_CURRENT_STOP_PORT, Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }
@@ -227,14 +222,10 @@ class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
-                final String msg = "Indexing server port " + KeywordSearch.getServer().getCurrentSolrServerPort() + " is not available. "
-                        + " Check if your security software does not block " + Version.getName()
-                        + " and consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
-                        + Server.PROPERTIES_FILE + " property file in the application user folder."
-                        + " Then try rebooting your system if another process was causing the conflict. ";
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                final String msg = NbBundle.getMessage(this.getClass(), "Installer.reportInitError", KeywordSearch.getServer().getCurrentSolrServerPort(), Version.getName(), Server.PROPERTIES_CURRENT_SERVER_PORT, Server.PROPERTIES_FILE);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
 
-                MessageNotifyUtil.Notify.error("Error initializing Keyword Search module", msg);
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), msg);
             }
         });
     }

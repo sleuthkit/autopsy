@@ -88,19 +88,15 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
             skipped = true;
             return;
         }
-        
-        // Get the hash stored in the E01 file from the database
-        if (skCase.imageHasHash(img)) {
-            try {
-                storedHash = skCase.getImageHash(img).toLowerCase();
+
+            
+         if ((img.getMd5()!= null) && !img.getMd5().isEmpty()) 
+         {
+                storedHash = img.getMd5().toLowerCase();
                 logger.info("Hash value stored in " + imgName + ": " + storedHash);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get stored hash from image " + imgName, ex);
-                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
-                        "Error retrieving stored hash value from " + imgName));
-                return;
-            }
-        } else {
+            
+         }           
+         else {
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
                     "Image " + imgName + " does not have stored hash."));
             return;
@@ -157,7 +153,7 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
         running = false;

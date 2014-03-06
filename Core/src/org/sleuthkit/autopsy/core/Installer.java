@@ -44,12 +44,21 @@ public class Installer extends ModuleInstall {
     }
     
     private static void loadDynLibraries() {
+        /* On Windows, we distribute dlls that libtsk_jni depend on.
+         * If libtsk_jni tries to load them, they will not be found by
+         * Windows because they are in special NetBeans folders. So, we
+         * manually load them from within Autopsy so that they are found 
+         * via the NetBeans loading setup.  These are copied by the build
+         * script when making the ZIP file.  In a development environment
+         * they will need to be loaded from standard places in your system.
+         * 
+         * On non-Windows platforms, we assume the dependncies are all installed
+         * and loadable (i.e. a 'make install' was done). 
+         */
         if (PlatformUtil.isWindowsOS()) {
             try {
-                //on windows force loading ms crt dependencies first
-                //in case linker can't find them on some systems
                 //Note: if shipping with a different CRT version, this will only print a warning
-               //and try to use linker mechanism to find the correct versions of libs.
+                //and try to use linker mechanism to find the correct versions of libs.
                 //We should update this if we officially switch to a new version of CRT/compiler
                 System.loadLibrary("msvcr100");
                 System.loadLibrary("msvcp100");
@@ -116,10 +125,7 @@ public class Installer extends ModuleInstall {
                     MessageNotifyUtil.Notify.error(msg, details);
                 }
             });
-
-
         }
-
     }
 
     @Override

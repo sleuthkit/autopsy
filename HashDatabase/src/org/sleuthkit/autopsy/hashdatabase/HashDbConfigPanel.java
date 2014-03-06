@@ -36,6 +36,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -47,9 +49,12 @@ import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
  * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
 public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
-    private static final String NO_SELECTION_TEXT = "No database selected";
-    private static final String ERROR_GETTING_PATH_TEXT = "Error occurred getting path";
-    private static final String ERROR_GETTING_INDEX_STATUS_TEXT = "Error occurred getting status";
+    private static final String NO_SELECTION_TEXT = NbBundle
+            .getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.noSelectionText");
+    private static final String ERROR_GETTING_PATH_TEXT = NbBundle
+            .getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.errorGettingPathText");
+    private static final String ERROR_GETTING_INDEX_STATUS_TEXT = NbBundle
+            .getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private HashDbManager hashSetManager = HashDbManager.getInstance();
     private HashSetTableModel hashSetTableModel = new HashSetTableModel();    
         
@@ -71,7 +76,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }
         
     private void customizeComponents() {
-        setName("Hash Set Configuration");
+        setName(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.setName.hashSetConfig"));
         this.ingestWarningLabel.setVisible(false);
         this.hashSetTable.setModel(hashSetTableModel);
         this.hashSetTable.setTableHeader(null);
@@ -109,7 +114,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         // Update indexing components.
         hashDbIndexStatusLabel.setText(NO_SELECTION_TEXT);
         hashDbIndexStatusLabel.setForeground(Color.black);
-        indexButton.setText("Index");
+        indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
         indexButton.setEnabled(false);            
 
         // Update ingest options.
@@ -140,7 +145,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex);                            
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex);
             hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
         
@@ -148,39 +153,45 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             indexPathLabel.setText(shortenPath(db.getIndexPath()));
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex);                            
+            Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex);
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
         
         // Update indexing components.
         try {
             if (db.isIndexing()) {
-                indexButton.setText("Indexing");
-                hashDbIndexStatusLabel.setText("Index is currently being generated");
+                indexButton.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.indexing"));
+                hashDbIndexStatusLabel.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
                 hashDbIndexStatusLabel.setForeground(Color.black);
                 indexButton.setEnabled(false);
             }         
             else if (db.hasIndex()) {
                 if (db.hasIndexOnly()) {
-                    hashDbIndexStatusLabel.setText("Index only");                
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
                 }
                 else {
-                    hashDbIndexStatusLabel.setText("Indexed");
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexed"));
                 }
                 hashDbIndexStatusLabel.setForeground(Color.black);
                 if (db.canBeReIndexed()) {
-                    indexButton.setText("Re-Index");
+                    indexButton.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.reIndex"));
                     indexButton.setEnabled(true);
                 }
                 else {
-                    indexButton.setText("Index");
+                    indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
                     indexButton.setEnabled(false);                    
                 }
             }
             else {
-                hashDbIndexStatusLabel.setText("No index");
+                hashDbIndexStatusLabel.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
                 hashDbIndexStatusLabel.setForeground(Color.red);
-                indexButton.setText("Index");
+                indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
                 indexButton.setEnabled(true);
             }
         }
@@ -188,7 +199,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             Logger.getLogger(HashDbConfigPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex);                
             hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
             hashDbIndexStatusLabel.setForeground(Color.red);
-            indexButton.setText("Index");
+            indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
             indexButton.setEnabled(false);
         }     
         
@@ -264,7 +275,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashDatabase(hashDb);
+            hashSetManager.removeHashDatabaseInternal(hashDb);
         }
         hashSetTableModel.refreshModel();        
     }
@@ -282,12 +293,15 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             total+= "\n" + hdb.getHashSetName();
         }
         if(plural){
-            message = "The following databases are not indexed, would you like to index them now? \n " + total;
+            message = NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.dbsNotIndexedMsg", total);
         }
         else{
-            message = "The following database is not indexed, would you like to index it now? \n" + total;
+            message = NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.dbNotIndexedMsg", total);
         }
-        int res = JOptionPane.showConfirmDialog(this, message, "Unindexed databases", JOptionPane.YES_NO_OPTION);
+        int res = JOptionPane.showConfirmDialog(this, message,
+                                                NbBundle.getMessage(this.getClass(),
+                                                                                   "HashDbConfigPanel.unindexedDbsMsg"),
+                                                JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
             ModalNoButtons indexingDialog = new ModalNoButtons(this, new Frame(),unindexed);
             indexingDialog.setLocationRelativeTo(null);
@@ -296,7 +310,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             hashSetTableModel.refreshModel();
         }
         if(res == JOptionPane.NO_OPTION){
-            JOptionPane.showMessageDialog(this, "All unindexed databases will be removed the list");
+            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
+                                                                    "HashDbConfigPanel.allUnindexedDbsRmFromListMsg"));
             removeThese(unindexed);
         }
     }
@@ -362,7 +377,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
 
         @Override
         public String getColumnName(int column) {
-            return "Name";
+            return NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.nameColLbl");
         }
 
         @Override
@@ -387,7 +402,8 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            throw new UnsupportedOperationException("Editing of cells is not supported");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.editingCellsNotSupportedMsg"));
         }
 
         @Override
@@ -720,10 +736,15 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database for all cases. Do you want to proceed? ", "Delete Hash Database from Configuration", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(null,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "HashDbConfigPanel.deleteDbActionConfirmMsg"),
+                                          NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
+                                          JOptionPane.YES_NO_OPTION,
+                                          JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }
@@ -733,7 +754,7 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabase(hashDb);
+                hashSetManager.removeHashDatabaseInternal(hashDb);
                 hashSetTableModel.refreshModel();
             }
         }                
