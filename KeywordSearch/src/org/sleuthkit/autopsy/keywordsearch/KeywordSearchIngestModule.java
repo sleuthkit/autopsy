@@ -216,7 +216,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         postIndexSummary();
 
         //run one last search as there are probably some new files committed
-        List<String> keywordLists = KeywordListsManager.getInstance().getKeywordListsForIngestJob(ingestJobId);        
+        List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();        
         if (!keywordLists.isEmpty() && processedFiles == true) {
             finalSearcher = new Searcher(keywordLists, true); //final searcher run
             finalSearcher.execute();
@@ -477,7 +477,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //in worst case, we will run search next time after commit timer goes off, or at the end of ingest
             if (searcherDone && runSearcher) {
                 //start search if previous not running
-                List<String> keywordLists = KeywordListsManager.getInstance().getKeywordListsForIngestJob(ingestJobId);
+                List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
                 if (!keywordLists.isEmpty()) {
                     currentSearcher = new Searcher(keywordLists);
                     currentSearcher.execute();//searcher will stop timer and restart timer when done

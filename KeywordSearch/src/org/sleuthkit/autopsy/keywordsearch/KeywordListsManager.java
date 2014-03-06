@@ -19,24 +19,22 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Maintains the keyword lists to be used for file ingest.
+ * Keeps track, by name, of the keyword lists to be used for file ingest.
  */
-// Note: This is a first step towards a keyword lists manager, an extraction of 
-// the keyword list management code from the keyword search file ingest module.
+// Note: This is a first step towards a keyword lists manager; it consists of
+// the portion of the keyword list management code that resided in the keyword 
+// search file ingest module.
 final class KeywordListsManager {
 
     private static KeywordListsManager instance = null;
     private final Logger logger = Logger.getLogger(KeywordListsManager.class.getName());
-    private List<Keyword> keywords = new ArrayList<>();
-    private List<String> keywordLists = new ArrayList<>();
-    private Map<String, KeywordList> keywordToList = new HashMap<>();
+    private final List<String> keywordListNames = new ArrayList<>();
+    private final List<Keyword> keywords = new ArrayList<>();
 
     /**
      * Gets the keyword lists manager singleton.
@@ -48,54 +46,55 @@ final class KeywordListsManager {
         return instance;
     }
 
-    /**
-     * Creates a keyword lists manager initialized with the keyword lists
-     * specified in the global options for the keyword search file ingest
-     * module.
-     */
     private KeywordListsManager() {
-        // Passing null to this method makes use of a side effect of the method
-        // to cause the keyword lists from the global options to be added to 
-        // the keyword lists to be used during file ingest.
-        addKeywordLists(null);
     }
 
     /**
-     * RJCTODO
+     * Sets the keyword lists to be used for ingest. The lists that are used
+     * will be the union of the lists enabled using the keyword search global
+     * options panel and a selection, possibly empty, of the disabled lists.
      *
-     * @param listNames
+     * @param listNames The names of disabled lists to temporarily enable
      */
-    void addKeywordLists(List<String> listNames) {
+    void addKeywordListsForFileIngest(List<String> listNames) {
         keywords.clear();
-        keywordLists.clear();
-        keywordToList.clear();
+        keywordListNames.clear();
 
         StringBuilder logMessage = new StringBuilder();
         KeywordSearchListsXML globalKeywordSearchOptions = KeywordSearchListsXML.getCurrent();
         for (KeywordList list : globalKeywordSearchOptions.getListsL()) {
             String listName = list.getName();
             if ((list.getUseForIngest() == true) || (null != listNames && listNames.contains(listName))) {
-                keywordLists.add(listName);
+                keywordListNames.add(listName);
                 logMessage.append(listName).append(" ");
             }
 
             for (Keyword keyword : list.getKeywords()) {
                 if (!keywords.contains(keyword)) {
                     keywords.add(keyword);
-                    keywordToList.put(keyword.getQuery(), list);
                 }
             }
         }
 
         logger.log(Level.INFO, "Keyword lists for file ingest set to: {0}", logMessage.toString());
     }
-    
+
     /**
-     * RJCTODO
+     * Returns the keyword lists to be used for ingest, by name.
      *
-     * @return
+     * @return The names of the enabled keyword lists
      */
-    List<String> getKeywordLists() {
-        return new ArrayList<>(keywordLists);
+    List<String> getNamesOfKeywordListsForFileIngest() {
+        return new ArrayList<>(keywordListNames);
+    }
+
+    /**
+     * Indicates whether or not there are currently keywords for which to search
+     * during ingest.
+     *
+     * @return True if there are no keywords specified, false otherwise
+     */
+    boolean hasNoKeywordsForSearch() {
+        return (keywords.isEmpty());
     }
 }

@@ -221,7 +221,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         // Certain buttons will be disabled if ingest is ongoing on this list
         List<String> ingestLists = new ArrayList<>();
         if (ingestOngoing) {
-            ingestLists = KeywordListsManager.getInstance().getDefaultKeywordLists();
+            ingestLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
         }
         boolean inIngest = !listSet ? false : ingestLists.contains(currentKeywordList.getName());
 

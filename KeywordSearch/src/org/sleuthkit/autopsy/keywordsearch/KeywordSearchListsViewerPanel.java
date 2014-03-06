@@ -142,7 +142,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (ingestRunning) {
-                    KeywordListsManager.getInstance().addKeywordListsToAllIngestJobs(listsTableModel.getSelectedLists());
+                    KeywordListsManager.getInstance().addKeywordListsForFileIngest(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest");
                 } else {
                     searchAction(e);
@@ -390,7 +390,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            List<String> locked = KeywordListsManager.getInstance().getKeywordListsForAllIngestJobs();
+            List<String> locked = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
             return (columnIndex == 0 && (!locked.contains((String) getValueAt(rowIndex, 1))|| !ingestRunning));
         }
 
@@ -601,7 +601,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setVerticalAlignment(JCheckBox.CENTER);
 
             String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> currentIngest = KeywordListsManager.getInstance().getKeywordListsForAllIngestJobs();
+            List<String> currentIngest = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
             boolean currentIngestUsed = currentIngest.contains(name);
             setEnabled(!currentIngestUsed || !ingestRunning);
 
