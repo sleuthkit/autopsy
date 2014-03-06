@@ -24,14 +24,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.AbstractIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
@@ -41,14 +40,14 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
  * Format (EWF) E01 image file by generating a hash of the file and comparing it 
  * to the value stored in the image.
  */
-public class EwfVerifyIngestModule implements DataSourceIngestModule {
+public class EwfVerifyIngestModule extends AbstractIngestModule implements DataSourceIngestModule {
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
-    private IngestServices services;
+    private static final IngestServices services = IngestServices.getDefault();
+    private static Logger logger = null; // RJCTODO: Is this paradigm being used in general? If so, need to change IDE lint rules
     private volatile boolean running = false;
     private Image img;
     private String imgName;
     private MessageDigest messageDigest;
-    private static Logger logger = null;
     private static int messageId = 0;
     private boolean verified = false;
     private boolean skipped = false;
@@ -65,7 +64,6 @@ public class EwfVerifyIngestModule implements DataSourceIngestModule {
         
     @Override
     public void init(long taskId) {
-        services = IngestServices.getDefault();
         running = false;
         verified = false;
         skipped = false;
@@ -188,9 +186,5 @@ public class EwfVerifyIngestModule implements DataSourceIngestModule {
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, imgName +  msg, extra));
             logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
         }
-    }
-
-    @Override
-    public void stop() {
     }
 }

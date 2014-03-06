@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2014 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
- * Container panel for keyword search advanced configuration options
+ * Global options panel for keyword searching.
  */
+// RJCTODO: Why is this a public class?
 public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
@@ -76,11 +77,13 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
      */
     @Override
     public void load() {
-        // Deselect all table rows
+        // This calls actually clears the component. RJCTODO: Krazy!
         listsPanel.load();
+        
         languagesPanel.load();
         generalPanel.load();
-        // Reload the XML to avoid 'ghost' vars
+        
+        // Reload the XML to avoid 'ghost' vars RJCTODO: What does this mean?
         KeywordSearchListsXML.getCurrent().reload();
     }
 
@@ -99,7 +102,6 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
     }
     
     boolean valid() {
-        // TODO check whether form is consistent and complete
         return true;
     }
     

@@ -36,7 +36,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
     public static final String PROP_OPTIONS = "Keyword Search_Options";
     private KeywordTableModel tableModel;
-    private List<KeywordSearchListsAbstract.KeywordSearchList> lists;
+    private List<KeywordList> lists;
 
     KeywordSearchIngestSimplePanel() {
         tableModel = new KeywordTableModel();
@@ -230,7 +230,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            KeywordSearchListsAbstract.KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
             if(columnIndex == 0) {
                 return list.getUseForIngest();
             } else {
@@ -246,7 +246,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             
-            KeywordSearchListsAbstract.KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
             if(columnIndex == 0){
                 KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
                 loader.addList(list.getName(), list.getKeywords(), (Boolean) aValue, false);

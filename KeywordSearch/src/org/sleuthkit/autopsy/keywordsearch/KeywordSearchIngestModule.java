@@ -374,37 +374,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         searchTimer.start();
     }
           
-    // RJCTODO
-//    public void saveAdvancedConfiguration() {
-//        if (advancedConfigPanel != null) {
-//            advancedConfigPanel.store();
-//        }
-//        
-//        if (simpleConfigPanel != null) {
-//            simpleConfigPanel.load();
-//        }
-//    }
-//
-//    public void saveSimpleConfiguration() {
-//        KeywordSearchListsXML.getCurrent().save();
-//    }
-
-    /**
-     * The modules maintains background threads, return true if background
-     * threads are running or there are pending tasks to be run in the future,
-     * such as the final search post-ingest completion
-     *
-     * @return
-     */
-    // RJCTODO:
-//    public boolean hasBackgroundJobsRunning() {
-//        if ((currentSearcher != null && searcherDone == false)
-//                || (finalSearcherDone == false)) {
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    @Override
+    public boolean hasBackgroundTasksRunning() {
+        return ((null != currentSearcher && searcherDone == false) || (finalSearcherDone == false));
+    }
 
     /**
      * Commits index and notifies listeners of index update
@@ -741,7 +714,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          */
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordLists; // lists currently being searched
-        private Map<String, KeywordSearchListsAbstract.KeywordSearchList> keywordToList; //keyword to list name mapping
+        private Map<String, KeywordList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
         private boolean finalRun = false;
@@ -819,7 +792,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     }
 
                     final String queryStr = keywordQuery.getQuery();
-                    final KeywordSearchListsAbstract.KeywordSearchList list = keywordToList.get(queryStr);
+                    final KeywordList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
 
                     //new subProgress will be active after the initial query
@@ -1045,7 +1018,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             this.keywordToList.clear();
 
             for (String name : this.keywordLists) {
-                KeywordSearchListsAbstract.KeywordSearchList list = loader.getList(name);
+                KeywordList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
                     this.keywords.add(k);
                     this.keywordToList.put(k.getQuery(), list);

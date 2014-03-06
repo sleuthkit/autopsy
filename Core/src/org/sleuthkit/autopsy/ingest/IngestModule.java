@@ -60,6 +60,12 @@ public interface IngestModule {
     void init(long taskId);
     
     /**
+     * RJCTODO
+     * @return 
+     */
+    boolean hasBackgroundTasksRunning();    
+    
+    /**
      * Invoked when a single ingest of a particular data source is completed.  
      * The module should tear down internal data sources, release private 
      * resources, submit final results, and post a final ingest message. The

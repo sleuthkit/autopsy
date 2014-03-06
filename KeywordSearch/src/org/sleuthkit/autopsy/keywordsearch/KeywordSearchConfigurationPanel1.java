@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,18 +17,12 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchConfigurationPanel1.java
- *
- * Created on Feb 28, 2012, 4:12:47 PM
- */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JOptionPane;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -43,9 +37,7 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
     private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
     
-    /** Creates new form KeywordSearchConfigurationPanel1 */
-    KeywordSearchConfigurationPanel1() {
-        
+    KeywordSearchConfigurationPanel1() {        
         initComponents();
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
@@ -80,7 +72,7 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = "Save Keyword List";
                 KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
-                KeywordSearchListsAbstract.KeywordSearchList currentKeywordList = editListPanel.getCurrentKeywordList();
+                KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
@@ -121,8 +113,6 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
                     writer.addList(listName, keywords);
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
-
-                //currentKeywordList = writer.getList(listName);
                 
                 listsManagementPanel.resync();
             }

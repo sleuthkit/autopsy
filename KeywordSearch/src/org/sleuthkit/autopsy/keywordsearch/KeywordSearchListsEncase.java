@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
             name = parentPath + "/" + entry.name;
         }
         
-        List<Keyword> children = new ArrayList<Keyword>();
+        List<Keyword> children = new ArrayList<>();
         for(EncaseFileEntry child : entry.children) {
             switch(child.type) {
                 case Folder:
@@ -86,7 +86,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
         }
         // Don't create lists if there are no keywords
         if (!children.isEmpty()) {
-            KeywordSearchList newList = new KeywordSearchList(name, new Date(), new Date(),
+            KeywordList newList = new KeywordList(name, new Date(), new Date(),
                     true, true, children);
             theLists.put(name, newList);
         }
@@ -129,7 +129,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
             BufferedReader readBuffer = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-16"));
             String structLine;
             String metaLine;
-            entriesUnsorted = new ArrayList<EncaseFileEntry>();
+            entriesUnsorted = new ArrayList<>();
             for(int line = 1; line < 6; line++) {
                 readBuffer.readLine();
             }
@@ -140,7 +140,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
                 String childCount = structArr[1];
                 String name = metaArr[1];
                 String value = metaArr[2];
-                ArrayList<EncaseFlag> flags = new ArrayList<EncaseFlag>();
+                ArrayList<EncaseFlag> flags = new ArrayList<>();
                 for(int i = 0; i < 17; i++) {
                     if(metaArr.length < i+4) {
                         continue;
@@ -208,7 +208,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
             this.name = name;
             this.value = value;
             this.childCount = childCount;
-            this.children = new ArrayList<EncaseFileEntry>();
+            this.children = new ArrayList<>();
             this.hasParent = hasParent;
             this.parent = parent;
             this.type = type;

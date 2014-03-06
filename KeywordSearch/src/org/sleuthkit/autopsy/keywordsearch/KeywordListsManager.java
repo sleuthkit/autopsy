@@ -25,13 +25,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * RJCTODO:
+ * 
  */
 class KeywordListsManager {
-        
-    private static KeywordListsManager instance = null;
+            
+    private static KeywordListsManager instance = null;    
     private final KeywordLists defaultKeywordLists = new KeywordLists();
     private final HashMap<Long, KeywordLists> keywordListsForIngestJobs = new HashMap<>();
+    
 
     /**
      * Gets the keyword lists manager singleton.
@@ -104,7 +105,7 @@ class KeywordListsManager {
         // RJCTODO: Understand better how these are used
         private List<Keyword> keywords = new ArrayList<>(); //keywords to search
         private List<String> keywordLists = new ArrayList<>(); // lists currently being searched
-        private Map<String, KeywordSearchListsAbstract.KeywordSearchList> keywordToList = new HashMap<>();    
+        private Map<String, KeywordList> keywordToList = new HashMap<>();    
 
         KeywordLists() {
             addKeywordLists(null);
@@ -126,7 +127,7 @@ class KeywordListsManager {
 
     //            StringBuilder sb = new StringBuilder();
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-            for (KeywordSearchListsAbstract.KeywordSearchList list : loader.getListsL()) {
+            for (KeywordList list : loader.getListsL()) {
                 // Add the list by list name.
                 // RJCTODO: Understand this better.
                 String listName = list.getName();
