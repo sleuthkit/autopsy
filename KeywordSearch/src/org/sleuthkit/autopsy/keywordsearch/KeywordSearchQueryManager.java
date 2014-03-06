@@ -126,8 +126,8 @@ class KeywordSearchQueryManager {
                     query.escape();
                 }
                 
-                // Wrap the keyword with wildcards
-                if (!queryWholeword) {
+                // Wrap the keyword with wildcards (for substrings)
+                if (!queryWholeword && (queryType == QueryType.LITERAL)) {
                     query.setSubstringQuery();
                 }
                 
