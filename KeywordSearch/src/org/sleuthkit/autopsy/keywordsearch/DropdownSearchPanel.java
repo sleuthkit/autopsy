@@ -222,11 +222,12 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(regexRadioButton)
-                            .addComponent(substringRadioButton)
-                            .addComponent(exactRadioButton))
-                        .addGap(0, 217, Short.MAX_VALUE)))
+                        .addComponent(exactRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(substringRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(regexRadioButton)
+                        .addGap(0, 27, Short.MAX_VALUE)))
                 .addGap(5, 5, 5))
         );
         layout.setVerticalGroup(
@@ -237,11 +238,11 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
                     .addComponent(keywordTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(exactRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(substringRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(regexRadioButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(exactRadioButton)
+                    .addComponent(substringRadioButton)
+                    .addComponent(regexRadioButton))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
