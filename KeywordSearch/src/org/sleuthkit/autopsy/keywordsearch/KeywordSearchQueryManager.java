@@ -122,10 +122,7 @@ class KeywordSearchQueryManager {
             }
 
             if (query != null) {
-                if (keyword.isLiteral()) {
-                    query.escape();
-                }
-                else if (!queryWholeword) {
+                if (keyword.isLiteral() || (queryType == QueryType.LITERAL)) {
                     query.escape();
                 }
                 
