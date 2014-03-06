@@ -37,7 +37,6 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.ptql.ProcessFinder;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.sleuthkit.autopsy.casemodule.LocalDisk;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 
