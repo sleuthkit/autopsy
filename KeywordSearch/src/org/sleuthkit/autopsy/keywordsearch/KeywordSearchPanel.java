@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
  * The default, Tahoma 14, could not perform this task at the desired size, and neither could numerous other fonts. 
  */
-class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
+class KeywordSearchPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(KeywordSearchPanel.class.getName());
     private KeywordPropertyChangeListener listener;
@@ -65,11 +65,6 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
             instance = new KeywordSearchPanel();
         }
         return instance;
-    }
-
-    @Override
-    protected void postFilesIndexedChange() {
-        //nothing to update
     }
 
     private void customizeComponents() {
@@ -229,31 +224,6 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     private javax.swing.JButton searchDropButton;
     private javax.swing.JPopupMenu searchMenu;
     // End of variables declaration//GEN-END:variables
-
-    @Override
-    public String getQueryText() {
-        return "";
-    }
-
-    @Override
-    public boolean isRegExQuerySelected() {
-        return dropPanel.isRegExQuerySelected();
-    }
-
-    @Override
-    public boolean isWholewordQuerySelected() {
-        return dropPanel.isWholewordQuerySelected();
-    }
-    
-    @Override
-    public boolean isMultiwordQuery() {
-        return false;
-    }
-
-    @Override
-    public List<Keyword> getQueryList() {
-        throw new UnsupportedOperationException("No list for single-keyword search");
-    }
 
     private class KeywordPropertyChangeListener implements PropertyChangeListener {
 
