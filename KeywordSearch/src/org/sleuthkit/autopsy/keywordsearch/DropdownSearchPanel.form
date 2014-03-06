@@ -118,6 +118,10 @@
           <Dimension value="[2, 25]"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="keywordTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="keywordTextFieldActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="searchButton">
       <Properties>

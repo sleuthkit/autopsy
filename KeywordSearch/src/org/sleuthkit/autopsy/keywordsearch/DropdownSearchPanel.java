@@ -181,6 +181,16 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
         keywordTextField.setPreferredSize(new java.awt.Dimension(2, 25));
+        keywordTextField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                keywordTextFieldMouseClicked(evt);
+            }
+        });
+        keywordTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                keywordTextFieldActionPerformed(evt);
+            }
+        });
 
         searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
@@ -239,6 +249,24 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         keywordTextFieldActionPerformed(evt);
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
+//        if (!entered) {
+//            return;
+//        }
+        //getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            search();
+        } finally {
+            //getRootPane().setCursor(null);
+        }
+    }//GEN-LAST:event_keywordTextFieldActionPerformed
+
+    private void keywordTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_keywordTextFieldMouseClicked
+        if(evt.isPopupTrigger()) {
+            rightClickMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_keywordTextFieldMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;
@@ -252,18 +280,6 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JRadioButton substringRadioButton;
     // End of variables declaration//GEN-END:variables
-
-    private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {                                          
-//        if (!entered) {
-//            return;
-//        }
-        //getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            search();
-        } finally {
-            //getRootPane().setCursor(null);
-        }
-    }  
-    
+  
  
 }
