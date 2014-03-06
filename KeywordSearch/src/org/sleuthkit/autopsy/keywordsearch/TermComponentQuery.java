@@ -83,6 +83,11 @@ class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public void setSubstringQuery() {
+        queryEscaped = ".*" + queryEscaped + ".*";
+    }
+    
+    @Override
     public void escape() {
         queryEscaped = Pattern.quote(termsQuery);
         isEscaped = true;
