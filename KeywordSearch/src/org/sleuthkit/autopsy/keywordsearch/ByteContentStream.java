@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -84,7 +86,7 @@ class ByteContentStream implements ContentStream {
 
     @Override
     public String getSourceInfo() {
-        return "File:" + aContent.getId();
+        return NbBundle.getMessage(this.getClass(), "ByteContentStream.getSrcInfo.text", aContent.getId());
     }
 
     @Override
