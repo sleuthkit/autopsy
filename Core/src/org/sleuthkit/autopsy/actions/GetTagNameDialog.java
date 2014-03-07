@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -52,12 +53,14 @@ public class GetTagNameDialog extends JDialog {
     }    
     
     private GetTagNameDialog() {
-        super((JFrame)WindowManager.getDefault().getMainWindow(), "Create Tag", true);   
+        super((JFrame)WindowManager.getDefault().getMainWindow(),
+              NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.createTag"),
+              true);
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
         
         // Set up the dialog to close when Esc is pressed.
-        String cancelName = "cancel";
+        String cancelName = NbBundle.getMessage(this.getClass(), "GetTagNameDialog.cancelName");
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
@@ -276,10 +279,17 @@ public class GetTagNameDialog extends JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         String tagDisplayName = tagNameField.getText();
         if (tagDisplayName.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Must supply a tag name to continue.", "Tag Name", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "GetTagNameDialog.mustSupplyTtagName.msg"),
+                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
+                                          JOptionPane.ERROR_MESSAGE);
         } 
         else if (containsIllegalCharacters(tagDisplayName)) {
-            JOptionPane.showMessageDialog(null, "The tag name contains illegal characters.\nCannot contain any of the following symbols: \\ : * ? \" < > |", "Illegal Characters", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
+                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
+                                          JOptionPane.ERROR_MESSAGE);
         } 
         else {
             tagName = tagNames.get(tagDisplayName);
@@ -290,12 +300,22 @@ public class GetTagNameDialog extends JDialog {
                 }
                 catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
-                    JOptionPane.showMessageDialog(null, "Unable to add the " + tagDisplayName + " tag name to the case.", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "GetTagNameDialog.unableToAddTagNameToCase.msg",
+                                                                      tagDisplayName),
+                                                  NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
+                                                  JOptionPane.ERROR_MESSAGE);
                     tagName = null;
                 }        
                 catch (TagsManager.TagNameAlreadyExistsException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
-                    JOptionPane.showMessageDialog(null, "A " + tagDisplayName + " tag name has already been defined.", "Duplicate Tag Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "GetTagNameDialog.tagNameAlreadyDef.msg",
+                                                                      tagDisplayName),
+                                                  NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
+                                                  JOptionPane.ERROR_MESSAGE);
                     tagName = null;
                 }
             }
