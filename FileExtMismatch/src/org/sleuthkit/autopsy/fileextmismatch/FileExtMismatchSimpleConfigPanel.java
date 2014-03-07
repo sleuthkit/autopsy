@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,22 +18,26 @@
  */
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import java.io.Serializable;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptionsPanel;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-class FileExtMismatchSimpleConfigPanel extends javax.swing.JPanel {    
+class FileExtMismatchSimpleConfigPanel extends IngestModuleOptionsPanel {    
 
-    public FileExtMismatchSimpleConfigPanel() {
+    FileExtMismatchSimpleConfigPanel(FileExtMismatchIngestOptions ingestOptions) {
         initComponents();
-        customizeComponents();
+        customizeComponents(ingestOptions);
+        super.setIngestOptions(ingestOptions);
     }
         
-    private void customizeComponents() {
-
+    private void customizeComponents(FileExtMismatchIngestOptions ingestOptions) {
+        skipNoExtCheckBox.setSelected(ingestOptions.getSkipFilesWithNoExtension());
+        skipTextPlain.setSelected(ingestOptions.getSkipFilesWithTextPlainMimeType());
     }
-   
-        
+       
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is

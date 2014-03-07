@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 
 /**
- * An factory that creates file ingest modules that do hash database lookups.
+ * A factory that creates file ingest modules that do hash database lookups.
  */
 @ServiceProvider(service=IngestModuleFactory.class)
 public class HashLookupModuleFactory extends AbstractIngestModuleFactory { 
@@ -73,7 +73,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     @Override
     public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) throws InvalidOptionsException {
         if (!(ingestOptionsPanel instanceof HashDbSimpleConfigPanel)) {
-            throw new InvalidOptionsException(""); // RJCTODO
+            throw new IllegalArgumentException("JPanel not a HashDbSimpleConfigPanel");
         }
 
         HashDbSimpleConfigPanel panel = (HashDbSimpleConfigPanel)ingestOptionsPanel;
@@ -97,7 +97,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     @Override
     public void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws InvalidOptionsException {
         if (!(globalOptionsPanel instanceof HashDbConfigPanel)) {
-            throw new InvalidOptionsException(""); // RJCTODO
+            throw new IllegalArgumentException("JPanel not a HashDbConfigPanel");
         }
         
         HashDbConfigPanel panel = (HashDbConfigPanel)globalOptionsPanel;
@@ -115,6 +115,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     }
     
     private static class IngestOptions implements Serializable {
+        // RJCTODO: fill out
         boolean alwaysCalcHashes = true;
         ArrayList<String> hashSetNames = new ArrayList<>();
     }

@@ -60,7 +60,7 @@ public interface IngestModule {
     void init(long taskId);
     
     /**
-     * RJCTODO
+     * RJCTODO: Two stage finalize? ready to complete?
      * @return 
      */
     boolean hasBackgroundTasksRunning();    

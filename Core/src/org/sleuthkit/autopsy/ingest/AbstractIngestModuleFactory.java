@@ -16,83 +16,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ingest;
 
 import java.io.Serializable;
 import javax.swing.JPanel;
 
 /**
- * An abstract class that provides no-op implementations of various 
+ * An abstract class that provides no-op implementations of various
  * IngestModuleFactory methods. Provided for the convenience of ingest module
  * developers.
  */
 public abstract class AbstractIngestModuleFactory implements IngestModuleFactory {
-        
+
     @Override
     public abstract String getModuleDisplayName();
-    
+
     @Override
     public abstract String getModuleDescription();
-    
+
     @Override
     public abstract String getModuleVersionNumber();
-    
+
     @Override
-    public Serializable getDefaultIngestOptions() {
-        return new EmptyIngestOptions();
+    public IngestModuleOptions getDefaultIngestOptions() {
+        return new NoIngestOptions();
     }
-   
+
     @Override
     public boolean providesIngestOptionsPanels() {
         return false;
     }
-    
+
     @Override
-    public JPanel getIngestOptionsPanel(Serializable ingestOptions) {
-        throw new UnsupportedOperationException(); 
+    public JPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+        throw new UnsupportedOperationException();
     }
-            
+
     @Override
-    public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();         
+    public IngestModuleOptions getIngestOptionsFromPanel(JPanel ingestOptionsPanel) {
+        throw new UnsupportedOperationException();
     }
-    
+
     @Override
     public boolean providesGlobalOptionsPanels() {
         return false;
     }
-    
+
     @Override
     public JPanel getGlobalOptionsPanel() {
-        throw new UnsupportedOperationException();         
+        throw new UnsupportedOperationException();
     }
-    
+
     @Override
     public void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();         
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isDataSourceIngestModuleFactory() {
         return false;
     }
-                
+
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(Serializable ingestOptions) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();         
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+        throw new UnsupportedOperationException();
     }
-    
+
     @Override
     public boolean isFileIngestModuleFactory() {
         return false;
     }
-    
+
     @Override
-    public FileIngestModule createFileIngestModule(Serializable ingestOptions) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();         
+    public FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+        throw new UnsupportedOperationException();
     }
+
     
-    public static class EmptyIngestOptions implements Serializable {
-    }    
+    
+//    public static class NoIngestOptions extends AbstractIngestModuleOptions {
+//        private final String options = "None";
+//        
+//        String getOptions() {
+//            return options;
+//        }
+//    }    
 }

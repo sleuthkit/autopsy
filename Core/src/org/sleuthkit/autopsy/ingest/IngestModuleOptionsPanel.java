@@ -18,38 +18,21 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import javax.swing.JPanel;
+
 /**
- * Combines an ingest module factory with ingest options and an enabled flag to
- * create a template for creating fully configured ingest modules.
+ * Base class for ingest module options panels. Can be used as an empty panel by
+ * ingest modules that have no options.
  */
-public class IngestModuleTemplate {
+public class IngestModuleOptionsPanel extends JPanel {
 
-    private final IngestModuleFactory moduleFactory;
-    private IngestModuleOptions ingestOptions = null;
-    boolean enabled = true;
-
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleOptions ingestOptions) {
-        this.moduleFactory = moduleFactory;
-        this.ingestOptions = ingestOptions;
-    }
-
-    IngestModuleFactory getIngestModuleFactory() {
-        return moduleFactory;
-    }
-
-    IngestModuleOptions getIngestOptions() {
-        return ingestOptions;
-    }
+    private IngestModuleOptions ingestOptions = new NoIngestOptions();
 
     void setIngestOptions(IngestModuleOptions ingestOptions) {
         this.ingestOptions = ingestOptions;
     }
 
-    void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    boolean isEnabled() {
-        return enabled;
+    IngestModuleOptions getIngestOptions() {
+        return ingestOptions;
     }
 }
