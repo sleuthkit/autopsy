@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -52,7 +54,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         reportProgressBar.setMaximum(100);
 
         reportLabel.setText(reportName);        
-        processingLabel.setText("Queuing...");
+        processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
         STATUS = ReportStatus.QUEUING;
         
         if (reportPath != null) {
@@ -101,7 +103,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             });
         }
         else {
-            pathLabel.setText("<html><u>No report file</u></html>");            
+            pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
         }
     }
     
@@ -136,8 +138,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png")));
-                cancelButton.setToolTipText("Cancel");
-                processingLabel.setText("Starting report...");
+                cancelButton.setToolTipText(
+                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.cancelButton.text"));
+                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
                 STATUS = ReportStatus.RUNNING;
             }
         });
@@ -235,10 +238,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             public void run() {
                 if (STATUS != ReportStatus.CANCELED) {
                     STATUS = ReportStatus.COMPLETE;
-                    processingLabel.setText("Complete");
+                    processingLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                     reportProgressBar.setValue(reportProgressBar.getMaximum());
                     cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png")));
-                    cancelButton.setToolTipText("Complete");
+                    cancelButton.setToolTipText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
                 }
             }
         });
@@ -349,13 +354,14 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             default:
                 STATUS = ReportStatus.CANCELED;
                 cancelButton.setEnabled(false);
-                cancelButton.setToolTipText("Canceled");
+                cancelButton.setToolTipText(
+                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.cancelButton.toolTipText"));
                 reportProgressBar.setIndeterminate(false);
                 reportProgressBar.setValue(0);
                 reportProgressBar.setForeground(Color.RED);
                 reportProgressBar.setBackground(Color.RED);
                 processingLabel.setForeground(Color.RED);
-                processingLabel.setText("Canceled");
+                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
     }
