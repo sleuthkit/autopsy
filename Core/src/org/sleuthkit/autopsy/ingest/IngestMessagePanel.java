@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -52,8 +54,6 @@ import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Notification window showing messages from modules to user
@@ -300,7 +300,10 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "IngestMessagePanel.moduleErr.errListenUpdates.text"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
 
         //update labels
@@ -325,7 +328,10 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "IngestMessagePanel.moduleErr.errListenUpdates.text"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
     
@@ -344,7 +350,10 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "IngestMessagePanel.moduleErr.errListenUpdates.text"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -357,13 +366,21 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
         catch (Exception ee) {
             logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", ee);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestMessagePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "IngestMessagePanel.moduleErr.errListenUpdates.text"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
     private class MessageTableModel extends AbstractTableModel {
 
-        private String[] columnNames = new String[]{"Module", "Num", "New?", "Subject", "Timestamp"};
+        private String[] columnNames = new String[]{
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.module"),
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.num"),
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.new"),
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.subject"),
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.timestamp")};
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per module, by uniqness
         private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
@@ -845,7 +862,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             if (value instanceof Boolean) {
                 boolVal = ((Boolean)value).booleanValue();
             } else {
-                throw new RuntimeException("Tried to use BooleanRenderer on non-boolean value.");
+                throw new RuntimeException(NbBundle.getMessage(this.getClass(),
+                                                               "IngestMessagePanel.BooleanRenderer.exception.nonBoolVal.msg"));
             }
             
             String aValue = boolVal ? bulletChar : "";
@@ -928,7 +946,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                 DateFormat df = new SimpleDateFormat("HH:mm:ss");
                 aValue = df.format(date);
             } else {
-                throw new RuntimeException("Tried to use DateRenderer on non-Date value.");
+                throw new RuntimeException(NbBundle.getMessage(this.getClass(),
+                                                               "IngestMessagePanel.DateRenderer.exception.nonDateVal.text"));
             }
             
             Component cell =  super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
