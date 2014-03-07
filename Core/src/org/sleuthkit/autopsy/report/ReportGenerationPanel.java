@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
  class ReportGenerationPanel extends javax.swing.JPanel {
@@ -96,7 +98,12 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         if (closeable) {
             actionListener.actionPerformed(null);
         } else {
-            int result = JOptionPane.showConfirmDialog(null, "Are you sure you'd like to close the dialog?\nAll reports will be canceled.", "Closing", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null,
+                                                       NbBundle.getMessage(this.getClass(),
+                                                                                 "ReportGenerationPanel.confDlg.sureToClose.msg"),
+                                                       NbBundle.getMessage(this.getClass(),
+                                                                           "ReportGenerationPanel.confDlg.title.closing"),
+                                                       JOptionPane.YES_NO_OPTION);
             if (result == 0) {
                 cancelAllReports();
                 actionListener.actionPerformed(null);
@@ -215,7 +222,11 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void cancelAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelAllButtonActionPerformed
-        int result = JOptionPane.showConfirmDialog(null, "Are you sure you'd like to cancel all the reports?", "Cancel All", JOptionPane.YES_NO_OPTION);
+        int result = JOptionPane.showConfirmDialog(null, NbBundle.getMessage(this.getClass(),
+                                                                             "ReportGenerationPanel.confDlg.cancelReports.msg"),
+                                                   NbBundle.getMessage(this.getClass(),
+                                                                       "ReportGenerationPanel.cancelAllButton.text"),
+                                                   JOptionPane.YES_NO_OPTION);
             if (result == 0) {
                 cancelAllReports();
             }

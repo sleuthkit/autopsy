@@ -36,6 +36,8 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -110,7 +112,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
      * Display this dialog, and return the selected artifacts.
      */
     Map<BlackboardArtifact.ARTIFACT_TYPE, Boolean> display() {
-        this.setTitle("Advanced Artifact Selection");
+        this.setTitle(NbBundle.getMessage(this.getClass(), "ArtifactSelectionDialog.dlgTitle.text"));
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
         int w = this.getSize().width;
