@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
@@ -65,15 +65,15 @@ public class ArtifactTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Artifact Type",
-                "Artifact Type",
-                "no description",
-                type.getDisplayName()));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
+                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
+                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
+                                type.getDisplayName()));
 
-        ss.put(new NodeProperty("Child Count",
-                "Child Count",
-                "no description",
-                childCount));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
+                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
+                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
+                                childCount));
 
         return s;
     }

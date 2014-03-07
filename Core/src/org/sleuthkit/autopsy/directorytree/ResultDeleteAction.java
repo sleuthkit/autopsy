@@ -23,6 +23,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -89,15 +91,21 @@ import org.sleuthkit.datamodel.SleuthkitCase;
             viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID()));
         } else if (this.actionType == ActionType.TYPE_ARTIFACTS) {
             if (JOptionPane.showConfirmDialog(null,
-                    "Are you sure you want to delete all " + artType.getDisplayName() + " results?",
-                    artType.getDisplayName() + " Results Deletion", JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "ResultDeleteAction.actionPerf.confDlg.delAllResults.msg",
+                                                                  artType.getDisplayName()),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "ResultDeleteAction.actoinPerf.confDlg.delAllresults.details",
+                                                                  artType.getDisplayName()), JOptionPane.YES_NO_OPTION,
+                                              JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                 deleteArtifacts(artType);
                 DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
                 viewer.refreshTree(artType);
             }
         } else {
-            throw new IllegalArgumentException("Invalid action type: " + this.actionType);
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ResultDeleteAction.exception.invalidAction.msg",
+                                        this.actionType));
         }
     }
 
