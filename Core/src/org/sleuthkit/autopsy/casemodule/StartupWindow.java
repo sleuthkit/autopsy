@@ -26,6 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -35,7 +37,7 @@ import org.openide.util.lookup.ServiceProvider;
 public final class StartupWindow extends JDialog implements StartupWindowInterface {
 
     private static StartupWindow instance;
-    private static final String TITLE = "Welcome";
+    private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
 
     public StartupWindow() {

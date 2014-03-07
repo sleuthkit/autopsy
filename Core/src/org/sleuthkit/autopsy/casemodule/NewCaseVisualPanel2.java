@@ -24,6 +24,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 /**
  *
  * @author dfickling
@@ -43,7 +45,7 @@ package org.sleuthkit.autopsy.casemodule;
      */
     @Override
     public String getName() {
-        return "Additional Information";
+        return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel2.getName.text");
     }
 
     /** This method is called from within the constructor to

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
@@ -55,7 +57,7 @@ import javax.swing.JPanel;
      */
     @Override
     public String getName() {
-        return "Configure Ingest Modules";
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigVisual.getName.text");
     }
 
     /**
