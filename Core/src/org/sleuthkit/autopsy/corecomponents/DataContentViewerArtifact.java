@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
@@ -53,8 +55,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer{
     
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-    private final static String WAIT_TEXT = "Retrieving and preparing data, please wait...";
-    private final static String ERROR_TEXT = "Error retrieving result";
+    private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
+    private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
     private final Object lock = new Object();
@@ -288,12 +290,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public String getTitle() {
-        return "Results";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays Results associated with the file";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.toolTip");
     }
 
     @Override

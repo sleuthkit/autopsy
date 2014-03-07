@@ -23,6 +23,8 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -257,8 +259,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             pageNumber = totalPages + 1;
         }
         if (pageNumber > totalPages || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerHex.goToPageTextField.msgDlg",
+                                                              totalPages),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerHex.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         setDataView(pageNumber);
@@ -309,16 +316,16 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
-                errorText = "(offset " + offset + "-" + (offset + pageLength)
-                    + " could not be read)";
+                errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
+                                                offset + pageLength);
                 logger.log(Level.WARNING, "Error while trying to show the hex content.", ex);
             }
         }
 
         // set the data on the bottom and show it
         if (bytesRead <= 0) {
-            errorText = "(offset " + offset + "-" + (offset + pageLength)
-                    + " could not be read)";
+            errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
+                                            offset + pageLength);
         }
         
 
@@ -378,13 +385,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public String getTitle() {
-        return "Hex";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerHex.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays the binary contents of a file as hexidecimal, with "
-                + "bytes that are displayable as ASCII characters on the right.";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerHex.toolTip");
     }
 
     @Override
