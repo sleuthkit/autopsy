@@ -27,6 +27,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,7 +47,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class DirectoryTreeFilterNode extends FilterNode {
 
-    private static final Action collapseAll = new CollapseAction("Collapse All");
+    private static final Action collapseAll = new CollapseAction(
+            NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
@@ -105,11 +107,13 @@ class DirectoryTreeFilterNode extends FilterNode {
             // file search action
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
-                actions.add(new FileSearchAction("Open File Search by Attributes"));
+                actions.add(new FileSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
             }
             
             //ingest action
-             actions.add(new AbstractAction("Run Ingest Modules") {
+             actions.add(new AbstractAction(
+                     NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();

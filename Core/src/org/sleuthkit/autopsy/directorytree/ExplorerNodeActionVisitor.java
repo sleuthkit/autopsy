@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.Toolkit;
 import java.awt.Dimension;
@@ -81,22 +82,27 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Image img) {
         List<Action> lst = new ArrayList<Action>();
-        lst.add(new ImageDetails("Image Details", img));
+        lst.add(new ImageDetails(
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.imgDetails.title"), img));
         //TODO lst.add(new ExtractAction("Extract Image", img));
-        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single Files", img));
+        lst.add(new ExtractUnallocAction(
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
         return lst;
     }
 
     @Override
     public List<? extends Action> visit(final FileSystem fs) {
-        return Collections.singletonList(new FileSystemDetails("File System Details", fs));
+        return Collections.singletonList(new FileSystemDetails(
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.fileSystemDetails.title"), fs));
     }
 
     @Override
     public List<? extends Action> visit(final Volume vol) {
         List<AbstractAction> lst = new ArrayList<AbstractAction>();
-        lst.add(new VolumeDetails("Volume Details", vol));
-        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single File", vol));
+        lst.add(new VolumeDetails(
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.volumeDetails.title"), vol));
+        lst.add(new ExtractUnallocAction(
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
         return lst;
     }
 
@@ -197,7 +203,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 popUpWindow.add(volumeDetailPanel);
             } else {
                 // error handler if no volume matches
-                JLabel error = new JLabel("Error: No Volume Matches.");
+                JLabel error = new JLabel(
+                        NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.volDetail.noVolMatchErr"));
                 error.setFont(new Font("Arial", Font.BOLD, 24));
                 popUpWindow.add(error);
             }
@@ -269,7 +276,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 popUpWindow.add(imgDetailPanel);
             } else {
                 // error handler if no volume matches
-                JLabel error = new JLabel("Error: No Volume Matches.");
+                JLabel error = new JLabel(
+                        NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.imgDetail.noVolMatchesErr"));
                 error.setFont(new Font("Arial", Font.BOLD, 24));
                 popUpWindow.add(error);
             }
@@ -340,7 +348,9 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             try {
                 parent = fs.getParent();
             } catch (Exception ex) {
-                throw new RuntimeException("Problem getting parent from " + FileSystem.class.getName() + ": " + fs, ex);
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.exception.probGetParent.text",
+                                            FileSystem.class.getName(), fs), ex);
             }
             long id = -1;
             if (parent != null) {
