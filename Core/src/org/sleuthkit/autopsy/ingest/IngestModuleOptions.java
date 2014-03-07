@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.io.Serializable;
 
 /**
- * Ingest options interface for ingest modules. // RJCTODO
+ * Interface for ingest module options.
  */
 public interface IngestModuleOptions extends Serializable {
 

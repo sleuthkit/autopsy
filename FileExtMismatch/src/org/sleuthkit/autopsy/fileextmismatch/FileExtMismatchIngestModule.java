@@ -70,21 +70,21 @@ public class FileExtMismatchIngestModule extends AbstractIngestModule implements
     }
     
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ResultCode process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
             (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {            
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
         
         // deleted files often have content that was not theirs and therefor causes mismatch
         if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) ||
                 (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
 
         if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
         
         try 
@@ -102,10 +102,10 @@ public class FileExtMismatchIngestModule extends AbstractIngestModule implements
 
                 services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
-            return ProcessResult.OK;
+            return ResultCode.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
-            return ProcessResult.ERROR;
+            return ResultCode.ERROR;
         }
     }
     

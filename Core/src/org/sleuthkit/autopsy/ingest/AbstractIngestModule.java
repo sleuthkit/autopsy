@@ -16,31 +16,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * RJCTODO
+ * An abstract class that provides no-op implementations of various IngestModule
+ * methods.
  */
 public abstract class AbstractIngestModule implements IngestModule {
-    
+
     @Override
     public abstract String getDisplayName();
 
     @Override
-    public void init(long taskId) {
+    public void init(long ingestJobId) {
     }
-    
-    @Override
-    public boolean hasBackgroundTasksRunning() {
-        return false;
-    }    
-    
+
     @Override
     public void complete() {
     }
-    
+
     @Override
     public void stop() {
-    }    
+    }
+
+    @Override
+    public boolean isFinished() {
+        return true;
+    }
 }

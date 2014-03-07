@@ -113,15 +113,15 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
     }
     
     @Override
-    public ProcessResult process(AbstractFile file) {
+    public ResultCode process(AbstractFile file) {
         // Skip unallocated space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
         
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
 
         // calc hash value
@@ -142,13 +142,13 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.calcHashValueErr",
                                                           name)));
-                return ProcessResult.ERROR;
+                return ResultCode.ERROR;
             }
         }
 
         // look up in known bad first
         boolean foundBad = false;
-        ProcessResult ret = ProcessResult.OK;
+        ResultCode ret = ResultCode.OK;
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
@@ -168,7 +168,7 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
                                               NbBundle.getMessage(this.getClass(),
                                                                   "HashDbIngestModule.settingKnownBadStateErr",
                                                                   name)));
-                        ret = ProcessResult.ERROR;
+                        ret = ResultCode.ERROR;
                     }                    
                     String hashSetName = db.getHashSetName();
                     
@@ -199,7 +199,7 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.lookingUpKnownBadHashValueErr",
                                                           name)));
-                ret = ProcessResult.ERROR;
+                ret = ResultCode.ERROR;
             }
         }
 
@@ -216,7 +216,7 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
                             break;
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
-                            ret = ProcessResult.ERROR;
+                            ret = ResultCode.ERROR;
                         }
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
@@ -230,7 +230,7 @@ public class HashDbIngestModule extends AbstractIngestModule implements FileInge
                                           NbBundle.getMessage(this.getClass(),
                                                               "HashDbIngestModule.lookingUpKnownHashValueErr",
                                                               name)));
-                    ret = ProcessResult.ERROR;
+                    ret = ResultCode.ERROR;
                 }
             }
         }

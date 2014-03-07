@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.Serializable;
 import javax.swing.JPanel;
 
 /**
  * An abstract class that provides no-op implementations of various
- * IngestModuleFactory methods. Provided for the convenience of ingest module
- * developers.
+ * IngestModuleFactory methods.
  */
 public abstract class AbstractIngestModuleFactory implements IngestModuleFactory {
 
@@ -43,18 +41,8 @@ public abstract class AbstractIngestModuleFactory implements IngestModuleFactory
     }
 
     @Override
-    public boolean providesIngestOptionsPanels() {
-        return false;
-    }
-
-    @Override
-    public JPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public IngestModuleOptions getIngestOptionsFromPanel(JPanel ingestOptionsPanel) {
-        throw new UnsupportedOperationException();
+    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+        return new IngestModuleOptionsPanel();
     }
 
     @Override
@@ -91,14 +79,4 @@ public abstract class AbstractIngestModuleFactory implements IngestModuleFactory
     public FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
         throw new UnsupportedOperationException();
     }
-
-    
-    
-//    public static class NoIngestOptions extends AbstractIngestModuleOptions {
-//        private final String options = "None";
-//        
-//        String getOptions() {
-//            return options;
-//        }
-//    }    
 }

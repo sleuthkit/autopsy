@@ -27,8 +27,8 @@ public final class NoIngestOptions implements IngestModuleOptions {
     private final String options = "None";
 
     /**
-     * Gets the string used as a placeholder for ingest options for
-     * serialization purposes.
+     * Gets the string used as an ingest options placeholder for serialization
+     * purposes.
      *
      * @return The string "None"
      */

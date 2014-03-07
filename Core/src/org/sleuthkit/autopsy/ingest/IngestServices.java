@@ -158,7 +158,7 @@ public class IngestServices {
      * @param moduleName registered module name of the module to check the return value of
      * @return the return value of the previously executed module for the currently processed file in the file ingest pipeline
      */
-    public IngestModule.ProcessResult getAbstractFileModuleResult(String moduleName) {
+    public IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
         return manager.getAbstractFileModuleResult(moduleName);
     }
     

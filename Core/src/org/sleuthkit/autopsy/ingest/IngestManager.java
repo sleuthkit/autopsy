@@ -60,7 +60,7 @@ public class IngestManager {
     private IngestAbstractFileProcessor abstractFileIngester;
     private List<IngestDataSourceThread> dataSourceIngesters;
     private SwingWorker<Object, Void> queueWorker;
-    private final Map<String, IngestModule.ProcessResult> abstractFileModulesRetValues = new HashMap<>();
+    private final Map<String, IngestModule.ResultCode> abstractFileModulesRetValues = new HashMap<>();
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 //    private IngestModuleLoader moduleLoader = null;
@@ -234,12 +234,12 @@ public class IngestManager {
      * @param moduleName Name of module.
      * @returns Return value from that module if it was previously run.
      */
-    IngestModule.ProcessResult getAbstractFileModuleResult(String moduleName) {
+    IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
         synchronized (abstractFileModulesRetValues) {
             if (abstractFileModulesRetValues.containsKey(moduleName)) {
                 return abstractFileModulesRetValues.get(moduleName);
             } else {
-                return IngestModule.ProcessResult.UNKNOWN; // RJCTODO: Not yet determined?
+                return IngestModule.ResultCode.UNKNOWN; // RJCTODO: Not yet determined?
             }
         }
     }

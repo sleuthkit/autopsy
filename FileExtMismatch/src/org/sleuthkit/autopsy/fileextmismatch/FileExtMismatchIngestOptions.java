@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.fileextmismatch;
 
-import org.sleuthkit.autopsy.ingest.AbstractIngestModuleOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
 
 /**
- * Ingest options for the file extension mismatch detector file ingest module.
+ * Ingest options for the file extension mismatch detector ingest module.
  */
-public class FileExtMismatchIngestOptions extends AbstractIngestModuleOptions {
+public class FileExtMismatchIngestOptions implements IngestModuleOptions {
 
     private boolean skipKnownFiles = false;
     private boolean skipFilesWithNoExtension = true;
@@ -60,5 +60,10 @@ public class FileExtMismatchIngestOptions extends AbstractIngestModuleOptions {
 
     boolean getSkipFilesWithTextPlainMimeType() {
         return skipFilesWithTextPlainMimeType;
+    }
+
+    @Override
+    public boolean areValid() {
+        return true;
     }
 }

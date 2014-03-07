@@ -33,5 +33,5 @@ public interface DataSourceIngestModule extends IngestModule {
      * detect task cancellation.
      * @return RJCTODO
      */
-    ProcessResult process(Content dataSource, IngestDataSourceWorkerController statusHelper); // RJCTODO: Change name of IngestDataSourceWorkerController class, or better, get rid of it so all threads in ingest can be the same     
+    ResultCode process(Content dataSource, IngestDataSourceWorkerController statusHelper); // RJCTODO: Change name of IngestDataSourceWorkerController class, or better, get rid of it so all threads in ingest can be the same     
 }

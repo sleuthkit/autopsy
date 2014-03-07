@@ -142,13 +142,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
         
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ResultCode process(AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
         try {
             //add data source id of the file to the set, keeping track of images being ingested
@@ -161,20 +161,20 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             //skip indexing of virtual dirs (no content, no real name) - will index children files
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
 
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-        if (services.getAbstractFileModuleResult(hashDBModuleName) == ProcessResult.ERROR) {
+        if (services.getAbstractFileModuleResult(hashDBModuleName) == ResultCode.ERROR) {
             indexer.indexFile(abstractFile, false);
             //notify depending module that keyword search (would) encountered error for this file
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
-            return ProcessResult.ERROR;
+            return ResultCode.ERROR;
         } 
         else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
 
         processedFiles = true;        
@@ -185,7 +185,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
 
-        return ProcessResult.OK;
+        return ResultCode.OK;
     }
 
     /**
@@ -375,7 +375,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
           
     @Override
-    public boolean hasBackgroundTasksRunning() {
+    public boolean isFinished() {
         return ((null != currentSearcher && searcherDone == false) || (finalSearcherDone == false));
     }
 

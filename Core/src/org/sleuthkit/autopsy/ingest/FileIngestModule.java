@@ -31,5 +31,5 @@ public interface FileIngestModule extends IngestModule {
      * @param file
      * @return 
      */
-    ProcessResult process(AbstractFile file);   
+    ResultCode process(AbstractFile file);   
 }

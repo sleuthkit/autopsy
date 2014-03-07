@@ -89,7 +89,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
     }
     
     @Override
-    public ProcessResult process(Content dataSource, IngestDataSourceWorkerController statusHelper) {
+    public ResultCode process(Content dataSource, IngestDataSourceWorkerController statusHelper) {
         imgName = dataSource.getName();
         try {
             img = dataSource.getImage();
@@ -98,7 +98,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
             logger.log(Level.SEVERE, "Failed to get image from Content.", ex);
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
                     "Error processing " + imgName));
-            return ProcessResult.ERROR;
+            return ResultCode.ERROR;
         }
         
         // Skip images that are not E01
@@ -108,7 +108,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
                     "Skipping non-ewf image " + imgName));
             skipped = true;
-            return ProcessResult.OK;
+            return ResultCode.OK;
         }
       
          if ((img.getMd5()!= null) && !img.getMd5().isEmpty()) 
@@ -120,7 +120,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
          else {
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
                     "Image " + imgName + " does not have stored hash."));
-            return ProcessResult.ERROR;
+            return ResultCode.ERROR;
         }
 
         logger.log(Level.INFO, "Starting ewf verification of {0}", img.getName());
@@ -151,7 +151,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
         for (int i = 0; i < totalChunks; i++) {
             if (statusHelper.isCancelled()) {
                 running = false;
-                return  ProcessResult.OK; // RJCTODO: Use unknown?
+                return  ResultCode.OK; // RJCTODO: Use unknown?
             }
             data = new byte[ (int) chunkSize ];
             try {
@@ -160,7 +160,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
                 String msg = "Error reading " + imgName + " at chunk " + i;
                 services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, msg));
                 logger.log(Level.SEVERE, msg, ex);
-                return  ProcessResult.ERROR;
+                return  ResultCode.ERROR;
             }
             messageDigest.update(data);
             statusHelper.progress(i);
@@ -171,7 +171,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
         verified = calculatedHash.equals(storedHash);
         logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash});
         running = false;
-        return ProcessResult.OK;
+        return ResultCode.OK;
     }
 
     @Override
