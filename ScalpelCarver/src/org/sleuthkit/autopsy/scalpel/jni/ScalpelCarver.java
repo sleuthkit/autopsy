@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -76,11 +78,11 @@ public class ScalpelCarver {
             System.loadLibrary(id);
             success = true;
         } catch (UnsatisfiedLinkError ex) {
-            String msg = "Could not load library " + id + " for your environment ";
+            String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib", id);
             System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         } catch (Exception ex) {
-            String msg = "Could not load library " + id + " for your environment ";
+            String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib2", id);
             System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         }
@@ -113,24 +115,28 @@ public class ScalpelCarver {
      */
     public List<CarvedFileMeta> carve(AbstractFile file, String configFilePath, String outputFolderPath) throws ScalpelException {
         if (!initialized) {
-            throw new ScalpelException("Scalpel library is not fully initialized. ");
+            throw new ScalpelException(NbBundle.getMessage(this.getClass(), "ScalpelCarver.carve.exception.libNotInit"));
         }
 
         //basic check of arguments before going to jni land
         if (file == null || configFilePath == null || configFilePath.isEmpty()
                 || outputFolderPath == null || outputFolderPath.isEmpty()) {
-            throw new ScalpelException("Invalid arguments for scalpel carving. ");
+            throw new ScalpelException(NbBundle.getMessage(this.getClass(), "ScalpelCarver.carve.exception.invalidArgs"));
         }
         
         //validate the paths passed in
         File config = new File(configFilePath);
         if (! config.exists() || ! config.canRead()) {
-            throw new ScalpelException("Cannot read libscalpel config file: " + configFilePath);
+            throw new ScalpelException(
+                    NbBundle.getMessage(this.getClass(), "ScalpelCarver.carve.exception.cannotReadConfig",
+                                        configFilePath));
         }
         
         File outDir = new File(outputFolderPath);
         if (! outDir.exists() || ! outDir.canWrite()) {
-            throw new ScalpelException("Cannot write to libscalpel output dir: " + outputFolderPath);
+            throw new ScalpelException(
+                    NbBundle.getMessage(this.getClass(), "ScalpelCarver.carve.exception.cannotWriteConfig",
+                                        outputFolderPath));
         }
 
         final String carverInputId = file.getId() + ": " + file.getName();
