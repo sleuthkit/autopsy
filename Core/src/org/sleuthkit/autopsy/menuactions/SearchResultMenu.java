@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
@@ -57,7 +58,7 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
         // add search results if there are any
         if(dataResultsIds.size() > 0){
-            JMenu submenu = new JMenu("Data Results");
+            JMenu submenu = new JMenu(NbBundle.getMessage(this.getClass(), "SearchResultMenu.menu.dataRes.text"));
             for(String resultTabId : dataResultsIds){
                 JMenuItem item = new JMenuItem(resultTabId);
                 item.addActionListener(new OpenTopComponentAction(resultTabId));
