@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -355,8 +357,9 @@ public final class ContentUtils {
 
         @Override
         protected Void defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Can't extract a "
-                    + cntnt.getClass().getSimpleName());
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                                                                        "ContentUtils.exception.msg",
+                                                                        cntnt.getClass().getSimpleName()));
         }
     }
     /**sets displayInlocalTime value based on button in GeneralPanel.java

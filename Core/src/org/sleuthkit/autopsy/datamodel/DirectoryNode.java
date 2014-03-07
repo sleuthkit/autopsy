@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -36,8 +38,8 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  */
 public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
 
-    public static final String DOTDOTDIR = "[parent folder]";
-    public static final String DOTDIR = "[current folder]";
+    public static final String DOTDOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.parFolder.text");
+    public static final String DOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.curFolder.text");
 
     public DirectoryNode(Directory dir) {
         this(dir, true);
@@ -70,10 +72,11 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
         if (!getDirectoryBrowseMode()) {
-            actions.add(new ViewContextAction("View File in Directory", this));
+            actions.add(new ViewContextAction(
+                    NbBundle.getMessage(this.getClass(), "DirectoryNode.getActions.viewFileInDir.text"), this));
             actions.add(null); // creates a menu separator
         }
-        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "DirectoryNode.viewInNewWin.text"), this));
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator

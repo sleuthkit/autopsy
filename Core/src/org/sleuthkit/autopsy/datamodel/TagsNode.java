@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -37,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * tag name. 
  */
  class TagsNode extends DisplayableItemNode {
-    private static final String DISPLAY_NAME = "Tags";
+    private static final String DISPLAY_NAME = NbBundle.getMessage(TagsNode.class, "TagsNode.displayName.text");
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
         
     public TagsNode() {
@@ -66,7 +67,10 @@ import org.sleuthkit.datamodel.TskCoreException;
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Name", "Name", "", getName()));
+        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.name"),
+                                        NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.displayName"),
+                                        "",
+                                        getName()));
 
         return propertySheet;
     }

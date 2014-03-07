@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -57,18 +58,34 @@ public class BlackboardArtifactTagNode  extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("Source File", "Source File", "", tag.getContent().getName()));
+        properties.put(new NodeProperty(
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
+                "",
+                tag.getContent().getName()));
         String contentPath; 
         try {
             contentPath = tag.getContent().getUniquePath();
         }
         catch (TskCoreException ex) {
             Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
-            contentPath = "Unavailable";
+            contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
         }
-        properties.put(new NodeProperty("Source File Path", "Source File Path", "", contentPath));        
-        properties.put(new NodeProperty("Result Type", "Result Type", "", tag.getArtifact().getDisplayName()));
-        properties.put(new NodeProperty("Comment", "Comment", "", tag.getComment()));
+        properties.put(new NodeProperty(
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFilePath.text"),
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFilePath.text"),
+                "",
+                contentPath));
+        properties.put(new NodeProperty(
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.resultType.text"),
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.resultType.text"),
+                "",
+                tag.getArtifact().getDisplayName()));
+        properties.put(new NodeProperty(
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.comment.text"),
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.comment.text"),
+                "",
+                tag.getComment()));
                 
         return propertySheet;
     }
