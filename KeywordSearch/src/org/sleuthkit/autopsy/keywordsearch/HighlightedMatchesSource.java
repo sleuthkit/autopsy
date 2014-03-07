@@ -223,7 +223,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int nextPage() {
         if (!hasNextPage()) {
-            throw new IllegalStateException("No next page.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextPage.exception.msg"));
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx + 1);
@@ -233,7 +234,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int previousPage() {
         if (!hasPreviousPage()) {
-            throw new IllegalStateException("No previous page.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousPage.exception.msg"));
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx - 1);
@@ -259,7 +261,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int nextItem() {
         if (!hasNextItem()) {
-            throw new IllegalStateException("No next item.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) + 1;
         pagesToHits.put(currentPage, cur);
@@ -269,7 +272,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int previousItem() {
         if (!hasPreviousItem()) {
-            throw new IllegalStateException("No previous item.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) - 1;
         pagesToHits.put(currentPage, cur);
