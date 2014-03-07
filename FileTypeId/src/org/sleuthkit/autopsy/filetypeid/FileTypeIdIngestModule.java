@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.filetypeid;
 
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -41,8 +43,10 @@ import org.sleuthkit.datamodel.TskException;
  */
  public class FileTypeIdIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileTypeIdIngestModule defaultInstance = null;
-    public final static String MODULE_NAME = "File Type Identification";
-    public final static String MODULE_DESCRIPTION = "Matches file types based on binary signatures.";
+    public final static String MODULE_NAME = NbBundle.getMessage(FileTypeIdIngestModule.class,
+                                                                 "FileTypeIdIngestModule.moduleName.text");
+    public final static String MODULE_DESCRIPTION = NbBundle.getMessage(FileTypeIdIngestModule.class,
+                                                                        "FileTypeIdIngestModule.moduleDesc.text");
     public final static String MODULE_VERSION = Version.getVersion();    
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static long matchTime = 0;
@@ -132,11 +136,18 @@ import org.sleuthkit.datamodel.TskException;
 
         detailsSb.append("<tr><td>"+MODULE_DESCRIPTION+"</td></tr>");
 
-        detailsSb.append("<tr><td>Total Processing Time</td><td>").append(matchTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
+        detailsSb.append("<tr><td>")
+                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                 .append("</td><td>").append(matchTime).append("</td></tr>\n");
+        detailsSb.append("<tr><td>")
+                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
 
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "File Type Id Results", detailsSb.toString()));
+        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this,
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "FileTypeIdIngestModule.complete.srvMsg.text"),
+                                                         detailsSb.toString()));
     }
 
     @Override
