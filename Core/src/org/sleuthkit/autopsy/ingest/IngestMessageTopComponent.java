@@ -249,11 +249,12 @@ import org.sleuthkit.datamodel.Content;
     @Override
     public void displayReport(String ingestReport) {
 
-        Object[] options = {"OK",
-            "Generate Report"};
+        Object[] options = {NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.displayReport.option.OK"),
+                            NbBundle.getMessage(this.getClass(),
+                                                "IngestMessageTopComponent.displayReport.option.GenRpt")};
         final int choice = JOptionPane.showOptionDialog(null,
                 ingestReport,
-                "Ingest Report",
+                NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.msgDlg.ingestRpt.text"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 null,

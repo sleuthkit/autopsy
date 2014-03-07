@@ -23,6 +23,8 @@ import java.awt.EventQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -95,13 +97,17 @@ import org.sleuthkit.datamodel.Content;
 
         logger.log(Level.INFO, "Pending module: " + module.getName());
         
-        final String displayName = module.getName() + " dataSource id:" + dataSource.getId();
-        progress = ProgressHandleFactory.createHandle(displayName + " (Pending...)", new Cancellable() {
+        final String displayName = NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.displayName.text",
+                                                       module.getName(),
+                                                       dataSource.getId());
+        progress = ProgressHandleFactory.createHandle(
+                NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.progress.pending", displayName), new Cancellable() {
             @Override
             public boolean cancel() {
                 logger.log(Level.INFO, "DataSource ingest module " + module.getName() + " cancelled by user.");
                 if (progress != null) {
-                    progress.setDisplayName(displayName + " (Cancelling...)");
+                    progress.setDisplayName(
+                            NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.progress.cancelling", displayName));
                 }
                 return IngestDataSourceThread.this.cancel(true);
             }
