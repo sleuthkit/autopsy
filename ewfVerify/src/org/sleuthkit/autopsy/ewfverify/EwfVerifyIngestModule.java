@@ -24,8 +24,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
  * Format (EWF) E01 image file by generating a hash of the file and comparing it 
  * to the value stored in the image.
  */
-public class EwfVerifyIngestModule extends AbstractIngestModule implements DataSourceIngestModule {
+public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
     private static Logger logger = null; // RJCTODO: Is this paradigm being used in general? If so, need to change IDE lint rules
@@ -89,7 +89,7 @@ public class EwfVerifyIngestModule extends AbstractIngestModule implements DataS
     }
     
     @Override
-    public ResultCode process(Content dataSource, IngestDataSourceWorkerController statusHelper) {
+    public ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
         imgName = dataSource.getName();
         try {
             img = dataSource.getImage();

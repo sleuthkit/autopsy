@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.Content;
     private ProgressHandle progress;
     private final Content dataSource;
     private final DataSourceIngestModule module;
-    private IngestDataSourceWorkerController controller;
+    private DataSourceIngestModuleStatusHelper controller;
     private final IngestManager manager;
     private boolean inited;
     //current method of enqueuing data source ingest modules with locks and internal lock queue
@@ -114,7 +114,7 @@ import org.sleuthkit.datamodel.Content;
             }
             logger.log(Level.INFO, "Starting processing of module: {0}", module.getDisplayName());
 
-            controller = new IngestDataSourceWorkerController(this, progress);
+            controller = new DataSourceIngestModuleStatusHelper(this, progress);
 
             if (isCancelled()) {
                 logger.log(Level.INFO, "Terminating DataSource ingest module {0} due to cancellation.", module.getDisplayName());

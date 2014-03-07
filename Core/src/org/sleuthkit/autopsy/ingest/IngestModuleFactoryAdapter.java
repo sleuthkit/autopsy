@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JPanel;
-
 /**
- * An abstract class that provides no-op implementations of various
- * IngestModuleFactory methods.
+ * An adapter that provides no-op implementations of various IngestModuleFactory
+ * methods.
  */
-public abstract class AbstractIngestModuleFactory implements IngestModuleFactory {
+public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory {
 
     @Override
     public abstract String getModuleDisplayName();
@@ -36,27 +34,27 @@ public abstract class AbstractIngestModuleFactory implements IngestModuleFactory
     public abstract String getModuleVersionNumber();
 
     @Override
-    public IngestModuleOptions getDefaultIngestOptions() {
+    public IngestModuleOptions getDefaultPerIngestJobOptions() {
         return new NoIngestOptions();
     }
-
+    
     @Override
-    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
-        return new IngestModuleOptionsPanel();
-    }
-
-    @Override
-    public boolean providesGlobalOptionsPanels() {
+    public boolean providesIngestOptionsPanels() {
         return false;
     }
-
+    
     @Override
-    public JPanel getGlobalOptionsPanel() {
+    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws InvalidOptionsException {
+    public boolean providesResourcesConfigPanels() {
+        return false;
+    }
+
+    @Override
+    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
         throw new UnsupportedOperationException();
     }
 

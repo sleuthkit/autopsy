@@ -18,29 +18,17 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+
 /**
- * An abstract class that provides no-op implementations of various IngestModule
- * methods.
+ * Base class for ingest module resource configuration panels.
  */
-public abstract class AbstractIngestModule implements IngestModule {
+public abstract class IngestModuleResourcesConfigPanel extends JPanel implements OptionsPanel {
 
     @Override
-    public abstract String getDisplayName();
+    abstract public void load();
 
     @Override
-    public void init(long ingestJobId) {
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+    abstract public void store();
 }

@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
-public class FileExtMismatchIngestModule extends AbstractIngestModule implements FileIngestModule {
+public class FileExtMismatchIngestModule extends IngestModuleAdapter implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
     private static long processTime = 0;
     private static int messageId = 0;

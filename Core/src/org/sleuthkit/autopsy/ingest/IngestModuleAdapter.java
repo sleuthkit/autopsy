@@ -18,19 +18,29 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.Serializable;
-
 /**
- * Interface for per ingest job options for ingest modules. Options are
- * serializable to support persistence of options between invocations of the
- * application.
+ * An adapter that provides no-op implementations of various
+ * IngestModule methods.
  */
-public interface IngestModuleOptions extends Serializable {
+public abstract class IngestModuleAdapter implements IngestModule {
 
-    /**
-     * Determines whether the per ingest job options are valid.
-     *
-     * @return True if the options are valid, false otherwise
-     */
-    boolean areValid();
+    @Override
+    public abstract String getDisplayName();
+
+    @Override
+    public void init(long ingestJobId) {
+    }
+
+    @Override
+    public void complete() {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public boolean isFinished() {
+        return true;
+    }
 }

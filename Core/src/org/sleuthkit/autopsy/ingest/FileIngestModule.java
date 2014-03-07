@@ -16,20 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ingest;
 
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Interface that must be implemented by all data source ingest modules.
+ * Interface that must be implemented by all file ingest modules.
  */
 public interface FileIngestModule extends IngestModule {
-    
+
     /**
-     * RJCTODO
-     * @param file
-     * @return 
+     * Process a file.
+     *
+     * @param file The file
+     * @return A result code indicating success or failure.
      */
-    ResultCode process(AbstractFile file);   
+    ResultCode process(AbstractFile file);
 }

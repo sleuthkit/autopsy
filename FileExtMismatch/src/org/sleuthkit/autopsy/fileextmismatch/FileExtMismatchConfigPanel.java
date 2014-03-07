@@ -30,6 +30,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 //import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 //import org.sleuthkit.autopsy.coreutils.Logger;
 //import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule; RJCTODO
@@ -37,7 +38,7 @@ import javax.swing.table.AbstractTableModel;
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
-final class FileExtMismatchConfigPanel extends javax.swing.JPanel /*implements OptionsPanel*/ {
+final class FileExtMismatchConfigPanel extends IngestModuleResourcesConfigPanel {
 //    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
@@ -502,8 +503,9 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel /*implements O
         }
     }
     
-//    @Override
+    @Override
     public void load() {
+        // RJCTODO
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
 //        editableMap = FileExtMismatchXML.getDefault().load();
@@ -511,8 +513,9 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel /*implements O
         updateExtList();
     }
 
-//    @Override
+    @Override
     public void store() {
+        // RJCTODO
 //        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
 //            mimeErrLabel.setText(" ");
 //            mimeRemoveErrLabel.setText(" ");

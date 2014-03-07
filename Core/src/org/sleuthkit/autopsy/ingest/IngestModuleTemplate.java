@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.ingest;
  * Combines an ingest module factory with ingest options and an enabled flag to
  * create a template for creating fully configured ingest modules.
  */
-public class IngestModuleTemplate {
+class IngestModuleTemplate {
 
     private final IngestModuleFactory moduleFactory;
     private IngestModuleOptions ingestOptions = null;

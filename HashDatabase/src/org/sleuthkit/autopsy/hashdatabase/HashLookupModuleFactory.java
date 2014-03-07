@@ -25,7 +25,7 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 
@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
  * A factory that creates file ingest modules that do hash database lookups.
  */
 @ServiceProvider(service=IngestModuleFactory.class)
-public class HashLookupModuleFactory extends AbstractIngestModuleFactory { 
+public class HashLookupModuleFactory extends IngestModuleFactoryAdapter { 
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
@@ -54,7 +54,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     }
     
     @Override
-    public Serializable getDefaultIngestOptions() {
+    public Serializable getDefaultPerIngestJobOptions() {
         return new IngestOptions();        
     }
     
@@ -83,7 +83,7 @@ public class HashLookupModuleFactory extends AbstractIngestModuleFactory {
     }
     
     @Override
-    public boolean providesGlobalOptionsPanels() {
+    public boolean providesResourcesConfigPanels() {
         return true;    
     }
     

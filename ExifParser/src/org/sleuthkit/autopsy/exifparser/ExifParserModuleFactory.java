@@ -16,47 +16,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.exifparser;
 
-import java.io.Serializable;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
 
 /**
  * An factory that creates file ingest modules that do hash database lookups.
  */
-@ServiceProvider(service=IngestModuleFactory.class)
-public class ExifParserModuleFactory extends AbstractIngestModuleFactory { 
+@ServiceProvider(service = IngestModuleFactory.class)
+public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
-        
+
     static String getModuleName() {
         return "Exif Image Parser";
     }
-        
+
     @Override
     public String getModuleDescription() {
-        return "Ingests JPEG files and retrieves their EXIF metadata.";        
+        return "Ingests JPEG files and retrieves their EXIF metadata.";
     }
-    
+
     @Override
     public String getModuleVersionNumber() {
-        return Version.getVersion();        
+        return Version.getVersion();
     }
-    
+
     @Override
     public boolean isFileIngestModuleFactory() {
-        return true;            
+        return true;
     }
-    
+
     @Override
-    public FileIngestModule createFileIngestModule(Serializable ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
         return new ExifParserFileIngestModule();
     }
 }

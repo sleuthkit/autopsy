@@ -70,7 +70,7 @@ public class IngestConfigurator {
             // NOTE: In the future, this code will be modified to get the ingest 
             // options for each module for the current context; for now just
             // get the default ingest options.
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultIngestOptions());             
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultPerIngestJobOptions());             
             String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);

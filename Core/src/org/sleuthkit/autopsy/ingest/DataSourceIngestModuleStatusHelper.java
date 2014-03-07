@@ -25,7 +25,7 @@ import org.netbeans.api.progress.ProgressHandle;
  * Controller for DataSource level ingest modules
  * Used by modules to check task status and to post progress to
  */
-public class IngestDataSourceWorkerController {
+public class DataSourceIngestModuleStatusHelper {
 
     private IngestDataSourceThread worker;
     private ProgressHandle progress;
@@ -35,7 +35,7 @@ public class IngestDataSourceWorkerController {
      * @param worker underlying DataSource ingest thread
      * @param progress the progress handle
      */
-    IngestDataSourceWorkerController(IngestDataSourceThread worker, ProgressHandle progress) {
+    DataSourceIngestModuleStatusHelper(IngestDataSourceThread worker, ProgressHandle progress) {
         this.worker = worker;
         this.progress = progress;
     }

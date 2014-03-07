@@ -23,16 +23,16 @@ import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
 /**
  * Ingest options for the file extension mismatch detector ingest module.
  */
-public class FileExtMismatchIngestOptions implements IngestModuleOptions {
+public class FileExtMismatchDetectorOptions implements IngestModuleOptions {
 
     private boolean skipKnownFiles = false;
     private boolean skipFilesWithNoExtension = true;
     private boolean skipFilesWithTextPlainMimeType = false;
 
-    FileExtMismatchIngestOptions() {
+    FileExtMismatchDetectorOptions() {
     }
 
-    FileExtMismatchIngestOptions(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
+    FileExtMismatchDetectorOptions(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
         this.skipKnownFiles = skipKnownFiles;
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;

@@ -18,16 +18,23 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JPanel;
-
 /**
  * An interface that must be implemented by all providers of ingest modules. An
- * IngestModuleFactory will be used as a stateless source of one or more
- * instances of a family of configurable ingest modules. IngestModuleFactory
- * implementations must be marked with the NetBeans Service provider annotation
- * as follows:
+ * IngestModuleFactory will be used as a stateless source of a type of data
+ * source ingest module, a type of file ingest module, or both. The ingest
+ * framework will create one or more instances of each module type for each
+ * ingest job it performs, but it is guaranteed that there will be no more than
+ * one module instance per thread. If these instances must share resources, the
+ * modules are responsible for synchronizing access to the shared resources and
+ * doing reference counting as required to release the resources correctly.
+ * <p>
+ * IngestModuleFactory implementations must be marked with the NetBeans Service
+ * provider annotation:
  *
  * @ServiceProvider(service=IngestModuleFactory.class)
+ * <p>
+ * Default implementations of many of the methods in this interface are provided
+ * by IngestModuleFactoryAdapter, an abstract base class.
  */
 public interface IngestModuleFactory {
 
@@ -67,84 +74,74 @@ public interface IngestModuleFactory {
     String getModuleVersionNumber();
 
     /**
-     * Gets the default ingest options for instances of the family of ingest
-     * modules the factory creates. Ingest options are serializable to support
-     * the persistence of possibly different options for different module
-     * execution contexts.
+     * Gets the default per ingest job options for instances of the family of
+     * ingest modules the factory creates. If the module family does not have
+     * per ingest job options, either this method should return an instance of
+     * the NoIngestOptions class, or the factory should extend
+     * IngestModuleFactoryAdapter.
      *
      * @return The ingest options.
      */
-    IngestModuleOptions getDefaultIngestOptions();
+    IngestModuleOptions getDefaultPerIngestJobOptions();
 
     /**
-     * Queries the factory to determine if it provides user interface panels
-     * that can be used to specify the ingest options for instances of the
-     * family of ingest modules the factory creates.
+     * Queries the factory to determine if it provides user interface panels to
+     * configure resources to be used by instances of the family of ingest
+     * modules the factory creates. For example, the core hash lookup and
+     * keyword search ingest modules provide resource configuration panels to
+     * import hash databases and keyword lists. The imported hash databases and
+     * keyword lists are then enabled or disabled per ingest job using per
+     * ingest job options panels.
      *
-     * @return True if the factory provides ingest options panels.
+     * @return True if the factory provides per ingest job options panels, false
+     * otherwise.
      */
-//    boolean providesIngestOptionsPanels();
+    boolean providesIngestOptionsPanels();
 
     /**
-     * Gets a user interface panel that can be used to specify the ingest
+     * Gets a user interface panel that can be used to specify per ingest job
      * options for instances of the family of ingest modules the factory
-     * creates.
+     * creates. If the module family does not have per ingest job options, this
+     * method should either throw an UnsupportedOperationException or the
+     * factory should extend IngestModuleFactoryAdapter.
      *
-     * @param ingestOptions A set of ingest options to be used to initialize the
-     * panel.
-     * @return A user interface panel. It is assumed that the factory is
-     * stateless and will not hold a reference to the panel.
+     * @param ingestOptions Per ingest job options to initialize the panel.
+     * @return A user interface panel. The factory should be stateless and
+     * should not hold a reference to the panel.
+     * @throws
+     * org.sleuthkit.autopsy.ingest.IngestModuleFactory.InvalidOptionsException
      */
     IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
 
     /**
-     * Gets ingest options for instances of the family of ingest modules the
-     * factory creates from an ingest options panel. Ingest options are
-     * serializable to support the persistence of possibly different options for
-     * different module execution contexts.
+     * Queries the factory to determine if it provides user interface panels to
+     * configure resources to be used by instances of the family of ingest
+     * modules the factory creates. For example, the core hash lookup and
+     * keyword search ingest modules provide resource configuration panels to
+     * import hash databases and keyword lists. The imported hash databases and
+     * keyword lists are then enabled or disabled per ingest job using per
+     * ingest job options panels.
      *
-     * @param ingestOptionsPanel The ingest options panel.
-     * @return The ingest options from the panel.
+     * @return True if the factory provides global options panels, false
+     * otherwise.
      */
-//    IngestModuleOptions getIngestOptionsFromPanel(JPanel ingestOptionsPanel); RJCTODO
+    boolean providesResourcesConfigPanels();
 
     /**
-     * Queries the factory to determine if it provides user interface panels
-     * that can be used to specify global options for all instances of the
-     * family of ingest modules the factory creates.
+     * Gets a user interface panel that can be used to configure resources for
+     * instances of the family of ingest modules the factory creates. For
+     * example, the core hash lookup and keyword search ingest modules provide
+     * resource configuration panels to import hash databases and keyword lists.
+     * The imported hash databases and keyword lists are then enabled or
+     * disabled per ingest job using per ingest job options panels. If the
+     * module family does not have resources to configure, this method should
+     * either throw an UnsupportedOperationException or the factory should
+     * extend IngestModuleFactoryAdapter.
      *
-     * @return True if the factory provides global options panels.
+     * @return A user interface panel. The factory should be stateless and
+     * should not hold a reference to the panel.
      */
-    boolean providesGlobalOptionsPanels();
-
-    /**
-     * Gets a user interface panel that can be used to specify the global
-     * options for all instances of the family of ingest modules the factory
-     * creates. PLEASE TAKE NOTICE: The factory should initialize the panel from
-     * its own persistence of global options to disk in the directory returned
-     * by PlatformUtil.getUserConfigDirectory(). In the future, this method will
-     * be deprecated and the factory will be expected to receive global options
-     * in serializable form.
-     *
-     * @return A user interface panel. It is assumed that the factory is
-     * stateless and will not hold a reference to the panel.
-     */
-    JPanel getGlobalOptionsPanel();
-
-    /**
-     * Get the global options for instances of the family of ingest modules the
-     * factory creates from a global options panel and saves the options to
-     * persistent storage on disk in the directory returned by
-     * PlatformUtil.getUserConfigDirectory(). PLEASE TAKE NOTICE: In the future,
-     * this method will be deprecated and the factory will be expected to supply
-     * global options in serializable form in a getGlobalOptionsFromPanel()
-     * method.
-     *
-     * @param globalOptionsPanel
-     * @throws
-     * org.sleuthkit.autopsy.ingest.IngestModuleFactory.InvalidOptionsException
-     */
-    void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws InvalidOptionsException;
+    IngestModuleResourcesConfigPanel getResourcesConfigPanel();
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -155,11 +152,11 @@ public interface IngestModuleFactory {
     boolean isDataSourceIngestModuleFactory();
 
     /**
-     * Creates a data source ingest module.
+     * Creates a data source ingest module instance.
      *
      * @param ingestOptions The ingest options to use to configure the module.
-     * @return An instance of a data source ingest module created using the
-     * provided ingest options.
+     * @return A data source ingest module instance created using the provided
+     * ingest options.
      */
     DataSourceIngestModule createDataSourceIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
 
@@ -172,11 +169,11 @@ public interface IngestModuleFactory {
     boolean isFileIngestModuleFactory();
 
     /**
-     * Creates a data source ingest module.
+     * Creates a file ingest module instance.
      *
      * @param ingestOptions The ingest options to use to configure the module.
-     * @return An instance of a data source ingest module created using the
-     * provided ingest options.
+     * @return A file ingest module instance created using the provided ingest
+     * options.
      */
     FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
 }

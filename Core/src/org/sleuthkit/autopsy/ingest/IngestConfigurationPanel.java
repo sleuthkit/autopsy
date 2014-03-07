@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JPanel;
+import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -33,16 +33,16 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.io.Serializable;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * User interface component to allow a user to set ingest module options and
- * enable/disable the modules. Designed as a view of a ingest module model class
- * provided by a controller (Model-View-Controller design pattern).
+ * enable/disable the modules.
  */
 class IngestConfigurationPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(IngestConfigurationPanel.class.getName());
     private List<IngestModuleModel> modules = new ArrayList<>();
     private boolean processUnallocatedSpace = false;
     private IngestModuleModel selectedModule = null;
@@ -61,8 +61,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasIngestOptionsPanel()) {
-                IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                IngestModuleOptions options = moduleFactory.getIngestOptionsFromPanel(module.getIngestOptionsPanel());
+                IngestModuleOptions options = module.getIngestOptionsPanel().getIngestOptions();
                 moduleTemplate.setIngestOptions(options);
             }
             moduleTemplates.add(moduleTemplate);
@@ -110,7 +109,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
                     }
                     simplePanel.revalidate();
                     simplePanel.repaint();
-                    advancedButton.setEnabled(null != selectedModule.getGlobalOptionsPanel());
+                    advancedButton.setEnabled(null != selectedModule.getResourcesConfigPanel());
                 }
             }
         });
@@ -258,8 +257,8 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    if (selectedModule.hasGlobalOptionsPanel()) {
-                        selectedModule.saveGlobalOptions();
+                    if (selectedModule.hasResourcesConfigPanel()) {
+                        selectedModule.saveResourcesConfig();
                     }
                 } catch (IngestModuleFactory.InvalidOptionsException ex) {
                     // RJCTODO: Error message box
@@ -277,7 +276,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        dialog.display(selectedModule.getGlobalOptionsPanel());
+        dialog.display(selectedModule.getResourcesConfigPanel());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
@@ -304,8 +303,8 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
     static private class IngestModuleModel {
 
         private final IngestModuleTemplate moduleTemplate;
-        private JPanel ingestOptionsPanel;
-        private JPanel globalOptionsPanel;
+        private IngestModuleOptionsPanel ingestOptionsPanel = null;
+        private IngestModuleResourcesConfigPanel resourcesConfigPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
@@ -315,12 +314,14 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
                 try {
                     ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(moduleTemplate.getIngestOptions());
                 } catch (IngestModuleFactory.InvalidOptionsException ex) {
-                    // RJCTODO
+                    // RJCTODO: This is messy, maybe the template should be more capable, not expose factory? 
+                    // RJCTODO: Need a solution
+                     logger.log(Level.SEVERE, "The ingest options for " + moduleTemplate.getIngestModuleFactory().getModuleDisplayName() + " are invalid", ex);
                 }
             }
 
-            if (moduleFactory.providesGlobalOptionsPanels()) {
-                globalOptionsPanel = moduleFactory.getGlobalOptionsPanel();
+            if (moduleFactory.providesResourcesConfigPanels()) {
+                resourcesConfigPanel = moduleFactory.getResourcesConfigPanel();
             }
         }
 
@@ -348,21 +349,20 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
             return moduleTemplate.getIngestModuleFactory().providesIngestOptionsPanels();
         }
 
-        JPanel getIngestOptionsPanel() {
+        IngestModuleOptionsPanel getIngestOptionsPanel() {
             return ingestOptionsPanel;
         }
 
-        boolean hasGlobalOptionsPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesGlobalOptionsPanels();
+        boolean hasResourcesConfigPanel() {
+            return moduleTemplate.getIngestModuleFactory().providesResourcesConfigPanels();
         }
 
-        JPanel getGlobalOptionsPanel() {
-            return globalOptionsPanel;
+        IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+            return resourcesConfigPanel;
         }
 
-        void saveGlobalOptions() throws IngestModuleFactory.InvalidOptionsException {
-            // RJCTODO: Check for null.
-            moduleTemplate.getIngestModuleFactory().saveGlobalOptionsFromPanel(globalOptionsPanel);
+        void saveResourcesConfig() throws IngestModuleFactory.InvalidOptionsException {
+            resourcesConfigPanel.store();
         }
     }
 

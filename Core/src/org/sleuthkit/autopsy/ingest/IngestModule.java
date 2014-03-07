@@ -35,7 +35,7 @@ public interface IngestModule {
      * suitable for presentation to a user in a user interface component or a
      * log message.
      *
-     * @return The display name of the module
+     * @return The display name of the module.
      */
     String getDisplayName();
 
@@ -56,7 +56,7 @@ public interface IngestModule {
      * that the files will be processed as part of the same ingest job.
      *
      * @param ingestJobId Identifier for the ingest job with which this module
-     * instance is associated
+     * instance is associated.
      */
     void init(long ingestJobId);
 
@@ -80,7 +80,7 @@ public interface IngestModule {
      * Invoked after complete() or stop() is called to determine if the module
      * has finished responding to the termination request.
      *
-     * @return True if the module is finished, false otherwise
+     * @return True if the module is finished, false otherwise.
      */
     boolean isFinished();
 }

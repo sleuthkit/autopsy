@@ -40,11 +40,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.datamodel.HashInfo;
 
-public class HashDbIngestModule extends AbstractIngestModule implements FileIngestModule {
+public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private IngestServices services;

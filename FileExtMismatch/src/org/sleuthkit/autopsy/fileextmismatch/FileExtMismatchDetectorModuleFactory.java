@@ -9,15 +9,18 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
  * An factory that creates file ingest modules that do hash database lookups.
  */
 @ServiceProvider(service=IngestModuleFactory.class)
-public class FileExtMismatchDetectorModuleFactory extends AbstractIngestModuleFactory {
+public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAdapter {
     public static final String MODULE_NAME = "Extension Mismatch Detector";
     public static final String MODULE_DESCRIPTION = "Flags files that have a non-standard extension based on their file type.";
     
@@ -41,8 +44,8 @@ public class FileExtMismatchDetectorModuleFactory extends AbstractIngestModuleFa
     }
     
     @Override
-    public Serializable getDefaultIngestOptions() {
-        return new FileExtMismatchIngestOptions();        
+    public IngestModuleOptions getDefaultPerIngestJobOptions() {
+        return new FileExtMismatchDetectorOptions();        
     }
     
     @Override
@@ -51,38 +54,26 @@ public class FileExtMismatchDetectorModuleFactory extends AbstractIngestModuleFa
     }
     
     @Override
-    public JPanel getIngestOptionsPanel(Serializable ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
-        if (!ingestOptionsAreValid(ingestOptions)) {
-            throw new IngestModuleFactory.InvalidOptionsException();
+    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+        if (ingestOptions instanceof FileExtMismatchDetectorOptions) {
+            throw new IngestModuleFactory.InvalidOptionsException("Ingest options must be of type " + FileExtMismatchDetectorOptions.class.getCanonicalName());            
+        }
+        
+        if (!ingestOptions.areValid()) {
+            throw new IngestModuleFactory.InvalidOptionsException("");
         }        
-        FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel(ingestOptions);  
+        
+        FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions)ingestOptions);  
         return ingestOptionsPanel;                
     }
-    
+        
     @Override
-    public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) {
-        if (!(ingestOptionsPanel instanceof FileExtMismatchSimpleConfigPanel)) {
-            throw new IllegalArgumentException("JPanel not a FileExtMismatchConfigPanel");
-        }
-
-        FileExtMismatchSimpleConfigPanel panel = (FileExtMismatchSimpleConfigPanel)ingestOptionsPanel;
-//        panel.store(); RJCTODO
-                
-        return new FileExtMismatchIngestOptions(); // RJCTODO
-    }
-    
-    @Override
-    public boolean ingestOptionsAreValid(Serializable ingestOptions) {
-        return (ingestOptions instanceof FileExtMismatchIngestOptions);
-    }
-    
-    @Override
-    public boolean providesGlobalOptionsPanels() {
+    public boolean providesResourcesConfigPanels() {
         return true;    
     }
     
     @Override
-    public JPanel getGlobalOptionsPanel() {
+    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
         FileExtMismatchConfigPanel globalOptionsPanel = new FileExtMismatchConfigPanel();        
         globalOptionsPanel.load();
         return globalOptionsPanel;

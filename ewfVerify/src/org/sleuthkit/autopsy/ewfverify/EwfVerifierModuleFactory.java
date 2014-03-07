@@ -16,48 +16,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ewfverify;
 
-import java.io.Serializable;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.AbstractIngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
 
 /**
  * An factory that creates file ingest modules that do hash database lookups.
  */
-@ServiceProvider(service=IngestModuleFactory.class)
-public class EwfVerifierModuleFactory extends AbstractIngestModuleFactory { 
+@ServiceProvider(service = IngestModuleFactory.class)
+public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
-        
+
     static String getModuleName() {
         return "EWF Verify"; // RJCTODO: Is this what we want here?
     }
-        
+
     @Override
     public String getModuleDescription() {
-        return "Validates the integrity of E01 files.";        
+        return "Validates the integrity of E01 files.";
     }
-    
+
     @Override
     public String getModuleVersionNumber() {
-        return Version.getVersion();        
+        return Version.getVersion();
     }
-    
-    
+
     @Override
     public boolean isDataSourceIngestModuleFactory() {
-        return true;            
+        return true;
     }
-    
+
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(Serializable ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
         return new EwfVerifyIngestModule();
     }
 }

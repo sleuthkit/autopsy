@@ -21,18 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import javax.swing.JPanel;
 
 /**
- * Base class for ingest module options panels. Can be used as an empty panel by
- * ingest modules that have no options.
+ * Abstract base class for ingest module options panels.
  */
-public class IngestModuleOptionsPanel extends JPanel {
+public abstract class IngestModuleOptionsPanel extends JPanel {
 
-    private IngestModuleOptions ingestOptions = new NoIngestOptions();
-
-    void setIngestOptions(IngestModuleOptions ingestOptions) {
-        this.ingestOptions = ingestOptions;
-    }
-
-    IngestModuleOptions getIngestOptions() {
-        return ingestOptions;
-    }
+    public abstract IngestModuleOptions getIngestOptions();
 }
