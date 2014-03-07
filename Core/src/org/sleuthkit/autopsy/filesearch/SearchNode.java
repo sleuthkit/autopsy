@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.util.List;
 import org.openide.nodes.AbstractNode;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -38,6 +39,6 @@ class SearchNode extends AbstractNode {
 
     @Override
     public String getName() {
-        return "Search Result";
+        return NbBundle.getMessage(this.getClass(), "SearchNode.getName.text");
     }
 }
