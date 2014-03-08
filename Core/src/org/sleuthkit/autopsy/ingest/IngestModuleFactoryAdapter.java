@@ -34,7 +34,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     public abstract String getModuleVersionNumber();
 
     @Override
-    public IngestModuleOptions getDefaultPerIngestJobOptions() {
+    public IngestModuleOptions getDefaultIngestOptions() {
         return new NoIngestOptions();
     }
     

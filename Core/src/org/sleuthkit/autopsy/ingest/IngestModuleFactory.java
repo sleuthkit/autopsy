@@ -82,7 +82,7 @@ public interface IngestModuleFactory {
      *
      * @return The ingest options.
      */
-    IngestModuleOptions getDefaultPerIngestJobOptions();
+    IngestModuleOptions getDefaultIngestOptions();
 
     /**
      * Queries the factory to determine if it provides user interface panels to

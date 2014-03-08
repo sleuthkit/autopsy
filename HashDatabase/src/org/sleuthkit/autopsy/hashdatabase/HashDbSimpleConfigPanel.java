@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -34,11 +32,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptionsPanel;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends javax.swing.JPanel { 
+public class HashDbSimpleConfigPanel extends IngestModuleOptionsPanel { 
     
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
@@ -54,16 +54,6 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
         customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
         alwaysCalcHashesCheckbox.setSelected(HashDbManager.getInstance().getAlwaysCalculateHashes());
-        
-        // Add a listener to the always calculate hashes checkbox component.
-        // The listener passes the user's selection on to the hash database manager.
-        alwaysCalcHashesCheckbox.addActionListener( new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                HashDbManager.getInstance().setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
-            }            
-        });
-        
         load();
     }
 
@@ -85,6 +75,15 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
         }        
     }
     
+    @Override
+    public IngestModuleOptions getIngestOptions() {
+        // RJCTODO: Work out how this works, load() and store(), etc.
+        HashDbManager hashDbManager = HashDbManager.getInstance();
+        List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
+        List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();
+        return new HashLookupOptions(alwaysCalcHashesCheckbox.isSelected(), knownFileHashSets, knownBadFileHashSets);
+    }
+
     public void load() {        
         knownTableModel.load();
         knownBadTableModel.load();
@@ -256,7 +255,7 @@ public class HashDbSimpleConfigPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
-        // TODO add your handling code here:
+        HashDbManager.getInstance().setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
     }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

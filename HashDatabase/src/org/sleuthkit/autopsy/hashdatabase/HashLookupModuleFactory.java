@@ -16,107 +16,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleOptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
  * A factory that creates file ingest modules that do hash database lookups.
  */
-@ServiceProvider(service=IngestModuleFactory.class)
-public class HashLookupModuleFactory extends IngestModuleFactoryAdapter { 
+@ServiceProvider(service = IngestModuleFactory.class)
+public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
-    
+
     static String getModuleName() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");        
+        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
     }
-    
+
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleDescription");        
+        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleDescription");
     }
-    
+
     @Override
     public String getModuleVersionNumber() {
-        return Version.getVersion();        
+        return Version.getVersion();
     }
-    
+
     @Override
-    public Serializable getDefaultPerIngestJobOptions() {
-        return new IngestOptions();        
+    public IngestModuleOptions getDefaultIngestOptions() {
+        return new HashLookupOptions();
     }
-    
+
     @Override
     public boolean providesIngestOptionsPanels() {
         return true;
     }
-    
-    @Override
-    public JPanel getIngestOptionsPanel(Serializable ingestOptions) {
-        HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();  
-        ingestOptionsPanel.load();
-        return ingestOptionsPanel;                
-    }
-    
-    @Override
-    public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) throws InvalidOptionsException {
-        if (!(ingestOptionsPanel instanceof HashDbSimpleConfigPanel)) {
-            throw new IllegalArgumentException("JPanel not a HashDbSimpleConfigPanel");
-        }
 
-        HashDbSimpleConfigPanel panel = (HashDbSimpleConfigPanel)ingestOptionsPanel;
-        panel.store();
-                
-        return new IngestOptions(); // RJCTODO
+    @Override
+    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) {
+        HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();
+        ingestOptionsPanel.load();
+        return ingestOptionsPanel;
     }
-    
+
     @Override
     public boolean providesResourcesConfigPanels() {
-        return true;    
+        return true;
     }
-    
+
     @Override
-    public JPanel getGlobalOptionsPanel() {
-        HashDbConfigPanel globalOptionsPanel = new HashDbConfigPanel();        
-        globalOptionsPanel.load();
-        return globalOptionsPanel;
-    }    
-    
-    @Override
-    public void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws InvalidOptionsException {
-        if (!(globalOptionsPanel instanceof HashDbConfigPanel)) {
-            throw new IllegalArgumentException("JPanel not a HashDbConfigPanel");
-        }
-        
-        HashDbConfigPanel panel = (HashDbConfigPanel)globalOptionsPanel;
-        panel.store();
+    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+        HashDbConfigPanel resourcesConfigPanel = new HashDbConfigPanel();
+        resourcesConfigPanel.load();
+        return resourcesConfigPanel;
     }
-    
+
     @Override
     public boolean isFileIngestModuleFactory() {
-        return true;            
+        return true;
     }
-    
+
     @Override
-    public FileIngestModule createFileIngestModule(Serializable ingestOptions) throws InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
         return new HashDbIngestModule();
-    }
-    
-    private static class IngestOptions implements Serializable {
-        // RJCTODO: fill out
-        boolean alwaysCalcHashes = true;
-        ArrayList<String> hashSetNames = new ArrayList<>();
     }
 }

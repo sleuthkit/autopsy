@@ -38,17 +38,17 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
-public final class HashDbConfigPanel extends javax.swing.JPanel implements OptionsPanel {
+public final class HashDbConfigPanel extends IngestModuleResourcesConfigPanel {
     private static final String NO_SELECTION_TEXT = NbBundle
             .getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.noSelectionText");
     private static final String ERROR_GETTING_PATH_TEXT = NbBundle

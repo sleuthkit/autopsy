@@ -54,7 +54,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public Serializable getDefaultPerIngestJobOptions() {
+    public Serializable getDefaultIngestOptions() {
         return new IngestOptions();        
     }
     

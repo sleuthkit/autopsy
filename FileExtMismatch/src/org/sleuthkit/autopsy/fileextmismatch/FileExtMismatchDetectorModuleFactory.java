@@ -44,7 +44,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
     
     @Override
-    public IngestModuleOptions getDefaultPerIngestJobOptions() {
+    public IngestModuleOptions getDefaultIngestOptions() {
         return new FileExtMismatchDetectorOptions();        
     }
     
