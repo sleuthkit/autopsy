@@ -138,7 +138,7 @@ import org.sleuthkit.datamodel.Content;
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Module {0} completed", module.getDisplayName());
                     try {
-                        module.complete();
+                        module.jobCompleted();
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Error completing the module " + module.getDisplayName(), e);
                     }
@@ -146,7 +146,7 @@ import org.sleuthkit.datamodel.Content;
                 } else {
                     logger.log(Level.INFO, "Module {0} stopped", module.getDisplayName());
                     try {
-                        module.stop();
+                        module.jobCancelled();
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Error stopping the module" + module.getDisplayName(), e);
                     }

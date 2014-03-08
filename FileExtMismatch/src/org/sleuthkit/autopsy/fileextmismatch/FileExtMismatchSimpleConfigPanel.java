@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.fileextmismatch;
 
-import org.sleuthkit.autopsy.ingest.IngestModuleOptions;
-import org.sleuthkit.autopsy.ingest.IngestModuleOptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets
  * configuration.
  */
-class FileExtMismatchSimpleConfigPanel extends IngestModuleOptionsPanel {
+class FileExtMismatchSimpleConfigPanel extends IngestModuleIngestJobOptionsPanel {
 
     private final FileExtMismatchDetectorOptions ingestOptions;
 
@@ -41,7 +41,7 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleOptionsPanel {
     }
 
     @Override
-    public IngestModuleOptions getIngestOptions() {
+    public IngestModuleIngestJobOptions getIngestOptions() {
         return ingestOptions;
     }
 

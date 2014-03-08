@@ -21,16 +21,16 @@ package org.sleuthkit.autopsy.ingest;
 import java.io.Serializable;
 
 /**
- * Interface for per ingest job options for ingest modules. Options are
- * serializable to support persistence of options between invocations of the
+ * Interface for resources configuration for ingest modules. The configuration
+ * is serializable to support its persistence between invocations of the
  * application.
  */
-public interface IngestModuleOptions extends Serializable {
+public interface IngestModuleResourcesConfig extends Serializable {
 
     /**
-     * Determines whether the per ingest job options are valid.
+     * Determines whether the resources configuration is valid.
      *
-     * @return True if the options are valid, false otherwise
+     * @return True if the configuration is valid, false otherwise
      */
-    boolean areValid();
+    boolean isValid();
 }

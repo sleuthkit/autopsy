@@ -18,12 +18,19 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JPanel;
+import java.io.Serializable;
 
 /**
- * Abstract base class for ingest module options panels.
+ * Interface for per ingest job options for ingest modules. Options are
+ * serializable to support persistence of options between invocations of the
+ * application.
  */
-public abstract class IngestModuleOptionsPanel extends JPanel {
+public interface IngestModuleIngestJobOptions extends Serializable {
 
-    public abstract IngestModuleOptions getIngestOptions();
+    /**
+     * Determines whether the per ingest job options are valid.
+     *
+     * @return True if the options are valid, false otherwise.
+     */
+    boolean areValid();
 }

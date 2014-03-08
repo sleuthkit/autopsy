@@ -27,6 +27,12 @@ public interface DataSourceIngestModule extends IngestModule {
 
     /**
      * Process a data source.
+     * <p>
+     * IMPORTANT NOTE: The DataSourceIngestModuleStatusHelper class will be
+     * deleted in the Autopsy 3.2 release. An additional method will be added to
+     * allow the ingest framework to assume responsibility for monitoring
+     * progress and the framework will make the data source ingest worker
+     * threads for ingest jobs invisible to data source ingest modules.
      *
      * @param dataSource The data source to process.
      * @param statusHelper A status helper to be used to report progress and

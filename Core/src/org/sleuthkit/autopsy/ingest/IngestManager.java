@@ -239,7 +239,7 @@ public class IngestManager {
             if (abstractFileModulesRetValues.containsKey(moduleName)) {
                 return abstractFileModulesRetValues.get(moduleName);
             } else {
-                return IngestModule.ResultCode.UNKNOWN; // RJCTODO: Not yet determined?
+                return IngestModule.ResultCode.NOT_SET; // RJCTODO: Not yet determined?
             }
         }
     }

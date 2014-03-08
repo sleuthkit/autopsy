@@ -298,7 +298,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
     
     @Override
-    public void complete() {
+    public void jobCompleted() {
         if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
             StringBuilder detailsSb = new StringBuilder();
             //details

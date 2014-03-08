@@ -158,7 +158,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
     
     @Override
-    public void complete() {
+    public void jobCompleted() {
         StringBuilder detailsSb = new StringBuilder();
         //details
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");

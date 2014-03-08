@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.ingest;
 
 /**
  * Implementation of the IngestModuleOptions interface for use by ingest modules
- * that do not have ingest options.
+ * that do not have per ingest job options.
  */
-public final class NoIngestOptions implements IngestModuleOptions {
+public final class NoIngestJobOptions implements IngestModuleIngestJobOptions {
 
     private final String options = "None";
 

@@ -18,35 +18,24 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import javax.swing.JPanel;
+
 /**
- * An adapter that provides default implementations of various
- * IngestModule methods.
+ * Abstract base class for ingest module per ingest job options panels.
  */
-public abstract class IngestModuleAdapter implements IngestModule {
-    private long ingestJobId = 0; // RJCTODO: Add method to scheduler to provide a suitable invalid id
-    
-    protected long getIngestJobId() {
-        return ingestJobId;
-    }
-    
-    @Override
-    public abstract String getDisplayName();
+public abstract class IngestModuleIngestJobOptionsPanel extends JPanel {
 
-    @Override
-    public void init(long ingestJobId) {
-        this.ingestJobId = ingestJobId;
-    }
+    /**
+     * Initializes the ingest options panel for an ingest module.
+     *
+     * @param ingestOptions The initial state of the ingest options.
+     */
+    public abstract void initialize(IngestModuleIngestJobOptions ingestOptions);
 
-    @Override
-    public void jobCompleted() {
-    }
-
-    @Override
-    public void jobCancelled() {
-    }
-
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+    /**
+     * Gets the ingest options for an ingest module.
+     *
+     * @return The ingest options.
+     */
+    public abstract IngestModuleIngestJobOptions getIngestOptions();
 }

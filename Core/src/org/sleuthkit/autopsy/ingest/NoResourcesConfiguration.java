@@ -19,34 +19,25 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * An adapter that provides default implementations of various
- * IngestModule methods.
+ * Implementation of the IngestModuleResourcesConfig interface for use by ingest
+ * modules that do not have ingest options.
  */
-public abstract class IngestModuleAdapter implements IngestModule {
-    private long ingestJobId = 0; // RJCTODO: Add method to scheduler to provide a suitable invalid id
-    
-    protected long getIngestJobId() {
-        return ingestJobId;
-    }
-    
-    @Override
-    public abstract String getDisplayName();
+public final class NoResourcesConfiguration implements IngestModuleResourcesConfig {
 
-    @Override
-    public void init(long ingestJobId) {
-        this.ingestJobId = ingestJobId;
-    }
+    private final String configuration = "None";
 
-    @Override
-    public void jobCompleted() {
+    /**
+     * Gets the string used as an resources configuration placeholder for
+     * serialization purposes.
+     *
+     * @return The string "None"
+     */
+    String getConfig() {
+        return configuration;
     }
 
     @Override
-    public void jobCancelled() {
-    }
-
-    @Override
-    public boolean isFinished() {
+    public boolean isValid() {
         return true;
     }
 }

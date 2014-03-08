@@ -59,7 +59,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public boolean providesIngestOptionsPanels() {
+    public boolean providesIngestJobOptionsPanels() {
         return true;
     }
     

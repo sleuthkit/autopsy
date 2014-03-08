@@ -61,7 +61,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasIngestOptionsPanel()) {
-                IngestModuleOptions options = module.getIngestOptionsPanel().getIngestOptions();
+                IngestModuleIngestJobOptions options = module.getIngestOptionsPanel().getIngestOptions();
                 moduleTemplate.setIngestOptions(options);
             }
             moduleTemplates.add(moduleTemplate);
@@ -303,14 +303,14 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
     static private class IngestModuleModel {
 
         private final IngestModuleTemplate moduleTemplate;
-        private IngestModuleOptionsPanel ingestOptionsPanel = null;
+        private IngestModuleIngestJobOptionsPanel ingestOptionsPanel = null;
         private IngestModuleResourcesConfigPanel resourcesConfigPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
 
             IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-            if (moduleFactory.providesIngestOptionsPanels()) {
+            if (moduleFactory.providesIngestJobOptionsPanels()) {
                 try {
                     ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(moduleTemplate.getIngestOptions());
                 } catch (IngestModuleFactory.InvalidOptionsException ex) {
@@ -346,10 +346,10 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         }
 
         boolean hasIngestOptionsPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesIngestOptionsPanels();
+            return moduleTemplate.getIngestModuleFactory().providesIngestJobOptionsPanels();
         }
 
-        IngestModuleOptionsPanel getIngestOptionsPanel() {
+        IngestModuleIngestJobOptionsPanel getIngestOptionsPanel() {
             return ingestOptionsPanel;
         }
 

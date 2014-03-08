@@ -193,7 +193,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Cleanup resources, threads, timers
      */
     @Override
-    public void complete() {
+    public void jobCompleted() {
         if (initialized == false) {
             return;
         }
@@ -242,7 +242,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
      */
     @Override
-    public void stop() {
+    public void jobCancelled() {
         logger.log(Level.INFO, "stop()");
 
         //stop timer

@@ -90,7 +90,7 @@ class IngestPipelines {
                 for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
                     IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
                     if (moduleFactory.isFileIngestModuleFactory()) {
-                        IngestModuleOptions ingestOptions = moduleTemplate.getIngestOptions();
+                        IngestModuleIngestJobOptions ingestOptions = moduleTemplate.getIngestOptions();
                         FileIngestModule module = moduleFactory.createFileIngestModule(ingestOptions);
                         module.init(dataSourceTaskId);
                         ingestModules.add(module);
@@ -116,13 +116,13 @@ class IngestPipelines {
 
         void stop() {
             for (FileIngestModule module : ingestModules) {
-                module.stop();
+                module.jobCancelled();
             }
         }
 
         void complete() {
             for (FileIngestModule module : ingestModules) {
-                module.complete();
+                module.jobCompleted();
             }
         }
     }
@@ -136,7 +136,7 @@ class IngestPipelines {
                 for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
                     IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
                     if (moduleFactory.isDataSourceIngestModuleFactory()) {
-                        IngestModuleOptions ingestOptions = moduleTemplate.getIngestOptions();
+                        IngestModuleIngestJobOptions ingestOptions = moduleTemplate.getIngestOptions();
                         DataSourceIngestModule module = moduleFactory.createDataSourceIngestModule(ingestOptions);
                         module.init(dataSourceTaskId);
                         modules.add(module);

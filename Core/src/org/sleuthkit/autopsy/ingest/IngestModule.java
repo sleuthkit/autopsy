@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * Interface that must be implemented by all ingest modules.
+ * The interface that must be implemented by all ingest modules.
  */
 public interface IngestModule {
 
@@ -27,7 +27,8 @@ public interface IngestModule {
 
         OK,
         ERROR,
-        UNKNOWN
+        @Deprecated
+        NOT_SET 
     };
 
     /**
@@ -54,6 +55,10 @@ public interface IngestModule {
      * scheduler. For example, a module that extracts files from an archive file
      * should schedule ingest of those files using the ingest job ID to ensure
      * that the files will be processed as part of the same ingest job.
+     * <p>
+     * An ingest module that does not require initialization should extend the
+     * IngestModuleAdapter class to get a default implementation of this method
+     * that saves the ingest job id.
      *
      * @param ingestJobId Identifier for the ingest job with which this module
      * instance is associated.
@@ -61,24 +66,37 @@ public interface IngestModule {
     void init(long ingestJobId);
 
     /**
-     * Invoked when a single ingest of a particular data source is completed.
-     * The module should tear down internal data sources, release private
-     * resources, submit final results, and post a final ingest message. The
-     * module will be discarded when this method returns.
+     * Invoked when an ingest job is completed, before the module instance is
+     * discarded. The module should respond by doing things like releasing
+     * private resources, submitting final results, and posting a final ingest
+     * message.
+     * <p>
+     * An ingest module that does not need to do anything when the ingest job
+     * completes should extend the IngestModuleAdapter class to get a default
+     * implementation of this method that does nothing.
      */
-    void complete();
+    void jobCompleted();
 
     /**
-     * Invoked when a single ingest of a particular data source is canceled. The
-     * module should tear down internal data sources and release private
-     * resources, discard unrecorded results, and post a final ingest message.
-     * The module will be discarded when this method returns.
+     * Invoked when an ingest job is canceled or otherwise terminated early,
+     * before the module instance is discarded. The module should respond by
+     * doing things like releasing private resources, discarding partial
+     * results, and posting a stopped ingest message.
+     * <p>
+     * An ingest module that does not need to do anything when the ingest job is
+     * canceled should extend the IngestModuleAdapter class to get a default
+     * implementation of this method that does nothing.
      */
-    void stop();
+    void jobCancelled();
 
     /**
      * Invoked after complete() or stop() is called to determine if the module
-     * has finished responding to the termination request.
+     * has finished responding to the termination request. The module instance
+     * will be discarded when this method returns true.
+     * <p>
+     * An ingest module that does not need to do anything when the ingest job is
+     * completed or canceled should extend the IngestModuleAdapter class to get
+     * a default implementation of this method that returns true.
      *
      * @return True if the module is finished, false otherwise.
      */

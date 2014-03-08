@@ -34,17 +34,17 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     public abstract String getModuleVersionNumber();
 
     @Override
-    public IngestModuleOptions getDefaultIngestOptions() {
-        return new NoIngestOptions();
+    public IngestModuleIngestJobOptions getDefaultIngestOptions() {
+        return new NoIngestJobOptions();
     }
     
     @Override
-    public boolean providesIngestOptionsPanels() {
+    public boolean providesIngestJobOptionsPanels() {
         return false;
     }
     
     @Override
-    public IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+    public IngestModuleIngestJobOptionsPanel getIngestOptionsPanel(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
         throw new UnsupportedOperationException();
     }
 
@@ -64,7 +64,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +74,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
         throw new UnsupportedOperationException();
     }
 }

@@ -205,7 +205,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
 
     @Override
-    public void complete() {
+    public void jobCompleted() {
         logger.log(Level.INFO, "completed exif parsing {0}", this.toString());
         if (filesToFire) {
             //send the final new data event

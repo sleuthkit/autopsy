@@ -20,40 +20,35 @@ package org.sleuthkit.autopsy.ingest;
 
 /**
  * An interface that must be implemented by all providers of ingest modules. An
- * IngestModuleFactory will be used as a stateless source of a type of data
- * source ingest module, a type of file ingest module, or both. The ingest
- * framework will create one or more instances of each module type for each
- * ingest job it performs, but it is guaranteed that there will be no more than
- * one module instance per thread. If these instances must share resources, the
- * modules are responsible for synchronizing access to the shared resources and
- * doing reference counting as required to release the resources correctly.
+ * ingest module factory will be used to create instances of a type of data
+ * source ingest module, a type of file ingest module, or both.
+ * <P>
+ * IMPORTANT: The factory should be stateless to support context-sensitive use
+ * of the factory. The ingest framework is responsible for managing context
+ * switching and the persistence of resource configurations and per ingest job
+ * options.
  * <p>
- * IngestModuleFactory implementations must be marked with the NetBeans Service
- * provider annotation:
+ * IMPORTANT: The ingest framework will create one or more instances of each
+ * module type for each ingest job it performs. The ingest framework may use
+ * multiple threads to complete an ingest job, but it is guaranteed that there
+ * will be no more than one module instance per thread. However, if these
+ * instances must share resources, the modules are responsible for synchronizing
+ * access to the shared resources and doing reference counting as required to
+ * release those resources correctly.
+ * <p>
+ * IMPORTANT: To be discovered at runtime by the ingest framework,
+ * IngestModuleFactory implementations must be marked with the following
+ * NetBeans Service provider annotation:
  *
  * @ServiceProvider(service=IngestModuleFactory.class)
- * <p>
- * Default implementations of many of the methods in this interface are provided
- * by IngestModuleFactoryAdapter, an abstract base class.
  */
 public interface IngestModuleFactory {
-
-    class InvalidOptionsException extends Exception {
-
-        public InvalidOptionsException() {
-            super("Ingest options are not valid");
-        }
-
-        public InvalidOptionsException(String message) {
-            super(message);
-        }
-    }
 
     /**
      * Gets the display name that identifies the family of ingest modules the
      * factory creates.
      *
-     * @return The module display name as a string.
+     * @return The module family display name.
      */
     String getModuleDisplayName();
 
@@ -61,7 +56,7 @@ public interface IngestModuleFactory {
      * Gets a brief, user-friendly description of the family of ingest modules
      * the factory creates.
      *
-     * @return The module description as a string.
+     * @return The module family description.
      */
     String getModuleDescription();
 
@@ -69,79 +64,108 @@ public interface IngestModuleFactory {
      * Gets the version number of the family of ingest modules the factory
      * creates.
      *
-     * @return The module version number as a string.
+     * @return The module family version number.
      */
     String getModuleVersionNumber();
 
     /**
-     * Gets the default per ingest job options for instances of the family of
-     * ingest modules the factory creates. If the module family does not have
-     * per ingest job options, either this method should return an instance of
-     * the NoIngestOptions class, or the factory should extend
-     * IngestModuleFactoryAdapter.
+     * Gets the default resources configuration for the family of ingest modules
+     * the factory creates. For example, the core hash lookup ingest modules
+     * family has a resources configuration consisting of hash databases which
+     * can be either enabled or disabled per ingest job. If the module family
+     * does not have configurable resources, the factory should extend
+     * IngestModuleFactoryAdapter to get an implementation of this method that
+     * returns an instance of the NoResourcesConfiguration class.
      *
-     * @return The ingest options.
+     * @return The default resources configuration.
      */
-    IngestModuleOptions getDefaultIngestOptions();
+    IngestModuleResourcesConfig getDefaultResourcesConfig();
 
     /**
      * Queries the factory to determine if it provides user interface panels to
      * configure resources to be used by instances of the family of ingest
-     * modules the factory creates. For example, the core hash lookup and
-     * keyword search ingest modules provide resource configuration panels to
-     * import hash databases and keyword lists. The imported hash databases and
-     * keyword lists are then enabled or disabled per ingest job using per
-     * ingest job options panels.
+     * modules the factory creates. For example, the core hash lookup ingest
+     * module factory provides resource configuration panels to import and
+     * create hash databases. The hash databases are then enabled or disabled
+     * per ingest job using ingest job options panels. If the module family does
+     * not have a resources configuration, the factory should extend
+     * IngestModuleFactoryAdapter to get an implementation of this method that
+     * returns false.
      *
-     * @return True if the factory provides per ingest job options panels, false
-     * otherwise.
-     */
-    boolean providesIngestOptionsPanels();
-
-    /**
-     * Gets a user interface panel that can be used to specify per ingest job
-     * options for instances of the family of ingest modules the factory
-     * creates. If the module family does not have per ingest job options, this
-     * method should either throw an UnsupportedOperationException or the
-     * factory should extend IngestModuleFactoryAdapter.
-     *
-     * @param ingestOptions Per ingest job options to initialize the panel.
-     * @return A user interface panel. The factory should be stateless and
-     * should not hold a reference to the panel.
-     * @throws
-     * org.sleuthkit.autopsy.ingest.IngestModuleFactory.InvalidOptionsException
-     */
-    IngestModuleOptionsPanel getIngestOptionsPanel(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
-
-    /**
-     * Queries the factory to determine if it provides user interface panels to
-     * configure resources to be used by instances of the family of ingest
-     * modules the factory creates. For example, the core hash lookup and
-     * keyword search ingest modules provide resource configuration panels to
-     * import hash databases and keyword lists. The imported hash databases and
-     * keyword lists are then enabled or disabled per ingest job using per
-     * ingest job options panels.
-     *
-     * @return True if the factory provides global options panels, false
-     * otherwise.
+     * @return True if the factory provides resource configuration panels.
      */
     boolean providesResourcesConfigPanels();
 
     /**
      * Gets a user interface panel that can be used to configure resources for
      * instances of the family of ingest modules the factory creates. For
-     * example, the core hash lookup and keyword search ingest modules provide
-     * resource configuration panels to import hash databases and keyword lists.
-     * The imported hash databases and keyword lists are then enabled or
-     * disabled per ingest job using per ingest job options panels. If the
-     * module family does not have resources to configure, this method should
-     * either throw an UnsupportedOperationException or the factory should
-     * extend IngestModuleFactoryAdapter.
+     * example, the core hash lookup ingest module factory provides a resource
+     * configuration panel to import and create hash databases. The imported
+     * hash databases are then enabled or disabled per ingest job using ingest
+     * options panels. If the module family does not have a resources
+     * configuration, the factory should extend IngestModuleFactoryAdapter to
+     * get an implementation of this method that throws an
+     * UnsupportedOperationException.
+     * <p>
+     * IMPORTANT: The ingest framework assumes that ingest module factories are
+     * stateless to support context-sensitive use of the factory, with the
+     * ingest framework managing context switching and the persistence of
+     * resource configurations and per ingest job options. A factory should not
+     * retain references to the resources configuration panels it creates.
      *
-     * @return A user interface panel. The factory should be stateless and
-     * should not hold a reference to the panel.
+     * @param resourcesConfig A resources configuration with which to initialize
+     * the panel.
+     * @return A user interface panel for configuring ingest module resources.
      */
-    IngestModuleResourcesConfigPanel getResourcesConfigPanel();
+    IngestModuleResourcesConfigPanel getResourcesConfigPanel(IngestModuleResourcesConfig resourcesConfig);
+
+    /**
+     * Gets the default per ingest job options for instances of the family of
+     * ingest modules the factory creates. For example, the core hash lookup
+     * ingest modules family has a resources configuration consisting of hash
+     * databases, all of which are enabled by default for an ingest job. If the
+     * module family does not have per ingest job options, the factory should
+     * extend IngestModuleFactoryAdapter to get an implementation of this method
+     * that returns an instance of the NoIngestJobOptions class.
+     *
+     * @return The ingest options.
+     */
+    IngestModuleIngestJobOptions getDefaultIngestJobOptions(IngestModuleResourcesConfig defaultResourcesConfig);
+
+    /**
+     * Queries the factory to determine if it provides user interface panels to
+     * set per ingest job options for instances of the family of ingest modules
+     * the factory creates. For example, the core hash lookup ingest module
+     * factory provides ingest options panels to enable or disable hash
+     * databases per ingest job. If the module family does not have per ingest
+     * job options, the factory should extend IngestModuleFactoryAdapter to get
+     * an implementation of this method that returns false.
+     *
+     * @return True if the factory provides ingest job options panels.
+     */
+    boolean providesIngestJobOptionsPanels();
+
+    /**
+     * Gets a user interface panel that can be used to set per ingest job
+     * options for instances of the family of ingest modules the factory
+     * creates. For example, the core hash lookup ingest module factory provides
+     * ingest options panels to enable or disable hash databases per ingest job.
+     * If the module family does not have ingest job options, the factory should
+     * extend IngestModuleFactoryAdapter to get an implementation of this method
+     * that throws an UnsupportedOperationException.
+     * <p>
+     * IMPORTANT: The ingest framework assumes that ingest module factories are
+     * stateless to support context-sensitive use of the factory. The ingest
+     * framework is responsible for managing context switching and the
+     * persistence of resource configurations and per ingest job options. A
+     * factory should not retain references to the ingest job options panels it
+     * creates.
+     *
+     * @param resourcesConfig
+     * @param ingestOptions Per ingest job options to initialize the panel.
+     * @return A user interface panel.
+     */
+    IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -153,27 +177,53 @@ public interface IngestModuleFactory {
 
     /**
      * Creates a data source ingest module instance.
+     * <p>
+     * IMPORTANT: The factory should be stateless to support context-sensitive
+     * use of the factory. The ingest framework is responsible for managing
+     * context switching and the persistence of resource configurations and per
+     * ingest job options. A factory should not retain references to the data
+     * source ingest module instances it creates.
+     * <p>
+     * IMPORTANT: The ingest framework will create one or more data source
+     * ingest module instances for each ingest job it performs. The ingest
+     * framework may use multiple threads to complete an ingest job, but it is
+     * guaranteed that there will be no more than one module instance per
+     * thread. However, if these instances must share resources, the modules are
+     * responsible for synchronizing access to the shared resources and doing
+     * reference counting as required to release those resources correctly.
      *
-     * @param ingestOptions The ingest options to use to configure the module.
-     * @return A data source ingest module instance created using the provided
-     * ingest options.
+     * @param ingestOptions The ingest options for the module instance.
+     * @return A data source ingest module instance.
      */
-    DataSourceIngestModule createDataSourceIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
+    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions);
 
     /**
-     * Queries the factory to determine if it is capable of creating data source
-     * ingest modules.
+     * Queries the factory to determine if it is capable of creating file ingest
+     * module instances.
      *
-     * @return True if the factory can create data source ingest modules.
+     * @return True if the factory can create file ingest module instances.
      */
     boolean isFileIngestModuleFactory();
 
     /**
      * Creates a file ingest module instance.
+     * <p>
+     * IMPORTANT: The factory should be stateless to support context-sensitive
+     * use of the factory. The ingest framework is responsible for managing
+     * context switching and the persistence of resource configurations and per
+     * ingest job options. A factory should not retain references to the file
+     * ingest module instances it creates.
+     * <p>
+     * IMPORTANT: The ingest framework will create one or more file ingest
+     * module instances for each ingest job it performs. The ingest framework
+     * may use multiple threads to complete an ingest job, but it is guaranteed
+     * that there will be no more than one module instance per thread. However,
+     * if these instances must share resources, the modules are responsible for
+     * synchronizing access to the shared resources and doing reference counting
+     * as required to release those resources correctly.
      *
-     * @param ingestOptions The ingest options to use to configure the module.
-     * @return A file ingest module instance created using the provided ingest
-     * options.
+     * @param ingestOptions The ingest options for the module instance.
+     * @return A file ingest module instance.
      */
-    FileIngestModule createFileIngestModule(IngestModuleOptions ingestOptions) throws InvalidOptionsException;
+    FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions);
 }

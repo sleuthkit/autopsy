@@ -175,7 +175,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     }
 
     @Override
-    public void complete() {
+    public void jobCompleted() {
         logger.log(Level.INFO, "complete() {0}", getDisplayName());
         if (skipped == false) {
             String msg = verified ? " verified" : " not verified";
