@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 
 final class GeneralPanel extends javax.swing.JPanel {
 
@@ -33,6 +34,7 @@ final class GeneralPanel extends javax.swing.JPanel {
     GeneralPanel(GeneralOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
+        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
     }
 
@@ -80,6 +82,11 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         buttonGroup3.add(useGMTTimeRB);
         org.openide.awt.Mnemonics.setLocalizedText(useGMTTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useGMTTimeRB.text")); // NOI18N
+        useGMTTimeRB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useGMTTimeRBActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel3.text")); // NOI18N
 
@@ -143,6 +150,10 @@ final class GeneralPanel extends javax.swing.JPanel {
     private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_useBestViewerRBActionPerformed
+
+    private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
+         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
+    }//GEN-LAST:event_useGMTTimeRBActionPerformed
 
     void load() {
         boolean keepPreferredViewer = prefs.getBoolean(KEEP_PREFERRED_VIEWER, false);

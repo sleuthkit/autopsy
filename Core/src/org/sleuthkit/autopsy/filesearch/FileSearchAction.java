@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
@@ -66,7 +67,7 @@ import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
     @Override
     public String getName() {
-        return "File Search by Attributes";
+        return NbBundle.getMessage(this.getClass(), "FileSearchAction.getName.text");
     }
 
     @Override

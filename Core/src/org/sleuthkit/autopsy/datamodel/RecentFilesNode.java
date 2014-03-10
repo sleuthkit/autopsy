@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -29,7 +30,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class RecentFilesNode extends DisplayableItemNode {
 
-    private static final String NAME = "Recent Files";
+    private static final String NAME = NbBundle.getMessage(RecentFilesNode.class, "RecentFilesNode.name.text");
     private SleuthkitCase skCase;
 
     RecentFilesNode(SleuthkitCase skCase) {
@@ -60,10 +61,10 @@ public class RecentFilesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
-                NAME));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.desc"),
+                                NAME));
         return s;
     }
 }

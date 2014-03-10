@@ -20,6 +20,8 @@
 
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import org.openide.util.NbBundle;
+
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +54,10 @@ class AddFileExtensionAction extends AbstractAction {
         
         if (!FileExtMismatchXML.getDefault().save(editableMap)) {            
             //error
-            JOptionPane.showMessageDialog(null, "Writing XML configuration file failed.", "Add Mismatch Extension Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                                          NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                                          JOptionPane.ERROR_MESSAGE);
         } // else //in the future we might want to update the statusbar to give feedback to the user
         
     }      

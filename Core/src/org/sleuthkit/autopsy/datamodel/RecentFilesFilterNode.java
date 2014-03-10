@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Calendar;
 import java.util.Locale;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -71,9 +73,10 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
-                "Filter Type",
-                "no description",
+        ss.put(new NodeProperty(
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.name"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.displayName"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.desc"),
                 filter.getDisplayName()));
 
         return s;

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.ISevenZipInArchive;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
@@ -69,8 +70,9 @@ import org.sleuthkit.datamodel.TskData;
 public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
-    public static final String MODULE_NAME = "Archive Extractor";
-    public static final String MODULE_DESCRIPTION = "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
+    public static final String MODULE_NAME = NbBundle.getMessage(SevenZipIngestModule.class, "SevenZipIngestModule.moduleName");
+    public static final String MODULE_DESCRIPTION = NbBundle.getMessage(SevenZipIngestModule.class,
+                                                                        "SevenZipIngestModule.moduleDesc.text");
     final public static String MODULE_VERSION = Version.getVersion();
     private IngestServices services;
     private volatile int messageID = 0;
@@ -82,8 +84,10 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
     //encryption type strings
-    private static final String ENCRYPTION_FILE_LEVEL = "File-level Encryption";
-    private static final String ENCRYPTION_FULL = "Full Encryption";
+    private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(SevenZipIngestModule.class,
+                                                                            "SevenZipIngestModule.encryptionFileLevel");
+    private static final String ENCRYPTION_FULL = NbBundle.getMessage(SevenZipIngestModule.class,
+                                                                      "SevenZipIngestModule.encryptionFull");
     //zip bomb detection
     private static final int MAX_DEPTH = 4;
     private static final int MAX_COMPRESSION_RATIO = 600;
@@ -130,8 +134,11 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 unpackDirPathFile.mkdirs();
             } catch (SecurityException e) {
                 logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e);
-                String msg = "Error initializing " + MODULE_NAME;
-                String details = "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage();
+                String msg = NbBundle.getMessage(this.getClass(),
+                                                 "SevenZipIngestModule.init.errInitModule.msg", MODULE_NAME);
+                String details = NbBundle.getMessage(this.getClass(),
+                                                     "SevenZipIngestModule.init.errInitModule.details",
+                                                     unpackDirPath, e.getMessage());
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                 throw e;
@@ -144,8 +151,10 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: " + platform);
         } catch (SevenZipNativeInitializationException e) {
             logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
-            String msg = "Error initializing " + MODULE_NAME;
-            String details = "Could not initialize 7-ZIP library: " + e.getMessage();
+            String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errInitModule.msg",
+                                             MODULE_NAME);
+            String details = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errCantInitLib",
+                                                 e.getMessage());
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
             throw new RuntimeException(e);
@@ -274,10 +283,10 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 String itemName = archiveFileItem.getPath();
                 logger.log(Level.INFO, "Possible zip bomb detected, compression ration: " + cRatio
                         + " for in archive item: " + itemName);
-                String msg = "Possible ZIP bomb detected in archive: " + archiveName
-                        + ", item: " + itemName;
-                String details = "The archive item compression ratio is " + cRatio
-                        + ", skipping processing of this archive item. ";
+                String msg = NbBundle.getMessage(this.getClass(),
+                                                 "SevenZipIngestModule.isZipBombCheck.warnMsg", archiveName, itemName);
+                String details = NbBundle.getMessage(this.getClass(),
+                                                     "SevenZipIngestModule.isZipBombCheck.warnDetails", cRatio);
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
 
@@ -308,9 +317,11 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
         if (parentAr == null) {
             parentAr = archiveDepthCountTree.addArchive(null, archiveId);
         } else if (parentAr.getDepth() == MAX_DEPTH) {
-            String msg = "Possible ZIP bomb detected: " + archiveFile.getName();
-            String details = "The archive is " + parentAr.getDepth()
-                    + " levels deep, skipping processing of this archive and its contents ";
+            String msg = NbBundle.getMessage(this.getClass(),
+                                             "SevenZipIngestModule.unpack.warnMsg.zipBomb", archiveFile.getName());
+            String details = NbBundle.getMessage(this.getClass(),
+                                                 "SevenZipIngestModule.unpack.warnDetails.zipBomb",
+                                                 parentAr.getDepth());
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
             return unpackedFiles;
@@ -390,7 +401,8 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                         extractedPath = "/" + useName;
                     }
                     
-                    String msg = "Unknown item path in archive: " + archiveFile.getName() + ", will use: " + extractedPath;
+                    String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.unpack.unknownPath.msg",
+                                                     archiveFile.getName(), extractedPath);
                     logger.log(Level.WARNING, msg);
                     
                 }
@@ -432,8 +444,11 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && size > 0) { //if known free space and file not empty
                     long newDiskSpace = freeDiskSpace - size;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
-                        String msg = "Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName;
-                        String details = "The archive item is too large to unpack, skipping unpacking this item. ";
+                        String msg = NbBundle.getMessage(this.getClass(),
+                                                         "SevenZipIngestModule.unpack.notEnoughDiskSpace.msg",
+                                                         archiveFile.getName(), fileName);
+                        String details = NbBundle.getMessage(this.getClass(),
+                                                             "SevenZipIngestModule.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
                         logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: " + archiveFile.getName() + ", " + fileName);
@@ -528,8 +543,11 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
             // print a message if the file is allocated
             if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
-                String msg = "Error unpacking " + archiveFile.getName();
-                String details = "Error unpacking  " + fullName + ". " + ex.getMessage();
+                String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.unpack.errUnpacking.msg",
+                                                 archiveFile.getName());
+                String details = NbBundle.getMessage(this.getClass(),
+                                                     "SevenZipIngestModule.unpack.errUnpacking.details",
+                                                     fullName, ex.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
             }
         } finally {
@@ -565,9 +583,10 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
 
-            String msg = "Encrypted files in archive detected. ";
-            String details = "Some files in archive: " + archiveFile.getName() + " are encrypted. "
-                    + MODULE_NAME + " extractor was unable to extract all files from this archive.";
+            String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.unpack.encrFileDetected.msg");
+            String details = NbBundle.getMessage(this.getClass(),
+                                                 "SevenZipIngestModule.unpack.encrFileDetected.details",
+                                                 archiveFile.getName(), MODULE_NAME);
             // MessageNotifyUtil.Notify.info(msg, details);
 
             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, msg, details));
@@ -693,7 +712,9 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
             try {
                 output.write(bytes);
             } catch (IOException ex) {
-                throw new SevenZipException("Error writing unpacked file to: " + localAbsPath, ex);
+                throw new SevenZipException(
+                        NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.UnpackStream.write.exception.msg",
+                                            localAbsPath), ex);
             }
             return bytes.length;
         }
@@ -833,7 +854,9 @@ public final class SevenZipIngestModule extends IngestModuleAbstractFile {
 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex);
-                throw new TskCoreException("Error adding a derived file to db:" + fileName, ex);
+                throw new TskCoreException(
+                        NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.UnpackedTree.exception.msg",
+                                            fileName), ex);
             }
 
             //recurse

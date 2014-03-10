@@ -36,7 +36,7 @@ import java.util.logging.Level;
  */
 public class ModuleSettings {
 
-    // The directory where the properties file is lcoated
+    // The directory where the properties file is located
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
     public static final String DEFAULT_CONTEXT = "GeneralContext";
     public static final String MAIN_SETTINGS = "Case";

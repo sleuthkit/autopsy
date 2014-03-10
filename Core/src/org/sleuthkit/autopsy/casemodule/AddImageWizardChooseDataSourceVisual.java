@@ -37,6 +37,7 @@ import javax.swing.JSeparator;
 import javax.swing.event.DocumentEvent;
 import javax.swing.ListCellRenderer;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
@@ -183,7 +184,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     @Override
     public String getName() {
-        return "Enter Data Source Information";
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardChooseDataSourceVisual.getName.text");
     }
 
 

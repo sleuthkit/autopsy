@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.event.ActionEvent;
@@ -190,16 +191,19 @@ public class DataResultFilterNode extends FilterNode {
 
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() ) {
-                actions.add(new ViewContextAction("View File in Directory", ban));
+                actions.add(new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
                 Content c = findLinked(ban);
                 if (c != null) {
-                    actions.add(new ViewContextAction("View File in Directory", c));
+                    actions.add(new ViewContextAction(
+                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                actions.add(new ViewContextAction("View Source File in Directory", ban));
+                actions.add(new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             }
             File f = ban.getLookup().lookup(File.class);
             LayoutFile lf = null;
@@ -209,11 +213,14 @@ public class DataResultFilterNode extends FilterNode {
             if (f != null) {
                 final FileNode fn = new FileNode(f);
                 actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction("View in New Window", fn));
-                actions.add(new ExternalViewerAction("Open in External Viewer", fn));
+                actions.add(new NewWindowViewAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), fn));
+                actions.add(new ExternalViewerAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), fn));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
-                actions.add(new HashSearchAction("Search for files with the same MD5 hash", fn));
+                actions.add(new HashSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), fn));
 
                 //add file/result tag if itself is not a tag
                 if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
@@ -227,8 +234,10 @@ public class DataResultFilterNode extends FilterNode {
             if ((d = ban.getLookup().lookup(Directory.class)) != null) {
                 DirectoryNode dn = new DirectoryNode(d);
                 actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction("View in New Window", dn));
-                actions.add(new ExternalViewerAction("Open in External Viewer", dn));
+                actions.add(new NewWindowViewAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), dn));
+                actions.add(new ExternalViewerAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), dn));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
 
@@ -244,8 +253,10 @@ public class DataResultFilterNode extends FilterNode {
             if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
                 VirtualDirectoryNode dn = new VirtualDirectoryNode(vd);
                 actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction("View in New Window", dn));
-                actions.add(new ExternalViewerAction("Open in External Viewer", dn));
+                actions.add(new NewWindowViewAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), dn));
+                actions.add(new ExternalViewerAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), dn));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
 
@@ -260,8 +271,10 @@ public class DataResultFilterNode extends FilterNode {
             } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 LayoutFileNode lfn = new LayoutFileNode(lf);
                 actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction("View in New Window", lfn));
-                actions.add(new ExternalViewerAction("Open in External Viewer", lfn));
+                actions.add(new NewWindowViewAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), lfn));
+                actions.add(new ExternalViewerAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), lfn));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
 
@@ -277,8 +290,10 @@ public class DataResultFilterNode extends FilterNode {
                     || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
                 final LocalFileNode locfn = new LocalFileNode(locF);
                 actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction("View in New Window", locfn));
-                actions.add(new ExternalViewerAction("Open in External Viewer", locfn));
+                actions.add(new NewWindowViewAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), locfn));
+                actions.add(new ExternalViewerAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), locfn));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
 
@@ -423,7 +438,8 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
-            return new ViewContextAction("View in Directory", ban);
+            return new ViewContextAction(
+                    NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
         }
 
         @Override

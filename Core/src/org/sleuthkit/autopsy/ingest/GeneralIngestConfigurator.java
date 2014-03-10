@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.Content;
@@ -104,9 +106,11 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
         // the UI component.
         List<IngestModuleAbstract> enabledModules = new ArrayList<>();
         for (String moduleName : enabledList) {
-            if (moduleName.equals("Thunderbird Parser") 
-                    || moduleName.equals("MBox Parser")) {
-                moduleName = "Email Parser";
+            if (moduleName.equals(
+                    NbBundle.getMessage(this.getClass(), "GeneralIngestConfigurator.modName.tbirdParser.text"))
+                    || moduleName.equals(
+                    NbBundle.getMessage(this.getClass(), "GeneralIngestConfigurator.modName.mboxParser.text"))) {
+                moduleName = NbBundle.getMessage(this.getClass(), "GeneralIngestConfigurator.modName.emailParser.text");
             }
             
             IngestModuleAbstract moduleFound =  null;
@@ -120,7 +124,8 @@ public class GeneralIngestConfigurator implements IngestConfigurator {
                 enabledModules.add(moduleFound);
             }
             else {
-                messages.add(moduleName + " was previously enabled, but could not be found");
+                messages.add(NbBundle.getMessage(this.getClass(), "GeneralIngestConfigurator.enabledMods.notFound.msg",
+                                                 moduleName));
             }
         }        
         ingestDialogPanel.setEnabledIngestModules(enabledModules);                            

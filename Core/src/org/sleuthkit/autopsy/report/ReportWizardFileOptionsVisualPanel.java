@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -52,7 +54,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     
     @Override
     public String getName() {
-        return "Configure File Report";
+        return NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsVisualPanel.getName.text");
     }
     
     /**

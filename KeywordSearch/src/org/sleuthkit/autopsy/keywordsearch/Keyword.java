@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -72,7 +73,7 @@ class Keyword {
 
     @Override
     public String toString() {
-        return "Keyword{" + "query=" + keywordString + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
+        return NbBundle.getMessage(this.getClass(), "Keyword.toString.text", keywordString, isLiteral, keywordType);
     }
     
     

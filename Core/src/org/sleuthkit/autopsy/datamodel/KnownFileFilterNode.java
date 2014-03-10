@@ -23,6 +23,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
@@ -56,8 +57,8 @@ public class KnownFileFilterNode extends FilterNode {
      * is a sub-node of. (i.e. Data Sources, Views, Results)
      */
     public enum SelectionContext {
-        DATA_SOURCES("Data Sources"),   // Subnode of DataSources
-        VIEWS("Views"),                 // Subnode of Views
+        DATA_SOURCES(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.dataSources")),   // Subnode of DataSources
+        VIEWS(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.views")),                 // Subnode of Views
         OTHER("");                      // Subnode of another node.
         
         private final String displayName;
