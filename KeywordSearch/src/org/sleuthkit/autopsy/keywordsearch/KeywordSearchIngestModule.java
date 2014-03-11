@@ -193,7 +193,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Cleanup resources, threads, timers
      */
     @Override
-    public void jobCompleted() {
+    public void shutDown(boolean ingestJobCancelled) {
         if (initialized == false) {
             return;
         }
@@ -295,8 +295,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *
      */
     @Override
-    public void init(long ingestJobId) {
-        this.ingestJobId = ingestJobId;
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
+        this.ingestJobId = context;
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;

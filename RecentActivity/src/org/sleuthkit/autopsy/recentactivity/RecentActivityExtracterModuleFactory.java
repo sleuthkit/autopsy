@@ -16,20 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ewfverify;
+package org.sleuthkit.autopsy.recentactivity;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 
 /**
- * An factory that creates file ingest modules that do hash database lookups.
+ * A factory that creates data source ingest modules that extract recent activity artifacts.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
+public class RecentActivityExtracterModuleFactory extends IngestModuleFactoryAdapter {    
+    public final static String MODULE_NAME = "Recent Activity";
+    public final static String MODULE_DESCRIPTION = "Extracts recent user activity, such as Web browsing, recently used documents and installed programs.";
 
     @Override
     public String getModuleDisplayName() {
@@ -37,12 +39,12 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return "EWF Verify"; // RJCTODO: Is this what we want here?
+        return MODULE_NAME;
     }
 
     @Override
     public String getModuleDescription() {
-        return "Validates the integrity of E01 files.";
+        return MODULE_DESCRIPTION;
     }
 
     @Override
@@ -56,7 +58,8 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) {
-        return new EwfVerifyIngestModule();
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestJobOptions) {
+        return new RAImageIngestModule();
     }
 }
+

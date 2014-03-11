@@ -37,7 +37,7 @@ package org.sleuthkit.autopsy.examples;
 //import org.sleuthkit.autopsy.casemodule.Case;
 //import org.sleuthkit.autopsy.casemodule.services.FileManager;
 //import org.sleuthkit.autopsy.casemodule.services.Services;
-//import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+//import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 //import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
 //import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 //import org.sleuthkit.datamodel.AbstractFile;
@@ -56,7 +56,7 @@ package org.sleuthkit.autopsy.examples;
 //     * are passed in teh data source refernce and query it for things they want.
 //     */
 //    @Override
-//    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+//    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, DataSourceIngestModuleStatusHelper controller) {
 //        
 //        Case case1 = Case.getCurrentCase();
 //        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();

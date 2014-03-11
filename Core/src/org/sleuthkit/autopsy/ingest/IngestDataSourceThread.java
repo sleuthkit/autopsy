@@ -33,8 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Worker thread that runs a data source-level ingest module (image, file set virt dir, etc). 
- * Used to process only a single data-source and single module. 
+ * Worker thread that runs a single data source ingest module (image, file set virt dir, etc). 
  */
  class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
@@ -42,18 +41,18 @@ import org.sleuthkit.datamodel.Content;
     private ProgressHandle progress;
     private final Content dataSource;
     private final DataSourceIngestModule module;
-    private DataSourceIngestModuleStatusHelper controller;
-    private final IngestManager manager;
+    private final IngestModuleProcessingContext context;
+    private DataSourceIngestModuleStatusHelper statusHelper;
     private boolean inited;
     //current method of enqueuing data source ingest modules with locks and internal lock queue
     //ensures that we init, run and complete a single data source ingest module at a time
     //uses fairness policy to run them in order enqueued
     private static final Lock dataSourceIngestModuleLock = new ReentrantReadWriteLock(true).writeLock();
 
-    IngestDataSourceThread(IngestManager manager, Content dataSource, DataSourceIngestModule module) {
-        this.manager = manager;
+    IngestDataSourceThread(Content dataSource, DataSourceIngestModule module, IngestModuleProcessingContext context) {
         this.dataSource = dataSource;
         this.module = module;
+        this.context = context;
         this.inited = false;
     }
     
@@ -67,12 +66,11 @@ import org.sleuthkit.datamodel.Content;
     
     public void init() {
         
-        logger.log(Level.INFO, "Initializing module: {0}", module.getDisplayName());
         try {
-            module.init(dataSource.getId());
+            module.startUp(context);
             inited = true;
         } catch (Exception e) {
-            logger.log(Level.INFO, "Failed initializing module: {0}, will not run.", module.getDisplayName());
+            logger.log(Level.INFO, "Failed initializing module: {0}, will not run.", context.getModuleDisplayName());
             //will not run
             inited = false;
             throw e;
@@ -81,14 +79,11 @@ import org.sleuthkit.datamodel.Content;
 
     @Override
     protected Void doInBackground() throws Exception {
-
-        logger.log(Level.INFO, "Pending module: {0}", module.getDisplayName());
         
-        final String displayName = module.getDisplayName() + " dataSource id:" + dataSource.getId();
+        final String displayName = context.getModuleDisplayName() + " dataSource id:" + dataSource.getId();
         progress = ProgressHandleFactory.createHandle(displayName + " (Pending...)", new Cancellable() {
             @Override
             public boolean cancel() {
-                logger.log(Level.INFO, "DataSource ingest module {0} cancelled by user.", module.getDisplayName());
                 if (progress != null) {
                     progress.setDisplayName(displayName + " (Cancelling...)");
                 }
@@ -101,56 +96,47 @@ import org.sleuthkit.datamodel.Content;
         dataSourceIngestModuleLock.lock();
         try {
             if (this.isCancelled()) {
-                logger.log(Level.INFO, "Cancelled while pending, module: {0}", module.getDisplayName());
                 return Void.TYPE.newInstance();
             }
-            logger.log(Level.INFO, "Starting module: {0}", module.getDisplayName());
             logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
             progress.setDisplayName(displayName);
 
             if (inited == false) {
-                logger.log(Level.INFO, "Module wasn''t initialized, will not run: {0}", module.getDisplayName());
                 return Void.TYPE.newInstance();
             }
-            logger.log(Level.INFO, "Starting processing of module: {0}", module.getDisplayName());
 
-            controller = new DataSourceIngestModuleStatusHelper(this, progress);
+            statusHelper = new DataSourceIngestModuleStatusHelper(this, progress);
 
             if (isCancelled()) {
-                logger.log(Level.INFO, "Terminating DataSource ingest module {0} due to cancellation.", module.getDisplayName());
                 return Void.TYPE.newInstance();
             }
             final StopWatch timer = new StopWatch();
             timer.start();
             try {
-                // RJCTODO
-//                module.process(pipelineContext, dataSource, controller);
+                module.process(dataSource, statusHelper);
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Exception in module: " + module.getDisplayName() + " DataSource: " + dataSource.getName(), e);
+                logger.log(Level.WARNING, "Exception in module: " + context.getModuleDisplayName() + " DataSource: " + dataSource.getName(), e);
             } finally {
                 timer.stop();
-                logger.log(Level.INFO, "Done processing of module: {0} took {1} secs. to process()", new Object[]{module.getDisplayName(), timer.getElapsedTimeSecs()});
-
+                logger.log(Level.INFO, "Done processing of module: {0} took {1} secs. to process()", new Object[]{context.getModuleDisplayName(), timer.getElapsedTimeSecs()});
 
                 //cleanup queues (worker and DataSource/module)
-                manager.removeDataSourceIngestWorker(this);
+                IngestManager.getDefault().removeDataSourceIngestWorker(this);
 
                 if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "Module {0} completed", module.getDisplayName());
                     try {
-                        module.jobCompleted();
+                        module.shutDown(false);
                     } catch (Exception e) {
-                        logger.log(Level.INFO, "Error completing the module " + module.getDisplayName(), e);
+                        logger.log(Level.INFO, "Error completing the module " + context.getModuleDisplayName(), e);
                     }
-                    IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), module.getDisplayName());
+                    IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), context.getModuleDisplayName());
                 } else {
-                    logger.log(Level.INFO, "Module {0} stopped", module.getDisplayName());
                     try {
-                        module.jobCancelled();
+                        module.shutDown(true);
                     } catch (Exception e) {
-                        logger.log(Level.INFO, "Error stopping the module" + module.getDisplayName(), e);
+                        logger.log(Level.INFO, "Error stopping the module" + context.getModuleDisplayName(), e);
                     }
-                    IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), module.getDisplayName());
+                    IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), context.getModuleDisplayName());
                 }
 
             }
@@ -164,7 +150,6 @@ import org.sleuthkit.datamodel.Content;
                     progress.finish();
                 }
             });
-            logger.log(Level.INFO, "Done running module: {0}", module.getDisplayName());
             logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
     }

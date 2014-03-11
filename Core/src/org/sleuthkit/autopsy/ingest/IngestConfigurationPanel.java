@@ -25,7 +25,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -34,7 +33,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * User interface component to allow a user to set ingest module options and
@@ -42,7 +40,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class IngestConfigurationPanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(IngestConfigurationPanel.class.getName());
     private List<IngestModuleModel> modules = new ArrayList<>();
     private boolean processUnallocatedSpace = false;
     private IngestModuleModel selectedModule = null;
@@ -61,7 +58,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasIngestOptionsPanel()) {
-                IngestModuleIngestJobOptions options = module.getIngestOptionsPanel().getIngestOptions();
+                IngestModuleIngestJobOptions options = module.getIngestOptionsPanel().getIngestJobOptions();
                 moduleTemplate.setIngestOptions(options);
             }
             moduleTemplates.add(moduleTemplate);
@@ -94,8 +91,8 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         }
 
         // Add a selection listener to the table model that will display the  
-        // ingest options panel of the currently selected module model and 
-        // enable or disable the global options panel invocation button.
+        // ingest job options panel of the currently selected module model and 
+        // enable or disable the resources configuration panel invocation button.
         modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -256,14 +253,8 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         dialog.addApplyButtonListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    if (selectedModule.hasResourcesConfigPanel()) {
-                        selectedModule.saveResourcesConfig();
-                    }
-                } catch (IngestModuleFactory.InvalidOptionsException ex) {
-                    // RJCTODO: Error message box
-                    // Return without closing to allow user to correct error.
-                    return;
+                if (selectedModule.hasResourcesConfigPanel()) {
+                    selectedModule.saveResourcesConfig();
                 }
                 dialog.close();
             }
@@ -303,21 +294,15 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
     static private class IngestModuleModel {
 
         private final IngestModuleTemplate moduleTemplate;
-        private IngestModuleIngestJobOptionsPanel ingestOptionsPanel = null;
         private IngestModuleResourcesConfigPanel resourcesConfigPanel = null;
+        private IngestModuleIngestJobOptionsPanel ingestJobOptionsPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
 
             IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
             if (moduleFactory.providesIngestJobOptionsPanels()) {
-                try {
-                    ingestOptionsPanel = moduleFactory.getIngestOptionsPanel(moduleTemplate.getIngestOptions());
-                } catch (IngestModuleFactory.InvalidOptionsException ex) {
-                    // RJCTODO: This is messy, maybe the template should be more capable, not expose factory? 
-                    // RJCTODO: Need a solution
-                     logger.log(Level.SEVERE, "The ingest options for " + moduleTemplate.getIngestModuleFactory().getModuleDisplayName() + " are invalid", ex);
-                }
+                ingestJobOptionsPanel = moduleFactory.getIngestJobOptionsPanel(moduleTemplate.getIngestOptions());
             }
 
             if (moduleFactory.providesResourcesConfigPanels()) {
@@ -350,7 +335,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         }
 
         IngestModuleIngestJobOptionsPanel getIngestOptionsPanel() {
-            return ingestOptionsPanel;
+            return ingestJobOptionsPanel;
         }
 
         boolean hasResourcesConfigPanel() {
@@ -361,7 +346,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
             return resourcesConfigPanel;
         }
 
-        void saveResourcesConfig() throws IngestModuleFactory.InvalidOptionsException {
+        void saveResourcesConfig() {
             resourcesConfigPanel.store();
         }
     }

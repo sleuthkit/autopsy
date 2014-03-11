@@ -63,7 +63,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
         
     @Override
-    public void init(long ingestJobId) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
         services = IngestServices.getDefault();           
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
@@ -100,7 +100,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
+                services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
             return ResultCode.OK;
         } catch (TskException ex) {
@@ -158,7 +158,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
     
     @Override
-    public void jobCompleted() {
+    public void shutDown(boolean ingestJobCancelled) {
         StringBuilder detailsSb = new StringBuilder();
         //details
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");

@@ -19,34 +19,27 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * An adapter that provides default implementations of various
- * IngestModule methods.
+ * An adapter that provides a default implementation of the IngestModule
+ * interface.
  */
 public abstract class IngestModuleAdapter implements IngestModule {
-    private long ingestJobId = 0; // RJCTODO: Add method to scheduler to provide a suitable invalid id
-    
-    protected long getIngestJobId() {
-        return ingestJobId;
+
+    private IngestModuleProcessingContext context;
+
+    @Override
+    public void startUp(IngestModuleProcessingContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public void shutDown(boolean ingestJobCancelled) {
     }
     
-    @Override
-    public abstract String getDisplayName();
-
-    @Override
-    public void init(long ingestJobId) {
-        this.ingestJobId = ingestJobId;
+    protected void setContext(IngestModuleProcessingContext context) {
+        this.context = context;
     }
-
-    @Override
-    public void jobCompleted() {
-    }
-
-    @Override
-    public void jobCancelled() {
-    }
-
-    @Override
-    public boolean isFinished() {
-        return true;
+        
+    protected IngestModuleProcessingContext getContext() {
+        return context;
     }
 }

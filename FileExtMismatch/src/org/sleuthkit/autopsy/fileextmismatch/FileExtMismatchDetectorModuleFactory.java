@@ -28,7 +28,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
- * An factory that creates file ingest modules that do hash database lookups.
+ * An factory that creates file ingest modules that detect mismatches between 
+ * the types of files and their extensions.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAdapter {
@@ -56,7 +57,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobOptions getDefaultIngestOptions() {
+    public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
         return new FileExtMismatchDetectorOptions();
     }
 
@@ -66,15 +67,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestOptionsPanel(IngestModuleIngestJobOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
-        if (ingestOptions instanceof FileExtMismatchDetectorOptions) {
-            throw new IngestModuleFactory.InvalidOptionsException("Ingest options must be of type " + FileExtMismatchDetectorOptions.class.getCanonicalName());
-        }
-
-        if (!ingestOptions.areValid()) {
-            throw new IngestModuleFactory.InvalidOptionsException("");
-        }
-
+    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
         FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
         return ingestOptionsPanel;
     }
@@ -97,7 +90,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
         return new FileExtMismatchIngestModule();
     }
 }

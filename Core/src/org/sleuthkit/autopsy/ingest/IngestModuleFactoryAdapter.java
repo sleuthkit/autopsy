@@ -34,21 +34,6 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     public abstract String getModuleVersionNumber();
 
     @Override
-    public IngestModuleIngestJobOptions getDefaultIngestOptions() {
-        return new NoIngestJobOptions();
-    }
-    
-    @Override
-    public boolean providesIngestJobOptionsPanels() {
-        return false;
-    }
-    
-    @Override
-    public IngestModuleIngestJobOptionsPanel getIngestOptionsPanel(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public boolean providesResourcesConfigPanels() {
         return false;
     }
@@ -59,12 +44,27 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
+    public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
+        return new NoIngestJobOptions();
+    }
+
+    @Override
+    public boolean providesIngestJobOptionsPanels() {
+        return false;
+    }
+
+    @Override
+    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isDataSourceIngestModuleFactory() {
         return false;
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +74,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) throws InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
         throw new UnsupportedOperationException();
     }
 }

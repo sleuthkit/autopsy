@@ -16,23 +16,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.filetypeid;
 
-import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
- * A factory that creates file ingest modules that do hash database lookups.
+ * An factory that creates file ingest modules that determine the types of
+ * files.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
+public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter {
+
+    public final static String MODULE_NAME = "File Type Identification";
+    public final static String MODULE_DESCRIPTION = "Matches file types based on binary signatures.";
 
     @Override
     public String getModuleDisplayName() {
@@ -40,12 +42,12 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
+        return MODULE_NAME;
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleDescription");
+        return MODULE_DESCRIPTION;
     }
 
     @Override
@@ -55,7 +57,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
-        return new HashLookupOptions();
+        return new FileTypeIdentifierIngestJobOptions();
     }
 
     @Override
@@ -64,22 +66,8 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
-        HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();
-        ingestOptionsPanel.load();
-        return ingestOptionsPanel;
-    }
-
-    @Override
-    public boolean providesResourcesConfigPanels() {
-        return true;
-    }
-
-    @Override
-    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
-        HashDbConfigPanel resourcesConfigPanel = new HashDbConfigPanel();
-        resourcesConfigPanel.load();
-        return resourcesConfigPanel;
+    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestJobOptions) {
+        return new FileTypeIdSimpleConfigPanel((FileTypeIdentifierIngestJobOptions) ingestJobOptions);
     }
 
     @Override
@@ -88,7 +76,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
-        return new HashDbIngestModule();
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestJobOptions) {
+        return new FileTypeIdIngestModule((FileTypeIdentifierIngestJobOptions) ingestJobOptions);
     }
 }

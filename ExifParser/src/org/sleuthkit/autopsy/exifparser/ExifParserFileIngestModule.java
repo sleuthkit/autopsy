@@ -70,7 +70,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
         
     @Override
-    public void init(long taskId) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() {0}", this.toString());
         filesProcessed = 0;
@@ -205,7 +205,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
 
     @Override
-    public void jobCompleted() {
+    public void shutDown(boolean ingestJobCancelled) {
         logger.log(Level.INFO, "completed exif parsing {0}", this.toString());
         if (filesToFire) {
             //send the final new data event

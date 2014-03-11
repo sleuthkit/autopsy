@@ -16,17 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
  * Global options panel for keyword searching.
  */
 // RJCTODO: Why is this a public class?
-public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
+public final class KeywordSearchConfigurationPanel extends IngestModuleResourcesConfigPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
@@ -36,7 +35,7 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
         listsPanel = new KeywordSearchConfigurationPanel1();
@@ -72,24 +71,18 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Load each of the tabs and reload the XML.
-     */
     @Override
     public void load() {
         // This calls actually clears the component. RJCTODO: Krazy!
         listsPanel.load();
-        
+
         languagesPanel.load();
         generalPanel.load();
-        
+
         // Reload the XML to avoid 'ghost' vars RJCTODO: What does this mean?
         KeywordSearchListsXML.getCurrent().reload();
     }
 
-    /**
-     * Store each panel's settings.
-     */
     @Override
     public void store() {
         listsPanel.store();
@@ -98,13 +91,12 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
     }
 
     public void cancel() {
-        KeywordSearchListsXML.getCurrent().reload();        
+        KeywordSearchListsXML.getCurrent().reload();
     }
-    
+
     boolean valid() {
         return true;
     }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables

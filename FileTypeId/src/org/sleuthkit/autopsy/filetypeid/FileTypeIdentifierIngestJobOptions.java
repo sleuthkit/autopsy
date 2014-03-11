@@ -16,28 +16,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.filetypeid;
+
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 
 /**
- * Implementation of the IngestModuleResourcesConfig interface for use by ingest
- * modules that do not have ingest options.
+ * Ingest job options for the file type identifier ingest module instances.
  */
-public final class NoResourcesConfiguration implements IngestModuleResourcesConfig {
+public class FileTypeIdentifierIngestJobOptions implements IngestModuleIngestJobOptions {
 
-    private final String configuration = "None";
+    private boolean skipKnownFiles = true;
 
-    /**
-     * Gets the string used as an resources configuration placeholder for
-     * serialization purposes.
-     *
-     * @return The string "None"
-     */
-    String getConfig() {
-        return configuration;
+    FileTypeIdentifierIngestJobOptions() {
+    }
+
+    FileTypeIdentifierIngestJobOptions(boolean skipKnownFiles) {
+        this.skipKnownFiles = skipKnownFiles;
+    }
+
+    void setSkipKnownFiles(boolean enabled) {
+        skipKnownFiles = enabled;
+    }
+
+    boolean shouldSkipKnownFiles() {
+        return skipKnownFiles;
     }
 
     @Override
-    public boolean isValid() {
+    public boolean areValid() {
         return true;
     }
 }

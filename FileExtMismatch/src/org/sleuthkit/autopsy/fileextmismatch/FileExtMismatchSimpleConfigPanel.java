@@ -22,15 +22,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
 
 /**
- * Instances of this class provide a simplified UI for managing the hash sets
- * configuration.
+ * UI component used to set ingest job options for file extension mismatch
+ * detector ingest modules.
  */
 class FileExtMismatchSimpleConfigPanel extends IngestModuleIngestJobOptionsPanel {
 
-    private final FileExtMismatchDetectorOptions ingestOptions;
+    private FileExtMismatchDetectorOptions ingestJobOptions;
 
     FileExtMismatchSimpleConfigPanel(FileExtMismatchDetectorOptions ingestOptions) {
-        this.ingestOptions = ingestOptions;
+        this.ingestJobOptions = ingestOptions;
         initComponents();
         customizeComponents(ingestOptions);
     }
@@ -41,8 +41,8 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleIngestJobOptionsPanel
     }
 
     @Override
-    public IngestModuleIngestJobOptions getIngestOptions() {
-        return ingestOptions;
+    public IngestModuleIngestJobOptions getIngestJobOptions() {
+        return ingestJobOptions;
     }
 
     /**
@@ -94,11 +94,11 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleIngestJobOptionsPanel
     }// </editor-fold>//GEN-END:initComponents
 
     private void skipNoExtCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNoExtCheckBoxActionPerformed
-        ingestOptions.setSkipFilesWithNoExtension(skipNoExtCheckBox.isSelected());
+        ingestJobOptions.setSkipFilesWithNoExtension(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
     private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
-        ingestOptions.setSkipFilesWithTextPlainMimeType(skipTextPlain.isSelected());
+        ingestJobOptions.setSkipFilesWithTextPlainMimeType(skipTextPlain.isSelected());
     }//GEN-LAST:event_skipTextPlainActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox skipNoExtCheckBox;

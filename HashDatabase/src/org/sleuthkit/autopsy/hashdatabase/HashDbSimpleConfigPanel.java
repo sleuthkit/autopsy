@@ -76,7 +76,7 @@ public class HashDbSimpleConfigPanel extends IngestModuleIngestJobOptionsPanel {
     }
     
     @Override
-    public IngestModuleIngestJobOptions getIngestOptions() {
+    public IngestModuleIngestJobOptions getIngestJobOptions() {
         // RJCTODO: Work out how this works, load() and store(), etc.
         HashDbManager hashDbManager = HashDbManager.getInstance();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();

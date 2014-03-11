@@ -19,23 +19,16 @@
 package org.sleuthkit.autopsy.ingest;
 
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
  * Base class for ingest module resources configuration panels.
  */
-public abstract class IngestModuleResourcesConfigPanel extends JPanel {
+public abstract class IngestModuleResourcesConfigPanel extends JPanel implements OptionsPanel {
 
-    /**
-     * Initializes the resources configuration panel for an ingest module.
-     *
-     * @param ingestOptions The initial state of the resources configuration.
-     */
-    public abstract void initialize(IngestModuleResourcesConfig ingestOptions);
+    @Override
+    public abstract void load();
 
-    /**
-     * Gets the resources configuration for an ingest module.
-     *
-     * @return The resources configuration.
-     */
-    public abstract IngestModuleResourcesConfig getResourcesConfig();
+    @Override
+    public abstract void store();
 }

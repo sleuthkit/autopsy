@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,103 +22,95 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-// imports
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.logging.Level;
-//import org.sleuthkit.autopsy.coreutils.Logger;
-//import java.util.Collection;
-//import org.sleuthkit.autopsy.coreutils.JLNK;
-//import org.sleuthkit.autopsy.coreutils.JLnkParser;
-//import org.sleuthkit.autopsy.coreutils.JLnkParserException;
-//import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-//import org.sleuthkit.autopsy.ingest.IngestServices;
-//import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-//import org.sleuthkit.datamodel.BlackboardArtifact;
-//import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-//import org.sleuthkit.datamodel.BlackboardAttribute;
-//import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-//import org.sleuthkit.datamodel.Content;
-//import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-//import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-//import org.sleuthkit.datamodel.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.Collection;
+import org.sleuthkit.autopsy.coreutils.JLNK;
+import org.sleuthkit.autopsy.coreutils.JLnkParser;
+import org.sleuthkit.autopsy.coreutils.JLnkParserException;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.*;
 
 /**
  * Recent documents class that will extract recent documents in the form of 
  *.lnk files
  */
-//class RecentDocumentsByLnk extends Extract  {
-//    private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-//    private IngestServices services;    
-//    final private static String MODULE_VERSION = "1.0";
-//
-//    /**
-//     * Find the documents that Windows stores about recent documents and make artifacts.
-//     * @param dataSource
-//     * @param controller 
-//     */
-//    private void getRecentDocuments(Content dataSource, IngestDataSourceWorkerController controller) {
-//        
-//        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-//        List<AbstractFile> recentFiles = null;
-//        try {
-//            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
-//        } catch (TskCoreException ex) {
-//            logger.log(Level.WARNING, "Error searching for .lnk files.");
-//            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
-//            return;
-//        }
-//
-//        if (recentFiles.isEmpty()) {
-//            logger.log(Level.INFO, "Didn't find any recent files.");
-//            return;
-//        }
-//        
-//        dataFound = true;
-//        for (AbstractFile recentFile : recentFiles) {
-//            if (controller.isCancelled()) {
-//                break;
-//            }
-//            
-//            if (recentFile.getSize() == 0) {
-//                continue;
-//            }
-//            JLNK lnk = null;
-//            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(recentFile), (int) recentFile.getSize());
-//            try {
-//                lnk = lnkParser.parse();
-//            } catch (JLnkParserException e) {
-//                //TODO should throw a specific checked exception
-//                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
-//                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-//                if (unalloc == false) {
-//                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
-//                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
-//                }
-//                continue;
-//            }
-//           
-//            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-//            String path = lnk.getBestPath();
-//            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
-//            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, path)));
-//            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", recentFile.getCrtime()));
-//            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
-//        }
-//        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
-//    }
-//
-//    @Override
-//    public String getVersion() {
-//        return MODULE_VERSION;
-//    }
-//    
-//    @Override
-//    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-//        dataFound = false;
-//        this.getRecentDocuments(dataSource, controller);
-//    }
-//   
+class RecentDocumentsByLnk extends Extract  {
+    private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
+    private IngestServices services;    
+    final private static String MODULE_VERSION = "1.0";
+
+    /**
+     * Find the documents that Windows stores about recent documents and make artifacts.
+     * @param dataSource
+     * @param controller 
+     */
+    private void getRecentDocuments(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+        
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> recentFiles = null;
+        try {
+            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
+            return;
+        }
+
+        if (recentFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any recent files.");
+            return;
+        }
+        
+        dataFound = true;
+        for (AbstractFile recentFile : recentFiles) {
+            if (controller.isCancelled()) {
+                break;
+            }
+            
+            if (recentFile.getSize() == 0) {
+                continue;
+            }
+            JLNK lnk = null;
+            JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(recentFile), (int) recentFile.getSize());
+            try {
+                lnk = lnkParser.parse();
+            } catch (JLnkParserException e) {
+                //TODO should throw a specific checked exception
+                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
+                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+                if (unalloc == false) {
+                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
+                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                }
+                continue;
+            }
+           
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            String path = lnk.getBestPath();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, path)));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", recentFile.getCrtime()));
+            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+        }
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+    }
+    
+    @Override
+    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+        dataFound = false;
+        this.getRecentDocuments(dataSource, controller);
+    }
+   
 //    @Override
 //    public void init(IngestModuleInit initContext) {
 //        services = IngestServices.getDefault();
@@ -143,4 +135,4 @@ package org.sleuthkit.autopsy.recentactivity;
 //    public boolean hasBackgroundJobsRunning() {
 //        return false;
 //    }
-//}
+}

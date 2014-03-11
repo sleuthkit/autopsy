@@ -27,11 +27,14 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
+import org.sleuthkit.autopsy.ingest.NoIngestJobOptions;
 
 /**
- * Ingest options panel for the keyword search file ingest module.
+ * Ingest job options panel for the keyword search file ingest module.
  */
-public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
+public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobOptionsPanel {
     
     private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
     public static final String PROP_OPTIONS = "Keyword Search_Options";
@@ -68,6 +71,11 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         reloadEncodings();
     }
 
+    @Override
+    public IngestModuleIngestJobOptions getIngestJobOptions() {
+        return new NoIngestJobOptions();
+    }
+    
     public void load() {  
         KeywordSearchListsXML.getCurrent().reload();                
         reloadLists();

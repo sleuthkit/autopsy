@@ -56,7 +56,7 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
         return new ExifParserFileIngestModule();
     }
 }

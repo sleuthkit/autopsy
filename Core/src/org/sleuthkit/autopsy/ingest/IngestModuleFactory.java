@@ -69,19 +69,6 @@ public interface IngestModuleFactory {
     String getModuleVersionNumber();
 
     /**
-     * Gets the default resources configuration for the family of ingest modules
-     * the factory creates. For example, the core hash lookup ingest modules
-     * family has a resources configuration consisting of hash databases which
-     * can be either enabled or disabled per ingest job. If the module family
-     * does not have configurable resources, the factory should extend
-     * IngestModuleFactoryAdapter to get an implementation of this method that
-     * returns an instance of the NoResourcesConfiguration class.
-     *
-     * @return The default resources configuration.
-     */
-    IngestModuleResourcesConfig getDefaultResourcesConfig();
-
-    /**
      * Queries the factory to determine if it provides user interface panels to
      * configure resources to be used by instances of the family of ingest
      * modules the factory creates. For example, the core hash lookup ingest
@@ -117,7 +104,7 @@ public interface IngestModuleFactory {
      * the panel.
      * @return A user interface panel for configuring ingest module resources.
      */
-    IngestModuleResourcesConfigPanel getResourcesConfigPanel(IngestModuleResourcesConfig resourcesConfig);
+    IngestModuleResourcesConfigPanel getResourcesConfigPanel();
 
     /**
      * Gets the default per ingest job options for instances of the family of
@@ -130,7 +117,7 @@ public interface IngestModuleFactory {
      *
      * @return The ingest options.
      */
-    IngestModuleIngestJobOptions getDefaultIngestJobOptions(IngestModuleResourcesConfig defaultResourcesConfig);
+    IngestModuleIngestJobOptions getDefaultIngestJobOptions();
 
     /**
      * Queries the factory to determine if it provides user interface panels to

@@ -16,33 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ewfverify;
+package org.sleuthkit.autopsy.sevenzip;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 
-/**
- * An factory that creates file ingest modules that do hash database lookups.
- */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
+public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDisplayName() {
-        return getModuleName();
-    }
-
-    static String getModuleName() {
-        return "EWF Verify"; // RJCTODO: Is this what we want here?
+        return "Archive Extractor";
     }
 
     @Override
     public String getModuleDescription() {
-        return "Validates the integrity of E01 files.";
+        return "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
     }
 
     @Override
@@ -51,12 +44,12 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public boolean isDataSourceIngestModuleFactory() {
+    public boolean isFileIngestModuleFactory() {
         return true;
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) {
-        return new EwfVerifyIngestModule();
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
+        return new SevenZipIngestModule();
     }
 }

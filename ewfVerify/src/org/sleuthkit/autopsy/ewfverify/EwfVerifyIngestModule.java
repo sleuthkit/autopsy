@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness 
@@ -41,10 +42,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
  * to the value stored in the image.
  */
 public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
+    private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
-    private static Logger logger = null; // RJCTODO: Is this paradigm being used in general? If so, need to change IDE lint rules
-    private volatile boolean running = false;
     private Image img;
     private String imgName;
     private MessageDigest messageDigest;
@@ -56,26 +56,17 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
     EwfVerifyIngestModule() {
     }
-
-    @Override
-    public String getDisplayName() {
-        return EwfVerifierModuleFactory.getModuleName();
-    }
         
     @Override
-    public void init(long taskId) {
-        running = false;
+    public void startUp(IngestModuleProcessingContext context) {
+        setContext(context);
         verified = false;
         skipped = false;
         img = null;
         imgName = "";
         storedHash = "";
         calculatedHash = "";
-        
-        if (logger == null) {
-            logger = services.getLogger(this);
-        }
-        
+                
         if (messageDigest == null) {
             try {
                 messageDigest = MessageDigest.getInstance("MD5");
@@ -95,9 +86,9 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             img = dataSource.getImage();
         } catch (TskCoreException ex) {
             img = null;
-            logger.log(Level.SEVERE, "Failed to get image from Content.", ex);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
-                    "Error processing " + imgName));
+            String message = "Failed to get image from Content";
+            getContext().logError(EwfVerifyIngestModule.class, message, ex);
+            getContext().postIngestMessage(++messageId, MessageType.ERROR, message);
             return ResultCode.ERROR;
         }
         
@@ -115,7 +106,6 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
          {
                 storedHash = img.getMd5().toLowerCase();
                 logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash});
-            
          }           
          else {
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
@@ -146,11 +136,9 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         byte[] data;
         statusHelper.switchToDeterminate(totalChunks);
         
-        running = true;
         // Read in byte size chunks and update the hash value with the data.
         for (int i = 0; i < totalChunks; i++) {
             if (statusHelper.isCancelled()) {
-                running = false;
                 return  ResultCode.OK; // RJCTODO: Use unknown?
             }
             data = new byte[ (int) chunkSize ];
@@ -170,12 +158,11 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
         verified = calculatedHash.equals(storedHash);
         logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash});
-        running = false;
         return ResultCode.OK;
     }
 
     @Override
-    public void jobCompleted() {
+    public void shutDown(boolean ingestJobCancelled) {
         logger.log(Level.INFO, "complete() {0}", getDisplayName());
         if (skipped == false) {
             String msg = verified ? " verified" : " not verified";

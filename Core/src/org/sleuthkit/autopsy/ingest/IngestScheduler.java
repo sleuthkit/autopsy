@@ -26,9 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -104,6 +102,7 @@ class IngestScheduler {
      *
      */
     static class FileScheduler implements Iterator<FileScheduler.FileTask> {
+        // RJCTODO: Restore old collections
         private final static int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
@@ -140,7 +139,7 @@ class IngestScheduler {
 
         synchronized void scheduleIngestOfFiles(DataSourceIngestJob dataSourceTask) {
             // Save the data source task to manage its pipelines.
-            dataSourceTasks.put(dataSourceTask.getTaskId(), dataSourceTask);
+            dataSourceTasks.put(dataSourceTask.getId(), dataSourceTask);
  
             Content dataSource = dataSourceTask.getDataSource();
             Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirVisitor());
@@ -462,9 +461,7 @@ class IngestScheduler {
             
             
             void execute(int threadId) {
-                // RJCTODO
                 dataSourceTask.getIngestPipelines().ingestFile(threadId, file);
-                dataSourceTask.fileTaskCompleted();
             }
             
             public DataSourceIngestJob getDataSourceTask() {

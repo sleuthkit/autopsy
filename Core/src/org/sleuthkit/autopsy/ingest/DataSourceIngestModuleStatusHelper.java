@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import org.netbeans.api.progress.ProgressHandle;
 
-// RJCTODO: This could use a renaming, really don't want it long-term, but maybe need to keep it for 3.1 DISCUSS
 /**
  * Controller for DataSource level ingest modules
  * Used by modules to check task status and to post progress to

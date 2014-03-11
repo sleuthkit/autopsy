@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.ingest;
  */
 public interface IngestModule {
 
-    public enum ResultCode {
+    public enum ResultCode { // RJCTODO: Do we really want to have this
 
         OK,
         ERROR,
@@ -31,15 +31,7 @@ public interface IngestModule {
         NOT_SET 
     };
 
-    /**
-     * Invoked to obtain a display name for the module, i.e., a name that is
-     * suitable for presentation to a user in a user interface component or a
-     * log message.
-     *
-     * @return The display name of the module.
-     */
-    String getDisplayName();
-
+    // RJCTODO: Update
     /**
      * Invoked to allow an ingest module to set up internal data structures and
      * acquire any private resources it will need during an ingest job. There
@@ -60,11 +52,12 @@ public interface IngestModule {
      * IngestModuleAdapter class to get a default implementation of this method
      * that saves the ingest job id.
      *
-     * @param ingestJobId Identifier for the ingest job with which this module
-     * instance is associated.
+     * @param ingestJobId Identifier for the ingest job.
+     * @param ingestOptions Module options for the ingest job.
      */
-    void init(long ingestJobId);
+    void startUp(IngestModuleProcessingContext context);
 
+    // RJCTODO: Update
     /**
      * Invoked when an ingest job is completed, before the module instance is
      * discarded. The module should respond by doing things like releasing
@@ -75,8 +68,6 @@ public interface IngestModule {
      * completes should extend the IngestModuleAdapter class to get a default
      * implementation of this method that does nothing.
      */
-    void jobCompleted();
-
     /**
      * Invoked when an ingest job is canceled or otherwise terminated early,
      * before the module instance is discarded. The module should respond by
@@ -87,8 +78,6 @@ public interface IngestModule {
      * canceled should extend the IngestModuleAdapter class to get a default
      * implementation of this method that does nothing.
      */
-    void jobCancelled();
-
     /**
      * Invoked after complete() or stop() is called to determine if the module
      * has finished responding to the termination request. The module instance
@@ -100,5 +89,5 @@ public interface IngestModule {
      *
      * @return True if the module is finished, false otherwise.
      */
-    boolean isFinished();
+    void shutDown(boolean ingestJobWasCancelled);
 }

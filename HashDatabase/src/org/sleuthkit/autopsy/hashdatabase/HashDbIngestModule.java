@@ -67,7 +67,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
     
     @Override
-    public void init(long taskId) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
@@ -298,7 +298,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
     
     @Override
-    public void jobCompleted() {
+    public void shutDown(boolean ingestJobCancelled) {
         if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
             StringBuilder detailsSb = new StringBuilder();
             //details

@@ -26,16 +26,9 @@ import javax.swing.JPanel;
 public abstract class IngestModuleIngestJobOptionsPanel extends JPanel {
 
     /**
-     * Initializes the ingest options panel for an ingest module.
-     *
-     * @param ingestOptions The initial state of the ingest options.
-     */
-    public abstract void initialize(IngestModuleIngestJobOptions ingestOptions);
-
-    /**
      * Gets the ingest options for an ingest module.
      *
      * @return The ingest options.
      */
-    public abstract IngestModuleIngestJobOptions getIngestOptions();
+    public abstract IngestModuleIngestJobOptions getIngestJobOptions();
 }

@@ -27,6 +27,9 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 
 /**
  * An ingest module factory that creates file ingest modules that do keyword 
@@ -52,34 +55,17 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     public String getModuleVersionNumber() {
         return Version.getVersion();        
     }
-    
-    @Override
-    public Serializable getDefaultIngestOptions() {
-        return new IngestOptions();        
-    }
-    
+       
     @Override
     public boolean providesIngestJobOptionsPanels() {
         return true;
     }
     
     @Override
-    public JPanel getIngestOptionsPanel(Serializable ingestOptions) {
+    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestJobOptions) {
         KeywordSearchIngestSimplePanel ingestOptionsPanel = new KeywordSearchIngestSimplePanel();  
         ingestOptionsPanel.load();
         return ingestOptionsPanel; 
-    }
-    
-    @Override
-    public Serializable getIngestOptionsFromPanel(JPanel ingestOptionsPanel) throws IngestModuleFactory.InvalidOptionsException {
-        if (!(ingestOptionsPanel instanceof KeywordSearchIngestSimplePanel)) {
-            throw new IllegalArgumentException("JPanel not a KeywordSearchIngestSimplePanel");
-        }
-
-        KeywordSearchIngestSimplePanel panel = (KeywordSearchIngestSimplePanel)ingestOptionsPanel;
-        panel.store();
-                
-        return new IngestOptions(); // RJCTODO
     }
     
     @Override
@@ -88,21 +74,11 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public JPanel getGlobalOptionsPanel() {
+    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
         KeywordSearchConfigurationPanel globalOptionsPanel = new KeywordSearchConfigurationPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
     }    
-    
-    @Override
-    public void saveGlobalOptionsFromPanel(JPanel globalOptionsPanel) throws IngestModuleFactory.InvalidOptionsException {
-        if (!(globalOptionsPanel instanceof KeywordSearchConfigurationPanel)) {
-            throw new IngestModuleFactory.InvalidOptionsException(""); // RJCTODO
-        }
-        
-        KeywordSearchConfigurationPanel panel = (KeywordSearchConfigurationPanel)globalOptionsPanel;
-        panel.store();
-    }
     
     @Override
     public boolean isFileIngestModuleFactory() {
@@ -110,13 +86,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public FileIngestModule createFileIngestModule(Serializable ingestOptions) throws IngestModuleFactory.InvalidOptionsException {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestJobOptions) {
         return new KeywordSearchIngestModule();
     }
-    
-    private static class IngestOptions implements Serializable {
-        // RJCTODO: Any options here?
-        //        boolean alwaysCalcHashes = true;
-//        ArrayList<String> hashSetNames = new ArrayList<>();
-    }    
 }
