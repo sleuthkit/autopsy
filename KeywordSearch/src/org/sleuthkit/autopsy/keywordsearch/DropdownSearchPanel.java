@@ -30,6 +30,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A simple UI for finding text after ingest
+ * 
+ * The toolbar uses a different font from the rest of the application, Monospaced 14, 
+ * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
+ * The default, Tahoma 14, could not perform this task at the desired size, and neither could numerous other fonts. 
  */
 public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
     private static final Logger logger = Logger.getLogger(DropdownSearchPanel.class.getName());
