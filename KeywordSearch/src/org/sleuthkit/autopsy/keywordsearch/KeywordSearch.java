@@ -47,8 +47,7 @@ public class KeywordSearch {
     static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     public enum QueryType {
-
-        WORD, REGEX
+        LITERAL, REGEX
     };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
     private static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);

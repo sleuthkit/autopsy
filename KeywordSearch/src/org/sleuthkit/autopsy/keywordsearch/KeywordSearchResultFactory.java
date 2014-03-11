@@ -151,7 +151,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isLiteral()));
                 ResultCollapsedChildFactory childFactory = new ResultCollapsedChildFactory(thing);
                 childFactory.createKeysForFlatNodes(toPopulate);
             }            
@@ -176,7 +176,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isLiteral()));
                 toPopulate.add(thing);
             }
         }
@@ -258,7 +258,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 listName = list.getName();
             }
 
-            final boolean literal_query = tcq.isEscaped();
+            final boolean literal_query = tcq.isLiteral();
 
             int resID = 0;
             for (final AbstractFile f : hitContents.keySet()) {
@@ -393,7 +393,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false, hits);
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isLiteral(), false, hits);
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr, previewChunk);
         }
     }
@@ -484,7 +484,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
-                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped(), hits);
+                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isLiteral(), hits);
                 return new KeywordSearchFilterNode(highlights, kvNode, query, previewChunk);
             }
         }
