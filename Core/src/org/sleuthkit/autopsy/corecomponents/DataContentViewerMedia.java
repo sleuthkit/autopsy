@@ -24,6 +24,8 @@ import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
@@ -164,12 +166,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public String getTitle() {
-        return "Media";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays supported multimedia files (images, videos, audio)";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.toolTip");
     }
 
     @Override

@@ -10,6 +10,7 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -20,7 +21,8 @@ iconBase = "org/sleuthkit/autopsy/corecomponents/general-options.png",
 position = 1,
 keywords = "#OptionsCategory_Keywords_General",
 keywordsCategory = "General")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_General=General", "OptionsCategory_Keywords_General=general"})
+// moved to Bundle
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_General=General", "OptionsCategory_Keywords_General=general"})
 public final class GeneralOptionsPanelController extends OptionsPanelController {
 
     private GeneralPanel panel;
@@ -81,7 +83,10 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to GeneralOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
         
@@ -90,7 +95,10 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to GeneralOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
     }
 }

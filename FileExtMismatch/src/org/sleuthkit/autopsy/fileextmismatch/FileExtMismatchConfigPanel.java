@@ -30,6 +30,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
@@ -44,7 +46,8 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
     private ArrayList<String> currentExtensions = null;
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
-    private final String EXT_HEADER_LABEL = "Allowed Extensions for ";
+    private final String EXT_HEADER_LABEL = NbBundle.getMessage(FileExtMismatchConfigPanel.class,
+                                                                "AddFileExtensionAction.extHeaderLbl.text");
     private String selectedMime = "";
     private String selectedExt = "";
     ListSelectionModel lsm = null;
@@ -58,7 +61,7 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
     }
     
     private void customizeComponents() {
-        setName("Advanced File Extension Mismatch Configuration");  
+        setName(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.name.text"));
                
         // Handle selections on the left table
         lsm = mimeTable.getSelectionModel();
@@ -347,19 +350,22 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         String newExt = userExtTextField.getText();
         if (newExt.isEmpty()) {
             extErrorLabel.setForeground(Color.red);            
-            extErrorLabel.setText("Extension text is empty!");
+            extErrorLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.empty"));
             return;
         }
         
         if (selectedMime.isEmpty()) {
             extErrorLabel.setForeground(Color.red);  
-            extErrorLabel.setText("No MIME type selected!");
+            extErrorLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.noMimeType"));
             return;
         }
         
         if (currentExtensions.contains(newExt)) {
             extErrorLabel.setForeground(Color.red);
-            extErrorLabel.setText("Extension already exists!");
+            extErrorLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extExists"));
             return;            
         }                
         
@@ -375,7 +381,9 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         
         // user feedback for successful add
         extErrorLabel.setForeground(Color.blue);
-        extErrorLabel.setText("Extension " + newExt + " added.");  
+        extErrorLabel.setText(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extAdded",
+                                    newExt));
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
         setIsModified();
@@ -389,23 +397,26 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         String newMime = userTypeTextField.getText();
         if (newMime.isEmpty()) {
             mimeErrLabel.setForeground(Color.red);
-            mimeErrLabel.setText("MIME type text is empty!");
+            mimeErrLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.empty"));
             return;
         }
         if (newMime.equals( "application/octet-stream")){
             mimeErrLabel.setForeground(Color.red);
-            mimeErrLabel.setText("MIME type not supported!");
+            mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
+                                                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotSupported"));
             return;   
         }
         if (mimeList.contains(newMime)) {
             mimeErrLabel.setForeground(Color.red);
-            mimeErrLabel.setText("MIME type already exists!");
+            mimeErrLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.mimeTypeExists"));
             return;            
         }
         
         if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
             mimeErrLabel.setForeground(Color.red);
-            mimeErrLabel.setText("MIME type is not detectable by this module.");
+            mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
+                                                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
             return;                        
         }
         
@@ -418,7 +429,8 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         // user feedback for successful add
         //selectByMimeString(newMime);
         mimeErrLabel.setForeground(Color.blue);
-        mimeErrLabel.setText("MIME type " + newMime + " added.");
+        mimeErrLabel.setText(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.mimeTypeAdded", newMime));
         mimeRemoveErrLabel.setText(" ");
         userTypeTextField.setText("");
         setIsModified();
@@ -435,7 +447,8 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
     private void removeTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeTypeButtonActionPerformed
         if (selectedMime.isEmpty()) {
             mimeRemoveErrLabel.setForeground(Color.red);
-            mimeRemoveErrLabel.setText("No MIME type selected!");
+            mimeRemoveErrLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeTypeButton.noneSelected"));
             return;
         }        
         
@@ -448,20 +461,23 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
                 
         // user feedback for successful add
         mimeRemoveErrLabel.setForeground(Color.blue);
-        mimeRemoveErrLabel.setText("MIME type " + deadMime + " deleted.");        
+        mimeRemoveErrLabel.setText(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.remoteTypeButton.deleted", deadMime));
         setIsModified();
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
         if (selectedExt.isEmpty()) {
             extRemoveErrLabel.setForeground(Color.red);
-            extRemoveErrLabel.setText("No extension selected!");
+            extRemoveErrLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.noneSelected"));
             return;
         }        
              
         if (selectedMime.isEmpty()) {
             extErrorLabel.setForeground(Color.red);  
-            extErrorLabel.setText("No MIME type selected!");
+            extErrorLabel.setText(NbBundle.getMessage(this.getClass(),
+                                                      "FileExtMismatchConfigPanel.removeExtButton.noMimeTypeSelected"));
             return;
         }        
         
@@ -478,7 +494,8 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
         
         // user feedback for successful add
         extRemoveErrLabel.setForeground(Color.blue);
-        extRemoveErrLabel.setText("Extension " + deadExt + " deleted.");        
+        extRemoveErrLabel.setText(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.deleted", deadExt));
         setIsModified();
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
@@ -518,11 +535,16 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
             extRemoveErrLabel.setText(" ");
             extErrorLabel.setText(" ");
             
-            saveMsgLabel.setText("Saved.");
+            saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
             saveButton.setEnabled(false);
         } else {
             //error
-            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "FileExtMismatchConfigPanel.store.msgDlg.msg"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                                          JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -539,7 +561,12 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
     public void ok() {
         // if data is unsaved
         if (saveButton.isEnabled()) {
-           int choice = JOptionPane.showConfirmDialog(this, "Would you like to save configuration changes?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+           int choice = JOptionPane.showConfirmDialog(this,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "FileExtMismatchConfigPanel.ok.confDlg.msg"),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "FileExtMismatchConfigPanel.confDlg.title"),
+                                                      JOptionPane.YES_NO_OPTION);
            if (choice == JOptionPane.YES_OPTION) {
                store();
            }
@@ -594,7 +621,7 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
 
             switch (column) {
                 case 0:
-                    colName = "MIME Type";
+                    colName = NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.mimeTableModel.colName");
                     break;
                 default:
                     ;
@@ -658,7 +685,7 @@ final class FileExtMismatchConfigPanel extends javax.swing.JPanel implements Opt
 
             switch (column) {
                 case 0:
-                    colName = "Extension";
+                    colName = NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.extTableModel.colName");
                     break;
                 default:
                     ;
