@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -180,7 +182,9 @@ import org.sleuthkit.datamodel.TskCoreException;
         @Override
         public void fileAdded(final AbstractFile newFile) {
             if (count++ % 10 == 0) {  
-                progressMonitor.setProgressText("Adding: " + newFile.getParentPath() + "/" + newFile.getName()); 
+                progressMonitor.setProgressText(
+                        NbBundle.getMessage(this.getClass(), "AddLocalFilesTask.localFileAdd.progress.text",
+                                            newFile.getParentPath(), newFile.getName()));
             }
         }
     }

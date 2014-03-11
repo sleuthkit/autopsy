@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         ProductInformationPanel pip = new ProductInformationPanel();
         DialogDescriptor descriptor = new DialogDescriptor(
                 pip,
-                NbBundle.getMessage(AboutAction.class, "About_title"),
+                NbBundle.getMessage(CustomAboutAction.class, "CTL_CustomAboutAction"),
                 true,
                 new Object[0],
                 null,

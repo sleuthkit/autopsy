@@ -41,6 +41,7 @@ import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -279,7 +280,8 @@ class Ingester {
         
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
-            String msg = "Skipping indexing the file, unknown image id, for file: " + cs.getName();
+            String msg = NbBundle.getMessage(this.getClass(),
+                                             "Ingester.ingest.exception.unknownImgId.msg", cs.getName());
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
@@ -301,7 +303,9 @@ class Ingester {
                 is = cs.getStream();
                 read = is.read(docChunkContentBuf);
             } catch (IOException ex) {
-                throw new IngesterException("Could not read content stream: " + cs.getName());
+                throw new IngesterException(
+                        NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.cantReadStream.msg",
+                                            cs.getName()));
             } finally {
                 try {
                     is.close();
@@ -333,7 +337,8 @@ class Ingester {
             solrServer.addDocument(updateDoc);
             uncommitedIngests = true;
         } catch (KeywordSearchModuleException ex) {
-            throw new IngesterException("Error ingestint document: " + cs.getName(), ex);
+            throw new IngesterException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.err.msg", cs.getName()), ex);
         }
 
 
@@ -373,9 +378,13 @@ class Ingester {
             logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
             //restart may be needed to recover from some error conditions
             hardSolrRestart();
-            throw new IngesterException("Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
+            throw new IngesterException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.solrTimeout.msg",
+                                        fields.get("id"), fields.get("file_name")));
         } catch (Exception e) {
-            throw new IngesterException("Problem posting content to Solr, id: " + fields.get("id") + ", name: " + fields.get("file_name"), e);
+            throw new IngesterException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.probPostToSolr.msg",
+                                        fields.get("id"), fields.get("file_name")), e);
         }
         uncommitedIngests = true;
     }
@@ -443,14 +452,17 @@ class Ingester {
                 up.setMethod(METHOD.POST);
                 solrServer.request(up);
             } catch (NoOpenCoreException ex) {
-                throw new RuntimeException("No Solr core available, cannot index the content", ex);
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "Ingester.UpReqestTask.run.exception.sorlNotAvail.msg"), ex);
             } catch (IllegalStateException ex) {
                 // problems with content
-                throw new RuntimeException("Problem reading file.", ex);
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "Ingester.UpRequestTask.run.exception.probReadFile.msg"), ex);
             } catch (SolrServerException ex) {
                 // If there's a problem talking to Solr, something is fundamentally
                 // wrong with ingest
-                throw new RuntimeException("Problem with Solr", ex);
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "Ingester.UpRequestTask.run.exception.solrProb.msg"), ex);
             } catch (SolrException ex) {
                 // Tika problems result in an unchecked SolrException
                 ErrorCode ec = ErrorCode.getErrorCode(ex.code());
@@ -458,7 +470,10 @@ class Ingester {
                 // When Tika has problems with a document, it throws a server error
                 // but it's okay to continue with other documents
                 if (ec.equals(ErrorCode.SERVER_ERROR)) {
-                    throw new RuntimeException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
+                    throw new RuntimeException(NbBundle.getMessage(this.getClass(),
+                                                                   "Ingester.UpRequestTask.run.exception.probPostToSolr.msg",
+                                                                   ec),
+                                               ex);
                 } else {
                     // shouldn't get any other error codes
                     throw ex;
@@ -513,7 +528,7 @@ class Ingester {
 
         @Override
         public String getSourceInfo() {
-            return "File:" + f.getId();
+            return NbBundle.getMessage(this.getClass(), "Ingester.FscContentStream.getSrcInfo", f.getId());
         }
 
         @Override
@@ -533,7 +548,8 @@ class Ingester {
 
         @Override
         public Reader getReader() throws IOException {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.FscContentStream.getReader"));
         }
     }
 
@@ -555,7 +571,7 @@ class Ingester {
 
         @Override
         public String getSourceInfo() {
-            return "File:" + aContent.getId();
+            return NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getSrcInfo.text", aContent.getId());
         }
 
         @Override
@@ -575,7 +591,8 @@ class Ingester {
 
         @Override
         public Reader getReader() throws IOException {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getReader"));
         }
     }
 

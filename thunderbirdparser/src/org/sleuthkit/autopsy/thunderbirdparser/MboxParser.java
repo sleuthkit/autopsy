@@ -54,6 +54,7 @@ import org.apache.james.mime4j.message.DefaultMessageBuilder;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 
 /**
@@ -116,14 +117,14 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 // Not the right encoder
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "couldn't find mbox file.", ex);
-                addErrorMessage("Failed to read mbox file from disk.");
+                addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToReadFile"));
                 return Collections.EMPTY_LIST;
             }
         }
         
         // If no encoders work, post an error message and return.
         if (mboxIterator == null || theEncoder == null) {
-            addErrorMessage("Couldn't find appropriate charset encoder.");
+            addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.couldntFindCharset"));
             return Collections.EMPTY_LIST;
         }
         
@@ -142,7 +143,8 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         }
         
         if (failCount > 0) {
-            addErrorMessage("Failed to extract " + failCount + " email messages.");
+            addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToParseNMsgs", failCount));
         }
         return emails;
     }
@@ -255,7 +257,9 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         try {
             fos = new FileOutputStream(outPath);
         } catch (FileNotFoundException ex) {
-            addErrorMessage("Failed to extract attachment to disk: " + filename);
+            addErrorMessage(
+                    NbBundle.getMessage(this.getClass(),
+                                        "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", filename));
             logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex);
             return;
         }
@@ -270,7 +274,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             }
         } catch (IOException ex) {
             logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex);
-            addErrorMessage("Failed to extract attachment to disk: " + filename);
+            addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.handleAttch.failedWriteToDisk", filename));
             return;
         } finally {
             try {

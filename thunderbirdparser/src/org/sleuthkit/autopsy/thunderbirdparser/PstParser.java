@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -80,7 +82,8 @@ class PstParser {
             pstFile = new PSTFile(file);
             failures = processFolder(pstFile.getRootFolder(), "\\", true);
             if (failures > 0) {
-                addErrorMessage("Failed to extract " + failures + " email messages.");
+                addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "PstParser.parse.errMsg.failedToParseNMsgs", failures));
             }
             return ParseResult.OK;
         } catch (PSTException | IOException ex) {
@@ -219,7 +222,9 @@ class PstParser {
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
             } catch (PSTException | IOException ex) {
-                addErrorMessage("Failed to extract attachment to disk: " + filename);
+                addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
+                                            filename));
                 logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex);
             }
         }

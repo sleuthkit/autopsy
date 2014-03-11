@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.awt.Component;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.openide.LifecycleManager;
@@ -62,9 +64,9 @@ public class Installer extends ModuleInstall {
             String skVersion = SleuthkitJNI.getVersion();
 
             if (skVersion == null) {
-                throw new Exception("Sleuth Kit JNI test call returned without error, but version string was null!");
+                throw new Exception(NbBundle.getMessage(this.getClass(), "Installer.exception.tskVerStringNull.msg"));
             } else if (skVersion.length() == 0) {
-                throw new Exception("Sleuth Kit JNI test call returned without error, but version string was \"\"!");
+                throw new Exception(NbBundle.getMessage(this.getClass(), "Installer.exception.taskVerStringBang.msg"));
             } else {
                 logger.log(Level.CONFIG, "Sleuth Kit Version: {0}", skVersion);
             }
@@ -75,8 +77,8 @@ public class Installer extends ModuleInstall {
 
             // Normal error box log handler won't be loaded yet, so show error here.
             final Component parentComponent = null; // Use default window frame.
-            final String message = "Problem with Sleuth Kit JNI. Test call failed!\n\nDetails: " + e.toString();
-            final String title = "Fatal Error!";
+            final String message = NbBundle.getMessage(this.getClass(), "Installer.tskLibErr.msg", e.toString());
+            final String title = NbBundle.getMessage(this.getClass(), "Installer.tskLibErr.err");
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             JOptionPane.showMessageDialog(

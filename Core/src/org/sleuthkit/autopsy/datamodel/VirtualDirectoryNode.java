@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -77,7 +78,8 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new NewWindowViewAction("View in New Window", this));
+        actions.add(new NewWindowViewAction(
+                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.getActions.viewInNewWin.text"), this));
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
@@ -97,9 +99,13 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "VirtualDirectoryNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
+                                getName()));
 
-        final String NO_DESCR = "no description";
+        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }

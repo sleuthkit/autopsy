@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -72,7 +74,7 @@ class DataSourceTask<T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "ScheduledTask{" + "input=" + input + ", modules=" + modules + '}';
+        return NbBundle.getMessage(this.getClass(), "DataSourceTask.toString.text", input, modules);
     }
 
     /**

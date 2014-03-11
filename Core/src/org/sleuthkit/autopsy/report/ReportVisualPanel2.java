@@ -36,6 +36,8 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -130,7 +132,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     @Override
     public String getName() {
-        return "Configure Artifact Reports";
+        return NbBundle.getMessage(this.getClass(), "ReportVisualPanel2.getName.text");
     }
     
     /**

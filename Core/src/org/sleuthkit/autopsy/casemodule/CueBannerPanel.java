@@ -29,13 +29,14 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 
 /**
  *
  */
 public class CueBannerPanel extends javax.swing.JPanel {
 
-    final private static String title = "Open Recent Case";
+    final private static String title = NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.title.text");
     final private static JFrame frame = new JFrame(title);
     final static JDialog recentCasesWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
 

@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
@@ -32,6 +30,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -202,7 +202,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
@@ -330,7 +332,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -341,7 +345,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -353,7 +359,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to ImageFilePanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
     

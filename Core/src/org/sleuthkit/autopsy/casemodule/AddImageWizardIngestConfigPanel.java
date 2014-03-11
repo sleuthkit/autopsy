@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Color;
 import java.awt.Component;
@@ -275,9 +276,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
       
         //check the result and display to user
         if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS)
-            progressPanel.getComponent().setProgressBarTextAndColor("*Data Source added.", 100, Color.black);
+            progressPanel.getComponent().setProgressBarTextAndColor(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text"), 100, Color.black);
         else 
-            progressPanel.getComponent().setProgressBarTextAndColor("*Errors encountered in adding Data Source.", 100, Color.red);
+            progressPanel.getComponent().setProgressBarTextAndColor(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.errs.text"), 100, Color.red);
        
         
         //if errors, display them on the progress panel

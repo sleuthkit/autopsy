@@ -48,10 +48,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.ModuleInfo;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
-import org.openide.util.LookupEvent;
-import org.openide.util.LookupListener;
+import org.openide.util.*;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.scanners.SubTypesScanner;
@@ -611,7 +608,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 }
                 catch (Exception e) {
                     logger.log(Level.SEVERE, "IngestModuleLoader listener threw exception", e);
-                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to IngestModuleLoader updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                    MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestModuleLoader.moduleErr"),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "IngestModuleLoader.moduleErr.errListenUpdates.msg"),
+                                                  MessageNotifyUtil.MessageType.ERROR);
                 }
             }
 
@@ -633,7 +633,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
      * @param newOrder new order to set
      */
     void setModuleOrder(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException {
-        throw new IngestModuleLoaderException("Not yet implemented");
+        throw new IngestModuleLoaderException(
+                NbBundle.getMessage(this.getClass(), "IngestModuleLoader.exception.notImplemented.msg"));
     }
 
     /**
@@ -665,7 +666,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             }
         }
         if (pipeline == null) {
-            throw new IngestModuleLoaderException("Could not find expected pipeline of type: " + pipelineType.toString() + ", cannot add autodiscovered module: " + moduleLocation);
+            throw new IngestModuleLoaderException(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.exception.cantFindPipeline.msg",
+                                        pipelineType.toString(), moduleLocation));
         } else {
             pipeline.modules.add(modRaw);
             logger.log(Level.INFO, "Added a new module " + moduleClass.getName() + " to pipeline " + pipelineType.toString());
@@ -706,8 +709,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             Document doc = docBuilder.newDocument();
 
 
-            Comment comment = doc.createComment("Saved by: " + getClass().getName()
-                    + " on: " + dateFormatter.format(System.currentTimeMillis()));
+            Comment comment = doc.createComment(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.save.comment.text", getClass().getName(),
+                                        dateFormatter.format(System.currentTimeMillis())));
             doc.appendChild(comment);
             Element rootEl = doc.createElement(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_ROOT);
             doc.appendChild(rootEl);
@@ -885,18 +889,23 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     private void loadRawPipeline() throws IngestModuleLoaderException {
         final Document doc = XMLUtil.loadDoc(IngestModuleLoader.class, absFilePath, XSDFILE);
         if (doc == null) {
-            throw new IngestModuleLoaderException("Could not load pipeline config XML: " + this.absFilePath);
+            throw new IngestModuleLoaderException(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.loadRawPipeline.exception.cantLoadXML.msg",
+                                        this.absFilePath));
         }
         Element root = doc.getDocumentElement();
         if (root == null) {
-            String msg = "Error loading pipeline configuration: invalid file format.";
+            String msg = NbBundle
+                    .getMessage(this.getClass(), "IngestModuleLoader.loadRawPipeline.exception.invalidFileFormat.msg");
             logger.log(Level.SEVERE, msg);
             throw new IngestModuleLoaderException(msg);
         }
         NodeList pipelineNodes = root.getElementsByTagName(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_EL);
         int numPipelines = pipelineNodes.getLength();
         if (numPipelines == 0) {
-            throw new IngestModuleLoaderException("No pipelines found in the pipeline configuration: " + absFilePath);
+            throw new IngestModuleLoaderException(NbBundle.getMessage(this.getClass(),
+                                                                      "IngestModuleLoader.loadRawPipeline.exception.noPipelinesInConf.msg",
+                                                                      absFilePath));
         }
         for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
             //process pipelines
@@ -1026,7 +1035,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                     return types[i];
                 }
             }
-            throw new IllegalArgumentException("No PIPELINE_TYPE for string: " + s);
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestModuleLoader.class, "IngestModuleLoader.exception.noPipelineTypeForStr.msg", s));
         }
         private static final String XML_PIPELINE_ROOT = "PIPELINE_CONFIG";
         private static final String XML_PIPELINE_EL = "PIPELINE";

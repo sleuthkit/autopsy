@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -73,7 +74,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
 
         AbstractFilePropertyType[] fsTypes = AbstractFilePropertyType.values();
         final int FS_PROPS_LEN = fsTypes.length;
-        final String NO_DESCR = "no description";
+        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "AbstractFsContentNode.noDesc.text");
         for (int i = 0; i < FS_PROPS_LEN; ++i) {
             final AbstractFilePropertyType propType = AbstractFilePropertyType.values()[i];
             final String propString = propType.toString();
