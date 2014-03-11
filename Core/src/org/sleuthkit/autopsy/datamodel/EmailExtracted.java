@@ -26,8 +26,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -49,8 +50,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String LABEL_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName();
     private static final Logger logger = Logger.getLogger(EmailExtracted.class.getName());
-    private static final String MAIL_ACCOUNT = "Account";
-    private static final String MAIL_FOLDER = "Folder";
+    private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
+    private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
     private static final String MAIL_PATH_SEPARATOR = "/";
     private SleuthkitCase skCase;
     private Map<String, Map<String, List<Long>>> accounts;
@@ -104,8 +105,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         if (split.length < 4) {
             logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: "
                     + split.length + ", will use defaults");
-            parsed.put(MAIL_ACCOUNT, "Default");
-            parsed.put(MAIL_FOLDER, "Default");
+            parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
+            parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
             return parsed;
         }
 
@@ -152,10 +153,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }
@@ -234,10 +235,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }
@@ -281,10 +282,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }
@@ -351,10 +352,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }

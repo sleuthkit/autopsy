@@ -111,15 +111,18 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         
         final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
         if (null != ingestConfig && ingestConfig.isIngestRunning()) {
-            final String msg = "<html>Ingest is ongoing on another data source. Adding a new source now might slow down the current ingest.<br />Do you want to proceed and add a new data source now?</html>";
-            if (JOptionPane.showConfirmDialog(null, msg, "Ingest in progress", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
+            final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
+            if (JOptionPane.showConfirmDialog(null, msg,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "AddImageAction.ingestConfig.ongoingIngest.title"),
+                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
             }
         }
 
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
-        wizardDescriptor.setTitle("Add Data Source");
+        wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
         wizardDescriptor.putProperty(NAME, e);
 
         if (dialog != null) {

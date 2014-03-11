@@ -28,8 +28,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.logging.Level;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;

@@ -29,6 +29,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -57,10 +59,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 //@ServiceProvider(service = DataResultViewer.class)
  public class DataResultViewerTable extends AbstractDataResultViewer {
 
-    private String firstColumnLabel = "Name";
+    private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
+    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class,                                                                              "DataResultViewerTable.dummyNodeDisplayName");
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node 
@@ -154,7 +157,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         Node firstChild = parent.getChildren().getNodeAt(0);
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             for (PropertySet ps : firstChild.getPropertySets()) {
                 if (ps.getName().equals(Sheet.PROPERTIES)) {
@@ -162,7 +166,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
                 }
             }
 
-            throw new IllegalArgumentException("Child Node doesn't have the regular PropertySet.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
         }
     }
 
@@ -180,7 +185,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         Property[] properties = null;
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             Set<Property> allProperties = new LinkedHashSet<Property>();
             while (firstChild != null) {
@@ -410,7 +416,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
     @Override
     public String getTitle() {
-        return "Table";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerTable.title");
     }
 
     @Override
@@ -481,7 +487,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
     }
     
     private class DummyNodeListener implements NodeListener {
-        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
         private volatile boolean load = true;
         
         public void reset() {

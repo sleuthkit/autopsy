@@ -30,7 +30,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.Long;
-import java.lang.Long;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
@@ -38,9 +37,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -57,7 +57,6 @@ import org.openide.modules.Places;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
@@ -403,10 +402,12 @@ public class Server {
 
             } catch (SecurityException ex) {
                 logger.log(Level.WARNING, "Could not start Solr process!", ex);
-                throw new KeywordSearchModuleException("Could not start Solr server process", ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg"), ex);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not start Solr server process!", ex);
-                throw new KeywordSearchModuleException("Could not start Solr server process", ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
         } else {
             logger.log(Level.WARNING, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
@@ -537,10 +538,12 @@ public class Server {
                 logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
                 return false;
             } else {
-                throw new KeywordSearchModuleException("Error checking if Solr server is running", ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.isRunning.exception.errCheckSolrRunning.msg"), ex);
             }
         } catch (IOException ex) {
-            throw new KeywordSearchModuleException("Error checking if Solr server is running", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.isRunning.exception.errCheckSolrRunning.msg2"), ex);
         }
 
         return true;
@@ -552,7 +555,8 @@ public class Server {
 
     synchronized void openCore() throws KeywordSearchModuleException {
         if (currentCore != null) {
-            throw new KeywordSearchModuleException("Already an open Core! Explicitely close Core first. ");
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.alreadyOpen.msg"));
         }
 
         Case currentCase = Case.getCurrentCase();
@@ -665,7 +669,8 @@ public class Server {
         try {
             return currentCore.queryNumIndexedFiles();
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error querying number of indexed files, ", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
         }
 
 
@@ -686,7 +691,8 @@ public class Server {
         try {
             return currentCore.queryNumIndexedChunks();
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error querying number of indexed chunks, ", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxChunks.exception.msg"), ex);
         }
     }
 
@@ -705,7 +711,8 @@ public class Server {
         try {
             return currentCore.queryNumIndexedDocuments();
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error querying number of indexed documents, ", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxDocs.exception.msg"), ex);
         }
     }
 
@@ -724,7 +731,8 @@ public class Server {
         try {
             return currentCore.queryIsIndexed(contentID);
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error checkign if content is indexed, ", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryIsIdxd.exception.msg"), ex);
         }
     }
 
@@ -744,7 +752,8 @@ public class Server {
         try {
             return currentCore.queryNumFileChunks(fileID);
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error getting number of file chunks, ", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryNumFileChunks.exception.msg"), ex);
         }
     }
 
@@ -763,7 +772,8 @@ public class Server {
         try {
             return currentCore.query(sq);
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error running query: " + sq.getQuery(), ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
         }
     }
 
@@ -783,7 +793,8 @@ public class Server {
         try {
             return currentCore.query(sq, method);
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error running query: " + sq.getQuery(), ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
         }
     }
 
@@ -802,7 +813,8 @@ public class Server {
         try {
             return currentCore.queryTerms(sq);
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Error running terms query: " + sq.getQuery(), ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
         }
     }
 
@@ -873,7 +885,8 @@ public class Server {
             //handle a possible scenario when server process might not be fully started
             if (!this.isRunning()) {
                 logger.log(Level.WARNING, "Core open requested, but server not yet running");
-                throw new KeywordSearchModuleException("Core open requested, but server not yet running");
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
             CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
@@ -888,9 +901,11 @@ public class Server {
             return newCore;
 
         } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException("Could not open Core", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         } catch (IOException ex) {
-            throw new KeywordSearchModuleException("Could not open Core", ex);
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg2"), ex);
         }
     }
 
@@ -931,7 +946,8 @@ public class Server {
                 return solrCore.request(request);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not issue Solr request. ", e);
-                throw new SolrServerException("Could not issue Solr request", e);
+                throw new SolrServerException(
+                        NbBundle.getMessage(this.getClass(), "Server.request.exception.exception.msg"), e);
             }
 
         }
@@ -951,7 +967,7 @@ public class Server {
                 solrCore.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e);
-                throw new SolrServerException("Could not commit index", e);
+                throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
             }
         }
 
@@ -960,10 +976,12 @@ public class Server {
                 solrCore.add(doc);
             } catch (SolrServerException ex) {
                 logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
-                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
-                throw new KeywordSearchModuleException("Could not add document to index via update handler: " + doc.getField("id"), ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", doc.getField("id")), ex);
             }
         }
 
@@ -994,9 +1012,11 @@ public class Server {
             try {
                 CoreAdminRequest.unloadCore(this.name, solrServer);
             } catch (SolrServerException ex) {
-                throw new KeywordSearchModuleException("Cannot close Core", ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
             } catch (IOException ex) {
-                throw new KeywordSearchModuleException("Cannot close Core", ex);
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
             }
         }
 
@@ -1092,9 +1112,8 @@ public class Server {
         private int port;
 
         SolrServerNoPortException(int port) {
-            super("Indexing server could not bind to port " + port
-                    + ", port is not available, consider change the default "
-                    + Server.PROPERTIES_CURRENT_SERVER_PORT + " port.");
+            super(NbBundle.getMessage(Server.class, "Server.solrServerNoPortException.msg", port,
+                                      Server.PROPERTIES_CURRENT_SERVER_PORT));
             this.port = port;
         }
 

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -125,7 +127,10 @@ class FileTypeChildren extends ChildFactory<Content> {
 
             @Override
             protected AbstractNode defaultVisit(Content di) {
-                throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(),
+                                            "FileTypeChildren.exception.notSupported.msg",
+                                            di.toString()));
             }
         });
     }

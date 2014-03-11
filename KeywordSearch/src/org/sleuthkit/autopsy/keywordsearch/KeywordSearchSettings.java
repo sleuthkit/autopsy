@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
@@ -34,10 +36,10 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 
 //This file contains constants and settings for KeywordSearch
 class KeywordSearchSettings {
-    public static final String MODULE_NAME = "KeywordSearch";
-    static final String PROPERTIES_OPTIONS = MODULE_NAME+"_Options";
-    static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";
-    static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
+    public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.moduleName.text");
+    static final String PROPERTIES_OPTIONS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.properties_options.text", MODULE_NAME);
+    static final String PROPERTIES_NSRL = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesNSRL.text", MODULE_NAME);
+    static final String PROPERTIES_SCRIPTS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesScripts.text", MODULE_NAME);
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;

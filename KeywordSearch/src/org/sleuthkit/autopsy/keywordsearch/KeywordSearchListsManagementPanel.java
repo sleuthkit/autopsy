@@ -342,7 +342,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
         @Override
         public String getColumnName(int column) {
-            return "Name";
+            return NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.getColName.text");
         }
 
         @Override
@@ -357,7 +357,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            throw new UnsupportedOperationException("Editing of cells is not supported");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.setValueAt.exception.msg"));
         }
 
         @Override

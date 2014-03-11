@@ -20,21 +20,19 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -131,10 +129,10 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }
@@ -177,10 +175,10 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
-                    getName()));
+            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.name"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.displayName"),
+                                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.desc"),
+                                    getName()));
 
             return s;
         }

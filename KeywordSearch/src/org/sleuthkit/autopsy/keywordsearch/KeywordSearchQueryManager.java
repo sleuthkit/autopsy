@@ -176,7 +176,7 @@ class KeywordSearchQueryManager {
             rootNode = Node.EMPTY;
         }
 
-        final String pathText = "Keyword search";
+        final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
         DataResultTopComponent.initInstance(pathText, rootNode, things.size(), searchResultWin);
 
