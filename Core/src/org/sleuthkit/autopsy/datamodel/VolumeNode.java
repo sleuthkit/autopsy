@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,29 +88,29 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         }
 
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.desc"),
-                                this.getDisplayName()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.desc"),
+                this.getDisplayName()));
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.desc"),
-                                content.getAddr()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.desc"),
+                content.getAddr()));
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.desc"),
-                                content.getStart()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.desc"),
+                content.getStart()));
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.desc"),
-                                content.getLength()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.desc"),
+                content.getLength()));
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.desc"),
-                                content.getDescription()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.desc"),
+                content.getDescription()));
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.name"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.displayName"),
-                                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.desc"),
-                                content.getFlagsAsString()));
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.desc"),
+                content.getFlagsAsString()));
 
         return s;
     }
@@ -124,7 +124,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public boolean isLeafTypeNode() {
         return false;
     }
-                
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

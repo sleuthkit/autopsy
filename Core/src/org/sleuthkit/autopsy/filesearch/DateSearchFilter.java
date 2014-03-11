@@ -204,7 +204,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     /**
      * Inner class to put the separator inside the combo box.
      */
-    static class ComboBoxRenderer extends JLabel implements ListCellRenderer {
+    static class ComboBoxRenderer extends JLabel implements ListCellRenderer<String> {
 
         JSeparator separator;
 
@@ -215,8 +215,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         }
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            String str = (value == null) ? "" : value.toString();
+        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+            String str = (value == null) ? "" : value;
             if (SEPARATOR.equals(str)) {
                 return separator;
             }

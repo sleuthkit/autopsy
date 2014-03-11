@@ -159,8 +159,8 @@ public final class ContentUtils {
      * @return number of bytes extracted
      * @throws IOException if file could not be written
      */
-    public static long writeToFile(Content content, java.io.File outputFile,
-            ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
+    public static <T,V> long writeToFile(Content content, java.io.File outputFile,
+            ProgressHandle progress, SwingWorker<T,V> worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
 
@@ -215,11 +215,11 @@ public final class ContentUtils {
      * Assumes there will be no collisions with existing directories/files, and
      * that the directory to contain the destination file already exists.
      */
-    public static class ExtractFscContentVisitor extends ContentVisitor.Default<Void> {
+    public static class ExtractFscContentVisitor<T,V> extends ContentVisitor.Default<Void> {
 
         java.io.File dest;
         ProgressHandle progress;
-        SwingWorker worker;
+        SwingWorker<T,V> worker;
         boolean source = false;
 
         /**
@@ -234,7 +234,7 @@ public final class ContentUtils {
          * @param source true if source file
          */
         public ExtractFscContentVisitor(java.io.File dest,
-                ProgressHandle progress, SwingWorker worker, boolean source) {
+                ProgressHandle progress, SwingWorker<T,V> worker, boolean source) {
             this.dest = dest;
             this.progress = progress;
             this.worker = worker;
@@ -249,8 +249,8 @@ public final class ContentUtils {
          * Convenience method to make a new instance for given destination and
          * extract given content
          */
-        public static void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker worker) {
-            cntnt.accept(new ExtractFscContentVisitor(dest, progress, worker, true));
+        public static <T,V> void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker<T,V> worker) {
+            cntnt.accept(new ExtractFscContentVisitor<>(dest, progress, worker, true));
         }
 
         @Override
@@ -333,8 +333,8 @@ public final class ContentUtils {
                 // recurse on children
                 for (Content child : dir.getChildren()) {
                     java.io.File childFile = getFsContentDest(child);
-                    ExtractFscContentVisitor childVisitor =
-                            new ExtractFscContentVisitor(childFile, progress, worker, false);
+                    ExtractFscContentVisitor<T,V> childVisitor =
+                            new ExtractFscContentVisitor<>(childFile, progress, worker, false);
                     // If this is the source directory of an extract it
                     // will have a progress and worker, and will keep track
                     // of the progress bar's progress

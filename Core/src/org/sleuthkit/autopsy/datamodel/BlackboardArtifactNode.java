@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
     private BlackboardArtifact artifact;
     private Content associated;
-    private List<NodeProperty> customProperties;
+    private List<NodeProperty<? extends Object>> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
     /**
      * Artifact types which should have the associated content's full unique path
@@ -107,7 +107,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.noDesc.text");
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, artifact);
 
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
@@ -116,7 +116,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                                 associated.getName()));
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty(entry.getKey(),
+            ss.put(new NodeProperty<>(entry.getKey(),
                     entry.getKey(),
                     NO_DESCR,
                     entry.getValue()));
@@ -124,7 +124,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
         //append custom node properties
         if (customProperties != null) {
-            for (NodeProperty np : customProperties) {
+            for (NodeProperty<? extends Object> np : customProperties) {
                 ss.put(np);
             }
         }
@@ -172,7 +172,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             try {
                 sourcePath = associated.getUniquePath();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get unique path from: " + associated.getName());
+                logger.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName());
             }
 
             if (sourcePath.isEmpty() == false) {
@@ -192,7 +192,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     dataSource = getRootParentName();
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get image name from " + associated.getName());
+                logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName());
             }
             
             if (dataSource.isEmpty() == false) {
@@ -215,7 +215,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 parentName = parent.getName();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get parent name from " + associated.getName());
+            logger.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName());
             return "";
         }
         return parentName;
@@ -227,10 +227,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      *
      * @param np NodeProperty to add
      */
-    public void addNodeProperty(NodeProperty np) {
+    public <T> void addNodeProperty(NodeProperty<T> np) {
         if (customProperties == null) {
             //lazy create the list
-            customProperties = new ArrayList<NodeProperty>();
+            customProperties = new ArrayList<>();
         }
         customProperties.add(np);
 
@@ -297,7 +297,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private static Lookup getLookups(BlackboardArtifact artifact) {
         Content content = getAssociatedContent(artifact);
         HighlightLookup highlight = getHighlightLookup(artifact, content);
-        List<Object> forLookup = new ArrayList<Object>();
+        List<Object> forLookup = new ArrayList<>();
         forLookup.add(artifact);
         if (content != null) {
             forLookup.add(content);

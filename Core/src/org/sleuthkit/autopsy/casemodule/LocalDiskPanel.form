@@ -80,6 +80,10 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;&gt;()"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;LocalDisk&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="errorLabel">
       <Properties>

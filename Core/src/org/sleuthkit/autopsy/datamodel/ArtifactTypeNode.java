@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,8 +30,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node encapsulating blackboard artifact type.  This is used on the left-hand navigation side of the Autopsy UI as the
- * parent node for all of the artifacts of a given type. Its children will be BlackboardArtifactNode objects. 
+ * Node encapsulating blackboard artifact type. This is used on the left-hand
+ * navigation side of the Autopsy UI as the parent node for all of the artifacts
+ * of a given type. Its children will be BlackboardArtifactNode objects.
  */
 public class ArtifactTypeNode extends DisplayableItemNode {
 
@@ -66,14 +67,14 @@ public class ArtifactTypeNode extends DisplayableItemNode {
         }
 
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
-                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
-                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
-                                type.getDisplayName()));
+                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
+                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
+                type.getDisplayName()));
 
         ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
-                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
-                                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
-                                childCount));
+                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
+                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
+                childCount));
 
         return s;
     }
@@ -127,7 +128,7 @@ public class ArtifactTypeNode extends DisplayableItemNode {
             case TSK_ENCRYPTION_DETECTED:
                 return "encrypted-file.png";
             case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png";                
+                return "mismatch-16.png";
         }
         return "artifact-icon.png";
     }
