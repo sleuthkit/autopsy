@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -37,6 +38,8 @@ class KeywordSearchSettings {
     static final String PROPERTIES_OPTIONS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.properties_options.text", MODULE_NAME);
     static final String PROPERTIES_NSRL = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesNSRL.text", MODULE_NAME);
     static final String PROPERTIES_SCRIPTS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesScripts.text", MODULE_NAME);
+    static final String SHOW_SNIPPETS = "showSnippets";
+    static final boolean DEFAULT_SHOW_SNIPPETS = true;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
@@ -124,6 +127,18 @@ class KeywordSearchSettings {
     static void setStringExtractOption(String key, String val) {
         stringExtractOptions.put(key, val);
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, key, val);
+    }
+
+    static void setShowSnippets(boolean showSnippets) {
+        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS, (showSnippets ? "true" : "false"));
+    }
+
+    static boolean getShowSnippets() {
+        if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, SHOW_SNIPPETS)) {
+            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS).equals("true");
+        } else {
+            return DEFAULT_SHOW_SNIPPETS;
+        }
     }
 
     /**
