@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -33,7 +34,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
     private static final Logger logger = Logger.getLogger(DropdownSearchPanel.class.getName());
     private static DropdownSearchPanel instance = null;
-//    private boolean entered = false;
     
     /**
      * Creates new form DropdownSearchPanel
@@ -47,13 +47,7 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         keywordTextField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-//                if (keywordTextField.getText()
-//                             .equals(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
-//                                                                          "KeywordSearchPanel.keywordTextField.text"))) {
-//                    keywordTextField.setText("");
-//                    keywordTextField.setForeground(Color.BLACK);
-//                    entered = true;
-//                }
+                //do nothing
             }
 
             @Override
@@ -74,13 +68,6 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
                 } else if (jmi.equals(copyMenuItem)) {
                     keywordTextField.copy();
                 } else if (jmi.equals(pasteMenuItem)) {
-//                    if (keywordTextField.getText()
-//                                 .equals(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
-//                                                                              "KeywordSearchPanel.keywordTextField.text"))) {
-//                        keywordTextField.setText("");
-//                        keywordTextField.setForeground(Color.BLACK);
-//                        entered = true;
-//                    }
                     keywordTextField.paste();
                 } else if (jmi.equals(selectAllMenuItem)) {
                     keywordTextField.selectAll();
@@ -106,11 +93,6 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
        
     public void resetSearchBox() {
         keywordTextField.setText("");
-//        keywordTextField.setEditable(true);
-//        keywordTextField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class,
-//                                                               "KeywordSearchPanel.keywordTextField.text"));
-//        keywordTextField.setForeground(Color.LIGHT_GRAY);
-        //entered = false;
     }       
     
     @Override
@@ -251,14 +233,10 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
-//        if (!entered) {
-//            return;
-//        }
-        //getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             search();
-        } finally {
-            //getRootPane().setCursor(null);
+        } catch(Exception e) {
+            logger.log(Level.SEVERE, "search() threw exception", e);
         }
     }//GEN-LAST:event_keywordTextFieldActionPerformed
 
