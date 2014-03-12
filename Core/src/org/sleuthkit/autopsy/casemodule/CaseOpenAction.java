@@ -22,15 +22,17 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collections;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * The action to open a existing case. This class is always enabled.
@@ -47,8 +49,9 @@ public final class CaseOpenAction implements ActionListener {
      * The constructor
      */
     public CaseOpenAction() {
-        autFilter = new FileNameExtensionFilter(org.sleuthkit.autopsy.coreutils.Version.getName() 
-                + " Case File ( " + Case.CASE_DOT_EXTENSION + ")", 
+        autFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(),
+                                    Case.CASE_DOT_EXTENSION),
                 Case.CASE_EXTENSION);
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -80,7 +83,12 @@ public final class CaseOpenAction implements ActionListener {
             ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
             // check if the file exists
             if (!new File(path).exists()) {
-                JOptionPane.showMessageDialog(null, "Error: File doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "CaseOpenAction.msgDlg.fileNotExist.msg"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "CaseOpenAction.msgDlg.fileNotExist.title"),
+                                              JOptionPane.ERROR_MESSAGE);
                 this.actionPerformed(e); // show the dialog box again
             } else {
                 // try to close Startup window if there's one
@@ -93,8 +101,13 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.open(path); // open the case
                 } catch (CaseActionException ex) {
-                    JOptionPane.showMessageDialog(null, "Error: could not open the case in folder " + path
-                            + ": " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
+                                                                      ex.getMessage()),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                                  JOptionPane.ERROR_MESSAGE);
                     logger.log(Level.WARNING, "Error opening case in folder " + path, ex);
 
                     StartupWindowProvider.getInstance().open();

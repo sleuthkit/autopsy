@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
@@ -331,7 +333,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     
     @Override
     public String getTitle() {
-        return "Thumbnail";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.title");
     }
 
     @Override
@@ -384,8 +386,13 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         
         if (newPage > totalPages || newPage < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.msgDlg",
+                                                              totalPages),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -411,7 +418,8 @@ import org.sleuthkit.datamodel.TskCoreException;
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
@@ -449,7 +457,9 @@ import org.sleuthkit.datamodel.TskCoreException;
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
         } else {
-            pageNumLabel.setText(Integer.toString(curPage) + " of " + Integer.toString(totalPages));
+            pageNumLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
+                                        Integer.toString(curPage), Integer.toString(totalPages)));
             final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);

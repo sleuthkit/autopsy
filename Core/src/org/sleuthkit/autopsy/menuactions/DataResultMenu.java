@@ -24,6 +24,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -33,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
  class DataResultMenu extends CallableSystemAction implements Presenter.Menu, PropertyChangeListener {
 
-    JMenu menu = new JMenu("DataResult Windows");
+    JMenu menu = new JMenu(NbBundle.getMessage(this.getClass(), "DataResultMenu.menu.dataResWin.text"));
 
     DataResultMenu(){
     }
@@ -73,7 +74,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
     @Override
     public String getName() {
-        return "DataResult Menu";
+        return NbBundle.getMessage(this.getClass(), "DataResultMenu.getName.text");
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -28,13 +29,20 @@ import org.sleuthkit.datamodel.SleuthkitCase;
     SleuthkitCase skCase;
     
     public enum RecentFilesFilter implements AutopsyVisitableItem {
-        AUT_0DAY_FILTER(0, "AUT_0DAY_FILTER", "Final Day", 0),
-        AUT_1DAY_FILTER(0, "AUT_1DAY_FILTER", "Final Day - 1", 1),
-        AUT_2DAY_FILTER(0, "AUT_2DAY_FILTER", "Final Day - 2", 2),
-        AUT_3DAY_FILTER(0, "AUT_3DAY_FILTER", "Final Day - 3", 3),
-        AUT_4DAY_FILTER(0, "AUT_4DAY_FILTER", "Final Day - 4", 4),
-        AUT_5DAY_FILTER(0, "AUT_5DAY_FILTER", "Final Day - 5", 5),
-        AUT_6DAY_FILTER(0, "AUT_6DAY_FILTER", "Final Day - 6", 6);
+        AUT_0DAY_FILTER(0, "AUT_0DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut0DayFilter.displayName.text"), 0),
+        AUT_1DAY_FILTER(0, "AUT_1DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut1dayFilter.displayName.text"), 1),
+        AUT_2DAY_FILTER(0, "AUT_2DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut2dayFilter.displayName.text"), 2),
+        AUT_3DAY_FILTER(0, "AUT_3DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut3dayFilter.displayName.text"), 3),
+        AUT_4DAY_FILTER(0, "AUT_4DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut4dayFilter.displayName.text"), 4),
+        AUT_5DAY_FILTER(0, "AUT_5DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut5dayFilter.displayName.text"), 5),
+        AUT_6DAY_FILTER(0, "AUT_6DAY_FILTER",
+                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut6dayFilter.displayName.text"), 6);
         
         private int id;
         private String name;

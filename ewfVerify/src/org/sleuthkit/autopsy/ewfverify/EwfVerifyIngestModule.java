@@ -38,6 +38,8 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.openide.util.NbBundle;
+
 
 /**
  * Data Source Ingest Module that generates a hash of an E01 image file and
@@ -46,9 +48,11 @@ import org.sleuthkit.datamodel.TskData;
  * @author jwallace
  */
 public class EwfVerifyIngestModule extends IngestModuleDataSource {
-    private static final String MODULE_NAME = "EWF Verify";
+    private static final String MODULE_NAME = NbBundle.getMessage(EwfVerifyIngestModule.class,
+                                                                  "EwfVerifyIngestModule.moduleName.text");
     private static final String MODULE_VERSION = Version.getVersion();
-    private static final String MODULE_DESCRIPTION = "Validates the integrity of E01 files.";
+    private static final String MODULE_DESCRIPTION = NbBundle.getMessage(EwfVerifyIngestModule.class,
+                                                                         "EwfVerifyIngestModule.moduleDesc.text");
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private IngestServices services;
     private volatile boolean running = false;
@@ -74,8 +78,10 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
         } catch (TskCoreException ex) {
             img = null;
             logger.log(Level.SEVERE, "Failed to get image from Content.", ex);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
-                    "Error processing " + imgName));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this,
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.errProcImg",
+                                                                                 imgName)));
             return;
         }
         
@@ -83,8 +89,10 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
             logger.log(Level.INFO, "Skipping non-ewf image " + imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
-                    "Skipping non-ewf image " + imgName));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.skipNonEwf",
+                                                                                 imgName)));
             skipped = true;
             return;
         }
@@ -97,20 +105,26 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
             
          }           
          else {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
-                    "Image " + imgName + " does not have stored hash."));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this,
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.noStoredHash",
+                                                                                 imgName)));
             return;
         }
 
         logger.log(Level.INFO, "Starting ewf verification of " + img.getName());
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
-                "Starting " + imgName));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "EwfVerifyIngestModule.process.startingImg",
+                                                                             imgName)));
         
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image " + imgName + " was 0 when queried.");
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
-                    "Error getting size of " + imgName + ". Image will not be processed."));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this,
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.errGetSizeOfImg",
+                                                                                 imgName)));
         }
         
         // Libewf uses a sector size of 64 times the sector size, which is the
@@ -136,7 +150,8 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
             try {
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
-                String msg = "Error reading " + imgName + " at chunk " + i;
+                String msg = NbBundle.getMessage(this.getClass(),
+                                                 "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
                 services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return;
@@ -173,7 +188,8 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
                 messageDigest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException ex) {
                 logger.log(Level.WARNING, "Error getting md5 algorithm", ex);
-                throw new RuntimeException("Failed to get MD5 algorithm");
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.init.exception.failGetMd5"));
             }
         } else {
             messageDigest.reset();
@@ -184,11 +200,13 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
     public void complete() {
         logger.info("complete() " + this.getName());
         if (skipped == false) {
-            String msg = verified ? " verified" : " not verified";
-            String extra = "<p>EWF Verification Results for " + imgName + "</p>";
-            extra += "<li>Result:" + msg + "</li>";
-            extra += "<li>Calculated hash: " + calculatedHash + "</li>";
-            extra += "<li>Stored hash: " + storedHash + "</li>";
+            String msg = verified ? NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.complete.verified") : NbBundle
+                    .getMessage(this.getClass(), "EwfVerifyIngestModule.complete.notVerified");
+            String extra = NbBundle
+                    .getMessage(this.getClass(), "EwfVerifyIngestModule.complete.verifResultsHead", imgName);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.complete.resultLi", msg);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.complete.calcHashLi", calculatedHash);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.complete.storedHashLi", storedHash);
             services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, imgName +  msg, extra));
             logger.info(imgName + msg);
         }
