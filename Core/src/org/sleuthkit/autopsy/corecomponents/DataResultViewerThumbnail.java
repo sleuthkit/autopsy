@@ -121,7 +121,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         filePathLabel = new javax.swing.JLabel();
         goToPageLabel = new javax.swing.JLabel();
         goToPageField = new javax.swing.JTextField();
-        thumbnailSizeComboBox = new javax.swing.JComboBox();
+        thumbnailSizeComboBox = new javax.swing.JComboBox<>();
 
         thumbnailScrollPanel.setPreferredSize(new java.awt.Dimension(582, 348));
 
@@ -171,8 +171,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
         });
 
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
-        thumbnailSizeComboBox.setSelectedIndex(1);
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -183,7 +182,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -289,7 +288,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JScrollPane thumbnailScrollPanel;
-    private javax.swing.JComboBox thumbnailSizeComboBox;
+    private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
     @Override

@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -31,6 +34,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -129,7 +133,8 @@ class LuceneQuery implements KeywordSearchQuery {
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
         //in case of single term literal query there is only 1 term
-        results.put(keywordString, performLuceneQuery());
+        boolean showSnippets = KeywordSearchSettings.getShowSnippets();
+        results.put(keywordString, performLuceneQuery(showSnippets));
 
         return results;
     }
@@ -192,33 +197,13 @@ class LuceneQuery implements KeywordSearchQuery {
      * @return list of ContentHit objects
      * @throws NoOpenCoreException
      */
-    private List<ContentHit> performLuceneQuery() throws NoOpenCoreException {
+    private List<ContentHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
 
-        List<ContentHit> matches = new ArrayList<ContentHit>();
-
+        List<ContentHit> matches = new ArrayList<>();
         boolean allMatchesFetched = false;
-
         final Server solrServer = KeywordSearch.getServer();
-
-        SolrQuery q = new SolrQuery();
-        q.setShowDebugInfo(DEBUG); //debug
-
-        //set query, force quotes/grouping around all literal queries
-        final String groupedQuery = KeywordSearchUtil.quoteQuery(keywordStringEscaped);
-        String theQueryStr = groupedQuery;
-        if (field != null) {
-            //use the optional field
-            StringBuilder sb = new StringBuilder();
-            sb.append(field).append(":").append(groupedQuery);
-            theQueryStr = sb.toString();
-        }
         
-        q.setQuery(theQueryStr);
-        q.setRows(MAX_RESULTS);
-        q.setFields(Server.Schema.ID.toString());
-        for (KeywordQueryFilter filter : filters) {
-            q.addFilterQuery(filter.toString());
-        }
+        SolrQuery q = createAndConfigureSolrQuery(snippets);
 
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
             q.setStart(start);
@@ -226,53 +211,29 @@ class LuceneQuery implements KeywordSearchQuery {
             try {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
-                long results = resultList.getNumFound();
-                allMatchesFetched = start + MAX_RESULTS >= results;
-                SleuthkitCase sc = null;
+                Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
+                Set<SolrDocument> solrDocumentsWithMatches = filterDuplicateSolrDocuments(resultList);
+                
+                allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
+                
+                SleuthkitCase sleuthkitCase;
                 try {
-                    sc = Case.getCurrentCase().getSleuthkitCase();
+                    sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
                 } catch (IllegalStateException ex) {
                     //no case open, must be just closed
                     return matches;
                 }
 
-                for (SolrDocument resultDoc : resultList) {
-                    final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
-
-                    final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
-
-                    if (sepIndex != -1) {
-                        //file chunk result
-                        final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
-                        final int chunkId = Integer.parseInt(resultID.substring(sepIndex + 1));
-                        //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
-
-                        try {
-                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                            matches.add(new ContentHit(resultAbstractFile, chunkId));
-
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
-                            //something wrong with case/db
-                            return matches;
-                        }
-
-                    } else {
-                        final long fileID = Long.parseLong(resultID);
-
-                        try {
-                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                            matches.add(new ContentHit(resultAbstractFile));
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
-                            //something wrong with case/db
-                            return matches;
-                        }
+                for (SolrDocument resultDoc : solrDocumentsWithMatches) {
+                    ContentHit contentHit;
+                    try {
+                        contentHit = createContentHitFromQueryResults(resultDoc, highlightResponse, snippets, sleuthkitCase);
+                    } catch (TskException ex) {
+                        return matches;
                     }
-
+                    matches.add(contentHit);
                 }
-
-
+                
             } catch (NoOpenCoreException ex) {
                 logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
                 throw ex;
@@ -282,6 +243,109 @@ class LuceneQuery implements KeywordSearchQuery {
 
         }
         return matches;
+    }
+    
+    private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
+        SolrQuery q = new SolrQuery();
+        q.setShowDebugInfo(DEBUG); //debug
+        //set query, force quotes/grouping around all literal queries
+        final String groupedQuery = KeywordSearchUtil.quoteQuery(keywordStringEscaped);
+        String theQueryStr = groupedQuery;
+        if (field != null) {
+            //use the optional field
+            StringBuilder sb = new StringBuilder();
+            sb.append(field).append(":").append(groupedQuery);
+            theQueryStr = sb.toString();
+        }
+        q.setQuery(theQueryStr);
+        q.setRows(MAX_RESULTS);
+        
+        if (snippets) {
+            q.setFields(Server.Schema.ID.toString(), Server.Schema.CONTENT.toString());
+        } else {
+            q.setFields(Server.Schema.ID.toString());
+        }
+        
+        for (KeywordQueryFilter filter : filters) {
+            q.addFilterQuery(filter.toString());
+        }
+        
+        if (snippets) {
+            q.addHighlightField(Server.Schema.CONTENT.toString());
+            //q.setHighlightSimplePre("&laquo;"); //original highlighter only
+            //q.setHighlightSimplePost("&raquo;");  //original highlighter only
+            q.setHighlightSnippets(1);
+            q.setHighlightFragsize(SNIPPET_LENGTH);
+
+            //tune the highlighter
+            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
+            q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
+            q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
+            q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+
+             //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
+            q.setParam("hl.fragCharSize", Integer.toString(theQueryStr.length())); //makes sense for FastVectorHighlighter only
+
+            //docs says makes sense for the original Highlighter only, but not really
+            //analyze all content SLOW! consider lowering
+            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
+        }
+        
+        return q;
+    }
+
+    private Set<SolrDocument> filterDuplicateSolrDocuments(SolrDocumentList resultList) {
+        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparator());
+        solrDocumentsWithMatches.addAll(resultList);
+        return solrDocumentsWithMatches;
+    }
+
+    private ContentHit createContentHitFromQueryResults(SolrDocument resultDoc, Map<String, Map<String, List<String>>> highlightResponse, boolean snippets, SleuthkitCase sc) throws TskException {
+        ContentHit chit;
+        final String resultID = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+        final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
+        String snippet = "";
+        if (snippets) {
+            List<String> snippetList = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString());
+            // list is null if there wasn't a snippet
+            if (snippetList != null) {
+                snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
+            }
+        }
+        if (sepIndex != -1) {
+            //file chunk result
+            final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
+            final int chunkId = Integer.parseInt(resultID.substring(sepIndex + 1));
+            //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
+
+            try {
+                AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                chit = new ContentHit(resultAbstractFile, chunkId);
+                if (snippet.isEmpty() == false) {
+                    chit.setSnippet(snippet);
+                }
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                //something wrong with case/db
+                throw ex;
+            }
+
+        } else {
+            final long fileID = Long.parseLong(resultID);
+
+            try {
+                AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                chit = new ContentHit(resultAbstractFile);
+                if (snippet.isEmpty() == false) {
+                    chit.setSnippet(snippet);
+                }
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                //something wrong with case/db
+                throw ex;
+            }
+        }
+        return chit;
     }
 
     /**
@@ -391,6 +455,30 @@ class LuceneQuery implements KeywordSearchQuery {
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
             return "";
+        }
+    }
+    
+    /**
+     * Compares SolrDocuments based on their ID's. Two SolrDocuments with
+     * different chunk numbers are considered equal.
+     */
+    private class SolrDocumentComparator implements Comparator<SolrDocument> {
+        @Override
+        public int compare(SolrDocument left, SolrDocument right) {
+            String idName = Server.Schema.ID.toString();
+            String leftID = left.getFieldValue(idName).toString();
+            int index = leftID.indexOf(Server.ID_CHUNK_SEP);
+            if (index != -1) {
+                leftID = leftID.substring(0, index);
+            }
+
+            String rightID = right.getFieldValue(idName).toString();
+            index = rightID.indexOf(Server.ID_CHUNK_SEP);
+            if (index != -1) {
+                rightID = rightID.substring(0, index);
+            }
+
+            return leftID.compareTo(rightID);
         }
     }
 }

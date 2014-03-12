@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,7 +58,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
     public EmailExtracted(SleuthkitCase skCase) {
         this.skCase = skCase;
-        accounts = new LinkedHashMap<String, Map<String, List<Long>>>();
+        accounts = new LinkedHashMap<>();
     }
 
     @SuppressWarnings("deprecation")
@@ -82,12 +82,12 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
                 Map<String, List<Long>> folders = accounts.get(account);
                 if (folders == null) {
-                    folders = new LinkedHashMap<String, List<Long>>();
+                    folders = new LinkedHashMap<>();
                     accounts.put(account, folders);
                 }
                 List<Long> messages = folders.get(folder);
                 if (messages == null) {
-                    messages = new ArrayList<Long>();
+                    messages = new ArrayList<>();
                     folders.put(folder, messages);
                 }
                 messages.add(artifactId);
@@ -100,11 +100,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
 
     private static Map<String, String> parsePath(String path) {
-        Map<String, String> parsed = new HashMap<String, String>();
+        Map<String, String> parsed = new HashMap<>();
         String[] split = path.split(MAIL_PATH_SEPARATOR);
         if (split.length < 4) {
-            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: "
-                    + split.length + ", will use defaults");
+            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: {0}, will use defaults", split.length);
             parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
             parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
             return parsed;
@@ -137,7 +136,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             return false;
         }
-                
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             //return v.visit(this);
@@ -153,11 +152,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-                                    getName()));
-
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                    getName()));
             return s;
         }
     }
@@ -190,7 +188,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 }
             }
 
-
             list.addAll(tempList);
             return true;
         }
@@ -219,7 +216,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             return false;
         }
-                
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -235,10 +232,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-                                    getName()));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                    getName()));
 
             return s;
         }
@@ -282,10 +279,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-                                    getName()));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                    getName()));
 
             return s;
         }
@@ -294,7 +291,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             return false;
         }
-                
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -352,10 +349,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-                                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-                                    getName()));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
+                    getName()));
 
             return s;
         }

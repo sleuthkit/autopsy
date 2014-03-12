@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
@@ -66,7 +67,7 @@ public class ViewContextAction extends AbstractAction {
 
     }
 
-    public ViewContextAction(String title, AbstractFsContentNode node) {
+    public ViewContextAction(String title, AbstractFsContentNode<? extends AbstractFile> node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
     }

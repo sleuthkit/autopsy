@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,9 @@ import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
+import org.netbeans.jemmy.Timeouts;
 import org.netbeans.jemmy.operators.JButtonOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
@@ -117,6 +119,7 @@ public class RegressionTest extends TestCase {
     public void setUp() {
 
         logger.info("########  " + System.getProperty("img_path") + "  #######");
+        Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -369,8 +369,8 @@ class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
-            DataSourceTask originalTask = originalContext.getDataSourceTask();
+        synchronized void schedule(AbstractFile file, PipelineContext<IngestModuleAbstractFile> originalContext) {
+            DataSourceTask<IngestModuleAbstractFile> originalTask = originalContext.getDataSourceTask();
 
             //skip if task contains no modules
             if (originalTask.getModules().isEmpty()) {
@@ -393,7 +393,6 @@ class IngestScheduler {
          * @param context context to schedule, with scheduled task containing content to process and modules
          */
         synchronized void schedule(DataSourceTask<IngestModuleAbstractFile> task) {
-
             //skip if task contains no modules
             if (task.getModules().isEmpty()) {
                 return;

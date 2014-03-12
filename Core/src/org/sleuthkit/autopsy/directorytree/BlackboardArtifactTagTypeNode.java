@@ -72,7 +72,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty(
+        properties.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.displayName"),
                 "",
