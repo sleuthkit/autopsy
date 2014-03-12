@@ -65,6 +65,7 @@ public class PipelineContext <T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
+        @SuppressWarnings("unchecked")
         final PipelineContext<T> other = (PipelineContext<T>) obj;
 
         if (!Objects.equals(this.task, other.task)) {

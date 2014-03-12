@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,7 @@ public class ResultsNode extends DisplayableItemNode {
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
                 new InterestingHits(sleuthkitCase),
-                new TagsNodeKey()
-                )), Lookups.singleton(NAME));
+                new TagsNodeKey())), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
@@ -48,7 +47,7 @@ public class ResultsNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -63,10 +62,10 @@ public class ResultsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
-                                NAME));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
+                NAME));
         return s;
     }
 }

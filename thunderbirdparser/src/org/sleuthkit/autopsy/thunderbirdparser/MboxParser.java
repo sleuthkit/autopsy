@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -118,14 +117,14 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "couldn't find mbox file.", ex);
                 addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToReadFile"));
-                return Collections.EMPTY_LIST;
+                return new ArrayList<>();
             }
         }
         
         // If no encoders work, post an error message and return.
         if (mboxIterator == null || theEncoder == null) {
             addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.couldntFindCharset"));
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         
         List<EmailMessage> emails = new ArrayList<>();
@@ -137,7 +136,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
                 emails.add(extractEmail(msg));
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to get message from mbox: " + ex.getMessage());
+                logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage());
                 failCount++;
             }
         }
@@ -220,7 +219,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         try {
             r = new BufferedReader(tb.getReader());
             StringBuilder bodyString = new StringBuilder();
-            String line = "";
+            String line;
             while ((line = r.readLine()) != null) {
                 bodyString.append(line).append("\n");
             }

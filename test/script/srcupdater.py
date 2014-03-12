@@ -165,7 +165,7 @@ def antBuild(which, Build, branch):
             open(chk)
         except IOError as e:
             if(not tryredo):
-                errorem += "DataModel Java build failed. on branch " + branch + "\n"
+                errorem += "DataModel Java build failed on branch " + branch + ".\n"
                 attachl.append(antpth)
                 if email_enabled: 
                     Emailer.send_email(to, server, subj, errorem, attachl)
