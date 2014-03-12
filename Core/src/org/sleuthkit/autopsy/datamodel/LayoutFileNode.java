@@ -76,7 +76,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));

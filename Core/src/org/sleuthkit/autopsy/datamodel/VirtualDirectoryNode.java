@@ -95,7 +95,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                 "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),

@@ -128,7 +128,7 @@ public class FileSize implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.desc"),
                     NAME));
@@ -190,7 +190,7 @@ public class FileSize implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.name"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.name"),
                         NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.displayName"),
                         NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.desc"),
                         filter.getDisplayName()));

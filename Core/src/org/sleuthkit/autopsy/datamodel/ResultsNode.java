@@ -62,7 +62,7 @@ public class ResultsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
                 NAME));

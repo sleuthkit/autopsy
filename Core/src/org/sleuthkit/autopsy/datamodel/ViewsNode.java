@@ -64,7 +64,7 @@ public class ViewsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.desc"),
                 NAME));

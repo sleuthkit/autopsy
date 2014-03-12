@@ -187,7 +187,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.desc"),
                     getName()));
@@ -237,13 +237,13 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
                     name));
 
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.desc"),
                     children.size()));
@@ -314,12 +314,12 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
                     getDisplayName()));
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
                     children.size()));
@@ -363,21 +363,21 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return n;
             }
 
-            n.addNodeProperty(new NodeProperty(
+            n.addNodeProperty(new NodeProperty<>(
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
                     NbBundle.getMessage(this.getClass(),
                     "KeywordHits.createNodeForKey.modTime.displayName"),
                     NbBundle.getMessage(this.getClass(),
                     "KeywordHits.createNodeForKey.modTime.desc"),
                     ContentUtils.getStringTime(file.getMtime(), file)));
-            n.addNodeProperty(new NodeProperty(
+            n.addNodeProperty(new NodeProperty<>(
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
                     NbBundle.getMessage(this.getClass(),
                     "KeywordHits.createNodeForKey.accessTime.displayName"),
                     NbBundle.getMessage(this.getClass(),
                     "KeywordHits.createNodeForKey.accessTime.desc"),
                     ContentUtils.getStringTime(file.getAtime(), file)));
-            n.addNodeProperty(new NodeProperty(
+            n.addNodeProperty(new NodeProperty<>(
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
                     NbBundle.getMessage(this.getClass(),
                     "KeywordHits.createNodeForKey.chgTime.displayName"),

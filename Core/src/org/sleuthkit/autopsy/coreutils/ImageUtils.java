@@ -193,10 +193,7 @@ public class ImageUtils {
          * Check for the JPEG header. Since Java bytes are signed, we cast them
          * to an int first.
          */
-        if (((int) (fileHeaderBuffer[0] & 0xff) == 0xff) && ((int) (fileHeaderBuffer[1] & 0xff) == 0xd8)) {
-            return true;
-        }
-        return false;
+        return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
     }
     
     

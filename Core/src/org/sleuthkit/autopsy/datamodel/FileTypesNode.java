@@ -70,7 +70,7 @@ public class FileTypesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.desc"),
                 getName()));

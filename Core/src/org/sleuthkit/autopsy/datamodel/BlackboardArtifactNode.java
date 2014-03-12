@@ -110,7 +110,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, artifact);
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
                                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                                 NO_DESCR,
                                 associated.getName()));
@@ -137,7 +137,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
             }
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
                                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                                     NO_DESCR,
                                     ext));
@@ -156,7 +156,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 if (actualMimeType.isEmpty()) {
                     logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute.");
                 } else {
-                    ss.put(new NodeProperty(
+                    ss.put(new NodeProperty<>(
                             NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
                             NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
                             NO_DESCR,
@@ -176,7 +176,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
 
             if (sourcePath.isEmpty() == false) {
-                ss.put(new NodeProperty(
+                ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.filePath.name"),
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.filePath.displayName"),
                         NO_DESCR,
@@ -196,7 +196,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
             
             if (dataSource.isEmpty() == false) {
-                ss.put(new NodeProperty(
+                ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.name"),
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
                         NO_DESCR,

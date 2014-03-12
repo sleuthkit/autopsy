@@ -69,7 +69,7 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(
+        ss.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.name"),
                 NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.displayName"),
                 NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.desc"),

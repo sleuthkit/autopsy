@@ -58,7 +58,7 @@ public class DataSourcesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.desc"),
                 NAME));

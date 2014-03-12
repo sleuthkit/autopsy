@@ -133,7 +133,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.desc"),
                     NAME));
@@ -195,7 +195,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty(
+                ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.name"),
                         NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.displayName"),
                         NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.desc"),

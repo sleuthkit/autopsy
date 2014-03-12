@@ -37,14 +37,14 @@ public class RecentFilesNode extends DisplayableItemNode {
         super.setName(NAME);
         super.setDisplayName(NAME);
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");        
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
     }
 
     @Override
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -59,10 +59,10 @@ public class RecentFilesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.desc"),
-                                NAME));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesNode.createSheet.name.desc"),
+                NAME));
         return s;
     }
 }

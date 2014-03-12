@@ -62,7 +62,7 @@ public class FileTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.name"),
                 NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.displayName"),
                 NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.desc"),
                 filter.getDisplayName()));
@@ -71,7 +71,7 @@ public class FileTypeNode extends DisplayableItemNode {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.name"),
                 NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.displayName"),
                 NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.desc"),
                 extensions));

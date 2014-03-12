@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -165,7 +164,7 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                         MODULE_NAME,
                         NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
             } catch (TskCoreException ex) {
-                logger.log(Level.INFO, "Failed to add encryption attribute to file: " + abstractFile.getName());
+                logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName());
             }
         } else {
             // parsing error: log message
@@ -174,12 +173,12 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
                                         abstractFile.getName()),
                     NbBundle.getMessage(this.getClass(),
                                         "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
-            logger.log(Level.INFO, "PSTParser failed to parse " + abstractFile.getName());
+            logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName());
             return ProcessResult.ERROR;
         }
         
         if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: " + file.getName());
+            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName());
         }
         
         String errors = parser.getErrors();

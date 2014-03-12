@@ -69,7 +69,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actionsList = new ArrayList<Action>();
+        List<Action> actionsList = new ArrayList<>();
 
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
@@ -87,27 +87,27 @@ public class VolumeNode extends AbstractContentNode<Volume> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.desc"),
                 this.getDisplayName()));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.desc"),
                 content.getAddr()));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.desc"),
                 content.getStart()));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.desc"),
                 content.getLength()));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.desc"),
                 content.getDescription()));
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.name"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.displayName"),
                 NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.desc"),
                 content.getFlagsAsString()));

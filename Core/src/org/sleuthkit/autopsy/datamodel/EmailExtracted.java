@@ -152,7 +152,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
                     getName()));
@@ -232,7 +232,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
                     getName()));
@@ -279,7 +279,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
                     getName()));
@@ -349,7 +349,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
                     getName()));

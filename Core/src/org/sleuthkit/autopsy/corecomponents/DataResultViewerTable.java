@@ -61,7 +61,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
 
@@ -309,7 +308,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         propertiesAcc.clear();
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
+        List<Node.Property> props = new ArrayList<>(propertiesAcc);
         if (props.size() > 0) {
             Node.Property prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());

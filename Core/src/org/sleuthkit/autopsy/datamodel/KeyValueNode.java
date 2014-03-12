@@ -77,7 +77,7 @@ public class KeyValueNode extends AbstractNode {
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.desc"),
                 data.getName()));
@@ -85,7 +85,7 @@ public class KeyValueNode extends AbstractNode {
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty(key,
+            ss.put(new NodeProperty<>(key,
                     key,
                     NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.map.desc"),
                     value));
