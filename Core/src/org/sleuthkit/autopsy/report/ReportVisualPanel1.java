@@ -34,6 +34,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
  final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
@@ -99,7 +100,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public String getName() {
-        return "Select and Configure Report Modules";
+        return NbBundle.getMessage(this.getClass(), "ReportVisualPanel1.getName.text");
     }
     
     public ReportModule getSelectedModule() {

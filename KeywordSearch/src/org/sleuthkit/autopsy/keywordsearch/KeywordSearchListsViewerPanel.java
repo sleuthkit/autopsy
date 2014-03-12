@@ -322,12 +322,14 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
     @Override
     public boolean isLuceneQuerySelected() {
-        throw new UnsupportedOperationException("Not supported for multi-word queries.");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.isLuceneQuerySel.exception.msg"));
     }
 
     @Override
     public String getQueryText() {
-        throw new UnsupportedOperationException("Not supported for multi-word queries.");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.getQueryText.exception.msg"));
     }
 
     void addSearchButtonActionListener(ActionListener al) {

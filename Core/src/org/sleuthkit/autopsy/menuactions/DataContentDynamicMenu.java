@@ -25,6 +25,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
@@ -62,7 +63,8 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
         if (newWindowLists != null) {
             if (newWindowLists.size() > 0) {
 
-                JMenu submenu = new JMenu("Data Content Windows");
+                JMenu submenu = new JMenu(
+                        NbBundle.getMessage(this.getClass(), "DataContentDynamicMenu.menu.dataContentWin.text"));
                 for (int i = 0; i < newWindowLists.size(); i++) {
                     DataContentTopComponent dctc = newWindowLists.get(i);
                     JMenuItem item = new JMenuItem(dctc.getName());

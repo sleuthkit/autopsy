@@ -37,8 +37,9 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
+
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
@@ -159,7 +160,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (currentCase != null) {
             return currentCase;
         } else {
-            throw new IllegalStateException("Can't get the current case; there is no case open!");
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
         }
     }
 
@@ -192,7 +193,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
+                                              NbBundle.getMessage(Case.class,
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange("");
             
@@ -201,7 +205,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
+                                              NbBundle.getMessage(Case.class,
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
         }
 
@@ -214,7 +221,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
+                                              NbBundle.getMessage(Case.class,
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseChange(currentCase);
 
@@ -224,7 +234,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
+                                              NbBundle.getMessage(Case.class,
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange(currentCase.name);
 
@@ -267,7 +280,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
             db = SleuthkitCase.newCase(dbPath);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex);
-            throw new CaseActionException("Error creating a case: " + caseName + " in dir " + caseDir, ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
@@ -296,14 +310,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
             String examiner = xmlcm.getCaseExaminer();
             // if the caseName is "", case / config file can't be opened
             if (caseName.equals("")) {
-                throw new CaseActionException("Case name is blank.");
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
             }
 
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
             if (null != db.getBackupDatabasePath()) {
-                JOptionPane.showMessageDialog(null, "Updated case database schema.\nA backup copy of the database with the following path has been made:\n " + db.getBackupDatabasePath(), "Case Database Schema Update", JOptionPane.INFORMATION_MESSAGE);                
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                                                        db.getBackupDatabasePath()),
+                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                              JOptionPane.INFORMATION_MESSAGE);
             }
             
             checkImagesExist(db);
@@ -318,10 +336,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
             if (!configFilePath.endsWith(CASE_DOT_EXTENSION)) {
-                throw new CaseActionException("Check that you selected the correct case file (usually with "
-                        + CASE_DOT_EXTENSION + " extension)", ex);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION), ex);
             } else {
-                throw new CaseActionException("Error opening the case", ex);
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg"), ex);
             }
         }
     }
@@ -352,11 +370,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
             boolean fileExists = (pathExists(path)
                     || driveExists(path));
             if (!fileExists) {
-                int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one of the images associated with \n"
-                        + "this case are missing. Would you like to search for them now?\n"
-                        + "Previously, the image was located at:\n" + path
-                        + "\nPlease note that you will still be able to browse directories and generate reports\n"
-                        + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Image", JOptionPane.YES_NO_OPTION);
+                int ret = JOptionPane.showConfirmDialog(null,
+                                                        NbBundle.getMessage(Case.class,
+                                                                            "Case.checkImgExist.confDlg.doesntExist.msg",
+                                                                            appName, path),
+                                                        NbBundle.getMessage(Case.class,
+                                                                            "Case.checkImgExist.confDlg.doesntExist.title"),
+                                                        JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
                    
                     MissingImageDialog.makeDialog(obj_id, db);
@@ -389,12 +409,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                     catch (Exception e) {
                         logger.log(Level.SEVERE, "Case listener threw exception", e);
-                        MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                        MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "Case.changeCase.errListenToCaseUpdates.msg"),
+                                                      MessageNotifyUtil.MessageType.ERROR);
                     }
             CoreComponentControl.openCoreWindows();
             return newImage;
         } catch (Exception ex) {
-            throw new CaseActionException("Error adding image to the case", ex);
+            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
         }
     }
 
@@ -423,7 +446,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Case threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "Case.changeCase.errListenToCaseUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
         CoreComponentControl.openCoreWindows();
     }
@@ -456,7 +482,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
         } catch (Exception e) {
-            throw new CaseActionException("Error while trying to close the current case.", e);
+            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.closeCase.exception.msg"), e);
         }
     }
 
@@ -478,11 +504,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
             RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
             Case.changeCase(null);
             if (result == false) {
-                throw new CaseActionException("Error deleting the case dir: " + caseDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(this.getClass(), "Case.deleteCase.exception.msg", caseDir));
             }
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error deleting the current case dir: " + caseDir, ex);
-            throw new CaseActionException("Error deleting the case dir: " + caseDir, ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "Case.deleteCase.exception.msg2", caseDir), ex);
         }
     }
 
@@ -504,12 +532,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange(newCaseName);
 
         } catch (Exception e) {
-            throw new CaseActionException("Error while trying to update the case name.", e);
+            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseName.exception.msg"), e);
         }
     }
 
@@ -528,10 +559,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
         } catch (Exception e) {
-            throw new CaseActionException("Error while trying to update the examiner.", e);
+            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateExaminer.exception.msg"), e);
         }
     }
 
@@ -551,10 +585,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "Case listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Case updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
+                                              MessageNotifyUtil.MessageType.ERROR);
             }
         } catch (Exception e) {
-            throw new CaseActionException("Error while trying to update the case number.", e);
+            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseNum.exception.msg"), e);
         }
     }
 
@@ -764,7 +801,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             return db.getRootObjects();
         } catch (TskException ex) {
-            throw new RuntimeException("Error getting root objects.", ex);
+            throw new RuntimeException(NbBundle.getMessage(this.getClass(), "Case.exception.errGetRootObj"), ex);
         }
     }
 
@@ -919,16 +956,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
         File caseDirF = new File(caseDir);
         if (caseDirF.exists()) {
             if (caseDirF.isFile()) {
-                throw new CaseActionException("Cannot create case dir, already exists and is not a directory: " + caseDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.existNotDir", caseDir));
             } else if (!caseDirF.canRead() || !caseDirF.canWrite()) {
-                throw new CaseActionException("Cannot create case dir, already exists and cannot read/write: " + caseDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.existCantRW", caseDir));
             }
         }
 
         try {
             boolean result = (caseDirF).mkdirs(); // create root case Directory
             if (result == false) {
-                throw new CaseActionException("Cannot create case dir: " + caseDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreate", caseDir));
             }
 
             // create the folders inside the case directory
@@ -938,17 +978,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     && (new File(caseDir + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdir();
 
             if (result == false) {
-                throw new CaseActionException("Could not create case directory: " + caseDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", caseDir));
             }
 
             final String modulesOutDir = caseDir + File.separator + getModulesOutputDirRelPath();
             result = new File(modulesOutDir).mkdir();
             if (result == false) {
-                throw new CaseActionException("Could not create modules output directory: " + modulesOutDir);
+                throw new CaseActionException(
+                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateModDir",
+                                            modulesOutDir));
             }
 
         } catch (Exception e) {
-            throw new CaseActionException("Could not create case directory: " + caseDir, e);
+            throw new CaseActionException(
+                    NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.gen", caseDir), e);
         }
     }
 

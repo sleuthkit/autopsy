@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -27,7 +29,8 @@ import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationExcepti
  */
 class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
 
-    private static final String EMPTY_NAME_MESSAGE = "Must enter something for name search.";
+    private static final String EMPTY_NAME_MESSAGE = NbBundle
+            .getMessage(NameSearchFilter.class, "NameSearchFilter.emptyNameMsg.text");
 
     public NameSearchFilter() {
         this(new NameSearchPanel());

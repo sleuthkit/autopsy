@@ -30,6 +30,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -72,7 +74,7 @@ import org.sleuthkit.datamodel.*;
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
-        progressPanel.updateStatusLabel("Querying files...");  
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
         reportPath = path + "BodyFile.txt";
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
@@ -84,13 +86,13 @@ import org.sleuthkit.datamodel.*;
             final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() 
                                + " AND name != '.' AND name != '..'";
             
-            progressPanel.updateStatusLabel("Loading files...");  
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
             List<FsContent> fs = skCase.findFilesWhere(query);
             
             // Check if ingest has finished
             String ingestwarning = "";
             if (IngestManager.getDefault().isIngestRunning()) {
-                ingestwarning = "Warning, this report was run before ingest services completed!\n";
+                ingestwarning = NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text");
             }
             
             int size = fs.size();
@@ -109,7 +111,9 @@ import org.sleuthkit.datamodel.*;
                     }
                     if(count++ == 100) {
                         progressPanel.increment();
-                        progressPanel.updateStatusLabel("Now processing " + file.getName() + "...");
+                        progressPanel.updateStatusLabel(
+                                NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.processing",
+                                                    file.getName()));
                         count = 0;
                     }
 
@@ -161,13 +165,13 @@ import org.sleuthkit.datamodel.*;
 
     @Override
     public String getName() {
-        String name = "TSK Body File";
+        String name = NbBundle.getMessage(this.getClass(), "ReportBodyFile.getName.text");
         return name;
     }
 
     @Override
     public String getFilePath() {
-        return "BodyFile.txt";
+        return NbBundle.getMessage(this.getClass(), "ReportBodyFile.getFilePath.text");
     }
 
     @Override
@@ -178,7 +182,7 @@ import org.sleuthkit.datamodel.*;
 
     @Override
     public String getDescription() {
-        String desc = "Body file format report with MAC times for every file. This format can be used for a timeline view.";
+        String desc = NbBundle.getMessage(this.getClass(), "ReportBodyFile.getDesc.text");
         return desc;
     }
 
