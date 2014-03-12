@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -28,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class FileTypesNode extends DisplayableItemNode {
 
-    private static final String FNAME = "File Types";
+    private static final String FNAME = NbBundle.getMessage(FileTypesNode.class, "FileTypesNode.fname.text");
     private SleuthkitCase skCase;
 
     /**
@@ -71,9 +72,9 @@ public class FileTypesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
+        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.name"),
+                                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.displayName"),
+                                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.desc"),
                 getName()));
         return s;
     }

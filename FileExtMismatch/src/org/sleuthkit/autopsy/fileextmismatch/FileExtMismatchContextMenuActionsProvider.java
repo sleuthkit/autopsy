@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
@@ -104,7 +105,9 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                 if (mimeTypeStr.length() > 40) {
                                     mimeTypeStr = mimeTypeStr.substring(0, 39);
                                 }                            
-                                String menuItemStr = "Add extension " + extStr + " as matching MIME type " + mimeTypeStr;                    
+                                String menuItemStr = NbBundle.getMessage(this.getClass(),
+                                                                         "FileExtMismatchContextMenuActionsProvider.menuItemStr",
+                                                                         extStr, mimeTypeStr);
                                 actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr));
 
                                 // Check if already added

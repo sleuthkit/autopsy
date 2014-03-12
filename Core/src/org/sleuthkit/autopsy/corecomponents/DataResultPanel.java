@@ -36,6 +36,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
@@ -67,8 +68,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
-    private boolean listeningToTabbedPane = false;    
-
+    private boolean listeningToTabbedPane = false;
+    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class,
+                                                                              "DataResultPanel.dummyNodeDisplayName");
     /**
      * Creates new DataResultPanel
      * Default constructor, needed mostly  for the palette/UI builder
@@ -619,7 +621,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
     
     private class DummyNodeListener implements NodeListener {
-        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+
         private volatile boolean load = true;
         
         public void reset() {

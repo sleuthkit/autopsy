@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.CommonNetworkRelativeLinkFlags;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.DriveType;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.FileAttributesFlags;
@@ -294,7 +296,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             }
             return ret;
         }
-        return "No preferred path found";
+        return NbBundle.getMessage(this.getClass(), "JLNK.noPrefPath.text");
     }
    
     public String getBestName() {

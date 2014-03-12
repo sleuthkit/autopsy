@@ -51,12 +51,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 80)})
-@NbBundle.Messages(value = "CTL_ReportWizardAction=Run Report")
+// moved into Bundle
+//@NbBundle.Messages(value = "CTL_ReportWizardAction=Run Report")
 public final class ReportWizardAction  extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
     private static final Logger logger = Logger.getLogger(ReportWizardAction.class.getName());
     
     private JButton toolbarButton = new JButton();
-    private static final String ACTION_NAME = "Generate Report";
+    private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
 
     /**
      * When the Generate Report button or menu item is selected, open the reporting wizard.
@@ -66,7 +67,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
     public static void doReportWizard() {
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
-        wiz.setTitle("Generate Report");
+        wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), 
                     (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
@@ -139,7 +140,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
     public Component getToolbarPresenter() {
         ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_generate_report.png"));
         toolbarButton.setIcon(icon);
-        toolbarButton.setText("Generate Report");
+        toolbarButton.setText(NbBundle.getMessage(this.getClass(), "ReportWizardAction.toolBarButton.text"));
         return toolbarButton;
     }
 

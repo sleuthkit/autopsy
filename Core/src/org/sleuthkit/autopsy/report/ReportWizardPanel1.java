@@ -27,6 +27,7 @@ import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 
  class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
@@ -36,8 +37,8 @@ import org.openide.util.NbPreferences;
     private JButton finishButton;
     
     ReportWizardPanel1() {
-        nextButton = new JButton("Next >");
-        finishButton = new JButton("Finish");
+        nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));
+        finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.finishButton.text"));
         finishButton.setEnabled(false);
         
         // Initialize our custom next and finish buttons

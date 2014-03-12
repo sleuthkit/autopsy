@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -50,8 +51,10 @@ import org.sleuthkit.datamodel.TskException;
 public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
     private static FileExtMismatchIngestModule defaultInstance = null;
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
-    public static final String MODULE_NAME = "Extension Mismatch Detector";
-    public static final String MODULE_DESCRIPTION = "Flags files that have a non-standard extension based on their file type.";
+    public static final String MODULE_NAME = NbBundle.getMessage(FileExtMismatchIngestModule.class,
+                                                                 "FileExtMismatchIngestModule.moduleName");
+    public static final String MODULE_DESCRIPTION = NbBundle.getMessage(FileExtMismatchIngestModule.class,
+                                                                        "FileExtMismatchIngestModule.moduleDesc.text");
     public static final String MODULE_VERSION = Version.getVersion();    
 
     private static long processTime = 0;
@@ -188,11 +191,18 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
 
         detailsSb.append("<tr><td>"+MODULE_DESCRIPTION+"</td></tr>");
 
-        detailsSb.append("<tr><td>Total Processing Time</td><td>").append(processTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
+        detailsSb.append("<tr><td>").append(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
+                 .append("</td><td>").append(processTime).append("</td></tr>\n");
+        detailsSb.append("<tr><td>").append(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
+                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
 
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "File Extension Mismatch Results", detailsSb.toString()));
+        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this,
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "FileExtMismatchIngestModule.complete.svcMsg.text"),
+                                                         detailsSb.toString()));
     }
 
     @Override

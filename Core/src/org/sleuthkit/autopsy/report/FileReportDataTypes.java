@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -31,13 +32,13 @@ import org.sleuthkit.datamodel.TskData;
  */
  enum FileReportDataTypes {
     
-    NAME("Name") {
+    NAME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.filename.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getName();
         }
     }, 
-    FILE_EXT("File Extension") {
+    FILE_EXT(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.fileExt.text")) {
         @Override
         public String getValue(AbstractFile file) {
             String name = file.getName();
@@ -45,13 +46,13 @@ import org.sleuthkit.datamodel.TskData;
             return (extIndex == -1 ? "" : name.substring(extIndex));
         }
     },
-    FILE_TYPE("File Type") {
+    FILE_TYPE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.fileType.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getMetaTypeAsString();
         }
     },
-    DELETED("Is Deleted") {
+    DELETED(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.isDel.text")) {
         @Override
         public String getValue(AbstractFile file) {
             if (file.getMetaFlagsAsString().equals(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString())) {
@@ -60,55 +61,55 @@ import org.sleuthkit.datamodel.TskData;
             return "";
         }
     },
-    A_TIME("Last Accessed") {
+    A_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.aTime.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getAtimeAsDate();
         }
     },
-    CR_TIME("File Created") {
+    CR_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.crTime.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getCrtimeAsDate();
         }
     },
-    M_TIME("Last Modified") {
+    M_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.mTime.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getMtimeAsDate();
         }
     },
-    SIZE("Size") {
+    SIZE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.size.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return String.valueOf(file.getSize());
         }
     },
-    ADDRESS("Address") {
+    ADDRESS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.address.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return String.valueOf(file.getMetaAddr());
         }
     },
-    HASH_VALUE("Hash Value") {
+    HASH_VALUE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.hash.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getMd5Hash();
         }
     },
-    KNOWN_STATUS("Known Status") {
+    KNOWN_STATUS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.knownStatus.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getKnown().getName();
         }
     },
-    PERMISSIONS("Permissions") {
+    PERMISSIONS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.perms.text")) {
         @Override
         public String getValue(AbstractFile file) {
             return file.getModesAsString();
         }
     },
-    FULL_PATH("Full Path") {
+    FULL_PATH(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.path.text")) {
         @Override
         public String getValue(AbstractFile file) {
             try {

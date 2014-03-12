@@ -99,8 +99,11 @@ import org.openide.util.actions.CallableSystemAction;
         }
         else{
             // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = "Are you sure want to close and delete this case? \n     Case Name: " + caseName + "\n     Case Directory: "+ caseFolder.getPath();
-            NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase, "Warning: Closing the Current Case", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CaseDeleteAction.closeConfMsg.text",                                                          caseName, caseFolder.getPath());
+            NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                                                                   NbBundle.getMessage(this.getClass(),
+                                                                                       "CaseDeleteAction.closeConfMsg.title"),
+                                                                   NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             d.setValue(NotifyDescriptor.NO_OPTION);
 
             Object res = DialogDisplayer.getDefault().notify(d);
@@ -116,11 +119,18 @@ import org.openide.util.actions.CallableSystemAction;
 
                 // show notification whether the case has been deleted or it failed to delete...
                 if(!success){
-                    JOptionPane.showMessageDialog(caller, "The delete action can't be fully completed because the folder or file in it is open by another program.\n \nClose the folder and file and try again or you can delete the case manually.", "Error: Folder In Use", JOptionPane.ERROR_MESSAGE); // throw an error
+                    JOptionPane.showMessageDialog(caller,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "CaseDeleteAction.msgDlg.fileInUse.msg"),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "CaseDeleteAction.msgDlg.fileInUse.title"),
+                                                  JOptionPane.ERROR_MESSAGE); // throw an error
                 }
                 else{
                     CasePropertiesAction.closeCasePropertiesWindow(); // because the "Delete Case" button is in the "CaseProperties" window, we have to close that window when we delete the case.
-                    JOptionPane.showMessageDialog(caller, "Case " + caseName + " has been deleted.");
+                    JOptionPane.showMessageDialog(caller, NbBundle.getMessage(this.getClass(),
+                                                                              "CaseDeleteAction.msgDlg.caseDelete.msg",
+                                                                              caseName));
                 }
             }
         }
