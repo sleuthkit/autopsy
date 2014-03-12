@@ -173,7 +173,7 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
     @Override
     public void init(IngestModuleInit initContext) throws IngestModuleException {
         modules = new ArrayList<>();
-        browserModules = new ArrayList();
+        browserModules = new ArrayList<>();
         logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 

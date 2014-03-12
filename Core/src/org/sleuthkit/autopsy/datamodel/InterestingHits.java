@@ -135,7 +135,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
                                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                                     getName()));
@@ -181,7 +181,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                                     getName()));

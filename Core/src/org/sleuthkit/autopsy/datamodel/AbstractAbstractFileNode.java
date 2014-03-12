@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -189,7 +189,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content);
         }
         
         map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
@@ -217,10 +217,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
-        if (name.equals("..")) {
-            name = DirectoryNode.DOTDOTDIR;
-        } else if (name.equals(".")) {
-            name = DirectoryNode.DOTDIR;
+        switch (name) {
+            case "..":
+                name = DirectoryNode.DOTDOTDIR;
+                break;
+            case ".":
+                name = DirectoryNode.DOTDIR;
+                break;
         }
         return name;
     }

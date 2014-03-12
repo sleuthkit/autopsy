@@ -116,7 +116,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         prevPageButton = new javax.swing.JButton();
         goToPageLabel = new javax.swing.JLabel();
         goToPageTextField = new javax.swing.JTextField();
-        languageCombo = new javax.swing.JComboBox();
+        languageCombo = new javax.swing.JComboBox<>();
         languageLabel = new javax.swing.JLabel();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
@@ -316,7 +316,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JTextField goToPageTextField;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JComboBox languageCombo;
+    private javax.swing.JComboBox<SCRIPT> languageCombo;
     private javax.swing.JLabel languageLabel;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;

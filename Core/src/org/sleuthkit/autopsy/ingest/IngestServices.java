@@ -136,7 +136,7 @@ public class IngestServices {
      * @param file file to be scheduled
      * @param pipelineContext the ingest context for the file ingest pipeline
      */
-    public void scheduleFile(AbstractFile file, PipelineContext pipelineContext)  {
+    public void scheduleFile(AbstractFile file, PipelineContext<IngestModuleAbstractFile> pipelineContext)  {
         logger.log(Level.INFO, "Scheduling file: " + file.getName());
         manager.scheduleFile(file, pipelineContext);
     }

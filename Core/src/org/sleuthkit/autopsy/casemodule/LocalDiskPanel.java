@@ -50,12 +50,12 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
  */
- class LocalDiskPanel extends JPanel  {
+ final class LocalDiskPanel extends JPanel  {
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
     
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = null;
-    private List<LocalDisk> disks = new ArrayList<LocalDisk>();
+    private List<LocalDisk> disks;
     private LocalDiskModel model;
     private boolean enableNext = false;
 
@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
      * Creates new form LocalDiskPanel
      */
     public LocalDiskPanel() {
+        this.disks = new ArrayList<>();
         initComponents();
         customInit();
         
@@ -101,7 +102,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     private void initComponents() {
 
         diskLabel = new javax.swing.JLabel();
-        diskComboBox = new javax.swing.JComboBox();
+        diskComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox<String>();
@@ -165,7 +166,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel descLabel;
-    private javax.swing.JComboBox diskComboBox;
+    private javax.swing.JComboBox<LocalDisk> diskComboBox;
     private javax.swing.JLabel diskLabel;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
@@ -296,13 +297,12 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         private Object selected;
         private boolean ready = false;
         private volatile boolean loadingDisks = false;
-        List<LocalDisk> physical = new ArrayList<LocalDisk>();
-        List<LocalDisk> partitions = new ArrayList<LocalDisk>();
+        List<LocalDisk> physical = new ArrayList<>();
+        List<LocalDisk> partitions = new ArrayList<>();
         
         //private String SELECT = "Select a local disk:";
         private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
         LocalDiskThread worker = null;
-        
         
         private void loadDisks() {
            
@@ -313,9 +313,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             
             // Clear the lists
             errorLabel.setText("");
-            disks = new ArrayList<LocalDisk>();
-            physical = new ArrayList<LocalDisk>();
-            partitions = new ArrayList<LocalDisk>();
+            disks = new ArrayList<>();
+            physical = new ArrayList<>();
+            partitions = new ArrayList<>();
             diskComboBox.setEnabled(false);
             ready = false;
             enableNext = false;
@@ -330,7 +330,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         @Override
         public void setSelectedItem(Object anItem) {
             if(ready) {
-                selected = anItem;
+                selected = (LocalDisk) anItem;
                 enableNext = true;
                 
                 try {
@@ -384,13 +384,14 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 label.setForeground(list.getForeground());
             }
             
-            if(value !=null && value.equals(LOADING)) {
+            String localDiskString = value.toString();
+            if(localDiskString.equals(LOADING)) {
                 Font font = new Font(label.getFont().getName(), Font.ITALIC, label.getFont().getSize()); 
                 label.setText(LOADING);
                 label.setFont(font);
                 label.setBackground(Color.GRAY);
             } else {
-                label.setText(value != null ? value.toString() : "");
+                label.setText(value.toString());
             }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));

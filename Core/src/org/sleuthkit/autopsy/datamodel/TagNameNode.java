@@ -33,39 +33,38 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this class are elements of Node hierarchies consisting of 
- * content and blackboard artifact tags, grouped first by tag type, then by 
- * tag name. 
+ * Instances of this class are elements of Node hierarchies consisting of
+ * content and blackboard artifact tags, grouped first by tag type, then by tag
+ * name.
  */
-public class TagNameNode  extends DisplayableItemNode {
+public class TagNameNode extends DisplayableItemNode {
+
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
     private static final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
     private final TagName tagName;
     private static final String CONTENT_TAG_TYPE_NODE_KEY = NbBundle.getMessage(TagNameNode.class,
-                                                                                "TagNameNode.contentTagTypeNodeKey.text");
+            "TagNameNode.contentTagTypeNodeKey.text");
     private static final String BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY = NbBundle.getMessage(TagNameNode.class,
-                                                                                            "TagNameNode.bbArtTagTypeNodeKey.text");
+            "TagNameNode.bbArtTagTypeNodeKey.text");
 
     public TagNameNode(TagName tagName) {
         super(Children.create(new TagTypeNodeFactory(tagName), true), Lookups.singleton(
                 NbBundle.getMessage(TagNameNode.class, "TagNameNode.namePlusTags.text", tagName.getDisplayName())));
         this.tagName = tagName;
-        
+
         long tagsCount = 0;
         try {
             tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
             tagsCount += Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex);
         }
-        
+
         super.setName(tagName.getDisplayName());
         super.setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
         if (tagName.getDisplayName().equals(NbBundle.getMessage(this.getClass(), "TagNameNode.bookmark.text"))) {
             setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);
-        }
-        else {
+        } else {
             setIconBaseWithExtension(ICON_PATH);
         }
     }
@@ -79,10 +78,10 @@ public class TagNameNode  extends DisplayableItemNode {
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.name"),
-                                        NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.displayName"),
-                                        tagName.getDescription(),
-                                        getName()));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.displayName"),
+                tagName.getDescription(),
+                getName()));
 
         return propertySheet;
     }
@@ -98,14 +97,15 @@ public class TagNameNode  extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     private static class TagTypeNodeFactory extends ChildFactory<String> {
+
         private final TagName tagName;
-        
+
         TagTypeNodeFactory(TagName tagName) {
             this.tagName = tagName;
         }
-        
+
         @Override
         protected boolean createKeys(List<String> keys) {
             keys.add(CONTENT_TAG_TYPE_NODE_KEY);
@@ -136,4 +136,3 @@ public class TagNameNode  extends DisplayableItemNode {
         }
     }
 }
-

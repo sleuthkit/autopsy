@@ -208,7 +208,7 @@ public class PlatformUtil {
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
      */
-    public static boolean extractResourceToUserConfigDir(final Class resourceClass, final String resourceFile) throws IOException {
+    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFile) throws IOException {
         final File userDir = new File(getUserConfigDirectory());
 
         final File resourceFileF = new File(userDir + File.separator + resourceFile);

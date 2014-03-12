@@ -345,7 +345,7 @@ import org.sleuthkit.datamodel.TskData;
                 return absFiles;
             } catch (TskCoreException ex) {
                 // TODO
-                return Collections.EMPTY_LIST;
+                return Collections.<AbstractFile>emptyList();
             }
         }
         
@@ -515,7 +515,6 @@ import org.sleuthkit.datamodel.TskData;
                         module.addRow(rowData);
                     }
                 }
-                
                 // Finish up this data type
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).increment();

@@ -46,7 +46,7 @@ class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_
         this.skCase = skCase;
         
         // these are shown in other parts of the UI tree
-        doNotShow = new ArrayList();
+        doNotShow = new ArrayList<>();
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
         doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);

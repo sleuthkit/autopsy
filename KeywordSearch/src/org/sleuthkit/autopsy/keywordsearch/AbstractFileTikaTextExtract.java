@@ -279,6 +279,10 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
         else if (detectedFormat.contains("video/")
                 && !detectedFormat.equals("video/x-flv")) {
             return false;
+        } else if (detectedFormat.contains("application/x-font-ttf")) {
+            // Tika currently has a bug in the ttf parser in fontbox.
+            // It will throw an out of memory exception
+            return false;
         }
 
 

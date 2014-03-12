@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,11 +85,10 @@ public class ImageNode extends AbstractContentNode<Image> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
-                                getName()));
-        // @@@ add more properties here...
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
+                getName()));
 
         return s;
     }
@@ -103,7 +102,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     public boolean isLeafTypeNode() {
         return false;
     }
-                
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
