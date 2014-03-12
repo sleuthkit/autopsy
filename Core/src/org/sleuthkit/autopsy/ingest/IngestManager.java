@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,12 +55,11 @@ import org.sleuthkit.datamodel.Content;
  */
 public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-//    private IngestManagerStats stats; // RJCTODO: Decide whether to reimplement
     private final IngestScheduler scheduler;
     private IngestAbstractFileProcessor abstractFileIngester;
     private List<IngestDataSourceThread> dataSourceIngesters;
     private SwingWorker<Object, Void> queueWorker;
-    private final Map<String, IngestModule.ResultCode> abstractFileModulesRetValues = new HashMap<>();
+    private final List<IngestModuleTempApiShim> abstractFileModules = new ArrayList<>();    
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 //    private IngestModuleLoader moduleLoader = null;
@@ -113,8 +112,7 @@ public class IngestManager {
          * new content children have been added.  I.e. from ZIP files or Carved files
          */
         CONTENT_CHANGED,
-        
-        
+                
         /**
          * Event sent when a file has finished going through a pipeline of modules.
          * Second argument is the object ID. Third argument is null
@@ -124,18 +122,15 @@ public class IngestManager {
     };
     //ui
     //Initialized by Installer in AWT thread once the Window System is ready
-    private volatile IngestUI ui; // = null; //IngestMessageTopComponent.findInstance();
+    private volatile IngestUI ui;
     //singleton
     private static volatile IngestManager instance;
 
     private IngestManager() {
-        // RJCTODO: Adapt to new paradigm
-//        dataSourceIngesters = new ArrayList<IngestDataSourceThread>();
-
+        dataSourceIngesters = new ArrayList<>();
         scheduler = IngestScheduler.getInstance();
     }
 
-    // RJCTODO: May want finer-grained control than simply locking the IngestManager
     synchronized long getNextDataSourceTaskId() {
         return ++nextDataSourceTaskId;
     }
@@ -227,23 +222,6 @@ public class IngestManager {
         }
     }
 
-    /**
-     * Returns the return value from a previously run module on the file being
-     * currently analyzed.
-     *
-     * @param moduleName Name of module.
-     * @returns Return value from that module if it was previously run.
-     */
-    IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
-        synchronized (abstractFileModulesRetValues) {
-            if (abstractFileModulesRetValues.containsKey(moduleName)) {
-                return abstractFileModulesRetValues.get(moduleName);
-            } else {
-                return IngestModule.ResultCode.NOT_SET;
-            }
-        }
-    }
-
     // RJCTODO: Update comment
     /**
      * Multiple data-sources version of scheduleDataSource() method. Enqueues multiple sources inputs (Content objects) 
@@ -252,10 +230,9 @@ public class IngestManager {
      * @param modules modules to scheduleDataSource on every data source
      * @param inputs input data sources  to enqueue and scheduleDataSource the ingest modules on
      */
-    public void scheduleDataSource(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
-        // RJCTODO: If this is useful logging, reimplement
-//        logger.log(Level.INFO, "Will enqueue number of inputs: " + inputs.size() 
-//                + " to " + modules.size() + " modules.");
+    void scheduleDataSource(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        logger.log(Level.INFO, "Will enqueue number of inputs: " + dataSources.size() 
+                + " to " + moduleTemplates.size() + " modules.");
 
         if (!isIngestRunning() && ui != null) {
             ui.clearMessages();
@@ -269,7 +246,6 @@ public class IngestManager {
         }
     }
 
-    // RJCTODO: Comment out of date, is this even used?
     /**
      * IngestManager entry point, enqueues data to be processed and starts new ingest
      * as needed, or just enqueues data to an existing pipeline.
@@ -284,14 +260,13 @@ public class IngestManager {
      * @param modules modules to scheduleDataSource on the data source input
      * @param input input data source Content objects to scheduleDataSource the ingest modules on
      */
-    public void scheduleDataSource(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+    void scheduleDataSource(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
         List<Content> dataSources = new ArrayList<>();
         dataSources.add(dataSource);
         logger.log(Level.INFO, "Will enqueue input: {0}", dataSource.getName());
         scheduleDataSource(dataSources, moduleTemplates, processUnallocatedSpace);
     }
 
-    // RJCTODO: Fix comment
     /**
      * Schedule a file for ingest and add it to ongoing file ingest process on the same data source. 
      * Scheduler updates the current progress.
@@ -413,11 +388,10 @@ public class IngestManager {
         }
 
         if (startAbstractFileIngester) {
-//            stats = new IngestManagerStats(); RJCTODO: This class may or may not be reimplemented
             abstractFileIngester = new IngestAbstractFileProcessor();
             //init all fs modules, everytime new worker starts
 
-            // RJCTODO: Currently don't have an early module init concept quite like this, modules will be initialized
+            // RJCTODO: Handle init error situation
             // when the thread gets its pipeline instance(s) from the data source task.
 //            for (IngestModuleAbstractFile s : abstractFileModules) {
 //                // This was added at one point to remove the message about non-configured HashDB even 
@@ -678,170 +652,168 @@ public class IngestManager {
         }
     }
 
-// RJCTODO: Decide whether or not to reimplement this class
     /**
      * collects IngestManager statistics during runtime
      */
-//    private class IngestManagerStats {
-//
-//        private Date startTime;
-//        private Date endTime;
-//        private int errorsTotal;
-//        private Map<String, Integer> errors;
-//        private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        private final StopWatch timer = new StopWatch();
-//        private IngestModuleAbstract currentModuleForTimer;
-//        //file module timing stats, datasource module timers are logged in IngestDataSourceThread class
-//        private final Map<String, Long> fileModuleTimers = new HashMap<String, Long>();
-//
-//        IngestManagerStats() {
-//            errors = new HashMap<String, Integer>();
-//        }
-//
-//        /**
-//         * records start time of the file process for the module must be
-//         * followed by logFileModuleEndProcess for the same module
-//         *
-//         * @param module to record start time for processing a file
-//         */
-//        void logFileModuleStartProcess(IngestModuleAbstract module) {
-//            timer.reset();
-//            timer.start();
-//            currentModuleForTimer = module;
-//        }
-//
-//        /**
-//         * records stop time of the file process for the module must be preceded
-//         * by logFileModuleStartProcess for the same module
-//         *
-//         * @param module to record stop time for processing a file
-//         */
-//        void logFileModuleEndProcess(IngestModuleAbstract module) {
-//            timer.stop();
-//            if (module != currentModuleForTimer) {
-//                logger.log(Level.WARNING, "Invalid module passed in to record stop processing: " + module.getName()
-//                        + ", expected: " + currentModuleForTimer.getName());
-//            } else {
-//                final long elapsed = timer.getElapsedTime();
-//                final long current = fileModuleTimers.get(module.getName());
-//                fileModuleTimers.put(module.getName(), elapsed + current);
-//            }
-//
-//            currentModuleForTimer = null;
-//        }
-//
-//        String getFileModuleStats() {
-//            StringBuilder sb = new StringBuilder();
-//            for (final String moduleName : fileModuleTimers.keySet()) {
-//                sb.append(moduleName).append(" took: ")
-//                        .append(fileModuleTimers.get(moduleName) / 1000)
-//                        .append(" secs. to process()").append('\n');
-//            }
-//            return sb.toString();
-//        }
-//
-//        @Override
-//        public String toString() {
-//            final String EOL = System.getProperty("line.separator");
-//            StringBuilder sb = new StringBuilder();
-//            if (startTime != null) {
-//                sb.append("Start time: ").append(dateFormatter.format(startTime)).append(EOL);
-//            }
-//            if (endTime != null) {
-//                sb.append("End time: ").append(dateFormatter.format(endTime)).append(EOL);
-//            }
-//            sb.append("Total ingest time: ").append(getTotalTimeString()).append(EOL);
-//            sb.append("Total errors: ").append(errorsTotal).append(EOL);
-//            if (errorsTotal > 0) {
-//                sb.append("Errors per module:");
-//                for (String moduleName : errors.keySet()) {
-//                    sb.append("\t").append(moduleName).append(": ").append(errors.get(moduleName)).append(EOL);
-//                }
-//            }
-//            return sb.toString();
-//        }
-//
-//        public String toHtmlString() {
-//            StringBuilder sb = new StringBuilder();
-//            sb.append("<html><body>");
-//            sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
-//            sb.append("Total errors: ").append(errorsTotal).append("<br />");
-//            sb.append("<table><tr><th>Module</th><th>Time</th><th>Errors</th></tr>\n");
-//            
-//            for (final String moduleName : fileModuleTimers.keySet()) {
-//                sb.append("<tr><td>").append(moduleName).append("</td><td>");
-//                sb.append(msToString(fileModuleTimers.get(moduleName))).append("</td><td>");
-//                if (errors.get(moduleName) == null) {
-//                    sb.append("0");
-//                } else {
-//                    sb.append(errors.get(moduleName));
-//                }
-//                sb.append("</td></tr>\n");
-//            }
-//            sb.append("</table>");
-//            sb.append("</body></html>");
-//            return sb.toString();
-//        }
-//
-//        void start() {
-//            startTime = new Date();
-//
-//            for (IngestModuleAbstractFile module : abstractFileModules) {
-//                fileModuleTimers.put(module.getName(), 0L);
-//            }
-//        }
-//
-//        void end() {
-//            endTime = new Date();
-//        }
-//
-//        long getTotalTime() {
-//            if (startTime == null || endTime == null) {
-//                return 0;
-//            }
-//            return endTime.getTime() - startTime.getTime();
-//        }
-//
-//        String getStartTimeString() {
-//            return dateFormatter.format(startTime);
-//        }
-//
-//        String getEndTimeString() {
-//            return dateFormatter.format(endTime);
-//        }
-//
-//        /**
-//         * convert time in miliseconds to printable string in XX:YY:ZZ format. 
-//         * @param ms
-//         * @return 
-//         */
-//        private String msToString(long ms) {
-//            long hours = TimeUnit.MILLISECONDS.toHours(ms);
-//            ms -= TimeUnit.HOURS.toMillis(hours);
-//            long minutes = TimeUnit.MILLISECONDS.toMinutes(ms);
-//            ms -= TimeUnit.MINUTES.toMillis(minutes);
-//            long seconds = TimeUnit.MILLISECONDS.toSeconds(ms);
-//            final StringBuilder sb = new StringBuilder();
-//            sb.append(hours < 10 ? "0" : "").append(hours).append(':').append(minutes < 10 ? "0" : "").append(minutes).append(':').append(seconds < 10 ? "0" : "").append(seconds);
-//            return sb.toString();
-//        }
-//        
-//        String getTotalTimeString() {
-//            long ms = getTotalTime();
-//            return msToString(ms);
-//        }
-//
-//        synchronized void addError(IngestModuleAbstract source) {
-//            ++errorsTotal;
-//            String moduleName = source.getName();
-//            Integer curModuleErrorI = errors.get(moduleName);
-//            if (curModuleErrorI == null) {
-//                errors.put(moduleName, 1);
-//            } else {
-//                errors.put(moduleName, curModuleErrorI + 1);
-//            }
-//        }
-//    }
+    private class IngestManagerStats {
+
+        private Date startTime;
+        private Date endTime;
+        private int errorsTotal;
+        private Map<String, Integer> errors;
+        private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        private final StopWatch timer = new StopWatch();
+        private IngestModuleTempApiShim currentModuleForTimer;
+        private final Map<String, Long> fileModuleTimers = new HashMap<>();
+
+        IngestManagerStats() {
+            errors = new HashMap<>();
+        }
+
+        /**
+         * records start time of the file process for the module must be
+         * followed by logFileModuleEndProcess for the same module
+         *
+         * @param module to record start time for processing a file
+         */
+        void logFileModuleStartProcess(IngestModuleTempApiShim module) {
+            timer.reset();
+            timer.start();
+            currentModuleForTimer = module;
+        }
+
+        /**
+         * records stop time of the file process for the module must be preceded
+         * by logFileModuleStartProcess for the same module
+         *
+         * @param module to record stop time for processing a file
+         */
+        void logFileModuleEndProcess(IngestModuleTempApiShim module) {
+            timer.stop();
+            if (module != currentModuleForTimer) {
+                logger.log(Level.WARNING, "Invalid module passed in to record stop processing: " + module.getName()
+                        + ", expected: " + currentModuleForTimer.getName());
+            } else {
+                final long elapsed = timer.getElapsedTime();
+                final long current = fileModuleTimers.get(module.getName());
+                fileModuleTimers.put(module.getName(), elapsed + current);
+            }
+
+            currentModuleForTimer = null;
+        }
+
+        String getFileModuleStats() {
+            StringBuilder sb = new StringBuilder();
+            for (final String moduleName : fileModuleTimers.keySet()) {
+                sb.append(moduleName).append(" took: ")
+                        .append(fileModuleTimers.get(moduleName) / 1000)
+                        .append(" secs. to process()").append('\n');
+            }
+            return sb.toString();
+        }
+
+        @Override
+        public String toString() {
+            final String EOL = System.getProperty("line.separator");
+            StringBuilder sb = new StringBuilder();
+            if (startTime != null) {
+                sb.append("Start time: ").append(dateFormatter.format(startTime)).append(EOL);
+            }
+            if (endTime != null) {
+                sb.append("End time: ").append(dateFormatter.format(endTime)).append(EOL);
+            }
+            sb.append("Total ingest time: ").append(getTotalTimeString()).append(EOL);
+            sb.append("Total errors: ").append(errorsTotal).append(EOL);
+            if (errorsTotal > 0) {
+                sb.append("Errors per module:");
+                for (String moduleName : errors.keySet()) {
+                    sb.append("\t").append(moduleName).append(": ").append(errors.get(moduleName)).append(EOL);
+                }
+            }
+            return sb.toString();
+        }
+
+        public String toHtmlString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html><body>");
+            sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
+            sb.append("Total errors: ").append(errorsTotal).append("<br />");
+            sb.append("<table><tr><th>Module</th><th>Time</th><th>Errors</th></tr>\n");
+            
+            for (final String moduleName : fileModuleTimers.keySet()) {
+                sb.append("<tr><td>").append(moduleName).append("</td><td>");
+                sb.append(msToString(fileModuleTimers.get(moduleName))).append("</td><td>");
+                if (errors.get(moduleName) == null) {
+                    sb.append("0");
+                } else {
+                    sb.append(errors.get(moduleName));
+                }
+                sb.append("</td></tr>\n");
+            }
+            sb.append("</table>");
+            sb.append("</body></html>");
+            return sb.toString();
+        }
+
+        void start() {
+            startTime = new Date();
+
+            for (IngestModuleTempApiShim module : abstractFileModules) {
+                fileModuleTimers.put(module.getName(), 0L);
+            }
+        }
+
+        void end() {
+            endTime = new Date();
+        }
+
+        long getTotalTime() {
+            if (startTime == null || endTime == null) {
+                return 0;
+            }
+            return endTime.getTime() - startTime.getTime();
+        }
+
+        String getStartTimeString() {
+            return dateFormatter.format(startTime);
+        }
+
+        String getEndTimeString() {
+            return dateFormatter.format(endTime);
+        }
+
+        /**
+         * convert time in miliseconds to printable string in XX:YY:ZZ format. 
+         * @param ms
+         * @return 
+         */
+        private String msToString(long ms) {
+            long hours = TimeUnit.MILLISECONDS.toHours(ms);
+            ms -= TimeUnit.HOURS.toMillis(hours);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(ms);
+            ms -= TimeUnit.MINUTES.toMillis(minutes);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(ms);
+            final StringBuilder sb = new StringBuilder();
+            sb.append(hours < 10 ? "0" : "").append(hours).append(':').append(minutes < 10 ? "0" : "").append(minutes).append(':').append(seconds < 10 ? "0" : "").append(seconds);
+            return sb.toString();
+        }
+        
+        String getTotalTimeString() {
+            long ms = getTotalTime();
+            return msToString(ms);
+        }
+
+        synchronized void addError(IngestModuleAbstract source) {
+            ++errorsTotal;
+            String moduleName = source.getName();
+            Integer curModuleErrorI = errors.get(moduleName);
+            if (curModuleErrorI == null) {
+                errors.put(moduleName, 1);
+            } else {
+                errors.put(moduleName, curModuleErrorI + 1);
+            }
+        }
+    }
 
     /**
      * File ingest pipeline processor. Worker thread that queries
@@ -851,38 +823,20 @@ public class IngestManager {
      * consumed New instance is created and started when data arrives and
      * previous pipeline completed.
      */
-    private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
+    private static class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
 
-        private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
+        private static final Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
+        private final long id = 1; // RJCTODO: Fake thread id, get a real one
         private ProgressHandle progress;
         
         @Override
         protected Object doInBackground() throws Exception {
-
-            logger.log(Level.INFO, "Starting background ingest file processor");
-            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+            logger.log(Level.INFO, String.format("Starting file ingest thread {0}", this.id));
 
             // RJCTODO: This may or may not be reimplemented
 //            stats.start();
 
-            // RJCTODO: Interim version of this follows, is it really needed? 
-            // Could replace with an ingest started event?
-            //notify main thread modules started
-//            for (IngestModuleAbstractFile s : abstractFileModules) {
-//                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), s.getName());
-//            }
-            if (null != currentTask) {
-                List<IngestModuleTemplate> moduleTemplates = currentTask.getIngestPipelines().getIngestModuleTemplates();
-                for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-                    if (moduleTemplate.isEnabled()) {
-                        IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                        if (moduleFactory.isFileIngestModuleFactory()) {
-                            fireModuleEvent(IngestModuleEvent.STARTED.toString(), moduleFactory.getModuleDisplayName());
-                        }
-                    }
-                }
-            }
-
+            // Set up a progress bar.
             final String displayName = "File Ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
@@ -894,83 +848,38 @@ public class IngestManager {
                     return IngestAbstractFileProcessor.this.cancel(true);
                 }
             });
-
-            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
-            //initialize the progress bar
             progress.start();
             progress.switchToIndeterminate();
-            //set initial totals and processed (to be updated as we process or new files are scheduled)
+            IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
             int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
             progress.switchToDeterminate(totalEnqueuedFiles);
-            int processedFiles = 0;
             
-            //process AbstractFiles queue
-            while (fileScheduler.hasNext()) {
-                FileTask fileTask = fileScheduler.next();
-                fileTask.execute(1); // RJCTODO: Fake thread id, may not need thread ids
-                
-                // RJCTODO: This may be obsolete
-                //clear return values from modules for last file
-//                synchronized (abstractFileModulesRetValues) {
-//                    abstractFileModulesRetValues.clear();
-//                }
+            // Process all scheduled files.
+            int processedFiles = 0;
+            while (fileScheduler.hasNext()) { 
+                if (isCancelled()) {
+                    logger.log(Level.INFO, "Terminating file ingest thread {0} due to ingest cancellation", this.id);
+                    return null;                    
+                }                
+                                
+                FileTask task = fileScheduler.next();
+                progress.progress(task.getFile().getName(), processedFiles);
+                task.execute(this.id);
 
-                //logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
-
-                // RJCTODO: Note cancellation check after each module runs
-//                for (IngestModuleAbstractFile module : dataSourceTask.getModules()) {
-//                    //process the file with every file module
-//                    if (isCancelled()) {
-//                        logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
-//                        return null;
-//                    }
-//                    progress.progress(fileToProcess.getName() + " (" + module.getName() + ")", processedFiles);
-//
-//                    try {
-//                        stats.logFileModuleStartProcess(module);
-//                        IngestModuleAbstractFile.ProcessResult result = module.process(filepipelineContext, fileToProcess);
-//                        stats.logFileModuleEndProcess(module);
-//
-//                        //store the result for subsequent modules for this file
-//                        synchronized (abstractFileModulesRetValues) {
-//                            abstractFileModulesRetValues.put(module.getName(), result);
-//                        }
-//
-//                    } catch (Exception e) {
-//                        logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
-//                        stats.addError(module);
-//                    } catch (OutOfMemoryError e) {
-//                        logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
-//                        stats.addError(module);
-//                    }
-//                
-//                } //end for every module
-//                
-//                //free the internal file resource after done with every module
-//                fileToProcess.close();
-//                
-//                // notify listeners thsi file is done
-//                fireFileDone(fileToProcess.getId());                
-
-                // RJCTODO: Move this to the DataSourceTask -> DataSourceIngestJob, FileIngestJob (?); "task" is usually used for Runnable 
+                // Update the progress bar.
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
-                    //update if new enqueued
                     totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
-                    //processedFiles = 0; // RJCTODO: Previously commented out
-                    //reset // RJCTODO: Previously commented out
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
-                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same datasource Content enqueued twice
+                if (processedFiles < totalEnqueuedFiles) {
+                    // RCTODO: What is this comment saying? 
+                    //fix for now to handle the same datasource Content enqueued twice
                     ++processedFiles;
                 }
-                //--totalEnqueuedFiles; // RJCTODO: Previously commented out
-
-
-            } //end of for every AbstractFile
-            logger.log(Level.INFO, "IngestManager: Finished processing files");
+            } 
+            
             return null;
         }
 
@@ -978,37 +887,7 @@ public class IngestManager {
         protected void done() {
             try {
                 super.get(); //block and get all exceptions thrown while doInBackground()
-                //notify modules of completion
-                if (!this.isCancelled()) {
-//                    for (IngestModuleAbstractFile s : abstractFileModules) {
-//                        try {
-//                            s.complete();
-//                            IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
-//                        }
-//                        catch (Exception ex) {   
-//                            logger.log(Level.SEVERE, "Module " + s.getName() + " threw exception during call to complete()", ex);
-//                        }
-//                    }
-                    if (null != currentTask) {
-                        currentTask.getIngestPipelines().completeFileIngestPipeline();
-                        List<IngestModuleTemplate> moduleTemplates = currentTask.getIngestPipelines().getIngestModuleTemplates();
-                        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-                            if (moduleTemplate.isEnabled()) {
-                                IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                                if (moduleFactory.isFileIngestModuleFactory()) {
-                                    fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), moduleFactory.getModuleDisplayName());
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // RJCTODO: Running the garbage collector? Really? For the sake of stats?
-                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-                logger.log(Level.INFO, "Freeing jvm heap resources post file pipeline run");
-                System.gc();
-                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-
+                // RJCTODO: Pass thread id and this.isCancelled() back to manager to shut down thread's pipeline in all jobs
             } catch (CancellationException | InterruptedException e) {
                 //task was cancelled
                 handleInterruption();
@@ -1018,7 +897,7 @@ public class IngestManager {
             } catch (Exception ex) {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
-            } finally {
+            } finally {                                                
                     // RJCTODO: Stats may or may not be reimplemented
 //                stats.end();
                 progress.finish();
@@ -1027,9 +906,9 @@ public class IngestManager {
                     // RJCTODO: Stats may or may not be reimplemented
 //                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
 //                    logger.log(Level.INFO, "File module timings: " + stats.getFileModuleStats());
-                    if (ui != null) {
-                        logger.log(Level.INFO, "Ingest messages count: {0}", ui.getMessagesCount());
-                    }
+//                    if (ui != null) {
+//                        logger.log(Level.INFO, "Ingest messages count: {0}", ui.getMessagesCount());
+//                    }
                     // RJCTODO: Stats may or may not be reimplemented
 //                    IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete",
 //                            stats.toHtmlString()));
@@ -1038,34 +917,9 @@ public class IngestManager {
         }
 
         private void handleInterruption() {
-//            for (IngestModuleAbstractFile s : abstractFileModules) {
-                // RJCTODO: This is going away
-//                if (isModuleRunning(s)) {
-//                    try {
-//                        s.stop();
-//                    } catch (Exception e) {
-//                        logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
-//                    }
-//                }
-//                IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), s.getName());
-//            }
-                if (null != currentTask) {
-                    currentTask.getIngestPipelines().stopFileIngestPipeline();
-                    List<IngestModuleTemplate> moduleTemplates = currentTask.getIngestPipelines().getIngestModuleTemplates();
-                    for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-                        if (moduleTemplate.isEnabled()) {
-                            IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                            if (moduleFactory.isFileIngestModuleFactory()) {
-                                fireModuleEvent(IngestModuleEvent.STOPPED.toString(), moduleFactory.getModuleDisplayName());
-                            }
-                        }
-                    }
-                }
-            
-            
-            
+            // RJCTODO: Pass thread id and this.isCancelled() back to manager to shut down thread's pipeline in all jobs            
             //empty queues
-            scheduler.getFileScheduler().empty();
+            IngestScheduler.getInstance().getFileScheduler().empty(); // RJCTODO: Is this right?
         }
     }
 
@@ -1112,9 +966,7 @@ public class IngestManager {
                 logger.log(Level.INFO, "Queing file ingest task: {0}", dataSourceTask);
                 progress.progress("File Ingest" + " " + inputName, processed);
                 scheduler.getFileScheduler().scheduleIngestOfFiles(dataSourceTask);
-                progress.progress("File Ingest" + " " + inputName, ++processed);
-                
-                currentTask = dataSourceTask; // RJCTODO: temporary glue code
+                progress.progress("File Ingest" + " " + inputName, ++processed);                
             }
             return null;
         }
@@ -1146,25 +998,5 @@ public class IngestManager {
             scheduler.getFileScheduler().empty();
             scheduler.getDataSourceScheduler().empty();
         }
-    }
-    
-    // RJCTODO: This is a work in progress, the replacement for IngestAbstractFileProcessor
-    private class FileIngestWorker implements Runnable {  
-        private final int id;
-        
-        FileIngestWorker(int id) {
-            this.id = id;
-        }
-        
-        @Override
-        public void run() {
-            IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-            while (fileScheduler.hasNext()) {
-                FileTask fileTask = fileScheduler.next();
-                fileTask.execute(id);
-            }
-                        
-//            logger.log(Level.INFO, "IngestManager: Finished processing files"); // RJCTODO: Not true
-        }        
-    }
+    }    
 }

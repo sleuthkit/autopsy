@@ -459,8 +459,7 @@ class IngestScheduler {
                 this.dataSourceTask = dataSourceTask;
             }
             
-            
-            void execute(int threadId) {
+            void execute(long threadId) {
                 dataSourceTask.getIngestPipelines().ingestFile(threadId, file);
             }
             

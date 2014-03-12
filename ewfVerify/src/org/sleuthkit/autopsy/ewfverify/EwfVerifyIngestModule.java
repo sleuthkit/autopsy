@@ -35,13 +35,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleTempApiShim;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness 
  * Format (EWF) E01 image file by generating a hash of the file and comparing it 
  * to the value stored in the image.
  */
-public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
+public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule, IngestModuleTempApiShim {
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
@@ -57,6 +58,11 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     EwfVerifyIngestModule() {
     }
         
+    @Override
+    public String getDisplayName() {
+        return EwfVerifierModuleFactory.getModuleName();
+    }
+    
     @Override
     public void startUp(IngestModuleProcessingContext context) {
         setContext(context);
@@ -96,7 +102,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
             logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), 
                     "Skipping non-ewf image " + imgName));
             skipped = true;
             return ResultCode.OK;
@@ -108,19 +114,19 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash});
          }           
          else {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), 
                     "Image " + imgName + " does not have stored hash."));
             return ResultCode.ERROR;
         }
 
         logger.log(Level.INFO, "Starting ewf verification of {0}", img.getName());
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, 
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), 
                 "Starting " + imgName));
         
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), 
                     "Error getting size of " + imgName + ". Image will not be processed."));
         }
         
@@ -146,7 +152,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
                 String msg = "Error reading " + imgName + " at chunk " + i;
-                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, this, msg));
+                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return  ResultCode.ERROR;
             }
@@ -170,7 +176,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             extra += "<li>Result:" + msg + "</li>";
             extra += "<li>Calculated hash: " + calculatedHash + "</li>";
             extra += "<li>Stored hash: " + storedHash + "</li>";
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, imgName +  msg, extra));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), imgName +  msg, extra));
             logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
         }
     }

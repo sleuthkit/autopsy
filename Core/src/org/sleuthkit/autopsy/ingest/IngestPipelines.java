@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -28,14 +27,18 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 class IngestPipelines {
 
-    private final long ingestJobId;
+    private final DataSourceIngestJob ingestJob;
     private final List<IngestModuleTemplate> ingestModuleTemplates;
+    private FileIngestPipeline initialFileIngestPipeline = null;
+    private DataSourceIngestPipeline initialDataSourceIngestPipeline = null;
     private final ConcurrentHashMap<Integer, FileIngestPipeline> fileIngestPipelines = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, DataSourceIngestPipeline> dataSourceIngestPipelines = new ConcurrentHashMap<>();
 
-    IngestPipelines(long ingestJobId, List<IngestModuleTemplate> ingestModuleTemplates) {
-        this.ingestJobId = ingestJobId;
+    IngestPipelines(DataSourceIngestJob ingestJob, List<IngestModuleTemplate> ingestModuleTemplates) {
+        this.ingestJob = ingestJob;
         this.ingestModuleTemplates = ingestModuleTemplates;
+        this.initialDataSourceIngestPipeline = null;
+        this.initialFileIngestPipeline = null;
     }
 
     // RJCTODO: Added provisionally, should not need, may need way to check if pipelines are running
@@ -44,15 +47,21 @@ class IngestPipelines {
     }
 
     void startUp() {
-        for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
-            pipeline.stop();
-        }        
+        // RJCTODO: Add error handling for module startup failure
+        // Create at least one instance of each pipeline type now to make sure
+        // the ingest modules can be started.
+        this.initialDataSourceIngestPipeline = new DataSourceIngestPipeline(this.ingestJob, this.ingestModuleTemplates);
+        this.initialFileIngestPipeline = new FileIngestPipeline(this.ingestJob, this.ingestModuleTemplates);
     }
-    
+
     void ingestFile(int threadId, AbstractFile file) {
         FileIngestPipeline pipeline;
-        if (!fileIngestPipelines.containsKey(threadId)) {
-            pipeline = new FileIngestPipeline();
+        if (null != this.initialFileIngestPipeline) {
+            pipeline = this.initialFileIngestPipeline;
+            this.initialDataSourceIngestPipeline = null;
+            fileIngestPipelines.put(threadId, pipeline);
+        } else if (!fileIngestPipelines.containsKey(threadId)) {
+            pipeline = new FileIngestPipeline(this.ingestJob, this.ingestModuleTemplates);
             fileIngestPipelines.put(threadId, pipeline);
         } else {
             pipeline = fileIngestPipelines.get(threadId);
@@ -60,70 +69,9 @@ class IngestPipelines {
         pipeline.ingestFile(file);
     }
 
-    void stopFileIngestPipeline() {
-        // RJCTODO        
+    void shutDown(boolean ingestJobCancelled) { // RJCTODO: Do away with this flag, put cancelled in job?
         for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
-            pipeline.stop();
-        }
-    }
-
-    void completeFileIngestPipeline() {
-        // RJCTODO        
-        for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
-            pipeline.complete();
-        }
-    }
-
-    private class FileIngestPipeline {
-
-        private List<FileIngestModule> ingestModules = new ArrayList<>();
-
-        private FileIngestPipeline() {
-            for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
-                IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                if (moduleFactory.isFileIngestModuleFactory()) {
-                    IngestModuleIngestJobOptions ingestOptions = moduleTemplate.getIngestOptions();
-                    FileIngestModule module = moduleFactory.createFileIngestModule(ingestOptions);
-                    module.startUp(new IngestModuleProcessingContext(ingestJobId, moduleFactory));
-                    ingestModules.add(module);
-                }
-            }
-        }
-
-        void ingestFile(AbstractFile file) {
-            for (FileIngestModule module : ingestModules) {
-                module.process(file);
-            }
-            file.close();
-        }
-
-        void stop() {
-            for (FileIngestModule module : ingestModules) {
-                module.shutDown(true);
-            }
-        }
-
-        void complete() {
-            for (FileIngestModule module : ingestModules) {
-                module.shutDown(false);
-            }
-        }
-    }
-
-    private class DataSourceIngestPipeline {
-
-        private final List<DataSourceIngestModule> modules = new ArrayList<>();
-
-        private DataSourceIngestPipeline() {
-            for (IngestModuleTemplate moduleTemplate : ingestModuleTemplates) {
-                IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-                if (moduleFactory.isDataSourceIngestModuleFactory()) {
-                    IngestModuleIngestJobOptions ingestOptions = moduleTemplate.getIngestOptions();
-                    DataSourceIngestModule module = moduleFactory.createDataSourceIngestModule(ingestOptions);
-                    module.startUp(new IngestModuleProcessingContext(ingestJobId, moduleFactory));
-                    modules.add(module);
-                }
-            }
+            pipeline.shutDown(ingestJobCancelled);
         }
     }
 }

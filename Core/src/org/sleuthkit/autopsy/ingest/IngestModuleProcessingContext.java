@@ -33,15 +33,15 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public final class IngestModuleProcessingContext {
 
-    private final long ingestJobId;
+    private final DataSourceIngestJob ingestJob;
     private final IngestModuleFactory moduleFactory;
     private final IngestManager ingestManager;
     private final IngestScheduler scheduler;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthkitCase;
 
-    IngestModuleProcessingContext(long ingestJobId, IngestModuleFactory moduleFactory) {
-        this.ingestJobId = ingestJobId;
+    IngestModuleProcessingContext(DataSourceIngestJob ingestJob, IngestModuleFactory moduleFactory) {
+        this.ingestJob = ingestJob;
         this.moduleFactory = moduleFactory;
         ingestManager = IngestManager.getDefault();
         scheduler = IngestScheduler.getInstance();
@@ -82,7 +82,7 @@ public final class IngestModuleProcessingContext {
 
     public void submitFilesForIngest(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            scheduler.getFileScheduler().scheduleIngestOfDerivedFile(ingestJobId, file);
+            scheduler.getFileScheduler().scheduleIngestOfDerivedFile(ingestJob.getId(), file);
         }
     }
 

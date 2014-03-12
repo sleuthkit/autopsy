@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.sevenzip;
+package org.sleuthkit.autopsy.thunderbirdparser;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -26,29 +26,33 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
 
 /**
- * A factory for creating archive extractor file ingest modules and the user
+ * A factory for creating email parser file ingest modules and the user
  * interface panels used to configure the settings for instances of the modules.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
+public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
+        return "Email Parser";
+    }    
+    
+    static String getVersion() {
+        return Version.getVersion();        
+    }
+    
+    @Override
+    public String getModuleDisplayName() {
         return "Archive Extractor";
     }
 
     @Override
-    public String getModuleDisplayName() {
-        return getModuleName();
-    }
-
-    @Override
     public String getModuleDescription() {
-        return "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
+        return "This module detects and parses mbox and pst/ost files and populates email artifacts in the blackboard.";
     }
 
     @Override
     public String getModuleVersionNumber() {
-        return Version.getVersion();
+        return getVersion();
     }
 
     @Override
@@ -58,6 +62,6 @@ public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
-        return new SevenZipIngestModule();
+        return new ThunderbirdMboxFileIngestModule();
     }
 }

@@ -53,6 +53,8 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -75,7 +77,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  *
  * Registered as a module in layer.xml
  */
-public final class KeywordSearchIngestModule implements FileIngestModule {
+public final class KeywordSearchIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     enum UpdateFrequency {
         FAST(20),
@@ -135,11 +137,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
     KeywordSearchIngestModule() {
     }
-
-    @Override
-    public String getDisplayName() {
-        return KeywordSearchModuleFactory.getModuleName();
-    }
         
     @Override
     public ResultCode process(AbstractFile abstractFile) {
@@ -198,6 +195,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return;
         }
 
+        if (ingestJobCancelled) {
+            stop();
+            return;
+        }
+        
         commitTimer.stop();
 
         //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
@@ -241,8 +243,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     /**
      * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
      */
-    @Override
-    public void jobCancelled() {
+    private void stop() {
         logger.log(Level.INFO, "stop()");
 
         //stop timer
@@ -295,8 +296,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *
      */
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
-        this.ingestJobId = context;
+    public void startUp(IngestModuleProcessingContext context) {
+        setContext(context);
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
@@ -313,7 +314,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, this, msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
                 return;
 
             }
@@ -322,7 +323,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //this means Solr is not properly initialized
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, this, msg, details));
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
             return;
         }
 
@@ -374,11 +375,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         searchTimer.start();
     }
           
-    @Override
-    public boolean isFinished() {
-        return ((null != currentSearcher && searcherDone == false) || (finalSearcherDone == false));
-    }
-
     /**
      * Commits index and notifies listeners of index update
      */
@@ -437,8 +433,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats);
-        // RJCTODO
-//        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
+        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
         if (error_index > 0) {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
@@ -971,7 +966,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                                     }
                                     detailsSb.append("</table>");
                                 
-                                    services.postMessage(IngestMessage.createDataMessage(++messageID, KeywordSearchIngestModule.this, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                    services.postMessage(IngestMessage.createDataMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
 
@@ -981,7 +976,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            services.fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     } //if has results
 

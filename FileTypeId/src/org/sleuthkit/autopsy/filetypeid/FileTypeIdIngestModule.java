@@ -55,11 +55,6 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     }
 
     @Override
-    public String getDisplayName() {
-        return FileTypeIdentifierModuleFactory.getModuleName();
-    }
-
-    @Override
     public ResultCode process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
@@ -85,7 +80,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             if (!fileId.type.isEmpty()) {
                 // add artifact
                 BlackboardArtifact bart = abstractFile.getGenInfoArtifact();
-                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), getDisplayName(), fileId.type);
+                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdentifierModuleFactory.getModuleName(), fileId.type);
                 bart.addAttribute(batt);
 
                 // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
@@ -104,10 +99,10 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         StringBuilder detailsSb = new StringBuilder();
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-        detailsSb.append("<tr><td>").append(getDisplayName()).append("</td></tr>");
+        detailsSb.append("<tr><td>").append(FileTypeIdentifierModuleFactory.getModuleName()).append("</td></tr>");
         detailsSb.append("<tr><td>Total Processing Time</td><td>").append(matchTime).append("</td></tr>\n");
         detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "File Type Id Results", detailsSb.toString()));
+        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(), "File Type Id Results", detailsSb.toString()));
     }
 }

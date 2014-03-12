@@ -60,12 +60,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
     HashDbIngestModule() {
     }
-    
-    @Override
-    public String getDisplayName() {
-        return HashLookupModuleFactory.getModuleName();
-    }
-    
+        
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
         services = IngestServices.getDefault();
@@ -78,7 +73,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
         if (knownHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(++messageId,
-                                this,
+                                HashLookupModuleFactory.getModuleName(),
                                 NbBundle.getMessage(this.getClass(),
                                                     "HashDbIngestModule.noKnownHashDbSetMsg"),
                                 NbBundle.getMessage(this.getClass(),
@@ -86,7 +81,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         }
         if (knownBadHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(++messageId,
-                                this,
+                                HashLookupModuleFactory.getModuleName(),
                                 NbBundle.getMessage(this.getClass(),
                                                     "HashDbIngestModule.noKnownBadHashDbSetMsg"),
                                 NbBundle.getMessage(this.getClass(),
@@ -135,7 +130,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
                 services.postMessage(IngestMessage.createErrorMessage(++messageId,
-                                      HashDbIngestModule.this,
+                                      HashLookupModuleFactory.getModuleName(),
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.fileReadErrorMsg",
                                                           name),
@@ -161,7 +156,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                     } catch (TskException ex) {
                         logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
                         services.postMessage(IngestMessage.createErrorMessage(++messageId,
-                                              HashDbIngestModule.this,
+                                              HashLookupModuleFactory.getModuleName(),
                                               NbBundle.getMessage(this.getClass(),
                                                                   "HashDbIngestModule.hashLookupErrorMsg",
                                                                   name),
@@ -192,7 +187,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
                 services.postMessage(IngestMessage.createErrorMessage(++messageId,
-                                      HashDbIngestModule.this,
+                                      HashLookupModuleFactory.getModuleName(),
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.hashLookupErrorMsg",
                                                           name),
@@ -223,7 +218,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);
                     services.postMessage(IngestMessage.createErrorMessage(++messageId,
-                                          HashDbIngestModule.this,
+                                          HashLookupModuleFactory.getModuleName(),
                                           NbBundle.getMessage(this.getClass(),
                                                               "HashDbIngestModule.hashLookupErrorMsg",
                                                               name),
@@ -282,7 +277,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
                 detailsSb.append("</table>");
 
-                services.postMessage(IngestMessage.createDataMessage(++messageId, this,
+                services.postMessage(IngestMessage.createDataMessage(++messageId, HashLookupModuleFactory.getModuleName(),
                          NbBundle.getMessage(this.getClass(),
                                              "HashDbIngestModule.postToBB.knownBadMsg",
                                              abstractFile.getName()),
@@ -327,7 +322,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
             detailsSb.append("</ul>");
             services.postMessage(IngestMessage.createMessage(++messageId,
                                  IngestMessage.MessageType.INFO,
-                                 this,
+                                 HashLookupModuleFactory.getModuleName(),
                                  NbBundle.getMessage(this.getClass(),
                                                      "HashDbIngestModule.complete.hashLookupResults"),
                                  detailsSb.toString()));

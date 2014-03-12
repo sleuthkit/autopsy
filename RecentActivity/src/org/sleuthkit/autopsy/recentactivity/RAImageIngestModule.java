@@ -52,15 +52,9 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     RAImageIngestModule() {
     }
 
-    // RJCTODO: Can we dump this?
-    @Override
-    public String getDisplayName() {
-        return RecentActivityExtracterModuleFactory.getModuleName();
-    }
-
     @Override
     public ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + dataSource.getName()));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
 
         controller.switchToDeterminate(extracters.size());
         controller.progress(0);
@@ -105,7 +99,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             errorMessage.append("<p>No errors encountered.</p>");
             errorMsgSubject = "No errors reported";
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this, "Finished " + dataSource.getName() + " - " + errorMsgSubject, errorMessage.toString());
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, RecentActivityExtracterModuleFactory.getModuleName(), "Finished " + dataSource.getName() + " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
 
         StringBuilder historyMsg = new StringBuilder();
@@ -116,7 +110,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             historyMsg.append("</li>");
         }
         historyMsg.append("</ul>");
-        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, dataSource.getName() + " - Browser Results", historyMsg.toString());
+        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), dataSource.getName() + " - Browser Results", historyMsg.toString());
         services.postMessage(inboxMsg);
 
         return ResultCode.OK;
@@ -124,6 +118,11 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
+        if (ingestJobCancelled) {
+            stop();
+            return;
+        }
+        
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
             try {
@@ -171,8 +170,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
         }
     }
 
-    @Override
-    public void jobCancelled() {
+    private void stop() {
         for (Extract extracter : extracters) {
             try {
                 extracter.stop();

@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleTempApiShim;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -54,7 +55,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule, IngestModuleTempApiShim {
 
     private IngestServices services;
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -62,11 +63,6 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     private boolean filesToFire = false;
 
     ExifParserFileIngestModule() {
-    }
-
-    @Override
-    public String getDisplayName() {
-        return ExifParserModuleFactory.getModuleName();
     }
         
     @Override
@@ -93,7 +89,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
         filesProcessed++;
         if ((filesToFire) && (filesProcessed % 1000 == 0)) {
-            services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
             filesToFire = false;
         }
         
@@ -121,7 +117,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
             if (exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), getDisplayName(), date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
             }
 
@@ -132,13 +128,13 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                 if (loc != null) {
                     double latitude = loc.getLatitude();
                     double longitude = loc.getLongitude();
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), getDisplayName(), latitude));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), getDisplayName(), longitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), latitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
                 }
                 
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), getDisplayName(), altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
@@ -147,12 +143,12 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), getDisplayName(), model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), ExifParserModuleFactory.getModuleName(), model));
                 }
                 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), getDisplayName(), make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
@@ -209,7 +205,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
         logger.log(Level.INFO, "completed exif parsing {0}", this.toString());
         if (filesToFire) {
             //send the final new data event
-            services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
         }
     }
 }

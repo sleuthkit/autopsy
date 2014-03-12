@@ -56,12 +56,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     
     FileExtMismatchIngestModule() {
     }
-    
-    @Override
-    public String getDisplayName() {
-        return FileExtMismatchDetectorModuleFactory.getModuleName();
-    }
-        
+            
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
         services = IngestServices.getDefault();           
@@ -100,7 +95,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
 
-                services.fireModuleDataEvent(new ModuleDataEvent(getDisplayName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
+                services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
             return ResultCode.OK;
         } catch (TskException ex) {
@@ -163,13 +158,13 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
         //details
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
 
-        detailsSb.append("<tr><td>" + getDisplayName() + "</td></tr>");
+        detailsSb.append("<tr><td>" + FileExtMismatchDetectorModuleFactory.getModuleName() + "</td></tr>");
 
         detailsSb.append("<tr><td>Total Processing Time</td><td>").append(processTime).append("</td></tr>\n");
         detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
 
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "File Extension Mismatch Results", detailsSb.toString()));
+        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(), "File Extension Mismatch Results", detailsSb.toString()));
     }
 
     // RJCTODO: Ingest options!

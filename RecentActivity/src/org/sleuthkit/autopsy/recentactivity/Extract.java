@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -149,7 +149,7 @@ abstract class Extract {
      *
      * @return Gets the moduleName set in the moduleName data member
      */
-    public String getName() {
+    protected String getName() { // RJCTODO: Fix this
         return moduleName;
     }
 
