@@ -161,14 +161,16 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             return ResultCode.OK;
         }
 
+        // RJCTODO: Resolve this
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-        if (services.getAbstractFileModuleResult(hashDBModuleName) == ResultCode.ERROR) {
-            indexer.indexFile(abstractFile, false);
-            //notify depending module that keyword search (would) encountered error for this file
-            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
-            return ResultCode.ERROR;
-        } 
-        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+//        if (services.getAbstractFileModuleResult(hashDBModuleName) == ResultCode.ERROR) {
+//            indexer.indexFile(abstractFile, false);
+//            //notify depending module that keyword search (would) encountered error for this file
+//            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
+//            return ResultCode.ERROR;
+//        } 
+//        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+        if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ResultCode.OK;

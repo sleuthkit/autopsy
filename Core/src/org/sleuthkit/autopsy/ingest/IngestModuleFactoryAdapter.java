@@ -39,13 +39,13 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
-        return new NoIngestJobOptions();
+    public IngestModuleIngestJobSettings getDefaultIngestJobOptions() {
+        return new NoIngestJobSettings();
     }
 
     @Override
@@ -54,7 +54,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -64,7 +64,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +74,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 }

@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * Global options panel for keyword searching.
  */
 // RJCTODO: Why is this a public class?
-public final class KeywordSearchConfigurationPanel extends IngestModuleResourcesConfigPanel {
+public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;

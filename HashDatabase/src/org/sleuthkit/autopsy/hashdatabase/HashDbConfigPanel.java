@@ -43,12 +43,12 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets configuration.
  */
-public final class HashDbConfigPanel extends IngestModuleResourcesConfigPanel {
+public final class HashDbConfigPanel extends IngestModuleGlobalSetttingsPanel {
     private static final String NO_SELECTION_TEXT = NbBundle
             .getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.noSelectionText");
     private static final String ERROR_GETTING_PATH_TEXT = NbBundle

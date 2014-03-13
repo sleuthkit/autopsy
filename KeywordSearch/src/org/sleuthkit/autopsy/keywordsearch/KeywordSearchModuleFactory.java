@@ -27,9 +27,9 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * An ingest module factory that creates file ingest modules that do keyword 
@@ -62,7 +62,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestJobOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestJobOptions) {
         KeywordSearchIngestSimplePanel ingestOptionsPanel = new KeywordSearchIngestSimplePanel();  
         ingestOptionsPanel.load();
         return ingestOptionsPanel; 
@@ -74,7 +74,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
         KeywordSearchConfigurationPanel globalOptionsPanel = new KeywordSearchConfigurationPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
@@ -86,7 +86,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestJobOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
         return new KeywordSearchIngestModule();
     }
 }

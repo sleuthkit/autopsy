@@ -82,7 +82,7 @@ public class IngestServices {
      * @param message ingest message to be posted by ingest module
      */
     public void postMessage(final IngestMessage message) {
-        manager.postMessage(message);
+        manager.postIngestMessage(message);
     }
 
     /**
@@ -143,6 +143,7 @@ public class IngestServices {
         return manager.getFreeDiskSpace();
     }
 
+    // RJCTODO
     /**
      * Facility for a file ingest module to check a return value from a
      * previously run file ingest module that executed for the same file. The
@@ -154,7 +155,7 @@ public class IngestServices {
      * @return the return value of the previously executed module for the
      * currently processed file in the file ingest pipeline
      */
-    public IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
-        return manager.getAbstractFileModuleResult(moduleName);
-    }
+//    public IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
+//        return manager.getAbstractFileModuleResult(moduleName);
+//    }
 }

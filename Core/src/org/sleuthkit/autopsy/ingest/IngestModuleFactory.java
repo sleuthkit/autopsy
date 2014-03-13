@@ -104,7 +104,7 @@ public interface IngestModuleFactory {
      * the panel.
      * @return A user interface panel for configuring ingest module resources.
      */
-    IngestModuleResourcesConfigPanel getResourcesConfigPanel();
+    IngestModuleGlobalSetttingsPanel getResourcesConfigPanel();
 
     /**
      * Gets the default per ingest job options for instances of the family of
@@ -117,7 +117,7 @@ public interface IngestModuleFactory {
      *
      * @return The ingest options.
      */
-    IngestModuleIngestJobOptions getDefaultIngestJobOptions();
+    IngestModuleIngestJobSettings getDefaultIngestJobOptions();
 
     /**
      * Queries the factory to determine if it provides user interface panels to
@@ -152,7 +152,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions Per ingest job options to initialize the panel.
      * @return A user interface panel.
      */
-    IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions);
+    IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -182,7 +182,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions The ingest options for the module instance.
      * @return A data source ingest module instance.
      */
-    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobOptions ingestOptions);
+    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -212,5 +212,5 @@ public interface IngestModuleFactory {
      * @param ingestOptions The ingest options for the module instance.
      * @return A file ingest module instance.
      */
-    FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions);
+    FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions);
 }

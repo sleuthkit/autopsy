@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,15 +25,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
-import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Abstract visitor for getting all the files from content
@@ -75,7 +72,7 @@ import org.sleuthkit.datamodel.LayoutFile;
      * @return 
      */
     protected Collection<AbstractFile> getAllFromChildren(Content parent) {
-        Collection<AbstractFile> all = new ArrayList<AbstractFile>();
+        Collection<AbstractFile> all = new ArrayList<>();
 
         try {
             for (Content child : parent.getChildren()) {

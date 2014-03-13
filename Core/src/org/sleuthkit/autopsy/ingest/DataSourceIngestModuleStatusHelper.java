@@ -19,39 +19,42 @@
 package org.sleuthkit.autopsy.ingest;
 
 import org.netbeans.api.progress.ProgressHandle;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * Controller for DataSource level ingest modules
- * Used by modules to check task status and to post progress to
+ * Used by data source ingest modules to report progress and check for ingest
+ * job cancellation.
  */
 public class DataSourceIngestModuleStatusHelper {
 
-    private IngestDataSourceThread worker;
-    private ProgressHandle progress;
+    private final DataSourceIngestWorker worker;
+    private final ProgressHandle progress;
+    private final Content dataSource;
 
-    /**
-     * Instantiate the controller for the worker
-     * @param worker underlying DataSource ingest thread
-     * @param progress the progress handle
-     */
-    DataSourceIngestModuleStatusHelper(IngestDataSourceThread worker, ProgressHandle progress) {
+    DataSourceIngestModuleStatusHelper(DataSourceIngestWorker worker, ProgressHandle progress, Content dataSource) {
         this.worker = worker;
         this.progress = progress;
+        this.dataSource = dataSource;
     }
 
     /**
-     * Check if the task has been canceled.  This should be polled by the module periodically
-     * And the module needs to act, i.e. break out of its processing loop and call its stop() to cleanup
-     * 
-     * @return true if the task has been canceled, false otherwise
+     * Checks for ingest job cancellation. This should be polled by the module
+     * in its process() method. If the ingest job is canceled, the module should
+     * return from its process() method as quickly as possible.
+     *
+     * @return True if the task has been canceled, false otherwise
      */
-    public boolean isCancelled() {
+    public boolean isCanceled() {
         return worker.isCancelled();
     }
 
     /**
-     * Update the progress bar and switch to determinate mode once number of total work units is known
-     * @param workUnits total number of work units for the DataSource ingest task
+     * Updates the progress bar and switches it to determinate mode. This should
+     * be called by the module as soon as the number of total work units
+     * required to process the data source is known.
+     *
+     * @param workUnits Total number of work units for the processing of the
+     * data source.
      */
     public void switchToDeterminate(int workUnits) {
         if (progress != null) {
@@ -60,7 +63,8 @@ public class DataSourceIngestModuleStatusHelper {
     }
 
     /**
-     * Update the progress bar and switch to non determinate mode if number of work units is not known
+     * Switches the progress bar to indeterminate mode. This should be called if
+     * the total work units to process the data source is unknown.
      */
     public void switchToInDeterminate() {
         if (progress != null) {
@@ -69,12 +73,14 @@ public class DataSourceIngestModuleStatusHelper {
     }
 
     /**
-     * Update the progress bar with the number of work units performed, if in the determinate mode
-     * @param workUnits number of work units performed so far by the module
+     * Updates the progress bar with the number of work units performed, if in
+     * the determinate mode.
+     *
+     * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
         if (progress != null) {
-            progress.progress(worker.getContent().getName(), workUnits);
+            progress.progress(dataSource.getName(), workUnits);
         }
     }
 }

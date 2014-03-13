@@ -18,17 +18,26 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JPanel;
-
 /**
- * Abstract base class for ingest module per ingest job options panels.
+ * Implementation of the IngestModuleOptions interface for use by ingest modules
+ * that do not have per ingest job options.
  */
-public abstract class IngestModuleIngestJobOptionsPanel extends JPanel {
+public final class NoIngestJobSettings implements IngestModuleIngestJobSettings {
+
+    private final String options = "None";
 
     /**
-     * Gets the ingest options for an ingest module.
+     * Gets the string used as an ingest options placeholder for serialization
+     * purposes.
      *
-     * @return The ingest options.
+     * @return The string "None"
      */
-    public abstract IngestModuleIngestJobOptions getIngestJobOptions();
+    String getOptions() {
+        return options;
+    }
+
+    @Override
+    public boolean areValid() {
+        return true;
+    }
 }

@@ -57,6 +57,11 @@ public interface IngestModule {
      */
     void startUp(IngestModuleProcessingContext context);
 
+    /**
+     * RJCTODO
+     */
+    IngestModuleProcessingContext getContext();
+    
     // RJCTODO: Update
     /**
      * Invoked when an ingest job is completed, before the module instance is

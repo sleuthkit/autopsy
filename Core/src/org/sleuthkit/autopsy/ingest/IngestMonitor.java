@@ -164,7 +164,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
                 MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space on " + diskPath,
+                manager.postIngestMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space on " + diskPath,
                         "Stopping ingest due to low disk space on disk " + diskPath
                         + ". \nEnsure the Case drive has at least 1GB free space and restart ingest."));
             }

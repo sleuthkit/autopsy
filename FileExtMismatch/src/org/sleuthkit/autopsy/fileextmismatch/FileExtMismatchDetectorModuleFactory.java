@@ -23,9 +23,9 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * An factory that creates file ingest modules that detect mismatches between 
@@ -57,7 +57,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
+    public IngestModuleIngestJobSettings getDefaultIngestJobOptions() {
         return new FileExtMismatchDetectorOptions();
     }
 
@@ -67,7 +67,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions) {
         FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
         return ingestOptionsPanel;
     }
@@ -78,7 +78,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
         FileExtMismatchConfigPanel globalOptionsPanel = new FileExtMismatchConfigPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
@@ -90,7 +90,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new FileExtMismatchIngestModule();
     }
 }

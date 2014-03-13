@@ -29,18 +29,19 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * RJCTODO
+ * Acts as a facade for the parts of the ingest framework that make up the
+ * processing context of an ingest module.
  */
 public final class IngestModuleProcessingContext {
 
-    private final DataSourceIngestJob ingestJob;
+    private final IngestJob ingestJob;
     private final IngestModuleFactory moduleFactory;
     private final IngestManager ingestManager;
     private final IngestScheduler scheduler;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthkitCase;
 
-    IngestModuleProcessingContext(DataSourceIngestJob ingestJob, IngestModuleFactory moduleFactory) {
+    IngestModuleProcessingContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
         this.ingestJob = ingestJob;
         this.moduleFactory = moduleFactory;
         ingestManager = IngestManager.getDefault();
@@ -49,11 +50,10 @@ public final class IngestModuleProcessingContext {
         sleuthkitCase = this.autopsyCase.getSleuthkitCase();
     }
 
-    // RJCTODO: Or create blackboard attribute factory methods, perhaps as many as eleven
-    public String getModuleDisplayName() {
-        return moduleFactory.getModuleDisplayName();
+    public boolean isIngestJobCancelled() {
+        return this.ingestJob.isCancelled();
     }
-    
+
     /**
      * RJCTODO
      *
@@ -88,27 +88,27 @@ public final class IngestModuleProcessingContext {
 
     public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject, String detailsHtml) {
         IngestMessage message = IngestMessage.createMessage(ID, messageType, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postMessage(message);
+        ingestManager.postIngestMessage(message);
     }
 
     public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject) {
         IngestMessage message = IngestMessage.createMessage(ID, messageType, moduleFactory.getModuleDisplayName(), subject);
-        ingestManager.postMessage(message);
+        ingestManager.postIngestMessage(message);
     }
 
     public void postErrorIngestMessage(long ID, String subject, String detailsHtml) {
         IngestMessage message = IngestMessage.createErrorMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postMessage(message);
+        ingestManager.postIngestMessage(message);
     }
 
     public void postWarningIngestMessage(long ID, String subject, String detailsHtml) {
         IngestMessage message = IngestMessage.createWarningMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postMessage(message);
+        ingestManager.postIngestMessage(message);
     }
 
     public void postDataMessage(long ID, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         IngestMessage message = IngestMessage.createDataMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml, uniqueKey, data);
-        ingestManager.postMessage(message);
+        ingestManager.postIngestMessage(message);
     }
 
     public void fireDataEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
@@ -120,17 +120,23 @@ public final class IngestModuleProcessingContext {
         ModuleDataEvent event = new ModuleDataEvent(moduleFactory.getModuleDisplayName(), artifactType, artifactIDs);
         IngestManager.fireModuleDataEvent(event);
     }
-    
+
     // RJCTODO: Make story to convert existing core modules to use logging methods, address sloppy use of level...
     public void logInfo(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.INFO, message, ex);
     }
-        
+
     public void logWarning(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.WARNING, message, ex);
     }
-        
+
     public void logError(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.SEVERE, message, ex);
+    }
+
+    // RJCTODO: Leave public or create blackboard attribute factory methods, 
+    // perhaps as many as eleven. End goal is for this to be package    
+    public String getModuleDisplayName() {
+        return this.moduleFactory.getModuleDisplayName();
     }
 }

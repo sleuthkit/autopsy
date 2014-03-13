@@ -32,14 +32,15 @@ public abstract class IngestModuleAdapter implements IngestModule {
     }
 
     @Override
+    public IngestModuleProcessingContext getContext() {
+        return context;
+    }
+        
+    @Override
     public void shutDown(boolean ingestJobCancelled) {
     }
     
     protected void setContext(IngestModuleProcessingContext context) {
         this.context = context;
-    }
-        
-    protected IngestModuleProcessingContext getContext() {
-        return context;
-    }
+    }        
 }

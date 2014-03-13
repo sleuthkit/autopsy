@@ -24,9 +24,9 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptions;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobOptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * A factory that creates file ingest modules that do hash database lookups.
@@ -54,7 +54,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobOptions getDefaultIngestJobOptions() {
+    public IngestModuleIngestJobSettings getDefaultIngestJobOptions() {
         return new HashLookupOptions();
     }
 
@@ -64,7 +64,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobOptionsPanel getIngestJobOptionsPanel(IngestModuleIngestJobOptions ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions) {
         HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();
         ingestOptionsPanel.load();
         return ingestOptionsPanel;
@@ -76,7 +76,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleResourcesConfigPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
         HashDbConfigPanel resourcesConfigPanel = new HashDbConfigPanel();
         resourcesConfigPanel.load();
         return resourcesConfigPanel;
@@ -88,7 +88,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobOptions ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new HashDbIngestModule();
     }
 }

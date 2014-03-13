@@ -25,10 +25,10 @@ package org.sleuthkit.autopsy.ingest;
 class IngestModuleTemplate {
 
     private final IngestModuleFactory moduleFactory;
-    private IngestModuleIngestJobOptions ingestOptions = null;
+    private IngestModuleIngestJobSettings ingestOptions = null;
     boolean enabled = true;
 
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleIngestJobOptions ingestOptions) {
+    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings ingestOptions) {
         this.moduleFactory = moduleFactory;
         this.ingestOptions = ingestOptions;
     }
@@ -37,11 +37,11 @@ class IngestModuleTemplate {
         return moduleFactory;
     }
 
-    IngestModuleIngestJobOptions getIngestOptions() {
+    IngestModuleIngestJobSettings getIngestOptions() {
         return ingestOptions;
     }
 
-    void setIngestOptions(IngestModuleIngestJobOptions ingestOptions) {
+    void setIngestOptions(IngestModuleIngestJobSettings ingestOptions) {
         this.ingestOptions = ingestOptions;
     }
 

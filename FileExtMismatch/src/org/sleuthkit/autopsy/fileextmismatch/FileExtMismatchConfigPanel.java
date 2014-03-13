@@ -30,7 +30,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 //import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 //import org.sleuthkit.autopsy.coreutils.Logger;
 //import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule; RJCTODO
@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleResourcesConfigPanel;
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
  */
-final class FileExtMismatchConfigPanel extends IngestModuleResourcesConfigPanel {
+final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel {
 //    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;

@@ -107,7 +107,7 @@ class IngestScheduler {
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-        private final ConcurrentHashMap<Long, DataSourceIngestJob> dataSourceTasks = new ConcurrentHashMap<>(); // RJCTODO: Why weren't these concurrent before? Synchronized methods?
+        private final ConcurrentHashMap<Long, IngestJob> dataSourceTasks = new ConcurrentHashMap<>(); // RJCTODO: Why weren't these concurrent before? Synchronized methods?
         private final ConcurrentSkipListSet<FileTask> rootDirectoryTasks = new ConcurrentSkipListSet<>(new RootTaskComparator());
         private final List<FileTask> directoryTasks = new ArrayList<>();
 //        private final ConcurrentLinkedQueue<FileTask> directoryTasks = new ConcurrentLinkedQueue<>();
@@ -137,7 +137,7 @@ class IngestScheduler {
             return sb.toString();
         }
 
-        synchronized void scheduleIngestOfFiles(DataSourceIngestJob dataSourceTask) {
+        synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
             // Save the data source task to manage its pipelines.
             dataSourceTasks.put(dataSourceTask.getId(), dataSourceTask);
  
@@ -201,7 +201,7 @@ class IngestScheduler {
          * to schedule the parent origin content, with the modules, settings, etc.
          */
         synchronized void scheduleIngestOfDerivedFile(long dataSourceTaskId, AbstractFile file) {
-            DataSourceIngestJob dataSourceTask = dataSourceTasks.get(dataSourceTaskId);
+            IngestJob dataSourceTask = dataSourceTasks.get(dataSourceTaskId);
             if (null == dataSourceTask) {
                 // RJCTODO: Handle severe error
             }
@@ -328,7 +328,7 @@ class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getDataSourceTask());
+                            FileTask childTask = new FileTask(childFile, parentTask.getIngestJob());
 
                             if (childFile.hasChildren()) {
                                 this.directoryTasks.add(childTask);
@@ -363,13 +363,13 @@ class IngestScheduler {
             final Set<Content> contentSet = new HashSet<>();
 
             for (FileTask task : rootDirectoryTasks) {
-                contentSet.add(task.getDataSourceTask().getDataSource());
+                contentSet.add(task.getIngestJob().getDataSource());
             }
             for (FileTask task : directoryTasks) {
-                contentSet.add(task.getDataSourceTask().getDataSource());
+                contentSet.add(task.getIngestJob().getDataSource());
             }
             for (FileTask task : fileTasks) {
-                contentSet.add(task.getDataSourceTask().getDataSource());
+                contentSet.add(task.getIngestJob().getDataSource());
             }
 
             return new ArrayList<>(contentSet);
@@ -392,7 +392,7 @@ class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.getDataSourceTask().getProcessUnallocatedSpace() == false
+            if (processTask.getIngestJob().getProcessUnallocatedSpace() == false
                     && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                     )) {
                 return false;
@@ -452,19 +452,15 @@ class IngestScheduler {
          */
         static class FileTask {
             private final AbstractFile file;
-            private final DataSourceIngestJob dataSourceTask;
+            private final IngestJob ingetsJob;
 
-            public FileTask(AbstractFile file, DataSourceIngestJob dataSourceTask) {
+            public FileTask(AbstractFile file, IngestJob dataSourceTask) {
                 this.file = file;
-                this.dataSourceTask = dataSourceTask;
+                this.ingetsJob = dataSourceTask;
             }
             
-            void execute(long threadId) {
-                dataSourceTask.getIngestPipelines().ingestFile(threadId, file);
-            }
-            
-            public DataSourceIngestJob getDataSourceTask() {
-                return dataSourceTask;
+            public IngestJob getIngestJob() {
+                return ingetsJob;
             }
             
             public AbstractFile getFile() {
@@ -503,8 +499,8 @@ class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                DataSourceIngestJob thisTask = this.getDataSourceTask();
-                DataSourceIngestJob otherTask = other.getDataSourceTask();
+                IngestJob thisTask = this.getIngestJob();
+                IngestJob otherTask = other.getIngestJob();
 
                 if (thisTask != otherTask
                         && (thisTask == null || !thisTask.equals(otherTask))) {
@@ -760,15 +756,15 @@ class IngestScheduler {
     /**
      * DataSourceScheduler ingest scheduler
      */
-    static class DataSourceScheduler implements Iterator<DataSourceIngestJob> {
+    static class DataSourceScheduler implements Iterator<IngestJob> {
 
-        private LinkedList<DataSourceIngestJob> tasks;
+        private LinkedList<IngestJob> tasks;
 
         DataSourceScheduler() {
             tasks = new LinkedList<>();
         }
 
-        synchronized void schedule(DataSourceIngestJob task) {
+        synchronized void schedule(IngestJob task) {
             try {
                 if (task.getDataSource().getParent() != null) {
                     //only accepting parent-less content objects (Image, parentless VirtualDirectory)
@@ -784,12 +780,12 @@ class IngestScheduler {
         }
 
         @Override
-        public synchronized DataSourceIngestJob next() throws IllegalStateException {
+        public synchronized IngestJob next() throws IllegalStateException {
             if (!hasNext()) {
                 throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
             }
 
-            final DataSourceIngestJob ret = tasks.pollFirst();
+            final IngestJob ret = tasks.pollFirst();
             return ret;
         }
 
@@ -800,7 +796,7 @@ class IngestScheduler {
          */
         synchronized List<org.sleuthkit.datamodel.Content> getContents() {
             List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (DataSourceIngestJob task : tasks) {
+            for (IngestJob task : tasks) {
                 contents.add(task.getDataSource());
             }
             return contents;
@@ -828,7 +824,7 @@ class IngestScheduler {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("DataSourceQueue, size: ").append(getCount());
-            for (DataSourceIngestJob task : tasks) {
+            for (IngestJob task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();
